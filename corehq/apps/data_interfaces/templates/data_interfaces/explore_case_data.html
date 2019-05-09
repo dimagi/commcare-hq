@@ -32,6 +32,8 @@ breadcrumbs todo
   {% initial_page_data "report.endpoints" report.endpoints %}
   {% initial_page_data "report.slug" report.slug %}
   {% initial_page_data "report.columns" report.columns %}
+  {% initial_page_data "report.columnFilters" report.column_filters %}
+  {% initial_page_data "report.reportFilters" report.report_filters %}
 
 <div id="case_search--model">
 
@@ -47,6 +49,26 @@ breadcrumbs todo
   </div>
 
   <div id="report-datagrid">
+
+    <div class="form form-horizontal well"
+         data-bind="foreach: reportFilters">
+      <div class="form-group">
+        <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label"
+               data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
+        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6">
+          <select type="text"
+                 class="form-control"
+                 data-bind="selectedOptions: value,
+                            select2: {
+                                placeholder: placeholder(),
+                                multiple: true,
+                                url: endpoint.getUrl(),
+                            },
+                            attr: { id: 'filter_' + name() }"></select>
+        </div>
+      </div>
+    </div>
+
     <table class="datagrid-headers">
       <thead>
         <tr>
@@ -75,7 +97,7 @@ breadcrumbs todo
         <tr>
           <!-- ko foreach: { data: $root.columns, as: 'column' } -->
             <td data-bind="style: { width: column.width() + 'px' }">
-              <span data-bind="text: row[column.slug()]"></span>
+              <span data-bind="text: row[column.name()]"></span>
             </td>
           <!-- /ko -->
           <td></td>
@@ -112,9 +134,84 @@ breadcrumbs todo
               <div class="form-group">
                 <input type="text"
                        class="form-control"
-                       data-bind="textInput: slug,
-                                  slugAutocomplete: $root.editColumnController.slugOptions" />
+                       data-bind="textInput: name,
+                                  datagridAutocomplete: $root.editColumnController.columnNameOptions" />
               </div>
+
+              <div class="form-group"
+                   data-bind="visible: showClause">
+                {% trans "Match" %}
+                <select data-bind="value: clause,
+                                   event: { change: $root.editColumnController.updateFilter }"
+                        class="form-control">
+                  <option value="all">
+                    {% trans "all of the" %}
+                  </option>
+                  <option value="any">
+                    {% trans "any of the" %}
+                  </option>
+                </select>
+                {% trans "following conditions:" %}
+              </div>
+
+              <!-- ko foreach: appliedFilters -->
+              <div class="row">
+                <div class="col-xs-2">
+                  <!-- ko if: $index() == 0 -->
+                  <select class="form-control"
+                          data-bind="options: $root.editColumnController.availableFilterNames,
+                                     optionsText: function (val) {
+                                        return $root.editColumnController.filterTitleByName[val];
+                                     },
+                                     value: filterName,
+                                     event: { change: $root.editColumnController.updateFilterName }"></select>
+                  <!-- /ko -->
+                </div>
+                <div class="col-xs-4">
+                  <select class="form-control"
+                          data-bind="options: $root.editColumnController.availableChoiceNames,
+                                     optionsText: function (val) {
+                                        return $root.editColumnController.choiceTitleByName()[val];
+                                     },
+                                     value: choiceName,
+                                     event: { change: $root.editColumnController.updateFilter }"></select>
+                </div>
+                <div class="col-xs-4">
+                  <input type="text"
+                         class="form-control"
+                         data-bind="textInput: value,
+                                    visible: $root.editColumnController.isFilterText,
+                                    event: { change: $root.editColumnController.updateFilter }" />
+
+                  <input type="number"
+                         class="form-control"
+                         data-bind="textInput: value,
+                                    visible: $root.editColumnController.isFilterNumeric,
+                                    event: { change: $root.editColumnController.updateFilter }" />
+
+                  <input type="text"
+                         class="form-control"
+                         data-bind="value: value,
+                                    visible: $root.editColumnController.isFilterDate,
+                                    singleDatePicker: $root.editColumnController.isFilterDate,
+                                    event: { change: $root.editColumnController.updateFilter }" />
+                </div>
+                <div class="col-xs-2">
+                  <button type="button"
+                          class="btn btn-danger"
+                          data-bind="click: $root.editColumnController.removeFilter">
+                    <i class="fa fa-remove"></i>
+                  </button>
+
+                 </div>
+              </div>
+              <!-- /ko -->
+              <button type="button"
+                      class="btn btn-default"
+                      data-bind="click: $root.editColumnController.addFilter,
+                                 visible: showAddFilter" >
+                {% trans "Add Filter" %}
+              </button>
             </div>
           </div>
           <div class="modal-footer">

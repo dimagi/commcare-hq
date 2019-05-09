@@ -1,18 +1,18 @@
 {% load i18n %}
 {{ wizard.management_form }}
 {% for field in wizard.form %}
-<div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
-  <label>{{ field.label }}</label>
-  <div>
+  <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
+    <label>{{ field.label }}</label>
+    <div>
       {{ field }}
-  {% for error in field.errors %}
-      <span class="help-block">{{ error }}</span>
-  {% endfor %}
-  {% if field.name == "password" %}
-    <p class="help-block">
-      <a href="{% url "password_reset_email" %}">{% trans "Forgot your password?" %}</a>
-    </p>
-  {% endif %}
+      {% for error in field.errors %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+      {% if field.name == "password" %}
+        <p class="help-block">
+          <a href="{% url "password_reset_email" %}">{% trans "Forgot your password?" %}</a>
+        </p>
+      {% endif %}
+    </div>
   </div>
-</div>
 {% endfor %}

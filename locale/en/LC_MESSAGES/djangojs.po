@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-16 19:44+0000\n"
+"POT-Creation-Date: 2019-05-07 19:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -109,6 +109,7 @@ msgid "There was an error saving."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:143
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr ""
@@ -503,7 +504,7 @@ msgstr ""
 msgid "Select a Question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:169
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:173
 msgid "Edit Form"
 msgstr ""
 
@@ -511,27 +512,27 @@ msgstr ""
 msgid "Form Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:97
 msgid "Home Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:81
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:98
 msgid "First Menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:99
 msgid "Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:84
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:101
 msgid "Parent Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:86
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:103
 msgid "Previous Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:95
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:112
 msgid "Link to other form"
 msgstr ""
 
@@ -544,27 +545,32 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:9
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
+#: corehq/apps/sms/static/sms/js/add_gateway.js:11
+msgid "Remove"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:8
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:102
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:109
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:125
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:114
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:130
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:147
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:163
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:148
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:164
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -576,11 +582,11 @@ msgstr ""
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:340
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:433
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:435
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -667,11 +673,17 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:309
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:177
+msgid ""
+"This value is currently inherited from the master app. Once this page is "
+"saved, it will no longer be inherited."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:316
 msgid "You have unsaved settings."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:462
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:469
 msgid "Settings"
 msgstr ""
 
@@ -695,17 +707,22 @@ msgstr ""
 msgid "View All Cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js:74
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js:76
 #: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:34
 msgid "View All Forms"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js:77
+msgid "View Changed Items"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/form_models.js:44
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:214
-msgid "Latest"
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:49
+msgid "Latest saved"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:23
@@ -805,6 +822,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/reports/static/reports/v2/js/datagrid/bindingHandlers.js:61
 msgid "Search..."
 msgstr ""
 
@@ -2060,8 +2078,8 @@ msgid "Property Name"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:123
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:131
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:171
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:179
 msgid "Calculation"
 msgstr ""
 
@@ -2377,7 +2395,7 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:32
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:34
 msgid "no comment"
 msgstr ""
 
@@ -2925,6 +2943,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:21
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:283
 msgid "Edit"
 msgstr ""
 
@@ -2944,35 +2963,39 @@ msgstr ""
 msgid "Click <strong>Edit</strong> below to add mappings"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:124
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:132
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:172
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:180
 msgid "Calculation is duplicated"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:125
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:173
 msgid "Add Image"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:126
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:134
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:174
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:182
 msgid "Calculation contains an invalid character."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:133
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:141
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:181
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:189
 msgid "Add Key, Value Mapping"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:139
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:187
 msgid "Key"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:140
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:188
 msgid "Key is duplicated"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:142
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:190
 msgid "Key contains an invalid character."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:303
+msgid "Edit mapping for <%= property %>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
@@ -3071,46 +3094,46 @@ msgstr ""
 msgid "Loading"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:30
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:29
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:174
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
 #: corehq/apps/reports/static/reports/js/tabular.js:32
 msgid "Sorry!"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:33
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
 msgid ""
 "There was an error with your query, it has been logged, please try another "
 "query."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:36
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/data_corrections.js:346
+#: corehq/apps/reports/static/reports/js/data_corrections.js:364
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:115
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:130
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:135
 msgid "Available Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:131
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:136
 msgid "Included Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:132
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:137
 msgid "Search Reports..."
 msgstr ""
 
@@ -3239,6 +3262,10 @@ msgstr ""
 msgid "Failed to re-process"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/v2/js/datagrid/reportFilters.js:18
+msgid "Select"
+msgstr ""
+
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
@@ -3249,10 +3276,6 @@ msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:30
 msgid "Satellite"
-msgstr ""
-
-#: corehq/apps/sms/static/sms/js/add_gateway.js:11
-msgid "Remove"
 msgstr ""
 
 #: corehq/apps/sms/static/sms/js/add_gateway.js:25

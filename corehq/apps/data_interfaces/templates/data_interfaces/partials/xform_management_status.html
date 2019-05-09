@@ -1,42 +1,42 @@
 {% load i18n %}
 {% if is_ready %}
-    <div id="ready_{{ download_id }}">
-        <legend>{{ on_complete_short }}</legend>
-        {% block results %}
-        {% if result.success %}
-            <div class="alert alert-success">
-                <h4>{{ result.success_count_msg }}</h4>
-                {% if result.errors %}
-                    {% for s in result.success %}
-                        <p>{{ s }}</p>
-                    {% endfor %}
-                {% endif %}
-            </div>
+  <div id="ready_{{ download_id }}">
+    <legend>{{ on_complete_short }}</legend>
+    {% block results %}
+      {% if result.success %}
+        <div class="alert alert-success">
+          <h4>{{ result.success_count_msg }}</h4>
+          {% if result.errors %}
+            {% for s in result.success %}
+              <p>{{ s }}</p>
+            {% endfor %}
+          {% endif %}
+        </div>
         {% if result.errors %}
-            <div class="alert alert-danger">
+          <div class="alert alert-danger">
             <h3>{% trans "However, we ran into the following problems:" %}</h3>
-                {% for e in result.errors %}
-                <p>{{ e }}</p>
-                {% endfor %}
-            </div>
+            {% for e in result.errors %}
+              <p>{{ e }}</p>
+            {% endfor %}
+          </div>
         {% endif %}
-        {% else %}
-            <div class="alert alert-danger">
-                <h3>{{ mode.fail_text }}</h3>
-                    {% for e in result.errors %}
-                    <p>{{ e }}</p>
-                    {% endfor %}
-                </div>
-        {% endif %}
-        {% endblock results %}
-    </div>
-    <span>{{ mode.help_message }}</span>
-    {% blocktrans %}
-        <span>Return to <a href="{{form_management_url}}">Manage Forms</a> to reverse this.</span>
-    {% endblocktrans %}
+      {% else %}
+        <div class="alert alert-danger">
+          <h3>{{ mode.fail_text }}</h3>
+          {% for e in result.errors %}
+            <p>{{ e }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endblock results %}
+  </div>
+  <span>{{ mode.help_message }}</span>
+  {% blocktrans %}
+    <span>Return to <a href="{{form_management_url}}">Manage Forms</a> to reverse this.</span>
+  {% endblocktrans %}
 {% else %}
-    <legend>
-        {{ mode.progress_text }}
-    </legend>
-    {% include 'soil/partials/download_in_progress.html' %}
+  <legend>
+    {{ mode.progress_text }}
+  </legend>
+  {% include 'soil/partials/download_in_progress.html' %}
 {% endif %}

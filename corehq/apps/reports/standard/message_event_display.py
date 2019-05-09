@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import cgi
+from collections import namedtuple
 
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -211,6 +212,9 @@ def _get_case_rule_display(domain, rule_id, content_cache):
 
     content_cache[cache_key] = result
     return result
+
+
+EventStub = namedtuple('EventStub', 'source source_id content_type form_name')
 
 
 def get_event_display(domain, event, content_cache):

@@ -3,21 +3,21 @@
 {% load i18n %}
 
 {% block title %}
-    {% blocktrans with app_version=app_version %}
-        Form Summary - Version {{ app_version }}
-    {% endblocktrans %}
+  {% blocktrans with app_version=app_version %}
+    Form Summary - Version {{ app_version }}
+  {% endblocktrans %}
 {% endblock %}
 
 {% requirejs_main "app_manager/js/summary/form_summary" %}
 
 {% block content_extra %}
-    {% initial_page_data 'errors' errors %}
-    {% initial_page_data 'modules' modules %}
-    {% registerurl 'form_source' domain app_id '---' %}
-    {% registerurl 'view_module' domain app_id '---' %}
+  {% initial_page_data 'errors' errors %}
+  {% initial_page_data 'modules' modules %}
+  {% registerurl 'form_source' domain app_id '---' %}
+  {% registerurl 'view_module' domain app_id '---' %}
 
-    {% include 'app_manager/partials/form_summary_header.html' %}
-    <div id="form-summary" class="ko-template">
-        {% include 'app_manager/form_summary_base.html' with modules=modules errors=errors %}
-    </div>
+  {% include 'app_manager/partials/form_summary_header.html' %}
+  <div id="form-summary" class="ko-template">
+    {% include 'app_manager/form_summary_base.html' with modules=modules errors=errors %}
+  </div>
 {% endblock content_extra %}

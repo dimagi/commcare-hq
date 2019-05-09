@@ -3,46 +3,46 @@
 {% load hq_shared_tags %}
 
 {% block title %}
-    {% trans "SMS Languages" %}
+  {% trans "SMS Languages" %}
 {% endblock %}
 
 {% requirejs_main 'sms/js/sms_language_main' %}
 
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
-    <style>
-        .sortable-handle {
-            cursor: move;
-        }
-        #supported-languages {
-            padding: 10px 0;
-        }
-    </style>
+  <link rel="stylesheet" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+  <style>
+    .sortable-handle {
+      cursor: move;
+    }
+    #supported-languages {
+      padding: 10px 0;
+    }
+  </style>
 {% endblock %}
 
 
 {% block page_content %}
-    {% initial_page_data 'sms_langs' sms_langs %}
-    {% registerurl "edit_sms_languages" domain %}
+  {% initial_page_data 'sms_langs' sms_langs %}
+  {% registerurl "edit_sms_languages" domain %}
 
-    <div class="tab-pane">
-        <div class="tabbable">
-            <ul class="nav nav-tabs sticky-tabs">
-                <li><a href="#supported-languages" data-toggle="tab">{% trans "Language List" %}</a></li>
-                <li><a href="#translations-tab" data-toggle="tab">{% trans "Messaging Translations" %}</a></li>
-            </ul>
-        </div>
-        <div class="tab-content">
-            <div id="supported-languages" class="tab-pane">
-                    {% include "app_manager/partials/settings/supported_languages.html" %}
-            </div>
-            <div id="translations-tab" class="tab-pane">
-                <div>
-                    <section>
-                        {% include "hqwebapp/partials/bulk_upload.html" %}
-                    </section>
-                </div>
-            </div>
-        </div>
+  <div class="tab-pane">
+    <div class="tabbable">
+      <ul class="nav nav-tabs sticky-tabs">
+        <li><a href="#supported-languages" data-toggle="tab">{% trans "Language List" %}</a></li>
+        <li><a href="#translations-tab" data-toggle="tab">{% trans "Messaging Translations" %}</a></li>
+      </ul>
     </div>
+    <div class="tab-content">
+      <div id="supported-languages" class="tab-pane">
+        {% include "app_manager/partials/settings/supported_languages.html" %}
+      </div>
+      <div id="translations-tab" class="tab-pane">
+        <div>
+          <section>
+            {% include "hqwebapp/partials/bulk_upload.html" %}
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

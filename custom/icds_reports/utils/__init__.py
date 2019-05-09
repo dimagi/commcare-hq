@@ -22,7 +22,6 @@ from django.template.loader import render_to_string, get_template
 from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
-from weasyprint import HTML, CSS
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
@@ -675,6 +674,8 @@ def create_excel_file(excel_data, data_type, file_format):
 
 
 def create_pdf_file(pdf_context):
+    from weasyprint import HTML, CSS
+
     pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     resultFile = BytesIO()
@@ -878,7 +879,7 @@ def custom_strftime(format_to_use, date_to_format):
     )
 
 
-def create_aww_performance_excel_file(excel_data, data_type, month, state, district=None, block=None):
+def create_aww_performance_excel_file(excel_data, data_type, month, state, district=None, block=None, beta=False):
     aggregation_level = 3 if block else (2 if district else 1)
     export_info = excel_data[1][1]
     excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
@@ -898,9 +899,14 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.title = "AWW Performance Report"
     worksheet.sheet_view.showGridLines = False
     # sheet title
-    worksheet.merge_cells('B2:{0}2'.format(
-        "J" if aggregation_level == 3 else ("K" if aggregation_level == 2 else "L")
-    ))
+    if beta:
+        worksheet.merge_cells('B2:{0}2'.format(
+            "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
+        ))
+    else:
+        worksheet.merge_cells('B2:{0}2'.format(
+            "J" if aggregation_level == 3 else ("K" if aggregation_level == 2 else "L")
+        ))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
     title_cell.value = "AWW Performance Report for the month of {}".format(month)
@@ -908,11 +914,30 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_cell.alignment = Alignment(horizontal="center")
 
     # sheet header
-    header_cells = {"B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3"}
-    if aggregation_level < 3:
-        header_cells.add("K3")
-    if aggregation_level < 2:
-        header_cells.add("L3")
+    if beta:
+        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
+        if aggregation_level < 3:
+            header_cells.append("L3")
+        if aggregation_level < 2:
+            header_cells.append("M3")
+        date_description_cell_start = "I3" if aggregation_level == 3 else \
+            ("J3" if aggregation_level == 2 else "K3")
+        date_description_cell_finish = "J3" if aggregation_level == 3 else \
+            ("K3" if aggregation_level == 2 else "L3")
+        date_column = "K3" if aggregation_level == 3 else ("L3" if aggregation_level == 2 else "M3")
+
+    else:
+        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3"]
+        if aggregation_level < 3:
+            header_cells.append("K3")
+        if aggregation_level < 2:
+            header_cells.append("L3")
+        date_description_cell_start = "H3" if aggregation_level == 3 else \
+            ("I3" if aggregation_level == 2 else "J3")
+        date_description_cell_finish = "I3" if aggregation_level == 3 else \
+            ("J3" if aggregation_level == 2 else "K3")
+        date_column = "J3" if aggregation_level == 3 else ("K3" if aggregation_level == 2 else "L3")
+
     for cell in header_cells:
         worksheet[cell].fill = blue_fill
         worksheet[cell].font = bold_font
@@ -924,9 +949,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.merge_cells('E3:F3')
     if block:
         worksheet['E3'].value = "Block: {}".format(block)
-    date_description_cell_start = "H3" if aggregation_level == 3 else ("I3" if aggregation_level == 2 else "J3")
-    date_description_cell_finish = "I3" if aggregation_level == 3 else ("J3" if aggregation_level == 2 else "K3")
-    date_column = "J3" if aggregation_level == 3 else ("K3" if aggregation_level == 2 else "L3")
+
     worksheet.merge_cells('{0}:{1}'.format(
         date_description_cell_start,
         date_description_cell_finish,
@@ -945,14 +968,27 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         headers.append("District")
     if aggregation_level < 3:
         headers.append("Block")
-    headers.extend(["Supervisor", "AWC", "AWW Name", "AWW Contact Number", "Home Visits Conducted",
-                    "Number of Days AWC was Open", "Weighing Efficiency", "Eligible for Incentive"])
-    columns = 'B C D E F G H I J'
-    if aggregation_level < 3:
-        columns += " K"
-    if aggregation_level < 2:
-        columns += " L"
-    columns = columns.split()
+
+    if beta:
+        headers.extend([
+            'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
+            'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
+            'Number of Days AWC was Open', 'AWH Eligible for Incentive'
+        ])
+        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+        if aggregation_level < 3:
+            columns.append('L')
+        if aggregation_level < 2:
+            columns.append('M')
+    else:
+        headers.extend(["Supervisor", "AWC", "AWW Name", "AWW Contact Number", "Home Visits Conducted",
+                        "Number of Days AWC was Open", "Weighing Efficiency", "Eligible for Incentive"])
+        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+        if aggregation_level < 3:
+            columns.append('K')
+        if aggregation_level < 2:
+            columns.append('L')
+
     table_header = {}
     for col, header in zip(columns, headers):
         table_header[col] = header
@@ -988,6 +1024,9 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     standard_widths = [4, 7, 15]
     standard_widths.extend([15] * (3 - aggregation_level))
     standard_widths.extend([13, 12, 13, 15, 11, 14, 14])
+    if beta:
+        standard_widths.append(14)
+
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width
     widths['C'] = max(widths['C'], len(state) * 4 // 3 if state else 0)

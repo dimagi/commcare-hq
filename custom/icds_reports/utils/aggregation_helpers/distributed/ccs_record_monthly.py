@@ -60,7 +60,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
     def aggregation_query(self):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1, days=-1)).strftime("'%Y-%m-%d'::date")
-        age_in_days = "({} - case_list.dob)::integer".format(end_month_string)
+        age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         open_in_month = (
             "({} - case_list.opened_on::date)::integer >= 0"
@@ -92,7 +92,8 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         valid_in_month = "( {} OR {})".format(pregnant_to_consider, lactating)
 
         add_in_month = "(case_list.add>= {} AND case_list.add<={})".format(start_month_string, end_month_string)
-        delivered_in_month = "({} AND {})".format(seeking_services, add_in_month)
+        add_in_month_after_opened_on = "({} AND case_list.opened_on<=case_list.add)".format(add_in_month)
+        delivered_in_month = "({} AND {})".format(seeking_services, add_in_month_after_opened_on)
         extra_meal = "(agg_bp.eating_extra=1 AND {})".format(pregnant_to_consider)
         b1_complete = "(case_list.bp1_date <= {})".format(end_month_string)
         b2_complete = "(case_list.bp2_date <= {})".format(end_month_string)
@@ -229,7 +230,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('bp_date', 'agg_bp.latest_time_end_processed::DATE'),
             ('is_ebf', 'agg_pnc.is_ebf'),
             ('breastfed_at_birth', 'agg_delivery.breastfed_at_birth'),
-            ('person_name', 'case_list.person_name'),
+            ('person_name', 'person_cases.name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
             ('mobile_number', 'person_cases.phone_number'),
@@ -244,7 +245,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
-            ('dob', 'case_list.dob'),
+            ('dob', 'person_cases.dob'),
             ('closed', 'case_list.closed'),
             ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),
@@ -278,6 +279,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_delivery.supervisor_id
             WHERE {open_in_month} AND (case_list.add is NULL OR %(start_date)s-case_list.add<=183)
+                AND case_list.supervisor_id IS NOT NULL
             ORDER BY case_list.supervisor_id, case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         """.format(

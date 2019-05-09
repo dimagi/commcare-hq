@@ -215,6 +215,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
 
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table', force_citus=force_citus)
+            res_daily.get(disable_sync_subtasks=False)
+
             stage_1_tasks = [
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms', force_citus=force_citus)
                 for state_id in state_ids
@@ -264,7 +267,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table', force_citus=force_citus))
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table', force_citus=force_citus)
 
             # https://github.com/celery/celery/issues/4274
             stage_1_task_results = [stage_1_task.delay() for stage_1_task in stage_1_tasks]
@@ -281,7 +283,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 icds_aggregation_task.si(date=calculation_date, func_name='_ccs_record_monthly_table', force_citus=force_citus),
                 icds_aggregation_task.si(date=calculation_date, func_name='_agg_ccs_record_table', force_citus=force_citus),
             ).apply_async()
-            res_daily.get(disable_sync_subtasks=False)
+
             res_ccs.get(disable_sync_subtasks=False)
             res_child.get(disable_sync_subtasks=False)
 
@@ -737,7 +739,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test
         ).get_excel_data(
             location,
-            system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta
+            system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
+            system_usage_num_of_days_awc_was_open_formatting=aggregation_level <= 4 and beta,
         )
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'
@@ -762,7 +765,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = IncentiveReport(
             location=location,
             month=config['month'],
-            aggregation_level=aggregation_level
+            aggregation_level=aggregation_level,
+            beta=beta
         ).get_excel_data()
         if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
@@ -778,6 +782,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 block=SQLLocation.objects.get(
                     location_id=config['block_id'], domain=config['domain']
                 ).name if aggregation_level == 3 else None,
+                beta=beta
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)

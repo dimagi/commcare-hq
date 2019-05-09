@@ -41,19 +41,23 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregati
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
           sum_attended_child_ids, lunch_count
         ) (
-          SELECT DISTINCT ON (child_health_case_id)
+          SELECT DISTINCT ON (ucr.child_health_case_id)
             %(state_id)s AS state_id,
-            supervisor_id,
+            ucr.supervisor_id,
             %(month)s AS month,
-            child_health_case_id AS case_id,
-            MAX(timeend) OVER w AS latest_time_end_processed,
-            SUM(attended_child_ids) OVER w AS sum_attended_child_ids,
-            SUM(lunch) OVER w AS lunch_count
-          FROM "{ucr_tablename}"
-          WHERE state_id = %(state_id)s AND
-                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
-                child_health_case_id IS NOT NULL
-          WINDOW w AS (PARTITION BY supervisor_id, child_health_case_id)
+            ucr.child_health_case_id AS case_id,
+            MAX(ucr.timeend) OVER w AS latest_time_end_processed,
+            SUM(ucr.attended_child_ids) OVER w AS sum_attended_child_ids,
+            SUM(ucr.lunch) OVER w AS lunch_count
+          FROM "{ucr_tablename}" ucr INNER JOIN daily_attendance ON (
+            ucr.doc_id = daily_attendance.doc_id AND
+            ucr.supervisor_id = daily_attendance.supervisor_id AND
+            daily_attendance.month=%(current_month_start)s
+          )
+          WHERE ucr.state_id = %(state_id)s AND
+                ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s AND
+                ucr.child_health_case_id IS NOT NULL
+          WINDOW w AS (PARTITION BY ucr.supervisor_id, ucr.child_health_case_id)
         )
         """.format(
             ucr_tablename=self.ucr_tablename,

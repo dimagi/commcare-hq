@@ -1,85 +1,85 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
-	<h:head>
-		<h:title>Repeat Bug</h:title>
-		<model>
-			<instance>
-				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4A4E93C6-9D40-4E9C-8562-75F7606A3A9E" uiVersion="1" version="1" name="Repeat Bug">
-					<question1 />
-					<repeat_name_count />
-					<repeat_nam />
-					<repeat_name jr:template="">
-						<question5 />
-						<question />
-					</repeat_name>
-				</data>
-			</instance>
-			<bind nodeset="/data/question1" type="xsd:string" />
-			<bind nodeset="/data/repeat_name_count" />
-			<bind nodeset="/data/repeat_nam" />
-			<bind nodeset="/data/repeat_name" />
-			<bind nodeset="/data/repeat_name/question5" type="xsd:string" />
-			<bind nodeset="/data/repeat_name/question" type="xsd:string" />
-			<itext>
-				<translation lang="en" default="">
-					<text id="question1-label">
-						<value>question1</value>
-					</text>
-					<text id="repeat_name-label">
-						<value>repeat_name</value>
-					</text>
-					<text id="repeat_name/question5-label">
-						<value>question5</value>
-					</text>
-					<text id="repeat_name/question-label">
-						<value>question</value>
-					</text>
-				</translation>
-				<translation lang="fra">
-					<text id="question1-label">
-						<value>question1</value>
-					</text>
-					<text id="repeat_name-label">
-						<value>repeat_name</value>
-					</text>
-					<text id="repeat_name/question5-label">
-						<value>question5</value>
-					</text>
-					<text id="repeat_name/question-label">
-						<value>question</value>
-					</text>
-				</translation>
-				<translation lang="es">
-					<text id="question1-label">
-						<value>question1</value>
-					</text>
-					<text id="repeat_name-label">
-						<value>repeat_name</value>
-					</text>
-					<text id="repeat_name/question5-label">
-						<value>question5</value>
-					</text>
-					<text id="repeat_name/question-label">
-						<value>question</value>
-					</text>
-				</translation>
-			</itext>
-		</model>
-	</h:head>
-	<h:body>
-		<input ref="/data/question1">
-			<label ref="jr:itext('question1-label')" />
-		</input>
-		<group>
-			<label ref="jr:itext('repeat_name-label')" />
-			<repeat nodeset="/data/repeat_name">
-				<input ref="/data/repeat_name/question5">
-					<label ref="jr:itext('repeat_name/question5-label')" />
-				</input>
-				<input ref="/data/repeat_name/question">
-					<label ref="jr:itext('repeat_name/question-label')" />
-				</input>
-			</repeat>
-		</group>
-	</h:body>
+  <h:head>
+    <h:title>Repeat Bug</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4A4E93C6-9D40-4E9C-8562-75F7606A3A9E" uiVersion="1" version="1" name="Repeat Bug">
+          <question1 />
+          <repeat_name_count />
+          <repeat_nam />
+          <repeat_name jr:template="">
+            <question5 />
+            <question />
+          </repeat_name>
+        </data>
+      </instance>
+      <bind nodeset="/data/question1" type="xsd:string" />
+      <bind nodeset="/data/repeat_name_count" />
+      <bind nodeset="/data/repeat_nam" />
+      <bind nodeset="/data/repeat_name" />
+      <bind nodeset="/data/repeat_name/question5" type="xsd:string" />
+      <bind nodeset="/data/repeat_name/question" type="xsd:string" />
+      <itext>
+        <translation lang="en" default="">
+          <text id="question1-label">
+            <value>question1</value>
+          </text>
+          <text id="repeat_name-label">
+            <value>repeat_name</value>
+          </text>
+          <text id="repeat_name/question5-label">
+            <value>question5</value>
+          </text>
+          <text id="repeat_name/question-label">
+            <value>question</value>
+          </text>
+        </translation>
+        <translation lang="fra">
+          <text id="question1-label">
+            <value>question1</value>
+          </text>
+          <text id="repeat_name-label">
+            <value>repeat_name</value>
+          </text>
+          <text id="repeat_name/question5-label">
+            <value>question5</value>
+          </text>
+          <text id="repeat_name/question-label">
+            <value>question</value>
+          </text>
+        </translation>
+        <translation lang="es">
+          <text id="question1-label">
+            <value>question1</value>
+          </text>
+          <text id="repeat_name-label">
+            <value>repeat_name</value>
+          </text>
+          <text id="repeat_name/question5-label">
+            <value>question5</value>
+          </text>
+          <text id="repeat_name/question-label">
+            <value>question</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/question1">
+      <label ref="jr:itext('question1-label')" />
+    </input>
+    <group>
+      <label ref="jr:itext('repeat_name-label')" />
+      <repeat nodeset="/data/repeat_name">
+        <input ref="/data/repeat_name/question5">
+          <label ref="jr:itext('repeat_name/question5-label')" />
+        </input>
+        <input ref="/data/repeat_name/question">
+          <label ref="jr:itext('repeat_name/question-label')" />
+        </input>
+      </repeat>
+    </group>
+  </h:body>
 </h:html>

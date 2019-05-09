@@ -217,8 +217,6 @@ def _distribute_tables_for_citus(engine):
         (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
         (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
         (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
-        (AGG_INFRASTRUCTURE_TABLE, 'supervisor_id'),
-        (AWW_INCENTIVE_TABLE, 'supervisor_id'),
         ('child_health_monthly', 'supervisor_id'),
         ('ccs_record_monthly', 'supervisor_id'),
         ('daily_attendance', 'supervisor_id'),

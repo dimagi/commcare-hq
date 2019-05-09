@@ -16,20 +16,27 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.apps.translations.app_translations.utils import BulkAppTranslationUpdater, get_unicode_dicts
+from corehq.apps.translations.app_translations.utils import (
+    BulkAppTranslationUpdater,
+    get_unicode_dicts,
+    get_form_from_sheet_name,
+)
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
-    def __init__(self, app, identifier, lang=None):
+    def __init__(self, app, sheet_name, unique_id=None, lang=None):
         '''
-        :param identifier: String like "menu1_form2"
+        :param sheet_name: String like "menu1_form2"
         '''
         super(BulkAppTranslationFormUpdater, self).__init__(app, lang)
-        self.identifier = identifier
+        self.sheet_name = sheet_name
 
         # These attributes depend on each other and therefore need to be created in this order
-        self.form = self._get_form_from_sheet_name(self.identifier)
+        if unique_id:
+            self.form = app.get_form(unique_id)
+        else:
+            self.form = get_form_from_sheet_name(self.app, sheet_name)
         self.xform = self._get_xform()
         self.itext = self._get_itext()
 
@@ -37,22 +44,29 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         self.markdowns = None
         self.markdown_vetoes = None
 
-    def _get_form_from_sheet_name(self, sheet_name):
-        mod_text, form_text = sheet_name.split("_")
-        module_index = int(mod_text.replace("menu", "").replace("module", "")) - 1
-        form_index = int(form_text.replace("form", "")) - 1
-        return self.app.get_module(module_index).get_form(form_index)
-
     def _get_xform(self):
         if not isinstance(self.form, ShadowForm) and self.form.source:
             return self.form.wrapped_xform()
 
     def _get_itext(self):
+        """
+        find the bucket node that holds all translations.
+        it has a bunch of nodes, one for each lang, which then
+        has translations for all labels as a child node, example
+        <itext>
+        <translation lang="en" default="">
+         <text id="name-label">
+           <value>Name2</value>
+           <value form="image">image_path</value>
+         </text>
+        </translation>
+        </itext>
+        """
         if self.xform:
             try:
                 return self.xform.itext_node
             except XFormException:
-                # Can't do anything with this form
+                # Should be a blank form with no questions added so far, shouldn't need any update so skip.
                 pass
 
     def update(self, rows):
@@ -90,22 +104,26 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         save_xform(self.app, self.form, etree.tostring(self.xform.xml))
 
-        return [(t, _('Error in {identifier}: ').format(identifier=self.identifier) + m) for (t, m) in self.msgs]
+        return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
 
     def _get_template_translation_el(self):
         # Make language nodes for each language if they don't yet exist
         #
         # Currently operating under the assumption that every xForm has at least
         # one translation element, that each translation element has a text node
-        # for each question and that each text node has a value node under it
-        template_translation_el = None
-        # Get a translation element to be used as a template for new elements
-        for lang in self.langs:
+        # for each question and that each text node has a value node under it.
+        # Get a translation element to be used as a template for new elements, preferably of default lang
+        default_lang = self.app.default_language
+        default_trans_el = self.itext.find("./{f}translation[@lang='%s']" % default_lang)
+        if default_trans_el.exists():
+            return default_trans_el
+        non_default_langs = copy.copy(self.app.langs)
+        non_default_langs.remove(default_lang)
+        for lang in non_default_langs:
             trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
             if trans_el.exists():
-                template_translation_el = trans_el
-        assert(template_translation_el is not None)
-        return template_translation_el
+                return trans_el
+        raise Exception(_("Form has no translation node present to be used as a template."))
 
     def _add_missing_translation_elements_to_itext(self, template_translation_el):
         for lang in self.langs:
@@ -194,7 +212,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                     new_translation,
                     text_node,
                     self._get_value_node(text_node),
-                    {'form': 'default'},
                     delete_node=(not keep_value_node)
                 )
             else:
@@ -245,14 +262,23 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
     def _get_markdown_node(self, text_node_):
         return text_node_.find("./{f}value[@form='markdown']")
 
+    @staticmethod
+    def _get_default_value_nodes(text_node_):
+        for value_node in text_node_.findall("./{f}value"):
+            if 'form' not in value_node.attrib:
+                yield value_node
+            elif value_node.get('form') == 'default':
+                # migrate invalid values, http://manage.dimagi.com/default.asp?236239#BugEvent.1214824
+                value_node.attrib.pop('form')
+                yield value_node
+
     def _get_value_node(self, text_node_):
-        try:
-            return next(
-                n for n in text_node_.findall("./{f}value")
-                if 'form' not in n.attrib or n.get('form') == 'default'
-            )
-        except StopIteration:
-            return WrappedNode(None)
+        default_value_nodes = list(self._get_default_value_nodes(text_node_))
+        if len(default_value_nodes) > 1:
+            raise XFormException(_("Found conflicting nodes for label {}").format(text_node_.get('id')))
+        if default_value_nodes:
+            return default_value_nodes[0]
+        return WrappedNode(None)
 
     def _had_markdown(self, text_node_):
         """

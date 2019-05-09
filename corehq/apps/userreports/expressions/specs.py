@@ -199,11 +199,7 @@ class NamedExpressionSpec(JsonObject):
         self._context = context
 
     def _context_cache_key(self, item):
-        json_item = json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)
-        if six.PY3:
-            json_item = json_item.encode('utf-8')
-        item_hash = hashlib.md5(json_item).hexdigest()
-        return 'named_expression-{}-{}'.format(self.name, item_hash)
+        return 'named_expression-{}-{}'.format(self.name, id(item))
 
     def __call__(self, item, context=None):
         key = self._context_cache_key(item)

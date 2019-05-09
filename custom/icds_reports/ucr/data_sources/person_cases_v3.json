@@ -78,7 +78,8 @@
           "location_type": "supervisor",
           "location_property": "_id"
         },
-        "is_primary_key": true
+        "is_primary_key": true,
+        "is_nullable": false
       },
       {
         "column_id": "block_id",

@@ -39,7 +39,7 @@ Takeaways:
    (after excluding the ones that haven't changed and don't need to be saved!)
    using ``MyClass.get_db().bulk_save(docs)``.
    If you're writing application code that touches a number of related docs
-   in a number of different places, and you want to bulk save them,
+   in a number of different places, you want to bulk save them, and you understand the warning in its docstring,
    you can use ``dimagi.utils.couch.bulk.CouchTransaction``.
    Note that this isn't good for saving thousands of documents,
    because it doesn't do any chunking.

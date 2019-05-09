@@ -38,21 +38,38 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregatio
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT DISTINCT ccs_record_case_id AS case_id,
-        supervisor_id as supervisor_id,
+        SELECT
+        distinct case_id,
         %(current_month_start)s as month,
-        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        supervisor_id,
+        LAST_VALUE(latest_time_end) OVER w AS latest_time_end,
         MAX(counsel_methods) OVER w AS counsel_methods,
         LAST_VALUE(is_ebf) OVER w as is_ebf,
-        SUM(
-            CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8
-            THEN 1 ELSE 0 END
-        ) OVER w as valid_visits
-        FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
+            (latest_time_end::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
+        from
+        (
+            SELECT
+            DISTINCT ccs_record_case_id AS case_id,
+            LAST_VALUE(timeend) OVER w AS latest_time_end,
+            MAX(counsel_methods) OVER w AS counsel_methods,
+            LAST_VALUE(is_ebf) OVER w as is_ebf,
+            LAST_VALUE(unscheduled_visit) OVER w as unscheduled_visit,
+            LAST_VALUE(days_visit_late) OVER w as days_visit_late,
+            LAST_VALUE(next_visit) OVER w as next_visit,
+            supervisor_id
+            FROM "{ucr_tablename}"
+            WHERE timeend >= %(current_month_start)s
+                AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s
+            WINDOW w AS (
+                PARTITION BY doc_id, supervisor_id, ccs_record_case_id
+                ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+        ) ut
         WINDOW w AS (
-            PARTITION BY supervisor_id, ccs_record_case_id
-            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            PARTITION BY supervisor_id, case_id
+            ORDER BY latest_time_end RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )
         """.format(ucr_tablename=self.ucr_tablename), {
             "current_month_start": current_month_start,

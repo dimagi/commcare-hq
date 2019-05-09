@@ -130,7 +130,9 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         """.format(
             tablename=self.tablename,
             final_columns=", ".join([col[0] for col in columns]),
-            query_cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
+            query_cols=", ".join([
+                '{} as {}'.format(expression, col_name) for col_name, expression in query_cols
+            ]),
             ccs_record_monthly_table='ccs_record_monthly',
             tmp_tablename='tmp_{}'.format(self.tablename)
         ), {

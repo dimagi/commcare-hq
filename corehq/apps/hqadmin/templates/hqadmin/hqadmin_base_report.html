@@ -5,55 +5,55 @@
 {% block title %}{% if current_page and section %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} {% else %}{{ report.title }}{% endif %}: Admin Reports{% endblock %}
 
 {% block js %}{{ block.super }}
-    {% if request.use_datatables %}
-        <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
-    {% endif %}
-    {% if request.use_jquery_ui %}
-        <script src="{% static 'reports/js/datepicker.js' %}"></script>
-    {% endif %}
-    <script src="{% static 'reports/js/tabular.js' %}"></script>
-    <script src="{% static 'hqadmin/js/hqadmin_base_report.js' %}"></script>
+  {% if request.use_datatables %}
+    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
+  {% endif %}
+  {% if request.use_jquery_ui %}
+    <script src="{% static 'reports/js/datepicker.js' %}"></script>
+  {% endif %}
+  <script src="{% static 'reports/js/tabular.js' %}"></script>
+  <script src="{% static 'hqadmin/js/hqadmin_base_report.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-        <li>
-            <a href="{% url "default_admin_report" %}"><strong>{% trans "Admin Reports" %}</strong></a>
-        </li>
-        <li class="active">{% if current_page and current_page.title %}{{ current_page.title }}{% else %}{{ report.title }}{% endif %}</li>
-    </ol>
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li>
+      <a href="{% url "default_admin_report" %}"><strong>{% trans "Admin Reports" %}</strong></a>
+    </li>
+    <li class="active">{% if current_page and current_page.title %}{{ current_page.title }}{% else %}{{ report.title }}{% endif %}</li>
+  </ol>
 {% endblock %}
 
 {% block pre_page_content %}
-    {% if report.is_exportable or report.is_emailable or report.is_printable %}
+  {% if report.is_exportable or report.is_emailable or report.is_printable %}
     <div class="report-actions">
-        {% if report.is_exportable %}
-            <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
-                <i class="fa fa-share"></i> {% trans "Export to Excel" %}
-            </a>
-        {% endif %}
+      {% if report.is_exportable %}
+        <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+          <i class="fa fa-share"></i> {% trans "Export to Excel" %}
+        </a>
+      {% endif %}
 
-        {% if report.is_emailable %}
-            <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
-                <i class="fa fa-envelope"></i> {% trans "Email report" %}
-            </a>
-        {% endif %}
+      {% if report.is_emailable %}
+        <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+          <i class="fa fa-envelope"></i> {% trans "Email report" %}
+        </a>
+      {% endif %}
 
-        {% if report.is_printable %}
-            <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
-                <i class="fa fa-print"></i> {% trans "Print" %}
-            </a>
-        {% endif %}
+      {% if report.is_printable %}
+        <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+          <i class="fa fa-print"></i> {% trans "Print" %}
+        </a>
+      {% endif %}
     </div>
-    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'aoColumns' aoColumns %}
-    {% if not hide_filters %}
-        {% include "hqadmin/hqadmin_base_filters.html" %}
-    {% endif %}
-    <div id="report-content">
-        {% block reportcontent %}{% endblock %}
-     </div>
+  {% initial_page_data 'aoColumns' aoColumns %}
+  {% if not hide_filters %}
+    {% include "hqadmin/hqadmin_base_filters.html" %}
+  {% endif %}
+  <div id="report-content">
+    {% block reportcontent %}{% endblock %}
+  </div>
 {% endblock %}

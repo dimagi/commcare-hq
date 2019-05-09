@@ -6,25 +6,25 @@
 {% requirejs_main 'commtrack/js/products_and_programs_main' %}
 
 {% block page_content %}
-    <form class="form form-horizontal" name="product" method="post">
-        <legend>{% trans "Product Information" %}</legend>
-        {% crispy form %}
+  <form class="form form-horizontal" name="product" method="post">
+    <legend>{% trans "Product Information" %}</legend>
+    {% crispy form %}
 
-        {% if data_fields_form.fields or data_fields_form.data %}
-            {% crispy data_fields_form %}
-        {% endif %}
+    {% if data_fields_form.fields or data_fields_form.data %}
+      {% crispy data_fields_form %}
+    {% endif %}
 
-        <div class="form-actions">
-            <div class="col-sm-12">
-                <button type="submit" class="btn btn-primary">
-                    {% if product.get_id %}
-                        {% trans 'Update Product' %}
-                    {% else %}
-                        {% trans 'Create Product' %}
-                    {% endif %}
-                </button>
-            </div>
-        </div>
-    </form>
+    <div class="form-actions">
+      <div class="col-sm-12">
+        <button type="submit" class="btn btn-primary">
+          {% if product.get_id %}
+            {% trans 'Update Product' %}
+          {% else %}
+            {% trans 'Create Product' %}
+          {% endif %}
+        </button>
+      </div>
+    </div>
+  </form>
 {% endblock %}
 

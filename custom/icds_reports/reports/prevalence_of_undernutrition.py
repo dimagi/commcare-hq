@@ -208,10 +208,15 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         data['red'][date_in_miliseconds]['unweighed'] += (total - weighed)
         data['red'][date_in_miliseconds]['weighed'] += weighed
 
-    top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['percent']
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': value
+        }
+        for key, value in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
 
     return {
         "chart_data": [
@@ -258,9 +263,9 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "color": ChartColors.RED
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
@@ -328,7 +333,10 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         if sql_location.name not in result_set:
             chart_data['blue'].append([sql_location.name, 0])
 
-    chart_data['blue'] = sorted(chart_data['blue'])
+    chart_data['blue'] = sorted(
+        chart_data['blue'],
+        key=lambda loc_and_value: (loc_and_value[0] is not None, loc_and_value)
+    )
 
     return {
         "tooltips_data": dict(tooltips_data),

@@ -7,21 +7,21 @@
 
 {% block login-content %}
 
-<p>{{error_msg}}</p>
+  <p>{{error_msg}}</p>
 
-{% if error_details %}
+  {% if error_details %}
     <h3>{% trans "Error details" %}</h3>
     {% for err in error_details %}
-        <p>{{err}}</p>
+      <p>{{err}}</p>
     {% endfor%}
-{% endif %}
+  {% endif %}
 
-{% if back %}
+  {% if back %}
     <a href="{{back}}">{% trans "Back" %}</a>
-{% endif %}
+  {% endif %}
 
-{% if show_homepage_link %}
+  {% if show_homepage_link %}
     <a href="{% url "login" %}">{% trans "Log In" %}</a>
-{% endif %}
+  {% endif %}
 
 {% endblock %}

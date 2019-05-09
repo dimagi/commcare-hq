@@ -302,6 +302,7 @@
     "data_source" : [
       {
         "id": "static-{domain}-static-mpr_4a_6_pse",
+        "date_filter_field": "submitted_on",
         "columns": [
           {
             "column_name": "open_bfast_count",

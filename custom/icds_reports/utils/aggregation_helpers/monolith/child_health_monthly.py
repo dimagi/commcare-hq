@@ -45,7 +45,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def create_table_query(self):
         return """
         CREATE TABLE IF NOT EXISTS "{tablename}" (
-            CHECK (month = DATE %(date)s),
+            CHECK (month = DATE %(date)s)
         ) INHERITS ("{parent_tablename}")
         """.format(
             parent_tablename=self.base_tablename,
