@@ -94,36 +94,7 @@ To use soil:
 
         expose_cached_download(payload, expiry, file_extension)
 
-For error handling update the task state to failure and provide errors, HQ currently supports two options:
-
-Option 1
---------
-
-This option raises a celery exception which tells celery to ignore future state updates.
-The resulting task result will not be marked as "successful" so ``task.successful()`` will return ``False``
-If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), and with ``.delay()``,
-the exception will be caught by celery and ``task.result`` will return the exception.
-
-.. code-block:: python
-
-    from celery.exceptions import Ignore
-    from soil import DownloadBase
-    from soil.progress import update_task_state
-    from soil.util import expose_cached_download
-
-    @task
-    def my_cool_task():
-        try:
-            # do some stuff
-        except SomeError as err:
-            errors = [err]
-            update_task_state(my_cool_task, states.FAILURE, {'errors': errors})
-            raise Ignore()
-
-Option 2
---------
-
-This option raises an exception which celery does not catch.
+To fail a task raise an exception from within the task.
 Soil will catch this and set the error to the error message in the exception.
 The resulting task will be marked as a failure meaning ``task.failed()`` will return ``True``
 If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), the exception will "bubble up" to the calling code.
@@ -138,6 +109,26 @@ If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), the exc
     def my_cool_task():
         # do some stuff
         raise SomeError("my uncool error")
+
+
+To support multiple error messages you can change the above code to:
+
+.. code-block:: python
+
+    from soil import DownloadBase
+    from soil.progress import SOIL_ERROR_SEPARATOR, update_task_state
+    from soil.util import expose_cached_download
+
+    @task
+    def my_cool_task():
+        # do some stuff
+        errors = ["error 1", "error 2"]
+        raise SomeError(SOIL_ERROR_SEPARATOR + SOIL_ERROR_SEPARATOR.join(errors))
+
+
+Adding the SOIL_ERROR_SEPARATOR at the beginning will ensure that soil returns a list on failure when calling ``get_task_progress``.
+If your error parsing code can handle either a string or a list, then you may omit the initial separator.
+
 
 Testing
 =======
