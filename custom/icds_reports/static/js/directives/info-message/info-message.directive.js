@@ -25,7 +25,7 @@ function InfoMessageController($location) {
 
 InfoMessageController.$inject = ['$location'];
 
-window.angular.module('icdsApp').directive("infoMessage", function() {
+window.angular.module('icdsApp').directive("infoMessage", function () {
     return {
         restrict: 'E',
         scope: {
