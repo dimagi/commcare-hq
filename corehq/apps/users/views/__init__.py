@@ -821,7 +821,7 @@ class UserInvitationView(object):
                     invited=invitation.email, current=request.couch_user.username))
 
             if request.method == "POST":
-                couch_user = CouchUser.from_django_user(request.user)
+                couch_user = CouchUser.from_django_user(request.user, strict=True)
                 self._invite(invitation, couch_user)
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
