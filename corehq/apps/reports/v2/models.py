@@ -66,7 +66,7 @@ class BaseReport(object):
             return filter_class(self.request, self.domain, context)
         except (KeyError, NameError):
             raise ReportFilterNotFound(
-                "Could not find the report filter '{}'".format(filter_name)
+                _("Could not find the report filter '{}'").format(filter_name)
             )
 
     @property
