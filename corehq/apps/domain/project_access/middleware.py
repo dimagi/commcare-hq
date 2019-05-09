@@ -25,6 +25,7 @@ class ProjectAccessMiddleware(MiddlewareMixin):
 
     @staticmethod
     def record_web_user_entry(user, domain):
-        yesterday = datetime.today() - timedelta(hours=24)
-        if domain not in user.domains_accessed or user.domains_accessed[domain] < yesterday:
+        membership = user.get_domain_membership(domain)
+        yesterday = (datetime.today() - timedelta(hours=24)).date()
+        if membership and (not membership.last_accessed or membership.last_accessed < yesterday):
             update_domain_date.delay(user, domain)
