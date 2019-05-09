@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles
+from corehq.sql_db.routers import force_citus_engine
 from corehq.apps.users.models import CouchUser
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import ICDSAuditEntryRecord
@@ -45,11 +46,6 @@ def is_icds_dashboard_view(request):
         is_icds_domain(request) and
         is_path_in_audit_urls(request)
     )
-
-
-def force_citus_engine():
-    # todo; replace after https://github.com/dimagi/commcare-hq/pull/24113
-    pass
 
 
 class ICDSAuditMiddleware(MiddlewareMixin):
