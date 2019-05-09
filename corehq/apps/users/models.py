@@ -2338,7 +2338,6 @@ def get_fixture_statuses(user_id):
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
-    domains_accessed = DictProperty()
 
     fcm_device_token = StringProperty()
     # this property is used to mark users who signed up from internal invitations
