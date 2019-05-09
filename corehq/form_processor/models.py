@@ -1527,6 +1527,8 @@ class CaseTransactionDetail(JsonObject):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    __hash__ = None
+
 
 class RebuildWithReason(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_WITH_REASON

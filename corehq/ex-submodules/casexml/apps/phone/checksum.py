@@ -31,6 +31,8 @@ class CaseStateHash(object):
     
     def __ne__(self, obj):
         return not self == obj
+
+    __hash__ = None
         
 
 class Checksum(object):
