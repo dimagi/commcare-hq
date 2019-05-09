@@ -1,41 +1,41 @@
 <p>
-    Hello,
+  Hello,
 </p>
 
 <p>
-    This is a notice to inform you that your credit card payment for your CommCare
-    subscription for project space:
-    <a href="{{ domain_url }}">{{ domain }}</a>
-    was declined. Please check to see
-    if your billing information correctly matches your credit card.
+  This is a notice to inform you that your credit card payment for your CommCare
+  subscription for project space:
+  <a href="{{ domain_url }}">{{ domain }}</a>
+  was declined. Please check to see
+  if your billing information correctly matches your credit card.
 </p>
 
 <p>
-    Here are the details of your declined payment:
-    <br/>
-    <ul>
-        <li>Billed To: {{ autopay_card.brand }} card with the last four digits {{ autopay_card.last4 }} expiring {{ autopay_card.exp_month }}/{{ autopay_card.exp_year }}</li>
-        <li>Subscription plan: {{ subscription_plan }}</li>
-        <li>Billing date: {{ billing_date }}</li>
-        <li>Invoice #: {{ invoice_number }}</li>
-    </ul>
+  Here are the details of your declined payment:
+  <br/>
+<ul>
+  <li>Billed To: {{ autopay_card.brand }} card with the last four digits {{ autopay_card.last4 }} expiring {{ autopay_card.exp_month }}/{{ autopay_card.exp_year }}</li>
+  <li>Subscription plan: {{ subscription_plan }}</li>
+  <li>Billing date: {{ billing_date }}</li>
+  <li>Invoice #: {{ invoice_number }}</li>
+</ul>
 </p>
 
 <p>
-    Please update your billing information at
-    <a href="{{ billing_info_url }}">{{ billing_info_url }}</a>
-    to prevent disruption to your CommCare
-    subscription. You'll need to pay the prior invoice whose payment method was
-    declined, but future invoices will be paid via the updated billing
-    information.
+  Please update your billing information at
+  <a href="{{ billing_info_url }}">{{ billing_info_url }}</a>
+  to prevent disruption to your CommCare
+  subscription. You'll need to pay the prior invoice whose payment method was
+  declined, but future invoices will be paid via the updated billing
+  information.
 </p>
 
 <p>
-    If you have any questions, please contact {{ support_email }}.
+  If you have any questions, please contact {{ support_email }}.
 </p>
 
 <p>
-    Thanks,
-    <br/>
-    -Dimagi
+  Thanks,
+  <br/>
+  -Dimagi
 </p>

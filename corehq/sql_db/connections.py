@@ -20,6 +20,7 @@ UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 AAA_DB_ENGINE_ID = 'aaa-data'
+CITUS_MASTER = 'citus'
 
 
 def get_icds_ucr_db_alias():
@@ -96,6 +97,9 @@ class ConnectionManager(object):
 
     def get_django_db_alias(self, engine_id):
         return self.engine_id_django_db_map[engine_id]
+
+    def engine_id_is_available(self, engine_id):
+        return engine_id in self.engine_id_django_db_map
 
     def get_session_helper(self, engine_id=DEFAULT_ENGINE_ID):
         """
@@ -197,11 +201,6 @@ class ConnectionManager(object):
     def _get_reporting_db_config(self):
         return getattr(settings, 'REPORTING_DATABASES', None)
 
-    def _add_django_db_from_settings_key(self, engine_id, db_alias_settings_key):
-        db_alias = self._get_db_alias_from_settings_key(db_alias_settings_key)
-        if db_alias:
-            self._add_django_db(engine_id, db_alias)
-
     def _add_django_db(self, engine_id, db_alias):
         self.engine_id_django_db_map[engine_id] = db_alias
         connection_string = self._connection_string_from_django(db_alias)
@@ -222,6 +221,10 @@ class ConnectionManager(object):
         if db_alias in settings.DATABASES:
             return db_alias
 
+    def resolves_to_unique_dbs(self, engine_ids):
+        # return True if all in the list of engine_ids point to a different database
+        return len(engine_ids) == len({connection_manager.get_django_db_alias(e) for e in engine_ids})
+
 
 connection_manager = ConnectionManager()
 Session = connection_manager.get_scoped_session(DEFAULT_ENGINE_ID)
@@ -239,13 +242,17 @@ signals.request_finished.connect(_close_connections)
 
 @unit_testing_only
 @contextmanager
-def override_engine(engine_id, connection_url):
+def override_engine(engine_id, connection_url, db_alias=None):
     original_url = connection_manager.get_connection_string(engine_id)
+    original_alias = connection_manager.engine_id_django_db_map.get(engine_id, None)
     connection_manager.db_connection_map[engine_id] = connection_url
+    if db_alias:
+        connection_manager.engine_id_django_db_map[engine_id] = db_alias
     try:
         yield
     finally:
         connection_manager.db_connection_map[engine_id] = original_url
+        connection_manager.engine_id_django_db_map[engine_id] = original_alias
 
 
 def is_citus_db(connection):

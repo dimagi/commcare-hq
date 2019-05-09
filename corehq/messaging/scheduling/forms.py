@@ -2802,15 +2802,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
-    skip_running_rule_post_save = BooleanField(
-        required=False,
-        label=ugettext_lazy("Skip running rule post save"),
-    )
-
     allow_custom_immediate_schedule = True
 
     def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
-        self.new_reminders_migrator = kwargs.pop('new_reminders_migrator', False)
         self.initial_rule = rule
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
@@ -3166,9 +3160,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: capture_custom_metadata_item() === 'Y'",
                 ),
             ])
-
-        if self.new_reminders_migrator:
-            result.append(crispy.Field('skip_running_rule_post_save'))
 
         return result
 

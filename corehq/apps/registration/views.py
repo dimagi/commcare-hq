@@ -57,8 +57,7 @@ from corehq.util.context_processors import get_per_domain_context
 
 
 _domainless_new_user_soft_assert = soft_assert(to=[
-    '{}@{}'.format('biyeun', 'dimagi.com'),
-    '{}@{}'.format('jschweers', 'dimagi.com')
+    '{}@{}'.format('biyeun', 'dimagi.com')
 ], send_to_ops=False, fail_if_debug=False)
 
 

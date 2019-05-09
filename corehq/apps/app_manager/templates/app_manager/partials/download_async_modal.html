@@ -14,21 +14,21 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div class="modal fade download-async-modal" id="{{element_id}}" data-url="{{ url }}">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">{% trans "Downloading Your File" %}</h4>
-            </div>
-            <div class="modal-body">
-                <div id="{{element_id}}-downloading">
-                  <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                  {% trans 'Processing data. Please wait...' %}
-                </div>
-                <div class="hide" id="{{element_id}}-download-progress"></div>
-            </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">{% trans "Downloading Your File" %}</h4>
+      </div>
+      <div class="modal-body">
+        <div id="{{element_id}}-downloading">
+          <i class="fa fa-spin fa-spinner"></i>
+          {% trans 'Processing data. Please wait...' %}
         </div>
+        <div class="hide" id="{{element_id}}-download-progress"></div>
+      </div>
     </div>
+  </div>
 </div>

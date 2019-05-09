@@ -4,149 +4,149 @@
      data-detail-type="{{ detail.type }}"
      id="{{ detail.type }}-list-callout-configuration"
      class="panel panel-appmanager">
-    <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-            {% trans "Case List Search Callout" %}
-        </h4>
-    </div>
-    <div class="panel-body">
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox" data-bind="checked: lookup_enabled"/>
-                        {% trans "Enable case list search callout" %}
-                    </label>
-                </div>
-            </div>
+  <div class="panel-heading">
+    <h4 class="panel-title panel-title-nolink">
+      {% trans "Case List Search Callout" %}
+    </h4>
+  </div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" data-bind="checked: lookup_enabled"/>
+            {% trans "Enable case list search callout" %}
+          </label>
         </div>
-        <div data-bind="visible: lookup_enabled">
-            <form>
-              <div class="form-group container-fluid">
-                  <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-autolaunch">
-                      {% trans "Autolaunch Lookup" %}
-                  </label>
-                  <div class="col-sm-10 checkbox">
-                      <input type="checkbox" id="{{ detail.type }}-lookup-autolaunch"
-                             data-bind="checked: lookup_autolaunch" />
-                  </div>
-              </div>
-              <div class="form-group container-fluid">
-                  <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-action">
-                      {% trans "Action" %}
-                  </label>
-                  <div class="col-sm-4">
-                      <input type="text" class="form-control" id="{{ detail.type }}-lookup-action"
-                             data-bind="value: lookup_action" required
-                             placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}" />
-                      <span class="help-block" style="display: none;">
-                          {% trans "Case list callout requires an action" %}
-                      </span>
-                  </div>
-                  <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-name">
-                      {% trans "Action Name" %}
-                  </label>
-                  <div class="col-sm-4">
-                      <input type="text" class="form-control" id="{{ detail.type }}-lookup-name" required
-                             data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}" />
-                      <span class="help-block" style="display: none;">
-                          {% trans "Case list callout requires a name" %}
-                      </span>
-                  </div>
-              </div>
-              <div class="form-group container-fluid">
-                  <label class="col-sm-2 control-label {{ detail.type }}-extras">
-                      {% trans "Extras" %}
-                  </label>
-                  <div class="col-sm-4 {{ detail.type }}-extras">
-                      <!-- ko foreach: extras() -->
-                      <div class="fd-kv-pair row form-group">
-                          <div class="col-sm-4">
-                              <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
-                          </div>
-                          <div class="col-sm-2 text-center">&rarr;</div>
-                          <div class="col-sm-4">
-                              <input class="fd-kv-val form-control" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
-                          </div>
-                          <div class="col-sm-2">
-                              <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
-                                 data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.removeItem('extras', item) }">
-                                  <i class="fa fa-remove"></i>
-                              </a>
-                          </div>
-                      </div>
-                      <!-- /ko -->
-                      <a href="#"
-                         class="btn btn-default fd-kv-add-pair"
-                         data-bind="visible: show_add_extra(), click: function(){ addItem('extras') }">
-                          <i class="fa fa-plus"></i> Add Key &rarr; Value Pair
-                      </a>
-                      <span class="help-block" style="display: none;">
-                          {% trans "At least one extra required" %}
-                      </span>
-                  </div>
-                  <label class="control-label col-sm-2 {{ detail.type }}-responses">
-                      {% trans "Responses" %}
-                  </label>
-                  <div class="col-sm-4 {{ detail.type }}-responses">
-                      <!-- ko foreach: responses() -->
-                      <div class="fd-kv-pair row form-group">
-                          <div class="col-sm-5">
-                              <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
-                          </div>
-                          <div class="col-sm-1">
-                              <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
-                                 data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.removeItem('responses', item) }">
-                                  <i class="fa fa-remove"></i>
-                              </a>
-                          </div>
-                      </div>
-                      <!-- /ko -->
-                      <a href="#"
-                         class="btn btn-default fd-kv-add-pair"
-                         data-bind="visible: show_add_response(), click: function(){ addItem('responses') }">
-                          <i class="fa fa-plus"></i> Add Key
-                      </a>
-                      <span class="help-block" style="display: none;">{% trans "At least one response required" %}</span>
-                  </div>
-              </div>
-              <div class="case-list-lookup-icon container-fluid">
-                  <!-- ko stopBinding: true -->
-                  {% with qualifier='case-list-lookup'|add:detail.type %}
-                      {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" qualifier=qualifier EXCLUDE_AUDIO=True %}
-                  {% endwith %}
-                  <!-- /ko -->
-              </div>
-              <div class="form-group">
-                  <label class="col-sm-2 control-label">
-                      {% trans "Display results in case list" %}
-                  </label>
-                  <div class="col-sm-4 checkbox">
-                      <label>
-                           <input type="checkbox" data-bind="checked: lookup_display_results"/>
-                      </label>
-                  </div>
-              </div>
-              <div data-bind="visible: lookup_display_results" class="col-sm-6 container-fluid">
-                  <div class="form-group container-fluid" id="{{ detail.type }}-results-text">
-                      <label class="control-label col-sm-4">
-                          {% trans "Results display text" %}
-                      </label>
-                      <div class="col-sm-8" data-bind="jqueryElement: lookup_field_header.ui"></div>
-                  </div>
-                  <div class="form-group container-fluid" id="{{ detail.type }}-results-property">
-                      <label class="control-label col-sm-4">
-                          {% trans "Results mapping property" %}
-                          <span class="hq-help-template"
-                                data-content="{% trans 'Case property or attribute used to map each result row to the correct case.' %}"></span>
-                      </label>
-                      <div class="col-sm-8">
-                          <input class="form-control" type="text"
-                                 data-bind="value: lookup_field_template"/>
-                      </div>
-                  </div>
-              </div>
-          </form>
       </div>
     </div>
+    <div data-bind="visible: lookup_enabled">
+      <form>
+        <div class="form-group container-fluid">
+          <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-autolaunch">
+            {% trans "Autolaunch Lookup" %}
+          </label>
+          <div class="col-sm-10 checkbox">
+            <input type="checkbox" id="{{ detail.type }}-lookup-autolaunch"
+                   data-bind="checked: lookup_autolaunch" />
+          </div>
+        </div>
+        <div class="form-group container-fluid">
+          <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-action">
+            {% trans "Action" %}
+          </label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" id="{{ detail.type }}-lookup-action"
+                   data-bind="value: lookup_action" required
+                   placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}" />
+            <span class="help-block" style="display: none;">
+                          {% trans "Case list callout requires an action" %}
+                      </span>
+          </div>
+          <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-name">
+            {% trans "Action Name" %}
+          </label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" id="{{ detail.type }}-lookup-name" required
+                   data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}" />
+            <span class="help-block" style="display: none;">
+                          {% trans "Case list callout requires a name" %}
+                      </span>
+          </div>
+        </div>
+        <div class="form-group container-fluid">
+          <label class="col-sm-2 control-label {{ detail.type }}-extras">
+            {% trans "Extras" %}
+          </label>
+          <div class="col-sm-4 {{ detail.type }}-extras">
+            <!-- ko foreach: extras() -->
+            <div class="fd-kv-pair row form-group">
+              <div class="col-sm-4">
+                <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
+              </div>
+              <div class="col-sm-2 text-center">&rarr;</div>
+              <div class="col-sm-4">
+                <input class="fd-kv-val form-control" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
+              </div>
+              <div class="col-sm-2">
+                <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
+                   data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.removeItem('extras', item) }">
+                  <i class="fa fa-remove"></i>
+                </a>
+              </div>
+            </div>
+            <!-- /ko -->
+            <a href="#"
+               class="btn btn-default fd-kv-add-pair"
+               data-bind="visible: show_add_extra(), click: function(){ addItem('extras') }">
+              <i class="fa fa-plus"></i> Add Key &rarr; Value Pair
+            </a>
+            <span class="help-block" style="display: none;">
+                          {% trans "At least one extra required" %}
+                      </span>
+          </div>
+          <label class="control-label col-sm-2 {{ detail.type }}-responses">
+            {% trans "Responses" %}
+          </label>
+          <div class="col-sm-4 {{ detail.type }}-responses">
+            <!-- ko foreach: responses() -->
+            <div class="fd-kv-pair row form-group">
+              <div class="col-sm-5">
+                <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
+              </div>
+              <div class="col-sm-1">
+                <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
+                   data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.removeItem('responses', item) }">
+                  <i class="fa fa-remove"></i>
+                </a>
+              </div>
+            </div>
+            <!-- /ko -->
+            <a href="#"
+               class="btn btn-default fd-kv-add-pair"
+               data-bind="visible: show_add_response(), click: function(){ addItem('responses') }">
+              <i class="fa fa-plus"></i> Add Key
+            </a>
+            <span class="help-block" style="display: none;">{% trans "At least one response required" %}</span>
+          </div>
+        </div>
+        <div class="case-list-lookup-icon container-fluid">
+          <!-- ko stopBinding: true -->
+          {% with qualifier='case-list-lookup'|add:detail.type %}
+            {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" qualifier=qualifier EXCLUDE_AUDIO=True %}
+          {% endwith %}
+          <!-- /ko -->
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label">
+            {% trans "Display results in case list" %}
+          </label>
+          <div class="col-sm-4 checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: lookup_display_results"/>
+            </label>
+          </div>
+        </div>
+        <div data-bind="visible: lookup_display_results" class="col-sm-6 container-fluid">
+          <div class="form-group container-fluid" id="{{ detail.type }}-results-text">
+            <label class="control-label col-sm-4">
+              {% trans "Results display text" %}
+            </label>
+            <div class="col-sm-8" data-bind="jqueryElement: lookup_field_header.ui"></div>
+          </div>
+          <div class="form-group container-fluid" id="{{ detail.type }}-results-property">
+            <label class="control-label col-sm-4">
+              {% trans "Results mapping property" %}
+              <span class="hq-help-template"
+                    data-content="{% trans 'Case property or attribute used to map each result row to the correct case.' %}"></span>
+            </label>
+            <div class="col-sm-8">
+              <input class="form-control" type="text"
+                     data-bind="value: lookup_field_template"/>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

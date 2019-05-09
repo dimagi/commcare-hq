@@ -6,8 +6,11 @@ from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.utils import is_identifier_invalid
-from corehq.util.workbook_json.excel import WorkbookJSONReader, InvalidExcelFileException, \
-    HeaderValueError, JSONReaderError, WorksheetNotFound
+from corehq.util.workbook_json.excel import (
+    get_workbook as excel_get_workbook,
+    WorkbookJSONError,
+    WorksheetNotFound,
+)
 import six
 
 
@@ -22,15 +25,8 @@ class _FixtureWorkbook(object):
 
     def __init__(self, file_or_filename):
         try:
-            self.workbook = WorkbookJSONReader(file_or_filename)
-        except AttributeError:
-            # todo: I don't know what would cause this error and it's a bad message
-            raise FixtureUploadError([_("Error processing your Excel (.xlsx) file")])
-        except InvalidExcelFileException:
-            raise FixtureUploadError([FAILURE_MESSAGES['not_excel_file']])
-        except HeaderValueError as e:
-            raise FixtureUploadError([six.text_type(e)])
-        except JSONReaderError as e:
+            self.workbook = excel_get_workbook(file_or_filename)
+        except WorkbookJSONError as e:
             raise FixtureUploadError([six.text_type(e)])
 
     def get_types_sheet(self):

@@ -20,12 +20,19 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
+from corehq.sql_db.routers import db_for_read_write
+from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE, \
+    AGG_GROWTH_MONITORING_TABLE, AGG_CCS_RECORD_BP_TABLE, AGG_CHILD_HEALTH_PNC_TABLE, AGG_CCS_RECORD_PNC_TABLE, \
+    AGG_CCS_RECORD_THR_TABLE, AGG_DAILY_FEEDING_TABLE, AGG_CCS_RECORD_CF_TABLE, AGG_CHILD_HEALTH_THR_TABLE, \
+    AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE
+
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     build_incentive_report,
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
+from custom.icds_reports.models.aggregate import AggregateCcsRecordDeliveryForms
 from io import open
 from six.moves import range
 from six.moves import zip
@@ -61,6 +68,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
+_use_citus = override_settings(ICDS_USE_CITUS=True)
+
 
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
@@ -71,8 +80,11 @@ def setUpModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
+    # _use_citus.enable()
 
     domain = create_domain('icds-cas')
+    SQLLocation.objects.all().delete()
+    LocationType.objects.all().delete()
     location_type = LocationType.objects.create(
         domain=domain.name,
         name='block',
@@ -171,6 +183,8 @@ def setUpModule():
                         null='' if six.PY3 else b'', columns=columns
                     )
 
+        _distribute_tables_for_citus(engine)
+
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
@@ -179,18 +193,67 @@ def setUpModule():
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
             build_incentive_report(agg_date=datetime(2017, 5, 28))
-        except AssertionError as e:
-            # we always use soft assert to email when the aggregation has completed
-            if "Aggregation completed" not in str(e):
-                print(e)
-                tearDownModule()
-                raise
         except Exception as e:
             print(e)
             tearDownModule()
             raise
         finally:
             _call_center_domain_mock.stop()
+
+
+def _distribute_tables_for_citus(engine):
+    if not getattr(settings, 'ICDS_USE_CITUS', False):
+        return
+
+    # move to migrations
+    distribute = [
+        (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id'),
+        (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_CF_TABLE, 'supervisor_id'),
+        (AGG_CHILD_HEALTH_THR_TABLE, 'supervisor_id'),
+        (AGG_GROWTH_MONITORING_TABLE, 'supervisor_id'),
+        (AGG_CHILD_HEALTH_PNC_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_PNC_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
+        (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
+        ('child_health_monthly', 'supervisor_id'),
+        ('ccs_record_monthly', 'supervisor_id'),
+        ('daily_attendance', 'supervisor_id'),
+    ]
+    reference = [
+        'awc_location',
+        'icds_months'
+    ]
+    for table, col in distribute:
+        with engine.begin() as conn:
+            res = conn.execute(
+                """
+                SELECT c.relname AS child
+                FROM
+                    pg_inherits JOIN pg_class AS c ON (inhrelid=c.oid)
+                    JOIN pg_class as p ON (inhparent=p.oid)
+                    where p.relname = %s;
+                """,
+                table
+            )
+            for child in [row.child for row in res]:
+                # only need this because of reusedb if testing on master and this branch
+                conn.execute('drop table if exists "{}"'.format(child))
+            res = conn.execute("""
+                    select 1 from pg_dist_partition
+                    where partmethod = 'h' and logicalrelid = %s::regclass
+                """, table)
+            if not list(res):
+                conn.execute("select create_distributed_table(%s, %s)", [table, col])
+    for table in reference:
+        with engine.begin() as conn:
+            res = conn.execute("""
+                    select 1 from pg_dist_partition
+                    where partmethod = 'n' and logicalrelid = %s::regclass
+                """, table)
+            if not list(res):
+                conn.execute("select create_reference_table(%s)", [table])
 
 
 def tearDownModule():
@@ -222,6 +285,7 @@ def tearDownModule():
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
     Domain.get_by_name('icds-cas').delete()
+    # _use_citus.disable()
     _call_center_domain_mock.stop()
 
 

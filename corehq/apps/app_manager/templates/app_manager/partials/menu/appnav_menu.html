@@ -3,69 +3,69 @@
 {% load hq_shared_tags %}
 
 <ul class="sortable appmanager-main-menu appnav-menu appnav-module js-sortable-module">
-    <li class="sort-action">
-        <form method="post"
-              action="{% url "rearrange" domain app.id 'modules' %}">
+  <li class="sort-action">
+    <form method="post"
+          action="{% url "rearrange" domain app.id 'modules' %}">
+      {% csrf_token %}
+      <input name="ajax" value="true" type="hidden" />
+    </form>
+  </li>
+  {% with module as selected_module %}
+    {% for module in app.get_modules %}
+      <li class="edit-module-li js-sorted-li" data-index="{{ module.id }}" data-indexvar="moduleid">
+
+        <div class="appnav-item {% ifequal module.unique_id selected_module.unique_id %}{% if not form %}active{% endif %}{% endifequal %}">
+          {% include 'app_manager/partials/menu/confirm_delete_module.html' %}
+          {% include 'app_manager/partials/menu/module_link_primary.html' %}
+          {% include 'app_manager/partials/menu/module_link_secondary.html' %}
+        </div>
+
+        <ul class="appnav-menu appnav-menu-nested see {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
+          <li class="sort-action">
+            <form method="post"
+                  action="{% url "rearrange" domain app.id 'forms' %}">
               {% csrf_token %}
               <input name="ajax" value="true" type="hidden" />
-        </form>
-    </li>
-    {% with module as selected_module %}
-        {% for module in app.get_modules %}
-            <li class="edit-module-li js-sorted-li" data-index="{{ module.id }}" data-indexvar="moduleid">
-
-                <div class="appnav-item {% ifequal module.unique_id selected_module.unique_id %}{% if not form %}active{% endif %}{% endifequal %}">
-                  {% include 'app_manager/partials/menu/confirm_delete_module.html' %}
-                  {% include 'app_manager/partials/menu/module_link_primary.html' %}
-                  {% include 'app_manager/partials/menu/module_link_secondary.html' %}
+            </form>
+          </li>
+          {% with nav_form as selected_form %}
+            {% for form in module.get_forms %}
+              <li class="edit-form-li js-sorted-li"
+                  data-moduleid="{{ module.id }}"
+                  data-index="{{ form.id }}"
+                  data-indexvar="formid"
+                  {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}
+              >
+                <!--[F]-->
+                <div class="appnav-item {% ifequal form selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endifequal %}">
+                  {% include 'app_manager/partials/menu/confirm_delete_form.html' %}
+                  {% include 'app_manager/partials/menu/form_link_primary.html' %}
+                  {% include 'app_manager/partials/menu/form_link_secondary.html' %}
                 </div>
-
-                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
-                    <li class="sort-action">
-                        <form method="post"
-                              action="{% url "rearrange" domain app.id 'forms' %}">
-                              {% csrf_token %}
-                              <input name="ajax" value="true" type="hidden" />
-                        </form>
-                    </li>
-                    {% with nav_form as selected_form %}
-                        {% for form in module.get_forms %}
-                            <li class="edit-form-li js-sorted-li"
-                                data-moduleid="{{ module.id }}"
-                                data-index="{{ form.id }}"
-                                data-indexvar="formid"
-                                {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}
-                            >
-                                <!--[F]-->
-                                <div class="appnav-item {% ifequal form selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endifequal %}">
-                                    {% include 'app_manager/partials/menu/confirm_delete_form.html' %}
-                                    {% include 'app_manager/partials/menu/form_link_primary.html' %}
-                                    {% include 'app_manager/partials/menu/form_link_secondary.html' %}
-                                </div>
-                            </li>
-                        {% endfor %}
-                    {% endwith %}
-                </ul>
-            </li>
-        {% endfor %}
-    {% endwith %}
+              </li>
+            {% endfor %}
+          {% endwith %}
+        </ul>
+      </li>
+    {% endfor %}
+  {% endwith %}
 </ul>
 <ul class="appnav-menu">
-    {% if app.get_doc_type == "Application" %}
-        <li class="sort-disabled">
-            <div class="appnav-item">
-                <form id="new-module-form"
-                      action="{% url "new_module" domain app.id %}"
-                      method="post"
-                      class="hide">
-                    {% csrf_token %}
-                    <input id="new-module-type" type="hidden" name="module_type" />
-                </form>
-                <a href="#" class="appnav-add js-add-new-item" data-slug="module">
-                    <i class="new-module-icon fa fa-plus"></i>
-                    {% trans "Add..." %}
-                </a>
-            </div>
-        </li>
-    {% endif %}
+  {% if app.get_doc_type == "Application" %}
+    <li class="sort-disabled">
+      <div class="appnav-item">
+        <form id="new-module-form"
+              action="{% url "new_module" domain app.id %}"
+              method="post"
+              class="hide">
+          {% csrf_token %}
+          <input id="new-module-type" type="hidden" name="module_type" />
+        </form>
+        <a href="#" class="appnav-add js-add-new-item" data-slug="module">
+          <i class="new-module-icon fa fa-plus"></i>
+          {% trans "Add..." %}
+        </a>
+      </div>
+    </li>
+  {% endif %}
 </ul>

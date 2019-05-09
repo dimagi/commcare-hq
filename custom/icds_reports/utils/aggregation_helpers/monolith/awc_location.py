@@ -11,10 +11,13 @@ from six.moves import range
 
 
 class LocationAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'location'
     base_tablename = 'awc_location'
 
     ucr_location_table = AWC_LOCATION_TABLE_ID
     ucr_aww_table = AWW_USER_TABLE_ID
+
+    local_tablename = 'awc_location_local'
 
     def __init__(self):
         pass
@@ -30,6 +33,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         cursor.execute(aww_query)
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
+        cursor.execute(self.create_local_table())
 
     @property
     def ucr_location_tablename(self):
@@ -189,4 +193,13 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by)
+        )
+
+    def create_local_table(self):
+        return """
+        DELETE FROM "{local_tablename}";
+        INSERT INTO "{local_tablename}" SELECT * FROM "{tablename}";
+        """.format(
+            tablename=self.base_tablename,
+            local_tablename=self.local_tablename
         )

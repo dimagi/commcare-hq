@@ -1,19 +1,19 @@
 <select id='example-multiselect'>
-    <option>alpha</option>
-    <option>beta</option>
-    <option>gamma</option>
-    <option>delta</option>
-    <option>epsilon</option>
+  <option>alpha</option>
+  <option>beta</option>
+  <option>gamma</option>
+  <option>delta</option>
+  <option>epsilon</option>
 </select>
 
 <script>
-    $(function () {
-        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-        multiselect_utils.createFullMultiselectWidget(
-            'example-multiselect',
-            gettext("Available Letters"),
-            gettext("Letters Selected"),
-            gettext("Search Letters...")
-        );
-    });
+  $(function () {
+    var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
+    multiselect_utils.createFullMultiselectWidget(
+      'example-multiselect',
+      gettext("Available Letters"),
+      gettext("Letters Selected"),
+      gettext("Search Letters...")
+    );
+  });
 </script>

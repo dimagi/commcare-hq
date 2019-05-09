@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'thr-forms-child-health'
     ucr_data_source_id = 'static-dashboard_thr_forms'
     aggregate_parent_table = AGG_CHILD_HEALTH_THR_TABLE
     aggregate_child_table_prefix = 'icds_db_child_thr_form_'

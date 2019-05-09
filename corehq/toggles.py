@@ -732,12 +732,6 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BULK_ARCHIVE_FORMS = StaticToggle(
-    'bulk_archive_forms',
-    'Bulk archive forms with Excel',
-    TAG_SOLUTIONS
-)
-
 TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',
@@ -1122,6 +1116,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+BULK_CONDITIONAL_ALERTS = StaticToggle(
+    'bulk_conditional_alerts',
+    'Allow bulk download and upload of conditional alerts.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
 COPY_CONDITIONAL_ALERTS = StaticToggle(
     'copy_conditional_alerts',
     'Allow copying conditional alerts to another project (or within the same project).',
@@ -1177,23 +1178,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     'to allow migrating ICDS to a new cluster.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-
-NEW_REMINDERS_MIGRATOR = StaticToggle(
-    'new_reminders_migrator',
-    "Enables features to handle migrating domains to the new reminders framework",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-
-REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
-    'reminders_migration_in_progress',
-    "Disables editing of reminders so that the migration to the new framework can happen.",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 
@@ -1407,7 +1391,7 @@ UATBC_ADHERENCE_TASK = StaticToggle(
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
@@ -1713,6 +1697,13 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+MANAGE_RELEASES_PER_LOCATION = StaticToggle(
+    'manage_releases_per_location',
+    'Manage releases per location',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
@@ -1773,4 +1764,11 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
     'Use CitusDB for loading ICDS Dashboard',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+PARALLEL_AGGREGATION = StaticToggle(
+    'parallel_agg'
+    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

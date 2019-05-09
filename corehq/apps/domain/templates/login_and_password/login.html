@@ -14,30 +14,30 @@
 {% endblock %}
 
 {% block stylesheets %}
-<link type="text/css"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
 
-{% if less_debug %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.debug.less' %}" />
-{% else %}
-{% compress css %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.less' %}" />
-{% endcompress %}
-{% endif %}
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'registration/less/registration.debug.less' %}" />
+  {% else %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'registration/less/registration.less' %}" />
+    {% endcompress %}
+  {% endif %}
 {% endblock stylesheets %}
 
 {% block content %}
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% block login-content %}
-  {% include "login_and_password/partials/login_full.html" %}
+    {% include "login_and_password/partials/login_full.html" %}
   {% endblock %}
 {% endblock content %}
 

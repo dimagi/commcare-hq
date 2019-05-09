@@ -102,7 +102,7 @@ hqDefine('app_manager/js/summary/case_summary',[
         var caseSummaryMenu = models.menuModel({
             items: _.map(caseTypes, function (caseType) {
                 return models.menuItemModel({
-                    id: caseType.name,
+                    unique_id: caseType.name,
                     name: caseType.name,
                     icon: "fcc fcc-fd-external-case appnav-primary-icon",
                     has_errors: caseType.has_errors,

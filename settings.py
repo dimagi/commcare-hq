@@ -893,7 +893,7 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-from env_settings import *
+ES_SETTINGS = None
 
 try:
     # try to see if there's an environmental variable set for local_settings

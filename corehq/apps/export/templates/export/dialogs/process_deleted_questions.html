@@ -5,20 +5,20 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <span aria-hidden="true">&times;</span>
         </button>
         <h4 class="modal-title">{% trans "Show Deleted Questions" %}</h4>
       </div>
       <div class="modal-body">
         <p>
-        {% blocktrans %}
-        In order to show you your deleted questions, we need to process all of your old applications that have
-        had submissions. This operation can sometimes take a few minutes.
-        {% endblocktrans %}
+          {% blocktrans %}
+            In order to show you your deleted questions, we need to process all of your old applications that have
+            had submissions. This operation can sometimes take a few minutes.
+          {% endblocktrans %}
         </p>
         <div class="spacer"></div>
         <p data-bind="visible: errorOnBuildSchema, css: { 'text-danger': errorOnBuildSchema }">
-            {% trans "Unable to process applications. Please report an issue if this persists" %}
+          {% trans "Unable to process applications. Please report an issue if this persists" %}
         </p>
         <div class="spacer"></div>
         <div class="progress " data-bind="visible: showBuildSchemaProgressBar">
@@ -35,7 +35,7 @@
             click: onBeginSchemaBuild,
             text: schemaProgressText
             ">
-            {% trans "Process" %}
+          {% trans "Process" %}
         </button>
       </div>
     </div><!-- /.modal-content -->

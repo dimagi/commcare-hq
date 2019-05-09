@@ -1,0 +1,33 @@
+DROP TABLE IF EXISTS "icds_db_child_daily_feed_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_child_daily_feed_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_daily_feeding_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_daily_feeding_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_child_daily_feed_form_7a197ee47818209780c23ed9" (
+          state_id, supervisor_id, month, case_id, latest_time_end_processed,
+          sum_attended_child_ids, lunch_count
+        ) (
+          SELECT DISTINCT ON (ucr.child_health_case_id)
+            %(state_id)s AS state_id,
+            LAST_VALUE(ucr.supervisor_id) OVER w AS supervisor_id,
+            %(month)s AS month,
+            ucr.child_health_case_id AS case_id,
+            MAX(ucr.timeend) OVER w AS latest_time_end_processed,
+            SUM(ucr.attended_child_ids) OVER w AS sum_attended_child_ids,
+            SUM(ucr.lunch) OVER w AS lunch_count
+          FROM "ucr_icds-cas_dashboard_child_health_daily_2cd9a7c1" ucr inner join daily_attendance ON (
+            ucr.doc_id = daily_attendance.doc_id AND
+            daily_attendance.month=%(current_month_start)s
+          )
+          WHERE ucr.state_id = %(state_id)s AND
+                ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s AND
+                ucr.child_health_case_id IS NOT NULL
+          WINDOW w AS (PARTITION BY ucr.child_health_case_id)
+        )
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

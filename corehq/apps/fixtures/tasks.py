@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.fixtures.upload import upload_fixture_file
-from soil import DownloadBase
+from __future__ import absolute_import, unicode_literals
+
 from celery.task import task
 
+from soil import DownloadBase
 
-@task(serializer='pickle')
+from corehq.apps.fixtures.download import prepare_fixture_download
+from corehq.apps.fixtures.upload import upload_fixture_file
+
+
+@task
 def fixture_upload_async(domain, download_id, replace):
     task = fixture_upload_async
     DownloadBase.set_progress(task, 0, 100)
@@ -24,7 +27,16 @@ def fixture_upload_async(domain, download_id, replace):
 
 @task(serializer='pickle')
 def fixture_download_async(prepare_download, *args, **kw):
+    # deprecated task. no longer called. to be removed after all tasks consumed
     task = fixture_download_async
     DownloadBase.set_progress(task, 0, 100)
     prepare_download(task=task, *args, **kw)
+    DownloadBase.set_progress(task, 100, 100)
+
+
+@task
+def async_fixture_download(table_ids, domain, download_id):
+    task = async_fixture_download
+    DownloadBase.set_progress(task, 0, 100)
+    prepare_fixture_download(table_ids, domain, task, download_id)
     DownloadBase.set_progress(task, 100, 100)

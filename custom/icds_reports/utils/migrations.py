@@ -11,6 +11,7 @@ from corehq.sql_db.operations import RawSQLMigration
 def get_view_migrations():
     sql_views = [
         'awc_location_months.sql',
+        'awc_location_months_local.sql',
         'agg_awc_monthly.sql',
         'agg_ccs_record_monthly.sql',
         'agg_child_health_monthly.sql',
@@ -37,7 +38,7 @@ def _citus_composite_key_sql(model_cls):
     index = '{}_{}_uniq'.format(model_cls._meta.db_table, '_'.join(columns))
     sql = """
         CREATE UNIQUE INDEX {index} on "{table}" ({cols});
-        ALTER TABLE "{table}" DROP CONSTRAINT {pkey_name};
+        ALTER TABLE "{table}" DROP CONSTRAINT IF EXISTS {pkey_name};
         ALTER TABLE "{table}" ADD CONSTRAINT {pkey_name} PRIMARY KEY USING INDEX {index};
     """.format(
         table=model_cls._meta.db_table,

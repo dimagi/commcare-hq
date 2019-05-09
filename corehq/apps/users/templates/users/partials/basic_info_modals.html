@@ -3,65 +3,65 @@
 {% load i18n %}
 
 {% for phone_number in phonenumbers %}
-    <div id="delete_phonenumber_{{ forloop.counter }}" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                    <h3 class="modal-title">{% blocktrans with phone_number.number as number %}Delete +{{ number }}
-                        ?{% endblocktrans %}</h3>
-                </div>
-                <form class="form form-horizontal hq-form disable-on-submit"
-                      name="delete_phone_number"
-                      {% if user_type == "mobile" %}
-                      action="{% url "delete_phone_number" domain couch_user.couch_id %}"
-                      {% endif %}
-                      method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_type" value="delete-phone-number"/>
-                    <input type="hidden" name="phone_number" value="{{ phone_number.number }}"/>
+  <div id="delete_phonenumber_{{ forloop.counter }}" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title">{% blocktrans with phone_number.number as number %}Delete +{{ number }}
+            ?{% endblocktrans %}</h3>
+        </div>
+        <form class="form form-horizontal hq-form disable-on-submit"
+              name="delete_phone_number"
+          {% if user_type == "mobile" %}
+              action="{% url "delete_phone_number" domain couch_user.couch_id %}"
+          {% endif %}
+              method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="delete-phone-number"/>
+          <input type="hidden" name="phone_number" value="{{ phone_number.number }}"/>
 
-                    <div class="modal-body">
-                        <p>{% blocktrans with phone_number.number as number %}
-                            Are you sure you want to delete the phone number: "+{{ number }}"?
-                        {% endblocktrans %}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-                        <button type="submit" class="btn btn-danger"><i class="fa fa-remove"></i> {% trans "Delete" %}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+          <div class="modal-body">
+            <p>{% blocktrans with phone_number.number as number %}
+              Are you sure you want to delete the phone number: "+{{ number }}"?
+            {% endblocktrans %}</p>
+          </div>
+          <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-danger"><i class="fa fa-remove"></i> {% trans "Delete" %}</button>
+          </div>
+        </form>
+      </div>
     </div>
-    {% if user_type == "mobile" and phone_number.status == "pending" %}
-        <div id="reverify_{{phone_number.number|urlencode}}" class="modal fade">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">{% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}</h4>
-                    </div>
-                    <form class="form form-horizontal hq-form disable-on-submit"
-                          name="reverify_phone_number"
-                          action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone_number.number|urlencode}}"
-                          method="post">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                            <p>
-                            {% blocktrans %}
-                            A verification message has already been sent to this phone.
-                            The phone has not replied yet. Send again?
-                            {% endblocktrans %}
-                            </p>
-                        </div>
-                        <div class="modal-footer">
-                            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-                            <button type="submit" class="btn btn-primary"><i class="fa fa-signal"></i> {% trans "Verify" %}</button>
-                        </div>
-                    </form>
-                </div>
+  </div>
+  {% if user_type == "mobile" and phone_number.status == "pending" %}
+    <div id="reverify_{{phone_number.number|urlencode}}" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">{% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}</h4>
+          </div>
+          <form class="form form-horizontal hq-form disable-on-submit"
+                name="reverify_phone_number"
+                action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone_number.number|urlencode}}"
+                method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+              <p>
+                {% blocktrans %}
+                  A verification message has already been sent to this phone.
+                  The phone has not replied yet. Send again?
+                {% endblocktrans %}
+              </p>
             </div>
+            <div class="modal-footer">
+              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+              <button type="submit" class="btn btn-primary"><i class="fa fa-signal"></i> {% trans "Verify" %}</button>
+            </div>
+          </form>
         </div>
-    {% endif %}
+      </div>
+    </div>
+  {% endif %}
 {% endfor %}

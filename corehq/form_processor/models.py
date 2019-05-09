@@ -37,6 +37,7 @@ from corehq.form_processor.exceptions import UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -518,10 +519,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSQLSerializer
-        serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
+        from .serializers import XFormInstanceSQLSerializer, lazy_serialize_form_attachments, \
+            lazy_serialize_form_history
+        serializer = XFormInstanceSQLSerializer(self)
         data = dict(serializer.data)
-        data['history'] = [dict(op) for op in data['history']]
+        if include_attachments:
+            data['external_blobs'] = lazy_serialize_form_attachments(self)
+        data['history'] = lazy_serialize_form_history(self)
         data['backend_id'] = 'sql'
         return data
 
@@ -813,10 +817,16 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return serializer.data
 
     def to_json(self):
-        from .serializers import CommCareCaseSQLSerializer
+        from .serializers import (
+            CommCareCaseSQLSerializer, lazy_serialize_case_indices, lazy_serialize_case_transactions,
+            lazy_serialize_case_xform_ids, lazy_serialize_case_attachments
+        )
         serializer = CommCareCaseSQLSerializer(self)
         ret = dict(serializer.data)
-        ret['indices'] = [dict(index) for index in ret['indices']]
+        ret['indices'] = lazy_serialize_case_indices(self)
+        ret['actions'] = lazy_serialize_case_transactions(self)
+        ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
+        ret['case_attachments'] = lazy_serialize_case_attachments(self)
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
@@ -825,7 +835,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
-        return json.dumps(self.to_json(), indent=indent)
+        return json.dumps(self.to_json(), indent=indent, cls=CommCareJSONEncoder)
 
     def pprint(self):
         print(self.dumps(pretty=True))
@@ -1650,9 +1660,9 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
 
     # change from previous balance
-    delta = models.IntegerField(default=0)
+    delta = models.BigIntegerField(default=0)
     # new balance
-    updated_balance = models.IntegerField(default=0)
+    updated_balance = models.BigIntegerField(default=0)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
