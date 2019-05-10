@@ -55,6 +55,8 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.messaging.scheduling.view_helpers import (
     get_conditional_alert_rows,
     get_conditional_alerts_queryset_by_domain,
+    TranslatedConditionalAlertUploader,
+    UntranslatedConditionalAlertUploader,
     upload_conditional_alert_workbook,
 )
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -1019,20 +1021,20 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 
     def get(self, request, domain):
         common_headers = ['id', 'name', 'case_type']
-        translated_sheet_name = 'translated'        # TODO: make this a constant
-        untranslated_sheet_name = 'not translated'  # TODO: make this a constant
 
         langs = get_language_list(self.domain)
-        headers = ((translated_sheet_name, common_headers + ['message_' + lang for lang in langs]),
-                   (untranslated_sheet_name, common_headers + ['message']))
+        headers = ((TranslatedConditionalAlertUploader.sheet_name,
+                    common_headers + ['message_' + lang for lang in langs]),
+                   (UntranslatedConditionalAlertUploader.sheet_name,
+                    common_headers + ['message']))
 
         (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, langs)
 
         temp = io.BytesIO()
         export_raw(
             headers, [
-                (translated_sheet_name, translated_rows),
-                (untranslated_sheet_name, untranslated_rows),
+                (TranslatedConditionalAlertUploader.sheet_name, translated_rows),
+                (UntranslatedConditionalAlertUploader.sheet_name, untranslated_rows),
             ], temp)
         filename = 'Conditional Alerts - {domain}'.format(domain=domain)
         return export_response(temp, Format.XLS_2007, filename)
