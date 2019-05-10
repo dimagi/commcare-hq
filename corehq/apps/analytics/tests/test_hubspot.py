@@ -18,45 +18,18 @@ from ..tasks import (
 @mock.patch('corehq.apps.analytics.tasks.requests.get', mock.MagicMock())
 @mock.patch('corehq.apps.analytics.tasks.requests.post', mock.MagicMock())
 @mock.patch('corehq.apps.analytics.tasks._send_hubspot_form_request')
-@mock.patch('corehq.apps.analytics.tasks._get_user_hubspot_id')
-@mock.patch('corehq.apps.analytics.tasks._track_on_hubspot')
 class TestSendToHubspot(TestCase):
     domain = 'test-send-to-hubspot'
 
-    def test_registration(
-            self,
-            _track_on_hubspot,
-            _get_user_hubspot_id,
-            _send_hubspot_form_request,
-    ):
+    def test_registration(self, _send_hubspot_form_request):
         request = self.get_request()
-
-        # The is present in hubspot by the time this is called
-        _get_user_hubspot_id.return_value = "123abc"
-
         buyer_props = {'buyer_persona': 'Old-Timey Prospector'}
         track_web_user_registration_hubspot(request, self.user, buyer_props)
 
-        self.assert_signup_form_submitted(_send_hubspot_form_request)
-        self.assert_properties_sent(_track_on_hubspot, buyer_props)
-
-    def test_registration_no_user_hubspot_id(
-            self,
-            _track_on_hubspot,
-            _get_user_hubspot_id,
-            _send_hubspot_form_request,
-    ):
-        request = self.get_request()
-
-        # The user isn't present in hubspot
-        _get_user_hubspot_id.return_value = ""
-
-        buyer_props = {'buyer_persona': 'Old-Timey Prospector'}
-        track_web_user_registration_hubspot(request, self.user, buyer_props)
-
-        self.assert_signup_form_submitted(_send_hubspot_form_request)
-        # Since the user ID wasn't found,t he properties were never submitted
-        _track_on_hubspot.assert_not_called()
+        _send_hubspot_form_request.assert_called_once()
+        hubspot_id, form_id, data = _send_hubspot_form_request.call_args[0]
+        self.assertEqual(form_id, HUBSPOT_SIGNUP_FORM_ID)
+        self.assertDictContainsSubset(buyer_props, data)
 
     @classmethod
     def setUpClass(cls):
@@ -78,13 +51,3 @@ class TestSendToHubspot(TestCase):
         # The hubspot cookie must be passed from the client
         request.COOKIES[HUBSPOT_COOKIE] = '54321'
         return request
-
-    def assert_signup_form_submitted(self, _send_hubspot_form_request):
-        _send_hubspot_form_request.assert_called_once()
-        url, data = _send_hubspot_form_request.call_args[0]
-        self.assertIn(HUBSPOT_SIGNUP_FORM_ID, url)
-
-    def assert_properties_sent(self, _track_on_hubspot, buyer_props):
-        _track_on_hubspot.assert_called_once()
-        webuser, properties = _track_on_hubspot.call_args[0]
-        self.assertDictContainsSubset(buyer_props, properties)
