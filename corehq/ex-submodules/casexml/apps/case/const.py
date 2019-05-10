@@ -1,5 +1,7 @@
 # how cases/referrals are tagged in the xform/couch
+from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from datetime import timedelta
 
 CASE_TAG = "case"

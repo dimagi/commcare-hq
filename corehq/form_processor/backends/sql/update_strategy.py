@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import datetime
 import logging
 import sys
 from functools import cmp_to_key
