@@ -5,7 +5,7 @@ import mock
 from django.test import TestCase
 from sqlalchemy.engine import reflection
 
-from corehq.apps.userreports.models import DataSourceActionLog
+from corehq.apps.userreports.models import DataSourceActionLog, DataSourceConfiguration
 from corehq.apps.userreports.tests.utils import get_sample_data_source
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.pillows.case import get_case_pillow
@@ -137,7 +137,13 @@ class RebuildTableTest(TestCase):
 
     @softer_assert()
     def test_skip_destructive_rebuild(self):
-        self._setup_data_source('add_non_nullable_col')
+        self.config = self._get_config('add_non_nullable_col')
+        self.config.disable_destructive_rebuild = True
+        self.config.save()
+
+        get_case_pillow(ucr_configs=[self.config])
+        self.adapter = get_indicator_adapter(self.config)
+        self.engine = self.adapter.engine
 
         # assert new date isn't in the config
         insp = reflection.Inspector.from_engine(self.engine)
@@ -147,9 +153,7 @@ class RebuildTableTest(TestCase):
         )
 
         # add the column to the config
-        config = self._get_config('add_non_nullable_col')
-        self.addCleanup(config.delete)
-        config.configured_indicators.append({
+        self.config.configured_indicators.append({
             "column_id": "new_date",
             "type": "raw",
             "display_name": "new_date opened",
@@ -157,16 +161,16 @@ class RebuildTableTest(TestCase):
             "property_name": "other_opened_on",
             "is_nullable": False
         })
-        config.disable_destructive_rebuild = True
-        config.save()
+        self.config.save()
 
-        # mock rebuild table to ensure the table is rebuilt
-        with mock.patch('corehq.apps.userreports.pillow.rebuild_indicators.delay') as mock_task:
-            get_case_pillow(ucr_configs=[config])
-            self.assertFalse(mock_task.called)
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
+        # bootstrap to trigger rebuild
+        get_case_pillow(ucr_configs=[self.config])
 
         logs = DataSourceActionLog.objects.filter(
-            indicator_config_id=config.data_source_id,
+            indicator_config_id=self.config.data_source_id,
             skip_destructive=True
         )
         self.assertEqual(1, len(logs))

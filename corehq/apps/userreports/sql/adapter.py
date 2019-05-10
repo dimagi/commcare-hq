@@ -60,6 +60,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
         )
 
+    @property
+    def table_exists(self):
+        return self.engine.has_table(self.get_table().name)
+
     @memoized
     def get_sqlalchemy_orm_table(self):
         table = self.get_table()
