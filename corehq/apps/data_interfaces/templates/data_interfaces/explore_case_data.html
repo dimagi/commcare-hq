@@ -24,34 +24,6 @@
   breadcrumbs todo
 {% endblock %}
 
-{% block js %}{{ block.super }}
-  <script type="text/html" id="datagridPages">
-    <a href="#" data-bind="click: previousPage, visible: showPrevious">
-      <i class="fa fa-angle-double-left"></i>
-      {% trans "Previous" %}
-    </a>
-    <ul class="datagrid-pages datagrid-number-nav"
-        data-bind="foreach: pages">
-      <li data-bind="css: {'current': isCurrent}">
-        <a href="#" data-bind="text: number, click: $root.data.changePage"></a>
-      </li>
-    </ul>
-    <a href="#" data-bind="click: nextPage, visible: showNext">
-      {% trans "Next" %}
-      <i class="fa fa-angle-double-right"></i>
-    </a>
-  </script>
-
-  <script type="text/html" id="datagridLimits">
-    <ul class="datagrid-limits datagrid-number-nav"
-        data-bind="foreach: limits">
-      <li data-bind="css: {'current': isCurrent}">
-        <a href="#" data-bind="text: number, click: $root.data.changeLimit"></a>
-      </li>
-    </ul>
-  </script>
-{% endblock %}
-
 {% block page_content %}
   {% registerurl "endpoint_options" domain report.slug '---' %}
   {% registerurl "endpoint_data" domain report.slug '---' %}
@@ -97,12 +69,6 @@
           </div>
         </div>
       </div>
-      <div class="row">
-        <div data-bind="template: { name: 'datagridLimits', data: data }"
-             class="col-sm-6"></div>
-        <div data-bind="template: { name: 'datagridPages', data: data }"
-             class="col-sm-6"></div>
-      </div>
 
       <table class="datagrid-headers">
         <thead>
@@ -139,6 +105,14 @@
         </tr>
         </tbody>
       </table>
+
+      <pagination data-apply-bindings="false"
+                  params="goToPage: $root.data.goToPage,
+                          pageSlug: 'p',
+                          limitSlug: 'l',
+                          slug: 'datagrid',
+                          perPage: $root.data.limit,
+                          totalItems: $root.data.totalRecords"></pagination>
 
       <div class="modal fade"
            data-bind="modal: editColumnController.column"

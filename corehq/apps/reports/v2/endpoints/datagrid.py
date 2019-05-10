@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from __future__ import division
-
-import math
 
 from corehq.apps.reports.v2.models import BaseDataEndpoint
 
@@ -25,7 +22,6 @@ class DatagridEndpoint(BaseDataEndpoint):
     def get_response(self, query, formatter):
         total = query.count()
         start = min((self.page - 1) * self.limit, total)
-        total_pages = int(math.ceil(float(total) / float(self.limit)))
 
         query = query.size(self.limit).start(start)
         results = [formatter(self.request, self.domain, r).get_context()
@@ -33,5 +29,4 @@ class DatagridEndpoint(BaseDataEndpoint):
         return {
             "rows": results,
             "totalRecords": total,
-            "totalPages": total_pages,
         }
