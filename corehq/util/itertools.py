@@ -9,7 +9,8 @@ def zip_with_gaps(all_items, some_items, all_items_key=None, some_items_key=None
 
     Keys do not need to be unique. Keys in `all_items` must be a
     superset of keys in `some_items`. If key functions are not given,
-    the key is item.
+    items are compared directly. Sequence is important: Items are
+    assumed to be sorted.
 
     >>> long_list = ['Alice', 'Apple', 'Bengal', 'Carrot', 'Daring', 'Danger', 'Dakar', 'Electric']
     >>> short_list = ['Cabernet', 'Daedalus', 'Daimler', 'Dog']
