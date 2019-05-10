@@ -456,7 +456,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
     except TaskFailedError as e:
         notify_exception(request, message=six.text_type(e))
         response = {
-            'message': _("Upload did not complete. Reason: '{}'".format(e.message)),
+            'message': _("Upload did not complete. Reason: '{}'".format(six.text_type(e))),
             'error': True,
         }
         return json_response(response)
