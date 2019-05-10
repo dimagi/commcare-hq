@@ -53,6 +53,7 @@
             <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Import Products' %}
           </a>
           <a class="btn btn-default" href="{% url "product_fields_view" domain %}">
+            <i class="fa fa-edit"></i>
             {% trans "Edit Product Fields" %}
           </a>
         </div>
@@ -61,7 +62,7 @@
 
     <div class="row" data-bind="visible: !initialLoad() || currentlySearching()">
       <div class="col-sm-12">
-        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+        <i class="fa fa-spin fa-spinner"></i>
         {% trans 'Loading products...' %}
       </div>
     </div>
