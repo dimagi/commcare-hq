@@ -32,6 +32,16 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         });
     };
 
+    $scope.updateCssClasses = function () {
+        if (window.angular.element('.alert-maintenance').children().length === 1) {
+            var elementsToUpdate = ['left-menu', 'fixed-title', 'fixes-filters', 'main-container'];
+
+            _.each(elementsToUpdate, function (element) {
+                window.angular.element('.' + element).addClass(element + '-with-alert');
+            });
+        }
+    };
+
     $scope.checkAccessToLocation = function() {
         var locationId = $location.search()['location_id'];
         if (userLocationId !== void(0) && ['', 'undefinded', 'null', void(0)].indexOf(locationId) === -1) {
