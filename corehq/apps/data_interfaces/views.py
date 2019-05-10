@@ -17,6 +17,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.hqwebapp.models import PageInfoContext
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
@@ -139,6 +140,14 @@ class ExploreCaseDataView(BaseDomainView):
         report_config = ExploreCaseDataReport(self.request, self.domain)
         return {
             'report': report_config.context,
+            'section': PageInfoContext(
+                title=DataInterfaceSection.section_name,
+                url=reverse(DataInterfaceSection.urlname, args=[self.domain]),
+            ),
+            'page': PageInfoContext(
+                title=self.page_title,
+                url=reverse(self.urlname, args=[self.domain]),
+            ),
         }
 
 
