@@ -8,7 +8,6 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
-from django.conf import settings
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
