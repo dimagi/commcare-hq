@@ -760,14 +760,15 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
              ('baz', {'en': 'newbaz'})]
         )
 
+
 class BulkAppTranslationPartialsTest(BulkAppTranslationTestBaseWithApp):
 
     multi_sheet_headers = (
-        (MODULES_AND_FORMS_SHEET_NAME, 
+        (MODULES_AND_FORMS_SHEET_NAME,
          ('Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id')),
-        ('menu1', 
+        ('menu1',
          ('case_property', 'list_or_detail', 'default_en')),
-        ('menu1_form1', 
+        ('menu1_form1',
          ('label', 'default_en', 'image_en', 'audio_en', 'video_en'))
     )
     multi_sheet_upload = (

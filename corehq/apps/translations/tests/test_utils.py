@@ -65,7 +65,7 @@ def test_zip_with_gaps_not_in_all():
     """
     Items not found in `all_items` will skip all remaining items.
     """
-    all_items = [1, 2, 4,]
+    all_items = [1, 2, 4]
     some_items = [1, 3, 4]
     zipped = zip_with_gaps(all_items, some_items)
     eq(list(zipped), [(1, 1)])
