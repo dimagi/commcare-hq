@@ -53,6 +53,6 @@ branches:
   #- jls/reports-select2-v4  # Jenny April 9
   - nh/cdc/one_domain  # Norman March 26
   - sr-ucr-mirror # Sravan May 1
-  - jls/locale-id-integrity-bug # Jenny May 2
-  #- mk/ccz-hosting-revamp # MK May 6
+  #- jls/locale-id-integrity-bug # Jenny May 2
+  - mk/ccz-hosting-revamp # MK May 6
 submodules: {}
