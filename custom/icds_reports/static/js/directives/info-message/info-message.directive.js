@@ -17,9 +17,14 @@ function InfoMessageController($location) {
             (new Date().getDate() === 1 || new Date().getDate() === 2)) {
             vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
             vm.currentMonth = moment().format("MMMM");
+            var elementsToUpdate = ['left-menu', 'fixed-title', 'fixes-filters', 'main-container'];
+
+            _.each(elementsToUpdate, function (element) {
+                $('.' + element).addClass(element + '-with-alert');
+            });
             return true;
         }
-        return true;
+        return false;
     };
 }
 

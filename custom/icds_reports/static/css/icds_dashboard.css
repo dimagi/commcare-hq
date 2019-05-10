@@ -6,13 +6,26 @@
 }
 
 .fixed-title {
+    position: fixed;
     z-index: 2;
+    width: inherit;
+}
+
+.fixed-title-with-alert {
+    top: 50px;
 }
 
 .fixes-filters {
+    position: fixed;
     z-index: 1;
+    top: 42px;
     background-color: white;
+    width: 83%;
     padding: 10px 0;
+}
+
+.fixes-filters-with-alert {
+    top: 92px;
 }
 
 .fixed-dots {
@@ -255,6 +268,10 @@ nvd3#sectorChart > div.title.h4 {
     z-index: 1;
 }
 
+.left-menu-with-alert {
+    top: 50px;
+}
+
 .navbar-default {
     margin-bottom: 0;
     height: 50px;
@@ -268,6 +285,20 @@ nvd3#sectorChart > div.title.h4 {
     height: auto;
     position: absolute;
     right: 0;
+}
+
+.main-container-with-alert {
+    top: 50px;
+}
+
+.alert-maintenance {
+    position: fixed;
+    z-index: 1;
+    width: 100%;
+}
+
+.info-message {
+    margin-top: 130px;
 }
 
 .crop {
