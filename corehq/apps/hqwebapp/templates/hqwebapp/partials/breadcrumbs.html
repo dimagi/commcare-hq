@@ -1,0 +1,28 @@
+<ol id="hq-breadcrumbs"
+    class="breadcrumb breadcrumb-hq-section">
+  <li>
+    <a href="{{ section.url }}">
+      <strong>
+        {% if section.page_name %}
+          {{ section.page_name }}
+        {% else %}
+          {{ section.title }}
+        {% endif %}
+      </strong>
+    </a>
+  </li>
+  {% for parent in parents %}
+    <li>
+      <a href="{{ parent.url }}">
+        {{ parent.title }}
+      </a>
+    </li>
+  {% endfor %}
+  <li class="active">
+    {% if page.page_name %}
+      {{ page.page_name }}
+    {% else %}
+      {{ page.title }}
+    {% endif %}
+  </li>
+</ol>

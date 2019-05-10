@@ -11,17 +11,6 @@
     </div>
   {% endif %}
 
-  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-    <li>
-      <a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a>
-    </li>
-    {% for parent in current_page.parents %}
-      <li>
-        <a href="{{ parent.url }}">{{ parent.title }}</a>
-      </li>
-    {% endfor %}
-    <li class="active">
-      {{ current_page.page_name }}
-    </li>
-  </ol>
+  {% breadcrumbs current_page section current_page.parents %}
+
 {% endblock %}

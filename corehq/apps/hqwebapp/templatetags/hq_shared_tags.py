@@ -24,7 +24,7 @@ from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
-from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.models import MaintenanceAlert, PageInfoContext
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six
@@ -760,3 +760,25 @@ def javascript_libraries(context, **kwargs):
         'hq': kwargs.pop('hq', False),
         'helpers': kwargs.pop('helpers', False),
     }
+
+
+@register.simple_tag
+def breadcrumbs(page, section, parents=None):
+    """
+    Generates breadcrumbs given a page, section,
+    and (optional) list of parent pages.
+
+    :param page: PageInfoContext or what is returned in
+                 `current_page` of `BasePageView`'s `main_context`
+    :param section: PageInfoContext or what is returned in
+                    `section` of `BaseSectionPageView`'s `main_context`
+    :param parents: list of PageInfoContext or what is returned in
+                    `parent_pages` of `BasePageView`'s `main_context`
+    :return:
+    """
+
+    return mark_safe(render_to_string('hqwebapp/partials/breadcrumbs.html', {
+        'page': page,
+        'section': section,
+        'parents': parents or [],
+    }))
