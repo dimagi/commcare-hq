@@ -76,7 +76,7 @@ def test_zip_with_gaps_unsorted():
     Unsorted `some_items` will return the first item from `all_items`
     that matches and drop the skipped items.
     """
-    all_items = [1, 2, 3, 4, 5]
-    some_items = [4, 5, 3]
+    all_items = [1, 2, 3, 4, 5, 6, 7]
+    some_items = [6, 7, 3, 4]
     zipped = zip_with_gaps(all_items, some_items)
-    eq(list(zipped), [(4, 4), (5, 5)])
+    eq(list(zipped), [(6, 6), (7, 7)])
