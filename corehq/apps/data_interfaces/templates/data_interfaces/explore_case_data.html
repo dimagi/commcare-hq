@@ -110,6 +110,7 @@
                           limitSlug: 'l',
                           slug: 'datagrid',
                           perPage: $root.data.limit,
+                          itemsTextTemplate: '{% trans_html_attr 'Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> cases' %}',
                           totalItems: $root.data.totalRecords"></pagination>
 
       <div class="modal fade"

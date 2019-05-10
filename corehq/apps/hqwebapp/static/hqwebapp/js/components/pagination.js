@@ -93,7 +93,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.itemsText = ko.computed(function () {
                 var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
                 return _.template(
-                    gettext('Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries')
+                    params.itemsTextTemplate || gettext('Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries')
                 )({
                     firstItem: ((self.currentPage() - 1) * self.perPage()) + 1,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,
