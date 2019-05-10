@@ -219,10 +219,6 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     if hubspot_id and hubspot_cookie:
-        url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
-            hubspot_id=hubspot_id,
-            form_id=form_id
-        )
         data = {
             'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
@@ -235,13 +231,19 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
         if extra_fields:
             data.update(extra_fields)
 
-        response = _send_hubspot_form_request(url, data)
+        response = _send_hubspot_form_request(hubspot_id, form_id, data)
         _log_response('HS', data, response)
         response.raise_for_status()
 
 
 @count_by_response_code(DATADOG_HUBSPOT_SENT_FORM_METRIC)
-def _send_hubspot_form_request(url, data):
+def _send_hubspot_form_request(hubspot_id, form_id, data):
+    # Submits a urlencoded form, not JSON.  data should use "true"/"false" for bools
+    # https://developers.hubspot.com/docs/methods/forms/submit_form
+    url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+        hubspot_id=hubspot_id,
+        form_id=form_id
+    )
     return requests.post(url, data=data)
 
 
@@ -257,8 +259,8 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         return
 
     tracking_info = {
-        'created_account_in_hq': True,
-        'is_a_commcare_user': True,
+        'created_account_in_hq': 'true',
+        'is_a_commcare_user': 'true',
         'lifecyclestage': 'lead',
     }
     env = get_instance_string()
@@ -271,7 +273,7 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
     if web_user.atypical_user:
         tracking_info.update({
-            'atypical_user': True
+            'atypical_user': 'true'
         })
 
     tracking_info.update(get_ab_test_properties(web_user))
