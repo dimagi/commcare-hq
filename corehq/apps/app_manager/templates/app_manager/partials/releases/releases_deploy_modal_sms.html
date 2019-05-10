@@ -29,7 +29,7 @@
     </form>
   </div>
   <div data-bind="visible: generating_url()">
-    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
+    <i class='fa fa-spin fa-spinner'></i>
   </div>
   <div data-bind="visible: !{% if is_odk %}sms_odk_url(){% else %}sms_url(){% endif %} && !generating_url()">
         <span class="label label-danger">
