@@ -171,7 +171,7 @@
                           class="form-control"
                           data-bind="value: name,
                                      select2: {
-                                       placeholder: 'select property',
+                                       placeholder: '{% trans_html_attr "Select Property" %}',
                                        delay: 250,
                                        getInitialValue: getInitialNameValue,
                                        url: $root.editColumnController.endpoint.getUrl(),
