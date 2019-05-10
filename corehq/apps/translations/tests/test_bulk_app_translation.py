@@ -760,6 +760,104 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
              ('baz', {'en': 'newbaz'})]
         )
 
+class BulkAppTranslationPartialsTest(BulkAppTranslationTestBaseWithApp):
+
+    multi_sheet_headers = (
+        (MODULES_AND_FORMS_SHEET_NAME, 
+         ('Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id')),
+        ('menu1', 
+         ('case_property', 'list_or_detail', 'default_en')),
+        ('menu1_form1', 
+         ('label', 'default_en', 'image_en', 'audio_en', 'video_en'))
+    )
+    multi_sheet_upload = (
+        (MODULES_AND_FORMS_SHEET_NAME,
+         (('Menu', 'menu1', 'update_case module', '', '', 'update_case_module'),
+          ('Form', 'menu1_form1', 'update_case form 0', '', '', 'update_case_form_0'))),
+        ('menu1',
+         (('name', 'list', 'Name'),
+          ('yes', 'list', 'Yes'),
+          ('yes', 'list', 'Yep'),
+          ('no', 'list', 'No'),
+          ('no', 'list', 'Nope'),
+          ('name', 'detail', 'Name'),
+          ('name', 'detail', 'Name'),
+          ('name', 'detail', 'Name'))),
+        ('menu1_form1', [])
+    )
+
+    def setUp(self):
+        """
+        Instantiate an app with AppFactory
+        """
+        # Don't use super() because we don't want BulkAppTranslationTestBaseWithApp.app
+        BulkAppTranslationTestBase.setUp(self)
+
+        factory = AppFactory(build_version='2.11.0')
+        module1, form1 = factory.new_basic_module('update_case', 'person')
+        factory.add_module_case_detail_column(module1, 'long', 'name', 'Name')
+        factory.add_module_case_detail_column(module1, 'long', 'name', 'Name')
+        factory.add_module_case_detail_column(module1, 'short', 'yes', 'Yes')
+        factory.add_module_case_detail_column(module1, 'short', 'yes', 'Yep')
+        factory.add_module_case_detail_column(module1, 'short', 'no', 'No')
+        factory.add_module_case_detail_column(module1, 'short', 'no', 'Nope')
+        self.app = factory.app
+
+    @flag_enabled('ICDS')
+    def test_partial_missing_dups(self):
+        """
+        Dropping some duplicates of a case property should throw an error
+        """
+        translations = []
+        for sheet in self.multi_sheet_upload:
+            if sheet[0] == 'menu1':
+                menu1_translations = []
+                for i, translation in enumerate(sheet[1]):
+                    # Drop one name translation
+                    if i == 5:
+                        assert translation[0:2] == ('name', 'detail')
+                        continue
+                    menu1_translations.append(translation)
+                translations.append(['menu1', menu1_translations])
+            else:
+                translations.append(sheet)
+
+        messages = [
+            'There is more than one translation for case property "name" for '
+            'menu 1, but some translations are missing. Unable to determine '
+            'which translation(s) to use. Skipping this case property.',
+
+            'App Translations Updated!',
+        ]
+        self.upload_raw_excel_translations(self.multi_sheet_headers, translations,
+                                           expected_messages=messages)
+
+    @flag_enabled('ICDS')
+    def test_partial_no_dups(self):
+        """
+        Dropping all duplicates of a case property should succeed
+        """
+        translations = []
+        for sheet in self.multi_sheet_upload:
+            if sheet[0] == 'menu1':
+                menu1_translations = []
+                for translation in sheet[1]:
+                    # Drop all name translations
+                    if translation[0:2] == ('name', 'detail'):
+                        continue
+                    menu1_translations.append(translation)
+                translations.append(['menu1', menu1_translations])
+            else:
+                translations.append(sheet)
+        self.upload_raw_excel_translations(self.multi_sheet_headers, translations)
+
+    @flag_enabled('ICDS')
+    def test_partial_all_dups(self):
+        """
+        Translating duplicates should succeed
+        """
+        self.upload_raw_excel_translations(self.multi_sheet_headers, self.multi_sheet_upload)
+
 
 class MismatchedItextReferenceTest(BulkAppTranslationTestBaseWithApp):
     """
