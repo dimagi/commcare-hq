@@ -415,7 +415,8 @@ def _action_sort_key_function(case):
                 type_index(second_action.action_type)
             )
 
-        if not (first_action.server_date and second_action.server_date):
+        if not (first_action.server_date and second_action.server_date
+                and first_action.date and second_action.date):
             raise MissingServerDate()
 
         if abs(first_action.server_date - second_action.server_date) > const.SIGNIFICANT_TIME:
