@@ -32,7 +32,7 @@
     "config": {
         "engine_id": "default",
         "base_item_expression": {
-            "type": "abt_supervisor_v2019"
+            "type": "abt_supervisor_v2"
         },
         "configured_filter": {
             "filters": [
@@ -56,7 +56,7 @@
                                 "type": "property_path"
                             },
                             "operator": "eq",
-                            "property_value": "yes",
+                            "property_value": "no",
                             "type": "boolean_expression"
                         }
                     ]
@@ -81,7 +81,7 @@
                                 "type": "property_path"
                             },
                             "operator": "eq",
-                            "property_value": "yes",
+                            "property_value": "no",
                             "type": "boolean_expression"
                         }
                     ]
@@ -106,7 +106,7 @@
                                 "type": "property_path"
                             },
                             "operator": "eq",
-                            "property_value": "yes",
+                            "property_value": "no",
                             "type": "boolean_expression"
                         }
                     ]
@@ -131,7 +131,7 @@
                                 "type": "property_path"
                             },
                             "operator": "eq",
-                            "property_value": "yes",
+                            "property_value": "no",
                             "type": "boolean_expression"
                         }
                     ]
@@ -156,7 +156,7 @@
                                 "type": "property_path"
                             },
                             "operator": "eq",
-                            "property_value": "yes",
+                            "property_value": "no",
                             "type": "boolean_expression"
                         }
                     ]
@@ -359,9 +359,15 @@
                 "datatype": "string",
                 "display_name": "inspector_names",
                 "expression": {
-                    "datatype": null,
-                    "property_name": "names",
-                    "type": "property_name"
+                    "expression": {
+                        "datatype": null,
+                        "property_path": [
+                            "form",
+                            "inspector_names"
+                        ],
+                        "type": "property_path"
+                    },
+                    "type": "root_doc"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,
@@ -409,26 +415,12 @@
                 "is_primary_key": false,
                 "transform": {},
                 "type": "expression"
-            },
-            {
-                "column_id": "responsible_follow_up",
-                "datatype": "string",
-                "display_name": "responsible_follow_up",
-                "expression": {
-                    "datatype": null,
-                    "property_name": "responsible_follow_up",
-                    "type": "property_name"
-                },
-                "is_nullable": true,
-                "is_primary_key": false,
-                "transform": {},
-                "type": "expression"
             }
         ],
         "description": "",
-        "display_name": "Supervisory Indicators v2019",
+        "display_name": "Supervisory Indicators v2",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "supervisory-v2019"
+        "table_id": "supervisory-v2-001"
     }
 }
