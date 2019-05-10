@@ -6,12 +6,12 @@ from collections import namedtuple
 
 from testil import eq
 
-from corehq.apps.translations import utils
-from corehq.apps.translations.utils import zip_with_gaps
+from corehq.util import itertools
+from corehq.util.itertools import zip_with_gaps
 
 
 def test_doctests():
-    results = doctest.testmod(utils)
+    results = doctest.testmod(itertools)
     assert results.failed == 0
 
 

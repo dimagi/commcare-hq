@@ -17,7 +17,7 @@ from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_unicode_dicts,
 )
-from corehq.apps.translations.utils import zip_with_gaps
+from corehq.util.itertools import zip_with_gaps
 
 
 class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
