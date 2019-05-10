@@ -5,6 +5,7 @@ from celery.task import task
 from soil import DownloadBase
 
 from corehq.apps.fixtures.download import prepare_fixture_download
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureOwnership
 from corehq.apps.fixtures.upload import upload_fixture_file
 
 
@@ -40,3 +41,15 @@ def async_fixture_download(table_ids, domain, download_id):
     DownloadBase.set_progress(task, 0, 100)
     prepare_fixture_download(table_ids, domain, task, download_id)
     DownloadBase.set_progress(task, 100, 100)
+
+
+# this task is likely to fail if view has not been hit recently
+# should be retried
+@task(queue='background_queue')
+def delete_unneeded_fixture_data_item(domain, data_type_id):
+    item_ids = []
+    for item in FixtureDataItem.by_data_type(domain, data_type_id):
+        item.delete()
+        item_ids.append(item.get_id)
+    for doc in FixtureOwnership.for_all_item_ids(item_ids, domain):
+        doc.delete()
