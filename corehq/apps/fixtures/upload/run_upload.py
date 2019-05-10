@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, unicode_literals
 
+import uuid
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
@@ -7,6 +9,7 @@ import six
 from couchdbkit import ResourceNotFound
 from six.moves import range
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
 from soil import DownloadBase
 
@@ -92,6 +95,74 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                 return_val.errors.extend(err)
 
     clear_fixture_quickcache(domain, data_types)
+    clear_fixture_cache(domain)
+    return return_val
+
+
+def _run_fast_fixture_upload(domain, workbook, task=None):
+    return_val = FixtureUploadResult()
+
+    type_sheets = workbook.get_all_type_sheets()
+    total_tables = len(type_sheets)
+    return_val.number_of_fixtures = total_tables
+
+    def _update_progress(table_count, item_count, items_in_table):
+        if task:
+            processed = table_count * 10 + (10 * item_count / items_in_table)
+            DownloadBase.set_progress(task, processed, 10 * total_tables)
+
+    existing_data_types_by_tag = {
+        data_type.tag: data_type
+        for data_type in FixtureDataType.by_domain(domain)
+    }
+    for table_number, table_def in enumerate(type_sheets):
+        docs_to_save = []
+        data_type = {
+            "_id": uuid.uuid4().hex,
+            "doc_type": "FixtureDataType",
+            "domain": domain,
+            "is_global": False,
+            "description": None,
+            "fields": [field.to_json() for field in table_def.fields],
+            "copy_from": None,
+            "tag": table_def.table_id,
+            "item_attributes": table_def.item_attributes
+        }
+        docs_to_save.append(data_type)
+
+        data_items = list(workbook.get_data_sheet(data_type['tag']))
+        items_in_table = len(data_items)
+        for sort_key, di in enumerate(data_items):
+            _update_progress(table_number, sort_key, items_in_table)
+            type_fields = table_def.fields
+            item_fields = {
+                field.field_name: _process_item_field(field, di).to_json()
+                for field in type_fields
+            }
+
+            item_attributes = di.get('property', {})
+            data_item = {
+                "_id": uuid.uuid4().hex,
+                "doc_type": "FixtureDataItem",
+                "domain": domain,
+                "sort_key": sort_key,
+                "fields": item_fields,
+                "data_type_id": data_type['_id'],
+                "item_attributes": item_attributes
+            }
+            docs_to_save.append(data_item)
+
+        for docs in chunked(docs_to_save, 1000):
+            FixtureDataItem.get_db().save_docs(docs)
+
+        existing_data_type = existing_data_types_by_tag.get(data_type['tag'])
+        if existing_data_type:
+            from corehq.apps.fixtures.tasks import delete_unneeded_fixture_data_item
+            existing_data_type.delete()
+            delete_unneeded_fixture_data_item.delay(domain, existing_data_type._id)
+            clear_fixture_quickcache(domain, [existing_data_type])
+            clear_fixture_cache(domain)
+
     clear_fixture_cache(domain)
     return return_val
 
