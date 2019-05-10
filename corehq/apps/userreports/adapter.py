@@ -20,10 +20,10 @@ class IndicatorAdapter(object):
     def get_table(self):
         raise NotImplementedError
 
-    def rebuild_table(self, initiated_by=None, source=None):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
-    def drop_table(self, initiated_by=None, source=None):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
     @unit_testing_only

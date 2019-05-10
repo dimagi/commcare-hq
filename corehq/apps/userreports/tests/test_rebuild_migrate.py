@@ -6,10 +6,18 @@ from django.test import TestCase
 from sqlalchemy.engine import reflection
 
 from corehq.apps.userreports.models import DataSourceActionLog, DataSourceConfiguration
-from corehq.apps.userreports.tests.utils import get_sample_data_source
+from corehq.apps.userreports.tests.utils import get_sample_data_source, skip_domain_filter_patch
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.pillows.case import get_case_pillow
 from corehq.util.test_utils import softer_assert
+
+
+def setup_module():
+    skip_domain_filter_patch.start()
+
+
+def teardown_module():
+    skip_domain_filter_patch.stop()
 
 
 class RebuildTableTest(TestCase):

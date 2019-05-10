@@ -293,17 +293,17 @@ class MultiDBSqlAdapter(object):
     def get_distinct_values(self, column, limit):
         return self.main_adapter.get_distinct_values(column, limit)
 
-    def build_table(self):
+    def build_table(self, initiated_by=None, source=None):
         for adapter in self.all_adapters:
-            adapter.build_table()
+            adapter.build_table(initiated_by=initiated_by, source=source)
 
-    def rebuild_table(self):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
-            adapter.rebuild_table()
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
-            adapter.drop_table()
+            adapter.drop_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
 
     @unit_testing_only
     def clear_table(self):

@@ -122,7 +122,7 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
 
     def obj_create(self, bundle, request=None, **kwargs):
         if FixtureDataType.by_domain_tag(kwargs['domain'], bundle.data.get("tag")):
-            raise AssertionError("A lookup table with name %s already exists" % bundle.data.get("tag"))
+            raise BadRequest("A lookup table with name %s already exists" % bundle.data.get("tag"))
 
         bundle.obj = FixtureDataType(bundle.data)
         bundle.obj.domain = kwargs['domain']

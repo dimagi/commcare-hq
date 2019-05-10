@@ -10,6 +10,7 @@ import six
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
@@ -66,6 +67,16 @@ def _filter_by_hash(configs, ucr_division):
     return filtered_configs
 
 
+def _filter_missing_domains(configs):
+    """Return a list of configs whose domain exists on this environment"""
+    domain_names = [config.domain for config in configs if config.is_static]
+    existing_domains = list(get_domain_ids_by_names(domain_names))
+    return [
+        config for config in configs
+        if not config.is_static or config.domain in existing_domains
+    ]
+
+
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
@@ -107,6 +118,8 @@ class ConfigurableReportTableManagerMixin(object):
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
+
+        configs = _filter_missing_domains(configs)
 
         return configs
 
@@ -202,7 +215,7 @@ class ConfigurableReportTableManagerMixin(object):
             return
 
         if config.is_static:
-            rebuild_indicators.delay(adapter.config.get_id)
+            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop')
         else:
             adapter.rebuild_table(source='pillowtop')
 
