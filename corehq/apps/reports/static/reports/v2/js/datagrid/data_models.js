@@ -40,11 +40,11 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
         self.pages = ko.computed(function () {
             return _.map(_.range(1, self.totalPages() + 1), function (pageNum) {
-               return _numberOption(pageNum, self.currentPage());
+                return _numberOption(pageNum, self.currentPage());
             });
         });
 
-        self.limits = ko.computed(function() {
+        self.limits = ko.computed(function () {
             return _.map([10, 25, 50, 100], function (limitNum) {
                 return _numberOption(limitNum, self.limit());
             });
@@ -79,7 +79,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         };
 
         self.showNext = ko.computed(function () {
-           return self.currentPage() < self.totalPages();
+            return self.currentPage() < self.totalPages();
         });
 
         self.showPrevious = ko.computed(function () {
@@ -87,8 +87,8 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         });
 
         self.nextPage = function () {
-           self.currentPage(Math.min(self.totalPages(), self.currentPage() + 1));
-           self.loadRecords();
+            self.currentPage(Math.min(self.totalPages(), self.currentPage() + 1));
+            self.loadRecords();
         };
 
         self.previousPage = function () {

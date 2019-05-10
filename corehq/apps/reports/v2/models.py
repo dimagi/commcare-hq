@@ -9,6 +9,8 @@ from abc import ABCMeta, abstractmethod
 
 from memoized import memoized
 
+from django.utils.translation import ugettext as _
+
 from corehq.apps.reports.v2.exceptions import (
     EndpointNotFoundError,
     ReportFilterNotFound,
@@ -47,7 +49,7 @@ class BaseReport(object):
             return endpoint_class(self.request, self.domain)
         except (KeyError, NameError):
             raise EndpointNotFoundError(
-                "The report endpoint for {}/{} cannot be found.".format(
+                _("The report endpoint for {}/{} cannot be found.").format(
                     self.slug, endpoint_slug
                 )
             )
