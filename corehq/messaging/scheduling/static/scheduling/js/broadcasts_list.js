@@ -1,14 +1,77 @@
 hqDefine("scheduling/js/broadcasts_list", [
     'jquery',
+    'knockout',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'datatables',
     'datatables.fixedColumns',
     'datatables.bootstrap',
 ], function (
     $,
+    ko,
+    assertProperties,
     initialPageData
 ) {
-    var scheduledTable = null;
+    var broadcast = function (options) {
+        var self = _.extend({}, options);
+
+        return self;
+    };
+
+    var broadcastList = function (options) {
+        assertProperties.assertRequired(options, ['listAction']);
+
+        var self = {};
+        self.broadcasts = ko.observableArray();
+
+        self.itemsPerPage = ko.observable();
+        self.totalItems = ko.observable();
+        self.showPaginationSpinner = ko.observable(false);
+
+        self.emptyTable = ko.computed(function () {
+            return self.totalItems() === 0;
+        });
+        self.currentPage = ko.observable(1);
+        self.goToPage = function (page) {
+            self.showPaginationSpinner(true);
+            self.currentPage(page);
+            $.ajax({
+                url: initialPageData.reverse("new_list_broadcasts"),
+                data: {
+                    action: options.listAction,
+                    page: page,
+                    limit: self.itemsPerPage(),
+                },
+                success: function (data) {
+                    self.showPaginationSpinner(false);
+                    self.broadcasts(_.map(data.broadcasts, function (b) { return broadcast(b); }));
+                    self.totalItems(data.total);
+                },
+            });
+        };
+
+        self.goToPage(self.currentPage());
+
+        return self;
+    };
+
+    $(function () {
+        var $scheduledTable = $("#scheduled-table");
+        if ($scheduledTable.length) {
+            $scheduledTable.koApplyBindings(broadcastList({
+                listAction: 'list_scheduled',
+            }));
+        }
+
+        var $immediateTable = $("#immediate-table");
+        if ($immediateTable.length) {
+            $immediateTable.koApplyBindings(broadcastList({
+                listAction: 'list_immediate',
+            }));
+        }
+    });
+
+    /*var scheduledTable = null;
 
     $(function () {
         var listBroadcastsUrl = initialPageData.reverse("new_list_broadcasts");
@@ -154,5 +217,5 @@ hqDefine("scheduling/js/broadcasts_list", [
         if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
             broadcastAction('delete_scheduled_broadcast', this);
         }
-    }
+    }*/
 });

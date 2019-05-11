@@ -33,6 +33,11 @@
                     <th class="col-md-2">{% trans 'Action' %}</th>
                 </tr>
             </thead>
+            <tbody data-bind="foreach: broadcasts">
+                <tr>
+                    <td data-bind="text: name"></td>
+                </tr>
+            </tbody>
         </table>
     </div>
     <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
@@ -44,6 +49,11 @@
                     <th class="col-md-4">{% trans 'Sent' %}</th>
                 </tr>
             </thead>
+            <tbody data-bind="foreach: broadcasts">
+                <tr>
+                    <td data-bind="text: name"></td>
+                </tr>
+            </tbody>
         </table>
     </div>
 {% endblock %}
