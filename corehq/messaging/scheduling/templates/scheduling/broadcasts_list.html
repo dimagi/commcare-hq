@@ -35,7 +35,31 @@
             </thead>
             <tbody data-bind="foreach: broadcasts">
                 <tr>
-                    <td data-bind="text: name"></td>
+                    <td class="text-center">
+                        <button class="btn btn-danger" data-bind="click: deleteBroadcast">
+                            <i class="fa fa-remove"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <a data-bind="text: name, attr: {href: editUrl}"></a>
+                    </td>
+                    <td data-bind="text: last_sent"></td>
+                    <td>
+                        <span class="label label-success" data-bind="visible: active()">
+                            {% trans "Active" %}
+                        </span>
+                        <span class="label label-danger" data-bind="visible: !active()">
+                            {% trans "Inactive" %}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-default" data-bind="visible: active(), disable: !editable(), click: deactivateBroadcast">
+                            {% trans "Deactivate" %}
+                        </button>
+                        <button class="btn btn-default" data-bind="visible: !active(), disable: !editable(), click: activateBroadcast">
+                            {% trans "Activate" %}
+                        </button>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -51,7 +75,10 @@
             </thead>
             <tbody data-bind="foreach: broadcasts">
                 <tr>
-                    <td data-bind="text: name"></td>
+                    <td>
+                        <a data-bind="text: name, attr: {href: editUrl}"></a>
+                    </td>
+                    <td data-bind="text: last_sent"></td>
                 </tr>
             </tbody>
         </table>
