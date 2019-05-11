@@ -1,51 +1,73 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from contextlib import contextmanager
+from __future__ import absolute_import, unicode_literals
+
 import json
-from tempfile import NamedTemporaryFile
-from couchdbkit import ResourceNotFound
 from collections import OrderedDict
+from contextlib import contextmanager
+from copy import deepcopy
+from io import open
+from tempfile import NamedTemporaryFile
 
 from django.contrib import messages
-from django.urls import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, JsonResponse
+from django.http import (
+    Http404,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.fixtures.tasks import async_fixture_download, fixture_upload_async
-from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
-from corehq.apps.fixtures.download import prepare_fixture_html
-from corehq.apps.fixtures.exceptions import (
-    FixtureDownloadError,
-    FixtureUploadError,
-    FixtureAPIRequestError)
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.upload import upload_fixture_file, validate_fixture_file_format
-from corehq.apps.fixtures.utils import clear_fixture_cache, is_identifier_invalid
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.models import Permissions
-from corehq.util.files import file_extention_from_filename
-from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response, get_url_base
-from dimagi.utils.decorators.view import get_file
+import six
+from couchdbkit import ResourceNotFound
+from six.moves import range
 
-from copy import deepcopy
+from dimagi.utils.couch.bulk import CouchTransaction
+from dimagi.utils.decorators.view import get_file
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base, json_response
 from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-import six
-from six.moves import range
-from io import open
+
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
+from corehq.apps.fixtures.download import prepare_fixture_html
+from corehq.apps.fixtures.exceptions import (
+    FixtureAPIRequestError,
+    FixtureDownloadError,
+    FixtureUploadError,
+)
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureTypeField,
+)
+from corehq.apps.fixtures.tasks import (
+    async_fixture_download,
+    fixture_upload_async,
+)
+from corehq.apps.fixtures.upload import (
+    upload_fixture_file,
+    validate_fixture_file_format,
+)
+from corehq.apps.fixtures.utils import (
+    clear_fixture_cache,
+    is_identifier_invalid,
+)
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.users.models import Permissions
+from corehq.util.files import file_extention_from_filename
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
