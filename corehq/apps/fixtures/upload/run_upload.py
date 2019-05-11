@@ -116,7 +116,6 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
         for data_type in FixtureDataType.by_domain(domain)
     }
     for table_number, table_def in enumerate(type_sheets):
-        docs_to_save = []
         data_type = {
             "_id": uuid.uuid4().hex,
             "doc_type": "FixtureDataType",
@@ -128,8 +127,8 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
             "tag": table_def.table_id,
             "item_attributes": table_def.item_attributes
         }
-        docs_to_save.append(data_type)
 
+        data_item_docs_to_save = []
         data_items = list(workbook.get_data_sheet(data_type['tag']))
         items_in_table = len(data_items)
         for sort_key, di in enumerate(data_items):
@@ -150,20 +149,49 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
                 "data_type_id": data_type['_id'],
                 "item_attributes": item_attributes
             }
-            docs_to_save.append(data_item)
+            data_item_docs_to_save.append(data_item)
 
-        for docs in chunked(docs_to_save, 1000):
+        # save all the data items in the fixture, before the data type
+        # This ensure that all data items are created before the data type is created
+        # which could result in partial table upload
+        for docs in chunked(data_item_docs_to_save, 1000):
             FixtureDataItem.get_db().save_docs(docs)
 
+        data_type_docs = [data_type]
         existing_data_type = existing_data_types_by_tag.get(data_type['tag'])
+        if existing_data_type:
+            # delete the old data type in the same request
+            data_type_docs.append({
+                "_id": existing_data_type._id,
+                "_rev": existing_data_type._rev,
+                "_deleted": True
+            })
+            return_val.messages.append(
+                _("Pre-existing definition of {lookup_table_name} found").format(
+                    lookup_table_name=existing_data_type.tag
+                )
+            )
+
+        # if we fail in the above or following save_docs it introduces a lot of data items
+        # that do not have a data type doc. This is ok as data items are always accessed
+        # through their data_type_id in real code
+        FixtureDataType.get_db().save_docs(data_type_docs)
+        return_val.messages.extend([
+            _("Pre-existing definition of {lookup_table_name} deleted").format(
+                lookup_table_name=existing_data_type.tag
+            ),
+            _("Table {lookup_table_name} successfully uploaded").format(lookup_table_name=data_type['tag']),
+        ])
+
         if existing_data_type:
             from corehq.apps.fixtures.tasks import delete_unneeded_fixture_data_item
             existing_data_type.delete()
+            # delay removing data items for the previously delete type as that requires a
+            # couch view hit which introduces another opportunity for failure
             delete_unneeded_fixture_data_item.delay(domain, existing_data_type._id)
             clear_fixture_quickcache(domain, [existing_data_type])
-            clear_fixture_cache(domain)
+        clear_fixture_cache(domain)
 
-    clear_fixture_cache(domain)
     return return_val
 
 
