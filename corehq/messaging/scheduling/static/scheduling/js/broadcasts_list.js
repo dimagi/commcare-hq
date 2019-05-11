@@ -96,17 +96,17 @@ hqDefine("scheduling/js/broadcasts_list", [
     };
 
     $(function () {
-        var $scheduledTable = $("#scheduled-table");
-        if ($scheduledTable.length) {
-            $scheduledTable.koApplyBindings(broadcastList({
+        var $scheduledList = $("#scheduled-broadcasts");
+        if ($scheduledList.length) {
+            $scheduledList.koApplyBindings(broadcastList({
                 listAction: 'list_scheduled',
                 type: 'scheduled',
             }));
         }
 
-        var $immediateTable = $("#immediate-table");
-        if ($immediateTable.length) {
-            $immediateTable.koApplyBindings(broadcastList({
+        var $immediateList = $("#immediate-broadcasts");
+        if ($immediateList.length) {
+            $immediateList.koApplyBindings(broadcastList({
                 listAction: 'list_immediate',
                 type: 'immediate',
             }));
@@ -116,8 +116,6 @@ hqDefine("scheduling/js/broadcasts_list", [
     /*var scheduledTable = null;
 
     $(function () {
-        var listBroadcastsUrl = initialPageData.reverse("new_list_broadcasts");
-
         scheduledTable = $("#scheduled-table").dataTable({
             "lengthChange": false,
             "filter": false,
@@ -131,8 +129,6 @@ hqDefine("scheduling/js/broadcasts_list", [
             },
             "sDom": "rtp",
             "language": {
-                "emptyTable": gettext('There are no messages to display.'),
-                "infoEmpty": gettext('There are no messages to display.'),
                 "lengthMenu": gettext('Show _MENU_ messages per page'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ broadcasts'),
                 "infoFiltered": gettext('(filtered from _MAX_ total broadcasts)'),
@@ -152,8 +148,6 @@ hqDefine("scheduling/js/broadcasts_list", [
             },
             "dom": "rtp",
             "language": {
-                "emptyTable": gettext('There are no messages to display.'),
-                "infoEmpty": gettext('There are no messages to display.'),
                 "lengthMenu": gettext('Show _MENU_ messages per page'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ messages'),
                 "infoFiltered": gettext('(filtered from _MAX_ total messages)'),

@@ -22,8 +22,11 @@
         </a>
     </div>
     <h4>{% trans 'Scheduled Broadcasts' %}</h4>
-    <div>
-        <table id="scheduled-table" class="table table-striped table-bordered ko-template">
+    <div id="scheduled-broadcasts" class="ko-template">
+        <div class="alert alert-info" data-bind="visible: !broadcasts().length">
+            {% trans "There are no messages to display." %}
+        </div>
+        <table class="table table-striped table-bordered" data-bind="visible: broadcasts().length">
             <thead>
                 <tr>
                     <th class="col-md-1">{% trans 'Delete' %}</th>
@@ -67,8 +70,11 @@
         </table>
     </div>
     <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
-    <div>
-        <table id="immediate-table" class="table table-striped table-bordered ko-template">
+    <div id="immediate-broadcasts" class="ko-template">
+        <div class="alert alert-info" data-bind="visible: !broadcasts().length">
+            {% trans "There are no messages to display." %}
+        </div>
+        <table class="table table-striped table-bordered" data-bind="visible: broadcasts().length">
             <thead>
                 <tr>
                     <th class="col-md-8">{% trans 'Name' %}</th>
