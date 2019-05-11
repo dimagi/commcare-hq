@@ -15,18 +15,40 @@ hqDefine("scheduling/js/broadcasts_list", [
     var broadcast = function (options) {
         var self = ko.mapping.fromJS(options);
 
-        self.editUrl = initialPageData.reverse('edit_schedule', self.type, self.id());
+        self.editUrl = initialPageData.reverse('edit_schedule', self.type(), self.id());
+        self.actionInProgress = ko.observable(false);
 
-        self.activateBroadcast = function () {
-            alert("TODO: activate_scheduled_broadcast " + self.id());
+        self.activateBroadcast = function (model) {
+            self.broadcastAction('activate_scheduled_broadcast', model);
         };
 
-        self.deactivateBroadcast = function () {
-            alert("TODO: deactivate_scheduled_broadcast " + self.id());
+        self.deactivateBroadcast = function (model) {
+            self.broadcastAction('deactivate_scheduled_broadcast', model);
         };
 
-        self.deleteBroadcast = function () {
-            alert("TODO: delete " + self.id());
+        self.deleteBroadcast = function (model) {
+            if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
+                self.broadcastAction('delete_scheduled_broadcast', model);
+            }
+        };
+
+        self.broadcastAction = function (action, model, success) {
+            self.actionInProgress(true);
+            $.ajax({
+                url: '',
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    action: action,
+                    broadcast_id: model.id(),
+                },
+                success: function (data) {
+                    ko.mapping.fromJS(data.broadcast, self);
+                },
+            })
+            .always(function () {
+                self.actionInProgress(false);
+            });
         };
 
         return self;
@@ -137,42 +159,5 @@ hqDefine("scheduling/js/broadcasts_list", [
                 "infoFiltered": gettext('(filtered from _MAX_ total messages)'),
             },
         });
-    });
-
-    function broadcastAction(action, button) {
-        var broadcastId = $(button).data("id"),
-            $row = $(button).closest("tr"),
-            $activateButton = $row.find(".broadcast-activate"),
-            $deleteButton = $row.find(".broadcast-delete");
-        if (action === 'delete_scheduled_broadcast') {
-            $deleteButton.disableButton();
-            $activateButton.prop('disabled', true);
-        } else {
-            $activateButton.disableButton();
-            $deleteButton.prop('disabled', true);
-        }
-
-        $.ajax({
-            url: '',
-            type: 'post',
-            dataType: 'json',
-            data: {
-                action: action,
-                broadcast_id: broadcastId,
-            },
-        })
-            .always(function () {
-                scheduledTable.fnDraw(false);
-            });
-    }
-
-    function activateScheduledBroadcast() {
-        broadcastAction($(this).data("action"), this);
-    }
-
-    function deleteScheduledBroadcast() {
-        if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
-            broadcastAction('delete_scheduled_broadcast', this);
-        }
-    }*/
+    }); */
 });

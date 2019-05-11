@@ -312,18 +312,21 @@ class BroadcastListView(BaseMessagingSectionView):
         page = int(self.request.GET.get('page', 1))
         skip = (page - 1) * limit
 
-        broadcasts = [{
+        broadcasts = [self._fmt_scheduled_broadcast(broadcast) for broadcast in query[skip:skip + limit]]
+        return JsonResponse({
+            'broadcasts': broadcasts,
+            'total': total_records,
+        })
+
+    def _fmt_scheduled_broadcast(self, broadcast):
+        return {
             'name': broadcast.name,
             'last_sent': self._format_time(broadcast.last_sent_timestamp),
             'active': broadcast.schedule.active,
             'editable': self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
             'id': broadcast.id,
-        } for broadcast in query[skip:skip + limit]]
-
-        return JsonResponse({
-            'broadcasts': broadcasts,
-            'total': total_records,
-        })
+            'deleted': broadcast.deleted,
+        }
 
     def get_immediate_ajax_response(self):
         query = (
@@ -368,12 +371,18 @@ class BroadcastListView(BaseMessagingSectionView):
             start_date=broadcast.start_date
         )
 
-        return HttpResponse()
+        return JsonResponse({
+            'success': True,
+            'broadcast': self._fmt_scheduled_broadcast(broadcast),
+        })
 
     def get_scheduled_broadcast_delete_ajax_response(self, broadcast_id):
         broadcast = self.get_scheduled_broadcast(broadcast_id)
         broadcast.soft_delete()
-        return HttpResponse()
+        return JsonResponse({
+            'success': True,
+            'broadcast': self._fmt_scheduled_broadcast(broadcast),
+        })
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')
