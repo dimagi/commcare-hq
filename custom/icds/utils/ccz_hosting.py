@@ -12,16 +12,10 @@ from corehq.blobs.models import BlobMeta
 
 
 class CCZHostingUtility:
-    def __init__(self, ccz_hosting=None, blob_id=None):
-        """
-        utils for ccz file actions either via ccz hosting or a blob object id
-        """
-        if not ccz_hosting and not blob_id:
-            raise Exception("Need either ccz hosting or blob id to work with")
-        self.ccz_hosting = ccz_hosting
-        self.blob_id = blob_id
-        if ccz_hosting and not blob_id:
-            self.blob_id = self.ccz_hosting.blob_id
+    def __init__(self, file_hosting):
+        self.domain = file_hosting.domain
+        self.file_hosting = file_hosting
+        self.blob_id = file_hosting.blob_id
 
     def file_exists(self):
         return get_blob_db().exists(key=self.blob_id)
@@ -42,29 +36,25 @@ class CCZHostingUtility:
 
     @property
     def ccz_details(self):
-        if self.ccz_hosting:
-            file_name = self.ccz_hosting.file_name
-        else:
-            file_name = self.get_file_name()
         return {
-            'name': file_name,
+            'name': self.file_hosting.file_name,
             'download_url': reverse('ccz_hosting_download_ccz', args=[
-                self.ccz_hosting.domain, self.ccz_hosting.id, self.blob_id])
+                self.domain, self.file_hosting.id, self.blob_id])
         }
 
-    def store_file_in_blobdb(self, ccz_file, name):
+    def store_file_in_blobdb(self, file_obj, name):
         db = get_blob_db()
         try:
             kw = {"meta": db.metadb.get(parent_id='CCZHosting', key=self.blob_id)}
         except BlobMeta.DoesNotExist:
             kw = {
-                "domain": self.ccz_hosting.link.domain,
+                "domain": self.file_hosting.domain,
                 "parent_id": 'CCZHosting',
                 "type_code": CODES.tempfile,
                 "key": self.blob_id,
                 "name": name,
             }
-        db.put(ccz_file, **kw)
+        db.put(file_obj, **kw)
 
     def remove_file_from_blobdb(self):
         get_blob_db().delete(key=self.blob_id)
