@@ -242,7 +242,7 @@ def remove_ccz_hosting(request, domain, hosting_id):
 def download_ccz(request, domain, hosting_id, blob_id):
     ccz_hosting = CCZHosting.objects.get(pk=hosting_id, link__domain=domain)
     assert ccz_hosting.blob_id == blob_id
-    file_size = ccz_hosting.utility.get_file_meta.content_length
+    file_size = ccz_hosting.utility.get_file_meta().content_length
     # check for file name of the ccz hosting object first because
     # the file meta might be coming from CCZ stored for another ccz hosting instance
     # since we don't re-store already present CCZs
@@ -260,4 +260,4 @@ def download_ccz_supporting_files(request, domain, blob_id):
     ccz_utility = CCZHostingUtility(blob_id=blob_id)
     content_format = Format('', Format.ZIP, '', True)
     return get_download_response(ccz_utility.get_file(), ccz_utility.get_file_size(), content_format,
-                                 ccz_utility.get_file_meta.name, request)
+                                 ccz_utility.get_file_meta().name, request)
