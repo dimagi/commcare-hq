@@ -135,7 +135,8 @@ class CCZHosting(models.Model):
         from custom.icds.tasks.ccz_hosting import setup_ccz_file_for_hosting
         self.full_clean()
         super(CCZHosting, self).save(*args, **kwargs)
-        setup_ccz_file_for_hosting.delay(self.pk)
+        if not self.utility.file_exists():
+            setup_ccz_file_for_hosting.delay(self.pk)
 
     def delete_ccz(self):
         # if no other link is using this app+version+profile, delete the file from blobdb
