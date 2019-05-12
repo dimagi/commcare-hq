@@ -79,7 +79,7 @@ class ManageCCZHostingLink(BaseDomainView):
         link_id = self.kwargs.get('link_id')
         if link_id:
             try:
-                ccz_hosting_link = CCZHostingLink.objects.get(pk=link_id)
+                ccz_hosting_link = CCZHostingLink.objects.get(pk=link_id, domain=self.domain)
             except CCZHostingLink.DoesNotExist:
                 pass
             else:
@@ -101,7 +101,7 @@ class EditCCZHostingLink(ManageCCZHostingLink):
 
     @cached_property
     def form(self):
-        link = CCZHostingLink.objects.get(id=self.kwargs['link_id'])
+        link = CCZHostingLink.objects.get(id=self.kwargs['link_id'], domain=self.domain)
         if self.request.POST:
             return CCZHostingLinkForm(domain=self.domain, instance=link, data=self.request.POST)
         return CCZHostingLinkForm(domain=self.domain, instance=link)
