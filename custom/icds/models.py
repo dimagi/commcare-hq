@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import cached_property
@@ -77,6 +78,17 @@ class CCZHostingSupportingFile(models.Model):
     def delete(self, *args, **kwargs):
         self.delete_file()
         super(CCZHostingSupportingFile, self).delete(*args, **kwargs)
+
+    @classmethod
+    def create(cls, domain, file_name, file_type, display, file_obj):
+        supporting_file = cls(
+            file_name=file_name, file_type=file_type, display=display,
+            domain=domain, blob_id=uuid.uuid4().hex
+        )
+        supporting_file.full_clean()
+        supporting_file.save()
+        supporting_file.utility.store_file_in_blobdb(file_obj, file_name)
+        return supporting_file.utility.file_exists()
 
 
 class CCZHosting(models.Model):
