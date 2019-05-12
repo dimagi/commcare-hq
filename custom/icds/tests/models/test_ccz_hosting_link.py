@@ -35,6 +35,3 @@ class TestCCZHostingLink(TestCase):
         self.assertNotEqual(self.link.password, self.raw_password)
         self.assertTrue(verify_password(self.raw_password, self.link.password),
                         "encrypted password does not match")
-
-    def test_representation(self):
-        self.assertEqual(six.text_type(self.link), self.link.identifier)
