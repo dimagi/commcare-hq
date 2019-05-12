@@ -8,6 +8,12 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from corehq.motech.utils import b64_aes_decrypt
+from custom.icds.const import (
+    FILE_TYPE_CHOICE_ZIP,
+    FILE_TYPE_CHOICE_DOC,
+    DISPLAY_CHOICE_LIST,
+    DISPLAY_CHOICE_FOOTER,
+)
 from custom.icds.utils.ccz_hosting import CCZHostingUtility
 from custom.icds.validators import (
     LowercaseAlphanumericValidator,
@@ -38,6 +44,39 @@ class CCZHostingLink(models.Model):
         for ccz_hosting in CCZHosting.objects.filter(link=self):
             ccz_hosting.delete()
         super(CCZHostingLink, self).delete(*args, **kwargs)
+
+
+class CCZHostingSupportingFile(models.Model):
+    FILE_TYPE_CHOICES = (
+        (FILE_TYPE_CHOICE_ZIP, 'zip'),
+        (FILE_TYPE_CHOICE_DOC, 'document'),
+    )
+    DISPLAY_CHOICES = (
+        (DISPLAY_CHOICE_LIST, 'list'),
+        (DISPLAY_CHOICE_FOOTER, 'footer'),
+    )
+    domain = models.CharField(null=False, max_length=255, db_index=True)
+    blob_id = models.CharField(null=False, max_length=255, db_index=True)
+    file_name = models.CharField(max_length=255, blank=False)
+    file_type = models.IntegerField(choices=FILE_TYPE_CHOICES)
+    display = models.IntegerField(choices=DISPLAY_CHOICES)
+
+    class Meta:
+        unique_together = ('domain', 'blob_id')
+
+    @cached_property
+    def utility(self):
+        return CCZHostingUtility(self)
+
+    def delete_file(self):
+        # if no other domain is using this file/doc, delete the file from blobdb
+        if not (CCZHostingSupportingFile.objects.filter(blob_id=self.blob_id)
+                .exclude(domain=self.domain).exists()):
+            self.utility.remove_file_from_blobdb()
+
+    def delete(self, *args, **kwargs):
+        self.delete_file()
+        super(CCZHostingSupportingFile, self).delete(*args, **kwargs)
 
 
 class CCZHosting(models.Model):
@@ -99,7 +138,7 @@ class CCZHosting(models.Model):
         setup_ccz_file_for_hosting.delay(self.pk)
 
     def delete_ccz(self):
-        # if no other link is using this app+version+profile, delete the file reference
+        # if no other link is using this app+version+profile, delete the file from blobdb
         if not (CCZHosting.objects.filter(app_id=self.app_id, version=self.version, profile_id=self.profile_id)
                 .exclude(link=self.link).exists()):
             self.utility.remove_file_from_blobdb()

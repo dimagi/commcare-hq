@@ -48,12 +48,12 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-                {% if supporting_files %}
+                {% if supporting_list_files %}
                     <div class="mb-40">
                         <p class="file-titles font-weight-bold underlined">
                             Supporting Files
                         </p>
-                        {% for name, download_url in supporting_files.items %}
+                        {% for name, download_url in supporting_list_files.items %}
                         <p>
                             <a href="{{ download_url }}">{{ name }}</a>
                         </p>
@@ -62,12 +62,12 @@
                 {% endif %}
             </div>
         </div>
-        {% if supporting_docs %}
+        {% if supporting_footer_files %}
             <div class="row" id="supporting-doc-row">
                 <div class="col-sm-1"></div>
                 <div class="col-sm-9 text-center">
                     <ul class="list-inline">
-                    {% for name, download_url in supporting_docs.items %}
+                    {% for name, download_url in supporting_footer_files.items %}
                         <li class="list-inline-item">
                             <a href="{{ download_url }}">{{ name }}</a>
                         </li>

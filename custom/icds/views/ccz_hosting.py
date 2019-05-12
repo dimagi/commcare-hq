@@ -31,6 +31,11 @@ from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.util.download import get_download_response
+from custom.icds.const import (
+    DISPLAY_CHOICE_LIST,
+    DISPLAY_CHOICE_FOOTER,
+    FILE_TYPE_CHOICE_ZIP,
+)
 from custom.icds.forms import (
     CCZHostingForm,
     CCZHostingLinkForm,
@@ -38,6 +43,7 @@ from custom.icds.forms import (
 from custom.icds.models import (
     CCZHostingLink,
     CCZHosting,
+    CCZHostingSupportingFile,
 )
 from custom.icds.utils.ccz_hosting import CCZHostingUtility
 
@@ -205,16 +211,12 @@ class CCZHostingView(DomainViewMixin, TemplateView):
     def _page_title(self):
         return self.ccz_hosting_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
 
-    def _get_supporting_files(self):
+    def _get_files_for(self, display):
         return {
-            file_name: reverse('ccz_hosting_download_supporting_files', args=[self.domain, blob_id])
-            for file_name, blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_FILES.get(self.domain, {}).items()
-        }
-
-    def _get_supporting_docs(self):
-        return {
-            file_name: reverse('ccz_hosting_download_supporting_files', args=[self.domain, blob_id])
-            for file_name, blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_DOCS.get(self.domain, {}).items()
+            supporting_file.file_name: reverse('ccz_hosting_download_supporting_files',
+                                               args=[supporting_file.domain, supporting_file.pk])
+            for supporting_file in CCZHostingSupportingFile.objects.filter(domain=self.domain,
+                                                                           display=display)
         }
 
     def get_context_data(self, **kwargs):
@@ -223,8 +225,8 @@ class CCZHostingView(DomainViewMixin, TemplateView):
             'page_title': self._page_title,
             'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
-            'supporting_files': self._get_supporting_files(),
-            'supporting_docs': self._get_supporting_docs(),
+            'supporting_list_files': self._get_files_for(DISPLAY_CHOICE_LIST),
+            'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
         }
 
 
@@ -255,9 +257,14 @@ def download_ccz(request, domain, hosting_id, blob_id):
 
 
 @location_safe
-def download_ccz_supporting_files(request, domain, blob_id):
-    assert blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_FILES.get(domain, {}).values()
-    ccz_utility = CCZHostingUtility(blob_id=blob_id)
-    content_format = Format('', Format.ZIP, '', True)
+def download_ccz_supporting_files(request, domain, hosting_supporting_file_id):
+    ccz_supporting_file = CCZHostingSupportingFile.objects.get(pk=hosting_supporting_file_id, domain=domain)
+    ccz_utility = ccz_supporting_file.utility
+    file_name = ccz_supporting_file.file_name or ccz_utility.get_file_meta().name
+    if ccz_supporting_file.file_type == FILE_TYPE_CHOICE_ZIP:
+        content_format = Format('', Format.ZIP, '', True)
+    else:
+        content_format = Format('', Format.HTML, '', True)
     return get_download_response(ccz_utility.get_file(), ccz_utility.get_file_size(), content_format,
-                                 ccz_utility.get_file_meta().name, request)
+                                 file_name, request)
+
