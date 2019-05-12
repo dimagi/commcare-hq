@@ -17,10 +17,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_version_build_id,
 )
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.motech.utils import (
-    b64_aes_decrypt,
-    b64_aes_encrypt,
-)
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from custom.icds.models import (
