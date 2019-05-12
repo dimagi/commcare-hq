@@ -62,7 +62,7 @@ hqDefine("app_manager/js/widgets_v4", [
                 $('#app-profile-id-input').select2({
                     placeholder: gettext("Select profile"),
                     allowClear: true,
-                    data: buildProfiles
+                    data: buildProfiles,
                 });
             });
             $select.on('change.select2', function () {

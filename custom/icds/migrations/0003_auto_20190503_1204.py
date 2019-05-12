@@ -22,7 +22,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cczhostinglink',
             name='identifier',
-            field=models.CharField(db_index=True, max_length=255, unique=True, validators=[django.core.validators.RegexValidator('^[a-z0-9]*$', code='invalid_lowercase_alphanumberic', message='must be lowercase alphanumeric')]),
+            field=models.CharField(db_index=True, max_length=255, unique=True,
+                                   validators=[
+                                       django.core.validators.RegexValidator(
+                                           '^[a-z0-9]*$',
+                                           code='invalid_lowercase_alphanumberic',
+                                           message='must be lowercase alphanumeric')]),
         ),
         migrations.AlterUniqueTogether(
             name='cczhosting',
