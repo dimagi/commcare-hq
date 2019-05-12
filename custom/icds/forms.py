@@ -40,14 +40,14 @@ class CCZHostingLinkForm(forms.ModelForm):
         save_button_text = _('Update') if self.instance.pk else _('Create')
         self.helper.layout.append(Submit('save', save_button_text))
         if self.instance.pk:
+            del self.fields['password']
+        else:
+            self.fields['password'].widget = forms.PasswordInput()
+        if self.instance.pk:
             self.helper.layout.append(Submit('delete', _('Delete')))
         self.helper.layout = crispy.Fieldset(_("CCZ Hosting Link"), self.helper.layout)
         self.fields['identifier'].widget.attrs.update({'class': 'text-lowercase'})
-        self.initial['password'] = b64_aes_decrypt(self.instance.password)
         self.instance.domain = domain
-
-    def clean_password(self):
-        return b64_aes_encrypt(self.cleaned_data['password'])
 
 
 class CCZHostingForm(forms.Form):

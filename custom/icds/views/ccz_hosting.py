@@ -45,7 +45,7 @@ from custom.icds.models import (
     CCZHosting,
     CCZHostingSupportingFile,
 )
-from custom.icds.utils.ccz_hosting import CCZHostingUtility
+from custom.nic_compliance.utils import verify_password
 
 
 @location_safe
@@ -200,7 +200,7 @@ class CCZHostingView(DomainViewMixin, TemplateView):
 
         username, password = get_username_and_password_from_request(request)
         if username and password:
-            if username == ccz_hosting_link.username and password == ccz_hosting_link.get_password:
+            if username == ccz_hosting_link.username and verify_password(password, ccz_hosting_link.password):
                 return super(CCZHostingView, self).get(request, *args, **kwargs)
         # User did not provide an authorization header or gave incorrect credentials.
         response = HttpResponse(status=401)

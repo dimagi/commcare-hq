@@ -8,7 +8,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.app_manager.dbaccessors import get_build_by_version
-from corehq.motech.utils import b64_aes_decrypt
 from custom.icds.const import (
     FILE_TYPE_CHOICE_ZIP,
     FILE_TYPE_CHOICE_DOC,
@@ -19,6 +18,7 @@ from custom.icds.utils.ccz_hosting import CCZHostingUtility
 from custom.icds.validators import (
     LowercaseAlphanumericValidator,
 )
+from custom.nic_compliance.utils import hash_password
 
 
 class CCZHostingLink(models.Model):
@@ -33,13 +33,15 @@ class CCZHostingLink(models.Model):
     def __str__(self):
         return self.identifier
 
-    @cached_property
-    def get_password(self):
-        return b64_aes_decrypt(self.password)
-
     def to_json(self):
         from custom.icds.serializers import CCZHostingLinkSerializer
         return CCZHostingLinkSerializer(self).data
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.password = hash_password(self.password)
+        self.full_clean()
+        super(CCZHostingLink, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         for ccz_hosting in CCZHosting.objects.filter(link=self):
