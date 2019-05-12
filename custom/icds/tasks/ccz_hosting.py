@@ -22,7 +22,7 @@ def setup_ccz_file_for_hosting(ccz_hosting_id):
     ccz_utility = ccz_hosting.utility
     # set up the file if not already present
     if not ccz_utility.file_exists():
-        build = wrap_app(get_build_by_version(ccz_hosting.link.domain, ccz_hosting.app_id, version))
+        build = wrap_app(get_build_by_version(ccz_hosting.domain, ccz_hosting.app_id, version))
         ccz_file = create_ccz_files(build, ccz_hosting.profile_id)
         try:
             with open(ccz_file, 'rb') as ccz:

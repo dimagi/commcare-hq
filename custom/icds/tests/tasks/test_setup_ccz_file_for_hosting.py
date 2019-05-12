@@ -50,7 +50,7 @@ class TestSetUpCCZFileForHosting(SimpleTestCase):
         setup_ccz_file_for_hosting(3)
 
         self.assertTrue(mock_result.called)
-        mock_get_build.assert_called_with(self.ccz_hosting.link.domain, self.ccz_hosting.app_id,
+        mock_get_build.assert_called_with(self.ccz_hosting.domain, self.ccz_hosting.app_id,
                                           self.ccz_hosting.version)
         self.assertTrue(mock_create_ccz.called)
         self.assertTrue(mock_ccz_utility.return_value.store_file_in_blobdb.called)
@@ -68,7 +68,7 @@ class TestSetUpCCZFileForHosting(SimpleTestCase):
         with self.assertRaisesMessage(Exception, "Fail hard!"):
             setup_ccz_file_for_hosting(3)
 
-        mock_get_build.assert_called_with(self.ccz_hosting.link.domain, self.ccz_hosting.app_id,
+        mock_get_build.assert_called_with(self.ccz_hosting.domain, self.ccz_hosting.app_id,
                                           self.ccz_hosting.version)
         self.assertTrue(mock_create_ccz.called)
         self.assertTrue(mock_ccz_utility.return_value.store_file_in_blobdb.called)
