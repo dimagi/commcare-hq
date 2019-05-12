@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
+import sys
 from io import open
 from celery.task import task
 
@@ -28,4 +30,4 @@ def setup_ccz_file_for_hosting(ccz_hosting_id):
         except Exception as e:
             # delete the file from blob db if it was added but later failed
             ccz_utility.remove_file_from_blobdb()
-            raise e
+            six.reraise(*sys.exc_info())
