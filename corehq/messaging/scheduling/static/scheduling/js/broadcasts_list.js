@@ -30,7 +30,7 @@ hqDefine("scheduling/js/broadcasts_list", [
             }
         };
 
-        self.broadcastAction = function (action, model, success) {
+        self.broadcastAction = function (action, model) {
             self.actionInProgress(true);
             $.ajax({
                 url: '',
@@ -43,8 +43,7 @@ hqDefine("scheduling/js/broadcasts_list", [
                 success: function (data) {
                     ko.mapping.fromJS(data.broadcast, self);
                 },
-            })
-            .always(function () {
+            }).always(function () {
                 self.actionInProgress(false);
             });
         };
