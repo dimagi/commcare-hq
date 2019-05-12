@@ -16,6 +16,8 @@ class CCZHostingUtility:
         """
         utils for ccz file actions either via ccz hosting or a blob object id
         """
+        if not ccz_hosting and not blob_id:
+            raise Exception("Need either ccz hosting or blob id to work with")
         self.ccz_hosting = ccz_hosting
         self.blob_id = blob_id
         if ccz_hosting and not blob_id:
