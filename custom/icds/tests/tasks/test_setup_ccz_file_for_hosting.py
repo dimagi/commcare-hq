@@ -11,6 +11,7 @@ from custom.icds.models import (
 )
 
 
+@mock.patch('custom.icds.tasks.ccz_hosting.open')
 @mock.patch('custom.icds.tasks.ccz_hosting.wrap_app')
 @mock.patch('custom.icds.tasks.ccz_hosting.get_build_by_version')
 @mock.patch('custom.icds.tasks.ccz_hosting.create_ccz_files')
@@ -62,6 +63,10 @@ class TestSetUpCCZFileForHosting(SimpleTestCase):
         mock_result.return_value = False
         mock_ccz_utility.return_value.file_exists = mock_result
 
+        mock_delete_ccz = mock.MagicMock()
+        self.ccz_hosting.delete_ccz = mock_delete_ccz
+        mock_delete_ccz.return_value = True
+
         mock_store = mock.MagicMock()
         mock_ccz_utility.return_value.store_file_in_blobdb = mock_store
         mock_store.side_effect = Exception("Fail hard!")
@@ -72,4 +77,4 @@ class TestSetUpCCZFileForHosting(SimpleTestCase):
                                           self.ccz_hosting.version)
         self.assertTrue(mock_create_ccz.called)
         self.assertTrue(mock_ccz_utility.return_value.store_file_in_blobdb.called)
-        self.assertTrue(mock_ccz_utility.return_value.remove_file_from_blobdb.called)
+        self.assertTrue(mock_delete_ccz.called)
