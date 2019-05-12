@@ -29,6 +29,10 @@ class Command(BaseCommand):
                             help='Only retrieve from one database')
         parser.add_argument('--initiated-by', action='store', required=True, dest='initiated',
                             help='Who initiated the rebuild')
+        parser.add_argument('--start', action='store', dest='start',
+                            help='only include objects after date (inclusive)')
+        parser.add_argument('--end', action='store', dest='end',
+                            help='only include objects before date (exclusive)')
 
     def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
         assert type_ in ('xform', 'case')
@@ -37,7 +41,6 @@ class Command(BaseCommand):
         configs = []
         for data_source_id in data_source_ids:
             config, _ = get_datasource_config(data_source_id, domain)
-            assert config.asynchronous
             assert config.referenced_doc_type == self.referenced_type
             configs.append(config)
 
@@ -49,6 +52,8 @@ class Command(BaseCommand):
         self.case_type_or_xmlns = case_type_or_xmlns
         self.bulk = options['bulk']
         self.database = options['database']
+        self.start = options.get('start')
+        self.end = options.get('end')
 
         self.config_ids = [config._id for config in configs]
         ids = []
@@ -93,16 +98,25 @@ class Command(BaseCommand):
 
     def _get_ids(self, db):
         if self.referenced_type == CASE_DOC_TYPE:
-            return (
+            date_column = 'modified_on'
+            query = (
                 CommCareCaseSQL.objects
                 .using(db)
                 .filter(domain=self.domain, type=self.case_type_or_xmlns)
                 .values_list('case_id', flat=True)
             )
         elif self.referenced_type == XFORM_DOC_TYPE:
-            return(
+            date_column = 'received_on'
+            query = (
                 XFormInstanceSQL.objects
                 .using(db)
                 .filter(domain=self.domain, xmlns=self.case_type_or_xmlns)
                 .values_list('form_id', flat=True)
             )
+        if self.start:
+            kw = '{}__gte'.format(date_column)
+            query = query.filter(kw=self.start)
+        if self.end:
+            kw = ('{}__lt'.format(date_column)
+            query = query.filter(kw=self.end)
+        return query
