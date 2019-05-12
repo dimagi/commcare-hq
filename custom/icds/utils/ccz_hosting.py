@@ -39,7 +39,7 @@ class CCZHostingUtility:
         return {
             'name': self.file_hosting.file_name,
             'download_url': reverse('ccz_hosting_download_ccz', args=[
-                self.domain, self.file_hosting.id, self.blob_id])
+                self.domain, self.file_hosting.id])
         }
 
     def store_file_in_blobdb(self, file_obj, name):
