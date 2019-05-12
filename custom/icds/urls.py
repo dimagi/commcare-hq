@@ -19,7 +19,7 @@ urlpatterns = [
         name=EditCCZHostingLink.urlname),
     url(r'^ccz/hostings/link/(?P<hosting_id>[\d-]+)/delete/', remove_ccz_hosting,
         name="remove_ccz_hosting"),
-    url(r'^ccz/hostings/(?P<hosting_id>[\w-]+)/download/(?P<blob_id>[\w-]+)/', download_ccz,
+    url(r'^ccz/hostings/(?P<hosting_id>[\w-]+)/download/', download_ccz,
         name="ccz_hosting_download_ccz"),
     url(r'^ccz/hostings/download/support/(?P<hosting_supporting_file_id>[\w-]+)/', download_ccz_supporting_files,
         name="ccz_hosting_download_supporting_files"),
