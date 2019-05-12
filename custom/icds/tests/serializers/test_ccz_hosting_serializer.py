@@ -37,7 +37,7 @@ class TestCCZHostingSerializer(TestCase):
              'profile_name': 'Dummy Build Profile',
              'app_id': 'dummy',
              'ccz_details': {'name': self.ccz_hosting.file_name,
-                             'download_url': '/a/test/ccz/hostings/None/download/dummy1212345/'},
+                             'download_url': '/a/test/ccz/hostings/None/download/'},
              'link_name': self.link.identifier, 'link': self.link.pk, 'version': 12, 'id': None}
         )
 
