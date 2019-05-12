@@ -68,6 +68,12 @@
                 </tr>
             </tbody>
         </table>
+        <pagination data-apply-bindings="false"
+                    params="goToPage: goToPage,
+                            slug: 'scheduled-broadcasts',
+                            perPage: itemsPerPage,
+                            totalItems: totalItems,
+                            showSpinner: showPaginationSpinner"></pagination>
     </div>
     <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
     <div id="immediate-broadcasts" class="ko-template">
@@ -90,5 +96,11 @@
                 </tr>
             </tbody>
         </table>
+        <pagination data-apply-bindings="false"
+                    params="goToPage: goToPage,
+                            slug: 'immediate-broadcasts',
+                            perPage: itemsPerPage,
+                            totalItems: totalItems,
+                            showSpinner: showPaginationSpinner"></pagination>
     </div>
 {% endblock %}

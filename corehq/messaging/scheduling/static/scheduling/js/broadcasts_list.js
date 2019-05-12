@@ -3,9 +3,7 @@ hqDefine("scheduling/js/broadcasts_list", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'datatables',
-    'datatables.fixedColumns',
-    'datatables.bootstrap',
+    "hqwebapp/js/components.ko",     // pagination
 ], function (
     $,
     ko,
