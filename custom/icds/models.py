@@ -30,9 +30,6 @@ class CCZHostingLink(models.Model):
     domain = models.CharField(null=False, max_length=255)
     page_title = models.CharField(blank=True, max_length=255)
 
-    def __str__(self):
-        return self.identifier
-
     def to_json(self):
         from custom.icds.serializers import CCZHostingLinkSerializer
         return CCZHostingLinkSerializer(self).data

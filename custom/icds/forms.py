@@ -88,7 +88,7 @@ class CCZHostingForm(forms.Form):
     def link_choices(self):
         choices = [(None, _('Select Link'))]
         for link in CCZHostingLink.objects.filter(domain=self.domain):
-            choices.append((link.id, link))
+            choices.append((link.id, link.identifier))
         return choices
 
     def _version_exists(self):
