@@ -109,46 +109,4 @@ hqDefine("scheduling/js/broadcasts_list", [
             }));
         }
     });
-
-    /*var scheduledTable = null;
-
-    $(function () {
-        scheduledTable = $("#scheduled-table").dataTable({
-            "lengthChange": false,
-            "filter": false,
-            "sort": false,
-            "displayLength": 10,
-            "processing": false,
-            "serverSide": true,
-            "ajaxSource": listBroadcastsUrl,
-            "fnServerParams": function (aoData) {
-                aoData.push({"name": "action", "value": "list_scheduled"});
-            },
-            "sDom": "rtp",
-            "language": {
-                "lengthMenu": gettext('Show _MENU_ messages per page'),
-                "info": gettext('Showing _START_ to _END_ of _TOTAL_ broadcasts'),
-                "infoFiltered": gettext('(filtered from _MAX_ total broadcasts)'),
-            },
-        });
-
-        $("#immediate-table").dataTable({
-            "lengthChange": false,
-            "filter": false,
-            "sort": false,
-            "displayLength": 10,
-            "processing": false,
-            "serverSide": true,
-            "ajaxSource": listBroadcastsUrl,
-            "fnServerParams": function (aoData) {
-                aoData.push({"name": "action", "value": "list_immediate"});
-            },
-            "dom": "rtp",
-            "language": {
-                "lengthMenu": gettext('Show _MENU_ messages per page'),
-                "info": gettext('Showing _START_ to _END_ of _TOTAL_ messages'),
-                "infoFiltered": gettext('(filtered from _MAX_ total messages)'),
-            },
-        });
-    }); */
 });
