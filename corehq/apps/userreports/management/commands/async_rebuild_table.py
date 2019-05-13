@@ -117,6 +117,6 @@ class Command(BaseCommand):
             kw = '{}__gte'.format(date_column)
             query = query.filter(kw=self.start)
         if self.end:
-            kw = ('{}__lt'.format(date_column)
+            kw = '{}__lt'.format(date_column)
             query = query.filter(kw=self.end)
         return query
