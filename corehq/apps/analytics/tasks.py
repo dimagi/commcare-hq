@@ -354,7 +354,7 @@ def track_job_candidate_on_hubspot_v2(user_email):
 
 
 @analytics_task(serializer='pickle', )
-def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
+def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
