@@ -346,7 +346,7 @@ def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
 
 
 @analytics_task(serializer='pickle', )
-def track_job_candidate_on_hubspot_v2(user_email):
+def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
     }
