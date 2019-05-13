@@ -481,11 +481,13 @@ class PregnantWomanQueryHelper(object):
                 'ancDate': form['date_task'],
                 'ancLocation': form['anc_facility'],
                 'pwWeight': form['anc_weight'],
-                'bloodPressure': "{} / {}".format(form['bp_sys'], form['bp_dias']),
+                'bloodPressure': None,
                 'hb': form['anc_hemoglobin'],
                 'abdominalExamination': form['anc_abdominal_exam'],
                 'abnormalitiesDetected': form['anc_abnormalities'],
             }
+            if form['bp_sys'] and form['bp_dias']:
+                _ret['bloodPressure'] = "{} / {}".format(form['bp_sys'], form['bp_dias'])
             ret.append(_ret)
 
         return ret
