@@ -381,13 +381,13 @@ def track_workflow(email, event, properties=None):
     try:
         if analytics_enabled_for_email(email):
             timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-            _track_workflow_task_v2.delay(email, event, properties, timestamp)
+            _track_workflow_task.delay(email, event, properties, timestamp)
     except Exception:
         notify_exception(None, "Error tracking kissmetrics workflow")
 
 
 @analytics_task(serializer='pickle', )
-def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
+def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
         if isinstance(value, six.text_type):
             return value.encode('utf-8')
