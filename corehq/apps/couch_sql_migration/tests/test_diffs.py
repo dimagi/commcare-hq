@@ -452,3 +452,20 @@ class DiffTestCases(SimpleTestCase):
             )
         ]
         self._test_form_diff_filter(couch_doc, sql_doc, REAL_DIFFS + diffs)
+
+    def test_form_with_opened_by_diff(self):
+        couch_case = {
+            "doc_type": "XFormInstance",
+            "opened_by": "somebody",
+            "actions": [
+                {"action_type": "close"},
+                {"action_type": "rebuild"},
+            ],
+        }
+        sql_case = {
+            "doc_type": "XFormInstance",
+            "opened_by": "somebody else",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])

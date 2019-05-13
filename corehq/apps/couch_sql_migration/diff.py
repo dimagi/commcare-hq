@@ -83,6 +83,11 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'user_id', old=None),
         Ignore('type', 'opened_on', old=None),
         Ignore('type', 'opened_by', old=MISSING),
+        # The form that created the case was archived, but the opened_by
+        # field was not updated as part of the subsequent rebuild.
+        # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
+        # opened_by or opened_on (the latter is ignored by has_date_values).
+        Ignore('diff', 'opened_by', check=is_case_without_create_action),
         # form has case block with no actions
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
@@ -378,3 +383,8 @@ def case_index_order(old_obj, new_obj, rule, diff):
 def is_supply_point(old_obj, new_obj, rule, diff):
     from corehq.apps.commtrack.const import COMMTRACK_SUPPLY_POINT_XMLNS
     return old_obj["xmlns"] == COMMTRACK_SUPPLY_POINT_XMLNS
+
+
+def is_case_without_create_action(old_obj, new_obj, rule, diff):
+    from casexml.apps.case.const import CASE_ACTION_CREATE as CREATE
+    return all(a.get("action_type") != CREATE for a in old_obj.get("actions", []))
