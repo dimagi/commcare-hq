@@ -91,7 +91,7 @@ def catch_signal(sender, **kwargs):
     engine.dispose()
 
 
-@attr.s
+@attr.s(frozen=True)
 class SimpleDiff(object):
     type = attr.ib()
     table_name = attr.ib()
