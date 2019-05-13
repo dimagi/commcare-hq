@@ -99,8 +99,8 @@ def update_tables(request, domain, data_type_id):
         except ResourceNotFound:
             raise Http404()
 
-        assert(data_type.doc_type == FixtureDataType._doc_type)
-        assert(data_type.domain == domain)
+        if data_type.domain != domain:
+            raise Http404()
 
         if request.method == 'GET':
             return json_response(strip_json(data_type))
