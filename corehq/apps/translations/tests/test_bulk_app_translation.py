@@ -761,7 +761,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         )
 
 
-class BulkAppTranslationPartialsTest(BulkAppTranslationTestBaseWithApp):
+class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
 
     multi_sheet_headers = (
         (MODULES_AND_FORMS_SHEET_NAME,
@@ -791,8 +791,7 @@ class BulkAppTranslationPartialsTest(BulkAppTranslationTestBaseWithApp):
         """
         Instantiate an app with AppFactory
         """
-        # Don't use super() because we don't want BulkAppTranslationTestBaseWithApp.app
-        BulkAppTranslationTestBase.setUp(self)
+        super(BulkAppTranslationPartialsTest, self).setUp()
 
         factory = AppFactory(build_version='2.11.0')
         module1, form1 = factory.new_basic_module('update_case', 'person')
@@ -830,9 +829,8 @@ class BulkAppTranslationPartialsTest(BulkAppTranslationTestBaseWithApp):
 
             'App Translations Updated!',
         ]
-        self.upload_raw_excel_translations(self.multi_sheet_headers, translations,
+        self.upload_raw_excel_translations(self.app, self.multi_sheet_headers, translations,
                                            expected_messages=messages)
-
     @flag_enabled('ICDS')
     def test_partial_no_dups(self):
         """
@@ -850,14 +848,14 @@ class BulkAppTranslationPartialsTest(BulkAppTranslationTestBaseWithApp):
                 translations.append(['menu1', menu1_translations])
             else:
                 translations.append(sheet)
-        self.upload_raw_excel_translations(self.multi_sheet_headers, translations)
+        self.upload_raw_excel_translations(self.app, self.multi_sheet_headers, translations)
 
     @flag_enabled('ICDS')
     def test_partial_all_dups(self):
         """
         Translating duplicates should succeed
         """
-        self.upload_raw_excel_translations(self.multi_sheet_headers, self.multi_sheet_upload)
+        self.upload_raw_excel_translations(self.app, self.multi_sheet_headers, self.multi_sheet_upload)
 
 
 class MismatchedItextReferenceTest(BulkAppTranslationTestBaseWithApp):
