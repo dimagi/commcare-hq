@@ -299,7 +299,7 @@ def track_built_app_on_hubspot(webuser):
 
 
 @analytics_task(serializer='pickle', )
-def track_confirmed_account_on_hubspot_v2(webuser):
+def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
