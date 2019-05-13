@@ -1759,6 +1759,13 @@ IMPROVED_ASR_REPORT = StaticToggle(
     [NAMESPACE_USER]
 )
 
+SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
+    'skip_orm_fixture_upload',
+    'Exposes an option in fixture api upload to skip saving through couchdbkit',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
