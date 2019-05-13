@@ -82,7 +82,7 @@ def tables(request, domain):
 
 
 @require_can_edit_fixtures
-def update_tables(request, domain, data_type_id, test_patch=None):
+def update_tables(request, domain, data_type_id):
     """
     receives a JSON-update patch like following
     {
@@ -93,8 +93,6 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         "fields":{"genderr":{"update":"gender"},"grade":{}}
     }
     """
-    if test_patch is None:
-        test_patch = {}
     if data_type_id:
         try:
             data_type = FixtureDataType.get(data_type_id)
@@ -116,7 +114,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
             return HttpResponseBadRequest()
 
     if request.method == 'POST' or request.method == "PUT":
-        fields_update = test_patch or _to_kwargs(request)
+        fields_update = _to_kwargs(request)
         fields_patches = fields_update["fields"]
         data_tag = fields_update["tag"]
         is_global = fields_update["is_global"]
