@@ -831,6 +831,7 @@ class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
         ]
         self.upload_raw_excel_translations(self.app, self.multi_sheet_headers, translations,
                                            expected_messages=messages)
+
     @flag_enabled('ICDS')
     def test_partial_no_dups(self):
         """
