@@ -639,7 +639,7 @@ def _agg_awc_table_weekly(day):
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date, aggregation_start_time):
     aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
-    aggregation_finish_time = datetime.now(pytz.utc).astimezone(INDIA_TIMEZONE)
+    aggregation_finish_time = datetime.now(INDIA_TIMEZONE)
 
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
