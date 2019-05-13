@@ -117,7 +117,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
         icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
         audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
         custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
-        if icon:
+        if icon and not toggles.FORM_SUBMISSION_BLACKLIST.enabled(app.domain):
             yield id_strings.module_icon_locale(module), icon
         if audio:
             yield id_strings.module_audio_locale(module), audio
