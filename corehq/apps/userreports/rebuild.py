@@ -126,7 +126,7 @@ def add_columns(engine, raw_diffs, table_names):
             col.table = None
             changes[table_name].append({
                 'type': DiffTypes.ADD_COLUMN,
-                'value': col.name
+                'item_name': col.name
             })
             op.add_column(table_name, col)
 
@@ -143,7 +143,7 @@ def apply_index_changes(engine, raw_diffs, table_names):
         for index in add_indexes:
             changes[index.table.name].append({
                 'type': DiffTypes.ADD_INDEX,
-                'value': index.name
+                'item_name': index.name
             })
             index.create(conn)
 
