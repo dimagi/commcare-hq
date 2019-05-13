@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 import six
-from couchdbkit import ResourceNotFound
+from couchdbkit import BulkSaveError, ResourceNotFound
 from six.moves import range
 
 from dimagi.utils.chunked import chunked
@@ -156,8 +156,16 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
         # save all the data items in the fixture, before the data type
         # This ensure that all data items are created before the data type is created
         # which could result in partial table upload
-        for docs in chunked(data_item_docs_to_save, 1000):
-            FixtureDataItem.get_db().save_docs(docs)
+        try:
+            for docs in chunked(data_item_docs_to_save, 1000):
+                FixtureDataItem.get_db().save_docs(docs)
+        except BulkSaveError:
+            return_val.errors.append(
+                _("Error occurred while creating {lookup_table_name}. This table was not created").format(
+                    lookup_table_name=data_type['tag']
+                )
+            )
+            continue
 
         data_type_docs = [data_type]
         existing_data_type = existing_data_types_by_tag.get(data_type['tag'])
@@ -168,19 +176,28 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
                 "_rev": existing_data_type._rev,
                 "_deleted": True
             })
+
+        # if we fail in the above or following save_docs it introduces a lot of data items
+        # that do not have a data type doc. This is ok as data items are always accessed
+        # through their data_type_id in real code
+        try:
+            FixtureDataType.get_db().save_docs(data_type_docs)
+        except BulkSaveError:
+            return_val.errors.append(
+                _("Error occurred while creating {lookup_table_name}. This table was not created").format(
+                    lookup_table_name=data_type['tag']
+                )
+            )
+            continue
+        return_val.messages.append(
+            _("Table {lookup_table_name} successfully uploaded").format(lookup_table_name=data_type['tag']),
+        )
+        if existing_data_type:
             return_val.messages.append(
                 _("Pre-existing definition of {lookup_table_name} deleted").format(
                     lookup_table_name=existing_data_type.tag
                 )
             )
-
-        # if we fail in the above or following save_docs it introduces a lot of data items
-        # that do not have a data type doc. This is ok as data items are always accessed
-        # through their data_type_id in real code
-        FixtureDataType.get_db().save_docs(data_type_docs)
-        return_val.messages.extend([
-            _("Table {lookup_table_name} successfully uploaded").format(lookup_table_name=data_type['tag']),
-        ])
 
         if existing_data_type:
             from corehq.apps.fixtures.tasks import delete_unneeded_fixture_data_item
