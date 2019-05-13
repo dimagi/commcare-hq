@@ -308,7 +308,7 @@ class BroadcastListView(BaseMessagingSectionView):
         )
         total_records = query.count()
         query = query.select_related('schedule')
-        limit = int(self.request.GET.get('limit') or 10)
+        limit = int(self.request.GET.get('limit', 10))
         page = int(self.request.GET.get('page', 1))
         skip = (page - 1) * limit
 
