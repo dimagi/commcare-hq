@@ -102,6 +102,13 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
 
 
 def _run_fast_fixture_upload(domain, workbook, task=None):
+    """This upload should be much faster than the default _run_fixture_upload with the following trade-offs:
+
+    * Does not support any fixture ownership. All fixtures must be global
+    * Manually creates the JSON documents instead of using models
+    * Delays all fixture item deletes to an asynchronous task
+    * Creates tables one by one instead of attempting an "all or nothing" approach
+    """
     return_val = FixtureUploadResult()
 
     type_sheets = workbook.get_all_type_sheets()
@@ -177,9 +184,9 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
                 "_deleted": True
             })
 
-        # if we fail in the above or following save_docs it introduces a lot of data items
-        # that do not have a data type doc. This is ok as data items are always accessed
-        # through their data_type_id in real code
+        # the following save_docs can result in two issues:
+        # * the delete fails, new doc save succeeds meaning that there are two data types with the same tag
+        # * the delete succeeds, new doc save fails meaning that there is no data type with the desired tag
         try:
             FixtureDataType.get_db().save_docs(data_type_docs)
         except BulkSaveError:
