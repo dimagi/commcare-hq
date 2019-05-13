@@ -46,6 +46,11 @@ def async_fixture_download(table_ids, domain, download_id):
 
 @task(queue='background_queue', bind=True, default_retry_delay=15 * 60)
 def delete_unneeded_fixture_data_item(self, domain, data_type_id):
+    """Deletes all fixture data items and their ownership models based on their data type.
+
+    Note that this does not bust any caches meaning that the data items could still
+    be returned to the user for some time
+    """
     item_ids = []
     try:
         for items in chunked(FixtureDataItem.by_data_type(domain, data_type_id), 1000):
