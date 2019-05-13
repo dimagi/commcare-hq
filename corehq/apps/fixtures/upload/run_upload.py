@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 
 import six
 from couchdbkit import BulkSaveError, ResourceNotFound
+from requests import HTTPError
 from six.moves import range
 
 from dimagi.utils.chunked import chunked
@@ -166,7 +167,7 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
         try:
             for docs in chunked(data_item_docs_to_save, 1000):
                 FixtureDataItem.get_db().save_docs(docs)
-        except BulkSaveError:
+        except (BulkSaveError, HTTPError):
             return_val.errors.append(
                 _("Error occurred while creating {lookup_table_name}. This table was not created").format(
                     lookup_table_name=data_type['tag']
@@ -189,7 +190,7 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
         # * the delete succeeds, new doc save fails meaning that there is no data type with the desired tag
         try:
             FixtureDataType.get_db().save_docs(data_type_docs)
-        except BulkSaveError:
+        except (BulkSaveError, HTTPError):
             return_val.errors.append(
                 _("Error occurred while creating {lookup_table_name}. This table was not created").format(
                     lookup_table_name=data_type['tag']
