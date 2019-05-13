@@ -63,7 +63,7 @@ def celery_add_time_sent(headers=None, body=None, **kwargs):
     eta = info['eta']
     if eta:
         eta = TimeToStartTimer.parse_iso8601(eta)
-        TimeToStartTimer(task_id).start_timing(eta)
+    TimeToStartTimer(task_id).start_timing(eta)
 
 
 @task_prerun.connect
