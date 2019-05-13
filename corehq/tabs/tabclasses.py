@@ -65,6 +65,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds.views.ccz_hosting import (
+    ManageCCZHostingLink,
+    ManageCCZHosting,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -827,6 +831,11 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
+        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                ManageCCZHosting.page_title,
+                url=reverse(ManageCCZHosting.urlname, args=[self.domain])
+            ))
         if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Manage Releases'),
@@ -1388,6 +1397,27 @@ class EnterpriseSettingsTab(UITab):
                 'title': _('Billing Statements'),
                 'url': reverse('enterprise_billing_statements', args=[self.domain])
             }
+        ]))
+        return items
+
+
+class CCZHostingTab(UITab):
+    title = ugettext_noop('CCZ Hostings')
+    url_prefix_formats = (
+        '/a/{domain}/ccz/hostings/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(CCZHostingTab, self).sidebar_items
+        items.append((_('Manage CCZ Hostings'), [
+            {'url': reverse(ManageCCZHostingLink.urlname, args=[self.domain]),
+             'title': ManageCCZHostingLink.page_title
+             },
+            {'url': reverse(ManageCCZHosting.urlname, args=[self.domain]),
+             'title': ManageCCZHosting.page_title
+             },
         ]))
         return items
 
