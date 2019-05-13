@@ -266,4 +266,5 @@ def check_ccz_multimedia_integrity(domain, fpath):
                     missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
                     errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
 
+    return ['abc', 'def']
     return errors
