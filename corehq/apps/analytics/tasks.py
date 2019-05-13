@@ -323,14 +323,14 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task_v2.delay(
+        send_hubspot_form_task.delay(
             form_id, user.user_id, request.COOKIES.get(HUBSPOT_COOKIE),
             meta, extra_fields=extra_fields
         )
 
 
 @analytics_task()
-def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
+def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
     web_user = WebUser.get_by_user_id(web_user_id)
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
