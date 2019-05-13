@@ -290,3 +290,10 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
+
+
+@task()
+def update_domain_date(user, domain):
+    domain_membership = user.get_domain_membership(domain)
+    domain_membership.last_accessed = datetime.today().date()
+    user.save()
