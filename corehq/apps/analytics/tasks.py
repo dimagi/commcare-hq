@@ -248,7 +248,7 @@ def _send_hubspot_form_request(hubspot_id, form_id, data):
 
 
 @analytics_task(serializer='pickle', )
-def update_hubspot_properties_v2(webuser, properties):
+def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
@@ -689,7 +689,7 @@ def update_subscription_properties_by_domain(domain):
 def update_subscription_properties_by_user(web_user_id, properties):
     web_user = WebUser.get_by_user_id(web_user_id)
     identify_v2(web_user.username, properties)
-    update_hubspot_properties_v2(web_user, properties)
+    update_hubspot_properties(web_user, properties)
 
 
 def get_subscription_properties_by_user(couch_user):

@@ -7,7 +7,7 @@ from django.contrib.auth.signals import user_logged_in
 from corehq.apps.analytics.tasks import (
     track_user_sign_in_on_hubspot_v2,
     HUBSPOT_COOKIE,
-    update_hubspot_properties_v2,
+    update_hubspot_properties,
     identify_v2,
     update_subscription_properties_by_domain, get_subscription_properties_by_user)
 from corehq.apps.analytics.utils import get_meta
@@ -41,7 +41,7 @@ def user_save_callback(sender, **kwargs):
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
         identify_v2.delay(couch_user.username, properties)
-        update_hubspot_properties_v2.delay(couch_user, properties)
+        update_hubspot_properties.delay(couch_user, properties)
 
 
 @receiver(commcare_domain_post_save)
