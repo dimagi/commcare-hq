@@ -335,7 +335,7 @@ class BroadcastListView(BaseMessagingSectionView):
             .order_by('-last_sent_timestamp', 'id')
         )
         total_records = query.count()
-        limit = int(self.request.GET.get('limit') or 10)
+        limit = int(self.request.GET.get('limit', 10))
         page = int(self.request.GET.get('page', 1))
         skip = (page - 1) * limit
 
