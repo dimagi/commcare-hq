@@ -408,7 +408,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
 
 
 @analytics_task(serializer='pickle', )
-def identify_v2(email, properties):
+def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
     :param email: The email address by which to identify the user.
@@ -688,7 +688,7 @@ def update_subscription_properties_by_domain(domain):
 @analytics_task()
 def update_subscription_properties_by_user(web_user_id, properties):
     web_user = WebUser.get_by_user_id(web_user_id)
-    identify_v2(web_user.username, properties)
+    identify(web_user.username, properties)
     update_hubspot_properties(web_user, properties)
 
 
