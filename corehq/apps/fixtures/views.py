@@ -67,6 +67,7 @@ from corehq.apps.fixtures.utils import (
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
+from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 
 
@@ -504,7 +505,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
 
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace, is_async = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async, skip_orm = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', six.text_type(e))
 
@@ -522,6 +523,7 @@ def _upload_fixture_api(request, domain):
                     domain,
                     download_id,
                     replace,
+                    skip_orm
                 )
                 file_ref.set_task(task)
 
@@ -589,7 +591,11 @@ def _get_fixture_upload_args_from_request(request, domain):
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
-    return _excel_upload_file(upload_file), replace, is_async
+    skip_orm = False
+    if request.POST.get('skip_orm') == 'true' and SKIP_ORM_FIXTURE_UPLOAD.enabled(domain):
+        skip_orm = True
+
+    return _excel_upload_file(upload_file), replace, is_async, skip_orm
 
 
 @login_and_domain_required

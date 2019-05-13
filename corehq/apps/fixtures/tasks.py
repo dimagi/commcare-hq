@@ -10,11 +10,11 @@ from corehq.apps.fixtures.upload import upload_fixture_file
 
 
 @task
-def fixture_upload_async(domain, download_id, replace):
+def fixture_upload_async(domain, download_id, replace, skip_orm):
     task = fixture_upload_async
     DownloadBase.set_progress(task, 0, 100)
     download_ref = DownloadBase.get(download_id)
-    result = upload_fixture_file(domain, download_ref.get_filename(), replace, task)
+    result = upload_fixture_file(domain, download_ref.get_filename(), replace, task, skip_orm)
     DownloadBase.set_progress(task, 100, 100)
     return {
         'messages': {

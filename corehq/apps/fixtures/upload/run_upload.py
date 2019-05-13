@@ -30,7 +30,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 
 
-def upload_fixture_file(domain, filename, replace, task=None):
+def upload_fixture_file(domain, filename, replace, task=None, skip_orm=False):
     """
     should only ever be called after the same file has been validated
     using validate_fixture_file_format
@@ -38,6 +38,8 @@ def upload_fixture_file(domain, filename, replace, task=None):
     """
 
     workbook = get_workbook(filename)
+    if skip_orm is True:
+        return _run_fast_fixture_upload(domain, workbook, task=task)
     return _run_fixture_upload(domain, workbook, replace=replace, task=task)
 
 
