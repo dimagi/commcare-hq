@@ -189,15 +189,15 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
                 )
             )
             continue
-        return_val.messages.append(
-            _("Table {lookup_table_name} successfully uploaded").format(lookup_table_name=data_type['tag']),
-        )
         if existing_data_type:
             return_val.messages.append(
                 _("Pre-existing definition of {lookup_table_name} deleted").format(
                     lookup_table_name=existing_data_type.tag
                 )
             )
+        return_val.messages.append(
+            _("Table {lookup_table_name} successfully uploaded").format(lookup_table_name=data_type['tag']),
+        )
 
         if existing_data_type:
             from corehq.apps.fixtures.tasks import delete_unneeded_fixture_data_item
