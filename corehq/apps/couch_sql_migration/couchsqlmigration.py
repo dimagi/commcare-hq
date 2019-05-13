@@ -603,6 +603,11 @@ def _migrate_form_attachments(sql_form, couch_form):
         except BlobMeta.DoesNotExist:
             return None
 
+    if couch_form._attachments and any(
+        name not in couch_form.blobs for name in couch_form._attachments
+    ):
+        _migrate_couch_attachments_to_blob_db(couch_form)
+
     for name, blob in six.iteritems(couch_form.blobs):
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
@@ -674,6 +679,29 @@ def _migrate_case_actions(couch_case, sql_case):
 
     for transaction in transactions.values():
         sql_case.track_create(transaction)
+
+
+def _migrate_couch_attachments_to_blob_db(couch_form):
+    """Migrate couch attachments to blob db
+
+    Should have already been done, but somehow some forms still have not
+    been migrated. This operation is not reversible. It will permanently
+    mutate the couch document.
+    """
+    from couchdbkit.client import Document
+
+    log.warning("migrating couch attachments for form %s", couch_form.form_id)
+    blobs = couch_form.blobs
+    doc = Document(couch_form.get_db().cloudant_database, couch_form.form_id)
+    with couch_form.atomic_blobs():
+        for name, meta in six.iteritems(couch_form._attachments):
+            if name not in blobs:
+                couch_form.put_attachment(
+                    doc.get_attachment(name, attachment_type='binary'),
+                    name,
+                    content_type=meta.get("content_type"),
+                )
+        assert not set(couch_form._attachments) - set(couch_form.blobs), couch_form
 
 
 def _migrate_case_attachments(couch_case, sql_case):

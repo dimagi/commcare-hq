@@ -123,6 +123,13 @@ class MetaDB(object):
     def expire(self, parent_id, key, minutes=60):
         """Set blob expiration to some minutes from now
 
+        This makes it easy to handle the scenario where a new blob is
+        replacing another (now obsolete) blob, but immediate deletion of
+        the obsolete blob would introduce a race condition because in-
+        flight code may retain references to it. This will schedule the
+        obsolete blob for deletion in the near future at which point
+        such a race condition is extremely unlikely to be triggered.
+
         :param parent_id: Parent identifier used for sharding.
         :param key: Blob key.
         :param minutes: Optional number of minutes from now that

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
-from coreqh.blobs.util import set_max_connections
+from corehq.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
 
