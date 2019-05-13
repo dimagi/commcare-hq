@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
+from django.utils.functional import cached_property
 from django.http import HttpResponseRedirect
 from corehq.apps.fixtures.views import fixtures_home, FixtureViewMixIn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
@@ -107,6 +108,10 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
             "selected_table": self.table.get("table_id", ""),
             'data_tables_options': data_tables_options,
         })
+        if self.lookup_table:
+            context.update({
+                "table_description": self.lookup_table.description,
+            })
         return context
 
     @memoized
@@ -121,6 +126,12 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
             return data_table(self.request, self.domain)
         else:
             return {"headers": None, "rows": None}
+
+    @cached_property
+    def lookup_table(self):
+        if self.has_tables() and self.request.GET.get("table_id", None):
+            return FixtureDataType.get(self.request.GET['table_id'])
+        return None
 
     @property
     def headers(self):
