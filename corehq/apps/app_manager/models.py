@@ -4220,6 +4220,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def is_remote_app(self):
         return False
 
+    def get_version(self, version_number):
+        return self.view('app_manager/applications',
+            key=[self.domain, self.master_id, version_number],
+            include_docs=True,
+            limit=1,
+            descending=True,
+        ).first()
+
     @memoized
     def get_previous_version(self):
         return self.view('app_manager/applications',
@@ -4381,8 +4389,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, build_profile_id=None):
-        all_files = self.create_all_files(build_profile_id)
+    def create_build_files(self, build_profile_id=None, version_reverted_to=None):
+        all_files = self.create_all_files(build_profile_id=build_profile_id, version_reverted_to=version_reverted_to)
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
@@ -4504,14 +4512,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.get_jadjar().fetch_jar()
 
     @time_method()
-    def make_build(self, comment=None, user_id=None):
+    def make_build(self, comment=None, user_id=None, version_reverted_to=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        copy.create_build_files()
+        copy.create_build_files(version_reverted_to=version_reverted_to)
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4577,7 +4585,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # by default doing nothing here is fine.
         pass
 
-    def set_media_versions(self):
+    def set_media_versions(self, version_reverted_to=None):
         pass
 
     def get_build_langs(self, build_profile_id=None):
@@ -4788,15 +4796,17 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 else:
                     form.version = None
 
-    def set_media_versions(self):
+    def set_media_versions(self, version_reverted_to=None):
         """
         Set the media version numbers for all media in the app to the current app version
-        if the media is new or has changed since the last build. Otherwise set it to the
-        version from the last build.
+        if the media is new or has changed since the last build or the build reverting to.
+        Otherwise set it to the version from the last build.
         """
 
-        # access to .multimedia_map is slow
-        previous_version = self.get_previous_version()
+        if version_reverted_to:
+            previous_version = self.get_version(version_reverted_to)
+        else:
+            previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
@@ -5035,9 +5045,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
     @time_method()
     @memoized
-    def create_all_files(self, build_profile_id=None):
+    def create_all_files(self, build_profile_id=None, version_reverted_to=None):
         self.set_form_versions()
-        self.set_media_versions()
+        self.set_media_versions(version_reverted_to=version_reverted_to)
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
