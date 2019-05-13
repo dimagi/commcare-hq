@@ -44,13 +44,17 @@ def async_fixture_download(table_ids, domain, download_id):
     DownloadBase.set_progress(task, 100, 100)
 
 
-# this task is likely to fail if view has not been hit recently
-# should be retried
-@task(queue='background_queue')
-def delete_unneeded_fixture_data_item(domain, data_type_id):
+@task(queue='background_queue', bind=True, default_retry_delay=15 * 60)
+def delete_unneeded_fixture_data_item(self, domain, data_type_id):
     item_ids = []
-    for items in chunked(FixtureDataItem.by_data_type(domain, data_type_id), 1000):
-        FixtureDataItem.delete_docs(items)
-        item_ids.extend([item.get_id for item in items])
-    for docs in chunked(FixtureOwnership.for_all_item_ids(item_ids, domain), 1000):
-        FixtureOwnership.delete_docs(items)
+    try:
+        for items in chunked(FixtureDataItem.by_data_type(domain, data_type_id), 1000):
+            FixtureDataItem.delete_docs(items)
+            item_ids.extend([item.get_id for item in items])
+        for docs in chunked(FixtureOwnership.for_all_item_ids(item_ids, domain), 1000):
+            FixtureOwnership.delete_docs(items)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception as exc:
+        # there's no base exception in couchdbkit to catch, so must use Exception
+        self.retry(exc=exc)
