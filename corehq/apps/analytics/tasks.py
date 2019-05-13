@@ -286,7 +286,7 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
 
 @analytics_task(serializer='pickle', )
-def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
+def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
