@@ -338,7 +338,7 @@ def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
 
 
 @analytics_task(serializer='pickle', )
-def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
+def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
