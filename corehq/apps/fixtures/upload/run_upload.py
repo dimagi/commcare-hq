@@ -167,7 +167,7 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
                 "_deleted": True
             })
             return_val.messages.append(
-                _("Pre-existing definition of {lookup_table_name} found").format(
+                _("Pre-existing definition of {lookup_table_name} deleted").format(
                     lookup_table_name=existing_data_type.tag
                 )
             )
@@ -177,15 +177,11 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
         # through their data_type_id in real code
         FixtureDataType.get_db().save_docs(data_type_docs)
         return_val.messages.extend([
-            _("Pre-existing definition of {lookup_table_name} deleted").format(
-                lookup_table_name=existing_data_type.tag
-            ),
             _("Table {lookup_table_name} successfully uploaded").format(lookup_table_name=data_type['tag']),
         ])
 
         if existing_data_type:
             from corehq.apps.fixtures.tasks import delete_unneeded_fixture_data_item
-            existing_data_type.delete()
             # delay removing data items for the previously delete type as that requires a
             # couch view hit which introduces another opportunity for failure
             delete_unneeded_fixture_data_item.delay(domain, existing_data_type._id)
