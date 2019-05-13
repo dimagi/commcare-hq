@@ -130,7 +130,7 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
             "_id": uuid.uuid4().hex,
             "doc_type": "FixtureDataType",
             "domain": domain,
-            "is_global": False,
+            "is_global": True,
             "description": None,
             "fields": [field.to_json() for field in table_def.fields],
             "copy_from": None,
