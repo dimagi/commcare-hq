@@ -67,7 +67,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             f.write(file.getvalue())
             f.seek(0)
             workbook = get_workbook(f)
-            assert workbook, messages
+            assert workbook
             expected_headers = get_bulk_app_sheet_headers(app, lang=lang)
             messages = process_bulk_app_translation_upload(app, workbook, expected_headers, lang=lang)
 
