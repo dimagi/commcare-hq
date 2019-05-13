@@ -97,15 +97,13 @@ def _track_on_hubspot(webuser, properties):
     """
     if webuser.analytics_enabled:
         # Note: Hubspot recommends OAuth instead of api key
-        data = {}
-        if properties:
-            data = {'properties': [{'property': k, 'value': v} for k, v in properties.items()]}
-            _hubspot_post(
-                url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-                    six.moves.urllib.parse.quote(webuser.get_email())
-                ),
-                data=json.dumps(data),
-            )
+        data = {'properties': [{'property': k, 'value': v} for k, v in properties.items()]}
+        _hubspot_post(
+            url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+                six.moves.urllib.parse.quote(webuser.get_email())
+            ),
+            data=json.dumps(data),
+        )
 
 
 def _track_on_hubspot_by_email(email, properties):
@@ -221,10 +219,6 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     if hubspot_id and hubspot_cookie:
-        url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
-            hubspot_id=hubspot_id,
-            form_id=form_id
-        )
         data = {
             'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
@@ -234,19 +228,22 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
                 'firstname': webuser.first_name,
                 'lastname': webuser.last_name,
             })
+        if extra_fields:
+            data.update(extra_fields)
 
-        response = _send_hubspot_form_request(url, data)
+        response = _send_hubspot_form_request(hubspot_id, form_id, data)
         _log_response('HS', data, response)
         response.raise_for_status()
 
-        # these must be submitted after the form to ensure
-        # the contact has been created in hubspot
-        if extra_fields:
-            update_hubspot_properties_v2(webuser, extra_fields)
-
 
 @count_by_response_code(DATADOG_HUBSPOT_SENT_FORM_METRIC)
-def _send_hubspot_form_request(url, data):
+def _send_hubspot_form_request(hubspot_id, form_id, data):
+    # Submits a urlencoded form, not JSON.  data should use "true"/"false" for bools
+    # https://developers.hubspot.com/docs/methods/forms/submit_form
+    url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+        hubspot_id=hubspot_id,
+        form_id=form_id
+    )
     return requests.post(url, data=data)
 
 
@@ -262,8 +259,8 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         return
 
     tracking_info = {
-        'created_account_in_hq': True,
-        'is_a_commcare_user': True,
+        'created_account_in_hq': 'true',
+        'is_a_commcare_user': 'true',
         'lifecyclestage': 'lead',
     }
     env = get_instance_string()
@@ -276,7 +273,7 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
     if web_user.atypical_user:
         tracking_info.update({
-            'atypical_user': True
+            'atypical_user': 'true'
         })
 
     tracking_info.update(get_ab_test_properties(web_user))
