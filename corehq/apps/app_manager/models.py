@@ -4390,7 +4390,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return settings
 
     def create_build_files(self, build_profile_id=None, version_reverted_to=None):
-        all_files = self.create_all_files(build_profile_id=build_profile_id, version_reverted_to=version_reverted_to)
+        all_files = self.create_all_files(build_profile_id=build_profile_id,
+                                          version_reverted_to=version_reverted_to)
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
