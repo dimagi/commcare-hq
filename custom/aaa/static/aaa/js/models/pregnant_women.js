@@ -32,8 +32,7 @@ hqDefine("aaa/js/models/pregnant_women", [
             if (self.dob() === 'N/A') {
                 return self.dob();
             }
-            var selectedDate = new Date(postData.selectedYear(), postData.selectedMonth(), 1);
-            var age = Math.floor(moment(selectedDate).diff(
+            var age = Math.floor(moment(postData.selectedDate()).diff(
                 moment(self.dob(), "YYYY-MM-DD"),'months',true)
             );if (age < 12) {
                 return age + " Mon";
@@ -66,7 +65,7 @@ hqDefine("aaa/js/models/pregnant_women", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'pregMonth()', name: 'pregMonth', title: 'Preg. Month'},
             {data: 'highRiskPregnancy()', name: 'highRiskPregnancy', title: 'High Risk Pregnancy'},
             {data: 'noOfAncCheckUps()', name: 'noOfAncCheckUps', title: 'No. Of ANC Check-Ups'},
@@ -186,6 +185,14 @@ hqDefine("aaa/js/models/pregnant_women", [
                 return 'N/A';
             }
             return reachUtils.BLOODGROUPS[self.bloodGroup()];
+        });
+
+        self.abortionWeeks = ko.computed(function () {
+            if (self.abortionDays() !== undefined) {
+                return Number.isInteger(self.abortionDays()) ? self.abortionDays / 7 : self.abortionDays();
+            } else {
+                return 'N/A';
+            }
         });
 
         return self;

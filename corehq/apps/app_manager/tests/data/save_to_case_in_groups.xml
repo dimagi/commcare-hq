@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+  <h:head>
+    <h:title>Followup</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/DA1A9BA7-8EBD-4172-AABD-6185F1E2CEC9" uiVersion="1" version="1" name="Followup">
+          <a_repeat jr:template="">
+            <save_to_case_in_repeat vellum:role="SaveToCase" vellum:case_type="">
+              <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="" />
+            </save_to_case_in_repeat>
+          </a_repeat>
+          <a_group>
+            <save_to_case_in_group vellum:role="SaveToCase" vellum:case_type="">
+              <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="" />
+            </save_to_case_in_group>
+          </a_group>
+        </data>
+      </instance>
+      <instance src="jr://instance/session" id="commcaresession" />
+      <bind vellum:nodeset="#form/a_repeat" nodeset="/data/a_repeat" />
+      <bind vellum:nodeset="#form/a_group" nodeset="/data/a_group" />
+      <itext>
+        <translation lang="en" default="">
+          <text id="a_repeat-label">
+            <value>Repeat</value>
+          </text>
+          <text id="a_group-label">
+            <value>Group</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <group>
+      <label ref="jr:itext('a_repeat-label')" />
+      <repeat vellum:nodeset="#form/a_repeat" nodeset="/data/a_repeat" />
+    </group>
+    <group vellum:ref="#form/a_group" ref="/data/a_group">
+      <label ref="jr:itext('a_group-label')" />
+    </group>
+  </h:body>
+</h:html>

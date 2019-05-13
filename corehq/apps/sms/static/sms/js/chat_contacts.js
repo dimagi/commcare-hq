@@ -55,9 +55,7 @@ hqDefine('sms/js/chat_contacts', [
             "bFilter": true,
             "oLanguage": {
                 "sLengthMenu": gettext("Show ") + "_MENU_" + gettext(" contacts per page"),
-                "sProcessing": '<img src="' + initialPageData.get("ajax_loader") +
-                    '" alt="loading indicator" />' +
-                    gettext("Loading Contacts..."),
+                "sProcessing": "<i class='fa fa-spin fa-spinner'></i>" + gettext("Loading Contacts..."),
                 "sInfo": gettext("Showing _START_ to _END_ of _TOTAL_ contacts"),
                 "sInfoFiltered": gettext("(filtered from _MAX_ total contacts)"),
             },

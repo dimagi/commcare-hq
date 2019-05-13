@@ -47,6 +47,7 @@ class DataSourceActionLogAdmin(admin.ModelAdmin):
         'initiated_by',
         'action_source',
         'action',
+        'skip_destructive'
     ]
-    list_filter = ('action_source', 'action')
+    list_filter = ('action_source', 'action', 'skip_destructive')
     search_fields = ('domain', 'indicator_config_id',)

@@ -59,8 +59,8 @@ class SuiteGenerator(object):
             ])
 
         # by module
-        entries = EntriesContributor(self.suite, self.app, self.modules)
-        menus = MenuContributor(self.suite, self.app, self.modules)
+        entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
+        menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
 
         if any(module.is_training_module for module in self.modules):

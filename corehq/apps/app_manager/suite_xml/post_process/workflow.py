@@ -592,6 +592,8 @@ class CommandId(object):
     def __ne__(self, other):
         return not self == other
 
+    __hash__ = None
+
     def __repr__(self):
         return 'ModuleCommand(id={})'.format(self.id)
 
@@ -661,6 +663,8 @@ class WorkflowDatumMeta(object):
 
     def __ne__(self, other):
         return not self == other
+
+    __hash__ = None
 
     def __repr__(self):
         return 'WorkflowDatumMeta(id={}, case_type={})'.format(self.id, self.case_type)

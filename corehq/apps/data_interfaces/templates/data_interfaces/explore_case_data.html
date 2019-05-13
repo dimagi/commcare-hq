@@ -33,6 +33,7 @@ breadcrumbs todo
   {% initial_page_data "report.slug" report.slug %}
   {% initial_page_data "report.columns" report.columns %}
   {% initial_page_data "report.columnFilters" report.column_filters %}
+  {% initial_page_data "report.reportFilters" report.report_filters %}
 
 <div id="case_search--model">
 
@@ -48,6 +49,26 @@ breadcrumbs todo
   </div>
 
   <div id="report-datagrid">
+
+    <div class="form form-horizontal well"
+         data-bind="foreach: reportFilters">
+      <div class="form-group">
+        <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label"
+               data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
+        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6">
+          <select type="text"
+                 class="form-control"
+                 data-bind="selectedOptions: value,
+                            select2: {
+                                placeholder: placeholder(),
+                                multiple: true,
+                                url: endpoint.getUrl(),
+                            },
+                            attr: { id: 'filter_' + name() }"></select>
+        </div>
+      </div>
+    </div>
+
     <table class="datagrid-headers">
       <thead>
         <tr>

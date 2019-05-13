@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-30 19:51+0000\n"
+"POT-Creation-Date: 2019-05-07 19:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -721,7 +721,7 @@ msgstr ""
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:256
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
 #: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:49
 msgid "Latest saved"
 msgstr ""
@@ -809,20 +809,21 @@ msgstr ""
 msgid "Show"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 msgid "Question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 msgid "Used By"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 msgid "In Property"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/reports/static/reports/v2/js/datagrid/bindingHandlers.js:61
 msgid "Search..."
 msgstr ""
 
@@ -3094,24 +3095,24 @@ msgstr ""
 msgid "Loading"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:30
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:29
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:174
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
 #: corehq/apps/reports/static/reports/js/tabular.js:32
 msgid "Sorry!"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:33
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
 msgid ""
 "There was an error with your query, it has been logged, please try another "
 "query."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:36
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
@@ -3260,6 +3261,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:25
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/reportFilters.js:18
+msgid "Select"
 msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37

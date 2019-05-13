@@ -60,6 +60,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
         )
 
+    @property
+    def table_exists(self):
+        return self.engine.has_table(self.get_table().name)
+
     @memoized
     def get_sqlalchemy_orm_table(self):
         table = self.get_table()
@@ -121,7 +125,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return orm_table
 
     def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_table_rebuild(initiated_by, source, skip_log)
+        self.log_table_rebuild(initiated_by, source, skip=skip_log)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
@@ -289,17 +293,17 @@ class MultiDBSqlAdapter(object):
     def get_distinct_values(self, column, limit):
         return self.main_adapter.get_distinct_values(column, limit)
 
-    def build_table(self):
+    def build_table(self, initiated_by=None, source=None):
         for adapter in self.all_adapters:
-            adapter.build_table()
+            adapter.build_table(initiated_by=initiated_by, source=source)
 
-    def rebuild_table(self):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
-            adapter.rebuild_table()
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
-            adapter.drop_table()
+            adapter.drop_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
 
     @unit_testing_only
     def clear_table(self):

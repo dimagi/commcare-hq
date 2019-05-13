@@ -42,8 +42,8 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
     tag = StringProperty()
     fields = SchemaListProperty(FixtureTypeField)
     item_attributes = StringListProperty()
-    description = StringProperty()
-    copy_from = StringProperty()
+    description = StringProperty()  # legacy property, not used
+    copy_from = StringProperty()  # legacy property, not used
 
     @classmethod
     def wrap(cls, obj):

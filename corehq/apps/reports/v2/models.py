@@ -2,12 +2,17 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
+import json
 
 from collections import namedtuple
 from abc import ABCMeta, abstractmethod
 
-from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
+from memoized import memoized
 
+from corehq.apps.reports.v2.exceptions import (
+    EndpointNotFoundError,
+    ReportFilterNotFound,
+)
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
 ColumnMeta = namedtuple('ColumnMeta', 'title name width')
@@ -23,6 +28,7 @@ class BaseReport(object):
     formatters = ()
     columns = []
     column_filters = []
+    report_filters = []
 
     def __init__(self, request, domain):
         """
@@ -50,6 +56,17 @@ class BaseReport(object):
     def get_options_endpoint(self, endpoint_slug):
         return self._get_endpoint(endpoint_slug, self.options_endpoints)
 
+    def get_report_filter(self, context):
+        filter_name = context['name']
+        name_to_class = {f.name: f for f in self.report_filters}
+        try:
+            filter_class = name_to_class[filter_name]
+            return filter_class(self.request, self.domain, context)
+        except (KeyError, NameError):
+            raise ReportFilterNotFound(
+                "Could not find the report filter '{}'".format(filter_name)
+            )
+
     @property
     def context(self):
         endpoints = []
@@ -64,6 +81,7 @@ class BaseReport(object):
             'endpoints': [e._asdict() for e in endpoints],
             'columns': [c._asdict() for c in self.columns],
             'column_filters': [c.get_context() for c in self.column_filters],
+            'report_filters': [r.get_context() for r in self.report_filters],
         }
 
 
@@ -106,6 +124,11 @@ class BaseEndpoint(object):
     def data(self):
         return self.request.POST
 
+    @property
+    @memoized
+    def report_context(self):
+        return json.loads(self.data.get('reportContext', "{}"))
+
 
 class BaseOptionsEndpoint(BaseEndpoint):
 
@@ -147,3 +170,21 @@ class BaseFilter(six.with_metaclass(ABCMeta)):
         :return: {}
         """
         raise NotImplementedError("please implement get_context")
+
+
+class BaseReportFilter(BaseFilter):
+    name = None
+
+    def __init__(self, request, domain, context):
+        self.request = request
+        self.domain = domain
+        self.value = context['value']
+
+    @abstractmethod
+    def get_filtered_query(self, query):
+        """
+        Returns a filtered query object/
+        :param query:
+        :return: query object
+        """
+        raise NotImplementedError("please implement get_filtered_query")

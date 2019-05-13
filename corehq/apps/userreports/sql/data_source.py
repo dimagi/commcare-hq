@@ -24,7 +24,14 @@ from corehq.sql_db.connections import connection_manager
 class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData):
     @property
     def engine_id(self):
-        return get_engine_id(self.config, allow_read_replicas=True)
+        if self._engine_id is not None:
+            return self._engine_id
+
+        self._engine_id = get_engine_id(self.config, allow_read_replicas=True)
+        return self._engine_id
+
+    def override_engine_id(self, engine_id):
+        self._engine_id = engine_id
 
     @property
     def filters(self):
