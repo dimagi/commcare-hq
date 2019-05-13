@@ -616,6 +616,10 @@ class EligibleCoupleQueryHelper(object):
 
         planning_methods = ec_details.get('fp_current_method_history')
         if planning_methods:
+            # filter forms that don't update the current planning method (method[1] = '')
+            planning_methods = [method for method in planning_methods if method[1]]
+
+        if planning_methods:
             current_method = planning_methods[-1]
             data['familyPlaningMethod'] = current_method[1].replace("\'", '') if current_method[1] else 'N/A'
             data['familyPlanningMethodDate'] = force_to_datetime(
@@ -626,6 +630,10 @@ class EligibleCoupleQueryHelper(object):
                 data['previousFamilyPlanningMethod'] = previous_method
 
         preferred_methods = ec_details.get('fp_preferred_method_history')
+        if preferred_methods:
+            # filter forms that don't update the current preferred method (method[1] = '')
+            preferred_methods = [method for method in preferred_methods if method[1]]
+
         if preferred_methods:
             data['preferredFamilyPlaningMethod'] = preferred_methods[-1][1] or 'N/A'
 
