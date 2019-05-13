@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from celery.task import task
 
+from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 
 from corehq.apps.fixtures.download import prepare_fixture_download
@@ -48,8 +49,8 @@ def async_fixture_download(table_ids, domain, download_id):
 @task(queue='background_queue')
 def delete_unneeded_fixture_data_item(domain, data_type_id):
     item_ids = []
-    for item in FixtureDataItem.by_data_type(domain, data_type_id):
-        item.delete()
-        item_ids.append(item.get_id)
-    for doc in FixtureOwnership.for_all_item_ids(item_ids, domain):
-        doc.delete()
+    for items in chunked(FixtureDataItem.by_data_type(domain, data_type_id), 1000):
+        FixtureDataItem.delete_docs(items)
+        item_ids.extend([item.get_id for item in items])
+    for docs in chunked(FixtureOwnership.for_all_item_ids(item_ids, domain), 1000):
+        FixtureOwnership.delete_docs(items)
