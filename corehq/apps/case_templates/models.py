@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals, division
+from __future__ import absolute_import, division, unicode_literals
 
 import uuid
 from collections import OrderedDict
@@ -18,7 +18,7 @@ from casexml.apps.phone.xml import get_case_xml
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.blobs import CODES, get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 
 
 class CaseTemplate(models.Model):
@@ -117,6 +117,19 @@ class CaseTemplate(models.Model):
 
     def get_instance_cases_for_root(self, root_id):
         return [instance_case.get_case() for instance_case in self.instance_cases.filter(ancestor_id=root_id)]
+
+    def delete(self, *args, **kwargs):
+        case_accessor = CaseAccessors(self.domain)
+
+        case_ids = self.instance_cases.all().values_list('case_id', flat=True)
+        form_ids = set()
+        for case_id in case_ids:
+            form_ids.update(case_accessor.get_case_xform_ids(case_id))
+
+        with transaction.atomic():
+            FormAccessors(self.domain).soft_delete_forms(list(form_ids))
+            case_accessor.soft_delete_cases(case_ids)
+            super(CaseTemplate, self).delete(*args, **kwargs)
 
 
 class CaseTemplateInstanceCase(models.Model):

@@ -13,7 +13,7 @@ from corehq.apps.case_templates.models import (
     CaseTemplate,
     CaseTemplateInstanceCase,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     run_with_all_backends,
@@ -24,12 +24,15 @@ class CaseTemplateTests(TestCase):
     def setUp(self):
         super(CaseTemplateTests, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
+
         self.domain = 'template-domain'
         self.factory = CaseFactory(self.domain)
         self.cases = self._create_case_structure()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
         CaseTemplate.objects.all().delete()
         CaseTemplateInstanceCase.objects.all().delete()
         super(CaseTemplateTests, self).tearDown()
@@ -149,7 +152,17 @@ class CaseTemplateTests(TestCase):
 
     def test_delete_template(self):
         # Deleting a template deletes all instances and forms against them
-        pass
+        self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 3)
+        self.assertEqual(len(FormAccessors(self.domain).get_all_form_ids_in_domain()), 1)
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+
+        template.create_instance()
+        self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 6)
+        self.assertEqual(len(FormAccessors(self.domain).get_all_form_ids_in_domain()), 2)
+
+        template.delete()
+        self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 3)
+        self.assertEqual(len(FormAccessors(self.domain).get_all_form_ids_in_domain()), 1)
 
 
 class CaseTemplateInstanceTests(TestCase):
