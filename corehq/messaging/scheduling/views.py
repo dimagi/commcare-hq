@@ -40,9 +40,10 @@ from corehq.messaging.scheduling.forms import (
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    TimedSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
+    SMSContent,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
@@ -1010,7 +1011,8 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
             rule.pk,
             rule.name,
             rule.case_type,
-        ) for rule in self.get_conditional_alerts_queryset()]
+        ) for rule in self.get_conditional_alerts_queryset()
+          if isinstance(rule.get_messaging_rule_schedule().memoized_events[0].content, SMSContent)]
 
         temp = io.BytesIO()
         export_raw(headers, [(title, rows)], temp)
