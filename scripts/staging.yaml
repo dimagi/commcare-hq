@@ -58,5 +58,6 @@ branches:
   #- je/fast-fixture-upload+mk/ccz-hosting-revamp # J$ May 13
   - je/fast-fixture-upload # J$ May 13
 #  - web-user-reports-project-access  # Gabriella May 13
+  - revert-24299-revert-24200-jls/locale-id-integrity # Jenny May 14
   - jls/locale-id-integrity-bug # Jenny May 14
 submodules: {}
