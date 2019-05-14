@@ -1094,5 +1094,6 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
         return self.get(request, *args, **kwargs)
 
+
 def _get_rule_content(rule):
     return rule.get_messaging_rule_schedule().memoized_events[0].content
