@@ -47,7 +47,7 @@ from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
-REBUILD_CHECK_INTERVAL = timedelta(hours=1)
+REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
 
 
@@ -92,7 +92,8 @@ def _filter_missing_domains(configs):
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None, run_migrations=True):
+                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL,
+                 run_migrations=True):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -101,6 +102,7 @@ class ConfigurableReportTableManagerMixin(object):
                         first
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
+        bootstrap_interval -- time in seconds when the pillow checks for any data source changes
         run_migrations -- If True, rebuild tables if the data source changes.
                           Otherwise, do not attempt to change database
         """
@@ -110,6 +112,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
+        self.bootstrap_interval = bootstrap_interval
         self.run_migrations = run_migrations
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
@@ -139,7 +142,7 @@ class ConfigurableReportTableManagerMixin(object):
     def needs_bootstrap(self):
         return (
             not self.bootstrapped
-            or datetime.utcnow() - self.last_bootstrapped > REBUILD_CHECK_INTERVAL
+            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
         )
 
     def bootstrap_if_needed(self):
@@ -488,6 +491,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
             run_migrations=(process_num == 0)  # only first process runs migrations
         ),
         pillow_name=pillow_id,
