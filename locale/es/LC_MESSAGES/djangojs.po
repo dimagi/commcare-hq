@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-07 19:44+0000\n"
+"POT-Creation-Date: 2019-05-14 20:07+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -843,7 +843,7 @@ msgstr "En Propiedad"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: corehq/apps/reports/static/reports/v2/js/datagrid/bindingHandlers.js:61
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js:62
 msgid "Search..."
 msgstr "Buscar..."
 
@@ -3021,11 +3021,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:55
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:65
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:84
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:96
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3439,11 +3439,11 @@ msgstr "Falló"
 msgid "Failed to re-process"
 msgstr "Reproceso fallido"
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid/reportFilters.js:18
+#: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:18
 #, fuzzy
-#| msgid "Select All"
-msgid "Select"
-msgstr "Seleccionar Todos"
+#| msgid "Select a language..."
+msgid "Select <%= title %>..."
+msgstr "Seleccionar un idioma..."
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
@@ -3478,15 +3478,15 @@ msgstr ""
 msgid " contacts per page"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:60
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:58
 msgid "Loading Contacts..."
 msgstr "Cargando Contactos..."
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:61
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:59
 msgid "Showing _START_ to _END_ of _TOTAL_ contacts"
 msgstr "Mostrando_PRINCIPIO_a_FIN_del_TOTAL_de contactos"
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:62
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:60
 msgid "(filtered from _MAX_ total contacts)"
 msgstr "(filtrado de _MAX_ total de contactos)"
 
@@ -3968,3 +3968,6 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
+
+#~ msgid "Select"
+#~ msgstr "Seleccione"
