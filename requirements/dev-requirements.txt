@@ -192,7 +192,9 @@ sniffer==0.4.0
 snowballstemmer==1.2.1    # via sphinx
 socketpool==0.5.3
 soupsieve==1.9.1
-sphinx==1.8.5             # via recommonmark
+sphinx-rtd-theme==0.4.3
+sphinx==1.8.5
+sphinxcontrib-django==0.4
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlagg==0.13.0
 sqlalchemy-postgres-copy==0.5.0
