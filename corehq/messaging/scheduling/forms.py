@@ -2341,21 +2341,13 @@ class ScheduleForm(Form):
         else:
             raise ValueError("Unexpected send_time_type: %s" % event_type)
 
-    def assert_alert_schedule(self, schedule):
-        if not isinstance(schedule, AlertSchedule):
-            raise TypeError("Expected AlertSchedule")
-
-    def assert_timed_schedule(self, schedule):
-        if not isinstance(schedule, TimedSchedule):
-            raise TypeError("Expected TimedSchedule")
-
     def save_immediate_schedule(self):
         content = self.standalone_content_form.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_alert_schedule(schedule)
+            AlertSchedule.assert_is(schedule)
             schedule.set_simple_alert(content, extra_options=extra_scheduling_options)
         else:
             schedule = AlertSchedule.create_simple_alert(self.domain, content,
@@ -2371,7 +2363,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_daily_schedule(
                 self.distill_model_timed_event(),
                 content,
@@ -2402,7 +2394,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_weekly_schedule(
                 self.distill_model_timed_event(),
                 content,
@@ -2439,7 +2431,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_monthly_schedule(
                 self.distill_model_timed_event(),
                 sorted_days_of_month,
@@ -2478,7 +2470,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_custom_daily_schedule(
                 event_and_content_objects,
                 total_iterations=total_iterations,
@@ -2507,7 +2499,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_alert_schedule(schedule)
+            AlertSchedule.assert_is(schedule)
             schedule.set_custom_alert(event_and_content_objects, extra_options=extra_scheduling_options)
         else:
             schedule = AlertSchedule.create_custom_alert(self.domain, event_and_content_objects,
