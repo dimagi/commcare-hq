@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.apps import apps
+from django.conf import settings
 from django.db import migrations, router
 
 from corehq.sql_db.connections import is_citus_db
@@ -66,7 +67,7 @@ class OnlyCitusRunSql(migrations.RunSQL):
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         if (
             router.allow_migrate(schema_editor.connection.alias, app_label, **self.hints)
-            and is_citus_db(schema_editor.connection)
+            and (settings.UNIT_TESTING or is_citus_db(schema_editor.connection))
         ):
             self._run_sql(schema_editor, self.sql)
 
