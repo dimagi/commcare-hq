@@ -4803,17 +4803,19 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         else:
             previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
-
+        is_linked_app = isinstance(self, LinkedApplication)
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
                 map_item.unique_id = prev_map_item.unique_id
-            if (prev_map_item and prev_map_item.version
-                    and prev_map_item.multimedia_id == map_item.multimedia_id):
-                map_item.version = prev_map_item.version
-            else:
-                map_item.version = self.version
+            # if its a linked app and the map item already has a version don't need to set it up again
+            if not (is_linked_app and map_item.version):
+                if (prev_map_item and prev_map_item.version
+                        and prev_map_item.multimedia_id == map_item.multimedia_id):
+                    map_item.version = prev_map_item.version
+                else:
+                    map_item.version = self.version
 
     def ensure_module_unique_ids(self, should_save=False):
         """
