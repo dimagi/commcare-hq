@@ -4797,7 +4797,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         Otherwise set it to the version from the last build/version reverted to.
         """
 
-        if version_reverted_to and settings.SERVER_ENVIRONMENT in ['staging', 'india']:
+        if version_reverted_to and toggles.ICDS.enabled(self.domain):
             previous_version = get_build_doc_by_version(self.domain, self.copy_of, version_reverted_to)
         else:
             previous_version = self.get_previous_version()
