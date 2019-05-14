@@ -181,7 +181,7 @@ def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_
     return files, errors, file_count
 
 
-def _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, compression, task):
+def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression, task):
     with open(fpath, 'wb') as tmp:
         with zipfile.ZipFile(tmp, "w") as z:
             for path, data in files:
@@ -194,9 +194,9 @@ def _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, co
                     DownloadBase.set_progress(task, current_progress, 100)
 
 
-def create_ccz_files(build, build_profile_id, include_multimedia_files=True, include_index_files=True,
-                     download_id=None, compress_zip=False, filename="commcare.zip",
-                     download_targeted_version=False, task=None, expose_link=False):
+def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True, include_index_files=True,
+                         download_id=None, compress_zip=False, filename="commcare.zip",
+                         download_targeted_version=False, task=None, expose_link=False):
     """
     :param task: celery task whose progress needs to be set when being run asynchronously by celery
     :param expose_link: expose downloadable link for the file created
@@ -217,7 +217,7 @@ def create_ccz_files(build, build_profile_id, include_multimedia_files=True, inc
         files, errors, file_count = _build_ccz_files(build, build_profile_id, include_multimedia_files,
                                                      include_index_files, download_id, compress_zip,
                                                      filename, download_targeted_version)
-        _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, compression, task)
+        _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression, task)
         # Integrity check that all media files present in media_suite.xml were added to the zip
         if include_multimedia_files and include_index_files and toggles.CAUTIOUS_MULTIMEDIA.enabled(build.domain):
             _ensure_all_media_files_in_ccz(fpath, errors)
@@ -255,8 +255,8 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
     DownloadBase.set_progress(build_application_zip, 0, 100)
-    fpath = create_ccz_files(app, build_profile_id, include_multimedia_files, include_index_files,
-                             download_id, compress_zip, filename, download_targeted_version,
-                             task=build_application_zip, expose_link=True)
+    fpath = create_files_for_ccz(app, build_profile_id, include_multimedia_files, include_index_files,
+                                 download_id, compress_zip, filename, download_targeted_version,
+                                 task=build_application_zip, expose_link=True)
     _expose_download_link(fpath, filename, compress_zip, download_id)
     DownloadBase.set_progress(build_application_zip, 100, 100)
