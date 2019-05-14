@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals, division
 
 import uuid
 from collections import OrderedDict
@@ -95,7 +95,7 @@ class CaseTemplate(models.Model):
         cases = []
         root_id = list(self.prototype_cases.keys())[0]
         if suffix is None:
-            suffix = (self.instance_cases.count() % self.num_cases()) + 1
+            suffix = (self.instance_cases.count() // self.num_cases()) + 1
         with transaction.atomic():
             for case_id, case in six.iteritems(self.prototype_cases):
                 new_case_id = six.text_type(uuid.uuid4())

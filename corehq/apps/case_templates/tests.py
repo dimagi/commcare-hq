@@ -101,6 +101,21 @@ class CaseTemplateTests(TestCase):
             [new_case.name for new_case in new_cases]
         )
 
+    def test_instance_suffix_increments(self):
+        """Test that case names increment correctly based on the number of instances created
+        """
+        template = CaseTemplate.create(self.domain, self.grandchild_id, 'template')
+        template.create_instance()
+        self.assertEqual(template.instance_cases.last().get_case().name, 'baby-1')
+
+        template.create_instance()
+        self.assertEqual(template.instance_cases.last().get_case().name, 'baby-2')
+
+        template.create_instance('un-numbered-suffix')
+
+        template.create_instance()
+        self.assertEqual(template.instance_cases.last().get_case().name, 'baby-4')
+
     def test_get_instances(self):
         # Get all the instances created by a template
         pass
