@@ -13,15 +13,10 @@ from corehq.apps.reports.v2.models import BaseReportFilter
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 
 
-class Widget(object):
-    SELECT2_MULTIPLE = 'select2_multiple'
-
-
 class CaseOwnerReportFilter(BaseReportFilter):
     title = ugettext_lazy("Case Owner(s)")
     name = 'report_case_owner'
     endpoint_slug = CaseOwnerEndpoint.slug
-    widget = Widget.SELECT2_MULTIPLE
 
     @classmethod
     def get_context(cls):
@@ -29,7 +24,6 @@ class CaseOwnerReportFilter(BaseReportFilter):
             'title': cls.title,
             'name': cls.name,
             'endpointSlug': cls.endpoint_slug,
-            'widget': cls.widget,
         }
 
     def get_filtered_query(self, query):

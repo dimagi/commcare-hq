@@ -127,6 +127,13 @@ def flag_enabled(toggle_class_string):
     )
 
 
+def flag_disabled(toggle_class_string):
+    return mock.patch(
+        '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
+        new=lambda *args, **kwargs: False,
+    )
+
+
 class DocTestMixin(object):
     """To be mixed in with a TestCase"""
 

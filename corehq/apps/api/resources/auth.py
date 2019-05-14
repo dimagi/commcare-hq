@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 from functools import wraps
 
+import six
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from tastypie.authentication import Authentication
@@ -25,9 +26,9 @@ def api_auth(view_func):
     def _inner(req, domain, *args, **kwargs):
         try:
             return view_func(req, domain, *args, **kwargs)
-        except Http404 as ex:
-            if ex.message:
-                return HttpResponse(json.dumps({"error": ex.message}),
+        except Http404 as e:
+            if six.text_type(e):
+                return HttpResponse(json.dumps({"error": six.text_type(e)}),
                                 content_type="application/json",
                                 status=404)
             return HttpResponse(json.dumps({"error": "not authorized"}),

@@ -5,7 +5,15 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.db import connections
-from django.db.models import Case, IntegerField, Sum, When
+from django.db.models import (
+    Case,
+    IntegerField,
+    Sum,
+    When,
+    F,
+    Value,
+    ExpressionWrapper,
+)
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -32,6 +40,11 @@ class ChildQueryHelper(object):
             domain=domain,
             dob__range=(date_ - relativedelta(years=5), date_),
             **location_filters
+        ).annotate(
+            age_in_months=ExpressionWrapper(
+                (Value(date_) - F('dob')) / Value(30.417),
+                output_field=IntegerField()
+            )
         ).extra(
             select={
                 'lastImmunizationType': 'last_immunization_type',
@@ -40,7 +53,7 @@ class ChildQueryHelper(object):
                 'id': 'person_case_id',
             }
         ).values(
-            'id', 'name', 'dob', 'gender', 'lastImmunizationType', 'lastImmunizationDate'
+            'id', 'name', 'dob', 'gender', 'lastImmunizationType', 'lastImmunizationDate', 'age_in_months'
         ).order_by(sort_column)
 
     def infant_details(self):
@@ -238,6 +251,7 @@ class PregnantWomanQueryHelper(object):
                 (woman.person_case_id) AS "id",
                 woman.name AS "name",
                 woman.dob AS "dob",
+                ((%(start_date)s - "woman"."dob") / 30.417)::INT AS "age_in_months",
                 EXTRACT('month' FROM age(ccs_record.preg_reg_date)) AS "pregMonth",
                 ccs_record.hrp AS "highRiskPregnancy",
                 ccs_record.num_anc_checkups AS "noOfAncCheckUps"
@@ -246,7 +260,8 @@ class PregnantWomanQueryHelper(object):
             WHERE (
                 woman.domain = %(domain)s AND
                 {location_where}
-                (daterange(%(start_date)s, %(end_date)s) && ANY(pregnant_ranges))
+                (daterange(%(start_date)s, %(end_date)s) && ANY(pregnant_ranges)) AND
+                ccs_record.add < %(start_date)s
             ) ORDER BY {sort_col}
         """.format(
             location_where=location_query,
@@ -386,7 +401,7 @@ class PregnantWomanQueryHelper(object):
         details = ccs_record.ccs_record_details()
         pregnancy_length = 'N/A'
         if details['date_abortion'] and details['lmp']:
-            pregnancy_length = details['date_abortion'] - details['lmp']
+            pregnancy_length = (details['date_abortion'] - details['lmp']).days
         return {
             'abortionDate': details['date_abortion'] or 'N/A',
             'abortionType': details['abortion_type'] or 'N/A',
@@ -467,11 +482,13 @@ class PregnantWomanQueryHelper(object):
                 'ancDate': form['date_task'],
                 'ancLocation': form['anc_facility'],
                 'pwWeight': form['anc_weight'],
-                'bloodPressure': "{} / {}".format(form['bp_sys'], form['bp_dias']),
+                'bloodPressure': None,
                 'hb': form['anc_hemoglobin'],
                 'abdominalExamination': form['anc_abdominal_exam'],
                 'abnormalitiesDetected': form['anc_abnormalities'],
             }
+            if form['bp_sys'] and form['bp_dias']:
+                _ret['bloodPressure'] = "{} / {}".format(form['bp_sys'], form['bp_dias'])
             ret.append(_ret)
 
         return ret
@@ -515,6 +532,7 @@ class EligibleCoupleQueryHelper(object):
                 woman.person_case_id AS "id",
                 woman.name AS "name",
                 woman.dob AS "dob",
+                ((%(start_date)s - "woman"."dob") / 30.417)::INT AS "age_in_months",
                 eligible_couple."currentFamilyPlanningMethod" AS "currentFamilyPlanningMethod",
                 eligible_couple."adoptionDateOfFamilyPlaning" AS "adoptionDateOfFamilyPlaning"
             FROM "{woman_table}" woman
@@ -601,6 +619,10 @@ class EligibleCoupleQueryHelper(object):
 
         planning_methods = ec_details.get('fp_current_method_history')
         if planning_methods:
+            # filter forms that don't update the current planning method (method[1] = '')
+            planning_methods = [method for method in planning_methods if method[1]]
+
+        if planning_methods:
             current_method = planning_methods[-1]
             data['familyPlaningMethod'] = current_method[1].replace("\'", '') if current_method[1] else 'N/A'
             data['familyPlanningMethodDate'] = force_to_datetime(
@@ -611,6 +633,10 @@ class EligibleCoupleQueryHelper(object):
                 data['previousFamilyPlanningMethod'] = previous_method
 
         preferred_methods = ec_details.get('fp_preferred_method_history')
+        if preferred_methods:
+            # filter forms that don't update the current preferred method (method[1] = '')
+            preferred_methods = [method for method in preferred_methods if method[1]]
+
         if preferred_methods:
             data['preferredFamilyPlaningMethod'] = preferred_methods[-1][1] or 'N/A'
 

@@ -44,6 +44,14 @@ table.table th {
     border: 1px solid black;
     text-align: center;
 }
+@font-face {
+  font-family: 'Hind Guntur';
+  src: url(../fonts/HindGuntur-Regular.ttf) format('truetype');
+}
+.aww_name {
+    line-height: 1.5;
+    font-family: 'Hind Guntur', sans-serif;
+}
 .row:after {
     content: "";
     display: table;

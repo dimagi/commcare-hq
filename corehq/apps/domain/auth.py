@@ -153,14 +153,8 @@ def basic_or_api_key(realm=''):
         def wrapper(request, *args, **kwargs):
             username, password = get_username_and_password_from_request(request)
             if username and password:
-                user = authenticate(username=username, password=password)
-                if not user:
-                    # try api key auth
-                    try:
-                        user = User.objects.get(username=username, api_key__key=password)
-                        request.skip_two_factor_check = True
-                    except (User.DoesNotExist, User.MultipleObjectsReturned):
-                        pass
+                request.check_for_password_as_api_key = True
+                user = authenticate(username=username, password=password, request=request)
                 if user is not None and user.is_active:
                     request.user = user
                     return view(request, *args, **kwargs)
@@ -201,3 +195,18 @@ def formplayer_as_user_auth(view):
         return view(request, *args, **kwargs)
 
     return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(_inner)
+
+
+class ApiKeyFallbackBackend(object):
+
+    def authenticate(self, request, username, password):
+        if not getattr(request, 'check_for_password_as_api_key', False):
+            return None
+
+        try:
+            user = User.objects.get(username=username, api_key__key=password)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            return None
+        else:
+            request.skip_two_factor_check = True
+            return user

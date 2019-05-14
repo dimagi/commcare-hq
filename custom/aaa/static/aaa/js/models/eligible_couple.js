@@ -26,8 +26,7 @@ hqDefine("aaa/js/models/eligible_couple", [
             if (self.dob() === 'N/A') {
                 return self.dob();
             }
-            var selectedDate = new Date(postData.selectedYear(), postData.selectedMonth(), 1);
-            var age = Math.floor(moment(selectedDate).diff(
+            var age = Math.floor(moment(postData.selectedDate()).diff(
                 moment(self.dob(), "YYYY-MM-DD"),'months',true)
             );
             if (age < 12) {

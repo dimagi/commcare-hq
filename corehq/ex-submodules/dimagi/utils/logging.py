@@ -23,7 +23,7 @@ def notify_exception(request, message=None, details=None, exec_info=None):
     if request is not None:
         message = message or request.path
     if isinstance(message, bytes):
-        message = message.encode('utf-8')
+        message = message.decode('utf-8')
 
     message = 'Notify Exception: %s' % (
         message or "No message provided, fix error handler"

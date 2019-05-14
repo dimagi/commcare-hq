@@ -5,15 +5,14 @@ from __future__ import unicode_literals
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, IN
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.utils.utils import clean_IN_filter_value
 
 
-class AWCInfrastructureUCR(SqlData):
-    engine_id = 'icds-ucr'
-
+class AWCInfrastructureUCR(IcdsSqlData):
     def __init__(self, config):
         self.awcs = config['awc_id']
         super(AWCInfrastructureUCR, self).__init__(config)

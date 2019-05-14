@@ -105,6 +105,7 @@ if USE_PARTITIONED_DATABASE:
 #     },
 # })
 
+
 ####### Couch Config ######
 COUCH_DATABASES = {
     'default': {
