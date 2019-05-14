@@ -185,7 +185,8 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     if extension not in MULTIMEDIA_EXTENSIONS:
                         file_cache[path] = data
 
-        errors.extend(find_missing_locale_ids_in_ccz(file_cache))
+        if toggles.LOCALE_ID_INTEGRITY.enabled(app.domain):
+            errors.extend(find_missing_locale_ids_in_ccz(file_cache))
 
         if include_index_files and include_multimedia_files:
             errors.extend(check_ccz_multimedia_integrity(app.domain, fpath))
