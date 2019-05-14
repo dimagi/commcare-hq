@@ -351,9 +351,6 @@ def _wrap_with(code):
     def inner(text, bold=False):
         c = code
 
-        if os.environ.get('FABRIC_DISABLE_COLORS'):
-            return text
-
         if bold:
             c = "1;%s" % c
         return "\033[%sm%s\033[0m" % (c, text)
