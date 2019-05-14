@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
 from corehq.apps.reports.v2.endpoints.case_properties import (
@@ -20,6 +21,7 @@ from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
     BaseReport,
     ColumnMeta,
+    ReportFilterData,
 )
 from corehq.apps.es import CaseSearchES, cases as case_es
 
@@ -59,10 +61,22 @@ class ExploreCaseDataReport(BaseReport):
         CaseOwnerReportFilter,
     ]
 
+    initial_report_filters = [
+        ReportFilterData(
+            name=CaseOwnerReportFilter.name,
+            value=[
+                {
+                    'text': "[{}]".format(ugettext_lazy("Project Data")),
+                    'id': 'project_data',
+                },
+            ],
+        ),
+    ]
+
     def _get_base_query(self):
         return (CaseSearchES()
                 .domain(self.domain)
-                .NOT(case_es.case_type("user-owner-mapping-case")))
+                .NOT(case_es.case_type(USER_LOCATION_OWNER_MAP_TYPE)))
 
     def get_data_response(self, endpoint):
         query = self._get_base_query()
