@@ -18,7 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import api_auth
 
 from ..dbaccessors import (
-    get_build_doc_by_version,
+    get_build_by_version,
     get_current_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
@@ -62,7 +62,7 @@ def direct_ccz(request, domain):
 
     def get_app(app_id, version, latest):
         if version:
-            return get_build_doc_by_version(domain, app_id, version)
+            return get_build_by_version(domain, app_id, version)
         elif latest == 'build':
             return get_latest_build_doc(domain, app_id)
         elif latest == 'release':
