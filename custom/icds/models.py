@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
+from django.db.models.signals import pre_delete
 
 from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from custom.icds.const import (
@@ -39,11 +40,6 @@ class CCZHostingLink(models.Model):
             self.password = hash_password(self.password)
         self.full_clean()
         super(CCZHostingLink, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        for ccz_hosting in CCZHosting.objects.filter(link=self):
-            ccz_hosting.delete()
-        super(CCZHostingLink, self).delete(*args, **kwargs)
 
 
 class CCZHostingSupportingFile(models.Model):
@@ -158,3 +154,11 @@ class CCZHosting(models.Model):
     def delete(self, *args, **kwargs):
         self.delete_ccz()
         super(CCZHosting, self).delete(*args, **kwargs)
+
+
+def delete_ccz_for_link(sender, instance, **kwargs):
+    for ccz_hosting in CCZHosting.objects.filter(link=instance):
+        ccz_hosting.delete_ccz()
+
+
+pre_delete.connect(delete_ccz_for_link, sender=CCZHostingLink)
