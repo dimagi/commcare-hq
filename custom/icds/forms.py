@@ -47,9 +47,9 @@ class CCZHostingLinkForm(forms.ModelForm):
 
 
 class CCZHostingForm(forms.Form):
-    link_id = forms.ChoiceField(label=ugettext_lazy("Link"), choices=(), required=False)
-    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
-    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+    link_id = forms.ChoiceField(label=ugettext_lazy("Link"), choices=(), required=True)
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=True, widget=Select(choices=[]))
     profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
                                  required=False, widget=Select(choices=[]))
     file_name = forms.CharField(label=ugettext_lazy("CCZ File Name"), required=False)
@@ -94,24 +94,6 @@ class CCZHostingForm(forms.Form):
     def _version_exists(self):
         return bool(get_version_build_id(self.domain, self.cleaned_data['app_id'],
                                          self.cleaned_data['version']))
-
-    def clean_link_id(self):
-        link_id = self.cleaned_data.get('link_id')
-        if not link_id:
-            self.add_error('link_id', _("Please select link"))
-        return link_id
-
-    def clean_app_id(self):
-        app_id = self.cleaned_data.get('app_id')
-        if not app_id:
-            self.add_error('app_id', _("Please select application"))
-        return app_id
-
-    def clean_version(self):
-        version = self.cleaned_data.get('version')
-        if not version:
-            self.add_error('version', _("Please select version"))
-        return version
 
     def clean(self):
         if self.cleaned_data.get('app_id') and self.cleaned_data.get('version'):
