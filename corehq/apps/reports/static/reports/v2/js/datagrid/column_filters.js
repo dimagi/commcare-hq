@@ -1,4 +1,4 @@
-hqDefine('reports/v2/js/datagrid/filters', [
+hqDefine('reports/v2/js/datagrid/column_filters', [
     'jquery',
     'knockout',
 ], function (

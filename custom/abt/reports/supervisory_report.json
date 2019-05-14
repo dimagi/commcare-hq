@@ -1,0 +1,362 @@
+{
+    "domains": [
+        "abtmali",
+        "airs",
+        "airsethiopia",
+        "airsmadagascar",
+        "airsrwanda",
+        "airszambia",
+        "airszimbabwe",
+        "airstanzania",
+        "airsghana",
+        "airsbenin",
+        "airsmozambique",
+        "airskenya",
+        "airs-testing",
+        "vectorlink-benin",
+        "vectorlink-ethiopia",
+        "vectorlink-uganda"
+    ],
+    "server_environment": ["production"],
+    "report_id": "supervisory_report",
+    "data_source_table": "supervisory-006",
+    "config": {
+        "doc_type": "ReportConfiguration",
+        "domain": "airs",
+        "config_id": "32062419c0d0ec4a49f4b7034e28a786",
+        "description": "",
+        "title": "Supervisory Report",
+        "sort_expression": [
+            {
+                "field": "received_on",
+                "order": "DESC"
+            },
+            {
+                "field": "username",
+                "order": "ASC"
+            },
+            {
+                "field": "level_4",
+                "order": "ASC"
+            }
+        ],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "slug": "received_on",
+                "field": "received_on",
+                "type": "date",
+                "display": {
+                    "fra": "Date soumis",
+                    "en": "Date submitted",
+                    "por": "Data de Submiss\u00e3o"
+                }
+            },
+            {
+                "compare_as_string": false,
+                "show_all": true,
+                "datatype": "string",
+                "required": false,
+                "slug": "country",
+                "field": "country",
+                "type": "dynamic_choice_list",
+                "display": {
+                    "fra": "Pays",
+                    "en": "Country",
+                    "por": "Pa\u00eds"
+                }
+            },
+            {
+                "compare_as_string": false,
+                "show_all": true,
+                "datatype": "string",
+                "required": false,
+                "slug": "level_1",
+                "field": "level_1",
+                "type": "dynamic_choice_list",
+                "display": {
+                    "fra": "Niveau 1",
+                    "en": "Level 1",
+                    "por": "N\u00edvel 1"
+                }
+            },
+            {
+                "compare_as_string": false,
+                "show_all": true,
+                "datatype": "string",
+                "required": false,
+                "slug": "level_2",
+                "field": "level_2",
+                "type": "dynamic_choice_list",
+                "display": {
+                    "fra": "Niveau 2",
+                    "en": "Level 2",
+                    "por": "N\u00edvel 2"
+                }
+            },
+            {
+                "compare_as_string": false,
+                "show_all": true,
+                "datatype": "string",
+                "required": false,
+                "slug": "level_3",
+                "field": "level_3",
+                "type": "dynamic_choice_list",
+                "display": {
+                    "fra": "Niveau 3",
+                    "en": "Level 3",
+                    "por": "N\u00edvel 3"
+                }
+            },
+            {
+                "compare_as_string": false,
+                "show_all": true,
+                "datatype": "string",
+                "required": false,
+                "slug": "level_4",
+                "field": "level_4",
+                "type": "dynamic_choice_list",
+                "display": {
+                    "fra": "Niveau 4",
+                    "en": "Level 4",
+                    "por": "N\u00edvel 4"
+                }
+            }
+        ],
+        "visible": true,
+        "aggregation_columns": [
+            "doc_id",
+            "repeat_iteration"
+        ],
+        "configured_charts": [
+
+        ],
+        "_id": "4ac24169c7cf30e14174a508bd13a86a",
+        "report_meta": {
+            "doc_type": "ReportMeta",
+            "builder_report_type": null,
+            "created_by_builder": false
+        },
+        "columns": [
+            {
+                "description": null,
+                "field": "received_on",
+                "format": "default",
+                "transform": {
+                    "type": "date_format",
+                    "format": "%Y-%m-%d %H:%M"
+                },
+                "column_id": "received_on",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Date et heure soumis",
+                    "en": "Date and Time Submitted",
+                    "por": "Data e Hora de Submiss\u00e3o"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "username",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "username",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Nom d'utilisateur",
+                    "en": "Username",
+                    "por": "Utilizador"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "country",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "country",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Pays",
+                    "en": "Country",
+                    "por": "Pa\u00eds"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "level_1",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "level_1",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Niveau 1",
+                    "en": "Level 1",
+                    "por": "N\u00edvel 1"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "level_2",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "level_2",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Niveau 2",
+                    "en": "Level 2",
+                    "por": "N\u00edvel 2"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "level_3",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "level_3",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Niveau 3",
+                    "en": "Level 3",
+                    "por": "N\u00edvel 3"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "level_4",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "level_4",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Niveau 4",
+                    "en": "Level 4",
+                    "por": "N\u00edvel 4"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "inspector_names",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "inspector_names",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Noms de Inspecteurs/Superviseurs",
+                    "en": "Inspector names",
+                    "por": "Nome do Supervisor"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "form_name",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "form_name",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Nom du formulaire",
+                    "en": "Form Name",
+                    "por": "Nome do formulario"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "flag",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "flag",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Question",
+                    "en": "Form Question",
+                    "por": "Quest\u00E3o do formulario"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "warning",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "warning",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Avertissement",
+                    "en": "Red Flag Warning",
+                    "por": "Aviso de Alerta Vermelho"
+                },
+                "aggregation": "simple"
+            },
+            {
+                "description": null,
+                "field": "comments",
+                "format": "default",
+                "transform": {
+
+                },
+                "column_id": "comments",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Commentaires",
+                    "en": "Comments",
+                    "por": "Coment\u00E1rio"
+                },
+                "aggregation": "simple"
+            }
+        ]
+    }
+}

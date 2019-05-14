@@ -52,7 +52,10 @@ branches:
   - es/module-display  # Ethan March 4th
   #- jls/reports-select2-v4  # Jenny April 9
   - nh/cdc/one_domain  # Norman March 26
-  - odata-apikey  # Nick April 29
   - sr-ucr-mirror # Sravan May 1
-  - jls/locale-id-integrity-bug # Jenny May 2
+  - mk/ccz-hosting-revamp # MK May 6
+  - jls/standardize-broadcasts-ui # Jenny May 11
+  - je/fast-fixture-upload+mk/ccz-hosting-revamp # J$ May 13
+  - je/fast-fixture-upload # J$ May 13
+#  - web-user-reports-project-access  # Gabriella May 13
 submodules: {}

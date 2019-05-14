@@ -110,8 +110,7 @@
                                                         {% trans "Enter app code on installation screen: " %}
                                                         <code class="bitly" data-bind="text: app_code"></code>
                                                     </span>
-                          <img data-bind="visible: generating_url()"
-                               src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
+                          <i data-bind="visible: generating_url()" class='fa fa-spin fa-spinner'></i>
                           <span class="text-warning" data-bind="
                                                         visible: failed_url_generation() && !generating_url()
                                                         ">

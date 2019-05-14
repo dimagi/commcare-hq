@@ -26,7 +26,8 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
 from corehq.apps.api.odata.views import add_odata_headers
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
+    ODataAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
@@ -393,9 +394,9 @@ class GroupResource(v0_4.GroupResource):
             try:
 
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as ex:
+            except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = ex.message
+                bundle.data['_id'] = six.text_type(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -419,8 +420,8 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
-        except AssertionError as ex:
-            bundle.data['error_message'] = ex.message
+        except AssertionError as e:
+            bundle.data['error_message'] = six.text_type(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):
@@ -924,6 +925,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
         return add_odata_headers(response)
 
     class Meta(v0_4.CommCareCaseResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
         serializer = ODataCommCareCaseSerializer()
         max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing

@@ -34,6 +34,12 @@
         </span>
   </p>
   <p>
+    {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+      <a class="btn btn-default" href="{% url 'app_form_summary_diff' domain latest_build_id app.id %}">
+        <i class="fa fa-exchange"></i>
+        {% trans "View Changes" %}
+      </a>
+    {% endif %}
     <button class="btn btn-primary" data-bind="
             click: function() {
                 hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
@@ -44,14 +50,6 @@
       <i class="fa fa-spin fa-spinner" data-bind="visible: buildState() === 'pending'"></i>
       {% trans 'Make New Version' %}
     </button>
-    {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-      <button class="btn btn-default"
-              id="recent-changes-btn"
-              data-toggle="modal"
-              data-target="#app-diff-modal">
-        {% trans 'View changes' %}
-      </button>
-    {% endif %}
   </p>
 
   <div id="build-errors-wrapper"></div>
@@ -190,25 +188,21 @@
               "></inline-edit>
         </div>
       </div><!-- .panel-body -->
-      <div class="panel-footer">
-        <a class="btn btn-default track-usage-link" target="_blank"
-           data-category="Releases Page" data-action="Version Action" data-label="App Summary"
-           data-bind="attr: { href: hqImport('hqwebapp/js/initial_page_data').reverse('app_form_summary', $data.id()) }">
-          <i class="fa fa-list-alt"></i>
-          {% trans "App Summary" %}
-        </a>
+      <div class="panel-footer clearfix">
+        {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+          <a class="btn btn-default" data-bind="attr: { href: $parent.reverse('app_form_summary_diff', $parent.previousBuildId($index()), $data.id()) }">
+            <i class="fa fa-exchange"></i>
+            {% trans "View Changes" %}
+          </a>
+        {% endif %}
         <button class="btn btn-default hide"
                 data-bind="
                              openModal: 'revert-build-modal-template',
                              visible: version() !== $root.currentAppVersion(),
-                             css: {hide: false}">{% trans "Revert to this Version" %}</button>
-        {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-          <button class="btn btn-default" data-toggle="modal" data-target="#app-diff-modal" data-bind="
-                click: function() { $parent.onViewChanges($data.id(), $parent.previousBuildId($index())) }
-            ">
-            {% trans "View Changes" %}
-          </button>
-        {% endif %}
+                             css: {hide: false}">
+          <i class="fa fa-recycle"></i>
+          {% trans "Revert to this Version" %}
+        </button>
         <span class="pull-right">
           <a class="btn"
              data-bind="

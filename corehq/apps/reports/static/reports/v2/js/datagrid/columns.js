@@ -6,12 +6,12 @@ hqDefine('reports/v2/js/datagrid/columns', [
     'jquery',
     'knockout',
     'underscore',
-    'reports/v2/js/datagrid/filters',
+    'reports/v2/js/datagrid/column_filters',
 ], function (
     $,
     ko,
     _,
-    filters
+    columnFilters
 ) {
     'use strict';
 
@@ -25,7 +25,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.clause = ko.observable(data.clause || 'all');
 
         self.appliedFilters = ko.observableArray(_.map(data.appliedFilters, function (filterData) {
-            return filters.appliedColumnFilter(filterData);
+            return columnFilters.appliedColumnFilter(filterData);
         }));
 
         self.showClause = ko.computed(function () {
@@ -54,6 +54,14 @@ hqDefine('reports/v2/js/datagrid/columns', [
             };
         });
 
+        self.getInitialNameValue = function () {
+            if (!data.name) return null;
+            return {
+                id: data.name,
+                text: data.name,
+            };
+        };
+
         return self;
     };
 
@@ -69,7 +77,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.hasFilterUpdate = ko.observable(false);
 
         self.availableFilters = ko.observableArray(_.map(options.availableFilters, function (data) {
-            return filters.columnFilter(data);
+            return columnFilters.columnFilter(data);
         }));
 
         self.availableFilterNames = ko.computed(function () {
@@ -124,7 +132,6 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.setNew = function () {
-            self.loadOptions();
             self.oldColumn(undefined);
 
             if (self.isNew() && self.column()) {
@@ -138,7 +145,6 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.set = function (existingColumn) {
-            self.loadOptions();
             self.oldColumn(columnModel(existingColumn).unwrap());
             self.column(columnModel(existingColumn.unwrap()));
             self.isNew(false);
@@ -153,7 +159,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.addFilter = function () {
-            self.column().appliedFilters.push(filters.appliedColumnFilter({
+            self.column().appliedFilters.push(columnFilters.appliedColumnFilter({
                 filterName: self.selectedFilter().name(),
                 choiceName: self.selectedFilter().choices()[0].name(),
             }));
@@ -181,22 +187,11 @@ hqDefine('reports/v2/js/datagrid/columns', [
             self.hasFilterUpdate(true);
         };
 
-        self.loadOptions = function () {
-            if (!self.reportContext) {
-                throw new Error("Please call init() before calling loadOptions().");
+        self.getData = function (data) {
+            if (self.reportContext) {
+                data.reportContext = JSON.stringify(self.reportContext());
             }
-
-            $.ajax({
-                url: self.endpoint.getUrl(),
-                method: 'post',
-                dataType: 'json',
-                data: {
-                    reportContext: JSON.stringify(self.reportContext()),
-                },
-            })
-                .done(function (data) {
-                    self.columnNameOptions(data.options);
-                });
+            return data;
         };
 
         self.isColumnValid = ko.computed(function () {

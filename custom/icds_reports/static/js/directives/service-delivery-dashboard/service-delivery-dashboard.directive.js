@@ -71,8 +71,8 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
                 vm.dtColumns = vm.dtColumns.concat([
                     DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
                     DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltipAWC()).renderWith(renderCellValue('BooleanRaw','num_awcs_conducted_cbe')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltipAWC()).renderWith(renderCellValue('BooleanRaw','num_awcs_conducted_vhnd')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltipAWC()).renderWith(renderCellValue('booleanRaw','num_awcs_conducted_cbe')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltipAWC()).renderWith(renderCellValue('booleanRaw','num_awcs_conducted_vhnd')).withClass('medium-col'),
                     DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
                 ]);
             }

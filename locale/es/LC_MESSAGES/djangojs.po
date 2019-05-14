@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-30 19:51+0000\n"
+"POT-Creation-Date: 2019-05-07 19:44+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -734,21 +734,17 @@ msgid "View All Forms"
 msgstr "Ver Todos los Formularios"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/form_diff.js:77
-#, fuzzy
-#| msgid "Case Changes"
 msgid "View Changed Items"
-msgstr "Cambios del Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/form_models.js:44
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:256
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
 #: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:49
-#, fuzzy
-#| msgid "Latest"
 msgid "Latest saved"
-msgstr "La más reciente"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:23
 msgid "Warning: unrecognized language"
@@ -833,20 +829,21 @@ msgstr "Eliminar"
 msgid "Show"
 msgstr "Mostrar"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 msgid "Question"
 msgstr "Pregunta"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 msgid "Used By"
 msgstr "Utilizado Por"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 msgid "In Property"
 msgstr "En Propiedad"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/reports/static/reports/v2/js/datagrid/bindingHandlers.js:61
 msgid "Search..."
 msgstr "Buscar..."
 
@@ -3254,19 +3251,19 @@ msgstr "Desconocido"
 msgid "Loading"
 msgstr "Cargando"
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:30
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:29
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
 "No hay datos disponibles para mostrar. Por favor intente cambiar sus filtros."
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:174
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
 #: corehq/apps/reports/static/reports/js/tabular.js:32
 msgid "Sorry!"
 msgstr "¡Lo sentimos!"
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:33
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
 msgid ""
 "There was an error with your query, it has been logged, please try another "
 "query."
@@ -3274,7 +3271,7 @@ msgstr ""
 "Ocurrió un error con su consulta, ya ha sido ingresada, por favor intente "
 "con otra consulta."
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:36
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
@@ -3441,6 +3438,12 @@ msgstr "Falló"
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:25
 msgid "Failed to re-process"
 msgstr "Reproceso fallido"
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/reportFilters.js:18
+#, fuzzy
+#| msgid "Select All"
+msgid "Select"
+msgstr "Seleccionar Todos"
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
@@ -3965,12 +3968,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "show"
-#~ msgstr "mostrar"
-
-#~ msgid "hide"
-#~ msgstr "ocultar"
-
-#~ msgid "toggle"
-#~ msgstr "alternar"

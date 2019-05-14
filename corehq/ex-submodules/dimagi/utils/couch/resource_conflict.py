@@ -5,14 +5,6 @@ from django.utils.functional import wraps
 from six.moves import range
 
 
-def repeat(fn, n):
-    for _ in range(n):
-        try:
-            return fn()
-        except ResourceConflict:
-            pass
-
-
 class RetryResourceError(Exception):
     def __init__(self, fn, attempts):
         self.fn = fn

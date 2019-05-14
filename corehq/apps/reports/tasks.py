@@ -63,7 +63,7 @@ EXPIRE_TIME = 60 * 60 * 24
 def update_calculated_properties():
     results = DomainES().filter(
         get_domains_to_update_es_filter()
-    ).fields(["name", "_id", "cp_last_updated"]).scroll()
+    ).fields(["name", "_id"]).run().hits
 
     all_stats = all_domain_stats()
     for r in results:
