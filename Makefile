@@ -1,4 +1,4 @@
-.PHONY: requirements upgrade-requirements
+.PHONY: requirements upgrade-requirements docs
 
 scripts/_vendor/pip-post-compile.sh:
 	mkdir -p scripts/_vendor
@@ -32,3 +32,6 @@ upgrade-requirements: scripts/_vendor/pip-post-compile.sh
 	grep -v '^futures==' requirements-python3_6/prod-requirements.txt > temp && mv temp requirements-python3_6/prod-requirements.txt
 	grep -v '^futures==' requirements-python3_6/test-requirements.txt > temp && mv temp requirements-python3_6/test-requirements.txt
 	grep -v '^futures==' requirements-python3_6/dev-requirements.txt > temp && mv temp requirements-python3_6/dev-requirements.txt
+
+docs:
+	cd docs && $(MAKE) html
