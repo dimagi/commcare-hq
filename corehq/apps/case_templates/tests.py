@@ -9,7 +9,11 @@ import six
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
-from corehq.apps.case_templates.models import CaseTemplate
+from corehq.apps.case_templates.models import (
+    CaseTemplate,
+    CaseTemplateInstanceCase,
+)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     run_with_all_backends,
@@ -26,6 +30,8 @@ class CaseTemplateTests(TestCase):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
+        CaseTemplate.objects.all().delete()
+        CaseTemplateInstanceCase.objects.all().delete()
         super(CaseTemplateTests, self).tearDown()
 
     def _create_case_structure(self):
@@ -91,10 +97,15 @@ class CaseTemplateTests(TestCase):
 
     @run_with_all_backends
     def test_create_instance(self):
+        self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 3)
         template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+
         suffix = 'cool_new_cases'
         template.create_instance(suffix)
+
         new_cases = [instance.get_case() for instance in template.instance_cases.all()]
+
+        self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 6)
         self.assertEqual(len(new_cases), 3)
         self.assertItemsEqual(
             ["{}-{}".format(name, suffix) for name in ['mother', 'firstborn', 'baby']],
@@ -116,9 +127,25 @@ class CaseTemplateTests(TestCase):
         template.create_instance()
         self.assertEqual(template.instance_cases.last().get_case().name, 'baby-4')
 
+    @run_with_all_backends
     def test_get_instances(self):
         # Get all the instances created by a template
-        pass
+        original_case_ids = set(CaseAccessors(self.domain).get_case_ids_in_domain())
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+
+        new_case_root = template.create_instance()
+        new_case_ids = original_case_ids - set(CaseAccessors(self.domain).get_case_ids_in_domain())
+        self.assertEqual(
+            [case.case_id for case in template.get_instance_cases_for_root(new_case_root)],
+            list(new_case_ids),
+        )
+
+        second_new_case_root = template.create_instance()
+        second_new_case_ids = new_case_ids - set(CaseAccessors(self.domain).get_case_ids_in_domain())
+        self.assertEqual(
+            [case.case_id for case in template.get_instance_cases_for_root(second_new_case_root)],
+            list(second_new_case_ids),
+        )
 
     def test_delete_template(self):
         # Deleting a template deletes all instances and forms against them

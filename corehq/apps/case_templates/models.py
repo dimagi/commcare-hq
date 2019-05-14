@@ -90,7 +90,9 @@ class CaseTemplate(models.Model):
         return template_xml
 
     def create_instance(self, suffix=None):
-        """Creates cases based on the prototype stored in this template
+        """Creates cases based on the prototype stored in this template. Returns the
+        case_id of the root in the tree
+
         """
         cases = []
         root_id = list(self.prototype_cases.keys())[0]
@@ -111,16 +113,22 @@ class CaseTemplate(models.Model):
                 instance.save()
 
             submit_case_blocks(cases, self.domain, device_id=__name__ + '.create_template_instance')
+        return root_id
+
+    def get_instance_cases_for_root(self, root_id):
+        return [instance_case.get_case() for instance_case in self.instance_cases.filter(ancestor_id=root_id)]
 
 
 class CaseTemplateInstanceCase(models.Model):
     template = models.ForeignKey(CaseTemplate, on_delete=models.CASCADE, related_name='instance_cases')
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
+    ancestor_id = models.CharField(max_length=255, db_index=True)
 
     def __repr__(self):
         return (
             "CaseTemplateInstanceCase("
             "case_id='{self.case_id}', "
+            "ancestor_id='{self.ancestor_id}', "
             "template_id='{self.template_id}'"
             ")"
         ).format(self=self)
