@@ -2,9 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.apps import apps
-from django.conf import settings
-from django.db import migrations
+from django.db import migrations, router
 
+from corehq.sql_db.connections import is_citus_db
 from corehq.sql_db.operations import RawSQLMigration
 
 
@@ -57,10 +57,18 @@ def _citus_composite_key_sql(model_cls):
         pkey=model_cls._meta.pk.name,
         index=index,
     )
-    if getattr(settings, 'UNIT_TESTING', False):
-        return sql, reverse_sql
-    else:
-        return migrations.RunSQL.noop, reverse_sql
+    return sql, reverse_sql
+
+
+class OnlyCitusRunSql(migrations.RunSQL):
+    """Only run the SQL if the database is CitusDB"""
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        if (
+            router.allow_migrate(schema_editor.connection.alias, app_label, **self.hints)
+            and is_citus_db(schema_editor.connection)
+        ):
+            self._run_sql(schema_editor, self.sql)
 
 
 def get_composite_primary_key_migrations(models_to_update):
@@ -68,7 +76,7 @@ def get_composite_primary_key_migrations(models_to_update):
     for model_name in models_to_update:
         model = apps.get_model('icds_reports', model_name)
         sql, reverse_sql = _citus_composite_key_sql(model)
-        operations.append(migrations.RunSQL(
+        operations.append(OnlyCitusRunSql(
             sql,
             reverse_sql,
             state_operations=[
