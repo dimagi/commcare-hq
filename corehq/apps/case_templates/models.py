@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import uuid
+from collections import OrderedDict
 from xml.etree import cElementTree as ElementTree
 
 from django.db import models
@@ -67,10 +68,13 @@ class CaseTemplate(models.Model):
 
     @cached_property
     def prototype_cases(self):
-        """Dict of cases, keyed by case ID contained in the template
+        """Dict of cases, keyed by case ID, contained in the template
         """
-        return {case.case_id: case for case in (CaseBlock.from_xml(node)
-                for node in self._get_template_xml().findall("{%s}case" % V2_NAMESPACE))}
+        case_blocks = (
+            CaseBlock.from_xml(node)
+            for node in self._get_template_xml().findall("{%s}case" % V2_NAMESPACE)
+        )
+        return OrderedDict((case.case_id, case) for case in case_blocks)
 
     def num_cases(self):
         return len(self.prototype_cases)

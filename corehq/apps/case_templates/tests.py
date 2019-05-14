@@ -68,7 +68,7 @@ class CaseTemplateTests(TestCase):
         template = CaseTemplate.create(self.domain, self.parent_id, 'template')
         template_cases = template.prototype_cases
 
-        self.assertItemsEqual([self.parent_id, self.child_id, self.grandchild_id], template_cases.keys())
+        self.assertEqual([self.parent_id, self.child_id, self.grandchild_id], template_cases.keys())
 
         self.assertEqual(template_cases[self.child_id].case_name, 'firstborn')
         self.assertEqual(template_cases[self.child_id].update['age'], '30')
