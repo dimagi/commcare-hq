@@ -30,7 +30,9 @@ class Migration(migrations.Migration):
             name='CCZHostingLink',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('identifier', models.CharField(db_index=True, max_length=255, unique=True, validators=[django.core.validators.RegexValidator('^[a-z0-9]*$', code='invalid_lowercase_alphanumeric', message='must be lowercase alphanumeric')])),
+                ('identifier', models.CharField(db_index=True, max_length=255, unique=True, validators=[
+                    django.core.validators.RegexValidator('^[a-z0-9]*$', code='invalid_lowercase_alphanumeric',
+                                                          message='must be lowercase alphanumeric')])),
                 ('username', models.CharField(max_length=255)),
                 ('password', models.CharField(max_length=255)),
                 ('domain', models.CharField(max_length=255)),
