@@ -4797,8 +4797,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         if the media is new or has changed since the last build or the build reverting to.
         Otherwise set it to the version from the last build/version reverted to.
         """
+        icds_toggle_enabled = toggles.ICDS.enabled(self.domain)
 
-        if version_reverted_to and toggles.ICDS.enabled(self.domain):
+        if version_reverted_to and icds_toggle_enabled:
             previous_version = wrap_app(get_build_doc_by_version(self.domain, self.copy_of, version_reverted_to))
         else:
             previous_version = self.get_previous_version()
@@ -4810,7 +4811,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 # Re-use the id so CommCare knows it's the same resource
                 map_item.unique_id = prev_map_item.unique_id
             # if its a linked app and the map item already has a version don't need to set it up again
-            if not (is_linked_app and map_item.version):
+            if not (icds_toggle_enabled and is_linked_app and map_item.version):
                 if (prev_map_item and prev_map_item.version
                         and prev_map_item.multimedia_id == map_item.multimedia_id):
                     map_item.version = prev_map_item.version
