@@ -87,6 +87,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    get_build_doc_by_version,
 )
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
@@ -4220,14 +4221,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def is_remote_app(self):
         return False
 
-    def get_version(self, version_number):
-        return self.view('app_manager/applications',
-            key=[self.domain, self.master_id, version_number],
-            include_docs=True,
-            limit=1,
-            descending=True,
-        ).first()
-
     @memoized
     def get_previous_version(self):
         return self.view('app_manager/applications',
@@ -4805,7 +4798,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         if version_reverted_to:
-            previous_version = self.get_version(version_reverted_to)
+            previous_version = get_build_doc_by_version(self.domain, self.copy_of, version_reverted_to)
         else:
             previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
