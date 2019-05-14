@@ -215,7 +215,7 @@ class ConfigurableReportTableManagerMixin(object):
             return
 
         if config.is_static:
-            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop')
+            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
         else:
             adapter.rebuild_table(source='pillowtop')
 
