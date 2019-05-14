@@ -8,17 +8,17 @@ import uuid
 from datetime import datetime, timedelta
 from io import open
 
-import xmltodict
-from attr import attrs, attrib
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import SimpleTestCase
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
+
+import xmltodict
+from attr import attrib, attrs
+from couchdbkit.exceptions import ResourceNotFound
 from six.moves import zip
-from testil import eq, assert_raises
+from testil import assert_raises, eq
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -30,8 +30,8 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     MigrationRestricted,
     PartiallyLockingQueue,
     get_diff_db,
+    update_xml,
 )
-from corehq.apps.couch_sql_migration.couchsqlmigration import update_xml
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -67,7 +67,6 @@ from corehq.util.test_utils import (
     softer_assert,
     trap_extra_setup,
 )
-from couchforms.models import XFormInstance
 
 DECL = '<?xml version="1.0" encoding="utf-8"?>\n'
 
