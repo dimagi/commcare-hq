@@ -14,7 +14,7 @@ from custom.icds.models import (
 @mock.patch('custom.icds.tasks.ccz_hosting.open')
 @mock.patch('custom.icds.tasks.ccz_hosting.wrap_app')
 @mock.patch('custom.icds.tasks.ccz_hosting.get_build_doc_by_version')
-@mock.patch('custom.icds.tasks.ccz_hosting.create_ccz_files')
+@mock.patch('custom.icds.tasks.ccz_hosting.create_files_for_ccz')
 @mock.patch('custom.icds.tasks.ccz_hosting.CCZHosting.objects.get')
 @mock.patch('custom.icds.models.CCZHostingUtility')
 class TestSetUpCCZFileForHosting(SimpleTestCase):
