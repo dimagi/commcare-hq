@@ -2779,6 +2779,12 @@
         }
       ]
     },
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "mirrored_engine_ids": [
+        {
+            "server_environment": "india",
+            "engine_ids": ["icds-ucr-citus"]
+        }
+    ]
   }
 }
