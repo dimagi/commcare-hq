@@ -11,51 +11,58 @@
 {% registerurl 'ccz_hosting' domain '---' %}
 
 <div class="container">
-    <div class="row">
-        <div class="page-header">
-            <h1>{% trans "Manage CCZ Hosting Links" %}</h1>
-        </div>
+  <div class="row">
+    <div class="page-header">
+      <h1>
+        {% trans "Manage CCZ Hosting Links" %}
+      </h1>
     </div>
-    <div class="row">
-        {% if links %}
-        <div class="col-sm-4" id="links">
-            <table class="table table-condensed table-hover">
-                <thead>
-                    <tr>
-                        <th>Links</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: links">
-                    <tr>
-                        <td class="col-sm-8 col-md-10" data-bind="text: identifier"></td>
-                        <td class="col-sm-2 col-md-1">
-                            <a class="btn btn-default btn-xs" data-bind="attr: { href: editUrl }">
-                                <i class="fa fa-edit"></i>
-                                {% trans "Edit" %}
-                            </a>
-                        </td>
-                        <td class="col-sm-2 col-md-1">
-                            <a class="btn btn-default btn-xs" data-bind="attr: { href: pageUrl }" target="_blank">
-                                <i class="fa fa-external-link"></i>
-                                {% trans "View" %}
-                            </a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+  </div>
+  <div class="row">
+    {% if links %}
+      <div class="col-sm-4" id="links">
+        <table class="table table-condensed table-hover">
+          <thead>
+            <tr>
+              <th>
+                {% trans 'Links' %}
+              </th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: links">
+            <tr>
+              <td class="col-sm-8 col-md-10" data-bind="text: identifier">
+              </td>
+              <td class="col-sm-2 col-md-1">
+                <a class="btn btn-default btn-xs" data-bind="attr: { href: editUrl }">
+                  <i class="fa fa-edit">
+                  </i>
+                  {% trans "Edit" %}
+                </a>
+              </td>
+              <td class="col-sm-2 col-md-1">
+                <a class="btn btn-default btn-xs" data-bind="attr: { href: pageUrl }" target="_blank">
+                  <i class="fa fa-external-link">
+                  </i>
+                  {% trans "View" %}
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col-sm-8">
+    {% else %}
+      <div class="col-sm-12">
+    {% endif %}
+        <div class="panel panel-modern-gray panel-form-only">
+          <div class="panel-body">
+            {% crispy form %}
+          </div>
         </div>
-        <div class="col-sm-8">
-        {% else %}
-        <div class="col-sm-12">
-        {% endif %}
-            <div class="panel panel-modern-gray panel-form-only">
-                <div class="panel-body">
-                    {% crispy form %}
-                </div>
-            </div>
-        </div>
-    </div>
+      </div>
+  </div>
 </div>
 {% endblock %}

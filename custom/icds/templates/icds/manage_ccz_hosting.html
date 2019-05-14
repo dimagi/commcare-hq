@@ -14,51 +14,72 @@
 {% registerurl "remove_ccz_hosting" domain '---' %}
 {% registerurl "ccz_hosting" domain '---' %}
 <div class="container" id="manage-ccz-hostings">
-    <div class="row">
-        <div class="page-header">
-            <h1>{% trans "Manage CCZ Hosting" %}</h1>
-        </div>
+  <div class="row">
+    <div class="page-header">
+      <h1>
+        {% trans "Manage CCZ Hosting" %}
+      </h1>
     </div>
-    <div class="row">
-        <div>
-            <div class="panel panel-modern-gray panel-form-only">
-                <div class="panel-body">
-                    {% crispy form %}
-                </div>
-            </div>
+  </div>
+  <div class="row">
+    <div>
+      <div class="panel panel-modern-gray panel-form-only">
+        <div class="panel-body">
+          {% crispy form %}
         </div>
+      </div>
     </div>
-    <div class="row">
-        <div>
-        {% if ccz_hostings %}
-            <table id="ccz-hostings" class="table">
-                <thead>
-                    <tr>
-                        <th class="col-sm-2">{% trans 'Link' %}</th>
-                        <th class="col-sm-2">{% trans 'Application' %}</th>
-                        <th class="col-sm-2">{% trans 'Profile' %}</th>
-                        <th class="col-sm-2">{% trans 'Version' %}</th>
-                        <th class="col-sm-2">{% trans 'CCZ Name' %}</th>
-                        <th class="col-sm-2">{% trans 'Action' %}</th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: hostings">
-                    <tr>
-                        <td>
-                          <a data-bind="attr: { href: viewUrl}, text: link" target="_blank"></a>
-                        </td>
-                        <td data-bind="text: appName"></td>
-                        <td data-bind="text: profileName"></td>
-                        <td data-bind="text: version"></td>
-                        <td data-bind="text: fileName"></td>
-                        <td>
-                            <a data-bind="attr: { href: url}">{% trans 'Remove' %}</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        {% endif %}
-        </div>
+  </div>
+  <div class="row">
+    <div>
+      {% if ccz_hostings %}
+        <table id="ccz-hostings" class="table">
+          <thead>
+            <tr>
+              <th class="col-sm-2">
+                {% trans 'Link' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Application' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Profile' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Version' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'CCZ Name' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Action' %}
+              </th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: hostings">
+            <tr>
+              <td>
+                <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
+                </a>
+              </td>
+              <td data-bind="text: appName">
+              </td>
+              <td data-bind="text: profileName">
+              </td>
+              <td data-bind="text: version">
+              </td>
+              <td data-bind="text: fileName">
+              </td>
+              <td>
+                <a data-bind="attr: { href: url}">
+                  {% trans 'Remove' %}
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      {% endif %}
     </div>
+  </div>
 </div>
 {% endblock %}
