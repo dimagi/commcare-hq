@@ -181,7 +181,7 @@ def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_
     return files, errors, file_count
 
 
-def _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, compression, track_progress):
+def _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, compression, task):
     with open(fpath, 'wb') as tmp:
         with zipfile.ZipFile(tmp, "w") as z:
             for path, data in files:
@@ -190,15 +190,15 @@ def _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, co
                 file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                 z.writestr(path, data, file_compression)
                 current_progress += file_progress / file_count
-                if track_progress:
-                    DownloadBase.set_progress(build_application_zip, current_progress, 100)
+                if task:
+                    DownloadBase.set_progress(task, current_progress, 100)
 
 
 def create_ccz_files(build, build_profile_id, include_multimedia_files=True, include_index_files=True,
                      download_id=None, compress_zip=False, filename="commcare.zip",
-                     download_targeted_version=False, track_progress=False, expose_link=False):
+                     download_targeted_version=False, task=None, expose_link=False):
     """
-    :param track_progress: track progress of the files when being run asynchronously by celery
+    :param task: celery task whose progress needs to be set when being run asynchronously by celery
     :param expose_link: expose downloadable link for the file created
     :return: path to the ccz file
     """
@@ -206,8 +206,8 @@ def create_ccz_files(build, build_profile_id, include_multimedia_files=True, inc
     current_progress = 10  # early on indicate something is happening
     file_progress = 50.0  # arbitrarily say building files takes half the total time
 
-    if track_progress:
-        DownloadBase.set_progress(build_application_zip, current_progress, 100)
+    if task:
+        DownloadBase.set_progress(task, current_progress, 100)
 
     fpath = _get_file_path(build, include_multimedia_files, include_index_files, build_profile_id,
                            download_targeted_version)
@@ -217,21 +217,21 @@ def create_ccz_files(build, build_profile_id, include_multimedia_files=True, inc
         files, errors, file_count = _build_ccz_files(build, build_profile_id, include_multimedia_files,
                                                      include_index_files, download_id, compress_zip,
                                                      filename, download_targeted_version)
-        _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, compression, track_progress)
+        _zip_ccs_files(fpath, files, current_progress, file_progress, file_count, compression, task)
         # Integrity check that all media files present in media_suite.xml were added to the zip
         if include_multimedia_files and include_index_files and toggles.CAUTIOUS_MULTIMEDIA.enabled(build.domain):
             _ensure_all_media_files_in_ccz(fpath, errors)
         if errors:
             os.remove(fpath)
-            update_task_state(build_application_zip, states.FAILURE, {'errors': errors})
+            update_task_state(task, states.FAILURE, {'errors': errors})
             raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
     else:
-        if track_progress:
-            DownloadBase.set_progress(build_application_zip, current_progress + file_progress, 100)
+        if task:
+            DownloadBase.set_progress(task, current_progress + file_progress, 100)
     if expose_link:
         _expose_download_link(fpath, filename, compress_zip, download_id)
-    if track_progress:
-        DownloadBase.set_progress(build_application_zip, 100, 100)
+    if task:
+        DownloadBase.set_progress(task, 100, 100)
     return fpath
 
 
@@ -257,6 +257,6 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     DownloadBase.set_progress(build_application_zip, 0, 100)
     fpath = create_ccz_files(app, build_profile_id, include_multimedia_files, include_index_files,
                              download_id, compress_zip, filename, download_targeted_version,
-                             track_progress=True, expose_link=True)
+                             task=build_application_zip, expose_link=True)
     _expose_download_link(fpath, filename, compress_zip, download_id)
     DownloadBase.set_progress(build_application_zip, 100, 100)
