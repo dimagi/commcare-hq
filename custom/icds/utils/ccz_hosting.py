@@ -8,7 +8,6 @@ from corehq.blobs import (
     get_blob_db,
     CODES,
 )
-from corehq.blobs.models import BlobMeta
 
 
 class CCZHostingUtility:
@@ -43,18 +42,14 @@ class CCZHostingUtility:
         }
 
     def store_file_in_blobdb(self, file_obj, name):
-        db = get_blob_db()
-        try:
-            kw = {"meta": db.metadb.get(parent_id='CCZHosting', key=self.blob_id)}
-        except BlobMeta.DoesNotExist:
-            kw = {
-                "domain": self.file_hosting.domain,
-                "parent_id": 'CCZHosting',
-                "type_code": CODES.tempfile,
-                "key": self.blob_id,
-                "name": name,
-            }
-        db.put(file_obj, **kw)
+        kw = {
+            "domain": self.file_hosting.domain,
+            "parent_id": 'CCZHosting',
+            "type_code": CODES.tempfile,
+            "key": self.blob_id,
+            "name": name,
+        }
+        get_blob_db().put(file_obj, **kw)
 
     def remove_file_from_blobdb(self):
         get_blob_db().delete(key=self.blob_id)
