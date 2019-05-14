@@ -1011,8 +1011,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
             rule.pk,
             rule.name,
             rule.case_type,
-        ) for rule in self.get_conditional_alerts_queryset()
-          if isinstance(rule.get_messaging_rule_schedule().memoized_events[0].content, SMSContent)]
+        ) for rule in self.get_conditional_alerts_queryset() if isinstance(_get_rule_content(rule), SMSContent)]
 
         temp = io.BytesIO()
         export_raw(headers, [(title, rows)], temp)
@@ -1039,7 +1038,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
                 "adjective": _("conditional alert"),
                 "plural_noun": _("conditional alerts"),
-                "help_text": _("This page will only download / upload conditional alerts that use " \
+                "help_text": _("This page will only download / upload conditional alerts that use "
                                "SMS content - not email, SMS surveys or other content."),
             },
         }
@@ -1077,7 +1076,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                     index=index, id=row['id']))
             dirty = False
             if rule:
-                if not isinstance(rule.get_messaging_rule_schedule().memoized_events[0].content, SMSContent):
+                if not isinstance(_get_rule_content(rule), SMSContent):
                     messages.error(request, _("Row {index}, with rule id {id}, does not use SMS content.").format(
                         index=index, id=row['id']))
                 else:
@@ -1094,3 +1093,6 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
         messages.success(request, _("Updated {count} rule(s).").format(count=success_count))
 
         return self.get(request, *args, **kwargs)
+
+def _get_rule_content(rule):
+    return rule.get_messaging_rule_schedule().memoized_events[0].content
