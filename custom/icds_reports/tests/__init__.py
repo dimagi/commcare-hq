@@ -20,11 +20,7 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
-from corehq.sql_db.routers import db_for_read_write
-from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE, \
-    AGG_GROWTH_MONITORING_TABLE, AGG_CCS_RECORD_BP_TABLE, AGG_CHILD_HEALTH_PNC_TABLE, AGG_CCS_RECORD_PNC_TABLE, \
-    AGG_CCS_RECORD_THR_TABLE, AGG_DAILY_FEEDING_TABLE, AGG_CCS_RECORD_CF_TABLE, AGG_CHILD_HEALTH_THR_TABLE, \
-    AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE
+from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -32,10 +28,11 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
-from custom.icds_reports.models.aggregate import AggregateCcsRecordDeliveryForms
 from io import open
 from six.moves import range
 from six.moves import zip
+
+from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
@@ -205,28 +202,10 @@ def _distribute_tables_for_citus(engine):
     if not getattr(settings, 'ICDS_USE_CITUS', False):
         return
 
-    # move to migrations
-    distribute = [
-        (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id'),
-        (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
-        (AGG_CCS_RECORD_CF_TABLE, 'supervisor_id'),
-        (AGG_CHILD_HEALTH_THR_TABLE, 'supervisor_id'),
-        (AGG_GROWTH_MONITORING_TABLE, 'supervisor_id'),
-        (AGG_CHILD_HEALTH_PNC_TABLE, 'supervisor_id'),
-        (AGG_CCS_RECORD_PNC_TABLE, 'supervisor_id'),
-        (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
-        (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
-        (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
-        ('child_health_monthly', 'supervisor_id'),
-        ('ccs_record_monthly', 'supervisor_id'),
-        ('daily_attendance', 'supervisor_id'),
-    ]
-    reference = [
-        'awc_location',
-        'icds_months'
-    ]
-    for table, col in distribute:
+    for table, col in DISTRIBUTED_TABLES:
         with engine.begin() as conn:
+
+            # TODO: remove this after citus migration
             res = conn.execute(
                 """
                 SELECT c.relname AS child
@@ -240,20 +219,12 @@ def _distribute_tables_for_citus(engine):
             for child in [row.child for row in res]:
                 # only need this because of reusedb if testing on master and this branch
                 conn.execute('drop table if exists "{}"'.format(child))
-            res = conn.execute("""
-                    select 1 from pg_dist_partition
-                    where partmethod = 'h' and logicalrelid = %s::regclass
-                """, table)
-            if not list(res):
-                conn.execute("select create_distributed_table(%s, %s)", [table, col])
-    for table in reference:
+
+            create_citus_distributed_table(conn, table, col)
+
+    for table in REFERENCE_TABLES:
         with engine.begin() as conn:
-            res = conn.execute("""
-                    select 1 from pg_dist_partition
-                    where partmethod = 'n' and logicalrelid = %s::regclass
-                """, table)
-            if not list(res):
-                conn.execute("select create_reference_table(%s)", [table])
+            create_citus_reference_table(conn, table)
 
 
 def tearDownModule():
