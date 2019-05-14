@@ -85,6 +85,10 @@ class CaseTemplateTests(TestCase):
         template = CaseTemplate.create(self.domain, self.child_id, 'template')
         self.assertItemsEqual([self.child_id, self.grandchild_id], template.prototype_cases.keys())
 
+    def test_num_cases(self):
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+        self.assertEqual(template.num_cases(), 3)
+
     def test_get_instances(self):
         # Get all the instances created by a template
         pass

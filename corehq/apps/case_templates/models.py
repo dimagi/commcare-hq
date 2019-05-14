@@ -72,6 +72,9 @@ class CaseTemplate(models.Model):
         return {case.case_id: case for case in (CaseBlock.from_xml(node)
                 for node in self._get_template_xml().findall("{%s}case" % V2_NAMESPACE))}
 
+    def num_cases(self):
+        return len(self.prototype_cases)
+
     def _get_template_xml(self):
         """get case xml from the blobdb
         """
