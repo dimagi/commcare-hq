@@ -5,6 +5,7 @@ import json
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
+from unittest import skip
 
 from django.test import override_settings, TestCase
 from mock import patch
@@ -104,6 +105,7 @@ class BaseRepeaterTest(TestCase):
         return RepeatRecord.all(domain=domain_name, due_before=later)
 
 
+@skip
 class RepeaterTest(BaseRepeaterTest):
 
     def setUp(self):
