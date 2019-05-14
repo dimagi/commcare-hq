@@ -1,23 +1,43 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, unicode_literals
 
 import hashlib
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
 import six
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from pillowtop.dao.exceptions import DocumentMismatchError
+from pillowtop.exceptions import PillowConfigError
+from pillowtop.logger import pillow_logging
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import BulkPillowProcessor
+from pillowtop.utils import ensure_document_exists, ensure_matched_revisions
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
 from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.userreports.const import KAFKA_TOPICS
-from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
 from corehq.apps.userreports.exceptions import (
-    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
+    BadSpecError,
+    StaleRebuildError,
+    TableRebuildError,
+    UserReportsWarning,
 )
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
+from corehq.apps.userreports.rebuild import (
+    get_table_diffs,
+    get_tables_rebuild_migrate,
+    migrate_tables,
+)
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -26,14 +46,6 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.dao.exceptions import DocumentMismatchError
-from pillowtop.exceptions import PillowConfigError
-from pillowtop.logger import pillow_logging
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import BulkPillowProcessor
-from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = timedelta(hours=1)
 LONG_UCR_LOGGING_THRESHOLD = 0.5
