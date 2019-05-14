@@ -41,6 +41,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
         Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
+        Ignore('missing', '_attachments', new=MISSING),
 
         Ignore('diff', check=has_date_values),
         Ignore(check=is_text_xmlns),
