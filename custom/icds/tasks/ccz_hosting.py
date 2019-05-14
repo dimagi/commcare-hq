@@ -30,6 +30,7 @@ def setup_ccz_file_for_hosting(ccz_hosting_id):
             with open(ccz_file, 'rb') as ccz:
                 ccz_utility.store_file_in_blobdb(ccz, name=ccz_hosting.file_name)
         except:
+            exc = sys.exc_info()
             # delete the file from blob db if it was added but later failed
             ccz_hosting.delete_ccz()
-            six.reraise(*sys.exc_info())
+            six.reraise(*exc)
