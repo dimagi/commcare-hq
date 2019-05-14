@@ -58,6 +58,6 @@ class UCRExperiment(laboratory.Experiment):
             control_report_config_id=self.context['report_config_id'],
             candidate_report_config_id=self.context['new_report_config_id'],
             filter_values=self.context['filter_values'],
-            control_duration=control.duration,
-            candidate_duration=candidate.duration,
+            control_duration=control.duration.total_seconds(),
+            candidate_duration=candidate.duration.total_seconds(),
         )
