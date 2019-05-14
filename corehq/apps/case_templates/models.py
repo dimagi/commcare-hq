@@ -3,17 +3,20 @@ from __future__ import absolute_import, unicode_literals
 
 import uuid
 from collections import OrderedDict
+from copy import copy
 from xml.etree import cElementTree as ElementTree
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.functional import cached_property
 
+import six
 from six import StringIO
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.phone.xml import get_case_xml
 
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -86,10 +89,44 @@ class CaseTemplate(models.Model):
             template_xml = ElementTree.fromstring(file_obj.read())
         return template_xml
 
+    def create_instance(self, suffix=None):
+        """Creates cases based on the prototype stored in this template
+        """
+        cases = []
+        root_id = list(self.prototype_cases.keys())[0]
+        if suffix is None:
+            suffix = (self.instance_cases.count() % self.num_cases()) + 1
+        with transaction.atomic():
+            for case_id, case in six.iteritems(self.prototype_cases):
+                new_case_id = six.text_type(uuid.uuid4())
+                new_case = copy(case)
+                new_case.create = True
+                new_case.case_id = new_case_id
+                new_case.case_name = "{}-{}".format(case.case_name, suffix)
+                new_case.update['cc_template_id'] = six.text_type(self.template_id)
+                new_case.update['cc_template_ancestor_id'] = root_id
+                cases.append(new_case.as_string().decode('utf-8'))
+
+                instance = CaseTemplateInstanceCase(case_id=new_case_id, template=self)
+                instance.save()
+
+            submit_case_blocks(cases, self.domain, device_id=__name__ + '.create_template_instance')
+
 
 class CaseTemplateInstanceCase(models.Model):
     template = models.ForeignKey(CaseTemplate, on_delete=models.CASCADE, related_name='instance_cases')
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
+
+    def __repr__(self):
+        return (
+            "CaseTemplateInstanceCase("
+            "case_id='{self.case_id}', "
+            "template_id='{self.template_id}'"
+            ")"
+        ).format(self=self)
+
+    def get_case(self):
+        return CaseAccessors(self.template.domain).get_case(self.case_id)
 
 
 def get_case_hierarchy(case):

@@ -89,6 +89,18 @@ class CaseTemplateTests(TestCase):
         template = CaseTemplate.create(self.domain, self.parent_id, 'template')
         self.assertEqual(template.num_cases(), 3)
 
+    @run_with_all_backends
+    def test_create_instance(self):
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+        suffix = 'cool_new_cases'
+        template.create_instance(suffix)
+        new_cases = [instance.get_case() for instance in template.instance_cases.all()]
+        self.assertEqual(len(new_cases), 3)
+        self.assertItemsEqual(
+            ["{}-{}".format(name, suffix) for name in ['mother', 'firstborn', 'baby']],
+            [new_case.name for new_case in new_cases]
+        )
+
     def test_get_instances(self):
         # Get all the instances created by a template
         pass
