@@ -4794,7 +4794,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
         Set the media version numbers for all media in the app to the current app version
         if the media is new or has changed since the last build or the build reverting to.
-        Otherwise set it to the version from the last build.
+        Otherwise set it to the version from the last build/version reverted to.
         """
 
         if version_reverted_to:
