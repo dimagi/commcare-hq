@@ -53,11 +53,9 @@ branches:
   #- jls/reports-select2-v4  # Jenny April 9
   - nh/cdc/one_domain  # Norman March 26
   - sr-ucr-mirror # Sravan May 1
-  #- mk/ccz-hosting-revamp # MK May 6
+  - mk/ccz-hosting-revamp # MK May 6
   - jls/standardize-broadcasts-ui # Jenny May 11
-  #- je/fast-fixture-upload+mk/ccz-hosting-revamp # J$ May 13
+  - je/fast-fixture-upload+mk/ccz-hosting-revamp # J$ May 13
   - je/fast-fixture-upload # J$ May 13
 #  - web-user-reports-project-access  # Gabriella May 13
-  - revert-24299-revert-24200-jls/locale-id-integrity # Jenny May 14
-  - jls/locale-id-integrity-bug
 submodules: {}
