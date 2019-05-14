@@ -98,6 +98,11 @@ class Schedule(models.Model):
     class Meta(object):
         abstract = True
 
+    @classmethod
+    def assert_is(cls, schedule):
+        if not isinstance(schedule, cls):
+            raise TypeError("Expected " + cls.__name__)
+
     def set_first_event_due_timestamp(self, instance, start_date=None):
         raise NotImplementedError()
 
