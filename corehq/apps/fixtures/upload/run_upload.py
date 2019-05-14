@@ -113,6 +113,14 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
     return_val = FixtureUploadResult()
 
     type_sheets = workbook.get_all_type_sheets()
+    for table_definition in type_sheets:
+        if not table_definition.is_global:
+            return_val.errors.append(
+                _("type {lookup_table_name} is not defined as global").format(
+                    lookup_table_name=table_definition.table_id
+                )
+            )
+            return return_val
     total_tables = len(type_sheets)
     return_val.number_of_fixtures = total_tables
 
@@ -130,7 +138,7 @@ def _run_fast_fixture_upload(domain, workbook, task=None):
             "_id": uuid.uuid4().hex,
             "doc_type": "FixtureDataType",
             "domain": domain,
-            "is_global": False,
+            "is_global": True,
             "description": None,
             "fields": [field.to_json() for field in table_def.fields],
             "copy_from": None,
