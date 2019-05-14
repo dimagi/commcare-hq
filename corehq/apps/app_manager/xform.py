@@ -272,7 +272,7 @@ class ItextNodeGroup(object):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return ''.join(["{0}{1}".format(n.lang, n.rendered_values) for n in self.nodes.values()]).__hash__()
+        return hash(''.join(["{0}{1}".format(n.lang, n.rendered_values) for n in self.nodes.values()]))
 
     def __repr__(self):
         return "{0}, {1}".format(self.id, self.nodes)
