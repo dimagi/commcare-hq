@@ -5,6 +5,7 @@ import argparse
 from collections import namedtuple
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.apps.userreports.models import AsyncIndicator, get_datasource_config
@@ -114,9 +115,9 @@ class Command(BaseCommand):
                 .values_list('form_id', flat=True)
             )
         if self.start:
-            kw = '{}__gte'.format(date_column)
-            query = query.filter(kw=self.start)
+            kw = {'{}__gte'.format(date_column): self.start}
+            query = query.filter(**kw)
         if self.end:
-            kw = '{}__lt'.format(date_column)
-            query = query.filter(kw=self.end)
+            kw = {'{}__lt'.format(date_column): self.end}
+            query = query.filter(**kw)
         return query
