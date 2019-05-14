@@ -5,45 +5,45 @@
 {% requirejs_main 'scheduling/js/broadcasts_list' %}
 
 {% block stylesheets %}{{ block.super }}
-<style>
+  <style>
     .label {
-        font-size: 100%;
+      font-size: 100%;
     }
-</style>
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    {% registerurl 'new_list_broadcasts' domain %}
-    {% registerurl 'edit_schedule' domain '---' '---' %}
-    <div class="btn-group">
-        <a href="{% url 'create_schedule' domain %}" class="btn btn-primary">
-            <i class="fa fa-plus"></i>
-            {% trans 'Add Broadcast' %}
-        </a>
-    </div>
-    <h4>{% trans 'Scheduled Broadcasts' %}</h4>
-    <div>
-        <table id="scheduled-table" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th class="col-md-1">{% trans 'Delete' %}</th>
-                    <th class="col-md-4">{% trans 'Name' %}</th>
-                    <th class="col-md-3">{% trans 'Last Sent' %}</th>
-                    <th class="col-md-2">{% trans 'Status' %}</th>
-                    <th class="col-md-2">{% trans 'Action' %}</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
-    <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
-    <div>
-        <table id="immediate-table" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th class="col-md-8">{% trans 'Name' %}</th>
-                    <th class="col-md-4">{% trans 'Sent' %}</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
+  {% registerurl 'new_list_broadcasts' domain %}
+  {% registerurl 'edit_schedule' domain '---' '---' %}
+  <div class="btn-group">
+    <a href="{% url 'create_schedule' domain %}" class="btn btn-primary">
+      <i class="fa fa-plus"></i>
+      {% trans 'Add Broadcast' %}
+    </a>
+  </div>
+  <h4>{% trans 'Scheduled Broadcasts' %}</h4>
+  <div>
+    <table id="scheduled-table" class="table table-striped table-bordered">
+      <thead>
+      <tr>
+        <th class="col-md-1">{% trans 'Delete' %}</th>
+        <th class="col-md-4">{% trans 'Name' %}</th>
+        <th class="col-md-3">{% trans 'Last Sent' %}</th>
+        <th class="col-md-2">{% trans 'Status' %}</th>
+        <th class="col-md-2">{% trans 'Action' %}</th>
+      </tr>
+      </thead>
+    </table>
+  </div>
+  <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
+  <div>
+    <table id="immediate-table" class="table table-striped table-bordered">
+      <thead>
+      <tr>
+        <th class="col-md-8">{% trans 'Name' %}</th>
+        <th class="col-md-4">{% trans 'Sent' %}</th>
+      </tr>
+      </thead>
+    </table>
+  </div>
 {% endblock %}
