@@ -1281,6 +1281,14 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     always_enabled={'icds', 'icds-cas'},
 )
 
+LOCALE_ID_INTEGRITY = StaticToggle(
+    'locale_id_integrity',
+    'Verify all locale ids in suite are present in app strings before allowing CCZ download',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds', 'icds-cas'},
+)
+
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
     'Bulk multimedia path management',
