@@ -206,8 +206,7 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
     current_progress = 10  # early on indicate something is happening
     file_progress = 50.0  # arbitrarily say building files takes half the total time
 
-    if task:
-        DownloadBase.set_progress(task, current_progress, 100)
+    DownloadBase.set_progress(task, current_progress, 100)
 
     fpath = _get_file_path(build, include_multimedia_files, include_index_files, build_profile_id,
                            download_targeted_version)
@@ -225,12 +224,10 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
             os.remove(fpath)
             raise Exception('\t' + '\t'.join(errors))
     else:
-        if task:
-            DownloadBase.set_progress(task, current_progress + file_progress, 100)
+        DownloadBase.set_progress(task, current_progress + file_progress, 100)
     if expose_link:
         _expose_download_link(fpath, filename, compress_zip, download_id)
-    if task:
-        DownloadBase.set_progress(task, 100, 100)
+    DownloadBase.set_progress(task, 100, 100)
     return fpath
 
 
