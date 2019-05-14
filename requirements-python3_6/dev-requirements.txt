@@ -17,8 +17,8 @@ backports.functools-lru-cache==1.5
 backports.shutil-get-terminal-size==1.0.0  # via ipython
 beautifulsoup4==4.7.1
 billiard==3.5.0.4
-boto3==1.9.143
-botocore==1.12.143
+boto3==1.9.147
+botocore==1.12.147
 cairocffi==0.9.0
 cairosvg==1.0.22
 celery==4.1.1
@@ -117,7 +117,7 @@ laboratory==0.2.0
 line_profiler==1.0
 linecache2==1.0.0
 lxml==4.3.3
-mako==1.0.9
+mako==1.0.10
 markdown==2.2.1
 markupsafe==1.1.1
 mock==2.0.0
@@ -131,10 +131,10 @@ pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.2.0
 pdfrw==0.4
 pexpect==4.7.0            # via ipython
-phonenumberslite==8.10.10
+phonenumberslite==8.10.11
 pickleshare==0.7.5        # via ipython
 pillow==6.0.0
-pip-tools==3.6.1
+pip-tools==3.7.0
 ply==3.11
 polib==1.1.0
 prompt-toolkit==1.0.16    # via ipython
@@ -147,7 +147,7 @@ pycco==0.5.1
 pycparser==2.19
 pycryptodome==3.8.1
 pygithub==1.35
-pygments==2.3.1
+pygments==2.4.0
 pygooglechart==0.4.0
 pyjwt==1.7.1
 pyopenssl==19.0.0
