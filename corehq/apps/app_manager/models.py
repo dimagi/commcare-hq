@@ -276,6 +276,9 @@ class IndexedSchema(DocumentSchema):
             and (self._parent == other._parent)
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     class Getter(object):
 
         def __init__(self, attr):
