@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_delete
 
-from corehq.apps.app_manager.dbaccessors import get_build_by_version
+from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version
 from custom.icds.const import (
     FILE_TYPE_CHOICE_ZIP,
     FILE_TYPE_CHOICE_DOC,
@@ -117,7 +117,7 @@ class CCZHosting(models.Model):
     @cached_property
     def build_doc(self):
         if self.link_id and self.app_id and self.version:
-            return get_build_by_version(self.domain, self.app_id, self.version)
+            return get_build_doc_by_version(self.domain, self.app_id, self.version)
 
     @cached_property
     def build_profile(self):

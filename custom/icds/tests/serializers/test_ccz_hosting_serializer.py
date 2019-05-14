@@ -27,7 +27,7 @@ class TestCCZHostingSerializer(TestCase):
         cls.ccz_hosting = CCZHosting(link=cls.link, app_id="dummy", version=12, profile_id="12345",
                                      file_name="my file")
 
-    @mock.patch('custom.icds.models.get_build_by_version', lambda *args: BUILD)
+    @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: BUILD)
     def test_data(self):
         self.assertEqual(
             CCZHostingSerializer(self.ccz_hosting, context={'app_names': {

@@ -21,7 +21,7 @@ from corehq import toggles
 from corehq.apps.domain.auth import get_username_and_password_from_request
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
-    get_build_by_version,
+    get_build_doc_by_version,
 )
 from corehq.apps.domain.views import (
     BaseDomainView,
@@ -142,7 +142,7 @@ class ManageCCZHosting(BaseDomainView):
         selected_profile_id = self.request.GET.get('profile_id', '')
         # only when performing search populate these initial values
         if app_id and version:
-            build_doc = get_build_by_version(self.domain, self.request.GET.get('app_id'), version)
+            build_doc = get_build_doc_by_version(self.domain, self.request.GET.get('app_id'), version)
             if build_doc:
                 return [{
                     'id': _id,

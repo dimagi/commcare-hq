@@ -23,7 +23,7 @@ class TestCCZHosting(TestCase):
         self.link.delete()
         super(TestCCZHosting, self).tearDown()
 
-    @mock.patch('custom.icds.models.get_build_by_version', return_value={'is_released': True, 'name': 'App'})
+    @mock.patch('custom.icds.models.get_build_doc_by_version', return_value={'is_released': True, 'name': 'App'})
     def test_valid_ccz_hosting(self, *_):
         self.ccz_hosting.full_clean()
 
@@ -31,7 +31,7 @@ class TestCCZHosting(TestCase):
         with self.assertRaisesMessage(ValidationError, "Build not found for app dummy and version 12."):
             self.ccz_hosting.full_clean()
 
-    @mock.patch('custom.icds.models.get_build_by_version', return_value={'is_released': False, 'name': 'App'})
+    @mock.patch('custom.icds.models.get_build_doc_by_version', return_value={'is_released': False, 'name': 'App'})
     def test_released_version(self, *_):
         with self.assertRaisesMessage(ValidationError, "Version not released. Please mark it as released."):
             self.ccz_hosting.full_clean()
@@ -39,13 +39,13 @@ class TestCCZHosting(TestCase):
     def test_blob_id(self, _):
         self.assertEqual(self.ccz_hosting.blob_id, "dummy1212345")
 
-    @mock.patch('custom.icds.models.get_build_by_version', lambda *args: {'is_released': True, 'name': 'App'})
+    @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_setup_ccz_file_for_hosting_on_save(self, setup_mock):
         self.ccz_hosting.save()
         setup_mock.assert_called_with(self.ccz_hosting.pk)
         self.ccz_hosting.delete()
 
-    @mock.patch('custom.icds.models.get_build_by_version', lambda *args: {'is_released': True, 'name': 'App'})
+    @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_uniqueness(self, *_):
         self.ccz_hosting.save()
         error_message = "Ccz hosting with this Link, App id, Version and Profile id already exists."
@@ -59,7 +59,7 @@ class TestCCZHosting(TestCase):
         self.ccz_hosting.delete()
 
     @mock.patch('custom.icds.models.CCZHostingUtility.remove_file_from_blobdb')
-    @mock.patch('custom.icds.models.get_build_by_version', lambda *args: {'is_released': True, 'name': 'App'})
+    @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_delete_ccz(self, mock_delete, _):
         self.ccz_hosting.save()
         link2 = CCZHostingLink.objects.create(username="username", password="password",
