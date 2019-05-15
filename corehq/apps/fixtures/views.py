@@ -364,6 +364,7 @@ class UploadItemLists(TemplateView):
             self.domain,
             file_ref.download_id,
             replace,
+            SKIP_ORM_FIXTURE_UPLOAD.enabled(self.domain),
         )
         file_ref.set_task(task)
         return HttpResponseRedirect(
