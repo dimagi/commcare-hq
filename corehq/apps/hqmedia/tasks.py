@@ -140,24 +140,6 @@ def _get_file_path(app, include_multimedia_files, include_index_files, build_pro
     return fpath
 
 
-def _ensure_all_media_files_in_ccz(fpath, errors):
-    with open(fpath, 'rb') as tmp:
-        with zipfile.ZipFile(tmp, "r") as z:
-            media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
-            if len(media_suites) != 1:
-                message = _('Could not identify media_suite.xml in CCZ')
-                errors.append(message)
-            else:
-                with z.open(media_suites[0]) as media_suite:
-                    from corehq.apps.app_manager.xform import parse_xml
-                    parsed = parse_xml(media_suite.read())
-                    resources = {node.text for node in
-                                 parsed.findall("media/resource/location[@authority='local']")}
-                    names = z.namelist()
-                    missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
-                    errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
-
-
 def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_index_files,
                      download_id, compress_zip, filename, download_targeted_version):
     from corehq.apps.hqmedia.views import iter_app_files
@@ -182,6 +164,7 @@ def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_
 
 
 def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression, task):
+    file_cache = {}
     with open(fpath, 'wb') as tmp:
         with zipfile.ZipFile(tmp, "w") as z:
             for path, data in files:
@@ -192,6 +175,9 @@ def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count
                 current_progress += file_progress / file_count
                 if task:
                     DownloadBase.set_progress(task, current_progress, 100)
+                if extension not in MULTIMEDIA_EXTENSIONS:
+                    file_cache[path] = data
+    return file_cache
 
 
 def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True, include_index_files=True,
@@ -211,54 +197,18 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
     fpath = _get_file_path(build, include_multimedia_files, include_index_files, build_profile_id,
                            download_targeted_version)
 
-    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        files, errors, file_count = iter_app_files(
-            app, include_multimedia_files, include_index_files, build_profile_id,
-            download_targeted_version=download_targeted_version,
-        )
-
-        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
-            manifest = json.dumps({
-                'include_multimedia_files': include_multimedia_files,
-                'include_index_files': include_index_files,
-                'download_id': download_id,
-                'build_profile_id': build_profile_id,
-                'compress_zip': compress_zip,
-                'filename': filename,
-                'download_targeted_version': download_targeted_version,
-                'app': app.to_json(),
-            }, indent=4)
-            files = itertools.chain(files, [('manifest.json', manifest)])
-
-        file_cache = {}
-        with open(fpath, 'wb') as tmp:
-            with zipfile.ZipFile(tmp, "w") as z:
-                progress = initial_progress
-                for path, data in files:
-                    # don't compress multimedia files
-                    extension = os.path.splitext(path)[1]
-                    file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
-                    z.writestr(path, data, file_compression)
-                    progress += file_progress / file_count
-                    DownloadBase.set_progress(build_application_zip, progress, 100)
-                    if extension not in MULTIMEDIA_EXTENSIONS:
-                        file_cache[path] = data
-
-        if toggles.LOCALE_ID_INTEGRITY.enabled(app.domain):
-            errors.extend(find_missing_locale_ids_in_ccz(file_cache))
-
-        if include_index_files and include_multimedia_files:
-            errors.extend(check_ccz_multimedia_integrity(app.domain, fpath))
-
     # Don't rebuild the file if it is already there
     if not (os.path.isfile(fpath) and settings.SHARED_DRIVE_CONF.transfer_enabled):
         files, errors, file_count = _build_ccz_files(build, build_profile_id, include_multimedia_files,
                                                      include_index_files, download_id, compress_zip,
                                                      filename, download_targeted_version)
-        _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression, task)
-        # Integrity check that all media files present in media_suite.xml were added to the zip
-        if include_multimedia_files and include_index_files and toggles.CAUTIOUS_MULTIMEDIA.enabled(build.domain):
-            _ensure_all_media_files_in_ccz(fpath, errors)
+        file_cache = _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression,
+                                        task)
+        if toggles.LOCALE_ID_INTEGRITY.enabled(build.domain):
+            errors.extend(find_missing_locale_ids_in_ccz(file_cache))
+        if include_index_files and include_multimedia_files:
+            errors.extend(check_ccz_multimedia_integrity(build.domain, fpath))
+
         if errors:
             os.remove(fpath)
             raise Exception('\t' + '\t'.join(errors))
