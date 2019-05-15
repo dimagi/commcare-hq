@@ -10,7 +10,8 @@ from mock import patch
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_importer.const import ImportErrors
-from corehq.apps.case_importer.tasks import bulk_import_async, do_import
+from corehq.apps.case_importer.do_import import do_import
+from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
