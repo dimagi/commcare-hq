@@ -106,5 +106,3 @@ class DataAccessorTest(TestCase):
                 step, self.domain, self.config, self.now, False, False
             )
             self.assertEqual(get_awc_infrastructure.call_count, 2)
-
-
