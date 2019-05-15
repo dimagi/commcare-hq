@@ -1179,7 +1179,10 @@ def create_mbt_for_month(state_id, month):
         with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)
-            icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))
+            icds_file, _ = IcdsFile.objects.get_or_create(
+                blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month),
+                data_type='mbt_{}'.format(helper.base_tablename)
+            )
             icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
             icds_file.save()
 
