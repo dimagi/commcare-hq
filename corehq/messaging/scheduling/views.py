@@ -28,7 +28,6 @@ from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2_v4, use_jquery_ui, use_timepicker, use_nvd3
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
@@ -275,7 +274,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         return super(MessagingDashboardView, self).get(request, *args, **kwargs)
 
 
-class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+class BroadcastListView(BaseMessagingSectionView):
     template_name = 'scheduling/broadcasts_list.html'
     urlname = 'new_list_broadcasts'
     page_title = ugettext_lazy('Broadcasts')
@@ -310,18 +309,25 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         )
         total_records = query.count()
         query = query.select_related('schedule')
-        broadcasts = query[self.display_start:self.display_start + self.display_length]
+        limit = int(self.request.GET.get('limit', 10))
+        page = int(self.request.GET.get('page', 1))
+        skip = (page - 1) * limit
 
-        data = []
-        for broadcast in broadcasts:
-            data.append({
-                'name': broadcast.name,
-                'last_sent': self._format_time(broadcast.last_sent_timestamp),
-                'active': broadcast.schedule.active,
-                'editable': self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
-                'id': broadcast.id,
-            })
-        return self.datatables_ajax_response(data, total_records)
+        broadcasts = [self._fmt_scheduled_broadcast(broadcast) for broadcast in query[skip:skip + limit]]
+        return JsonResponse({
+            'broadcasts': broadcasts,
+            'total': total_records,
+        })
+
+    def _fmt_scheduled_broadcast(self, broadcast):
+        return {
+            'name': broadcast.name,
+            'last_sent': self._format_time(broadcast.last_sent_timestamp),
+            'active': broadcast.schedule.active,
+            'editable': self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
+            'id': broadcast.id,
+            'deleted': broadcast.deleted,
+        }
 
     def get_immediate_ajax_response(self):
         query = (
@@ -330,16 +336,20 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             .order_by('-last_sent_timestamp', 'id')
         )
         total_records = query.count()
-        broadcasts = query[self.display_start:self.display_start + self.display_length]
+        limit = int(self.request.GET.get('limit', 10))
+        page = int(self.request.GET.get('page', 1))
+        skip = (page - 1) * limit
 
-        data = []
-        for broadcast in broadcasts:
-            data.append({
-                'name': broadcast.name,
-                'last_sent': self._format_time(broadcast.last_sent_timestamp),
-                'id': broadcast.id,
-            })
-        return self.datatables_ajax_response(data, total_records)
+        broadcasts = [{
+            'name': broadcast.name,
+            'last_sent': self._format_time(broadcast.last_sent_timestamp),
+            'id': broadcast.id,
+        } for broadcast in query[skip:skip + limit]]
+
+        return JsonResponse({
+            'broadcasts': broadcasts,
+            'total': total_records,
+        })
 
     def get_scheduled_broadcast(self, broadcast_id):
         try:
@@ -362,12 +372,18 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             start_date=broadcast.start_date
         )
 
-        return HttpResponse()
+        return JsonResponse({
+            'success': True,
+            'broadcast': self._fmt_scheduled_broadcast(broadcast),
+        })
 
     def get_scheduled_broadcast_delete_ajax_response(self, broadcast_id):
         broadcast = self.get_scheduled_broadcast(broadcast_id)
         broadcast.soft_delete()
-        return HttpResponse()
+        return JsonResponse({
+            'success': True,
+            'broadcast': self._fmt_scheduled_broadcast(broadcast),
+        })
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')
