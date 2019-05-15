@@ -43,9 +43,9 @@ class CCZTest(TestCase):
         errors = find_missing_locale_ids_in_ccz(files)
         self.assertEqual(len(errors), 0)
 
-        default_app_strings = files['default/app_strings.txt'].splitlines()
+        default_app_strings = files['default/app_strings.txt'].decode('utf-8').splitlines()
         files['default/app_strings.txt'] = "\n".join([line for line in default_app_strings
-                                                      if not line.startswith("forms.m0f0")])
+                                                      if not line.startswith("forms.m0f0")]).encode('utf-8')
         errors = find_missing_locale_ids_in_ccz(files)
         self.assertEqual(len(errors), 1)
         self.assertIn('forms.m0f0', errors[0])

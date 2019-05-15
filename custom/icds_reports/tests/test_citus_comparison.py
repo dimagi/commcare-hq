@@ -35,14 +35,11 @@ class TestDjango(TestCase):
         list(AggAwc.objects.filter(aggregation_level=4, supervisor_id='super').values('awc_id'))
         self.assertEqual(len(experiment.call_args_list), 1)
         call = experiment.call_args_list[0]
-        expected_options = [
-            'SELECT "agg_awc"."awc_id" FROM "agg_awc" '
-            'WHERE ("agg_awc"."supervisor_id" = %s AND "agg_awc"."aggregation_level" = %s)',
-            'SELECT "agg_awc"."awc_id" FROM "agg_awc" '
-            'WHERE ("agg_awc"."aggregation_level" = %s AND "agg_awc"."supervisor_id" = %s)'
-        ]
-        self.assertIn(call[0][0], expected_options)
-        self.assertEqual(call[0][1], [['super', 4], [4, 'super']][expected_options.index(call[0][0])])
+        self.assertIn('SELECT "agg_awc"."awc_id" FROM "agg_awc"', call[0][0])
+        self.assertIn('"agg_awc"."supervisor_id" = %s', call[0][0])
+        self.assertIn('"agg_awc"."aggregation_level" = %s', call[0][0])
+        self.assertIn('super', call[0][1])
+        self.assertIn(4, call[0][1])
         self.assertEqual(call[1]['data_source'], 'AggAwc')
 
 
