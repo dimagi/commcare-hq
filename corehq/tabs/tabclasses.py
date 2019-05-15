@@ -28,6 +28,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
 )
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.case_templates.views import CaseTemplatesListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.releases import ManageReleases
 from corehq.apps.hqadmin.reports import (

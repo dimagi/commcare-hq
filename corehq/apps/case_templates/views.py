@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 
 from corehq import toggles
 from corehq.apps.case_templates.models import CaseTemplate
+from corehq.apps.data_interfaces.views import DataInterfaceSection
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -38,3 +39,20 @@ def create_template_view(request, domain):
 
     return HttpResponseRedirect(reverse(CaseTemplatesListView.urlname, args=[domain]))
 
+
+class CaseTemplatesListView(DataInterfaceSection):
+    urlname = 'case_templates_list'
+    page_title = _("Manage Case Templates")
+
+    template_name = 'case_templates/case_templates_list.html'
+
+    @method_decorator(toggles.CASE_TEMPLATES.required_decorator())
+    @method_decorator(require_permission(Permissions.edit_data))
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseTemplatesListView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'case_templates': CaseTemplate.objects.filter(domain=self.domain).all(),
+        }
