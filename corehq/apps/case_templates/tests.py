@@ -29,6 +29,7 @@ class CaseTemplateTests(TestCase):
         self.domain = 'template-domain'
         self.factory = CaseFactory(self.domain)
         self.cases = self._create_case_structure()
+        self.user_id = six.text_type(uuid.uuid4())
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
@@ -74,7 +75,7 @@ class CaseTemplateTests(TestCase):
     def test_create_template(self):
         """Creating a template successfully stores the whole tree of cases given a specific root
         """
-        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template', self.user_id)
         template_cases = template.prototype_cases
 
         self.assertEqual([self.parent_id, self.child_id, self.grandchild_id], template_cases.keys())
@@ -91,17 +92,17 @@ class CaseTemplateTests(TestCase):
     def test_create_template_children_only(self):
         """Creating a template successfully stores only the children of the given root
         """
-        template = CaseTemplate.create(self.domain, self.child_id, 'template')
+        template = CaseTemplate.create(self.domain, self.child_id, 'template', self.user_id)
         self.assertItemsEqual([self.child_id, self.grandchild_id], template.prototype_cases.keys())
 
     def test_num_cases(self):
-        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template', self.user_id)
         self.assertEqual(template.num_cases(), 3)
 
     @run_with_all_backends
     def test_create_instance(self):
         self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 3)
-        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template', self.user_id)
 
         suffix = 'cool_new_cases'
         template.create_instance(suffix)
@@ -118,7 +119,7 @@ class CaseTemplateTests(TestCase):
     def test_instance_suffix_increments(self):
         """Test that case names increment correctly based on the number of instances created
         """
-        template = CaseTemplate.create(self.domain, self.grandchild_id, 'template')
+        template = CaseTemplate.create(self.domain, self.grandchild_id, 'template', self.user_id)
         template.create_instance()
         self.assertEqual(template.instance_cases.last().get_case().name, 'baby-1')
 
@@ -134,7 +135,7 @@ class CaseTemplateTests(TestCase):
     def test_get_instances(self):
         # Get all the instances created by a template
         original_case_ids = set(CaseAccessors(self.domain).get_case_ids_in_domain())
-        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template', self.user_id)
 
         new_case_root = template.create_instance()
         new_case_ids = original_case_ids - set(CaseAccessors(self.domain).get_case_ids_in_domain())
@@ -154,7 +155,7 @@ class CaseTemplateTests(TestCase):
         # Deleting a template deletes all instances and forms against them
         self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 3)
         self.assertEqual(len(FormAccessors(self.domain).get_all_form_ids_in_domain()), 1)
-        template = CaseTemplate.create(self.domain, self.parent_id, 'template')
+        template = CaseTemplate.create(self.domain, self.parent_id, 'template', self.user_id)
 
         template.create_instance()
         self.assertEqual(len(CaseAccessors(self.domain).get_case_ids_in_domain()), 6)

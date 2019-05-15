@@ -26,6 +26,8 @@ class CaseTemplate(models.Model):
     domain = models.CharField(max_length=256, null=False, blank=False, db_index=True)
     name = models.CharField(max_length=256, null=False)
     comment = models.TextField(null=True)
+    created_by = models.CharField(max_length=256, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
 
     def __repr__(self):
         return (
@@ -33,13 +35,15 @@ class CaseTemplate(models.Model):
             "template_id='{self.template_id}', "
             "domain='{self.domain}', "
             "name='{self.name}', "
-            "comment='{self.comment}'"
+            "comment='{self.comment}', "
+            "created_by='{self.created_by}', "
+            "created_on='{self.created_on}'"
             ")"
         ).format(self=self)
 
     @classmethod
-    def create(cls, domain, root_case_id, name, comment=None):
-        template = cls.objects.create(domain=domain, name=name, comment=comment)
+    def create(cls, domain, root_case_id, name, user_id, comment=None):
+        template = cls.objects.create(domain=domain, name=name, created_by=user_id, comment=comment)
         template.save_template_xml(cls._generate_case_xml(domain, root_case_id))
         return template
 
