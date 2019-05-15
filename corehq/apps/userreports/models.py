@@ -604,7 +604,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 columns.append(column_name)
         if self.sql_settings.primary_key:
             if set(columns) != set(self.sql_settings.primary_key):
-                raise BadSpecError("Primary key columns must have is_primary_key set to true")
+                raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
             columns = self.sql_settings.primary_key
         return columns
 
