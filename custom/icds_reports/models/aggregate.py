@@ -230,6 +230,8 @@ class AwcLocation(models.Model, AggregateMixin):
 
 class AwcLocationLocal(AwcLocation):
 
+    objects = models.Manager()
+
     class Meta(object):
         managed = False
         db_table = 'awc_location_local'
