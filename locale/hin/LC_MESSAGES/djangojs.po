@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-07 19:44+0000\n"
+"POT-Creation-Date: 2019-05-14 20:07+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -826,7 +826,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: corehq/apps/reports/static/reports/v2/js/datagrid/bindingHandlers.js:61
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js:62
 msgid "Search..."
 msgstr ""
 
@@ -2876,11 +2876,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:55
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:65
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:84
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:96
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3266,8 +3266,8 @@ msgstr ""
 msgid "Failed to re-process"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid/reportFilters.js:18
-msgid "Select"
+#: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:18
+msgid "Select <%= title %>..."
 msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
@@ -3302,15 +3302,15 @@ msgstr ""
 msgid " contacts per page"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:60
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:58
 msgid "Loading Contacts..."
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:61
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:59
 msgid "Showing _START_ to _END_ of _TOTAL_ contacts"
 msgstr ""
 
-#: corehq/apps/sms/static/sms/js/chat_contacts.js:62
+#: corehq/apps/sms/static/sms/js/chat_contacts.js:60
 msgid "(filtered from _MAX_ total contacts)"
 msgstr ""
 
