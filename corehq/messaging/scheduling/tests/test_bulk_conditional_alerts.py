@@ -19,9 +19,10 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.messaging.scheduling.models import (
+    EmailContent,
+    SMSContent,
     TimedEvent,
     TimedSchedule,
-    SMSContent,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
@@ -46,13 +47,17 @@ class TestBulkConditionalAlerts(TestCase):
         cls.user = CommCareUser.create(cls.domain, 'test1', 'abc')
 
     def setUp(self):
-        self._translated_rule = self._add_rule({
+        self._translated_rule = self._add_rule(SMSContent(message={
             'en': 'Diamonds and Rust',
             'es': 'Diamantes y Óxido',
-        })
-        self._untranslated_rule = self._add_rule({
+        }))
+        self._untranslated_rule = self._add_rule(SMSContent(message={
             '*': 'Joan',
-        })
+        }))
+        self._email_rule = self._add_rule(EmailContent(
+            subject={'*': 'You just won something'},
+            message={'*': 'This is a scam'},
+        ))
 
     @classmethod
     def tearDownClass(cls):
@@ -77,14 +82,18 @@ class TestBulkConditionalAlerts(TestCase):
     def untranslated_rule(self):
         return AutomaticUpdateRule.objects.get(id=self._untranslated_rule.id)
 
+    @property
+    def email_rule(self):
+        return AutomaticUpdateRule.objects.get(id=self._email_rule.id)
+
     def _assertPatternIn(self, pattern, collection):
         self.assertTrue(any(re.match(pattern, item) for item in collection))
 
-    def _add_rule(self, message):
+    def _add_rule(self, content):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
             TimedEvent(time=time(9, 0)),
-            SMSContent(message=message)
+            content
         )
 
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
@@ -112,6 +121,7 @@ class TestBulkConditionalAlerts(TestCase):
         data = (
             ("translations", (
                 (self.translated_rule.id, 'test updated', 'song'),
+                (self.email_rule.id, 'test email', 'song'),
                 (1000, 'Not a rule', 'person'),
             )),
         )
@@ -123,9 +133,10 @@ class TestBulkConditionalAlerts(TestCase):
             f.seek(0)
             workbook = get_workbook(f)
             msgs = [m[1] for m in upload_conditional_alert_rows(self.domain, workbook.get_worksheet())]
-            self.assertEqual(len(msgs), 2)
-            self._assertPatternIn(r"Could not find rule for row 3, with id \d+", msgs)
-            self.assertIn('Updated 1 rule(s)', msgs)
+            self.assertEqual(len(msgs), 3)
+            self._assertPatternIn(r"Row 3, with rule id \d+, does not use SMS content", msgs)
+            self._assertPatternIn(r"Could not find rule for row 4, with id \d+", msgs)
+            self.assertIn("Updated 1 rule(s)", msgs)
             self.assertEqual(self.translated_rule.name, 'test updated')
             self.assertEqual(self.translated_rule.case_type, 'song')
             self.assertEqual(self.untranslated_rule.name, 'test')
