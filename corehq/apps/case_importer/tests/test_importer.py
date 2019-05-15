@@ -284,6 +284,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
+    @patch('corehq.apps.case_importer.do_import.CASEBLOCK_CHUNKSIZE', 2)
     def testBasicChunking(self):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
@@ -294,7 +295,7 @@ class ImporterTest(TestCase):
             ['case_id-3', 'age-3', 'sex-3', 'location-3'],
             ['case_id-4', 'age-4', 'sex-4', 'location-4'],
         )
-        res = do_import(file, config, self.domain, chunksize=2)
+        res = do_import(file, config, self.domain)
         # 5 cases in chunks of 2 = 3 chunks
         self.assertEqual(3, res['num_chunks'])
         self.assertEqual(5, res['created_count'])

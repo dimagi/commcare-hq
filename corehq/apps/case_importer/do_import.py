@@ -33,7 +33,7 @@ class _Importer(object):
         self.num_chunks = 0
         self.errors = importer_util.ImportErrorDetail()
 
-    def do_import(self, spreadsheet, config, domain, task, chunksize, record_form_callback):
+    def do_import(self, spreadsheet, config, domain, task, record_form_callback):
         user = CouchUser.get_by_user_id(config.couch_user_id, domain)
         username = user.username
         user_id = user._id
@@ -258,7 +258,7 @@ class _Importer(object):
 
             # check if we've reached a reasonable chunksize
             # and if so submit
-            if len(caseblocks) >= chunksize:
+            if len(caseblocks) >= CASEBLOCK_CHUNKSIZE:
                 _submit_caseblocks(domain, config.case_type, caseblocks)
                 self.num_chunks += 1
                 caseblocks = []
@@ -279,8 +279,7 @@ class _Importer(object):
         }
 
 
-def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE,
-              record_form_callback=None):
+def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     importer = _Importer()
-    importer.do_import(spreadsheet, config, domain, task, chunksize, record_form_callback)
+    importer.do_import(spreadsheet, config, domain, task, record_form_callback)
     return importer.outcome
