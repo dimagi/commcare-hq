@@ -56,5 +56,6 @@ branches:
   - mk/ccz-hosting-revamp # MK May 6
   - jls/standardize-broadcasts-ui # Jenny May 11
   - je/fast-fixture-upload # J$ May 13
+  - fr/case-templates      # FR May 15
 #  - web-user-reports-project-access  # Gabriella May 13
 submodules: {}
