@@ -113,7 +113,7 @@ class CaseTemplate(models.Model):
                 new_case.update['cc_template_ancestor_id'] = root_id
                 cases.append(new_case.as_string().decode('utf-8'))
 
-                instance = CaseTemplateInstanceCase(case_id=new_case_id, template=self)
+                instance = CaseTemplateInstanceCase(case_id=new_case_id, ancestor_id=root_id, template=self)
                 instance.save()
 
             submit_case_blocks(cases, self.domain, device_id=__name__ + '.create_template_instance')
@@ -125,7 +125,7 @@ class CaseTemplate(models.Model):
     def delete(self, *args, **kwargs):
         case_accessor = CaseAccessors(self.domain)
 
-        case_ids = self.instance_cases.all().values_list('case_id', flat=True)
+        case_ids = list(self.instance_cases.all().values_list('case_id', flat=True))
         form_ids = set()
         for case_id in case_ids:
             form_ids.update(case_accessor.get_case_xform_ids(case_id))
