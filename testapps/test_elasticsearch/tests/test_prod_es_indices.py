@@ -20,7 +20,20 @@ class ProdIndexManagementTest(SimpleTestCase):
         settings.PILLOWTOPS = cls._PILLOWTOPS
         super(ProdIndexManagementTest, cls).tearDownClass()
 
-    @override_settings(SERVER_ENVIRONMENT='production')
+    @override_settings(SERVER_ENVIRONMENT='production', ES_SETTINGS={
+        "default": {"number_of_replicas": 1},
+        "case_search": {},
+        "hqapps": {},
+        "hqcases": {},
+        "hqdomains": {},
+        "hqgroups": {},
+        "hqusers": {},
+        "ledgers": {},
+        "report_cases": {},
+        "report_xforms": {},
+        "smslogs": {},
+        "xforms": {},
+    })
     def test_prod_config(self):
         found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
         for info in found_prod_indices:
@@ -50,7 +63,7 @@ EXPECTED_PROD_INDICES = [
         "type": "case",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -78,7 +91,7 @@ EXPECTED_PROD_INDICES = [
         "type": "app",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -97,6 +110,7 @@ EXPECTED_PROD_INDICES = [
         "type": "case",
         "meta": {
             "settings": {
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -124,7 +138,7 @@ EXPECTED_PROD_INDICES = [
         "type": "hqdomain",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -147,7 +161,7 @@ EXPECTED_PROD_INDICES = [
         "type": "group",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -195,7 +209,7 @@ EXPECTED_PROD_INDICES = [
         "type": "ledger",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -223,7 +237,7 @@ EXPECTED_PROD_INDICES = [
         "type": "report_case",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -251,7 +265,7 @@ EXPECTED_PROD_INDICES = [
         "type": "report_xform",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -279,7 +293,7 @@ EXPECTED_PROD_INDICES = [
         "type": "sms",
         "meta": {
             "settings": {
-                "number_of_replicas": 0,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -307,6 +321,7 @@ EXPECTED_PROD_INDICES = [
         "type": "xform",
         "meta": {
             "settings": {
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {

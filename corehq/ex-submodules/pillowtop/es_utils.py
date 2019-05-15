@@ -61,8 +61,6 @@ ES_ENV_SETTINGS = {
         },
     },
 }
-if settings.ES_SETTINGS is not None:
-    ES_ENV_SETTINGS.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
 
 ES_META = {
     # Default settings for all indexes on ElasticSearch
@@ -116,8 +114,13 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         meta_settings.update(
             ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
+
+        overrides = copy(ES_ENV_SETTINGS)
+        if settings.ES_SETTINGS is not None:
+            overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
+
         for alias in ['default', self.alias]:
-            for key, value in ES_ENV_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
+            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
                 if value is REMOVE_SETTING:
                     del meta_settings['settings'][key]
                 else:
