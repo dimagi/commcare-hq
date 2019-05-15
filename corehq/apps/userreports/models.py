@@ -116,6 +116,10 @@ class DataSourceActionLog(models.Model):
     ), db_index=True, null=False)
     migration_diffs = JSONField(null=True, blank=True)
 
+    # True for actions that were skipped because the data source
+    # was marked with ``disable_destructive_rebuild``
+    skip_destructive = models.BooleanField(default=False)
+
 
 class SQLColumnIndexes(DocumentSchema):
     column_ids = StringListProperty()

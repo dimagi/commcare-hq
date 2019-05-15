@@ -12,24 +12,21 @@ class DatagridEndpoint(BaseDataEndpoint):
         return int(self.data.get('draw', 1))
 
     @property
-    def start(self):
-        return int(self.data.get('start', 0))
+    def page(self):
+        return int(self.data.get('page', 1))
 
     @property
-    def length(self):
-        return int(self.data.get('length', 1))
-
-    @property
-    def order(self):
-        return int(self.data.get('order', 1))
+    def limit(self):
+        return int(self.data.get('limit', 10))
 
     def get_response(self, query, formatter):
         total = query.count()
-        query = query.size(self.length).start(self.start)
+        start = min((self.page - 1) * self.limit, total)
+
+        query = query.size(self.limit).start(start)
         results = [formatter(self.request, self.domain, r).get_context()
                    for r in query.run().raw['hits'].get('hits', [])]
         return {
             "rows": results,
-            "recordsTotal": total,
-            "recordsFiltered": total,
+            "totalRecords": total,
         }

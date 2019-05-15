@@ -163,6 +163,11 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'corehq.apps.domain.auth.ApiKeyFallbackBackend',
+]
+
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
     'django.contrib.auth.hashers.SHA1PasswordHasher',

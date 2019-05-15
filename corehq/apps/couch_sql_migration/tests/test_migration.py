@@ -59,6 +59,7 @@ from corehq.util.test_utils import (
     softer_assert,
     trap_extra_setup,
 )
+from six.moves import zip
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
