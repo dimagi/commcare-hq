@@ -2,19 +2,19 @@
 {% load compress %}
 {% load hq_shared_tags %}
 <script type="text/html" id="beneficiary-type-template">
-    <div>
-        <h2 class="filter-title"><strong><img style="width: 40px; height: 40px;" src="{% static 'aaa/images/noun_person.png' %}"> Beneficiary Type</strong></h2>
-        <div class="form-group">
-            <label for="beneficiary-type">Current Beneficiary Status <span class="required">*</span></label>
-            <select class="form-control" data-bind="options: beneficiaryTypes,
-                optionsText: 'name',
-                optionsValue: 'id',
-                value: selectedType,
-                valueAllowUnset: true,
-                select2: {placeholder: 'Current Beneficiary Status'}">
-            </select>
-            <span class="hide red" data-bind="css: { show: showErrorMessage }">* This field is required</span>
-        </div>
+  <div>
+    <h2 class="filter-title"><strong><img style="width: 40px; height: 40px;" src="{% static 'aaa/images/noun_person.png' %}"> Beneficiary Type</strong></h2>
+    <div class="form-group">
+      <label for="beneficiary-type">Current Beneficiary Status <span class="required">*</span></label>
+      <select class="form-control" data-bind="options: beneficiaryTypes,
+                                              optionsText: 'name',
+                                              optionsValue: 'id',
+                                              value: selectedType,
+                                              valueAllowUnset: true,
+                                              select2: {placeholder: 'Current Beneficiary Status'}">
+      </select>
+      <span class="hide red" data-bind="css: { show: showErrorMessage }">* This field is required</span>
     </div>
-    <hr/>
+  </div>
+  <hr/>
 </script>
