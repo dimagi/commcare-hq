@@ -25,11 +25,11 @@ from corehq.messaging.scheduling.models import (
     TimedSchedule,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_case_schedule_instance
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.messaging.scheduling.views import get_conditional_alert_rows, upload_conditional_alert_rows
 from corehq.sql_db.util import run_query_across_partitioned_databases
-from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import get_workbook
 
 
