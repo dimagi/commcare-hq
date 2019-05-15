@@ -1,9 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import simplejson
-from django_redis.cache import RedisCache
 from . import CACHE_DOCS, key_doc_id, rcache
-from corehq.util.soft_assert import soft_assert
 
 
 def invalidate_doc_generation(doc):
@@ -23,22 +21,3 @@ def _get_cached_doc_only(doc_id):
         return simplejson.loads(doc)
     else:
         return None
-
-
-class HQRedisCache(RedisCache):
-
-    def _track_call(self):
-        hq_assert = soft_assert(['sreddy+redis' + '@' + 'dimagi.com'])
-        hq_assert(False, msg="Detected Redis multikey operation")
-
-    def set_many(self, *args, **kwargs):
-        self._track_call()
-        super(HQRedisCache, self).set_many(*args, **kwargs)
-
-    def get_many(self, *args, **kwargs):
-        self._track_call()
-        return super(HQRedisCache, self).get_many(*args, **kwargs)
-
-    def delete_many(self, *args, **kwargs):
-        self._track_call()
-        return super(HQRedisCache, self).delete_many(*args, **kwargs)

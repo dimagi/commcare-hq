@@ -1,30 +1,30 @@
 <script type="text/html" id="filters-modal-template">
-    <div class="filters-modal">
-        <i class="fa fa-2x fa-filter light-grey icon-bar pointer" data-bind="click: function() {localStorage.showModal(true)}"></i>
-    </div>
-    <div class="modal fade" role="dialog" data-bind="modal: localStorage.showModal">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bind="click: function() {localStorage.showModal(false)}">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <!-- ko if: !hideFilter('beneficiary-type-filter') -->
-                        <beneficiary-type-filter
-                                params="
+  <div class="filters-modal">
+    <i class="fa fa-2x fa-filter light-grey icon-bar pointer" data-bind="click: function() {localStorage.showModal(true)}"></i>
+  </div>
+  <div class="modal fade" role="dialog" data-bind="modal: localStorage.showModal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bind="click: function() {localStorage.showModal(false)}">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <!-- ko if: !hideFilter('beneficiary-type-filter') -->
+          <beneficiary-type-filter
+            params="
                                     postData: postData,
                                     callback: callback,
                                     filters: filters">
-                        </beneficiary-type-filter>
-                    <!-- /ko -->
-                    <month-year-filter params="postData: postData, callback: callback, filters: filters"></month-year-filter>
-                    <location-filter params="postData: postData, callback: callback, filters: filters, localStorage: localStorage"></location-filter>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-bind="click : function() {resetFilter()}">Reset</button>
-                    <button type="button" class="btn btn-primary" data-bind="click : function() {applyFilters()}">Apply</button>
-                </div>
-            </div>
+          </beneficiary-type-filter>
+          <!-- /ko -->
+          <month-year-filter params="postData: postData, callback: callback, filters: filters"></month-year-filter>
+          <location-filter params="postData: postData, callback: callback, filters: filters, localStorage: localStorage"></location-filter>
         </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-bind="click : function() {resetFilter()}">Reset</button>
+          <button type="button" class="btn btn-primary" data-bind="click : function() {applyFilters()}">Apply</button>
+        </div>
+      </div>
     </div>
+  </div>
 </script>

@@ -1,174 +1,174 @@
 {% extends "pact/patient/pactpatient_base.html" %}
 {% load i18n %}
 {% block patient-tab-container %}
+  <div>
     <div>
-        <div>
-            <div class="commit-group-heading">
-                <h4>Information
-                            &nbsp;<a id="btn_pt_edit" class="btn btn-success" href="{{ pt_root_url }}&view=edit">Edit</a>
-                    &nbsp;&nbsp;
+      <div class="commit-group-heading">
+        <h4>Information
+          &nbsp;<a id="btn_pt_edit" class="btn btn-success" href="{{ pt_root_url }}&view=edit">Edit</a>
+          &nbsp;&nbsp;
 
-                    &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
-                    {% if patient_doc.dot_status != "" %}
-                    &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
-                    {% endif %}
-                    &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
-                </h4>
-            </div>
-            <div class="commit-group">
-                <div id="patienteditform"></div>
-                <table class="table">
-
-                    <tr>
-                        <th>DOB</th>
-                        <td>{{ patient_doc.dob|date:"m/d/Y" }} ({{ patient_doc.dob|timesince }})</td>
-                        <th>Gender</th>
-                        <td>{{ patient_doc.gender_display}}</td>
-                        <th>SSN</th>
-                        <td>{{ patient_doc.ssn }}</td>
-                    </tr>
-
-                    <tr>
-                        <th class="col-sm-3">Race</th>
-                        <td>{{ patient_doc.race_display}}</td>
-                        <th class="col-sm-3">Latino</th>
-                        <td>{% if  patient_doc.is_latino %}
-                            Yes
-                        {% else %}
-                            No
-                        {% endif %}
-                        </td>
-                        <th class="col-sm-3">Language</th>
-                        <td>{{ patient_doc.preferred_language|title }}</td>
-                    </tr>
-                    <tr>
-                        <th>Primary HP</th>
-                        <td><span class="label label-info">{{ patient_doc.hp }}</span></td>
-                        <th>HP Status</th>
-                        <td><span class="label label-info">{{ patient_doc.hp_status_display }}</span></td>
-                        <th>DOT Status</th>
-                        <td>
-                            {% if patient_doc.is_dot %}
-                               <a href="/a/{{ domain }}/reports/custom/dots/?dot_patient={{ patient_doc.get_id }}">{{ patient_doc.dot_status_display }}</a>
-                            {% else %}
-                               <span class="label label-default">No DOT</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% if patient_doc.is_dot %}
-                    <tr>
-                        <th>ART Regimen</th>
-                        <td>{{ patient_doc.art_regimen_label_string_display }}</td>
-
-                        <th>Non ART Regimen</th>
-                        <td>{{ patient_doc.nonart_regimen_label_string_display }}</td>
-                    </tr>
-                    {% endif %}
-
-                    <tr>
-                        <th class="col-sm-3">MassHealth Expiration</th>
-                        <td>
-                            {% if patient_doc.mass_health_expiration %}
-                            {{ patient_doc.mass_health_expiration }}
-                            - {{ patient_doc.mass_health_expiration|timeuntil }}
-                            {% else %}
-                              ---
-
-                            {% endif %}
-                        </td>
-                        <th>HIV Care Clinic</th>
-                        <td>{{ patient_doc.hiv_care_clinic_display }}</td>
-                    </tr>
-                    <tr>
-                        <th>Additional Notes</th>
-                        <td colspan="5">{{ patient_doc.patient_notes|safe|linebreaksbr }}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    </div>
-    <br>
-    <div class="commit-group-heading">
-        <h4>Contact Information
-            &nbsp;<a id="btn_contact_edit" class="btn btn-success" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_addr_edit_url }}">Edit</a>
+          &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
+          {% if patient_doc.dot_status != "" %}
+            &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
+          {% endif %}
+          &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
         </h4>
-    </div>
-    <div class="commit-group">
+      </div>
+      <div class="commit-group">
+        <div id="patienteditform"></div>
         <table class="table">
-            <tr>
-                <th class="col-sm-3">
-                    Address(es)<br>
-                </th>
-                <td>
-                    <div id="addressform"></div>
-                    {% for patient_address in patient_doc.addresses %}
-                        <div class="ptprofile_address">
-                            {% if patient_address.type %}
-                                <strong>{{ patient_address.type|title }}</strong><br>
-                            {% endif %}
-                            {{ patient_address.address }}<br>
-                        </div>
-                    {% endfor %}
-                </td>
-            </tr>
 
+          <tr>
+            <th>DOB</th>
+            <td>{{ patient_doc.dob|date:"m/d/Y" }} ({{ patient_doc.dob|timesince }})</td>
+            <th>Gender</th>
+            <td>{{ patient_doc.gender_display}}</td>
+            <th>SSN</th>
+            <td>{{ patient_doc.ssn }}</td>
+          </tr>
+
+          <tr>
+            <th class="col-sm-3">Race</th>
+            <td>{{ patient_doc.race_display}}</td>
+            <th class="col-sm-3">Latino</th>
+            <td>{% if  patient_doc.is_latino %}
+              Yes
+            {% else %}
+              No
+            {% endif %}
+            </td>
+            <th class="col-sm-3">Language</th>
+            <td>{{ patient_doc.preferred_language|title }}</td>
+          </tr>
+          <tr>
+            <th>Primary HP</th>
+            <td><span class="label label-info">{{ patient_doc.hp }}</span></td>
+            <th>HP Status</th>
+            <td><span class="label label-info">{{ patient_doc.hp_status_display }}</span></td>
+            <th>DOT Status</th>
+            <td>
+              {% if patient_doc.is_dot %}
+                <a href="/a/{{ domain }}/reports/custom/dots/?dot_patient={{ patient_doc.get_id }}">{{ patient_doc.dot_status_display }}</a>
+              {% else %}
+                <span class="label label-default">No DOT</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% if patient_doc.is_dot %}
             <tr>
-                <th class="col-sm-3">
-                    Phone(s)
-                </th>
-                <td>
-                    <div id="phoneform"></div>
-                    {% for phone in patient_doc.phones %}
-                        <div class="ptprofile_phone">
-                            {% if phone.type %}
-                                <strong>{{ phone.type|title }}</strong> &nbsp;<br>
-                            {% endif %}
-                            {{ phone.number }}<br>
-                            &nbsp;
-                        </div>
-                    {% endfor %}
-                </td>
+              <th>ART Regimen</th>
+              <td>{{ patient_doc.art_regimen_label_string_display }}</td>
+
+              <th>Non ART Regimen</th>
+              <td>{{ patient_doc.nonart_regimen_label_string_display }}</td>
             </tr>
+          {% endif %}
+
+          <tr>
+            <th class="col-sm-3">MassHealth Expiration</th>
+            <td>
+              {% if patient_doc.mass_health_expiration %}
+                {{ patient_doc.mass_health_expiration }}
+                - {{ patient_doc.mass_health_expiration|timeuntil }}
+              {% else %}
+                ---
+
+              {% endif %}
+            </td>
+            <th>HIV Care Clinic</th>
+            <td>{{ patient_doc.hiv_care_clinic_display }}</td>
+          </tr>
+          <tr>
+            <th>Additional Notes</th>
+            <td colspan="5">{{ patient_doc.patient_notes|safe|linebreaksbr }}</td>
+          </tr>
         </table>
+      </div>
     </div>
-    <div class="commit-group row">
+  </div>
+  <br>
+  <div class="commit-group-heading">
+    <h4>Contact Information
+      &nbsp;<a id="btn_contact_edit" class="btn btn-success" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_addr_edit_url }}">Edit</a>
+    </h4>
+  </div>
+  <div class="commit-group">
+    <table class="table">
+      <tr>
+        <th class="col-sm-3">
+          Address(es)<br>
+        </th>
+        <td>
+          <div id="addressform"></div>
+          {% for patient_address in patient_doc.addresses %}
+            <div class="ptprofile_address">
+              {% if patient_address.type %}
+                <strong>{{ patient_address.type|title }}</strong><br>
+              {% endif %}
+              {{ patient_address.address }}<br>
+            </div>
+          {% endfor %}
+        </td>
+      </tr>
+
+      <tr>
+        <th class="col-sm-3">
+          Phone(s)
+        </th>
+        <td>
+          <div id="phoneform"></div>
+          {% for phone in patient_doc.phones %}
+            <div class="ptprofile_phone">
+              {% if phone.type %}
+                <strong>{{ phone.type|title }}</strong> &nbsp;<br>
+              {% endif %}
+              {{ phone.number }}<br>
+              &nbsp;
+            </div>
+          {% endfor %}
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div class="commit-group row">
     <h4>Provider Information
-        &nbsp;<a id="btn_provider_edit" class="btn btn-success" href="{{ pt_root_url }}&view=providers">Edit</a>
+      &nbsp;<a id="btn_provider_edit" class="btn btn-success" href="{{ pt_root_url }}&view=providers">Edit</a>
     </h4>
 
-{#        Yes, this is copied from the editor page - if more time, would try to consolidate the rendering of this information#}
-        <table class="table table-bordered table-striped span5">
-            <thead>
-            <tr>
-                <th class="col-sm-1"></th>
-                <th class="col-sm-4">Name</th>
-                <th>Info</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for provider in patient_doc.get_providers %}
-            <tr>
-                <td>
-                    {{ forloop.counter }}
-                </td>
-                <td>
-                    <p class="lead">
-                        {{ provider.first_name }} {{ provider.last_name }}
-                    </p>
-                    <strong>{{ provider.role }}</strong><br>
-                    {{ provider.email }}
+    {#        Yes, this is copied from the editor page - if more time, would try to consolidate the rendering of this information#}
+    <table class="table table-bordered table-striped span5">
+      <thead>
+      <tr>
+        <th class="col-sm-1"></th>
+        <th class="col-sm-4">Name</th>
+        <th>Info</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for provider in patient_doc.get_providers %}
+        <tr>
+          <td>
+            {{ forloop.counter }}
+          </td>
+          <td>
+            <p class="lead">
+              {{ provider.first_name }} {{ provider.last_name }}
+            </p>
+            <strong>{{ provider.role }}</strong><br>
+            {{ provider.email }}
 
-                <td>
-                    {{ provider.facility_name }}<br>
-                    <address>
-                        {{ provider.facility_address }}
-                    </address>
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+          <td>
+            {{ provider.facility_name }}<br>
+            <address>
+              {{ provider.facility_address }}
+            </address>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
 
-    </div>
+  </div>
 
 {% endblock %}

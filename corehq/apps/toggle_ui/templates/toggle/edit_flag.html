@@ -110,7 +110,7 @@
         {% if is_random_editable %}
           <div class="input-group">
             <label for="randomness-edit">Randomness Level: </label>
-            <input id="randomness-edit" class="input-medium form-control" type="number" data-bind="value: randomness">
+            <input id="randomness-edit" class="input-medium form-control" type="number" step="0.01" min="0" max="1" data-bind="value: randomness">
           </div>
         {% endif %}
         {% if allows_items %}

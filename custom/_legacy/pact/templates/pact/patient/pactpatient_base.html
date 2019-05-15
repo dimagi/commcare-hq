@@ -2,41 +2,41 @@
 {% load i18n %}
 
 {% block reportcontent %}
-{#    {% block extrahead %}#}
-{#    {% endblock extrahead %}#}
+  {#    {% block extrahead %}#}
+  {#    {% endblock extrahead %}#}
 
-    {% block pactpatient_header %}
-            <div>
-                {% block patient_hat %}
-                    <h2>
-                    {{ patient_doc.pactid}}  <small>{{ patient_doc.last_name }},  {{ patient_doc.first_name }}</small>
-                    </h2>
-                {% endblock patient_hat %}
-            </div>
-    {% endblock pactpatient_header %}
+  {% block pactpatient_header %}
+    <div>
+      {% block patient_hat %}
+        <h2>
+          {{ patient_doc.pactid}}  <small>{{ patient_doc.last_name }},  {{ patient_doc.first_name }}</small>
+        </h2>
+      {% endblock patient_hat %}
+    </div>
+  {% endblock pactpatient_header %}
 
-    {% block patient_content %}
-        <div class="col-sm-11">
-            {% block patient-content-tabs %}
-                <ul class="nav nav-pills">
-                    {% block patient-tab-controller %}
-                        <li {% if view_mode == "info" or view_mode == "edit" %}class="active"{% endif %}>
-                            <a href="{{ pt_root_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Info" %}</a></li>
+  {% block patient_content %}
+    <div class="col-sm-11">
+      {% block patient-content-tabs %}
+        <ul class="nav nav-pills">
+          {% block patient-tab-controller %}
+            <li {% if view_mode == "info" or view_mode == "edit" %}class="active"{% endif %}>
+              <a href="{{ pt_root_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Info" %}</a></li>
 
-                        <li {% if view_mode == "schedule" %}class="active"{% endif %}>
-                            <a href="{{ pt_root_url }}&view=schedule{% if notabs %}&notabs{% endif %}" >{% trans "Schedule" %}</a>
-                        </li>
-                        <li {% if view_mode == "submissions" %}class="active"{% endif %}>
-                            <a href="{{ pt_root_url }}&view=submissions{% if notabs %}&notabs{% endif %}" >{% trans "Submissions" %}</a>
-                        </li>
-                        <li {% if view_mode == "careplan" %}class="active"{% endif %}>
-                            <a href="{{ pt_root_url}}&view=careplan">{% trans "Care Plan" %}</a>
-                        </li>
-                    {% endblock patient-tab-controller %}
-                </ul>
-                {% block patient-tab-container %}
-                {% endblock patient-tab-container %}
-            {% endblock patient-content-tabs %}
-        </div>
-    {% endblock patient_content %}
+            <li {% if view_mode == "schedule" %}class="active"{% endif %}>
+              <a href="{{ pt_root_url }}&view=schedule{% if notabs %}&notabs{% endif %}" >{% trans "Schedule" %}</a>
+            </li>
+            <li {% if view_mode == "submissions" %}class="active"{% endif %}>
+              <a href="{{ pt_root_url }}&view=submissions{% if notabs %}&notabs{% endif %}" >{% trans "Submissions" %}</a>
+            </li>
+            <li {% if view_mode == "careplan" %}class="active"{% endif %}>
+              <a href="{{ pt_root_url}}&view=careplan">{% trans "Care Plan" %}</a>
+            </li>
+          {% endblock patient-tab-controller %}
+        </ul>
+        {% block patient-tab-container %}
+        {% endblock patient-tab-container %}
+      {% endblock patient-content-tabs %}
+    </div>
+  {% endblock patient_content %}
 {% endblock reportcontent %}

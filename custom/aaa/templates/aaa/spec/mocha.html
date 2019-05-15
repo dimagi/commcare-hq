@@ -2,43 +2,43 @@
 {% load hq_shared_tags %}
 
 {% block dependencies %}
-    <script src="{% static 'moment/moment.js' %}"></script>
-    <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
-    <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
-    <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+  <script src="{% static 'moment/moment.js' %}"></script>
+  <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
+  <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
 
-    <script src="{% static 'aaa/js/utils/reach_utils.js' %}"></script>
-    <script src="{% static 'aaa/js/filters/month_year_filter.js' %}"></script>
-    <script src="{% static 'aaa/js/filters/filters_modal.js' %}"></script>
-    <script src="{% static 'aaa/js/filters/location_model.js' %}"></script>
-    <script src="{% static 'aaa/js/filters/location_filter.js' %}"></script>
-    <script src="{% static 'aaa/js/filters/beneficiary_type_filter.js' %}"></script>
-    <script src="{% static 'aaa/js/models/model_utils.js' %}"></script>
-    <script src="{% static 'aaa/js/models/person.js' %}"></script>
-    <script src="{% static 'aaa/js/models/child.js' %}"></script>
-    <script src="{% static 'aaa/js/models/eligible_couple.js' %}"></script>
-    <script src="{% static 'aaa/js/models/pregnant_women.js' %}"></script>
-    <script src="{% static 'aaa/js/reports/program_overview.js' %}"></script>
-    <script src="{% static 'aaa/js/reports/unified_beneficiary.js' %}"></script>
-    <script src="{% static 'aaa/js/reports/unified_beneficiary_details.js' %}"></script>
-    <script src="{% static 'aaa/js/dashboard.js' %}"></script>
+  <script src="{% static 'aaa/js/utils/reach_utils.js' %}"></script>
+  <script src="{% static 'aaa/js/filters/month_year_filter.js' %}"></script>
+  <script src="{% static 'aaa/js/filters/filters_modal.js' %}"></script>
+  <script src="{% static 'aaa/js/filters/location_model.js' %}"></script>
+  <script src="{% static 'aaa/js/filters/location_filter.js' %}"></script>
+  <script src="{% static 'aaa/js/filters/beneficiary_type_filter.js' %}"></script>
+  <script src="{% static 'aaa/js/models/model_utils.js' %}"></script>
+  <script src="{% static 'aaa/js/models/person.js' %}"></script>
+  <script src="{% static 'aaa/js/models/child.js' %}"></script>
+  <script src="{% static 'aaa/js/models/eligible_couple.js' %}"></script>
+  <script src="{% static 'aaa/js/models/pregnant_women.js' %}"></script>
+  <script src="{% static 'aaa/js/reports/program_overview.js' %}"></script>
+  <script src="{% static 'aaa/js/reports/unified_beneficiary.js' %}"></script>
+  <script src="{% static 'aaa/js/reports/unified_beneficiary_details.js' %}"></script>
+  <script src="{% static 'aaa/js/dashboard.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}
-    <script src="{% static 'aaa/spec/fixture/program_overview_fixture.js' %}"></script>
+  <script src="{% static 'aaa/spec/fixture/program_overview_fixture.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
-    <script src="{% static 'aaa/spec/utils/reach_utils.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/filters/month_year_filter.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/filters/location_filter.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/filters/beneficiary_type_filter.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/models/model_utils.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/models/child.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/models/eligible_couple.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/models/person.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/models/pregnant_women.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/reports/program_overview.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/reports/unified_beneficiary.spec.js' %}"></script>
-    <script src="{% static 'aaa/spec/reports/unified_beneficiary_details.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/utils/reach_utils.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/filters/month_year_filter.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/filters/location_filter.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/filters/beneficiary_type_filter.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/models/model_utils.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/models/child.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/models/eligible_couple.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/models/person.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/models/pregnant_women.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/reports/program_overview.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/reports/unified_beneficiary.spec.js' %}"></script>
+  <script src="{% static 'aaa/spec/reports/unified_beneficiary_details.spec.js' %}"></script>
 {% endblock %}

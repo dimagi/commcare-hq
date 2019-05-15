@@ -5,21 +5,21 @@
 
 
 {% block js %}{{ block.super }}
-    {% requirejs_main 'scheduling/js/create_schedule_main' %}
+  {% requirejs_main 'scheduling/js/create_schedule_main' %}
 {% endblock %}
 
 {% block page_content %}{{ block.super }}
-    {% initial_page_data 'read_only_mode' read_only_mode %}
-    <p class="help-block">
-        <i class="fa fa-info-circle"></i>
-        {% blocktrans %}
-        For information on Broadcasts, see the
-        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Broadcasts">Broadcasts</a>
-        help page.
-        {% endblocktrans %}
-    </p>
-    {% include 'scheduling/partials/custom_event_templates.html' %}
-    <form class="form form-horizontal main-form" method="POST" action="#">
-        {% include 'scheduling/partials/schedule_form.html' %}
-    </form>
+  {% initial_page_data 'read_only_mode' read_only_mode %}
+  <p class="help-block">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+      For information on Broadcasts, see the
+      <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Broadcasts">Broadcasts</a>
+      help page.
+    {% endblocktrans %}
+  </p>
+  {% include 'scheduling/partials/custom_event_templates.html' %}
+  <form class="form form-horizontal main-form" method="POST" action="#">
+    {% include 'scheduling/partials/schedule_form.html' %}
+  </form>
 {% endblock %}
