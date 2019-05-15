@@ -544,16 +544,21 @@ class ConditionalAlertBaseView(BaseMessagingSectionView):
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertBaseView, self).dispatch(*args, **kwargs)
 
-    def get_conditional_alerts_queryset(self, query_string=''):
+    @staticmethod
+    def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
         query = (
             AutomaticUpdateRule
             .objects
-            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
+            .filter(domain=domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
         )
         if query_string:
             query = query.filter(name__icontains=query_string)
         query = query.order_by('case_type', 'name', 'id')
         return query
+
+    def get_conditional_alerts_queryset(self, query_string=''):
+        return ConditionalAlertBaseView.get_conditional_alerts_queryset_by_domain(self.domain,
+                                                                                  query_string=query_string)
 
 
 class ConditionalAlertListView(ConditionalAlertBaseView):
@@ -1007,11 +1012,8 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
     def get(self, request, domain):
         title = _("Conditional Alerts")
         headers = ((title, (_('id'), _('name'), _('case_type'))),)
-        rows = [(
-            rule.pk,
-            rule.name,
-            rule.case_type,
-        ) for rule in self.get_conditional_alerts_queryset() if isinstance(_get_rule_content(rule), SMSContent)]
+
+        rows = get_conditional_alert_rows(self.domain)
 
         temp = io.BytesIO()
         export_raw(headers, [(title, rows)], temp)
@@ -1019,6 +1021,17 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
             domain=domain,
             title=title)
         return export_response(temp, Format.XLS_2007, filename)
+
+
+def get_conditional_alert_rows(domain):
+    rows = []
+
+    for rule in ConditionalAlertBaseView.get_conditional_alerts_queryset_by_domain(domain):
+        if not isinstance(_get_rule_content(rule), SMSContent):
+            continue
+        rows.append([rule.pk, rule.name, rule.case_type])
+
+    return rows
 
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
