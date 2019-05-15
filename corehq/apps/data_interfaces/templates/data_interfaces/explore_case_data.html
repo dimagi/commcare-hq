@@ -49,32 +49,31 @@
     <div class="panel panel-default">
       <div class="panel-heading"
            role="tab"
-           id="datagrid-report-filters-header">
+           id="datagridFilterHeading">
         <h3 class="panel-title">
-          <a role="button"
-             data-toggle="collapse"
-             href="#datagrid-report-filters-content"
+          <a data-toggle="collapse"
+             href="#reportFilters"
              aria-expanded="true"
-             aria-controls="datagrid-report-filters-content">
+             aria-controls="reportFilters">
             {% trans "Report Filters" %}
           </a>
         </h3>
       </div>
-      <div id="datagrid-report-filters-content"
+      <div id="reportFilters"
            class="panel-collapse collapse in"
            role="tabpanel"
-           aria-labelledby="datagrid-report-filters-header"></div>
-      <div class="panel-body">
-        <div class="form form-horizontal"
-             data-bind="foreach: reportFilters">
+           aria-labelledby="datagridFilterHeading">
+        <div class="panel-body">
+          <div class="form form-horizontal"
+               data-bind="foreach: reportFilters">
 
-          <div class="form-group">
-            <label class="{% css_label_class %} control-label"
-                   data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
-            <div class="{% css_field_class %}">
-              <select type="text"
-                      class="form-control"
-                      data-bind="selectedOptions: value,
+            <div class="form-group">
+              <label class="{% css_label_class %} control-label"
+                     data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
+              <div class="{% css_field_class %}">
+                <select type="text"
+                        class="form-control"
+                        data-bind="selectedOptions: value,
                                  select2: {
                                    placeholder: placeholder(),
                                    multiple: true,
@@ -82,11 +81,13 @@
                                    getInitialValue: getInitialValue,
                                  },
                                  attr: { id: 'filter_' + name() }"></select>
+              </div>
             </div>
-          </div>
 
+          </div>
         </div>
       </div>
+
     </div>
 
     <table class="table table-striped table-hover table-datagrid">
