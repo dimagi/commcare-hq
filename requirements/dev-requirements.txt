@@ -17,8 +17,8 @@ backports.functools-lru-cache==1.5
 backports.shutil-get-terminal-size==1.0.0  # via ipython
 beautifulsoup4==4.7.1
 billiard==3.5.0.4
-boto3==1.9.147
-botocore==1.12.147
+boto3==1.9.148
+botocore==1.12.148
 cairocffi==0.9.0
 cairosvg==1.0.22
 celery==4.1.1
