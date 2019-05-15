@@ -87,6 +87,8 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
+        "is_nullable": false,
+        "is_primary_key": true,
         "expression": {
           "type": "location_parent_id",
           "location_id_expression": {
