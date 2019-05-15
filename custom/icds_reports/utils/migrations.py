@@ -67,9 +67,13 @@ class OnlyCitusRunSql(migrations.RunSQL):
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         if (
             router.allow_migrate(schema_editor.connection.alias, app_label, **self.hints)
-            and (settings.UNIT_TESTING or is_citus_db(schema_editor.connection))
+            and (settings.UNIT_TESTING or self._is_citus(schema_editor))
         ):
             self._run_sql(schema_editor, self.sql)
+
+    def _is_citus(self, schema_editor):
+        with schema_editor.connection.cursor() as cursor:
+            return is_citus_db(cursor)
 
 
 def get_composite_primary_key_migrations(models_to_update):
@@ -94,7 +98,9 @@ def create_citus_distributed_table(connection, table, distribution_column):
     res = connection.execute("""
         select 1 from pg_dist_partition
         where partmethod = 'h' and logicalrelid = %s::regclass
-    """, table)
+    """, [table])
+    if res is None:
+        res = list(connection)
     if not list(res):
         connection.execute("select create_distributed_table(%s, %s)", [table, distribution_column])
 
@@ -103,6 +109,8 @@ def create_citus_reference_table(connection, table):
     res = connection.execute("""
         select 1 from pg_dist_partition
         where partmethod = 'n' and logicalrelid = %s::regclass
-    """, table)
+    """, [table])
+    if res is None:
+        res = list(connection)
     if not list(res):
         connection.execute("select create_reference_table(%s)", [table])

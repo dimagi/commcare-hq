@@ -256,4 +256,10 @@ def override_engine(engine_id, connection_url, db_alias=None):
 
 
 def is_citus_db(connection):
-    return bool(list(connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")))
+    """
+    :param connection: either a sqlalchemy connection or a Django cursor
+    """
+    res = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
+    if res is None:
+        res = list(connection)
+    return bool(list(res))

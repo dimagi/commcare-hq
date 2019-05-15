@@ -11,14 +11,15 @@ from custom.icds_reports.utils.migrations import create_citus_distributed_table,
 
 
 def _distribute_citus_tables(apps, schema_editor):
-    if not is_citus_db(schema_editor.connection):
-        return
+    with schema_editor.connection.cursor() as cursor:
+        if not is_citus_db(cursor):
+            return
 
-    for table, col in DISTRIBUTED_TABLES:
-        create_citus_distributed_table(schema_editor.connection, table, col)
+        for table, col in DISTRIBUTED_TABLES:
+            create_citus_distributed_table(cursor, table, col)
 
-    for table in REFERENCE_TABLES:
-        create_citus_reference_table(schema_editor.connection, table)
+        for table in REFERENCE_TABLES:
+            create_citus_reference_table(cursor, table)
 
 
 class Migration(migrations.Migration):
