@@ -1,8 +1,8 @@
 {% block base_event_container %}
-<div class="span-8">
-{% block event_description %}
-    <strong>{{ event.event_class }}</strong>: {{ event.description }}<br>
-    {{ event.event_date }}
-{% endblock event_description %}
-</div>
+  <div class="span-8">
+    {% block event_description %}
+      <strong>{{ event.event_class }}</strong>: {{ event.description }}<br>
+      {{ event.event_date }}
+    {% endblock event_description %}
+  </div>
 {% endblock base_event_container %}

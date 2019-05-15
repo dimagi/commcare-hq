@@ -1,18 +1,18 @@
 {% extends 'reports/filters/single_option.html' %}
 
 {% block filter_js %}
-    {{ block.super }}
+  {{ block.super }}
 
-    <script>
+  <script>
     $(function () {
-        $("fieldset .help-block").each( function (index, data) {
-            $(this).parents('.form-group').find("label:first").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');
-            $(this).parent().prev().removeClass('col-xs-6');
-            $(this).parent().remove();
-        });
-        $('fieldset .hq-help-template').each(function () {
-            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
-        });
+      $("fieldset .help-block").each( function (index, data) {
+        $(this).parents('.form-group').find("label:first").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');
+        $(this).parent().prev().removeClass('col-xs-6');
+        $(this).parent().remove();
+      });
+      $('fieldset .hq-help-template').each(function () {
+        hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+      });
     });
-</script>
+  </script>
 {% endblock %}
