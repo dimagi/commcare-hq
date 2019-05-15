@@ -24,7 +24,7 @@ def _distribute_citus_tables(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0117_monthly_pk'),
+        ('icds_reports', '0118_monthly_pk'),
     ]
 
     operations = [

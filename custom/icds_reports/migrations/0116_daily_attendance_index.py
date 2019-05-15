@@ -19,7 +19,7 @@ def get_operations():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0114_local_tables'),
+        ('icds_reports', '0115_citusdashboarddiff_citusdashboardexception_citusdashboardtiming'),
     ]
 
     operations = get_operations()
