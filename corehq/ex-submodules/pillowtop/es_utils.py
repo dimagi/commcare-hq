@@ -55,18 +55,6 @@ ANALYZERS = {
 REMOVE_SETTING = None
 
 ES_ENV_SETTINGS = {
-    'production': {
-        'xforms': {
-            "number_of_replicas": REMOVE_SETTING,
-        },
-        'hqcases': {
-            "number_of_replicas": REMOVE_SETTING,
-        },
-        'hqusers': {
-            "number_of_replicas": 1,
-        },
-    },
-
     'icds': {
         'hqusers': {
             "number_of_replicas": 1,
