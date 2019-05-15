@@ -35,7 +35,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             FROM "{ucr_tablename}"
             WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
             WINDOW forms AS (
-              PARTITION BY awc_id
+              PARTITION BY supervisor_id, awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
             )
         """.format(
@@ -79,6 +79,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
     def aggregate_query(self):
         ucr_query, params = self.data_from_ucr_query()
         return """
+            CREATE TEMPORARY TABLE "tmp_usage" AS ({ucr_table_query});
             UPDATE "{table_name}" AS agg_table SET
                 first_submission = LEAST(agg_table.first_submission, ut.first_submission),
                 last_submission = GREATEST(agg_table.last_submission, ut.last_submission)
@@ -87,12 +88,13 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 loc.awc_id as awc_id,
                 ucr.first_submission as first_submission,
                 ucr.last_submission as last_submission
-              FROM ({ucr_table_query}) ucr
+              FROM "tmp_usage" ucr
               JOIN "{temp_tablename}" loc
               ON ucr.awc_id = loc.awc_id
             ) ut
             WHERE agg_table.awc_id = ut.awc_id;
             DROP TABLE "{temp_tablename}";
+            DROP TABLE "tmp_usage";
         """.format(
             table_name=self.aggregate_parent_table,
             ucr_table_query=ucr_query,

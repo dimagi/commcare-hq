@@ -347,6 +347,33 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        CREATE TEMPORARY TABLE "tmp_usage" AS SELECT
+            awc_id,
+            month,
+            sum(pse) AS usage_num_pse,
+            sum(gmp) AS usage_num_gmp,
+            sum(thr) AS usage_num_thr,
+            sum(add_household) AS usage_num_hh_reg,
+            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
+            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
+            sum(add_person) AS usage_num_add_person,
+            sum(add_pregnancy) AS usage_num_add_pregnancy,
+            sum(home_visit) AS usage_num_home_visit,
+            sum(bp_tri1) AS usage_num_bp_tri1,
+            sum(bp_tri2) AS usage_num_bp_tri2,
+            sum(bp_tri3) AS usage_num_bp_tri3,
+            sum(pnc) AS usage_num_pnc,
+            sum(ebf) AS usage_num_ebf,
+            sum(cf) AS usage_num_cf,
+            sum(delivery) AS usage_num_delivery,
+            CASE WHEN (
+                sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr)
+                + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
+            ) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active,
+            sum(due_list_ccs) AS usage_num_due_list_ccs,
+            sum(due_list_child) AS usage_num_due_list_child_health
+        FROM "{usage_table}"
+        WHERE month = %(start_date)s GROUP BY awc_id, month;
         UPDATE "{tablename}" agg_awc SET
             usage_num_pse = ut.usage_num_pse,
             usage_num_gmp = ut.usage_num_gmp,
@@ -371,36 +398,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             usage_awc_num_active = ut.usage_awc_num_active,
             usage_num_due_list_ccs = ut.usage_num_due_list_ccs,
             usage_num_due_list_child_health = ut.usage_num_due_list_child_health
-        FROM (
-            SELECT
-                awc_id,
-                month,
-                sum(pse) AS usage_num_pse,
-                sum(gmp) AS usage_num_gmp,
-                sum(thr) AS usage_num_thr,
-                sum(add_household) AS usage_num_hh_reg,
-                CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
-                CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
-                sum(add_person) AS usage_num_add_person,
-                sum(add_pregnancy) AS usage_num_add_pregnancy,
-                sum(home_visit) AS usage_num_home_visit,
-                sum(bp_tri1) AS usage_num_bp_tri1,
-                sum(bp_tri2) AS usage_num_bp_tri2,
-                sum(bp_tri3) AS usage_num_bp_tri3,
-                sum(pnc) AS usage_num_pnc,
-                sum(ebf) AS usage_num_ebf,
-                sum(cf) AS usage_num_cf,
-                sum(delivery) AS usage_num_delivery,
-                CASE WHEN (
-                    sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr)
-                    + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
-                ) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active,
-                sum(due_list_ccs) AS usage_num_due_list_ccs,
-                sum(due_list_child) AS usage_num_due_list_child_health
-            FROM "{usage_table}"
-            WHERE month = %(start_date)s GROUP BY awc_id, month
-        ) ut
+        FROM "tmp_usage" ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
+        DROP TABLE "tmp_usage";
         """.format(
             tablename=self.tablename,
             usage_table=self._ucr_tablename('static-usage_forms'),
@@ -681,17 +681,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     def weekly_updates(self):
         yield """
-        UPDATE  agg_awc SET
-            usage_num_hh_reg = ut.usage_num_hh_reg,
-            is_launched = ut.is_launched,
-            num_launched_states = ut.num_launched_awcs,
-            num_launched_districts = ut.num_launched_awcs,
-            num_launched_blocks = ut.num_launched_awcs,
-            num_launched_supervisors = ut.num_launched_awcs,
-            num_launched_awcs = ut.num_launched_awcs,
-            usage_awc_num_active = ut.usage_awc_num_active
-        FROM (
-        SELECT
+        CREATE TEMPORARY TABLE "tmp_usage" AS SELECT
             awc_id,
             month,
             sum(add_household) AS usage_num_hh_reg,
@@ -702,8 +692,17 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
             ) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
             FROM "{usage_table}"
-            WHERE month >= %(start_date)s GROUP BY awc_id, month
-        ) ut
+            WHERE month >= %(start_date)s GROUP BY awc_id, month;
+        UPDATE  agg_awc SET
+            usage_num_hh_reg = ut.usage_num_hh_reg,
+            is_launched = ut.is_launched,
+            num_launched_states = ut.num_launched_awcs,
+            num_launched_districts = ut.num_launched_awcs,
+            num_launched_blocks = ut.num_launched_awcs,
+            num_launched_supervisors = ut.num_launched_awcs,
+            num_launched_awcs = ut.num_launched_awcs,
+            usage_awc_num_active = ut.usage_awc_num_active
+        FROM "tmp_usage" ut
         WHERE ut.month <= agg_awc.month AND ut.awc_id = agg_awc.awc_id AND agg_awc.aggregation_level=5
         AND agg_awc.num_launched_awcs = 0 AND ut.num_launched_awcs != 0;
         """.format(
