@@ -115,7 +115,6 @@ describe('Pregnant women models', function () {
                 dob: '2017-01-01',
             };
             var pregnantModel = pregnantWomenModels.pregnantModel(initialData, postData);
-            assert.isTrue(pregnantModel.hasOwnProperty('dateOfLmp'));
             assert.isTrue(pregnantModel.hasOwnProperty('weightOfPw'));
             assert.isTrue(pregnantModel.hasOwnProperty('dateOfRegistration'));
             assert.isTrue(pregnantModel.hasOwnProperty('edd'));
