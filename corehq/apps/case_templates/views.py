@@ -6,7 +6,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from corehq import toggles
 from corehq.apps.case_templates.models import CaseTemplate
@@ -56,3 +56,40 @@ class CaseTemplatesListView(DataInterfaceSection):
         return {
             'case_templates': CaseTemplate.objects.filter(domain=self.domain).all(),
         }
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(Permissions.edit_data)
+@toggles.CASE_TEMPLATES.required_decorator()
+def create_instance_view(request, domain):
+    template_id = request.POST.get('template_id')
+
+    template = CaseTemplate.objects.get(domain=domain, template_id=template_id)
+    new_root_id = template.create_instance()
+
+    created_case_ids = template.instance_cases.filter(ancestor_id=new_root_id).values_list('case_id', flat=True)
+    search_string = " ".join("_id:{}".format(case_id) for case_id in created_case_ids)
+    search_url = "{url}?search_query={query}".format(
+        url=reverse('project_report_dispatcher', args=[domain, 'case_list']),
+        query=search_string
+    )
+
+    messages.success(request, _("Successfully created {} cases").format(len(created_case_ids)))
+
+    return HttpResponseRedirect(search_url)
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(Permissions.edit_data)
+@toggles.CASE_TEMPLATES.required_decorator()
+def delete_template_view(request, domain):
+    template_id = request.POST.get('template_id')
+
+    template = CaseTemplate.objects.get(domain=domain, template_id=template_id)
+    template.delete()
+
+    messages.success(request, _("Template successfully deleted"))
+
+    return HttpResponseRedirect(reverse(CaseTemplatesListView.urlname, args=[domain]))

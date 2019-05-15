@@ -44,20 +44,30 @@
                 {{ case_template.num_cases }}
               </td>
               <td>
-                <button class='btn btn-primary'>
-                  Create Cases
-                </button>
+                <form method="POST" action="{% url 'create_template_instance' domain %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="template_id" value="{{ case_template.template_id }}" />
+                  <button class='btn btn-primary' type="submit">
+                    {% trans "Create Cases" %}
+                  </button>
+                </form>
               </td>
               <td>
-                <button class='btn btn-default'>
-                  View Generated Cases
-                </button>
+                <a class='btn btn-default'
+                   href="{% url 'project_report_dispatcher' domain 'case_list' %}?search_query={% for case in case_template.instance_cases.all %}_id:{{ case.case_id }} {% endfor %}">
+                  {% trans "View Generated Cases" %}
+                </a>
               </td>
               <td>
-                <button class="btn btn-danger">
-                  <i class="fa fa-trash"></i>
-                  Delete
-                </button>
+                <form method="POST" action="{% url 'delete_template' domain %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="template_id" value="{{ case_template.template_id }}" />
+                  <button class="btn btn-danger" type="submit">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete" %}
+                  </button>
+                </form>
+
               </td>
             </tr>
 
