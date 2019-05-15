@@ -54,8 +54,7 @@ class SqlUpdateStrategyTest(TestCase):
         with freeze_time("2018-10-08"):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
         with freeze_time("2018-10-11"):
-            case.track_create(new_old_trans)
-            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+            self._save(new_old_xform, case, new_old_trans)
 
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
@@ -76,8 +75,7 @@ class SqlUpdateStrategyTest(TestCase):
         with freeze_time("2018-10-11"):
             new_old_xform = self._create_form()
             new_old_trans = self._create_case_transaction(case, new_old_xform)
-            case.track_create(new_old_trans)
-            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+            self._save(new_old_xform, case, new_old_trans)
 
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
@@ -92,8 +90,7 @@ class SqlUpdateStrategyTest(TestCase):
         with freeze_time("2018-10-08"):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
         with freeze_time("2018-10-11"):
-            case.track_create(new_old_trans)
-            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+            self._save(new_old_xform, case, new_old_trans)
 
         self.assertFalse(case.check_transaction_order())
 
@@ -101,8 +98,7 @@ class SqlUpdateStrategyTest(TestCase):
             new_rebuild_xform = self._create_form()
             rebuild_detail = RebuildWithReason(reason="shadow's golden coin")
             rebuild_transaction = CaseTransaction.rebuild_transaction(case, rebuild_detail)
-            case.track_create(rebuild_transaction)
-            FormProcessorSQL.save_processed_models(ProcessedForms(new_rebuild_xform, []), [case])
+            self._save(new_rebuild_xform, case, rebuild_transaction)
 
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
@@ -115,8 +111,7 @@ class SqlUpdateStrategyTest(TestCase):
         with freeze_time("2018-10-08"):
             new_old_xform = self._create_form()
             new_old_trans = self._create_case_transaction(case, new_old_xform)
-            case.track_create(new_old_trans)
-            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+            self._save(new_old_xform, case, new_old_trans)
 
         self.assertTrue(case.check_transaction_order())
 
@@ -135,14 +130,12 @@ class SqlUpdateStrategyTest(TestCase):
         with freeze_time("2018-10-10 18:00"):
             new_old_trans = self._create_case_transaction(case, new_old_xform)
         with freeze_time("2018-10-11 06:00"):
-            case.track_create(new_old_trans)
-            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+            self._save(new_old_xform, case, new_old_trans)
 
         with freeze_time("2018-10-11"):
             new_old_xform = self._create_form()
             new_old_trans = self._create_case_transaction(case, new_old_xform)
-            case.track_create(new_old_trans)
-            FormProcessorSQL.save_processed_models(ProcessedForms(new_old_xform, []), [case])
+            self._save(new_old_xform, case, new_old_trans)
 
         case = CaseAccessorSQL.get_case(case.case_id)
         update_strategy = SqlCaseUpdateStrategy(case)
@@ -197,10 +190,20 @@ class SqlUpdateStrategyTest(TestCase):
         )
 
         form = self._create_form(user_id, utcnow)
-        case.track_create(self._create_case_transaction(case, form, utcnow, action_types=[128]))
-        FormProcessorSQL.save_processed_models(ProcessedForms(form, []), [case])
+        trans = self._create_case_transaction(case, form, utcnow, action_types=[128])
+        self._save(form, case, trans)
 
         return CaseAccessorSQL.get_case(case_id)
+
+    def _save(self, form, case, transaction):
+        case.track_create(transaction)
+        FormProcessorSQL.save_processed_models(
+            ProcessedForms(form, []),
+            [case],
+            # disable publish to Kafka to avoid intermittent errors caused by
+            # the nexus of kafka's consumer thread and freeze_time
+            publish_to_kafka=False,
+        )
 
     def _check_for_reconciliation_error_soft_assert(self, soft_assert_mock):
         for call in soft_assert_mock.call_args_list:

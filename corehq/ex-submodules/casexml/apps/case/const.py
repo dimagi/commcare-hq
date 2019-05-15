@@ -1,5 +1,9 @@
 # how cases/referrals are tagged in the xform/couch
+from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from datetime import timedelta
+
 CASE_TAG = "case"
 REFERRAL_TAG = "referral"
 
@@ -47,3 +51,5 @@ DEFAULT_CASE_INDEX_IDENTIFIERS = {CASE_INDEX_CHILD: 'parent', CASE_INDEX_EXTENSI
 UNOWNED_EXTENSION_OWNER_ID = '-'
 
 ARCHIVED_CASE_OWNER_ID = '_archive_'
+
+SIGNIFICANT_TIME = timedelta(hours=12)

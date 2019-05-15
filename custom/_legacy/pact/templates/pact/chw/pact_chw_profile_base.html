@@ -2,21 +2,21 @@
 {% load i18n %}
 
 {% block reportcontent %}
-<div class="col-sm-11">
+  <div class="col-sm-11">
     {% block actor-tab-controller %}
-        <h4>{{ user_doc.first_name|title }} {{ user_doc.last_name|title }}</h4>
-        <ul class="nav nav-pills">
-            <li {% if view_mode == "info" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=info">{% trans "Info" %}</a></li>
-            <li {% if view_mode == "submissions" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=submissions">{% trans "Submissions" %}</a></li>
+      <h4>{{ user_doc.first_name|title }} {{ user_doc.last_name|title }}</h4>
+      <ul class="nav nav-pills">
+        <li {% if view_mode == "info" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=info">{% trans "Info" %}</a></li>
+        <li {% if view_mode == "submissions" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=submissions">{% trans "Submissions" %}</a></li>
 {#            <li {% if view_mode == "patients" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=patients">{% trans "Patients" %}</a></li>#}
-            <li {% if view_mode == "schedule" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=schedule">{% trans "Visit Schedule" %}</a></li>
+        <li {% if view_mode == "schedule" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=schedule">{% trans "Visit Schedule" %}</a></li>
 {#            <li {% if view_mode == "supervision" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=supervision">{% trans "Supervision" %}</a></li>#}
-        </ul>
+      </ul>
     {% endblock actor-tab-controller %}
 
     {% block actor-tab-container %}
     {% endblock actor-tab-container %}
-</div>
-{#{{ block.super }}#}
+  </div>
+  {#{{ block.super }}#}
 {% endblock reportcontent %}
 

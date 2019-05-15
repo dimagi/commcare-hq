@@ -3,52 +3,52 @@
 {% load i18n %}
 
 {% block page_content %}
-<form>
+  <form>
     <fieldset>
-        <legend>{% trans "MOTECH Logs" %}</legend>
-    {% if logs %}
+      <legend>{% trans "MOTECH Logs" %}</legend>
+      {% if logs %}
         <tbody class="col-sm-10">
-            <table class="table table-striped">
-                <thead>
-                    <th>{% trans "Timestamp" %}</th>
-                    <th>{% trans "Request" %}</th>
-                    <th>{% trans "Status" %}</th>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
-                            {{ log.timestamp }}
-                        </a></td>
-                        <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
-                            {{ log.request_method }} {{ log.request_url }}
-                        </a></td>
-                        <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
-                            {{ log.response_status }}
-                        </a></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <table class="table table-striped">
+          <thead>
+          <th>{% trans "Timestamp" %}</th>
+          <th>{% trans "Request" %}</th>
+          <th>{% trans "Status" %}</th>
+          </thead>
+          <tbody>
+          {% for log in logs %}
+            <tr>
+              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+                {{ log.timestamp }}
+              </a></td>
+              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+                {{ log.request_method }} {{ log.request_url }}
+              </a></td>
+              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+                {{ log.response_status }}
+              </a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
         <div class="col-sm-10">
         {% if is_paginated %}
-        <div>
+          <div>
             <span>
                 {% if page_obj.has_previous %}
-                [<a href="?page={{ page_obj.previous_page_number }}">Previous</a>]
+                  [<a href="?page={{ page_obj.previous_page_number }}">Previous</a>]
                 {% endif %}
-                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-                {% if page_obj.has_next %}
+              <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+              {% if page_obj.has_next %}
                 [<a href="?page={{ page_obj.next_page_number }}">Next</a>]
-                {% endif %}
+              {% endif %}
             </span>
-        </div>
+          </div>
         {% endif %}
-    {% else %}
+      {% else %}
         <div>
-            <p>No API requests have been logged.</p>
+          <p>No API requests have been logged.</p>
         </div>
-    {% endif %}
+      {% endif %}
     </fieldset>
-</form>
+  </form>
 {% endblock %}

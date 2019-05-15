@@ -298,7 +298,17 @@ def _both_dates(old, new):
 
 
 def xform_ids_order(old_obj, new_obj, rule, diff):
-    """Some couch docs have the xform ID's out of order"""
+    """Some couch docs have the xform ID's out of order
+
+    `sql_case.xform_ids` is derived from transactions, which are sorted
+    by `server_date`. `couch_case.xform_ids` is based on couch actions,
+    which are not necessarily sorted by `server_date`. Therefore it is
+    likely that they will not match, even after rebuilding either side.
+
+    `reconcile_transactions` does not update `transaction.server_date`
+    and therefore SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL is not useful
+    to eliminate `sql_case.xform_ids` list order diffs.
+    """
     old_ids = set(old_obj['xform_ids'])
     new_ids = set(new_obj['xform_ids'])
     if old_ids ^ new_ids:
@@ -308,7 +318,7 @@ def xform_ids_order(old_obj, new_obj, rule, diff):
             old_value=','.join(list(old_ids - new_ids)),
             new_value=','.join(list(new_ids - old_ids)),
         )
-    raise ReplaceDiff(diff_type="list_order", path=('xform_ids', '[*]'))
+    return True
 
 
 def case_attachments(old_obj, new_obj, rule, original_diff):

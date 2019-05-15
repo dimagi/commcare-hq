@@ -3,100 +3,100 @@
 {% load i18n %}
 
 {% if charts %}
-    <div class="row">
-        {% for chart in charts %}
-            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-md-{{ chart_span }} collapse">
-            <svg style='height: {{ chart.height }}px'> </svg>
-        </div>
-        {% endfor %}
-    </div>
+  <div class="row">
+    {% for chart in charts %}
+      {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+      <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-md-{{ chart_span }} collapse">
+        <svg style='height: {{ chart.height }}px'> </svg>
+      </div>
+    {% endfor %}
+  </div>
 {% endif %}
 
 <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
-    <thead>
-        {%  if report_table.headers.complex %}
-            {{ report_table.headers.render_html|safe }}
-        {% else %}
-            <tr>
-                {% for header in report_table.headers %}
-                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                        <i class="icon-white fa dt-sort-icon"></i>
-                        {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
-                        {% if header.help_text %}
-                            <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
-                        {% endif %}
-                    </th>
-                {% endfor %}
-            </tr>
-        {% endif %}
-    </thead>
-    <tbody>
-    {% block tabular-body %}
+  <thead>
+  {%  if report_table.headers.complex %}
+    {{ report_table.headers.render_html|safe }}
+  {% else %}
+    <tr>
+      {% for header in report_table.headers %}
+        <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+          <i class="icon-white fa dt-sort-icon"></i>
+          {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+          {% if header.help_text %}
+            <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
+          {% endif %}
+        </th>
+      {% endfor %}
+    </tr>
+  {% endif %}
+  </thead>
+  <tbody>
+  {% block tabular-body %}
     {% if report_table.pagination.is_on %}
-        <tr>
-            <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                {% trans "Fetching additional data, please wait..." %}
-            </td>
-        </tr>
+      <tr>
+        <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+          {% trans "Fetching additional data, please wait..." %}
+        </td>
+      </tr>
     {% endif %}
     {% for row in report_table.rows %}
-        <tr>
-            {% for col in row %}
-                {% include 'reports/async/partials/tabular_cell.html' %}
-            {% endfor %}
-        </tr>
+      <tr>
+        {% for col in row %}
+          {% include 'reports/async/partials/tabular_cell.html' %}
+        {% endfor %}
+      </tr>
     {% endfor %}
-    {% endblock %}
-    </tbody>
-    {% if report_table.total_row and report_table.rows %}
-        <tfoot>
-        <tr>
-            {% for col in report_table.total_row %}
-                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
-            {% endfor %}
-        </tr>
-        </tfoot>
-    {% endif %}
+  {% endblock %}
+  </tbody>
+  {% if report_table.total_row and report_table.rows %}
+    <tfoot>
+    <tr>
+      {% for col in report_table.total_row %}
+        <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+      {% endfor %}
+    </tr>
+    </tfoot>
+  {% endif %}
 </table>
 
 <script>
-   $(function () {
-        {% if report_table and report_table.datatables %}
-        var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
-            dataTableElem: '#report_table_{{ report.slug }}',
-            defaultRows: {{ report_table.default_rows|default:10 }},
-            startAtRowNum: {{ report_table.start_at_row|default:0 }},
-            showAllRowsOption: {{ report_table.show_all_rows|JSON }},
-            fixColumns: true,
-            fixColsNumLeft: 2,
-            fixColsWidth: 200
-        });
-        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
-        if (typeof standardHQReport !== 'undefined') {
-            standardHQReport.handleTabularReportCookies(reportTables);
-        }
-        reportTables.render();
-        {% endif %}
-       $(".header-popover").popover({
-           trigger: "hover",
-           placement: function (context, source) {
-               var position = $(source).offset();
-               return (position.left > $(window).width() * 0.5) ? "left" : "right";
-           },
-           container: 'body'
-       });
-   });
+  $(function () {
+    {% if report_table and report_table.datatables %}
+      var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
+        dataTableElem: '#report_table_{{ report.slug }}',
+        defaultRows: {{ report_table.default_rows|default:10 }},
+        startAtRowNum: {{ report_table.start_at_row|default:0 }},
+        showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+        fixColumns: true,
+        fixColsNumLeft: 2,
+        fixColsWidth: 200
+      });
+      var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+      if (typeof standardHQReport !== 'undefined') {
+        standardHQReport.handleTabularReportCookies(reportTables);
+      }
+      reportTables.render();
+    {% endif %}
+    $(".header-popover").popover({
+      trigger: "hover",
+      placement: function (context, source) {
+        var position = $(source).offset();
+        return (position.left > $(window).width() * 0.5) ? "left" : "right";
+      },
+      container: 'body'
+    });
+  });
 </script>
 
 <style>
-    #report_table_individual_wrapper tbody tr td {
-        padding: 1px !important;
-    }
-    .arrow {
-        top: 85% !important;
-    }
-    .header {
-        white-space: nowrap;
-    }
+  #report_table_individual_wrapper tbody tr td {
+    padding: 1px !important;
+  }
+  .arrow {
+    top: 85% !important;
+  }
+  .header {
+    white-space: nowrap;
+  }
 </style>

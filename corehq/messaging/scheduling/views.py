@@ -39,9 +39,10 @@ from corehq.messaging.scheduling.forms import (
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    TimedSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
+    SMSContent,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
@@ -1026,7 +1027,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
             rule.pk,
             rule.name,
             rule.case_type,
-        ) for rule in self.get_conditional_alerts_queryset()]
+        ) for rule in self.get_conditional_alerts_queryset() if isinstance(_get_rule_content(rule), SMSContent)]
 
         temp = io.BytesIO()
         export_raw(headers, [(title, rows)], temp)
@@ -1053,6 +1054,8 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
                 "adjective": _("conditional alert"),
                 "plural_noun": _("conditional alerts"),
+                "help_text": _("This page will only download / upload conditional alerts that use "
+                               "SMS content - not email, SMS surveys or other content."),
             },
         }
         context.update({
@@ -1075,7 +1078,6 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             return self.get(request, *args, **kwargs)
 
         success_count = 0
-        errors = []
         for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
             rule = None
             try:
@@ -1086,24 +1088,28 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                     deleted=False,
                 )
             except AutomaticUpdateRule.DoesNotExist:
-                errors.append(_("Row {index}, with rule id {id}").format(index=index, id=row['id']))
+                messages.error(request, _("Could not find rule for row {index}, with id {id}.").format(
+                    index=index, id=row['id']))
             dirty = False
             if rule:
-                if rule.name != row['name']:
-                    dirty = True
-                    rule.name = row['name']
-                if rule.case_type != row['case_type']:
-                    dirty = True
-                    rule.case_type = row['case_type']
+                if not isinstance(_get_rule_content(rule), SMSContent):
+                    messages.error(request, _("Row {index}, with rule id {id}, does not use SMS content.").format(
+                        index=index, id=row['id']))
+                else:
+                    if rule.name != row['name']:
+                        dirty = True
+                        rule.name = row['name']
+                    if rule.case_type != row['case_type']:
+                        dirty = True
+                        rule.case_type = row['case_type']
             if dirty:
                 rule.save()
                 success_count += 1
 
-        if errors:
-            messages.error(request, _("Could not find rules from the following rows: {errors}").format(
-                errors=", ".join(errors)))
-
-        if success_count:
-            messages.success(request, _("Updated {count} rule(s)").format(count=success_count))
+        messages.success(request, _("Updated {count} rule(s).").format(count=success_count))
 
         return self.get(request, *args, **kwargs)
+
+
+def _get_rule_content(rule):
+    return rule.get_messaging_rule_schedule().memoized_events[0].content

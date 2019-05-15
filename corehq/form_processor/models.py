@@ -1236,6 +1236,9 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
 
@@ -1494,6 +1497,14 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         )
 
     def __str__(self):
+        return (
+            "{self.form_id}: "
+            "{self.client_date} "
+            "({self.server_date}) "
+            "{self.readable_type}"
+        ).format(self=self)
+
+    def __repr__(self):
         return (
             "CaseTransaction("
             "case_id='{self.case_id}', "

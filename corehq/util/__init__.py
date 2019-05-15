@@ -27,3 +27,11 @@ def eval_lazy(value):
     if isinstance(value, Promise):
         value = value._proxy____cast()
     return value
+
+
+def cmp(a, b):
+    """Comparison function for Python 3
+
+    https://stackoverflow.com/a/22490617/10840
+    """
+    return (a > b) - (a < b)
