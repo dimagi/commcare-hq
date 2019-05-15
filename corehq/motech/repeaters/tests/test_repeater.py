@@ -123,7 +123,8 @@ class RepeaterTest(BaseRepeaterTest):
         self.form_repeater.save()
         self.log = []
 
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
+        with patch('corehq.motech.repeaters.models.simple_post',
+                   return_value=MockResponse(status_code=500, reason="Borked")) as mock_fire:
             self.post_xml(self.xform_xml, self.domain)
             self.initial_fire_call_count = mock_fire.call_count
 
