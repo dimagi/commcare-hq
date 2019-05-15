@@ -1281,6 +1281,13 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     always_enabled={'icds', 'icds-cas'},
 )
 
+LOCALE_ID_INTEGRITY = StaticToggle(
+    'locale_id_integrity',
+    'Verify all locale ids in suite are present in app strings before allowing CCZ download',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
     'Bulk multimedia path management',
@@ -1526,6 +1533,13 @@ CUSTOM_ICON_BADGES = StaticToggle(
 ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     'icds_ucr_elasticsearch_doc_loading',
     'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
+    'icds_compare_queries_against_citus',
+    'ICDS: Compare quereies against citus',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
 )

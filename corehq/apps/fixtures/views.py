@@ -105,7 +105,7 @@ def tables(request, domain):
 
 
 @require_can_edit_fixtures
-def update_tables(request, domain, data_type_id, test_patch=None):
+def update_tables(request, domain, data_type_id):
     """
     receives a JSON-update patch like following
     {
@@ -116,16 +116,14 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         "fields":{"genderr":{"update":"gender"},"grade":{}}
     }
     """
-    if test_patch is None:
-        test_patch = {}
     if data_type_id:
         try:
             data_type = FixtureDataType.get(data_type_id)
         except ResourceNotFound:
             raise Http404()
 
-        assert(data_type.doc_type == FixtureDataType._doc_type)
-        assert(data_type.domain == domain)
+        if data_type.domain != domain:
+            raise Http404()
 
         if request.method == 'GET':
             return json_response(strip_json(data_type))
@@ -139,10 +137,11 @@ def update_tables(request, domain, data_type_id, test_patch=None):
             return HttpResponseBadRequest()
 
     if request.method == 'POST' or request.method == "PUT":
-        fields_update = test_patch or _to_kwargs(request)
+        fields_update = _to_kwargs(request)
         fields_patches = fields_update["fields"]
         data_tag = fields_update["tag"]
         is_global = fields_update["is_global"]
+        description = fields_update["description"]
 
         # validate tag and fields
         validation_errors = []
@@ -171,26 +170,27 @@ def update_tables(request, domain, data_type_id, test_patch=None):
 
         with CouchTransaction() as transaction:
             if data_type_id:
-                data_type = update_types(fields_patches, domain, data_type_id, data_tag, is_global, transaction)
-                update_items(fields_patches, domain, data_type_id, transaction)
+                data_type = _update_types(
+                    fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
+                _update_items(fields_patches, domain, data_type_id, transaction)
             else:
                 if FixtureDataType.fixture_tag_exists(domain, data_tag):
                     return HttpResponseBadRequest("DuplicateFixture")
                 else:
-                    data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
+                    data_type = _create_types(
+                        fields_patches, domain, data_tag, is_global, description, transaction)
         clear_fixture_cache(domain)
         return json_response(strip_json(data_type))
 
 
-def update_types(patches, domain, data_type_id, data_tag, is_global, transaction):
+def _update_types(patches, domain, data_type_id, data_tag, is_global, description, transaction):
     data_type = FixtureDataType.get(data_type_id)
     fields_patches = deepcopy(patches)
-    assert(data_type.doc_type == FixtureDataType._doc_type)
-    assert(data_type.domain == domain)
     old_fields = data_type.fields
     new_fixture_fields = []
-    setattr(data_type, "tag", data_tag)
-    setattr(data_type, "is_global", is_global)
+    data_type.tag = data_tag
+    data_type.is_global = is_global
+    data_type.description = description
     for old_field in old_fields:
         patch = fields_patches.pop(old_field.field_name, {})
         if not any(patch):
@@ -208,12 +208,12 @@ def update_types(patches, domain, data_type_id, data_tag, is_global, transaction
                 field_name=new_field_name,
                 properties=[]
             ))
-    setattr(data_type, "fields", new_fixture_fields)
+    data_type.fields = new_fixture_fields
     transaction.save(data_type)
     return data_type
 
 
-def update_items(fields_patches, domain, data_type_id, transaction):
+def _update_items(fields_patches, domain, data_type_id, transaction):
     data_items = FixtureDataItem.by_data_type(domain, data_type_id)
     for item in data_items:
         fields = item.fields
@@ -242,13 +242,14 @@ def update_items(fields_patches, domain, data_type_id, transaction):
     )
 
 
-def create_types(fields_patches, domain, data_tag, is_global, transaction):
+def _create_types(fields_patches, domain, data_tag, is_global, description, transaction):
     data_type = FixtureDataType(
         domain=domain,
         tag=data_tag,
         is_global=is_global,
         fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches],
         item_attributes=[],
+        description=description,
     )
     transaction.save(data_type)
     return data_type
@@ -364,6 +365,7 @@ class UploadItemLists(TemplateView):
             self.domain,
             file_ref.download_id,
             replace,
+            SKIP_ORM_FIXTURE_UPLOAD.enabled(self.domain),
         )
         file_ref.set_task(task)
         return HttpResponseRedirect(

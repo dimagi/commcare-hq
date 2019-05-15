@@ -2,22 +2,22 @@
 {% load i18n %}
 
 {% block title %}
-    {% trans "Audited Model Changes" %}
+  {% trans "Audited Model Changes" %}
 {% endblock %}
 
 {% block content %}
-    <div class="module">
-        <div class="span-6 last">
-        <h2>Models and their Changes</h2>
-        </div>
-        <div class="span-24 last">
-            <dl>
-            {% for m, v in model_dict.items %}
-                <dt><a href="{% url 'single_model_history' m %}">{{ m }}</a></dt>
-                    <dd>{{ v }}</dd>
-            {% endfor %}
-            </dl>
-
-        </div>
+  <div class="module">
+    <div class="span-6 last">
+      <h2>Models and their Changes</h2>
     </div>
+    <div class="span-24 last">
+      <dl>
+        {% for m, v in model_dict.items %}
+          <dt><a href="{% url 'single_model_history' m %}">{{ m }}</a></dt>
+          <dd>{{ v }}</dd>
+        {% endfor %}
+      </dl>
+
+    </div>
+  </div>
 {% endblock %}

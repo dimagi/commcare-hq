@@ -2,143 +2,143 @@
 {#{% load patient_lookup %}#}
 
 {% block actor-tab-container %}
-    <h3>Submission Schedule {{ end_date|date:"m/d/Y" }} - {{ start_date|date:"m/d/Y" }}</h3>
-   <div class="row">
-        <div class="col-sm-4">
-            {% if total_scheduled == total_visited %}
-                <div class="alert alert-success">
-                    <strong>Scheduled Visits: </strong> {{ total_visited }} / {{ total_scheduled }}
-                </div>
-            {% else %}
-                <div class="alert alert-danger">
-                    <strong>Scheduled Visits: </strong> {{ total_visited }} / {{ total_scheduled }}
-                </div>
-            {% endif %}
+  <h3>Submission Schedule {{ end_date|date:"m/d/Y" }} - {{ start_date|date:"m/d/Y" }}</h3>
+  <div class="row">
+    <div class="col-sm-4">
+      {% if total_scheduled == total_visited %}
+        <div class="alert alert-success">
+          <strong>Scheduled Visits: </strong> {{ total_visited }} / {{ total_scheduled }}
         </div>
-        <div class="col-sm-8" style="text-align:right;">
-            <a href="{{ chw_root_url }}&view=schedule&interval=1">Today</a> &nbsp;
-            <a href="{{ chw_root_url }}&view=schedule&interval={% now "w" %}">Week to date</a> &nbsp;
-            <a href="{{ chw_root_url }}&view=schedule&interval=7">7 days</a> &nbsp;
-            <a href="{{ chw_root_url }}&view=schedule&interval={% now "j" %}">Month to date</a> &nbsp;
-            <a href="{{ chw_root_url }}&view=schedule&interval=30">30 days</a>
+      {% else %}
+        <div class="alert alert-danger">
+          <strong>Scheduled Visits: </strong> {{ total_visited }} / {{ total_scheduled }}
         </div>
-    </div> <!-- end top row -->
-    <div class="row">
-        <div class="col-sm-2"><h3>Date</h3></div>
-        <div class="col-sm-3"><h3>Patient Scheduled</h3></div>
-        <div class="col-sm-7"><h3>Visits</h3></div>
+      {% endif %}
     </div>
+    <div class="col-sm-8" style="text-align:right;">
+      <a href="{{ chw_root_url }}&view=schedule&interval=1">Today</a> &nbsp;
+      <a href="{{ chw_root_url }}&view=schedule&interval={% now "w" %}">Week to date</a> &nbsp;
+      <a href="{{ chw_root_url }}&view=schedule&interval=7">7 days</a> &nbsp;
+      <a href="{{ chw_root_url }}&view=schedule&interval={% now "j" %}">Month to date</a> &nbsp;
+      <a href="{{ chw_root_url }}&view=schedule&interval=30">30 days</a>
+    </div>
+  </div> <!-- end top row -->
+  <div class="row">
+    <div class="col-sm-2"><h3>Date</h3></div>
+    <div class="col-sm-3"><h3>Patient Scheduled</h3></div>
+    <div class="col-sm-7"><h3>Visits</h3></div>
+  </div>
 
-    {% for visit_date, patient_visits in date_arr %}
-        {% if patient_visits %}
-            {% for cpatient, visit in patient_visits %}
-                <div class="row">
-                    {% if forloop.counter0 == 0 %}
-                        <div class="col-sm-2">
-                            <h4>{{ visit_date|date:"D N j, Y" }}</h4>
-                        </div>
-                    {% else %}
-                        <div class="col-sm-2">&nbsp;</div>
-                    {% endif %}
-                    <div class="col-sm-3">
-                        <div class="alert alert-success">
-                            <h4>
-                                <a href="{{ cpatient.url }}">
-                                ({{ cpatient.pactid }}) {{ cpatient.name }}
-                                </a>
-                            </h4>
-                        </div>
-                    </div>
-                    <div class="col-sm-7">
-                        {% if visit %}
-                                <table class="table table-condensed">
-                                    <thead>
-                                    <th>Scheduled</th>
-                                    <th>Visit Kept</th>
-                                    <th>Type</th>
-                                    <th>Contact</th>
-                                    <th>by</th>
-                                    <th>Observed ART</th>
-                                    <th>Pillbox Check</th>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="alert alert-info">
-                                            <h4>
-                                            {% if visit.scheduled == "yes" %}
-                                                Scheduled
-                                            {% else %}
-                                                Unscheduled
-                                            {% endif %}
-                                                &nbsp;<small><a href="{% url 'render_form_data' domain visit.doc_id %}">View</a></small>
-                                            </h4>
-                                            </div>
-
-                                        </td>
-                                        <td>
-                                            {% if visit.visit_kept == "yes" %}
-                                            {# No – Client told PACT they’d miss it#}
-                                                Yes
-                                            {% endif %}
-                                            {% if visit.visit_kept == "notice" %}
-    {#                                            No – Client told PACT they’d miss it#}
-                                                No - Notice given
-                                            {% endif %}
-                                            {% if visit.scheduled == "pchanged" %}
-                                                Changed by PACT
-                                            {% endif %}
-
-                                            {% if visit.scheduled == "pcancelled" %}
-                                                Cancelled
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {{ visit.visit_type|title }}
-                                        </td>
-                                        <td>
-                                            {{ visit.contact_type|title }}
-                                        </td>
-                                        <td>
-                                            {% if visit.form.meta.username == username %}
-                                                <strong>{{ visit.username }}</strong>
-                                            {% else %}
-                                                <em>{{ visit.username }}</em>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {{ visit.observed_art|title }}
-                                        </td>
-                                        <td>
-                                            {{ visit.has_pillbox_check }}
-                                        </td>
-                                    </tr>
-
-                                    </tbody>
-                                </table>
-                        {% else %}
-                            <div class="alert alert-danger"><h4>No Visit</h4></div>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="row">
-                <div class="col-sm-2">
-                    <strong>{{ visit_date|date:"D N j, Y" }}</strong>
-                </div>
-                <div class="col-sm-3">
-                    -- No Patients Scheduled --
-                </div>
-                <div class="col-sm-7">
-                    <div class="row">
-                        <div class="col-sm-9" style="padding:.8em;margin-bottom:1em;border:2px solid #fff;">
-                        </div>
-                    </div>
-                </div>
+  {% for visit_date, patient_visits in date_arr %}
+    {% if patient_visits %}
+      {% for cpatient, visit in patient_visits %}
+        <div class="row">
+          {% if forloop.counter0 == 0 %}
+            <div class="col-sm-2">
+              <h4>{{ visit_date|date:"D N j, Y" }}</h4>
             </div>
-        {% endif %}
-    {% endfor %}
-    </div>
+          {% else %}
+            <div class="col-sm-2">&nbsp;</div>
+          {% endif %}
+          <div class="col-sm-3">
+            <div class="alert alert-success">
+              <h4>
+                <a href="{{ cpatient.url }}">
+                  ({{ cpatient.pactid }}) {{ cpatient.name }}
+                </a>
+              </h4>
+            </div>
+          </div>
+          <div class="col-sm-7">
+            {% if visit %}
+              <table class="table table-condensed">
+                <thead>
+                  <th>Scheduled</th>
+                  <th>Visit Kept</th>
+                  <th>Type</th>
+                  <th>Contact</th>
+                  <th>by</th>
+                  <th>Observed ART</th>
+                  <th>Pillbox Check</th>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="alert alert-info">
+                        <h4>
+                          {% if visit.scheduled == "yes" %}
+                            Scheduled
+                          {% else %}
+                            Unscheduled
+                          {% endif %}
+                          &nbsp;<small><a href="{% url 'render_form_data' domain visit.doc_id %}">View</a></small>
+                        </h4>
+                      </div>
+
+                    </td>
+                    <td>
+                      {% if visit.visit_kept == "yes" %}
+                        {# No – Client told PACT they’d miss it#}
+                        Yes
+                      {% endif %}
+                      {% if visit.visit_kept == "notice" %}
+                        {#                                            No – Client told PACT they’d miss it#}
+                        No - Notice given
+                      {% endif %}
+                      {% if visit.scheduled == "pchanged" %}
+                        Changed by PACT
+                      {% endif %}
+
+                      {% if visit.scheduled == "pcancelled" %}
+                        Cancelled
+                      {% endif %}
+                    </td>
+                    <td>
+                      {{ visit.visit_type|title }}
+                    </td>
+                    <td>
+                      {{ visit.contact_type|title }}
+                    </td>
+                    <td>
+                      {% if visit.form.meta.username == username %}
+                        <strong>{{ visit.username }}</strong>
+                      {% else %}
+                        <em>{{ visit.username }}</em>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {{ visit.observed_art|title }}
+                    </td>
+                    <td>
+                      {{ visit.has_pillbox_check }}
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+            {% else %}
+              <div class="alert alert-danger"><h4>No Visit</h4></div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="row">
+        <div class="col-sm-2">
+          <strong>{{ visit_date|date:"D N j, Y" }}</strong>
+        </div>
+        <div class="col-sm-3">
+          -- No Patients Scheduled --
+        </div>
+        <div class="col-sm-7">
+          <div class="row">
+            <div class="col-sm-9" style="padding:.8em;margin-bottom:1em;border:2px solid #fff;">
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+  </div>
 {% endblock actor-tab-container %}
 

@@ -37,7 +37,6 @@ import re
 import sh
 import sys
 
-from fabric.colors import red
 import gevent
 from gitutils import (
     OriginalBranch,
@@ -345,6 +344,20 @@ class DisableGitHooks(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not self.already_disabled:
             sh.mv(self.hidden_path, self.path)
+
+
+def _wrap_with(code):
+
+    def inner(text, bold=False):
+        c = code
+
+        if bold:
+            c = "1;%s" % c
+        return "\033[%sm%s\033[0m" % (c, text)
+    return inner
+
+
+red = _wrap_with('31')
 
 
 def main():

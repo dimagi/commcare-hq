@@ -4,11 +4,12 @@ from __future__ import unicode_literals
 
 from sqlagg.columns import SimpleColumn
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 
 
-class LadySupervisorExport(ExportableMixin, SqlData):
+class LadySupervisorExport(ExportableMixin, IcdsSqlData):
     title = 'Lady Supervisor'
     table_name = 'agg_ls_monthly'
 
