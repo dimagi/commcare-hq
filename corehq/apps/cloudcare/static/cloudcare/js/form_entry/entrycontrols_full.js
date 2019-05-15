@@ -666,8 +666,7 @@ function GeoPointEntry(question, options) {
                 fontFamily: 'Fontawesome',
                 // unicode for fa-crosshairs
                 text: '\uf05b'
-            },
-            shape: crosshairShape
+            }
         });
         marker.bindTo('position', self.map, 'center');
     };
