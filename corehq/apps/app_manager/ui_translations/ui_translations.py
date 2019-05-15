@@ -1,19 +1,29 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 import io
+import re
 from collections import defaultdict
 from distutils.version import StrictVersion
-import re
+
 from django.utils.translation import ugettext as _
-from commcare_translations import load_translations
-from corehq.apps.app_manager import app_strings
-from corehq.apps.app_manager.ui_translations.commcare_versioning import \
-    get_commcare_version_from_workbook, set_commcare_version_in_workbook
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError, WorksheetNotFound
-from couchexport.export import export_raw_to_writer
+
 import six
 from six.moves import range
+
+from couchexport.export import export_raw_to_writer
+
+from commcare_translations import load_translations
+from corehq.apps.app_manager import app_strings
+from corehq.apps.app_manager.ui_translations.commcare_versioning import (
+    get_commcare_version_from_workbook,
+    set_commcare_version_in_workbook,
+)
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONError,
+    WorksheetNotFound,
+    get_workbook,
+)
 
 
 def process_ui_translation_upload(app, trans_file):
