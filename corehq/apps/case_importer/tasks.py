@@ -29,8 +29,6 @@ from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from soil.progress import set_task_progress, update_task_state
 
-POOL_SIZE = 10
-PRIME_VIEW_FREQUENCY = 500
 CASEBLOCK_CHUNKSIZE = 100
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
