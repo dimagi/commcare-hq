@@ -232,16 +232,16 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        CREATE TEMPORARY TABLE "tmp_household" AS SELECT
+            owner_id,
+            sum(open_count) AS cases_household
+        FROM "{household_cases}"
+        GROUP BY owner_id;
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household
-        FROM (
-            SELECT
-                owner_id,
-                sum(open_count) AS cases_household
-            FROM "{household_cases}"
-            GROUP BY owner_id
-       ) ut
-        WHERE ut.owner_id = agg_awc.awc_id
+        FROM "tmp_household" ut
+        WHERE ut.owner_id = agg_awc.awc_id;
+        DROP TABLE "tmp_household";
         """.format(
             tablename=self.tablename,
             household_cases=self._ucr_tablename('static-household_cases'),
