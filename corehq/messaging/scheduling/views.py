@@ -1074,38 +1074,48 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             messages.error(request, six.text_type(e))
             return self.get(request, *args, **kwargs)
 
-        success_count = 0
-        for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
-            rule = None
-            try:
-                rule = AutomaticUpdateRule.objects.get(
-                    pk=row['id'],
-                    domain=self.domain,
-                    workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-                    deleted=False,
-                )
-            except AutomaticUpdateRule.DoesNotExist:
-                messages.error(request, _("Could not find rule for row {index}, with id {id}.").format(
-                    index=index, id=row['id']))
-            dirty = False
-            if rule:
-                if not isinstance(_get_rule_content(rule), SMSContent):
-                    messages.error(request, _("Row {index}, with rule id {id}, does not use SMS content.").format(
-                        index=index, id=row['id']))
-                else:
-                    if rule.name != row['name']:
-                        dirty = True
-                        rule.name = row['name']
-                    if rule.case_type != row['case_type']:
-                        dirty = True
-                        rule.case_type = row['case_type']
-            if dirty:
-                rule.save()
-                success_count += 1
-
-        messages.success(request, _("Updated {count} rule(s).").format(count=success_count))
+        msgs = upload_conditional_alert_rows(self.domain, worksheet)
+        for msg in msgs:
+            msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
+
+
+def upload_conditional_alert_rows(domain, rows):
+    msgs = []
+    success_count = 0
+
+    for index, row in enumerate(rows, start=2):    # one-indexed, plus header row
+        rule = None
+        try:
+            rule = AutomaticUpdateRule.objects.get(
+                pk=row['id'],
+                domain=domain,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                deleted=False,
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            msgs.append((messages.error,
+                        _("Could not find rule for row {index}, with id {id}").format(index=index, id=row['id'])))
+        dirty = False
+        if rule:
+            if not isinstance(_get_rule_content(rule), SMSContent):
+                msgs.append((messages.error, _("Row {index}, with rule id {id}, does not use SMS content.").format(
+                    index=index, id=row['id'])))
+            else:
+                if rule.name != row['name']:
+                    dirty = True
+                    rule.name = row['name']
+                if rule.case_type != row['case_type']:
+                    dirty = True
+                    rule.case_type = row['case_type']
+        if dirty:
+            rule.save()
+            success_count += 1
+
+    msgs.append((messages.success, _("Updated {count} rule(s)").format(count=success_count)))
+
+    return msgs
 
 
 def _get_rule_content(rule):

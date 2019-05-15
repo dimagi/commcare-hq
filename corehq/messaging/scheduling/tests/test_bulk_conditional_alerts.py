@@ -5,6 +5,12 @@ from __future__ import unicode_literals
 from django.db.models import Q
 from django.test import TestCase
 from datetime import time
+from io import BytesIO
+import re
+import tempfile
+
+from couchexport.export import export_raw
+from couchexport.models import Format
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -20,9 +26,10 @@ from corehq.messaging.scheduling.models import (
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
-from corehq.messaging.scheduling.views import get_conditional_alert_rows
+from corehq.messaging.scheduling.views import get_conditional_alert_rows, upload_conditional_alert_rows
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.util.test_utils import flag_enabled
+from corehq.util.workbook_json.excel import get_workbook
 
 
 class TestBulkConditionalAlerts(TestCase):
@@ -38,6 +45,15 @@ class TestBulkConditionalAlerts(TestCase):
         cls.domain_obj.save()
         cls.user = CommCareUser.create(cls.domain, 'test1', 'abc')
 
+    def setUp(self):
+        self._translated_rule = self._add_rule({
+            'en': 'Diamonds and Rust',
+            'es': 'Diamantes y Óxido',
+        })
+        self._untranslated_rule = self._add_rule({
+            '*': 'Joan',
+        })
+
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
@@ -52,6 +68,17 @@ class TestBulkConditionalAlerts(TestCase):
             delete_case_schedule_instance(instance)
 
         delete_timed_schedules(self.domain)
+
+    @property
+    def translated_rule(self):
+        return AutomaticUpdateRule.objects.get(id=self._translated_rule.id)
+
+    @property
+    def untranslated_rule(self):
+        return AutomaticUpdateRule.objects.get(id=self._untranslated_rule.id)
+
+    def _assertPatternIn(self, pattern, collection):
+        self.assertTrue(any(re.match(pattern, item) for item in collection))
 
     def _add_rule(self, message):
         schedule = TimedSchedule.create_simple_daily_schedule(
@@ -74,16 +101,32 @@ class TestBulkConditionalAlerts(TestCase):
         return rule
 
     def test_download(self):
-        translated_rule = self._add_rule({
-            'en': 'Diamonds and Rust',
-            'es': 'Diamantes y Óxido',
-        })
-        untranslated_rule = self._add_rule({
-            '*': 'Joan',
-        })
-
         rows = get_conditional_alert_rows(self.domain)
 
         self.assertEqual(len(rows), 2)
         self.assertListEqual(rows[0][1:], ['test', 'person'])
         self.assertListEqual(rows[1][1:], ['test', 'person'])
+
+    def test_upload(self):
+        headers = (("translations", ("id", "name", "case_type")),)
+        data = (
+            ("translations", (
+                (self.translated_rule.id, 'test updated', 'song'),
+                (1000, 'Not a rule', 'person'),
+            )),
+        )
+        file = BytesIO()
+        export_raw(headers, data, file, format=Format.XLS_2007)
+
+        with tempfile.TemporaryFile(suffix='.xlsx') as f:
+            f.write(file.getvalue())
+            f.seek(0)
+            workbook = get_workbook(f)
+            msgs = [m[1] for m in upload_conditional_alert_rows(self.domain, workbook.get_worksheet())]
+            self.assertEqual(len(msgs), 2)
+            self._assertPatternIn(r"Could not find rule for row 3, with id \d+", msgs)
+            self.assertIn('Updated 1 rule(s)', msgs)
+            self.assertEqual(self.translated_rule.name, 'test updated')
+            self.assertEqual(self.translated_rule.case_type, 'song')
+            self.assertEqual(self.untranslated_rule.name, 'test')
+            self.assertEqual(self.untranslated_rule.case_type, 'person')
