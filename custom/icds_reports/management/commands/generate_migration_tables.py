@@ -83,7 +83,7 @@ class Command(BaseCommand):
                 root_table = self.child_parent_mapping.get(table, table)
                 return not root_table.startswith(UCR_TABLE_PREFIX) or root_table.startswith(icds_ucr_prefix)
 
-            remaining_tables = filter(keep_table, remaining_tables)
+            remaining_tables = list(filter(keep_table, remaining_tables))
 
             if remaining_tables:
                 self.stderr.write("Some tables not seen:")
