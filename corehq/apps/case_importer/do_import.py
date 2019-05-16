@@ -40,18 +40,19 @@ class _Importer(object):
         self.num_chunks = 0
         self.errors = importer_util.ImportErrorDetail()
 
+        self.id_cache = {}
+        self.name_cache = {}
+        self.ids_seen = set()
+        self.caseblocks = []
+
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
 
-    def do_import(self, spreadsheet):
-        # keep a cache of id lookup successes to help performance
-        id_cache = {}
-        name_cache = {}
-        caseblocks = []
-        ids_seen = set()
-        track_load = case_load_counter("case_importer", self.domain)
+    def track_load(self):
+        case_load_counter("case_importer", self.domain)
 
+    def do_import(self, spreadsheet):
         row_count = spreadsheet.max_row
         for i, row in enumerate(spreadsheet.iter_row_dicts()):
             set_task_progress(self.task, i, row_count)
@@ -60,175 +61,178 @@ class _Importer(object):
             if i == 0:
                 continue
 
-            search_id = importer_util.parse_search_id(self.config, row)
-
-            fields_to_update = importer_util.populate_updated_fields(self.config, row)
-            if not any(fields_to_update.values()):
-                # if the row was blank, just skip it, no errors
-                continue
-
-            if self.config.search_field == 'external_id' and not search_id:
-                # do not allow blank external id since we save this
-                self.errors.add(ImportErrors.BlankExternalId, i + 1)
-                continue
-
-            external_id = fields_to_update.pop('external_id', None)
-            parent_id = fields_to_update.pop('parent_id', None)
-            parent_external_id = fields_to_update.pop('parent_external_id', None)
-            parent_type = fields_to_update.pop('parent_type', self.config.case_type)
-            parent_ref = fields_to_update.pop('parent_ref', 'parent')
-            to_close = fields_to_update.pop('close', False)
-
-            if any([lookup_id and lookup_id in ids_seen for lookup_id in [search_id, parent_id, parent_external_id]]):
-                # clear out the queue to make sure we've processed any potential
-                # cases we want to look up
-                # note: these three lines are repeated a few places, and could be converted
-                # to a function that makes use of closures (and globals) to do the same thing,
-                # but that seems sketchier than just beeing a little RY
-                self._submit_caseblocks(caseblocks)
-                self.num_chunks += 1
-                caseblocks = []
-                ids_seen = set()  # also clear ids_seen, since all the cases will now be in the database
-
-            case, error = importer_util.lookup_case(
-                self.config.search_field,
-                search_id,
-                self.domain,
-                self.config.case_type
-            )
-            track_load()
-
-            if case:
-                if case.type != self.config.case_type:
-                    continue
-            elif error == LookupErrors.NotFound:
-                if not self.config.create_new_cases:
-                    continue
-            elif error == LookupErrors.MultipleResults:
-                self.too_many_matches += 1
-                continue
-
-            uploaded_owner_name = fields_to_update.pop('owner_name', None)
-            uploaded_owner_id = fields_to_update.pop('owner_id', None)
-
-            if uploaded_owner_name:
-                # If an owner name was provided, replace the provided
-                # uploaded_owner_id with the id of the provided group or owner
-                try:
-                    uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, self.domain, name_cache)
-                except SQLLocation.MultipleObjectsReturned:
-                    self.errors.add(ImportErrors.DuplicateLocationName, i + 1)
-                    continue
-
-                if not uploaded_owner_id:
-                    self.errors.add(ImportErrors.InvalidOwnerName, i + 1, 'owner_name')
-                    continue
-            if uploaded_owner_id:
-                # If an owner_id mapping exists, verify it is a valid user
-                # or case sharing group
-                if importer_util.is_valid_id(uploaded_owner_id, self.domain, id_cache):
-                    owner_id = uploaded_owner_id
-                    id_cache[uploaded_owner_id] = True
-                else:
-                    self.errors.add(ImportErrors.InvalidOwnerId, i + 1, 'owner_id')
-                    id_cache[uploaded_owner_id] = False
-                    continue
-            else:
-                # if they didn't supply an owner_id mapping, default to current
-                # user
-                owner_id = self.user.user_id
-
-            extras = {}
-            if parent_id:
-                try:
-                    parent_case = CaseAccessors(self.domain).get_case(parent_id)
-                    track_load()
-
-                    if parent_case.domain == self.domain:
-                        extras['index'] = {
-                            parent_ref: (parent_case.type, parent_id)
-                        }
-                except ResourceNotFound:
-                    self.errors.add(ImportErrors.InvalidParentId, i + 1, 'parent_id')
-                    continue
-            elif parent_external_id:
-                parent_case, error = importer_util.lookup_case(
-                    'external_id',
-                    parent_external_id,
-                    self.domain,
-                    parent_type
-                )
-                track_load()
-                if parent_case:
-                    extras['index'] = {
-                        parent_ref: (parent_type, parent_case.case_id)
-                    }
-
-            case_name = fields_to_update.pop('name', None)
-
-            if BULK_UPLOAD_DATE_OPENED.enabled(self.domain):
-                date_opened = fields_to_update.pop(CASE_TAG_DATE_OPENED, None)
-                if date_opened:
-                    extras['date_opened'] = date_opened
-
-            if not case:
-                id = uuid.uuid4().hex
-
-                if self.config.search_field == 'external_id':
-                    extras['external_id'] = search_id
-                elif external_id:
-                    extras['external_id'] = external_id
-
-                try:
-                    caseblock = CaseBlock(
-                        create=True,
-                        case_id=id,
-                        owner_id=owner_id,
-                        user_id=self.user.user_id,
-                        case_type=self.config.case_type,
-                        case_name=case_name or '',
-                        update=fields_to_update,
-                        **extras
-                    )
-                    caseblocks.append(RowAndCase(i, caseblock))
-                    self.created_count += 1
-                    if external_id:
-                        ids_seen.add(external_id)
-                except CaseBlockError:
-                    self.errors.add(ImportErrors.CaseGeneration, i + 1)
-            else:
-                if external_id:
-                    extras['external_id'] = external_id
-                if uploaded_owner_id:
-                    extras['owner_id'] = owner_id
-                if to_close == 'yes':
-                    extras['close'] = True
-                if case_name is not None:
-                    extras['case_name'] = case_name
-
-                try:
-                    caseblock = CaseBlock(
-                        create=False,
-                        case_id=case.case_id,
-                        update=fields_to_update,
-                        **extras
-                    )
-                    caseblocks.append(RowAndCase(i, caseblock))
-                    self.match_count += 1
-                except CaseBlockError:
-                    self.errors.add(ImportErrors.CaseGeneration, i + 1)
+            self.handle_row(i, row)
 
             # check if we've reached a reasonable chunksize
             # and if so submit
-            if len(caseblocks) >= CASEBLOCK_CHUNKSIZE:
-                self._submit_caseblocks(caseblocks)
+            if len(self.caseblocks) >= CASEBLOCK_CHUNKSIZE:
+                self._submit_caseblocks(self.caseblocks)
                 self.num_chunks += 1
-                caseblocks = []
+                self.caseblocks = []
 
         # final purge of anything left in the queue
-        if self._submit_caseblocks(caseblocks):
+        if self._submit_caseblocks(self.caseblocks):
             self.match_count -= 1
         self.num_chunks += 1
+
+    def handle_row(self, i, row):
+        search_id = importer_util.parse_search_id(self.config, row)
+
+        fields_to_update = importer_util.populate_updated_fields(self.config, row)
+        if not any(fields_to_update.values()):
+            # if the row was blank, just skip it, no errors
+            return
+
+        if self.config.search_field == 'external_id' and not search_id:
+            # do not allow blank external id since we save this
+            self.errors.add(ImportErrors.BlankExternalId, i + 1)
+            return
+
+        external_id = fields_to_update.pop('external_id', None)
+        parent_id = fields_to_update.pop('parent_id', None)
+        parent_external_id = fields_to_update.pop('parent_external_id', None)
+        parent_type = fields_to_update.pop('parent_type', self.config.case_type)
+        parent_ref = fields_to_update.pop('parent_ref', 'parent')
+        to_close = fields_to_update.pop('close', False)
+
+        if any([lookup_id and lookup_id in self.ids_seen for lookup_id in [search_id, parent_id, parent_external_id]]):
+            # clear out the queue to make sure we've processed any potential
+            # cases we want to look up
+            # note: these three lines are repeated a few places, and could be converted
+            # to a function that makes use of closures (and globals) to do the same thing,
+            # but that seems sketchier than just beeing a little RY
+            self._submit_caseblocks(self.caseblocks)
+            self.num_chunks += 1
+            self.caseblocks = []
+            self.ids_seen = set()  # also clear ids_seen, since all the cases will now be in the database
+
+        case, error = importer_util.lookup_case(
+            self.config.search_field,
+            search_id,
+            self.domain,
+            self.config.case_type
+        )
+        self.track_load()
+
+        if case:
+            if case.type != self.config.case_type:
+                return
+        elif error == LookupErrors.NotFound:
+            if not self.config.create_new_cases:
+                return
+        elif error == LookupErrors.MultipleResults:
+            self.too_many_matches += 1
+            return
+
+        uploaded_owner_name = fields_to_update.pop('owner_name', None)
+        uploaded_owner_id = fields_to_update.pop('owner_id', None)
+
+        if uploaded_owner_name:
+            # If an owner name was provided, replace the provided
+            # uploaded_owner_id with the id of the provided group or owner
+            try:
+                uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, self.domain, self.name_cache)
+            except SQLLocation.MultipleObjectsReturned:
+                self.errors.add(ImportErrors.DuplicateLocationName, i + 1)
+                return
+
+            if not uploaded_owner_id:
+                self.errors.add(ImportErrors.InvalidOwnerName, i + 1, 'owner_name')
+                return
+        if uploaded_owner_id:
+            # If an owner_id mapping exists, verify it is a valid user
+            # or case sharing group
+            if importer_util.is_valid_id(uploaded_owner_id, self.domain, self.id_cache):
+                owner_id = uploaded_owner_id
+                self.id_cache[uploaded_owner_id] = True
+            else:
+                self.errors.add(ImportErrors.InvalidOwnerId, i + 1, 'owner_id')
+                self.id_cache[uploaded_owner_id] = False
+                return
+        else:
+            # if they didn't supply an owner_id mapping, default to current
+            # user
+            owner_id = self.user.user_id
+
+        extras = {}
+        if parent_id:
+            try:
+                parent_case = CaseAccessors(self.domain).get_case(parent_id)
+                self.track_load()
+
+                if parent_case.domain == self.domain:
+                    extras['index'] = {
+                        parent_ref: (parent_case.type, parent_id)
+                    }
+            except ResourceNotFound:
+                self.errors.add(ImportErrors.InvalidParentId, i + 1, 'parent_id')
+                return
+        elif parent_external_id:
+            parent_case, error = importer_util.lookup_case(
+                'external_id',
+                parent_external_id,
+                self.domain,
+                parent_type
+            )
+            self.track_load()
+            if parent_case:
+                extras['index'] = {
+                    parent_ref: (parent_type, parent_case.case_id)
+                }
+
+        case_name = fields_to_update.pop('name', None)
+
+        if BULK_UPLOAD_DATE_OPENED.enabled(self.domain):
+            date_opened = fields_to_update.pop(CASE_TAG_DATE_OPENED, None)
+            if date_opened:
+                extras['date_opened'] = date_opened
+
+        if not case:
+            id = uuid.uuid4().hex
+
+            if self.config.search_field == 'external_id':
+                extras['external_id'] = search_id
+            elif external_id:
+                extras['external_id'] = external_id
+
+            try:
+                caseblock = CaseBlock(
+                    create=True,
+                    case_id=id,
+                    owner_id=owner_id,
+                    user_id=self.user.user_id,
+                    case_type=self.config.case_type,
+                    case_name=case_name or '',
+                    update=fields_to_update,
+                    **extras
+                )
+                self.caseblocks.append(RowAndCase(i, caseblock))
+                self.created_count += 1
+                if external_id:
+                    self.ids_seen.add(external_id)
+            except CaseBlockError:
+                self.errors.add(ImportErrors.CaseGeneration, i + 1)
+        else:
+            if external_id:
+                extras['external_id'] = external_id
+            if uploaded_owner_id:
+                extras['owner_id'] = owner_id
+            if to_close == 'yes':
+                extras['close'] = True
+            if case_name is not None:
+                extras['case_name'] = case_name
+
+            try:
+                caseblock = CaseBlock(
+                    create=False,
+                    case_id=case.case_id,
+                    update=fields_to_update,
+                    **extras
+                )
+                self.caseblocks.append(RowAndCase(i, caseblock))
+                self.match_count += 1
+            except CaseBlockError:
+                self.errors.add(ImportErrors.CaseGeneration, i + 1)
 
     def _submit_caseblocks(self, caseblocks):
         err = False
