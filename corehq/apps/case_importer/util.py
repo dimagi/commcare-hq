@@ -176,7 +176,7 @@ class ImportErrorDetail(object):
     def __init__(self, *args, **kwargs):
         self.errors = defaultdict(dict)
 
-    def add(self, error):
+    def add(self, error, row_num):
         key = error.title
         column_name = error.column_name
         self.errors[key].setdefault(column_name, {})
@@ -190,7 +190,7 @@ class ImportErrorDetail(object):
         if 'rows' not in self.errors[key][column_name]:
             self.errors[key][column_name]['rows'] = []
 
-        self.errors[key][column_name]['rows'].append(error.row_number)
+        self.errors[key][column_name]['rows'].append(row_num)
 
     def as_dict(self):
         return dict(self.errors)

@@ -55,28 +55,28 @@ class _Importer(object):
 
     def do_import(self, spreadsheet):
         row_count = spreadsheet.max_row
-        for i, row in enumerate(spreadsheet.iter_row_dicts()):
-            set_task_progress(self.task, i, row_count)
+        for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
+            set_task_progress(self.task, row_num, row_count)
 
             # skip first row (header row)
-            if i == 0:
+            if row_num == 1:
                 continue
 
             try:
-                self.handle_row(i, row)
+                self.handle_row(row_num, row)
             except exceptions.CaseRowError as error:
-                self.errors.add(error)
+                self.errors.add(error, row_num)
 
         self.commit_caseblocks()
 
-    def handle_row(self, i, raw_row):
+    def handle_row(self, row_num, raw_row):
         search_id = importer_util.parse_search_id(self.config, raw_row)
         fields_to_update = importer_util.populate_updated_fields(self.config, raw_row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
 
-        row = CaseImportRow(i, search_id, fields_to_update, self.config, self.domain, self.user.user_id)
+        row = CaseImportRow(search_id, fields_to_update, self.config, self.domain, self.user.user_id)
         row.check_valid_external_id()
         if row.relies_on_unsubmitted_case(self.ids_seen):
             self.commit_caseblocks()
@@ -116,9 +116,9 @@ class _Importer(object):
                 caseblock = row.get_update_caseblock(case)
                 self.match_count += 1
         except CaseBlockError:
-            raise exceptions.CaseGeneration(i + 1)
+            raise exceptions.CaseGeneration()
 
-        self.add_caseblock(RowAndCase(i, caseblock))
+        self.add_caseblock(RowAndCase(row_num, caseblock))
 
     def add_caseblock(self, caseblock):
         self._caseblocks.append(caseblock)
@@ -128,10 +128,7 @@ class _Importer(object):
 
     def commit_caseblocks(self):
         if self._caseblocks:
-            try:
-                self._submit_caseblocks(self._caseblocks)
-            except exceptions.CaseRowError as error:
-                self.errors.add(error)
+            self._submit_caseblocks(self._caseblocks)
             self.num_chunks += 1
             self._caseblocks = []
 
@@ -147,10 +144,10 @@ class _Importer(object):
                 )
 
                 if form.is_error:
-                    raise exceptions.ImportErrorMessage(form.problem)
+                    self.errors.add(exceptions.ImportErrorMessage(), form.problem)
             except Exception:
                 for row_number, case in caseblocks:
-                    raise exceptions.ImportErrorMessage(row_number)
+                    self.errors.add(exceptions.ImportErrorMessage(), row_number)
             else:
                 self.record_form(form.form_id)
                 properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
@@ -185,8 +182,7 @@ class _Importer(object):
 
 
 class CaseImportRow(object):
-    def __init__(self, i, search_id, fields_to_update, config, domain, user_id):
-        self.i = i
+    def __init__(self, search_id, fields_to_update, config, domain, user_id):
         self.search_id = search_id
         self.fields_to_update = fields_to_update
         self.config = config
@@ -210,7 +206,7 @@ class CaseImportRow(object):
     def check_valid_external_id(self):
         if self.config.search_field == 'external_id' and not self.search_id:
             # do not allow blank external id since we save this
-            raise exceptions.BlankExternalId(i + 1)
+            raise exceptions.BlankExternalId()
 
     def relies_on_unsubmitted_case(self, ids_seen):
         return any(lookup_id and lookup_id in ids_seen
@@ -226,10 +222,10 @@ class CaseImportRow(object):
                     self.uploaded_owner_name, self.domain, name_cache
                 )
             except SQLLocation.MultipleObjectsReturned:
-                raise exceptions.DuplicateLocationName(self.i + 1)
+                raise exceptions.DuplicateLocationName()
 
             if not owner_id:
-                raise exceptions.InvalidOwnerName(self.i + 1, 'owner_name')
+                raise exceptions.InvalidOwnerName('owner_name')
 
         if owner_id:
             # If an owner_id mapping exists, verify it is a valid user
@@ -238,7 +234,7 @@ class CaseImportRow(object):
                 id_cache[owner_id] = True
             else:
                 id_cache[owner_id] = False
-                raise exceptions.InvalidOwnerId(self.i + 1, 'owner_id')
+                raise exceptions.InvalidOwnerId('owner_id')
 
         # if they didn't supply an owner, default to current user
         self.owner_id = owner_id or self.user_id
@@ -253,7 +249,7 @@ class CaseImportRow(object):
                         self.parent_ref: (parent_case.type, self.parent_id)
                     }
             except ResourceNotFound:
-                raise exceptions.InvalidParentId(self.i + 1, 'parent_id')
+                raise exceptions.InvalidParentId('parent_id')
         elif self.parent_external_id:
             parent_case, error = importer_util.lookup_case(
                 'external_id',

@@ -43,8 +43,7 @@ class CaseRowError(Exception):
     title = ""
     message = ""
 
-    def __init__(self, row_number, column_name=None):
-        self.row_number = row_number
+    def __init__(self, column_name=None):
         self.column_name = column_name
         super(CaseRowError, self).__init__(self.message)
 
