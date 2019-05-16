@@ -18,6 +18,12 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-dashboard_delivery_forms",
     "display_name": "Forms - Delivery Forms (Dashboard)",
@@ -258,12 +264,6 @@
     },
     "engine_id": "icds-ucr",
     "disable_destructive_rebuild": true,
-    "mirrored_engine_ids": [
-        {
-            "server_environment": "india",
-            "engine_ids": ["icds-ucr-citus"]
-        }
-    ],
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",

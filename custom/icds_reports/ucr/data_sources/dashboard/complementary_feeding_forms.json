@@ -18,6 +18,12 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-complementary_feeding_forms",
     "display_name": "Forms - Complementary Feeding (Static) (Dashboard)",
@@ -371,12 +377,6 @@
       },
       "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
-    "disable_destructive_rebuild": true,
-    "mirrored_engine_ids": [
-        {
-            "server_environment": "india",
-            "engine_ids": ["icds-ucr-citus"]
-        }
-    ]
+    "disable_destructive_rebuild": true
   }
 }

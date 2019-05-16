@@ -21,6 +21,12 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-it_report_follow_issue",
     "referenced_doc_type": "XFormInstance",
@@ -220,12 +226,6 @@
     },
     "named_filters": {},
     "sql_column_indexes": [],
-    "disable_destructive_rebuild": true,
-    "mirrored_engine_ids": [
-        {
-            "server_environment": "india",
-            "engine_ids": ["icds-ucr-citus"]
-        }
-    ]
+    "disable_destructive_rebuild": true
   }
 }

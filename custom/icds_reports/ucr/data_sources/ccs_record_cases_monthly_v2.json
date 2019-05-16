@@ -21,6 +21,12 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-ccs_record_cases_monthly_v2",
     "display_name": "Cases - CCS Record (Monthly) (Static) v2",
@@ -2779,12 +2785,6 @@
         }
       ]
     },
-    "disable_destructive_rebuild": true,
-    "mirrored_engine_ids": [
-        {
-            "server_environment": "india",
-            "engine_ids": ["icds-ucr-citus"]
-        }
-    ]
+    "disable_destructive_rebuild": true
   }
 }
