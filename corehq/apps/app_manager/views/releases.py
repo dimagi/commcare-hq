@@ -361,6 +361,7 @@ def revert_to_copy(request, domain, app_id):
     copy = app.make_build(
         comment=copy_build_comment_template.format(**copy_build_comment_params),
         user_id=request.couch_user.get_id,
+        version_reverted_to=copy.version,
     )
     copy.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)
