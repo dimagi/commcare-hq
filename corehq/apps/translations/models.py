@@ -148,6 +148,15 @@ class TransifexBlacklist(models.Model):
         "If display_text is not filled out then all translations that match "
         "the field_type and field_name will be blacklisted")
 
+    def __str__(self):
+        return "TransifexBlacklist(domain='{}', field_type='{}', field_name='{}')".format(
+            self.domain,
+            self.field_type,
+            self.field_name,
+        )
+        # app and module omitted to avoid hitting database
+        # app_id and module_id omitted because they are unfriendly
+
     @classmethod
     def translations_with_app_name(cls, domain):
         blacklisted = TransifexBlacklist.objects.filter(domain=domain).all().values()
