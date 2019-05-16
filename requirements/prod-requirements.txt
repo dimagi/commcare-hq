@@ -29,6 +29,7 @@ cryptography==2.6.1
 csiphash==0.0.5
 cssselect2==0.2.1
 csv342==1.0.0
+cython==0.29.7
 datadog==0.15.0
 ddtrace==0.14.1
 decorator==4.0.11
