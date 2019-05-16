@@ -1,0 +1,136 @@
+DELETE FROM "agg_ccs_record_2019-01-01_5"
+{}
+
+        INSERT INTO "agg_ccs_record_2019-01-01_5" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident, valid_in_month, lactating, pregnant, thr_eligible, rations_21_plus_distributed, tetanus_complete, delivered_in_month, anc1_received_at_delivery, anc2_received_at_delivery, anc3_received_at_delivery, anc4_received_at_delivery, registration_trimester_at_delivery, using_ifa, ifa_consumed_last_seven_days, anemic_normal, anemic_moderate, anemic_severe, anemic_unknown, extra_meal, resting_during_pregnancy, bp1_complete, bp2_complete, bp3_complete, pnc_complete, trimester_2, trimester_3, postnatal, counsel_bp_vid, counsel_preparation, counsel_immediate_bf, counsel_fp_vid, counsel_immediate_conception, counsel_accessible_postpartum_fp, has_aadhar_id, aggregation_level, valid_all_registered_in_month, institutional_delivery_in_month, lactating_all, pregnant_all, valid_visits, expected_visits
+        ) (SELECT
+            awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, crm.awc_id, crm.month, crm.ccs_status, COALESCE(crm.trimester::text, '') as coalesce_trimester, crm.caste, COALESCE(crm.disabled, 'no') as coalesce_disabled, COALESCE(crm.minority, 'no') as coalesce_minority, COALESCE(crm.resident,'no') as coalesce_resident, sum(crm.valid_in_month), sum(crm.lactating), sum(crm.pregnant), sum(crm.thr_eligible), SUM(CASE WHEN crm.num_rations_distributed>=21 THEN 1 ELSE 0 END), sum(crm.tetanus_complete), sum(crm.delivered_in_month), sum(crm.anc1_received_at_delivery), sum(crm.anc2_received_at_delivery), sum(crm.anc3_received_at_delivery), sum(crm.anc4_received_at_delivery), avg(crm.registration_trimester_at_delivery), sum(crm.using_ifa), sum(crm.ifa_consumed_last_seven_days), sum(crm.anemic_normal), sum(crm.anemic_moderate), sum(crm.anemic_severe), sum(crm.anemic_unknown), sum(crm.extra_meal), sum(crm.resting_during_pregnancy), sum(crm.bp1_complete), sum(crm.bp2_complete), sum(crm.bp3_complete), sum(crm.pnc_complete), sum(crm.trimester_2), sum(crm.trimester_3), sum(crm.postnatal), sum(crm.counsel_bp_vid), sum(crm.counsel_preparation), sum(crm.counsel_immediate_bf), sum(crm.counsel_fp_vid), sum(crm.counsel_immediate_conception), sum(crm.counsel_accessible_postpartum_fp), sum(crm.has_aadhar_id), 5 , sum(CASE WHEN (crm.valid_in_month=1 AND crm.open_in_month=1 AND (crm.pregnant_all=1 OR crm.lactating_all=1)) THEN 1 ELSE 0 END), sum(crm.institutional_delivery_in_month), sum(crm.lactating_all), sum(crm.pregnant_all), sum(crm.valid_visits), sum( CASE WHEN crm.pregnant=1 THEN 0.44 WHEN crm.month - crm.add <= 0 THEN 6 WHEN crm.month - crm.add < 182 THEN 1 ELSE 0.39 END)
+            FROM  "ccs_record_monthly" as crm
+            LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = crm.awc_id
+            WHERE crm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
+            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, crm.awc_id, crm.month,
+                     crm.ccs_status, coalesce_trimester, crm.caste, coalesce_disabled, coalesce_minority, coalesce_resident
+        )
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+            UPDATE "agg_ccs_record_2019-01-01_5" agg SET
+              state_is_test = ut.state_is_test,
+              district_is_test = ut.district_is_test,
+              block_is_test = ut.block_is_test,
+              supervisor_is_test = ut.supervisor_is_test,
+              awc_is_test = ut.awc_is_test
+            FROM (
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "awc_location"
+              GROUP BY awc_id
+            ) ut
+            WHERE ut.awc_id = agg.awc_id AND (
+                (
+                  agg.state_is_test IS NULL OR
+                  agg.district_is_test IS NULL OR
+                  agg.block_is_test IS NULL OR
+                  agg.supervisor_is_test IS NULL OR
+                  agg.awc_is_test IS NULL
+                ) OR (
+                  ut.state_is_test != agg.state_is_test OR
+                  ut.district_is_test != agg.district_is_test OR
+                  ut.block_is_test != agg.block_is_test OR
+                  ut.supervisor_is_test != agg.supervisor_is_test OR
+                  ut.awc_is_test != agg.awc_is_test
+                )
+            )
+        
+{}
+
+        INSERT INTO "agg_ccs_record_2019-01-01_4" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident, valid_in_month, lactating, pregnant, thr_eligible, rations_21_plus_distributed, tetanus_complete, delivered_in_month, anc1_received_at_delivery, anc2_received_at_delivery, anc3_received_at_delivery, anc4_received_at_delivery, registration_trimester_at_delivery, using_ifa, ifa_consumed_last_seven_days, anemic_normal, anemic_moderate, anemic_severe, anemic_unknown, extra_meal, resting_during_pregnancy, bp1_complete, bp2_complete, bp3_complete, pnc_complete, trimester_2, trimester_3, postnatal, counsel_bp_vid, counsel_preparation, counsel_immediate_bf, counsel_fp_vid, counsel_immediate_conception, counsel_accessible_postpartum_fp, has_aadhar_id, aggregation_level, valid_all_registered_in_month, institutional_delivery_in_month, lactating_all, pregnant_all, valid_visits, expected_visits, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, block_id, supervisor_id, 'All', month, ccs_status, 'All', 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(lactating), SUM(pregnant), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(tetanus_complete), SUM(delivered_in_month), SUM(anc1_received_at_delivery), SUM(anc2_received_at_delivery), SUM(anc3_received_at_delivery), SUM(anc4_received_at_delivery), AVG(registration_trimester_at_delivery), SUM(using_ifa), SUM(ifa_consumed_last_seven_days), SUM(anemic_normal), SUM(anemic_moderate), SUM(anemic_severe), SUM(anemic_unknown), SUM(extra_meal), SUM(resting_during_pregnancy), SUM(bp1_complete), SUM(bp2_complete), SUM(bp3_complete), SUM(pnc_complete), SUM(trimester_2), SUM(trimester_3), SUM(postnatal), SUM(counsel_bp_vid), SUM(counsel_preparation), SUM(counsel_immediate_bf), SUM(counsel_fp_vid), SUM(counsel_immediate_conception), SUM(counsel_accessible_postpartum_fp), SUM(has_aadhar_id), 4, SUM(valid_all_registered_in_month), SUM(institutional_delivery_in_month), SUM(lactating_all), SUM(pregnant_all), SUM(valid_visits), SUM(expected_visits), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), MAX(supervisor_is_test), 0
+            FROM "agg_ccs_record_2019-01-01_5"
+            WHERE awc_is_test = 0
+            GROUP BY state_id, month, ccs_status, district_id, block_id, supervisor_id
+            ORDER BY state_id, month, ccs_status, district_id, block_id, supervisor_id
+        )
+        
+{}
+
+        INSERT INTO "agg_ccs_record_2019-01-01_3" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident, valid_in_month, lactating, pregnant, thr_eligible, rations_21_plus_distributed, tetanus_complete, delivered_in_month, anc1_received_at_delivery, anc2_received_at_delivery, anc3_received_at_delivery, anc4_received_at_delivery, registration_trimester_at_delivery, using_ifa, ifa_consumed_last_seven_days, anemic_normal, anemic_moderate, anemic_severe, anemic_unknown, extra_meal, resting_during_pregnancy, bp1_complete, bp2_complete, bp3_complete, pnc_complete, trimester_2, trimester_3, postnatal, counsel_bp_vid, counsel_preparation, counsel_immediate_bf, counsel_fp_vid, counsel_immediate_conception, counsel_accessible_postpartum_fp, has_aadhar_id, aggregation_level, valid_all_registered_in_month, institutional_delivery_in_month, lactating_all, pregnant_all, valid_visits, expected_visits, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, block_id, 'All', 'All', month, ccs_status, 'All', 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(lactating), SUM(pregnant), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(tetanus_complete), SUM(delivered_in_month), SUM(anc1_received_at_delivery), SUM(anc2_received_at_delivery), SUM(anc3_received_at_delivery), SUM(anc4_received_at_delivery), AVG(registration_trimester_at_delivery), SUM(using_ifa), SUM(ifa_consumed_last_seven_days), SUM(anemic_normal), SUM(anemic_moderate), SUM(anemic_severe), SUM(anemic_unknown), SUM(extra_meal), SUM(resting_during_pregnancy), SUM(bp1_complete), SUM(bp2_complete), SUM(bp3_complete), SUM(pnc_complete), SUM(trimester_2), SUM(trimester_3), SUM(postnatal), SUM(counsel_bp_vid), SUM(counsel_preparation), SUM(counsel_immediate_bf), SUM(counsel_fp_vid), SUM(counsel_immediate_conception), SUM(counsel_accessible_postpartum_fp), SUM(has_aadhar_id), 3, SUM(valid_all_registered_in_month), SUM(institutional_delivery_in_month), SUM(lactating_all), SUM(pregnant_all), SUM(valid_visits), SUM(expected_visits), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), 0, 0
+            FROM "agg_ccs_record_2019-01-01_4"
+            WHERE supervisor_is_test = 0
+            GROUP BY state_id, month, ccs_status, district_id, block_id
+            ORDER BY state_id, month, ccs_status, district_id, block_id
+        )
+        
+{}
+
+        INSERT INTO "agg_ccs_record_2019-01-01_2" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident, valid_in_month, lactating, pregnant, thr_eligible, rations_21_plus_distributed, tetanus_complete, delivered_in_month, anc1_received_at_delivery, anc2_received_at_delivery, anc3_received_at_delivery, anc4_received_at_delivery, registration_trimester_at_delivery, using_ifa, ifa_consumed_last_seven_days, anemic_normal, anemic_moderate, anemic_severe, anemic_unknown, extra_meal, resting_during_pregnancy, bp1_complete, bp2_complete, bp3_complete, pnc_complete, trimester_2, trimester_3, postnatal, counsel_bp_vid, counsel_preparation, counsel_immediate_bf, counsel_fp_vid, counsel_immediate_conception, counsel_accessible_postpartum_fp, has_aadhar_id, aggregation_level, valid_all_registered_in_month, institutional_delivery_in_month, lactating_all, pregnant_all, valid_visits, expected_visits, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, 'All', 'All', 'All', month, ccs_status, 'All', 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(lactating), SUM(pregnant), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(tetanus_complete), SUM(delivered_in_month), SUM(anc1_received_at_delivery), SUM(anc2_received_at_delivery), SUM(anc3_received_at_delivery), SUM(anc4_received_at_delivery), AVG(registration_trimester_at_delivery), SUM(using_ifa), SUM(ifa_consumed_last_seven_days), SUM(anemic_normal), SUM(anemic_moderate), SUM(anemic_severe), SUM(anemic_unknown), SUM(extra_meal), SUM(resting_during_pregnancy), SUM(bp1_complete), SUM(bp2_complete), SUM(bp3_complete), SUM(pnc_complete), SUM(trimester_2), SUM(trimester_3), SUM(postnatal), SUM(counsel_bp_vid), SUM(counsel_preparation), SUM(counsel_immediate_bf), SUM(counsel_fp_vid), SUM(counsel_immediate_conception), SUM(counsel_accessible_postpartum_fp), SUM(has_aadhar_id), 2, SUM(valid_all_registered_in_month), SUM(institutional_delivery_in_month), SUM(lactating_all), SUM(pregnant_all), SUM(valid_visits), SUM(expected_visits), MAX(state_is_test), MAX(district_is_test), 0, 0, 0
+            FROM "agg_ccs_record_2019-01-01_3"
+            WHERE block_is_test = 0
+            GROUP BY state_id, month, ccs_status, district_id
+            ORDER BY state_id, month, ccs_status, district_id
+        )
+        
+{}
+
+        INSERT INTO "agg_ccs_record_2019-01-01_1" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident, valid_in_month, lactating, pregnant, thr_eligible, rations_21_plus_distributed, tetanus_complete, delivered_in_month, anc1_received_at_delivery, anc2_received_at_delivery, anc3_received_at_delivery, anc4_received_at_delivery, registration_trimester_at_delivery, using_ifa, ifa_consumed_last_seven_days, anemic_normal, anemic_moderate, anemic_severe, anemic_unknown, extra_meal, resting_during_pregnancy, bp1_complete, bp2_complete, bp3_complete, pnc_complete, trimester_2, trimester_3, postnatal, counsel_bp_vid, counsel_preparation, counsel_immediate_bf, counsel_fp_vid, counsel_immediate_conception, counsel_accessible_postpartum_fp, has_aadhar_id, aggregation_level, valid_all_registered_in_month, institutional_delivery_in_month, lactating_all, pregnant_all, valid_visits, expected_visits, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, 'All', 'All', 'All', 'All', month, ccs_status, 'All', 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(lactating), SUM(pregnant), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(tetanus_complete), SUM(delivered_in_month), SUM(anc1_received_at_delivery), SUM(anc2_received_at_delivery), SUM(anc3_received_at_delivery), SUM(anc4_received_at_delivery), AVG(registration_trimester_at_delivery), SUM(using_ifa), SUM(ifa_consumed_last_seven_days), SUM(anemic_normal), SUM(anemic_moderate), SUM(anemic_severe), SUM(anemic_unknown), SUM(extra_meal), SUM(resting_during_pregnancy), SUM(bp1_complete), SUM(bp2_complete), SUM(bp3_complete), SUM(pnc_complete), SUM(trimester_2), SUM(trimester_3), SUM(postnatal), SUM(counsel_bp_vid), SUM(counsel_preparation), SUM(counsel_immediate_bf), SUM(counsel_fp_vid), SUM(counsel_immediate_conception), SUM(counsel_accessible_postpartum_fp), SUM(has_aadhar_id), 1, SUM(valid_all_registered_in_month), SUM(institutional_delivery_in_month), SUM(lactating_all), SUM(pregnant_all), SUM(valid_visits), SUM(expected_visits), MAX(state_is_test), 0, 0, 0, 0
+            FROM "agg_ccs_record_2019-01-01_2"
+            WHERE district_is_test = 0
+            GROUP BY state_id, month, ccs_status
+            ORDER BY state_id, month, ccs_status
+        )
+        
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (ccs_status)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (supervisor_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (state_id, district_id, block_id, supervisor_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (ccs_status)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (supervisor_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (state_id, district_id, block_id, supervisor_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (ccs_status)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (state_id, district_id, block_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (ccs_status)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (state_id, district_id)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (ccs_status)
+{}
+CREATE INDEX ON "agg_ccs_record_2019-01-01_5" (state_id)
+{}

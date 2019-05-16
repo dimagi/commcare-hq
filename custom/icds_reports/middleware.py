@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.utils.deprecation import MiddlewareMixin
 
+from corehq import toggles
+from corehq.sql_db.routers import force_citus_engine
 from corehq.apps.users.models import CouchUser
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import ICDSAuditEntryRecord
@@ -49,6 +51,8 @@ def is_icds_dashboard_view(request):
 class ICDSAuditMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if is_icds_dashboard_view(request):
+            if toggles.LOAD_DASHBOARD_FROM_CITUS.enabled(request.couch_user.username):
+                force_citus_engine()
             ICDSAuditEntryRecord.create_entry(request)
             return None
 

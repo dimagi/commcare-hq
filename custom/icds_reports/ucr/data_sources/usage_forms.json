@@ -87,6 +87,8 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
+        "is_nullable": false,
+        "is_primary_key": true,
         "expression": {
           "type": "location_parent_id",
           "location_id_expression": {
@@ -991,13 +993,11 @@
     "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "form_date",
-          "subtype": "date",
-          "constraint": "month"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "disable_destructive_rebuild": true
   }
