@@ -4,9 +4,7 @@ from __future__ import absolute_import, division, unicode_literals
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
-from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
