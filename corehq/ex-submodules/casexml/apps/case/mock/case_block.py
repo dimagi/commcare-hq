@@ -53,6 +53,21 @@ class CaseBlock(object):
         self.index = {key: self._make_index_attrs(value)
                       for key, value in index.items()} if index else {}
 
+    def __repr__(self):
+        return (
+            "CaseBlock("
+            "case_id='{self.case_id}', "
+            "case_type='{self.case_type}', "
+            "case_name='{self.case_name}', "
+            "owner_id='{owner_id}', "
+            "state='{state}'"
+            ")"
+        ).format(
+            self=self,
+            state="closed" if self.close else "open",
+            owner_id=self.owner_id if self.owner_id is not CaseBlock.undefined else "",
+        )
+
     def _updatable_built_ins(self):
         return [(name, getattr(self, name)) for name in self._built_ins]
 
