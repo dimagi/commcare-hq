@@ -75,7 +75,7 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             awcm.state_name, awcm.district_name,
             awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
             awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
-            awcm.awc_days_open;
+            awcm.awc_days_open, awcm.is_launched;
         INSERT INTO "{tablename}" (
             state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name,
             supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,

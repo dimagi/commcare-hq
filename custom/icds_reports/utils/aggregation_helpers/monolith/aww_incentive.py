@@ -80,7 +80,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
           GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name, awcm.district_name,
                    awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
                    awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
-                   awcm.awc_days_open
+                   awcm.awc_days_open, awcm.is_launched
         );
         /* update visits for cf cases (not in agg_ccs_record) */
         UPDATE "{tablename}" perf
