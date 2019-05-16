@@ -67,13 +67,7 @@ class _Importer(object):
             except exceptions.CaseRowError as error:
                 self.errors.add(error)
 
-        # TODO switch this to commit_caseblocks - possible bug, why match_count -= 1?
-        # final purge of anything left in the queue
-        try:
-            self._submit_caseblocks(self._caseblocks)
-        except exceptions.CaseRowError:
-            self.match_count -= 1
-        self.num_chunks += 1
+        self.commit_caseblocks()
 
     def handle_row(self, i, raw_row):
         search_id = importer_util.parse_search_id(self.config, raw_row)
@@ -133,12 +127,13 @@ class _Importer(object):
             self.commit_caseblocks()
 
     def commit_caseblocks(self):
-        try:
-            self._submit_caseblocks(self._caseblocks)
-        except exceptions.CaseRowError as error:
-            self.errors.add(error)
-        self.num_chunks += 1
-        self._caseblocks = []
+        if self._caseblocks:
+            try:
+                self._submit_caseblocks(self._caseblocks)
+            except exceptions.CaseRowError as error:
+                self.errors.add(error)
+            self.num_chunks += 1
+            self._caseblocks = []
 
     def _submit_caseblocks(self, caseblocks):
         if caseblocks:
