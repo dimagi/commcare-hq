@@ -58,7 +58,15 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             awcm.wer_eligible,
             awcm.awc_days_open,
             sum(ccsm.valid_visits) as valid_visits,
-            sum(ccsm.expected_visits) as expected_visits
+            sum(ccsm.expected_visits) as expected_visits,
+            awcm.is_launched,
+            round(sum(ccsm.expected_visits)),
+            awcm.awc_days_open >= 21,
+            CASE 
+                WHEN round(sum(ccsm.expected_visits)) = 0 AND awcm.wer_eligible = 0 THEN true
+                ELSE (awcm.wer_weighed / GREATEST(awcm.wer_eligible, 1)) >= 0.6 AND 
+                     (sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)) >= 0.6
+            END
         FROM agg_awc_monthly as awcm
         INNER JOIN agg_ccs_record_monthly AS ccsm
         ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level
@@ -71,7 +79,8 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         INSERT INTO "{tablename}" (
             state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name,
             supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
-            wer_eligible, awc_num_open, valid_visits, expected_visits
+            wer_eligible, awc_num_open, valid_visits, expected_visits, is_launched,
+            visit_denominator, awh_eligible, incentive_eligible
         )
         SELECT * FROM "tmp_incentive";
         DROP TABLE "tmp_incentive";
