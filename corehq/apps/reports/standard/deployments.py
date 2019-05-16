@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -55,7 +55,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 @location_safe
 class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsReport):
-    name = ugettext_noop("Application Status")
+    name = ugettext_lazy("Application Status")
     slug = "app_status"
     emailable = True
     exportable = True
@@ -421,7 +421,7 @@ def _bootstrap_class(obj, severe, warn):
 
 
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
-    name = ugettext_noop("Application Error Report")
+    name = ugettext_lazy("Application Error Report")
     slug = "application_error"
     ajax_pagination = True
     sortable = False
