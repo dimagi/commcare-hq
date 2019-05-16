@@ -11,6 +11,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'birth-preparedness-forms'
     ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
     aggregate_parent_table = AGG_CCS_RECORD_BP_TABLE
     aggregate_child_table_prefix = 'icds_db_bp_form_'
@@ -84,7 +85,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
-          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
+          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin,
           bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits,
           play_birth_preparedness_vid, counsel_preparation, play_family_planning_vid, conceive,
           counsel_accessible_ppfp, ifa_last_seven_days,using_ifa

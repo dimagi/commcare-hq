@@ -28,7 +28,7 @@ class IncentiveReport(object):
         else:
             data = AWWIncentiveReport.objects.filter(
                 month=self.month, block_id=self.location
-            ).order_by('-supervisor_name')
+            ).order_by('-supervisor_name', 'awc_name')
         data = data.values(
             'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'aww_name',
             'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits',
@@ -49,6 +49,7 @@ class IncentiveReport(object):
             ]
 
         excel_rows = [headers]
+
         for row in data:
             row_data = [
                 row['state_name'],

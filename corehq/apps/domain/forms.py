@@ -14,7 +14,7 @@ from six.moves.urllib.parse import urlparse, parse_qs
 from captcha.fields import CaptchaField
 
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
+from corehq.apps.callcenter.views import CallCenterOwnerOptionsView, CallCenterOptionsController
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from crispy_forms import bootstrap as twbscrispy
@@ -501,7 +501,7 @@ class CallCenterOwnerWidget(Select2AjaxV4):
         self.domain = domain
 
     def render(self, name, value, attrs=None):
-        value_to_render = CallCenterOwnerOptionsView.convert_owner_id_to_select_choice(value, self.domain)
+        value_to_render = CallCenterOptionsController.convert_owner_id_to_select_choice(value, self.domain)
         return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs)
 
 

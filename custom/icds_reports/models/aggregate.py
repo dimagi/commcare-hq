@@ -16,6 +16,7 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
 from django.db import connections, models, transaction
 
 from custom.icds_reports.models.manager import CitusComparisonManager
+from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     AggCcsRecordAggregationHelper,
     AggChildHealthAggregationHelper,
@@ -67,9 +68,14 @@ class AggregateMixin(object):
 
     @classmethod
     def aggregate(cls, *args, **kwargs):
-        helper = cls._agg_helper_cls(*args, **kwargs)
+        helper = cls._get_helper(*args, **kwargs)
         with get_cursor(cls) as cursor, maybe_atomic(cls, cls._agg_atomic):
             helper.aggregate(cursor)
+
+    @classmethod
+    def _get_helper(cls, *args, **kwargs):
+        helper_cls = get_helper(cls._agg_helper_cls.helper_key)
+        return helper_cls(*args, **kwargs)
 
 
 class CcsRecordMonthly(models.Model, AggregateMixin):
@@ -177,6 +183,7 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     class Meta(object):
         managed = False
         db_table = 'ccs_record_monthly'
+        unique_together = ('supervisor_id', 'month', 'case_id')
 
     _agg_helper_cls = CcsRecordMonthlyAggregationHelper
     _agg_atomic = True
@@ -219,6 +226,15 @@ class AwcLocation(models.Model, AggregateMixin):
 
     _agg_helper_cls = LocationAggregationHelper
     _agg_atomic = False
+
+
+class AwcLocationLocal(AwcLocation):
+
+    objects = models.Manager()
+
+    class Meta(object):
+        managed = False
+        db_table = 'awc_location_local'
 
 
 class ChildHealthMonthly(models.Model, AggregateMixin):
@@ -307,6 +323,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     class Meta:
         managed = False
         db_table = 'child_health_monthly'
+        unique_together = ('supervisor_id', 'case_id', 'month')
 
     _agg_helper_cls = ChildHealthMonthlyAggregationHelper
     _agg_atomic = False
@@ -759,6 +776,9 @@ class DailyAttendance(models.Model, AggregateMixin):
         managed = False
         db_table = 'daily_attendance'
         unique_together = ('supervisor_id', 'doc_id', 'month')  # pkey
+        indexes = [
+            models.Index(fields=['awc_id'], name='idx_daily_attendance_awc_id')
+        ]
 
     _agg_helper_cls = DailyAttendanceAggregationHelper
     _agg_atomic = False
