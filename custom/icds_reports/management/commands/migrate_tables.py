@@ -29,7 +29,7 @@ def run_migration(
     table_path, source_db,
     target_db, target_host, target_user,
     start_date, end_date,
-    confirm, dry_run
+    only_table, confirm, dry_run
 ):
     with open(table_path, 'r') as file:
         tables = [
@@ -38,6 +38,12 @@ def run_migration(
         ]
 
     filtered_tables = filter_tables_by_date(tables, start_date, end_date)
+    if only_table:
+        filtered_tables = [
+            table for table in filtered_tables if table[0] == only_table
+        ]
+    if not filtered_tables:
+        raise Exception("No table to migrate")
 
     if dry_run or _confirm('Preparing to migrate {} tables.'.format(len(filtered_tables))):
         migrate_tables(
@@ -124,6 +130,10 @@ def main():
         help='Only migrate tables with date before this date. Format YYYY-MM-DD',
     )
     parser.add_argument(
+        '--table',
+        help='Only migrate this table',
+    )
+    parser.add_argument(
         '--confirm',
         action='store_true',
         help='Confirm before each table.',
@@ -140,7 +150,7 @@ def main():
         args.table_path, args.source_db,
         args.target_db, args.target_host, args.target_user,
         args.start_date, args.end_date,
-        args.confirm, args.dry_run
+        args.table, args.confirm, args.dry_run
     )
 
 
