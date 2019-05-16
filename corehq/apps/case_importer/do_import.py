@@ -21,7 +21,8 @@ from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert import soft_assert
 
 from . import util as importer_util
-from .const import ImportErrors, LookupErrors
+from .const import LookupErrors
+from . import exceptions
 
 CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
@@ -61,11 +62,16 @@ class _Importer(object):
             if i == 0:
                 continue
 
-            self.handle_row(i, row)
+            try:
+                self.handle_row(i, row)
+            except exceptions.CaseRowError as error:
+                self.errors.add(error)
 
         # TODO switch this to commit_caseblocks - possible bug, why match_count -= 1?
         # final purge of anything left in the queue
-        if self._submit_caseblocks(self._caseblocks):
+        try:
+            self._submit_caseblocks(self._caseblocks)
+        except exceptions.CaseRowError:
             self.match_count -= 1
         self.num_chunks += 1
 
@@ -79,8 +85,7 @@ class _Importer(object):
 
         if self.config.search_field == 'external_id' and not search_id:
             # do not allow blank external id since we save this
-            self.errors.add(ImportErrors.BlankExternalId, i + 1)
-            return
+            raise exceptions.BlankExternalId(i + 1)
 
         external_id = fields_to_update.pop('external_id', None)
         parent_id = fields_to_update.pop('parent_id', None)
@@ -107,7 +112,7 @@ class _Importer(object):
 
         if case:
             if case.type != self.config.case_type:
-                return
+                return  # TODO Add error message about skipped row
         elif error == LookupErrors.NotFound:
             if not self.config.create_new_cases:
                 return
@@ -124,12 +129,10 @@ class _Importer(object):
             try:
                 uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, self.domain, self.name_cache)
             except SQLLocation.MultipleObjectsReturned:
-                self.errors.add(ImportErrors.DuplicateLocationName, i + 1)
-                return
+                raise exceptions.DuplicateLocationName(i + 1)
 
             if not uploaded_owner_id:
-                self.errors.add(ImportErrors.InvalidOwnerName, i + 1, 'owner_name')
-                return
+                raise exceptions.InvalidOwnerName(i + 1, 'owner_name')
         if uploaded_owner_id:
             # If an owner_id mapping exists, verify it is a valid user
             # or case sharing group
@@ -137,9 +140,8 @@ class _Importer(object):
                 owner_id = uploaded_owner_id
                 self.id_cache[uploaded_owner_id] = True
             else:
-                self.errors.add(ImportErrors.InvalidOwnerId, i + 1, 'owner_id')
                 self.id_cache[uploaded_owner_id] = False
-                return
+                raise exceptions.InvalidOwnerId(i + 1, 'owner_id')
         else:
             # if they didn't supply an owner_id mapping, default to current
             # user
@@ -156,8 +158,7 @@ class _Importer(object):
                         parent_ref: (parent_case.type, parent_id)
                     }
             except ResourceNotFound:
-                self.errors.add(ImportErrors.InvalidParentId, i + 1, 'parent_id')
-                return
+                raise exceptions.InvalidParentId(i + 1, 'parent_id')
         elif parent_external_id:
             parent_case, error = importer_util.lookup_case(
                 'external_id',
@@ -202,7 +203,7 @@ class _Importer(object):
                 if external_id:
                     self.ids_seen.add(external_id)
             except CaseBlockError:
-                self.errors.add(ImportErrors.CaseGeneration, i + 1)
+                raise exceptions.CaseGeneration(i + 1)
         else:
             if external_id:
                 extras['external_id'] = external_id
@@ -223,7 +224,7 @@ class _Importer(object):
                 self.add_caseblock(RowAndCase(i, caseblock))
                 self.match_count += 1
             except CaseBlockError:
-                self.errors.add(ImportErrors.CaseGeneration, i + 1)
+                raise exceptions.CaseGeneration(i + 1)
 
     def add_caseblock(self, caseblock):
         self._caseblocks.append(caseblock)
@@ -232,12 +233,14 @@ class _Importer(object):
             self.commit_caseblocks()
 
     def commit_caseblocks(self):
-        self._submit_caseblocks(self._caseblocks)
+        try:
+            self._submit_caseblocks(self._caseblocks)
+        except exceptions.CaseRowError as error:
+            self.errors.add(error)
         self.num_chunks += 1
         self._caseblocks = []
 
     def _submit_caseblocks(self, caseblocks):
-        err = False
         if caseblocks:
             try:
                 form, cases = submit_case_blocks(
@@ -249,17 +252,10 @@ class _Importer(object):
                 )
 
                 if form.is_error:
-                    self.errors.add(
-                        error=ImportErrors.ImportErrorMessage,
-                        row_number=form.problem
-                    )
+                    raise exceptions.ImportErrorMessage(form.problem)
             except Exception:
-                err = True
                 for row_number, case in caseblocks:
-                    self.errors.add(
-                        error=ImportErrors.ImportErrorMessage,
-                        row_number=row_number
-                    )
+                    raise exceptions.ImportErrorMessage(row_number)
             else:
                 self.record_form(form.form_id)
                 properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
@@ -277,7 +273,6 @@ class _Importer(object):
                         'error adding inferred export properties in domain '
                         '({}): {}'.format(self.domain, ", ".join(properties))
                     )
-        return err
 
     def record_form(self, form_id):
         if self._record_form_callback:

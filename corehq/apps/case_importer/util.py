@@ -7,7 +7,8 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
-from corehq.apps.case_importer.const import LookupErrors, ImportErrors
+from corehq.apps.case_importer.const import LookupErrors
+from corehq.apps.case_importer import exceptions
 from corehq.apps.groups.models import Group
 from corehq.apps.case_importer.exceptions import (
     ImporterExcelFileEncrypted,
@@ -172,62 +173,24 @@ def convert_custom_fields_to_struct(config):
 
 class ImportErrorDetail(object):
 
-    ERROR_MSG = {
-        ImportErrors.InvalidOwnerId: _(
-            "Owner ID was used in the mapping but there were errors when "
-            "uploading because of these values. Make sure the values in this "
-            "column are ID's for users or case sharing groups or locations."
-        ),
-        ImportErrors.InvalidOwnerName: _(
-            "Owner name was used in the mapping but there were errors when "
-            "uploading because of these values."
-        ),
-        ImportErrors.InvalidDate: _(
-            "Date fields were specified that caused an error during "
-            "conversion. This is likely caused by a value from Excel having "
-            "the wrong type or not being formatted properly."
-        ),
-        ImportErrors.BlankExternalId: _(
-            "Blank external ids were found in these rows causing as error "
-            "when importing cases."
-        ),
-        ImportErrors.CaseGeneration: _(
-            "These rows failed to generate cases for unknown reasons"
-        ),
-        ImportErrors.InvalidParentId: _(
-            "An invalid or unknown parent case was specified for the "
-            "uploaded case."
-        ),
-        ImportErrors.DuplicateLocationName: _(
-            "Owner ID was used in the mapping, but there were errors when "
-            "uploading because of these values. There are multiple locations "
-            "with this same name, try using site-code instead."
-        ),
-        ImportErrors.InvalidInteger: _(
-            "Integer values were specified, but the values in Excel were not "
-            "all integers"
-        ),
-        ImportErrors.ImportErrorMessage: _(
-            "Problems in importing cases. Please check the Excel file."
-        )
-    }
-
     def __init__(self, *args, **kwargs):
         self.errors = defaultdict(dict)
 
-    def add(self, error, row_number, column_name=None):
-        self.errors[error].setdefault(column_name, {})
-        self.errors[error][column_name]['error'] = _(error)
+    def add(self, error):
+        key = error.title
+        column_name = error.column_name
+        self.errors[key].setdefault(column_name, {})
+        self.errors[key][column_name]['error'] = _(error.title)
 
         try:
-            self.errors[error][column_name]['description'] = self.ERROR_MSG[error]
+            self.errors[key][column_name]['description'] = error.message
         except KeyError:
-            self.errors[error][column_name]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
+            self.errors[key][column_name]['description'] = exceptions.CaseGeneration.message
 
-        if 'rows' not in self.errors[error][column_name]:
-            self.errors[error][column_name]['rows'] = []
+        if 'rows' not in self.errors[key][column_name]:
+            self.errors[key][column_name]['rows'] = []
 
-        self.errors[error][column_name]['rows'].append(row_number)
+        self.errors[key][column_name]['rows'].append(error.row_number)
 
     def as_dict(self):
         return dict(self.errors)

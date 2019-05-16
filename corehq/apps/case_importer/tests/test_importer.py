@@ -9,7 +9,7 @@ from mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.case_importer.const import ImportErrors
+from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
@@ -359,7 +359,7 @@ class ImporterTest(TestCase):
         res = do_import(file_missing, config, self.domain)
         error_column_name = 'parent_id'
         self.assertEqual(rows,
-                         len(res['errors'][ImportErrors.InvalidParentId][error_column_name]['rows']),
+                         len(res['errors'][exceptions.InvalidParentId.title][error_column_name]['rows']),
                          "All cases should have missing parent")
 
     def import_mock_file(self, rows):
@@ -397,12 +397,12 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['location-owner-code'].owner_id, location.group_id)
         self.assertEqual(cases['location-owner-name'].owner_id, location.group_id)
 
-        error_message = ImportErrors.DuplicateLocationName
+        error_message = exceptions.DuplicateLocationName.title
         error_column_name = None
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
-        error_message = ImportErrors.InvalidOwnerId
+        error_message = exceptions.InvalidOwnerId.title
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
