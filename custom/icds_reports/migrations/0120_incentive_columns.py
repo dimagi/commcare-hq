@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0115_citusdashboarddiff_citusdashboardexception_citusdashboardtiming'),
+        ('icds_reports', '0119_distribute_tables')
     ]
 
     operations = [
