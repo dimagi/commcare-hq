@@ -80,8 +80,6 @@ class _Importer(object):
         row.check_valid_external_id()
         if row.relies_on_uncreated_case(self.uncreated_external_ids):
             self.commit_caseblocks()
-            # TODO Move this into commit_caseblocks - possible bug
-            self.uncreated_external_ids = set()
 
         case, error = importer_util.lookup_case(
             self.config.search_field,
@@ -131,6 +129,7 @@ class _Importer(object):
             self._submit_caseblocks(self._caseblocks)
             self.num_chunks += 1
             self._caseblocks = []
+            self.uncreated_external_ids = set()
 
     def _submit_caseblocks(self, caseblocks):
         if caseblocks:
