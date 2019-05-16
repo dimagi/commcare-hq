@@ -104,7 +104,7 @@ def build_ui_translation_download_file(app):
         commcare_version = None
 
     all_prop_trans = get_default_translations_for_download(app, commcare_version)
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict and t not in blacklist])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)
