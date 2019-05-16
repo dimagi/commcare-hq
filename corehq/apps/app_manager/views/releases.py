@@ -44,7 +44,6 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_build_doc_by_version,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
