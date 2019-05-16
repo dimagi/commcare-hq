@@ -43,14 +43,14 @@ class _Importer(object):
 
         self.id_cache = {}
         self.name_cache = {}
-        self.ids_seen = set()
+        self.uncreated_external_ids = set()
         self._caseblocks = []
 
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
 
-    def track_load(self):
+    def log_case_lookup(self):
         case_load_counter("case_importer", self.domain)
 
     def do_import(self, spreadsheet):
@@ -63,13 +63,13 @@ class _Importer(object):
                 continue
 
             try:
-                self.handle_row(row_num, row)
+                self.import_row(row_num, row)
             except exceptions.CaseRowError as error:
                 self.errors.add(error, row_num)
 
         self.commit_caseblocks()
 
-    def handle_row(self, row_num, raw_row):
+    def import_row(self, row_num, raw_row):
         search_id = importer_util.parse_search_id(self.config, raw_row)
         fields_to_update = importer_util.populate_updated_fields(self.config, raw_row)
         if not any(fields_to_update.values()):
@@ -78,10 +78,10 @@ class _Importer(object):
 
         row = CaseImportRow(search_id, fields_to_update, self.config, self.domain, self.user.user_id)
         row.check_valid_external_id()
-        if row.relies_on_unsubmitted_case(self.ids_seen):
+        if row.relies_on_uncreated_case(self.uncreated_external_ids):
             self.commit_caseblocks()
             # TODO Move this into commit_caseblocks - possible bug
-            self.ids_seen = set()  # also clear ids_seen, since all the cases will now be in the database
+            self.uncreated_external_ids = set()
 
         case, error = importer_util.lookup_case(
             self.config.search_field,
@@ -89,7 +89,7 @@ class _Importer(object):
             self.domain,
             self.config.case_type
         )
-        self.track_load()
+        self.log_case_lookup()
 
         if case:
             if case.type != self.config.case_type:
@@ -102,14 +102,14 @@ class _Importer(object):
             return
 
         row.set_owner_id(self.name_cache, self.id_cache)
-        row.set_parent_id(self.track_load)
+        row.set_parent_id(self.log_case_lookup)
         row.set_date_opened()
         row.set_external_id(is_new_case=not case)
 
         try:
             if not case:
                 if row.external_id:
-                    self.ids_seen.add(row.external_id)
+                    self.uncreated_external_ids.add(row.external_id)
                 caseblock = row.get_create_caseblock()
                 self.created_count += 1
             else:
@@ -208,8 +208,8 @@ class CaseImportRow(object):
             # do not allow blank external id since we save this
             raise exceptions.BlankExternalId()
 
-    def relies_on_unsubmitted_case(self, ids_seen):
-        return any(lookup_id and lookup_id in ids_seen
+    def relies_on_uncreated_case(self, uncreated_external_ids):
+        return any(lookup_id and lookup_id in uncreated_external_ids
                    for lookup_id in [self.search_id, self.parent_id, self.parent_external_id])
 
     def set_owner_id(self, name_cache, id_cache):
@@ -239,11 +239,11 @@ class CaseImportRow(object):
         # if they didn't supply an owner, default to current user
         self.owner_id = owner_id or self.user_id
 
-    def set_parent_id(self, track_load):
+    def set_parent_id(self, log_case_lookup):
         if self.parent_id:
             try:
                 parent_case = CaseAccessors(self.domain).get_case(self.parent_id)
-                track_load()
+                log_case_lookup()
                 if parent_case.domain == self.domain:
                     self.extras['index'] = {
                         self.parent_ref: (parent_case.type, self.parent_id)
@@ -257,7 +257,7 @@ class CaseImportRow(object):
                 self.domain,
                 self.parent_type
             )
-            track_load()
+            log_case_lookup()
             if parent_case:
                 self.extras['index'] = {
                     self.parent_ref: (self.parent_type, parent_case.case_id)
