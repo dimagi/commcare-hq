@@ -43,7 +43,7 @@ class _Importer(object):
         self.id_cache = {}
         self.name_cache = {}
         self.ids_seen = set()
-        self.caseblocks = []
+        self._caseblocks = []
 
     @cached_property
     def user(self):
@@ -63,15 +63,9 @@ class _Importer(object):
 
             self.handle_row(i, row)
 
-            # check if we've reached a reasonable chunksize
-            # and if so submit
-            if len(self.caseblocks) >= CASEBLOCK_CHUNKSIZE:
-                self._submit_caseblocks(self.caseblocks)
-                self.num_chunks += 1
-                self.caseblocks = []
-
+        # TODO switch this to commit_caseblocks - possible bug, why match_count -= 1?
         # final purge of anything left in the queue
-        if self._submit_caseblocks(self.caseblocks):
+        if self._submit_caseblocks(self._caseblocks):
             self.match_count -= 1
         self.num_chunks += 1
 
@@ -95,15 +89,12 @@ class _Importer(object):
         parent_ref = fields_to_update.pop('parent_ref', 'parent')
         to_close = fields_to_update.pop('close', False)
 
-        if any([lookup_id and lookup_id in self.ids_seen for lookup_id in [search_id, parent_id, parent_external_id]]):
+        if any(lookup_id and lookup_id in self.ids_seen
+               for lookup_id in [search_id, parent_id, parent_external_id]):
             # clear out the queue to make sure we've processed any potential
             # cases we want to look up
-            # note: these three lines are repeated a few places, and could be converted
-            # to a function that makes use of closures (and globals) to do the same thing,
-            # but that seems sketchier than just beeing a little RY
-            self._submit_caseblocks(self.caseblocks)
-            self.num_chunks += 1
-            self.caseblocks = []
+            self.commit_caseblocks()
+            # TODO Move this into commit_caseblocks - possible bug
             self.ids_seen = set()  # also clear ids_seen, since all the cases will now be in the database
 
         case, error = importer_util.lookup_case(
@@ -206,7 +197,7 @@ class _Importer(object):
                     update=fields_to_update,
                     **extras
                 )
-                self.caseblocks.append(RowAndCase(i, caseblock))
+                self.add_caseblock(RowAndCase(i, caseblock))
                 self.created_count += 1
                 if external_id:
                     self.ids_seen.add(external_id)
@@ -229,10 +220,21 @@ class _Importer(object):
                     update=fields_to_update,
                     **extras
                 )
-                self.caseblocks.append(RowAndCase(i, caseblock))
+                self.add_caseblock(RowAndCase(i, caseblock))
                 self.match_count += 1
             except CaseBlockError:
                 self.errors.add(ImportErrors.CaseGeneration, i + 1)
+
+    def add_caseblock(self, caseblock):
+        self._caseblocks.append(caseblock)
+        # check if we've reached a reasonable chunksize and if so, submit
+        if len(self._caseblocks) >= CASEBLOCK_CHUNKSIZE:
+            self.commit_caseblocks()
+
+    def commit_caseblocks(self):
+        self._submit_caseblocks(self._caseblocks)
+        self.num_chunks += 1
+        self._caseblocks = []
 
     def _submit_caseblocks(self, caseblocks):
         err = False
