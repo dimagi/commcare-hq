@@ -23,6 +23,10 @@ AAA_DB_ENGINE_ID = 'aaa-data'
 ICDS_UCR_CITUS_ENGINE_ID = 'icds-ucr-citus'
 
 
+def get_icds_ucr_db_alias_or_citus(force_citus):
+    return get_icds_ucr_citus_db_alias() if force_citus else get_icds_ucr_db_alias()
+
+
 def get_icds_ucr_db_alias():
     return _get_db_alias_or_none(ICDS_UCR_ENGINE_ID)
 

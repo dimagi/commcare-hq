@@ -47,7 +47,8 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.sql_db.connections import get_icds_ucr_db_alias
+from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
+    get_icds_ucr_db_alias_or_citus
 from corehq.sql_db.routers import db_for_read_write, force_citus_engine, forced_citus
 from corehq.util.datadog.utils import case_load_counter, create_datadog_event
 from corehq.util.decorators import serial_task
@@ -90,7 +91,7 @@ from custom.icds_reports.models import (
     ChildHealthMonthly,
     ICDSAuditEntryRecord,
     UcrTableNameMapping,
-)
+    IcdsMonths)
 from custom.icds_reports.models.aggregate import (
     AggAwcDaily,
     AggregateBeneficiaryForm,
@@ -203,7 +204,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
 
     monthly_dates.append(date)
 
-    db_alias = get_icds_ucr_db_alias()
+    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
@@ -377,7 +378,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
     if six.PY2 and isinstance(date, bytes):
         date = date.decode('utf-8')
 
-    db_alias = get_icds_ucr_db_alias()
+    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
     if not db_alias:
         return
 
@@ -425,7 +426,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
     if six.PY2 and isinstance(date, bytes):
         date = date.decode('utf-8')
 
-    db_alias = get_icds_ucr_db_alias()
+    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
     if not db_alias:
         return
 
@@ -509,8 +510,7 @@ def _aggregate_bp_forms(state_id, day):
     AggregateBirthPreparednesForms.aggregate(state_id, day)
 
 
-def _run_custom_sql_script(commands, day=None):
-    db_alias = get_icds_ucr_db_alias()
+def _run_custom_sql_script(commands, day=None, db_alias=None):
     if not db_alias:
         return
 
@@ -528,7 +528,8 @@ def aggregate_awc_daily(day):
 
 @track_time
 def _update_months_table(day):
-    _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
+    db_alias = db_for_read_write(IcdsMonths)
+    _run_custom_sql_script(["SELECT update_months_table(%s)"], day, db_alias=db_alias)
 
 
 def get_cursor(model, write=True):
@@ -586,28 +587,31 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    with transaction.atomic(using=db_for_read_write(AggChildHealth)):
+    db_alias = db_for_read_write(AggChildHealth)
+    with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        ], day)
+        ], day, db_alias=db_alias)
         AggChildHealth.aggregate(force_to_date(day))
 
 
 @track_time
 def _agg_ccs_record_table(day):
-    with transaction.atomic(using=db_for_read_write(AggCcsRecord)):
+    db_alias = db_for_read_write(AggCcsRecord)
+    with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
-        ], day)
+        ], day, db_alias=db_alias)
         AggCcsRecord.aggregate(force_to_date(day))
 
 
 @track_time
 def _agg_awc_table(day):
-    with transaction.atomic(using=db_for_read_write(AggAwc)):
+    db_alias = db_for_read_write(AggAwc)
+    with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
-        ], day)
+        ], day, db_alias=db_alias)
         AggAwc.aggregate(force_to_date(day))
 
 
@@ -1211,7 +1215,7 @@ def run_citus_experiment_raw_sql(parameterized_sql, params, data_source="Unknown
             control.record(_dictfetchall(cursor))
 
     with experiment.candidate() as candidate:
-        db_alias = 'citus'
+        db_alias = get_icds_ucr_citus_db_alias()
         with connections[db_alias].cursor() as cursor:
             cursor.execute(parameterized_sql, params)
             candidate.record(_dictfetchall(cursor))
