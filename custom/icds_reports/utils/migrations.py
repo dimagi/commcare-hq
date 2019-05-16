@@ -3,14 +3,16 @@ from __future__ import unicode_literals
 
 from django.apps import apps
 from django.conf import settings
-from django.db import migrations
+from django.db import migrations, router
 
+from corehq.sql_db.connections import is_citus_db
 from corehq.sql_db.operations import RawSQLMigration
 
 
 def get_view_migrations():
     sql_views = [
         'awc_location_months.sql',
+        'awc_location_months_local.sql',
         'agg_awc_monthly.sql',
         'agg_ccs_record_monthly.sql',
         'agg_child_health_monthly.sql',
@@ -37,7 +39,7 @@ def _citus_composite_key_sql(model_cls):
     index = '{}_{}_uniq'.format(model_cls._meta.db_table, '_'.join(columns))
     sql = """
         CREATE UNIQUE INDEX {index} on "{table}" ({cols});
-        ALTER TABLE "{table}" DROP CONSTRAINT {pkey_name};
+        ALTER TABLE "{table}" DROP CONSTRAINT IF EXISTS {pkey_name};
         ALTER TABLE "{table}" ADD CONSTRAINT {pkey_name} PRIMARY KEY USING INDEX {index};
     """.format(
         table=model_cls._meta.db_table,
@@ -56,10 +58,22 @@ def _citus_composite_key_sql(model_cls):
         pkey=model_cls._meta.pk.name,
         index=index,
     )
-    if getattr(settings, 'UNIT_TESTING', False):
-        return sql, reverse_sql
-    else:
-        return migrations.RunSQL.noop, reverse_sql
+    return sql, reverse_sql
+
+
+class OnlyCitusRunSql(migrations.RunSQL):
+    """Only run the SQL if the database is CitusDB"""
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        if (
+            router.allow_migrate(schema_editor.connection.alias, app_label, **self.hints)
+            and (settings.UNIT_TESTING or self._is_citus(schema_editor))
+        ):
+            self._run_sql(schema_editor, self.sql)
+
+    def _is_citus(self, schema_editor):
+        with schema_editor.connection.cursor() as cursor:
+            return is_citus_db(cursor)
 
 
 def get_composite_primary_key_migrations(models_to_update):
@@ -67,7 +81,7 @@ def get_composite_primary_key_migrations(models_to_update):
     for model_name in models_to_update:
         model = apps.get_model('icds_reports', model_name)
         sql, reverse_sql = _citus_composite_key_sql(model)
-        operations.append(migrations.RunSQL(
+        operations.append(OnlyCitusRunSql(
             sql,
             reverse_sql,
             state_operations=[
@@ -78,3 +92,25 @@ def get_composite_primary_key_migrations(models_to_update):
             ]
         ))
     return operations
+
+
+def create_citus_distributed_table(connection, table, distribution_column):
+    res = connection.execute("""
+        select 1 from pg_dist_partition
+        where partmethod = 'h' and logicalrelid = %s::regclass
+    """, [table])
+    if res is None:
+        res = list(connection)
+    if not list(res):
+        connection.execute("select create_distributed_table(%s, %s)", [table, distribution_column])
+
+
+def create_citus_reference_table(connection, table):
+    res = connection.execute("""
+        select 1 from pg_dist_partition
+        where partmethod = 'n' and logicalrelid = %s::regclass
+    """, [table])
+    if res is None:
+        res = list(connection)
+    if not list(res):
+        connection.execute("select create_reference_table(%s)", [table])
