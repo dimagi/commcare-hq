@@ -36,7 +36,7 @@ COALESCE(SUM(agg_child_health.lunch_count_21_days),0) as lunch_count_21_days,
 COALESCE(SUM(agg_child_health.rations_21_plus_distributed),0) + COALESCE(ccr.mother_thr,0) as thr_given_21_days,
 COALESCE(SUM(agg_child_health.thr_eligible),0) + COALESCE(ccr.mother_thr_eligible,0) as total_thr_candidates
 
-FROM "public"."awc_location_months" "awc_location_months"
+FROM "public"."awc_location_months_local" "awc_location_months"
 LEFT join agg_awc on (
         ("agg_awc"."month" = "awc_location_months"."month") AND
         ("agg_awc"."state_id" = "awc_location_months"."state_id") AND

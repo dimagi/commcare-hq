@@ -1281,6 +1281,13 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     always_enabled={'icds', 'icds-cas'},
 )
 
+LOCALE_ID_INTEGRITY = StaticToggle(
+    'locale_id_integrity',
+    'Verify all locale ids in suite are present in app strings before allowing CCZ download',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
     'Bulk multimedia path management',
@@ -1530,6 +1537,13 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
+ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
+    'icds_compare_queries_against_citus',
+    'ICDS: Compare quereies against citus',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+)
+
 MOBILE_LOGIN_LOCKOUT = StaticToggle(
     'mobile_user_login_lockout',
     "On too many wrong password attempts, lock out mobile users",
@@ -1757,4 +1771,25 @@ IMPROVED_ASR_REPORT = StaticToggle(
     'This makes ASR report use the new asr_2_3 UCR report',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
+    'load_dashboard_from_citus',
+    'Use CitusDB for loading ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+PARALLEL_AGGREGATION = StaticToggle(
+    'parallel_agg'
+    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
+    'skip_orm_fixture_upload',
+    'Exposes an option in fixture api upload to skip saving through couchdbkit',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

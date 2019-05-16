@@ -76,7 +76,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
@@ -85,6 +85,16 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
         send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config)
+
+        if engine_id:
+            if getattr(adapter, 'all_adapters', None):
+                adapter = [
+                    adapter_ for adapter_ in adapter.all_adapters
+                    if adapter_.engine_id == engine_id
+                ][0]
+            elif adapter.engine_id != engine_id:
+                raise AssertionError("Engine ID does not match adapter")
+
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.

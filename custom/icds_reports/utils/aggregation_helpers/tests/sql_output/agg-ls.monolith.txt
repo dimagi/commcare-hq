@@ -1,0 +1,160 @@
+
+        DROP TABLE IF EXISTS "agg_ls_2019-01-01_4"
+        
+{}
+
+        DROP TABLE IF EXISTS "agg_ls_2019-01-01_3"
+        
+{}
+
+        DROP TABLE IF EXISTS "agg_ls_2019-01-01_2"
+        
+{}
+
+        DROP TABLE IF EXISTS "agg_ls_2019-01-01_1"
+        
+{}
+
+        CREATE TABLE "agg_ls_2019-01-01_4" (
+        CHECK (month=DATE %(start_date)s AND aggregation_level=4)
+        ) INHERITS (agg_ls)
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        CREATE TABLE "agg_ls_2019-01-01_3" (
+        CHECK (month=DATE %(start_date)s AND aggregation_level=3)
+        ) INHERITS (agg_ls)
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        CREATE TABLE "agg_ls_2019-01-01_2" (
+        CHECK (month=DATE %(start_date)s AND aggregation_level=2)
+        ) INHERITS (agg_ls)
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        CREATE TABLE "agg_ls_2019-01-01_1" (
+        CHECK (month=DATE %(start_date)s AND aggregation_level=1)
+        ) INHERITS (agg_ls)
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        INSERT INTO "agg_ls_2019-01-01_4" (
+            state_id, district_id, block_id, supervisor_id, month, awc_visits, vhnd_observed, beneficiary_vists, aggregation_level
+        )
+        (
+        SELECT
+        location.state_id, location.district_id, location.block_id, location.supervisor_id, '2019-01-01', COALESCE(awc_table.awc_visits, 0), COALESCE(vhnd_table.vhnd_observed, 0), COALESCE(beneficiary_table.beneficiary_vists, 0), 4
+        from (select distinct state_id, district_id, block_id, supervisor_id from "ucr_icds-cas_static-awc_location_88b3f9c3" where (
+        state_is_test=0 AND
+        district_is_test=0 AND
+        block_is_test=0 AND
+        supervisor_is_test=0
+        )) location
+        LEFT  JOIN "icds_dashboard_ls_awc_visits_forms" awc_table on (
+            location.supervisor_id=awc_table.supervisor_id AND
+            awc_table.month = %(start_date)s
+        )
+        LEFT  JOIN "icds_dashboard_ls_vhnd_forms" vhnd_table on (
+            location.supervisor_id = vhnd_table.supervisor_id AND
+            vhnd_table.month = %(start_date)s
+        )
+        LEFT  JOIN "icds_dashboard_ls_beneficiary_forms" beneficiary_table on (
+            location.supervisor_id = beneficiary_table.supervisor_id AND
+            beneficiary_table.month = %(start_date)s
+        )
+        )
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+            INSERT INTO "agg_ls_2019-01-01_3" (
+            vhnd_observed,
+            beneficiary_vists,
+            awc_visits,
+            aggregation_level,
+            state_id,
+            district_id,
+            block_id,
+            supervisor_id,
+            month)
+            (
+                SELECT
+                sum(vhnd_observed) as vhnd_observed,
+                sum(beneficiary_vists) as beneficiary_vists,
+                sum(awc_visits) as awc_visits,
+                3,
+                state_id,district_id,block_id,'All',
+                month
+                FROM "agg_ls_2019-01-01_4"
+                GROUP BY state_id,district_id,block_id, month
+            )
+        
+{}
+
+            INSERT INTO "agg_ls_2019-01-01_2" (
+            vhnd_observed,
+            beneficiary_vists,
+            awc_visits,
+            aggregation_level,
+            state_id,
+            district_id,
+            block_id,
+            supervisor_id,
+            month)
+            (
+                SELECT
+                sum(vhnd_observed) as vhnd_observed,
+                sum(beneficiary_vists) as beneficiary_vists,
+                sum(awc_visits) as awc_visits,
+                2,
+                state_id,district_id,'All','All',
+                month
+                FROM "agg_ls_2019-01-01_3"
+                GROUP BY state_id,district_id, month
+            )
+        
+{}
+
+            INSERT INTO "agg_ls_2019-01-01_1" (
+            vhnd_observed,
+            beneficiary_vists,
+            awc_visits,
+            aggregation_level,
+            state_id,
+            district_id,
+            block_id,
+            supervisor_id,
+            month)
+            (
+                SELECT
+                sum(vhnd_observed) as vhnd_observed,
+                sum(beneficiary_vists) as beneficiary_vists,
+                sum(awc_visits) as awc_visits,
+                1,
+                state_id,'All','All','All',
+                month
+                FROM "agg_ls_2019-01-01_2"
+                GROUP BY state_id, month
+            )
+        
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_4" (district_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_4" (block_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_4" (supervisor_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_4" (state_id, district_id, block_id, supervisor_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_3" (district_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_3" (block_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_3" (state_id, district_id, block_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_2" (district_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_2" (state_id, district_id)
+{}
+CREATE INDEX ON "agg_ls_2019-01-01_1" (state_id)
+{}
