@@ -317,7 +317,7 @@ class BlacklistTranslations(BaseTranslationsView):
     @property
     def page_context(self):
         context = super(BlacklistTranslations, self).page_context
-        context['blacklisted_translations'] = TransifexBlacklist.translations_with_app_name(self.domain)
+        context['blacklisted_translations'] = TransifexBlacklist.translations_with_names(self.domain)
         context['blacklist_form'] = self.blacklist_form
         return context
 
