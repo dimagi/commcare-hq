@@ -278,8 +278,8 @@
       <!-- ko foreach: {data: detailsModel.childDetails, as: 'child'} -->
       <div class="table-item col-md-3">
         <!-- ko if: child.name !== void(0) -->
-        <label class="col-md-5 col-form-label" data-bind="text: 'Child ' + ($index() + 1) + ':'"></label>
-        <div class="col-md-7">
+        <label class="col-form-label" data-bind="text: 'Child ' + ($index() + 1) + ':'"></label>
+        <div>
           <span data-bind="html: child.linkName"></span>
         </div>
         <!-- /ko -->

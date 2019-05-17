@@ -497,6 +497,14 @@ circle {
         -webkit-print-color-adjust: exact !important;
     }
 
+    a {
+        word-break: break-all;
+    }
+
+    a:link:after, a:visited:after {
+        content: "";
+    }
+
     .to-pdf-button {
         display: none;
     }
