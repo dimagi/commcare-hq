@@ -237,22 +237,21 @@ class CaseImportRow(object):
         self.owner_id = owner_id or self.user_id
 
     def set_parent_id(self, log_case_lookup):
-        if not self.parent_id and not self.parent_external_id:
-            return
-
-        parent_case, error = importer_util.lookup_case(
-            'case_id' if self.parent_id else 'external_id',
-            self.parent_id if self.parent_id else self.parent_external_id,
-            self.domain,
-            self.parent_type
-        )
-        log_case_lookup()
-        if parent_case:
-            self.extras['index'] = {
-                self.parent_ref: (parent_case.type, parent_case.case_id)
-            }
-        else:
-            raise exceptions.InvalidParentId('parent_id')
+        for column, search_field, search_id  in [
+                ('parent_id', 'case_id', self.parent_id),
+                ('parent_external_id', 'external_id', self.parent_external_id),
+        ]:
+            if search_id:
+                parent_case, error = importer_util.lookup_case(
+                    search_field, search_id, self.domain, self.parent_type)
+                log_case_lookup()
+                if parent_case:
+                    self.extras['index'] = {
+                        self.parent_ref: (parent_case.type, parent_case.case_id)
+                    }
+                    return
+                else:
+                    raise exceptions.InvalidParentId(column)
 
     def set_date_opened(self):
         if self.date_opened and BULK_UPLOAD_DATE_OPENED.enabled(self.domain):
