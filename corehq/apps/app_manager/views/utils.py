@@ -161,7 +161,7 @@ def get_default_followup_form_xml(context):
     return render_to_string("app_manager/default_followup_form.xml", context=context)
 
 
-def overwrite_app(app, master_build, report_map=None):
+def overwrite_app(app, master_build, report_map=None, version=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
@@ -174,7 +174,7 @@ def overwrite_app(app, master_build, report_map=None):
     for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
             app_json[key] = value
-    app_json['version'] = master_json['version']
+    app_json['version'] = version or master_json['version']
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -325,7 +325,7 @@ def update_linked_app(app, user_id):
             'Unable to pull latest master from remote CommCare HQ. Please try again later.'
         ))
 
-    if app.version is None or master_version > app.version:
+    if app.version is None or master_version > app.pulled_from_master_version:
         try:
             latest_master_build = app.get_latest_master_release()
         except ActionNotPermitted:
@@ -346,7 +346,9 @@ def update_linked_app(app, user_id):
         report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
 
         try:
-            app = overwrite_app(app, latest_master_build, report_map)
+            new_version = app.version + 1 if app.version else 1
+            app = overwrite_app(app, latest_master_build, report_map, version=new_version)
+            app.pulled_from_master_version = latest_master_build.version
         except AppEditingError as e:
             raise AppLinkError(
                 _(
