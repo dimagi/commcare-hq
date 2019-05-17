@@ -282,7 +282,10 @@ def get_app_view_context(request, app):
     if is_linked_app(app):
         context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
-            context['master_version'] = app.get_master_version()
+            context.update({
+                'master_version': app.get_master_version(),
+                'pulled_from_master_version': app.pulled_from_master_version,
+            })
         except RemoteRequestError:
             pass
     return context
