@@ -14,7 +14,7 @@ from corehq.apps.accounting.models import CustomerInvoice, SoftwarePlanVersion, 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        with open('customer_invoices.csv') as f:
+        with open('customer_invoices.csv', 'w') as f:
             writer = csv.writer(f)
             writer.writerow([
                 'Customer Invoice ID',
