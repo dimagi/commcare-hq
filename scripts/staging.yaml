@@ -55,6 +55,7 @@ branches:
   - sr-ucr-mirror # Sravan May 1
   - mk/ccz-hosting-revamp # MK May 6
   - fr/case-templates      # FR May 15
+  - jls/staging-icds-flag # Jenny May 17
   - mk/media-version-on-revert   # MK May 16
   - update-jsonobject  # Nick P May 17
 #  - web-user-reports-project-access  # Gabriella May 13
