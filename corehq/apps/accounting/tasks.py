@@ -1037,9 +1037,8 @@ def calculate_users_in_all_domains():
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)
         record_date = datetime.date.today() - relativedelta(days=1)
-        user_history = DomainUserHistory.create(
+        DomainUserHistory.objects.create(
             domain=domain,
             num_users=num_users,
             record_date=record_date
         )
-        user_history.save()

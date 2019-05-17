@@ -25,7 +25,7 @@ class TestDomainUserHistory(BaseInvoiceTestCase):
         super(TestDomainUserHistory, self).tearDown()
 
     def test_domain_user_history(self):
-        domain_user_history = DomainUserHistory.create(domain=self.domain.name,
+        domain_user_history = DomainUserHistory.objects.create(domain=self.domain.name,
                                                        num_users=self.num_users,
                                                        record_date=self.record_date)
         self.assertEqual(domain_user_history.domain, self.domain.name)
