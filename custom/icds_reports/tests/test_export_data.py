@@ -2022,7 +2022,7 @@ class TestExportData(TestCase):
                         'District',
                         'Block',
                         'Sector Name',
-                        'Name of Lady Supervisor',
+                        'Lady Supervisor User ID',
                         'Total No. of AWCs visited',
                         'Total No. of Beneficiaries Visited',
                         'Total No. of VHNDs observed'
@@ -2096,8 +2096,8 @@ class TestExportData(TestCase):
             ]
         ]
         self.assertListEqual(
-            data,
-            expected
+            expected,
+            data
         )
 
     def test_aww_performance_export(self):
