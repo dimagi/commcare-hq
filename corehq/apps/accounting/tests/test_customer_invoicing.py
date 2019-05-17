@@ -614,21 +614,19 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
 
         num_users = self.user_rate.monthly_limit + 1
         for record_date in record_dates:
-            user_history = DomainUserHistory.create(
+            DomainUserHistory.objects.create(
                 domain=self.domain,
                 num_users=num_users,
                 record_date=record_date
             )
-            user_history.save()
 
         num_users = self.advanced_rate.monthly_limit + 2
         for record_date in record_dates:
-            user_history = DomainUserHistory.create(
+            DomainUserHistory.objects.create(
                 domain=self.domain2,
                 num_users=num_users,
                 record_date=record_date
             )
-            user_history.save()
 
     def test_user_over_limit_in_quarterly_invoice(self):
         num_users = self.user_rate.monthly_limit + 1
