@@ -106,20 +106,24 @@ class Translation(object):
                 return translations
 
 
-FIELD_NAME_HELP = """
-This is the same string that appears in the bulk translations download.
-Usually the string in either case list or detail under 'property'.
-This could be an XPath, case property name, or UI property name.
-If it is an ID Mapping then the property should be '<property> (ID Mapping Text)'.
-For the values each value should be '<id mapping value> (ID Mapping Value)'.
-<br>
-Example: case detail for tasks_type could have entries:
-<ul>
-    <li>tasks_type (ID Mapping Text)</li>
-    <li>child (ID Mapping Value)</li>
-    <li>pregnancy (ID Mapping Value)</li>
-</ul>
-"""
+FIELD_NAME_HELP = (
+    'This is the same string that appears in the bulk app translation '
+    "download in the module's sheet for case list or case detail under "
+    '"property", or in the bulk ui translation download, also under '
+    '"property". This could be an XPath, case property name, or UI '
+    'property name. If it is an ID mapping then the property should be '
+    "'&lt;property&gt; (ID Mapping Text)'. For ID mapping values each "
+    "value should be '&lt;id mapping value&gt; (ID Mapping Value)'. "
+    'Create a separate blacklist item for every property.'
+    '<br>'
+    'Example: Case detail for tasks_type could have separate entries for '
+    'each of the following:'
+    '<ul>'
+    '    <li>tasks_type (ID Mapping Text)</li>'
+    '    <li>child (ID Mapping Value)</li>'
+    '    <li>pregnancy (ID Mapping Value)</li>'
+    '</ul>'
+)
 
 
 class TransifexBlacklist(models.Model):
