@@ -24,6 +24,7 @@ class Command(BaseCommand):
                 'Original SMS Cost',
                 'Correct Number of Users',
                 'Correct SMS Cost',
+                'Issue?',
             ])
 
             for invoice in CustomerInvoice.objects.order_by('id'):
@@ -53,6 +54,13 @@ class Command(BaseCommand):
                             invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
                             user_factory.num_excess_users_over_period,
                             sms_factory.unit_cost,
+                            'N' if (
+                                invoice.lineitem_set.get(feature_rate=user_rate).quantity,
+                                invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
+                            ) == (
+                                user_factory.num_excess_users_over_period,
+                                sms_factory.unit_cost,
+                            ) else 'Y',
                         ])
                     except LineItem.MultipleObjectsReturned:
                         print(invoice_id)
