@@ -163,7 +163,7 @@ def get_default_followup_form_xml(context):
     return render_to_string("app_manager/default_followup_form.xml", context=context)
 
 
-def overwrite_app(app, master_build, report_map=None):
+def overwrite_app(app, master_build, report_map=None, version=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
@@ -356,7 +356,9 @@ def update_linked_app(app, user_id, master_build=None):
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
 
         try:
-            app = overwrite_app(app, master_build, report_map)
+            new_version = app.version if app.version else 1
+            app = overwrite_app(app, master_build, report_map, version=new_version)
+            app.upstream_version = master_build.version
         except AppEditingError as e:
             raise AppLinkError(
                 _(
