@@ -28,6 +28,9 @@ class Command(BaseCommand):
                 plan_version_query = SoftwarePlanVersion.objects.filter(
                     id__in=invoice.subscriptions.values('plan_version__id')
                 )
+                if len(plan_version_query) != 1:
+                    print(invoice.id)
+                    continue
                 assert len(plan_version_query) == 1, len(plan_version_query)
                 plan_version = plan_version_query[0]
                 sample_subscription = invoice.subscriptions.filter(plan_version=plan_version)[0]
