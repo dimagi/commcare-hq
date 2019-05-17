@@ -4500,7 +4500,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
         if increment_version is None:
-            increment_version = not self.copy_of and not is_linked_app(self)
+            increment_version = not self.copy_of
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
