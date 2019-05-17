@@ -395,7 +395,7 @@ class Migrator(object):
             get_type_code=self.get_type_code,
         )
 
-    def get_document_provider(self):
+    def get_document_provider(self, **kwargs):
         return CouchDocumentProvider(self.iteration_key, self.doc_types)
 
 
