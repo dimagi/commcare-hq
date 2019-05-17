@@ -468,6 +468,13 @@ class SQLLocation(AdjListModel):
             where, **kwargs
         )
 
+    @staticmethod
+    def get_bulk_ancestors(domain, location_ids, **kwargs):
+        where = Q(domain=domain, location_id__in=location_ids)
+        return SQLLocation.objects.get_ancestors(
+            where, **kwargs
+        )
+
     def get_ancestors(self, include_self=False, **kwargs):
         where = Q(domain=self.domain, id=self.id if include_self else self.parent_id)
         return SQLLocation.objects.get_ancestors(
