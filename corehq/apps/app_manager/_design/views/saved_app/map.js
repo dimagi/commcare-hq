@@ -1,5 +1,5 @@
 function(doc){
-    if((doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp' || doc.doc_type == 'LinkedApplication') && doc.copy_of != null) {
+    if ((doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp' || doc.doc_type == 'LinkedApplication') && doc.copy_of != null) {
         emit([doc.domain, doc.copy_of, doc.version], {
             doc_type: doc.doc_type,
             short_url: doc.short_url,
@@ -22,7 +22,8 @@ function(doc){
             case_sharing: doc.case_sharing,
             build_profiles: doc.build_profiles,
             vellum_case_management: !!doc.vellum_case_management,
-            target_commcare_flavor: doc.target_commcare_flavor
+            target_commcare_flavor: doc.target_commcare_flavor,
+            upstream_version: doc.doc_type == 'LinkedApplication' ? doc.upstream_version : null,
         });
     }
 }
