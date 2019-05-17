@@ -18,6 +18,7 @@ class Command(BaseCommand):
             writer = csv.writer(f)
             writer.writerow([
                 'Customer Invoice ID',
+                'Account Name',
                 'Line Item Plan Edition',
                 'Original Number of Users',
                 'Original SMS Cost',
@@ -46,6 +47,7 @@ class Command(BaseCommand):
                     try:
                         writer.writerow([
                             invoice_id,
+                            invoice.account.name,
                             plan_version.plan.edition,
                             invoice.lineitem_set.get(feature_rate=user_rate).quantity,
                             invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
