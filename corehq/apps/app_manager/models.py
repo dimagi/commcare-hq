@@ -5545,6 +5545,8 @@ class LinkedApplication(Application):
     # This is the id of the master application
     master = StringProperty()
 
+    pulled_from_master_version = IntegerProperty()
+
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
     linked_app_translations = DictProperty()  # corresponding property: translations
@@ -5578,6 +5580,14 @@ class LinkedApplication(Application):
             return get_latest_master_app_release(self.domain_link, self.master)
         else:
             raise ActionNotPermitted
+
+    @classmethod
+    def wrap(cls, data):
+        self = super(LinkedApplication, cls).wrap(data)
+        if not self.pulled_from_master_version:
+            self.pulled_from_master_version = self.version
+
+        return self
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
