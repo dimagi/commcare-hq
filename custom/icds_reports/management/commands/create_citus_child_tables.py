@@ -142,4 +142,4 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(sql)
                 if not self.dry_run:
-                    source_connection.execute(sql)
+                    target_connection.execute(sql)
