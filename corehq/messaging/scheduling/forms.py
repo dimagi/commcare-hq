@@ -1137,6 +1137,18 @@ class ScheduleForm(Form):
 
     use_advanced_user_data_filter = True
 
+    @classmethod
+    def get_send_frequency_by_ui_type(cls, ui_type):
+        return {
+            Schedule.UI_TYPE_IMMEDIATE: cls.SEND_IMMEDIATELY,
+            Schedule.UI_TYPE_DAILY: cls.SEND_DAILY,
+            Schedule.UI_TYPE_WEEKLY: cls.SEND_WEEKLY,
+            Schedule.UI_TYPE_MONTHLY: cls.SEND_MONTHLY,
+            Schedule.UI_TYPE_CUSTOM_DAILY: cls.SEND_CUSTOM_DAILY,
+            Schedule.UI_TYPE_CUSTOM_IMMEDIATE: cls.SEND_CUSTOM_IMMEDIATE,
+            Schedule.UI_TYPE_UNKNOWN: None,
+        }[ui_type]
+
     def is_valid(self):
         # Make sure .is_valid() is called on all appropriate forms before returning.
         # Don't let the result of one short-circuit the expression and prevent calling the others.

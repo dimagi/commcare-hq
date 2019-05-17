@@ -2,15 +2,19 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.contrib import messages
+from django.db import transaction
 from django.utils.translation import ugettext as _
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.messaging.scheduling.forms import (
     ContentForm,
     ConditionalAlertCriteriaForm,
     ConditionalAlertScheduleForm,
+    ScheduleForm,
 )
+from corehq.messaging.scheduling.models.abstract import Schedule
 from corehq.messaging.scheduling.models.content import SMSContent
+from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
 from corehq import toggles
 
 
@@ -94,10 +98,11 @@ class ConditionalAlertUploader(object):
                                       "does not use SMS content.").format(index=index, id=row['id'],
                                                                           sheet_name=self.sheet_name)))
                 elif self.applies_to_rule(rule):
-                    dirty = self.update_rule(rule, row)
-                    if dirty:
-                        rule.save()
-                        success_count += 1
+                    with transaction.atomic():
+                        dirty = self.update_rule(rule, row)
+                        if dirty:
+                            rule.save()
+                            success_count += 1
                 else:
                     self.msgs.append((messages.error, _("Rule in row {index} with id {id} does not belong in " \
                         "'{sheet_name}' sheet.".format(index=index, id=row['id'], sheet_name=self.sheet_name))))
@@ -118,8 +123,36 @@ class ConditionalAlertUploader(object):
         return dirty
 
     def update_rule_message(self, rule, message):
-        # TODO
-        pass
+        schedule = rule.get_messaging_rule_schedule()
+        send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
+        {
+            ScheduleForm.SEND_IMMEDIATELY: lambda: None, # TODO: self.save_immediate_schedule,
+            ScheduleForm.SEND_DAILY: self.save_daily_schedule,
+            ScheduleForm.SEND_WEEKLY: lambda: None, # TODO: self.save_weekly_schedule,
+            ScheduleForm.SEND_MONTHLY: lambda: None, # TODO: self.save_monthly_schedule,
+            ScheduleForm.SEND_CUSTOM_DAILY: lambda: None, # TODO:, self.save_custom_daily_schedule,
+            ScheduleForm.SEND_CUSTOM_IMMEDIATE: lambda: None, # TODO: self.save_custom_immediate_schedule,
+        }[send_frequency](schedule, message)
+
+    def save_daily_schedule(self, schedule, message):
+        extra_scheduling_options = {
+            'active': schedule.active,
+            'default_language_code': schedule.default_language_code,
+            'include_descendant_locations': schedule.include_descendant_locations,
+            'location_type_filter': schedule.location_type_filter,
+            'use_utc_as_default_timezone': schedule.use_utc_as_default_timezone,
+            'user_data_filter': schedule.user_data_filter,
+        }
+
+        TimedSchedule.assert_is(schedule)
+        schedule.set_simple_daily_schedule(
+            schedule.memoized_events[0],
+            SMSContent(message=message),
+            total_iterations=schedule.total_iterations,
+            start_offset=schedule.start_offset,
+            extra_options=extra_scheduling_options,
+            repeat_every=schedule.repeat_every,
+        )
 
 
 class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
@@ -153,6 +186,7 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
         dirty = super(UntranslatedConditionalAlertUploader, self).update_rule(rule, row)
         message = self.rule_message(rule)
         if message.get('*', '') != row['message']:
+            message.update({'*': row['message']})
             self.update_rule_message(rule, message)
             dirty = True
         return dirty
