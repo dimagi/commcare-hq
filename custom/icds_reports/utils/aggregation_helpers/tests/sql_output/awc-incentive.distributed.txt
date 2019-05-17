@@ -27,7 +27,7 @@ DROP TABLE IF EXISTS "icds_db_aww_incentive_7a197ee47818209780c23ed9"
             awcm.awc_days_open,
             sum(ccsm.valid_visits) as valid_visits,
             sum(ccsm.expected_visits) as expected_visits,
-            awcm.is_launched,
+            awcm.is_launched = 'yes',
             round(sum(ccsm.expected_visits)),
             awcm.awc_days_open >= 21,
             CASE 

@@ -65,7 +65,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             awcm.awc_days_open,
             sum(ccsm.valid_visits),
             sum(ccsm.expected_visits),
-            awcm.is_launched,
+            awcm.is_launched = 'yes',
             round(sum(ccsm.expected_visits)),
             awcm.awc_days_open >= 21,
             CASE 
