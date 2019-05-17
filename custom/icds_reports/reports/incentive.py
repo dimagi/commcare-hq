@@ -60,7 +60,7 @@ class IncentiveReport(object):
             ]
 
             # AWC not launched
-            if row['is_launched'] != 'yes':
+            if not row['is_launched']:
                 AWC_NOT_LAUNCHED = 'AWC not launched'
                 row_data.extend([
                     AWC_NOT_LAUNCHED,
@@ -85,7 +85,7 @@ class IncentiveReport(object):
                 else:
                     num_open = row['awc_num_open']
                 weighing_efficiency = '{:.2%}'.format(weighing_efficiency_percent)
-                eligible_for_incentive = row['incentive_eligible']
+                eligible_for_incentive = 'Yes' if row['incentive_eligible'] else 'No'
                 no_visits = row['valid_visits'] == 0 and row['visit_denominator'] == 0
                 no_weights = row['wer_eligible'] == 0
                 if no_visits:
@@ -94,7 +94,7 @@ class IncentiveReport(object):
                     weighing_efficiency = "No expected weight measurement"
 
                 if self.beta:
-                    awh_eligible = row['awh_eligible']
+                    awh_eligible = 'Yes' if row['awh_eligible'] else 'No'
                     row_data.extend([
                         _format_infrastructure_data(row['aww_name']),
                         _format_infrastructure_data(row['contact_phone_number']),
@@ -102,7 +102,7 @@ class IncentiveReport(object):
                         weighing_efficiency,
                         eligible_for_incentive,
                         num_open,
-                        awh_eligible_for_incentive
+                        awh_eligible
                     ])
                 else:
                     row_data.extend([
