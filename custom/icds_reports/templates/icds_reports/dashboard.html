@@ -116,159 +116,163 @@
         <script src="{% static 'js/directives/adult-weight-scale/adult-weight-scale.directive.js' %}"></script>
         <script src="{% static 'js/directives/cas-export/cas-export.directive.js' %}"></script>
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
+        <script src="{% static 'js/directives/info-message/info-message.directive.js' %}"></script>
 </head>
 <body>
+
 <div id="app" ng-cloak>
     <div ng-controller="MainController" class="container-fluid">
+
         <div class="row">
-            <div class="col-xs-2 col-md-2 left-menu">
-                <navigation></navigation>
+          <div class="col-md-12">
+            <div class="row alert-maintenance" style="height: 50px;">
+              {% maintenance_alert request False %}
             </div>
-            <div class="col-xs-10 col-md-10 main-container">
-                <div class="row fixed-title">
-                    <nav class="navbar navbar-default">
-                        <div class="container-fluid">
-                            <div class="nav navbar-nav">
-                                <h2 class="dashboard-title">
-                                    <strong>{% trans "ICDS-CAS Dashboard" %}</strong>
-                                </h2>
-                            </div>
-                            <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
-                                <div class="nav-settings-bar pull-right">
-                                    <ul class="nav navbar-nav" role="menu">
-                                        <li class="dropdown">
-                                            <span class="pointer">
-                                                <a href="{% static 'media/Dashboard_Training_Manual.pdf' %}" download>
-                                                    <i class="fa fa-question-circle nav-main-icon fa-2x light-grey"
-                                                        uib-popover-html="'Download user manual'"
-                                                        popover-placement="left"
-                                                        popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
-                                                </a>
-                                            </span>
-                                        </li>
-                                        <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
-                                            <span>
-                                                <print-report></print-report>
-                                            </span>
-                                        </li>
-                                        <li class="dropdown">
-                                            <span ng-if="!isWebUser" id="settingsmenu-projectSettings"
-                                                  ng-click="reportAnIssue()"
-                                                  class="dropdown-toggle dropdown-toggle-with-icon pointer"
-                                                  data-toggle="dropdown">
-                                                <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
-                                                   popover-placement="left"
-                                                   popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
-                                            </span>
-                                            <span ng-if="isWebUser" id="settingsmenu-projectSettings"
-                                                  class="dropdown-toggle dropdown-toggle-with-icon pointer"
-                                                  data-toggle="dropdown">
-                                                  <a data-target="#modalReportIssue" data-toggle="modal">
-                                                   <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
-                                                      popover-placement="left"
-                                                      popover-trigger="'mouseenter'"
-                                                      style="margin-top: 11px;"></i>
-
+            <div class="row">
+              <div class="col-xs-2 col-md-2 left-menu">
+                  <navigation></navigation>
+              </div>
+              <div class="col-xs-10 col-md-10 main-container">
+                  <div class="row fixed-title">
+                      <nav class="navbar navbar-default">
+                          <div class="container-fluid">
+                              <div class="nav navbar-nav">
+                                  <h2 class="dashboard-title">
+                                      <strong>{% trans "ICDS-CAS Dashboard" %}</strong>
+                                  </h2>
+                              </div>
+                              <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
+                                  <div class="nav-settings-bar pull-right">
+                                      <ul class="nav navbar-nav" role="menu">
+                                          <li class="dropdown">
+                                              <span class="pointer">
+                                                  <a href="{% static 'media/Dashboard_Training_Manual.pdf' %}" download>
+                                                      <i class="fa fa-question-circle nav-main-icon fa-2x light-grey"
+                                                          uib-popover-html="'Download user manual'"
+                                                          popover-placement="left"
+                                                          popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
                                                   </a>
+                                              </span>
+                                          </li>
+                                          <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
+                                              <span>
+                                                  <print-report></print-report>
+                                              </span>
+                                          </li>
+                                          <li class="dropdown">
+                                              <span ng-if="!isWebUser" id="settingsmenu-projectSettings"
+                                                    ng-click="reportAnIssue()"
+                                                    class="dropdown-toggle dropdown-toggle-with-icon pointer"
+                                                    data-toggle="dropdown">
+                                                  <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
+                                                     popover-placement="left"
+                                                     popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
+                                              </span>
+                                              <span ng-if="isWebUser" id="settingsmenu-projectSettings"
+                                                    class="dropdown-toggle dropdown-toggle-with-icon pointer"
+                                                    data-toggle="dropdown">
+                                                    <a data-target="#modalReportIssue" data-toggle="modal">
+                                                     <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
+                                                        popover-placement="left"
+                                                        popover-trigger="'mouseenter'"
+                                                        style="margin-top: 11px;"></i>
 
-                                            </span>
-                                        </li>
-                                        <li class="dropdown">
-                                            <span id="settingsmenu-projectSettings"
-                                               class="dropdown-toggle dropdown-toggle-with-icon pointer"
-                                               data-toggle="dropdown">
-                                                <i class="fa fa-cog nav-main-icon fa-2x light-grey" uib-popover-html="'Settings'"
-                                                   popover-placement="left"
-                                                   popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
-                                            </span>
-                                            <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                                                <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
-                                                <li class="nav-login-header">
-                                                    <div class="login-container">
-                                                        <p>
-                                                            {% if user.first_name %}
-                                                                {{ user.first_name }} {{ user.last_name }}
-                                                                <br/>{{ user.username }}
-                                                            {% else %}
-                                                                {{ user.username }}
-                                                            {% endif %}
-                                                        </p>
-                                                        {% with request.couch_user.role_label.strip as role %}
-                                                            {% if role %}
-                                                                <div class="label label-default">
-                                                                    {{ role }}
-                                                                </div>
-                                                            {% endif %}
-                                                        {% endwith %}
-                                                    </div>
-                                                </li>
-                                                <li class="nav-divider divider"></li>
-                                                <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
-                                                <li>
-                                                    <a href="{% url "my_account_settings" %}"
-                                                       id="menuitem-accountsettings">
-                                                        <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
                                                     </a>
-                                                </li>
-                                                <li>
-                                                    <a href="{% url "logout" %}" id="menuitem-signout">
-                                                        <i class="icon-signout fa fa-sign-out"></i>
-                                                        {% trans 'Sign Out' %}
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </nav>
-                        </div>
-                    </nav>
-                </div>
-                <div class="row no-margin">
-                    <div class="alert-container">
-                        {% maintenance_alert request False %}
-                        <div class="alert alert-info" ng-if="showInfoMessage()">
-                            <strong>Info!</strong> Data shown is for {$ lastDayOfPreviousMonth $}. Data for {$ currentMonth $} will be displayed beginning 3rd {$ currentMonth $}.
-                        </div>
-                    </div>
-                    {% registerurl 'icds-ng-template' domain '---' %}
-                    {% registerurl 'program_summary' domain '---' %}
-                    {% registerurl 'awc_reports' domain '---' %}
-                    {% registerurl 'underweight_children' domain '---' %}
-                    {% registerurl 'prevalence_of_severe' domain '---' %}
-                    {% registerurl 'prevalence_of_stunting' domain '---' %}
-                    {% registerurl 'low_birth' domain '---' %}
-                    {% registerurl 'early_initiation' domain '---' %}
-                    {% registerurl 'icds_locations' domain %}
-                    {% registerurl 'icds_locations_ancestors' domain %}
-                    {% registerurl 'fact_sheets' domain %}
-                    {% registerurl 'exclusive-breastfeeding' domain '---' %}
-                    {% registerurl 'children_initiated' domain '---' %}
-                    {% registerurl 'institutional_deliveries' domain '---' %}
-                    {% registerurl 'immunization_coverage' domain '---' %}
-                    {% registerurl 'awc_daily_status' domain '---' %}
-                    {% registerurl 'awcs_covered' domain '---' %}
-                    {% registerurl 'registered_household' domain '---' %}
-                    {% registerurl 'enrolled_children' domain '---' %}
-                    {% registerurl 'enrolled_women' domain '---' %}
-                    {% registerurl 'lactating_enrolled_women' domain '---' %}
-                    {% registerurl 'adolescent_girls' domain '---' %}
-                    {% registerurl 'adhaar' domain '---' %}
-                    {% registerurl 'clean_water' domain '---' %}
-                    {% registerurl 'functional_toilet' domain '---' %}
-                    {% registerurl 'medicine_kit' domain '---' %}
-                    {% registerurl 'infants_weight_scale' domain '---' %}
-                    {% registerurl 'adult_weight_scale' domain '---' %}
-                    {% registerurl 'awc_locations' domain %}
-                    {% registerurl 'issnip_pdf_status' domain %}
-                    {% registerurl 'icds_export_indicator' domain %}
-                    {% registerurl 'have_access_to_location' domain %}
-                    {% registerurl 'lady_supervisor' domain %}
-                    {% registerurl 'cas_export' domain %}
-                    {% registerurl 'service_delivery_dashboard' domain %}
-                    <div class="ng-view"></div>
-                </div>
+
+                                              </span>
+                                          </li>
+                                          <li class="dropdown">
+                                              <span id="settingsmenu-projectSettings"
+                                                 class="dropdown-toggle dropdown-toggle-with-icon pointer"
+                                                 data-toggle="dropdown">
+                                                  <i class="fa fa-cog nav-main-icon fa-2x light-grey" uib-popover-html="'Settings'"
+                                                     popover-placement="left"
+                                                     popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
+                                              </span>
+                                              <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                                  <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
+                                                  <li class="nav-login-header">
+                                                      <div class="login-container">
+                                                          <p>
+                                                              {% if user.first_name %}
+                                                                  {{ user.first_name }} {{ user.last_name }}
+                                                                  <br/>{{ user.username }}
+                                                              {% else %}
+                                                                  {{ user.username }}
+                                                              {% endif %}
+                                                          </p>
+                                                          {% with request.couch_user.role_label.strip as role %}
+                                                              {% if role %}
+                                                                  <div class="label label-default">
+                                                                      {{ role }}
+                                                                  </div>
+                                                              {% endif %}
+                                                          {% endwith %}
+                                                      </div>
+                                                  </li>
+                                                  <li class="nav-divider divider"></li>
+                                                  <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
+                                                  <li>
+                                                      <a href="{% url "my_account_settings" %}"
+                                                         id="menuitem-accountsettings">
+                                                          <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
+                                                      </a>
+                                                  </li>
+                                                  <li>
+                                                      <a href="{% url "logout" %}" id="menuitem-signout">
+                                                          <i class="icon-signout fa fa-sign-out"></i>
+                                                          {% trans 'Sign Out' %}
+                                                      </a>
+                                                  </li>
+                                              </ul>
+                                          </li>
+                                      </ul>
+                                  </div>
+                              </nav>
+                          </div>
+                      </nav>
+                  </div>
+                  <div class="row no-margin">
+                      {% registerurl 'icds-ng-template' domain '---' %}
+                      {% registerurl 'program_summary' domain '---' %}
+                      {% registerurl 'awc_reports' domain '---' %}
+                      {% registerurl 'underweight_children' domain '---' %}
+                      {% registerurl 'prevalence_of_severe' domain '---' %}
+                      {% registerurl 'prevalence_of_stunting' domain '---' %}
+                      {% registerurl 'low_birth' domain '---' %}
+                      {% registerurl 'early_initiation' domain '---' %}
+                      {% registerurl 'icds_locations' domain %}
+                      {% registerurl 'icds_locations_ancestors' domain %}
+                      {% registerurl 'fact_sheets' domain %}
+                      {% registerurl 'exclusive-breastfeeding' domain '---' %}
+                      {% registerurl 'children_initiated' domain '---' %}
+                      {% registerurl 'institutional_deliveries' domain '---' %}
+                      {% registerurl 'immunization_coverage' domain '---' %}
+                      {% registerurl 'awc_daily_status' domain '---' %}
+                      {% registerurl 'awcs_covered' domain '---' %}
+                      {% registerurl 'registered_household' domain '---' %}
+                      {% registerurl 'enrolled_children' domain '---' %}
+                      {% registerurl 'enrolled_women' domain '---' %}
+                      {% registerurl 'lactating_enrolled_women' domain '---' %}
+                      {% registerurl 'adolescent_girls' domain '---' %}
+                      {% registerurl 'adhaar' domain '---' %}
+                      {% registerurl 'clean_water' domain '---' %}
+                      {% registerurl 'functional_toilet' domain '---' %}
+                      {% registerurl 'medicine_kit' domain '---' %}
+                      {% registerurl 'infants_weight_scale' domain '---' %}
+                      {% registerurl 'adult_weight_scale' domain '---' %}
+                      {% registerurl 'awc_locations' domain %}
+                      {% registerurl 'issnip_pdf_status' domain %}
+                      {% registerurl 'icds_export_indicator' domain %}
+                      {% registerurl 'have_access_to_location' domain %}
+                      {% registerurl 'lady_supervisor' domain %}
+                      {% registerurl 'cas_export' domain %}
+                      {% registerurl 'service_delivery_dashboard' domain %}
+                      <div class="ng-view"></div>
+                  </div>
+              </div>
             </div>
+          </div>
         </div>
     </div>
     <script type="text/ng-template" id="reportIssueModal.html">
