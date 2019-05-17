@@ -1,5 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from collections import defaultdict
 
 from django.contrib import admin
@@ -7,15 +7,16 @@ from django.db import models
 from django.utils.functional import cached_property
 
 from dimagi.ext.couchdbkit import (
-    Document,
     DictProperty,
+    Document,
     ListProperty,
     StringProperty,
 )
 from dimagi.utils.couch import CouchDocLockableMixIn
 
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.quickcache import quickcache
 
 
 class TranslationMixin(Document):
@@ -163,15 +164,43 @@ class TransifexBlacklist(models.Model):
         # app_id and module_id omitted because they are unfriendly
 
     @classmethod
-    def translations_with_app_name(cls, domain):
+    def translations_with_names(cls, domain):
         blacklisted = TransifexBlacklist.objects.filter(domain=domain).all().values()
-        app_ids_to_name = {app.id: app.name for app in get_brief_apps_in_domain(domain)}
+        apps_modules_by_id = get_apps_modules_by_id(domain)
         ret = []
         for trans in blacklisted:
             r = trans.copy()
-            r['app_name'] = app_ids_to_name.get(trans['app_id'], trans['app_id'])
+            app = apps_modules_by_id.get(trans['app_id'])
+            module = app['modules'].get(trans['module_id']) if app else None
+            r['app_name'] = app['name'] if app else trans['app_id']
+            r['module_name'] = module['name'] if module else trans['module_id']
             ret.append(r)
         return ret
+
+
+@quickcache(['domain'])
+def get_apps_modules_by_id(domain):
+    """
+    Return a dictionary of {
+        <app id>: {
+            'name': <app name>,
+            'modules': {
+                <module id>: {'name': <module name>}
+            }
+        }
+    }
+    """
+    apps = {}
+    for app_id in get_app_ids_in_domain(domain):
+        app = get_app(domain, app_id)
+        modules = {}
+        for module in app.get_modules():
+            modules[module.unique_id] = {'name': module.default_name(app)}
+        apps[app_id] = {
+            'name': app.name,
+            'modules': modules
+        }
+    return apps
 
 
 class TransifexOrganization(models.Model):

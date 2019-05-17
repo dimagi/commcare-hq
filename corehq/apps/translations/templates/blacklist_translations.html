@@ -21,7 +21,7 @@
           <td>{{ translation.app_name }}</td>
           <td>
             {% if translation.module_id %}
-            <a href="{% url 'view_module' domain translation.app_id translation.module_id %}">{{ translation.module_id }}</a>
+            <a href="{% url 'view_module' domain translation.app_id translation.module_id %}">{{ translation.module_name }}</a>
             {% endif %}
           </td>
           <td>{{ translation.field_type }}</td>
