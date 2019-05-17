@@ -37,6 +37,6 @@ class Command(BaseCommand):
                     invoice.id,
                     invoice.lineitem_set.filter(feature_rate__feature__feature_type=FeatureType.USER)[0].quantity,
                     invoice.lineitem_set.filter(feature_rate__feature__feature_type=FeatureType.SMS)[0].unit_cost,
-                    user_factory.quantity,
+                    user_factory.num_excess_users_over_period,
                     sms_factory.unit_cost,
                 ])
