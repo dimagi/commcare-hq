@@ -8,7 +8,7 @@ from io import open
 from django.core.management import BaseCommand
 
 from corehq.apps.accounting.invoicing import SmsLineItemFactory, UserLineItemFactory
-from corehq.apps.accounting.models import CustomerInvoice, SoftwarePlanVersion, FeatureType
+from corehq.apps.accounting.models import CustomerInvoice, SoftwarePlanVersion, FeatureType, LineItem
 
 
 class Command(BaseCommand):
@@ -42,11 +42,14 @@ class Command(BaseCommand):
                         user_rate,
                         invoice
                     )
-                    writer.writerow([
-                        invoice_id,
-                        plan_version.plan.edition,
-                        invoice.lineitem_set.get(feature_rate=user_rate).quantity,
-                        invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
-                        user_factory.num_excess_users_over_period,
-                        sms_factory.unit_cost,
-                    ])
+                    try:
+                        writer.writerow([
+                            invoice_id,
+                            plan_version.plan.edition,
+                            invoice.lineitem_set.get(feature_rate=user_rate).quantity,
+                            invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
+                            user_factory.num_excess_users_over_period,
+                            sms_factory.unit_cost,
+                        ])
+                    except LineItem.MultipleObjectsReturned:
+                        print(invoice_id)
