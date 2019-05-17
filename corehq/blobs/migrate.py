@@ -356,7 +356,7 @@ class Migrator(object):
         self.get_type_code = get_type_code
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **kw):
-        doc_provider = self.get_document_provider(kw)
+        doc_provider = self.get_document_provider(**kw)
         iterable = doc_provider.get_document_iterator(chunk_size)
         progress = ProgressManager(
             iterable,
@@ -415,10 +415,10 @@ class BackendMigrator(Migrator):
         migrator = super(BackendMigrator, self).get_doc_migrator(filename)
         return _migrator_with_worker_pool(migrator, self.reindexer, **kw)
 
-    def get_document_provider(self, kw):
+    def get_document_provider(self, date_range=None, **kw):
         iteration_key = self.iteration_key
-        if kw.get('date_range'):
-            (start, end) = kw.get('date_range')
+        if date_range:
+            (start, end) = date_range
             iteration_key = '{}-{}-{}'.format(self.iteration_key, start, end)
         return SqlDocumentProvider(iteration_key, self.reindexer)
 
