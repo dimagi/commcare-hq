@@ -50,15 +50,15 @@ class Command(BaseCommand):
                             invoice_id,
                             invoice.account.name,
                             plan_version.plan.edition,
-                            invoice.lineitem_set.get(feature_rate=user_rate).quantity,
+                            invoice.lineitem_set.get(feature_rate=user_rate).quantity if user_rate.monthly_limit != 1 else 0,
                             invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
-                            user_factory.num_excess_users_over_period,
+                            user_factory.num_excess_users_over_period if user_rate.monthly_limit != 1 else 0,
                             sms_factory.unit_cost,
                             'N' if (
-                                invoice.lineitem_set.get(feature_rate=user_rate).quantity,
+                                invoice.lineitem_set.get(feature_rate=user_rate).quantity if user_rate.monthly_limit != 1 else 0,
                                 invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
                             ) == (
-                                user_factory.num_excess_users_over_period,
+                                user_factory.num_excess_users_over_period if user_rate.monthly_limit != 1 else 0,
                                 sms_factory.unit_cost,
                             ) else 'Y',
                         ])
