@@ -25,6 +25,7 @@ class Command(BaseCommand):
             ])
 
             for invoice in CustomerInvoice.objects.order_by('id'):
+                invoice_id = invoice.id
                 for plan_version in SoftwarePlanVersion.objects.filter(
                     id__in=invoice.subscriptions.values('plan_version__id')
                 ):
@@ -42,7 +43,7 @@ class Command(BaseCommand):
                         invoice
                     )
                     writer.writerow([
-                        invoice.id,
+                        invoice_id,
                         plan_version.plan.edition,
                         invoice.lineitem_set.get(feature_rate=user_rate).quantity,
                         invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
