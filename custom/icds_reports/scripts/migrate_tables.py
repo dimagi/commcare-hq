@@ -54,9 +54,10 @@ def run_migration(
 def migrate_tables(tables, source_db, target_db, target_host, target_user, confirm, dry_run):
     commands = get_dump_load_commands(tables, source_db, target_db, target_host, target_user)
     for source_table, target_table, cmd_parts in commands:
-        print(' '.join(cmd_parts))
+        cmd = ' '.join(cmd_parts)
+        print(cmd)
         if not dry_run and (not confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
-            code = subprocess.call(cmd_parts, shell=True)
+            code = subprocess.call(cmd, shell=True)
             if code != 0:
                 sys.exit(code)
 
