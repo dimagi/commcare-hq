@@ -112,9 +112,10 @@ class Command(BaseCommand):
 
         source_engine = connection_manager.get_engine(source_db_alias)
         target_engine = connection_manager.get_engine(target_db_alias)
-        with source_engine.begin() as source_conn, target_engine.begin() as target_conn:
+        with source_engine.begin() as source_conn:
             for table in keep_child_tables:
-                self.create_child_tables(source_conn, target_conn, table)
+                with target_engine.begin() as target_conn:
+                    self.create_child_tables(source_conn, target_conn, table)
 
     def create_child_tables(self, source_connection, target_connection, table_name):
         for child_table in self.parent_child_mapping[table_name]:
