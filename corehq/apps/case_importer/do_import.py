@@ -5,24 +5,22 @@ from collections import namedtuple
 
 from django.utils.functional import cached_property
 
-from couchdbkit.exceptions import ResourceNotFound
-
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
+from dimagi.utils.logging import notify_exception
 from soil.progress import set_task_progress
 
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert import soft_assert
 
+from . import exceptions
 from . import util as importer_util
 from .const import LookupErrors
-from . import exceptions
 
 CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
@@ -141,13 +139,13 @@ class _Importer(object):
                     self.user.user_id,
                     device_id=__name__ + ".do_import",
                 )
-
-                if form.is_error:
-                    self.errors.add(exceptions.ImportErrorMessage(), form.problem)
             except Exception:
+                notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
                 for row_number, case in caseblocks:
                     self.errors.add(exceptions.ImportErrorMessage(), row_number)
             else:
+                if form.is_error:
+                    self.errors.add(exceptions.ImportErrorMessage(), form.problem)
                 self.record_form(form.form_id)
                 properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
                 if self.config.case_type and len(properties):
