@@ -356,6 +356,9 @@ class Migrator(object):
         self.get_type_code = get_type_code
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **kw):
+        if kw.get('date_range'):
+            start, end = kw.get('date_range')
+            self.iteration_key = '{}-{}-{}'.format(self.iteration_key, start, end)
         doc_provider = self.get_document_provider()
         iterable = doc_provider.get_document_iterator(chunk_size)
         progress = ProgressManager(
