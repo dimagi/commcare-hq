@@ -5577,8 +5577,8 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    # This is the id of the master application
-    master = StringProperty()
+    master = StringProperty()   # Legacy, should be removed once all linked apps support multiple masters
+    pulled_from_master_version = IntegerProperty()
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5613,6 +5613,15 @@ class LinkedApplication(Application):
             return get_latest_master_app_release(self.domain_link, self.master)
         else:
             raise ActionNotPermitted
+
+    @classmethod
+    def wrap(cls, data):
+        # Legacy linked apps pulled the master's version along with its content.
+        # So if the master's version wasn't recorded, that means it matches this app's version.
+        if not hasattr(data, 'pulled_from_master_version'):
+            data['pulled_from_master_version'] = data['version']
+
+        return super(LinkedApplication, cls).wrap(data)
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
