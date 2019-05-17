@@ -1,22 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from collections import defaultdict
 
 from django.contrib import admin
 from django.db import models
 from django.utils.functional import cached_property
 
-from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
-    Document,
     DictProperty,
+    Document,
     ListProperty,
     StringProperty,
 )
 from dimagi.utils.couch import CouchDocLockableMixIn
 
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.quickcache import quickcache
 
 
 class TranslationMixin(Document):
