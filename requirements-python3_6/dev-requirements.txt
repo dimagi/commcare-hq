@@ -86,11 +86,11 @@ fixture==1.5.11
 freezegun==0.3.11
 funcsigs==1.0.2
 future==0.17.1            # via commonmark
-gevent==1.4.0
+gevent==1.2.2
 ghdiff==0.4
 gnureadline==6.3.8
 graphviz==0.7
-greenlet==0.4.15
+greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1
