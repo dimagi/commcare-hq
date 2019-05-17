@@ -14,7 +14,7 @@ from corehq.apps.accounting.models import CustomerInvoice, SoftwarePlanVersion
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        invoice_to_plan_version_to_domains = defaultdict(defaultdict(list))
+        invoice_to_plan_version_to_domains = defaultdict(dict)
         for invoice in CustomerInvoice.objects.order_by('id'):
             for plan_version in SoftwarePlanVersion.objects.filter(
                 id__in=invoice.subscriptions.values('plan_version__id')
