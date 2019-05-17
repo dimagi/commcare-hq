@@ -25,29 +25,27 @@ class Command(BaseCommand):
             ])
 
             for invoice in CustomerInvoice.objects.order_by('id'):
-                plan_version_query = SoftwarePlanVersion.objects.filter(
+                for plan_version in SoftwarePlanVersion.objects.filter(
                     id__in=invoice.subscriptions.values('plan_version__id')
-                )
-                if len(plan_version_query) != 1:
-                    print(invoice.id)
-                    continue
-                assert len(plan_version_query) == 1, len(plan_version_query)
-                plan_version = plan_version_query[0]
-                sample_subscription = invoice.subscriptions.filter(plan_version=plan_version)[0]  # any will do
-                sms_factory = SmsLineItemFactory(
-                    sample_subscription,
-                    plan_version.feature_rates.get(feature__feature_type=FeatureType.SMS),
-                    invoice
-                )
-                user_factory = UserLineItemFactory(
-                    sample_subscription,
-                    plan_version.user_feature,
-                    invoice
-                )
-                writer.writerow([
-                    invoice.id,
-                    invoice.lineitem_set.get(feature_rate__feature__feature_type=FeatureType.USER).quantity,
-                    invoice.lineitem_set.get(feature_rate__feature__feature_type=FeatureType.SMS).unit_cost,
-                    user_factory.num_excess_users_over_period,
-                    sms_factory.unit_cost,
-                ])
+                ):
+                    sms_rate = plan_version.feature_rates.get(feature__feature_type=FeatureType.SMS)
+                    user_rate = plan_version.feature_rates.get(feature__feature_type=FeatureType.USER)
+                    sample_subscription = invoice.subscriptions.filter(plan_version=plan_version)[0]  # any will do
+                    sms_factory = SmsLineItemFactory(
+                        sample_subscription,
+                        sms_rate,
+                        invoice
+                    )
+                    user_factory = UserLineItemFactory(
+                        sample_subscription,
+                        user_rate,
+                        invoice
+                    )
+                    writer.writerow([
+                        invoice.id,
+                        plan_version.plan.edition,
+                        invoice.lineitem_set.get(feature_rate=user_rate).quantity,
+                        invoice.lineitem_set.get(feature_rate=sms_rate).unit_cost,
+                        user_factory.num_excess_users_over_period,
+                        sms_factory.unit_cost,
+                    ])
