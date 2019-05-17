@@ -81,7 +81,7 @@ def get_dump_load_commands(tables, source_db, target_db, target_host, target_use
         cmd = 'pg_dump -t {} {} --data-only --no-acl'.format(source_table, source_db)
         if target_table:
             cmd += ' | sed "s/{}/{}/g"'.format(source_table, target_table)
-        cmd += ' | psql -h {} -U {}'.format(
+        cmd += ' | psql -h {} -U {} -v ON_ERROR_STOP=1 {} --single-transaction'.format(
             target_host, target_user, target_db
         )
 
