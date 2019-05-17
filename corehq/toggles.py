@@ -1335,7 +1335,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'icds-new', 'india', 'staging'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
