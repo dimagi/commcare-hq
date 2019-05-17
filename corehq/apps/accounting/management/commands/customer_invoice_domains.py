@@ -31,8 +31,16 @@ class Command(BaseCommand):
                 assert len(plan_version_query) == 1, len(plan_version_query)
                 plan_version = plan_version_query[0]
                 sample_subscription = invoice.subscriptions.filter(plan_version=plan_version)[0]
-                sms_factory = SmsLineItemFactory(sample_subscription, None, invoice)
-                user_factory = UserLineItemFactory(sample_subscription, None, invoice)
+                sms_factory = SmsLineItemFactory(
+                    sample_subscription,
+                    plan_version.feature_rates.get(feature__feature_type=FeatureType.SMS),
+                    invoice
+                )
+                user_factory = UserLineItemFactory(
+                    sample_subscription,
+                    plan_version.user_feature,
+                    invoice
+                )
                 writer.writerow([
                     invoice.id,
                     invoice.lineitem_set.filter(feature_rate__feature__feature_type=FeatureType.USER)[0].quantity,
