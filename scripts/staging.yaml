@@ -57,5 +57,4 @@ branches:
   - fr/case-templates      # FR May 15
   - mk/media-version-on-revert   # MK May 16
 #  - web-user-reports-project-access  # Gabriella May 13
-  - upgrade-gevent-may-16  # Nick P May 16
 submodules: {}
