@@ -119,3 +119,11 @@ class ImportErrorMessage(CaseRowError):
     message = ugettext_lazy(
         "Problems in importing cases. Please check the Excel file."
     )
+
+
+class TooManyMatches(CaseRowError):
+    title = ugettext_noop('Too Many Matches')
+    message = ugettext_lazy(
+        "These rows matched more than one case at the same time - this means "
+        "that there are cases in your system with the same external ID."
+    )

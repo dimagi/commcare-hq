@@ -35,7 +35,6 @@ class _Importer(object):
 
         self.created_count = 0
         self.match_count = 0
-        self.too_many_matches = 0
         self.num_chunks = 0
         self.errors = importer_util.ImportErrorDetail()
 
@@ -94,8 +93,7 @@ class _Importer(object):
             if not self.config.create_new_cases:
                 return
         elif error == LookupErrors.MultipleResults:
-            self.too_many_matches += 1
-            return
+            raise exceptions.TooManyMatches()
 
         row.set_owner_id(self.name_cache, self.id_cache)
         row.set_parent_id(self.log_case_lookup)
@@ -172,7 +170,6 @@ class _Importer(object):
         return {
             'created_count': self.created_count,
             'match_count': self.match_count,
-            'too_many_matches': self.too_many_matches,
             'errors': self.errors.as_dict(),
             'num_chunks': self.num_chunks,
         }
