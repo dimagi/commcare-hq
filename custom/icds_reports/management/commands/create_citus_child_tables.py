@@ -114,32 +114,32 @@ class Command(BaseCommand):
         target_engine = connection_manager.get_engine(target_db_alias)
         with source_engine.begin() as source_conn:
             for table in keep_child_tables:
-                with target_engine.begin() as target_conn:
-                    self.create_child_tables(source_conn, target_conn, table)
+                self.create_child_tables(source_conn, target_engine, table)
 
-    def create_child_tables(self, source_connection, target_connection, table_name):
+    def create_child_tables(self, source_connection, target_engine, table_name):
         for child_table in self.parent_child_mapping[table_name]:
-            if not table_exists(target_connection, child_table):
-                insp = sqlinspect(source_connection)
-                # only interested in child table constraint and not inherited
-                constraints = [
-                    constraint for constraint in insp.get_check_constraints(child_table)
-                    if constraint['name'].startswith(child_table)
-                ]
-                constraints_sql = [
-                    'CHECK ({})'.format(constraint['sqltext'])
-                    for constraint in constraints
-                ]
-                sql = """
-                    CREATE TABLE IF NOT EXISTS "{tablename}" (
-                        {constraints},
-                        LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
-                    ) INHERITS ("{parent_tablename}")
-                """.format(
-                    parent_tablename=table_name,
-                    tablename=child_table,
-                    constraints=', '.join(constraints_sql)
-                )
-                self.stdout.write(sql)
-                if not self.dry_run:
-                    target_connection.execute(sql)
+            with target_engine.begin() as target_conn:
+                if not table_exists(target_conn, child_table):
+                    insp = sqlinspect(source_connection)
+                    # only interested in child table constraint and not inherited
+                    constraints = [
+                        constraint for constraint in insp.get_check_constraints(child_table)
+                        if constraint['name'].startswith(child_table)
+                    ]
+                    constraints_sql = [
+                        'CHECK ({})'.format(constraint['sqltext'])
+                        for constraint in constraints
+                    ]
+                    sql = """
+                        CREATE TABLE IF NOT EXISTS "{tablename}" (
+                            {constraints},
+                            LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+                        ) INHERITS ("{parent_tablename}")
+                    """.format(
+                        parent_tablename=table_name,
+                        tablename=child_table,
+                        constraints=', '.join(constraints_sql)
+                    )
+                    self.stdout.write(sql)
+                    if not self.dry_run:
+                        target_conn.execute(sql)
