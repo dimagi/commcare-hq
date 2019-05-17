@@ -18,7 +18,7 @@ class Command(BaseCommand):
             writer = csv.writer(f)
             writer.writerow([
                 'Customer Invoice ID',
-                'Line Item Plan Edition'
+                'Line Item Plan Edition',
                 'Original Number of Users',
                 'Original SMS Cost',
                 'Correct Number of Users',
