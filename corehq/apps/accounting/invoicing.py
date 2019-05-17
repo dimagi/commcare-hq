@@ -486,9 +486,14 @@ class LineItemFactory(object):
         if self.subscription.subscriber.domain is None:
             raise LineItemError("No domain could be obtained as the subscriber.")
         if self.subscription.account.is_customer_billing_account:
-            return [sub.subscriber.domain for sub in
-                    self.subscription.account.subscription_set
-                        .filter(plan_version=self.subscription.plan_version)]
+            return list(self.subscription.account.subscription_set.filter(
+                Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+                date_start__lte=self.invoice.date_end
+            ).filter(
+                plan_version=self.subscription.plan_version
+            ).values_list(
+                'subscriber__domain', flat=True
+            ))
         return [self.subscription.subscriber.domain]
 
     def create(self):
