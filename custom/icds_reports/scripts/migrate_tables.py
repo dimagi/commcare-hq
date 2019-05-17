@@ -61,8 +61,7 @@ def run_migration(
 
 def migrate_tables(tables, source_db, target_db, target_host, target_user, confirm, dry_run):
     commands = get_dump_load_commands(tables, source_db, target_db, target_host, target_user)
-    for source_table, target_table, cmd_parts in commands:
-        cmd = ' '.join(cmd_parts)
+    for source_table, target_table, cmd in commands:
         print(cmd)
         if not dry_run and (not confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
             code = subprocess.call(cmd, shell=True)
@@ -78,14 +77,15 @@ def filter_tables_by_date(tables, start_date, end_date):
 
 
 def get_dump_load_commands(tables, source_db, target_db, target_host, target_user):
-    dump_opts = ['--data-only', '--no-acl']
-    load_opts = ['-h', target_host, '-U', target_user, target_db]
     for source_table, target_table in tables:
-        cmd_parts = ['pg_dump', '-t', source_table, source_db] + dump_opts
+        cmd = 'pg_dump -t {} {} --data-only --no-acl'.format(source_table, source_db)
         if target_table:
-            cmd_parts += ['|', 'sed', '"s/{}/{}/g"'.format(source_table, target_table)]
-        cmd_parts += ['|', 'psql'] + load_opts
-        yield source_table, target_table, cmd_parts
+            cmd += ' | sed "s/{}/{}/g"'.format(source_table, target_table)
+        cmd += ' | psql -h {} -U {}'.format(
+            target_host, target_user, target_db
+        )
+
+        yield source_table, target_table, cmd
 
 
 def _confirm(msg):
