@@ -65,7 +65,6 @@ plain_tables = [
     AggregateInactiveAWW._meta.db_table,
     IcdsFile._meta.db_table,
     ICDSAuditEntryRecord._meta.db_table,
-
 ]
 
 
@@ -126,12 +125,19 @@ class Command(BaseCommand):
                     constraint for constraint in insp.get_check_constraints(child_table)
                     if constraint['name'].startswith(child_table)
                 ]
+                constraints_sql = [
+                    'CHECK ({})'.format(constraint['sqltext'])
+                    for constraint in constraints
+                ]
                 sql = """
-                    CREATE TABLE IF NOT EXISTS "{tablename}" ({constraint}) INHERITS ("{parent_tablename}")
+                    CREATE TABLE IF NOT EXISTS "{tablename}" (
+                        {constraints},
+                        LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+                    ) INHERITS ("{parent_tablename}")
                 """.format(
                     parent_tablename=table_name,
                     tablename=child_table,
-                    constraint='CHECK ({})'.format(constraints[0]['sqltext']) if constraints else ''
+                    constraints=', '.join(constraints_sql)
                 )
                 self.stdout.write(sql)
                 if not self.dry_run:
