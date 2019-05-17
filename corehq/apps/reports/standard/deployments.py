@@ -232,7 +232,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         location_list = ['---'] * len(location_type_map)
 
         while current_location is not None:
-            location_list[location_type_map[location_map_id[current_location].location_type_id]['position']] = location_map_id[current_location].name
+            location_list[location_type_map[location_map_id[current_location].location_type_id]['position']] = \
+                location_map_id[current_location].name
             current_location = location_map_id[current_location].parent_id
 
         return location_list
@@ -292,13 +293,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 app_name or "---", build_version, commcare_version or '---'
             ]
 
-            if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and \
-                toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['email', 'export']:
-                current_location = location_map[user['location_id']].id if user['location_id'] in location_map else None
+            if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
+                    toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['email', 'export']:
+                current_location = location_map[user['location_id']].id \
+                    if user['location_id'] in location_map else None
                 if current_location:
                     location_data = self.user_locations(location_map_id, current_location, self.location_type_map)
                 else:
-                    location_data = ['---']*len(self.location_type_map)
+                    location_data = ['---'] * len(self.location_type_map)
 
                 row_data[1:1] = location_data
 
@@ -395,10 +397,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         table = list(result[0][1])
         location_names = []
 
-        if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and \
-            toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['email', 'export']:
-
-            location_names = ['']*len(self.location_type_map)
+        if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
+                toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['email', 'export']:
+            location_names = [''] * len(self.location_type_map)
 
             for key, value in self.location_type_map.iteritems():
                 location_names[value['position']] = value['name']
@@ -407,9 +408,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for row in table[1:]:
             # Last submission
-            row[len(location_names)+1] = _fmt_timestamp(row[len(location_names)+1])
+            row[len(location_names) + 1] = _fmt_timestamp(row[len(location_names) + 1])
             # Last sync
-            row[len(location_names)+2] = _fmt_timestamp(row[len(location_names)+2])
+            row[len(location_names) + 2] = _fmt_timestamp(row[len(location_names) + 2])
         result[0][1] = table
         return result
 
