@@ -10,7 +10,7 @@ from django.test import TestCase
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting.invoicing import CustomerAccountInvoiceFactory, LineItemFactory
+from corehq.apps.accounting.invoicing import LineItemFactory
 from corehq.apps.domain.models import Domain
 from corehq.util.dates import get_previous_month_date_range
 
