@@ -25,7 +25,8 @@ describe('Person models', function () {
         assert.isTrue(personModel.hasOwnProperty('id'));
         assert.isTrue(personModel.hasOwnProperty('name'));
         assert.isTrue(personModel.hasOwnProperty('gender'));
-        assert.isTrue(personModel.hasOwnProperty('status'));
+        assert.isTrue(personModel.hasOwnProperty('maritalStatus'));
+        assert.isTrue(personModel.hasOwnProperty('migrationStatus'));
         assert.isTrue(personModel.hasOwnProperty('dob'));
         assert.isTrue(personModel.hasOwnProperty('marriedAt'));
         assert.isTrue(personModel.hasOwnProperty('aadhaarNo'));
