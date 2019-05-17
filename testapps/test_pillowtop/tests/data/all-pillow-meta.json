@@ -9,7 +9,7 @@
     "ApplicationToElasticsearchPillow": {
         "advertised_name": "ApplicationToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "ApplicationToElasticsearchPillow-test_hqapps_2019-01-23",
+        "checkpoint_id": "ApplicationToElasticsearchPillow-test_hqapps_2019-05-17",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ApplicationToElasticsearchPillow"
     },
