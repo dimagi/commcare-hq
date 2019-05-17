@@ -28,7 +28,7 @@ def run_migration(
     table_path, source_db,
     target_db, target_host, target_user,
     start_date, end_date,
-    only_table, confirm, dry_run
+    start_table, only_table, confirm, dry_run
 ):
     tables = []
     with open(table_path, 'r') as file:
@@ -37,6 +37,14 @@ def run_migration(
             tables.append((source_table, parse_date(date_str, date.max), target_table))
 
     filtered_tables = filter_tables_by_date(tables, start_date, end_date)
+    if start_table:
+        start_index = [i for i, t in enumerate(filtered_tables) if t[0] == start_table]
+        if not start_index:
+            raise Exception('start table not found')
+        else:
+            start_index = start_index[0]
+            filtered_tables = filtered_tables[start_index:]
+
     if only_table:
         filtered_tables = [
             table for table in filtered_tables if table[0] == only_table
@@ -130,6 +138,10 @@ def main():
         help='Only migrate tables with date before this date. Format YYYY-MM-DD',
     )
     parser.add_argument(
+        '--start-table',
+        help='Skip all tables up to this one',
+    )
+    parser.add_argument(
         '--table',
         help='Only migrate this table',
     )
@@ -150,7 +162,7 @@ def main():
         args.table_path, args.source_db,
         args.target_db, args.target_host, args.target_user,
         args.start_date, args.end_date,
-        args.table, args.confirm, args.dry_run
+        args.start_table, args.table, args.confirm, args.dry_run
     )
 
 
