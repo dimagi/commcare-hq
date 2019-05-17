@@ -329,15 +329,19 @@ class AddTransifexBlacklistForm(forms.ModelForm):
                 if module_id == module['unique_id']:
                     break
             else:
-                raise forms.ValidationError("Module {} not found in app {}".format(module_id, app_json['name']))
+                self.add_error('module_id', "Module {} not found in app {}".format(module_id, app_json['name']))
 
     def _check_module_not_ui_translation(self, module_id, field_type):
         if module_id and field_type == 'ui':
-            raise forms.ValidationError("Leave Module ID blank for UI translations")
+            self.add_error(field=None, error=forms.ValidationError({
+                'module_id': 'Leave Module ID blank for UI translations',
+                'field_type': 'Specify "Case List" or "Case Detail" for a module. '
+                              'UI translations apply to the whole app.',
+            }))
 
     def _check_module_for_case_list_detail(self, module_id, field_type):
         if not module_id and field_type != 'ui':
-            raise forms.ValidationError("Module ID must be given for Case List or Case Detail")
+            self.add_error('module_id', 'Module ID must be given for "Case List" or "Case Detail"')
 
     class Meta(object):
         model = TransifexBlacklist
