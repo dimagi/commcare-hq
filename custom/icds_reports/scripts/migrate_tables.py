@@ -8,7 +8,6 @@ import subprocess
 import sys
 from datetime import datetime, date
 
-import csv342 as csv
 from six.moves import input
 
 logger = logging.getLogger(__name__)
@@ -31,11 +30,11 @@ def run_migration(
     start_date, end_date,
     only_table, confirm, dry_run
 ):
+    tables = []
     with open(table_path, 'r') as file:
-        tables = [
-            (source_table, parse_date(date_str, date.max), target_table)
-            for source_table, date_str, target_table in csv.reader(file)
-        ]
+        for line in file.readlines():
+            source_table, date_str, target_table = line.strip().split(',')
+            tables.append((source_table, parse_date(date_str, date.max), target_table))
 
     filtered_tables = filter_tables_by_date(tables, start_date, end_date)
     if only_table:
