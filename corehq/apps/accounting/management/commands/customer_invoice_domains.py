@@ -19,7 +19,7 @@ class Command(BaseCommand):
             for plan_version in SoftwarePlanVersion.objects.filter(
                 id__in=invoice.subscriptions.values('plan_version__id')
             ).order_by('id'):
-                sample_subscription = invoice.subscriptions.filter(plan_version=plan_version)
+                sample_subscription = invoice.subscriptions.filter(plan_version=plan_version)[0]
                 factory = LineItemFactory(sample_subscription, None, invoice)
                 invoice_to_plan_version_to_domains[invoice.id][plan_version.id] = factory.subscribed_domains
         print(json.dumps(invoice_to_plan_version_to_domains))
