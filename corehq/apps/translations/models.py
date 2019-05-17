@@ -109,7 +109,7 @@ class Translation(object):
 FIELD_NAME_HELP = """
 This is the same string that appears in the bulk translations download.
 Usually the string in either case list or detail under 'property'.
-This could be an xpath or case property name.
+This could be an XPath, case property name, or UI property name.
 If it is an ID Mapping then the property should be '<property> (ID Mapping Text)'.
 For the values each value should be '<id mapping value> (ID Mapping Value)'.
 <br>
@@ -133,12 +133,13 @@ class TransifexBlacklist(models.Model):
 
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
-    module_id = models.CharField(max_length=255)
+    module_id = models.CharField(max_length=255, blank=True)
     field_type = models.CharField(
         max_length=100,
         choices=(
             ('detail', 'Case Detail'),
             ('list', 'Case List'),
+            ('ui', 'UI'),
         )
     )
     field_name = models.TextField(help_text=FIELD_NAME_HELP)
