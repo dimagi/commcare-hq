@@ -190,6 +190,9 @@
         "vellum_case_management": {
             "type": "boolean"
         },
+        "upstream_version": {
+            "type": "long"
+        },
         "version": {
             "type": "long"
         },
