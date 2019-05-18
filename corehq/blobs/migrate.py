@@ -422,6 +422,7 @@ class BackendMigrator(Migrator):
         iteration_key = self.iteration_key
         if date_range:
             (start, end) = date_range
+            self.reindexer.date_range = date_range
             iteration_key = '{}-{}-{}'.format(self.iteration_key, start, end)
         return SqlDocumentProvider(iteration_key, self.reindexer)
 
