@@ -52,6 +52,6 @@ class DashboardQueryExperiment(laboratory.Experiment):
         CitusDashboardTiming.objects.create(
             data_source=self.context['data_source'],
             context=self.context,
-            control_duration=control.duration,
-            candidate_duration=candidate.duration
+            control_duration=control.duration.total_seconds(),
+            candidate_duration=candidate.duration.total_seconds()
         )

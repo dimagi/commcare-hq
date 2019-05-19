@@ -3,19 +3,19 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
-    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
+  <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
+  <script src="{% static "case/js/case_hierarchy.js" %}"></script>
 {% endblock %}
 
 {% block patient-tab-container %}
-<script>
+  <script>
     // have to do this here too because this page is loaded asynchronously
     $(function () {
-        $(".timeago").timeago();
+      $(".timeago").timeago();
     });
-</script>
+  </script>
 
-<div class="row">
+  <div class="row">
     {% include "case/partials/case_hierarchy.html" %}
-</div>
+  </div>
 {% endblock %}

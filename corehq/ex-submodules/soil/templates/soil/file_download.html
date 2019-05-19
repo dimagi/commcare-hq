@@ -2,15 +2,15 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block title %}
-    {% trans "File Downloader" %}
+  {% trans "File Downloader" %}
 {% endblock title %}
 {% block extrahead %}
-    {% javascript_libraries %}
-    <script src="{% static "soil/js/file_download.js" %}"></script>
+  {% javascript_libraries %}
+  <script src="{% static "soil/js/file_download.js" %}"></script>
 {% endblock extrahead %}
 {% block content %}
-<h2>{% trans "Preparing download. This may take some time..." %}</h2>
-    <div class="downloader_container" id="display_{{ download_id }}"
-         data-download-id="{{ download_id }}"
-         data-url="{% url 'ajax_job_poll' download_id %}"></div>
+  <h2>{% trans "Preparing download. This may take some time..." %}</h2>
+  <div class="downloader_container" id="display_{{ download_id }}"
+       data-download-id="{{ download_id }}"
+       data-url="{% url 'ajax_job_poll' download_id %}"></div>
 {% endblock content %}

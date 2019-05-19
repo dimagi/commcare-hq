@@ -604,7 +604,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 columns.append(column_name)
         if self.sql_settings.primary_key:
             if set(columns) != set(self.sql_settings.primary_key):
-                raise BadSpecError("Primary key columns must have is_primary_key set to true")
+                raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
             columns = self.sql_settings.primary_key
         return columns
 
@@ -1279,3 +1279,33 @@ def _filter_by_server_env(configs):
 
 
 _Validation = namedtuple('_Validation', 'name error_message validation_function')
+
+
+class ReportComparisonException(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField()
+    exception = models.TextField()
+
+
+class ReportComparisonDiff(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField()
+    control = JSONField()
+    candidate = JSONField()
+    diff = JSONField()
+
+
+class ReportComparisonTiming(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField()
+    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
+    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

@@ -1328,7 +1328,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'icds-new', 'india', 'staging'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1771,6 +1771,20 @@ IMPROVED_ASR_REPORT = StaticToggle(
     'This makes ASR report use the new asr_2_3 UCR report',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
+    'load_dashboard_from_citus',
+    'Use CitusDB for loading ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+PARALLEL_AGGREGATION = StaticToggle(
+    'parallel_agg'
+    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
 
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(

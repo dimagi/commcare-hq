@@ -1,23 +1,23 @@
 {% load i18n %}
 <table class="table table-striped table-hover">
-{% for attach_key, attachment in case.case_attachments.items %}
-<tr><td>
-<dl class="dl-horizontal">
-    {% if not forloop.first %}<br>{% endif %}
-    <dt>{% trans "Case Property" %}</dt>
+  {% for attach_key, attachment in case.case_attachments.items %}
+    <tr><td>
+      <dl class="dl-horizontal">
+        {% if not forloop.first %}<br>{% endif %}
+        <dt>{% trans "Case Property" %}</dt>
         <dd>{{ attach_key }}</dd>
-    <dt>{% trans "File Type" %}</dt>
+        <dt>{% trans "File Type" %}</dt>
         <dd>{{ attachment.content_type }}</dd>
-    <dt>{% trans "File Size" %}</dt>
+        <dt>{% trans "File Size" %}</dt>
         <dd>{{ attachment.attachment_size }} bytes</dd>
-    {% if attachment.is_image %}
-        <dt>{% trans "Image" %}</dt>
-        <dd><img src="{% url "api_case_attachment" domain=case.domain case_id=case.case_id attachment_id=attach_key %}"></dd>
-    {% else %}
-        <dt>{% trans "Link" %}</dt>
-        <dd><a href="{% url "api_case_attachment" domain=case.domain case_id=case.case_id attachment_id=attach_key %}">{% trans "Download" %}</a></dd>
-    {% endif %}
-</dl>
-</td></tr>
-{% endfor %}
+        {% if attachment.is_image %}
+          <dt>{% trans "Image" %}</dt>
+          <dd><img src="{% url "api_case_attachment" domain=case.domain case_id=case.case_id attachment_id=attach_key %}"></dd>
+        {% else %}
+          <dt>{% trans "Link" %}</dt>
+          <dd><a href="{% url "api_case_attachment" domain=case.domain case_id=case.case_id attachment_id=attach_key %}">{% trans "Download" %}</a></dd>
+        {% endif %}
+      </dl>
+    </td></tr>
+  {% endfor %}
 </table>
