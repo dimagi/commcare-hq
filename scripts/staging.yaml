@@ -59,4 +59,5 @@ branches:
   - update-jsonobject  # Nick P May 17
 #  - web-user-reports-project-access  # Gabriella May 13
   - jls/linked-app-incremental-versioning # Jenny May 20
+  - es/case-import  # Ethan May 20
 submodules: {}
