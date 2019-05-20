@@ -33,10 +33,7 @@ class _Importer(object):
         self.task = task
         self._record_form_callback = record_form_callback
 
-        self.created_count = 0
-        self.match_count = 0
-        self.num_chunks = 0
-        self.errors = importer_util.ImportErrorDetail()
+        self.results = importer_util.ImportResults()
 
         self.id_cache = {}
         self.name_cache = {}
@@ -62,7 +59,7 @@ class _Importer(object):
             try:
                 self.import_row(row_num, row)
             except exceptions.CaseRowError as error:
-                self.errors.add(error, row_num)
+                self.results.add_error(row_num, error)
 
         self.commit_caseblocks()
 
@@ -102,10 +99,10 @@ class _Importer(object):
                 if row.external_id:
                     self.uncreated_external_ids.add(row.external_id)
                 caseblock = row.get_create_caseblock()
-                self.created_count += 1
+                self.results.add_created(row_num)
             else:
                 caseblock = row.get_update_caseblock(case)
-                self.match_count += 1
+                self.results.add_updated(row_num)
         except CaseBlockError:
             raise exceptions.CaseGeneration()
 
@@ -120,7 +117,7 @@ class _Importer(object):
     def commit_caseblocks(self):
         if self._caseblocks:
             self._submit_caseblocks(self._caseblocks)
-            self.num_chunks += 1
+            self.results.num_chunks += 1
             self._caseblocks = []
             self.uncreated_external_ids = set()
 
@@ -137,10 +134,10 @@ class _Importer(object):
             except Exception:
                 notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
                 for row_number, case in caseblocks:
-                    self.errors.add(exceptions.ImportErrorMessage(), row_number)
+                    self.results.add_error(row_number, exceptions.ImportErrorMessage())
             else:
                 if form.is_error:
-                    self.errors.add(exceptions.ImportErrorMessage(), form.problem)
+                    self.results.add_error(form.problem, exceptions.ImportErrorMessage())
                 self.record_form(form.form_id)
                 properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
                 if self.config.case_type and len(properties):
@@ -161,15 +158,6 @@ class _Importer(object):
     def record_form(self, form_id):
         if self._record_form_callback:
             self._record_form_callback(form_id)
-
-    @property
-    def outcome(self):
-        return {
-            'created_count': self.created_count,
-            'match_count': self.match_count,
-            'errors': self.errors.as_dict(),
-            'num_chunks': self.num_chunks,
-        }
 
 
 class CaseImportRow(object):
@@ -287,4 +275,4 @@ class CaseImportRow(object):
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     importer = _Importer(domain, config, task, record_form_callback)
     importer.do_import(spreadsheet)
-    return importer.outcome
+    return importer.results.to_json()

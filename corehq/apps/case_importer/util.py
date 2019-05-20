@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from contextlib import contextmanager
 import json
-from collections import defaultdict, namedtuple, OrderedDict
+from collections import defaultdict, namedtuple, OrderedDict, Counter
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
@@ -171,29 +171,48 @@ def convert_custom_fields_to_struct(config):
     return field_map
 
 
-class ImportErrorDetail(object):
+class ImportResults(object):
+    CREATED = 'created'
+    UPDATED = 'updated'
+    FAILED = 'failed'
 
-    def __init__(self, *args, **kwargs):
-        self.errors = defaultdict(dict)
+    def __init__(self):
+        self._results = {}
+        self._errors = defaultdict(dict)
+        self.num_chunks = 0
 
-    def add(self, error, row_num):
+    def add_error(self, row_num, error):
+        self._results[row_num] = self.FAILED
+
         key = error.title
         column_name = error.column_name
-        self.errors[key].setdefault(column_name, {})
-        self.errors[key][column_name]['error'] = _(error.title)
+        self._errors[key].setdefault(column_name, {})
+        self._errors[key][column_name]['error'] = _(error.title)
 
         try:
-            self.errors[key][column_name]['description'] = error.message
+            self._errors[key][column_name]['description'] = error.message
         except KeyError:
-            self.errors[key][column_name]['description'] = exceptions.CaseGeneration.message
+            self._errors[key][column_name]['description'] = exceptions.CaseGeneration.message
 
-        if 'rows' not in self.errors[key][column_name]:
-            self.errors[key][column_name]['rows'] = []
+        if 'rows' not in self._errors[key][column_name]:
+            self._errors[key][column_name]['rows'] = []
 
-        self.errors[key][column_name]['rows'].append(row_num)
+        self._errors[key][column_name]['rows'].append(row_num)
 
-    def as_dict(self):
-        return dict(self.errors)
+    def add_created(self, row_num):
+        self._results[row_num] = self.CREATED
+
+    def add_updated(self, row_num):
+        self._results[row_num] = self.UPDATED
+
+    def to_json(self):
+        counts = Counter(self._results.values())
+        return {
+            'created_count': counts.get(self.CREATED, 0),
+            'match_count': counts.get(self.UPDATED, 0),
+            'errors': dict(self._errors),
+            'num_chunks': self.num_chunks,
+        }
 
 
 def convert_field_value(value):
