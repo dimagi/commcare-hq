@@ -368,7 +368,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         try:
             return XFormInstanceSQL.objects.partitioned_get(form_id)
         except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
+            raise XFormNotFound(form_id)
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
@@ -1271,7 +1271,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             try:
                 return xform_map[form_id]
             except KeyError:
-                raise XFormNotFound
+                raise XFormNotFound(form_id)
 
         for case_transaction in transactions:
             if case_transaction.form_id:

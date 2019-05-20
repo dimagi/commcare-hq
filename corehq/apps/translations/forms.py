@@ -316,13 +316,32 @@ class AddTransifexBlacklistForm(forms.ModelForm):
         cleaned_data = super(AddTransifexBlacklistForm, self).clean()
         app_id = cleaned_data.get('app_id')
         module_id = cleaned_data.get('module_id')
+        field_type = cleaned_data.get('field_type')
 
-        app_json = Application.get_db().get(app_id)
-        for module in app_json['modules']:
-            if module_id == module['unique_id']:
-                break
-        else:
-            raise forms.ValidationError("Module {} not found in app {}".format(module_id, app_json['name']))
+        self._check_module_in_app(app_id, module_id)
+        self._check_module_not_ui_translation(module_id, field_type)
+        self._check_module_for_case_list_detail(module_id, field_type)
+
+    def _check_module_in_app(self, app_id, module_id):
+        if module_id:
+            app_json = Application.get_db().get(app_id)
+            for module in app_json['modules']:
+                if module_id == module['unique_id']:
+                    break
+            else:
+                self.add_error('module_id', "Module {} not found in app {}".format(module_id, app_json['name']))
+
+    def _check_module_not_ui_translation(self, module_id, field_type):
+        if module_id and field_type == 'ui':
+            self.add_error(field=None, error=forms.ValidationError({
+                'module_id': 'Leave Module ID blank for UI translations',
+                'field_type': 'Specify "Case List" or "Case Detail" for a module. '
+                              'UI translations apply to the whole app.',
+            }))
+
+    def _check_module_for_case_list_detail(self, module_id, field_type):
+        if not module_id and field_type != 'ui':
+            self.add_error('module_id', 'Module ID must be given for "Case List" or "Case Detail"')
 
     class Meta(object):
         model = TransifexBlacklist

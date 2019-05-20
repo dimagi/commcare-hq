@@ -16,6 +16,7 @@ from six.moves import range
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-awc'
     base_tablename = 'agg_awc'
     ucr_data_source_id = 'static-awc_location'
 
@@ -80,7 +81,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             'no',
             5,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END 
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id

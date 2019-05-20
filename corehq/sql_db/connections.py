@@ -20,6 +20,7 @@ UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 AAA_DB_ENGINE_ID = 'aaa-data'
+CITUS_MASTER = 'citus'
 
 
 def get_icds_ucr_db_alias():
@@ -255,4 +256,10 @@ def override_engine(engine_id, connection_url, db_alias=None):
 
 
 def is_citus_db(connection):
-    return bool(list(connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")))
+    """
+    :param connection: either a sqlalchemy connection or a Django cursor
+    """
+    res = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
+    if res is None:
+        res = list(connection)
+    return bool(list(res))
