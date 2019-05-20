@@ -26,7 +26,6 @@ class CCZHostingLink(models.Model):
     identifier = models.CharField(null=False, unique=True, max_length=255, db_index=True,
                                   validators=[LowercaseAlphanumericValidator])
     username = models.CharField(null=False, max_length=255)
-    # b64_aes_encrypt'ed raw password is stored in DB
     password = models.CharField(null=False, max_length=255)
     domain = models.CharField(null=False, max_length=255)
     page_title = models.CharField(blank=True, max_length=255)
