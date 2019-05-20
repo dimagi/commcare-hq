@@ -206,7 +206,7 @@ class ImportResults(object):
         self._results[row_num] = self.UPDATED
 
     def to_json(self):
-        counts = Counter(self._results.values())
+        counts = Counter(six.itervalues(self._results))
         return {
             'created_count': counts.get(self.CREATED, 0),
             'match_count': counts.get(self.UPDATED, 0),
