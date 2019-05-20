@@ -1041,6 +1041,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "case_id": self.case_id,
             "case": self.case_instance,
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
+            "show_case_templates": toggles.CASE_TEMPLATES.enabled(self.domain) and not self.case_instance.indices,
             "can_edit_data": can_edit_data,
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
 
