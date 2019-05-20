@@ -327,7 +327,7 @@ def update_linked_app(app, user_id):
 
     if app.version is None or master_version > app.pulled_from_master_version:
         try:
-            latest_master_build = app.get_latest_master_release()
+            latest_released_master_build = app.get_latest_master_release()
         except ActionNotPermitted:
             raise AppLinkError(_(
                 'This project is not authorized to update from the master application. '
@@ -343,12 +343,12 @@ def update_linked_app(app, user_id):
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
+        report_map = get_static_report_mapping(latest_released_master_build.domain, app['domain'])
 
         try:
             new_version = app.version + 1 if app.version else 1
-            app = overwrite_app(app, latest_master_build, report_map, version=new_version)
-            app.pulled_from_master_version = latest_master_build.version
+            app = overwrite_app(app, latest_released_master_build, report_map, version=new_version)
+            app.pulled_from_master_version = latest_released_master_build.version
         except AppEditingError as e:
             raise AppLinkError(
                 _(
