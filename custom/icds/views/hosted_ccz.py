@@ -27,7 +27,6 @@ from corehq.apps.domain.views import (
     BaseDomainView,
     DomainViewMixin,
 )
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.util.download import get_download_response
@@ -120,10 +119,6 @@ class ManageHostedCCZ(BaseDomainView):
     page_title = ugettext_lazy("Manage CCZ Hosting")
     template_name = 'icds/manage_hosted_ccz.html'
     section_name = ugettext_noop('CCZ Hostings')
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManageHostedCCZ, self).dispatch(request, *args, **kwargs)
 
     @cached_property
     def section_url(self):
