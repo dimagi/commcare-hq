@@ -72,6 +72,8 @@ def get_sql_scripts(state_id):
         # some forms are from deleted locations, so loc table doesn't have data on some rows
         _table_name('static-usage_forms'),
         _table_name('static-child_tasks_cases'),
+        'child_health_monthly',
+        'daily_attendance'
     ]
 
     child_health_ucrs = [
@@ -79,6 +81,15 @@ def get_sql_scripts(state_id):
         _table_name('dashboard_child_health_daily_feeding_forms'),
         _table_name('static-dashboard_growth_monitoring_forms'),
         _table_name('static-complementary_feeding_forms')
+    ]
+
+    child_health_case_id = [
+        'icds_dashboard_comp_feed_form',
+        'icds_dashboard_child_health_thr_forms',
+        'icds_dashboard_growth_monitoring_forms',
+        'icds_dashboard_child_health_postnatal_forms',
+        'icds_dashboard_daily_feeding_forms',
+
     ]
 
     # some supervisor_id on loc table are null
@@ -91,6 +102,14 @@ def get_sql_scripts(state_id):
     # has column 'case_load_ccs_record0'
     # some supervisor_id on loc table are null
     unclear_ccs_record = [_table_name('static-dashboard_delivery_forms')]
+    ccs_record_case_d = [
+        'icds_dashboard_ccs_record_delivery_forms',
+        'icds_dashboard_ccs_record_cf_forms',
+        'icds_dashboard_ccs_record_postnatal_forms',
+        'icds_dashboard_ccs_record_bp_forms',
+        'icds_dashboard_ccs_record_thr_forms',
+        'ccs_record_monthly',
+    ]
 
     ucr_to_sql = [
         # ([ucr_table_list, (join_table_name, ucr_column, join_table_column)])
@@ -107,6 +126,15 @@ def get_sql_scripts(state_id):
             _table_name('static-ccs_record_cases'),
             'case_load_ccs_record0',
             'doc_id')),
+        (ccs_record_case_d, (
+            _table_name('static-ccs_record_cases'),
+            'case_id',
+            'doc_id')),
+        (child_health_case_id, (
+            _table_name('static-child_health_cases'),
+            'case_id',
+            'doc_id'
+        ))
     ]
     sql_scripts = {}
     for ucrs, (join_table, ucr_column, join_table_column) in ucr_to_sql:
