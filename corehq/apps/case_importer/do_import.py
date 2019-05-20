@@ -131,13 +131,13 @@ class _Importer(object):
                     self.user.user_id,
                     device_id=__name__ + ".do_import",
                 )
+                if form.is_error:
+                    raise Exception("Form error during case import: {}".format(form.problem))
             except Exception:
                 notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
                 for row_number, case in caseblocks:
                     self.results.add_error(row_number, exceptions.ImportErrorMessage())
             else:
-                if form.is_error:
-                    self.results.add_error(form.problem, exceptions.ImportErrorMessage())
                 self.record_form(form.form_id)
                 properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
                 if self.config.case_type and len(properties):
