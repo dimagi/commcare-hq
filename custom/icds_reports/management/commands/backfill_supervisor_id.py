@@ -15,7 +15,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
 from custom.icds_reports.models.aggregate import AwcLocation
-from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.const import AggregationLevels, DASHBOARD_DOMAIN
 from dimagi.utils.logging import notify_exception
 
 
@@ -144,7 +144,7 @@ def get_sql_scripts(state_id):
 
 
 def _table_name(table_id):
-    return get_table_name('icds-cas', table_id)
+    return get_table_name(DASHBOARD_DOMAIN, table_id)
 
 
 @memoized
