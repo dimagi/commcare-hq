@@ -3,9 +3,15 @@ from __future__ import division
 from __future__ import unicode_literals
 from decimal import Decimal
 import random
-import datetime
+from datetime import date
+from mock import Mock
+
+from django.test import TestCase
 
 from dimagi.utils.dates import add_months_to_date
+
+from corehq.apps.accounting.invoicing import LineItemFactory
+from corehq.apps.domain.models import Domain
 from corehq.util.dates import get_previous_month_date_range
 
 from corehq.apps.accounting import utils, tasks
@@ -17,7 +23,8 @@ from corehq.apps.accounting.models import (
     CustomerInvoice,
     InvoicingPlan,
     DomainUserHistory,
-    CreditLine
+    CreditLine,
+    Subscription,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -55,7 +62,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.advanced_plan.plan.is_customer_software_plan = True
 
         cls.subscription_length = 15  # months
-        subscription_start_date = datetime.date(2016, 2, 23)
+        subscription_start_date = date(2016, 2, 23)
         subscription_end_date = add_months_to_date(subscription_start_date, cls.subscription_length)
         cls.subscription = generator.generate_domain_subscription(
             cls.account,
@@ -607,21 +614,19 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
 
         num_users = self.user_rate.monthly_limit + 1
         for record_date in record_dates:
-            user_history = DomainUserHistory.create(
+            DomainUserHistory.objects.create(
                 domain=self.domain,
                 num_users=num_users,
                 record_date=record_date
             )
-            user_history.save()
 
         num_users = self.advanced_rate.monthly_limit + 2
         for record_date in record_dates:
-            user_history = DomainUserHistory.create(
+            DomainUserHistory.objects.create(
                 domain=self.domain2,
                 num_users=num_users,
                 record_date=record_date
             )
-            user_history.save()
 
     def test_user_over_limit_in_quarterly_invoice(self):
         num_users = self.user_rate.monthly_limit + 1
@@ -742,3 +747,95 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
+
+
+class TestDomainsInLineItemForCustomerInvoicing(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestDomainsInLineItemForCustomerInvoicing, cls).setUpClass()
+
+        cls.customer_account = generator.billing_account('test@test.com', 'test@test.com')
+        cls.customer_account.is_customer_billing_account = True
+        cls.customer_account.save()
+
+        cls.customer_plan_version = DefaultProductPlan.get_default_plan_version()
+        cls.customer_plan_version.plan.is_customer_software_plan = True
+        cls.customer_plan_version.plan.save()
+
+        cls.mock_customer_invoice = Mock()
+        cls.mock_customer_invoice.date_start = date(2019, 5, 1)
+        cls.mock_customer_invoice.date_end = date(2019, 5, 31)
+
+        cls.domain = Domain(name='test_domain')
+        cls.domain.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+
+        super(TestDomainsInLineItemForCustomerInvoicing, cls).tearDownClass()
+
+    def test_past_subscription_is_excluded(self):
+        past_subscription = Subscription.new_domain_subscription(
+            account=self.customer_account,
+            domain=self.domain.name,
+            plan_version=self.customer_plan_version,
+            date_start=date(2019, 4, 1),
+            date_end=date(2019, 5, 1),
+        )
+        line_item_factory = LineItemFactory(past_subscription, None, self.mock_customer_invoice)
+        self.assertEqual(line_item_factory.subscribed_domains, [])
+
+    def test_future_subscription_is_excluded(self):
+        future_subscription = Subscription.new_domain_subscription(
+            account=self.customer_account,
+            domain=self.domain.name,
+            plan_version=self.customer_plan_version,
+            date_start=date(2019, 6, 1),
+            date_end=date(2019, 7, 1),
+        )
+        line_item_factory = LineItemFactory(future_subscription, None, self.mock_customer_invoice)
+        self.assertEqual(line_item_factory.subscribed_domains, [])
+
+    def test_preexisting_subscription_is_included(self):
+        preexisting_subscription = Subscription.new_domain_subscription(
+            account=self.customer_account,
+            domain=self.domain.name,
+            plan_version=self.customer_plan_version,
+            date_start=date(2019, 4, 30),
+            date_end=date(2019, 5, 2),
+        )
+        line_item_factory = LineItemFactory(preexisting_subscription, None, self.mock_customer_invoice)
+        self.assertEqual(line_item_factory.subscribed_domains, [self.domain.name])
+
+    def test_preexisting_subscription_without_end_date_is_included(self):
+        preexisting_subscription = Subscription.new_domain_subscription(
+            account=self.customer_account,
+            domain=self.domain.name,
+            plan_version=self.customer_plan_version,
+            date_start=date(2019, 4, 30),
+        )
+        line_item_factory = LineItemFactory(preexisting_subscription, None, self.mock_customer_invoice)
+        self.assertEqual(line_item_factory.subscribed_domains, [self.domain.name])
+
+    def test_new_subscription_is_included(self):
+        new_subscription = Subscription.new_domain_subscription(
+            account=self.customer_account,
+            domain=self.domain.name,
+            plan_version=self.customer_plan_version,
+            date_start=date(2019, 5, 31),
+            date_end=date(2019, 6, 1),
+        )
+        line_item_factory = LineItemFactory(new_subscription, None, self.mock_customer_invoice)
+        self.assertEqual(line_item_factory.subscribed_domains, [self.domain.name])
+
+    def test_new_subscription_without_end_date_is_included(self):
+        new_subscription = Subscription.new_domain_subscription(
+            account=self.customer_account,
+            domain=self.domain.name,
+            plan_version=self.customer_plan_version,
+            date_start=date(2019, 5, 31),
+        )
+        line_item_factory = LineItemFactory(new_subscription, None, self.mock_customer_invoice)
+        self.assertEqual(line_item_factory.subscribed_domains, [self.domain.name])

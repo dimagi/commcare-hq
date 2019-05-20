@@ -45,7 +45,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     require_can_edit_data,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.hqwebapp.decorators import use_daterangepicker, use_select2_v4
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
@@ -122,7 +122,6 @@ class ExploreCaseDataView(BaseDomainView):
     page_title = ugettext_lazy("Explore Case Data")
 
     @use_daterangepicker
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
 

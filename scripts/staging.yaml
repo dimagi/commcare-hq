@@ -56,6 +56,8 @@ branches:
   - mk/ccz-hosting-revamp # MK May 6
   - fr/case-templates      # FR May 15
   - mk/media-version-on-revert   # MK May 16
+  - update-jsonobject  # Nick P May 17
 #  - web-user-reports-project-access  # Gabriella May 13
-  - upgrade-gevent-may-16  # Nick P May 16
+  - jls/linked-app-incremental-versioning # Jenny May 20
+  - es/case-import  # Ethan May 20
 submodules: {}

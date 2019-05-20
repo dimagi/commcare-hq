@@ -137,6 +137,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
     CcsMbtHelper,
     ChildHealthMbtHelper,
 )
+from six.moves import zip
 
 celery_task_logger = logging.getLogger('celery.task')
 
