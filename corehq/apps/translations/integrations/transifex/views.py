@@ -26,7 +26,6 @@ from openpyxl import Workbook
 
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.translations.forms import (
     AddTransifexBlacklistForm,
@@ -213,7 +212,6 @@ class PullResource(BaseTranslationsView):
     template_name = 'pull_resource.html'
     section_name = ugettext_noop("Translations")
 
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(PullResource, self).dispatch(request, *args, **kwargs)
 
@@ -336,7 +334,6 @@ class AppTranslations(BaseTranslationsView):
     template_name = 'app_translations.html'
     section_name = ugettext_lazy("Translations")
 
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(AppTranslations, self).dispatch(request, *args, **kwargs)
 
