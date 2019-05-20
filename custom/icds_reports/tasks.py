@@ -1176,7 +1176,8 @@ def create_mbt_for_month(state_id, month):
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
         helper = get_helper(helper_class.helper_key)(state_id, month)
-        with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
+        # run on primary DB to avoid "conflict with recovery" errors
+        with get_cursor(helper.base_class, write=True) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)
             icds_file, _ = IcdsFile.objects.get_or_create(
