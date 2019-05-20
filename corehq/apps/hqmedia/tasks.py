@@ -193,7 +193,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                 notify_exception(
                     None,
                     message="CCZ missing locale ids from default/app_strings.txt",
-                    details={'domain': domain, 'app_id': app_id, 'errors': locale_errors}
+                    details={'domain': app.domain, 'app_id': app.id, 'errors': locale_errors}
                 )
 
         if include_index_files and include_multimedia_files:
@@ -203,7 +203,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                 notify_exception(
                     None,
                     message="CCZ missing multimedia files",
-                    details={'domain': domain, 'app_id': app_id, 'errors': multimedia_errors}
+                    details={'domain': app.domain, 'app_id': app.id, 'errors': multimedia_errors}
                 )
 
         if errors:
