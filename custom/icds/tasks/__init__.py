@@ -9,7 +9,7 @@ from corehq.blobs import get_blob_db, CODES
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
-from custom.icds.tasks.ccz_hosting import (
+from custom.icds.tasks.hosted_ccz import (
     setup_ccz_file_for_hosting,
 )
 

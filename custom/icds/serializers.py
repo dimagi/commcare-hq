@@ -5,13 +5,13 @@ from rest_framework import serializers
 
 from custom.icds.models import (
     HostedCCZ,
-    CCZHostingLink,
+    HostedCCZLink,
 )
 
 
-class CCZHostingLinkSerializer(serializers.ModelSerializer):
+class HostedCCZLinkSerializer(serializers.ModelSerializer):
     class Meta(object):
-        model = CCZHostingLink
+        model = HostedCCZLink
         fields = ['identifier', 'username', 'id', 'page_title']
 
 

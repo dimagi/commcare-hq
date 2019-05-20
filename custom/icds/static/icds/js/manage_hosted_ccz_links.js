@@ -1,4 +1,4 @@
-hqDefine('icds/js/manage_ccz_hosting_links', [
+hqDefine('icds/js/manage_hosted_ccz_links', [
     'jquery',
     'knockout',
     'underscore',
@@ -11,17 +11,17 @@ hqDefine('icds/js/manage_ccz_hosting_links', [
 ) {
     'use strict';
     $(function () {
-        var cczHostingLink = function (id, identifier) {
+        var hostedCCZLink = function (id, identifier) {
             var self = {};
             self.identifier = identifier;
-            self.editUrl = initialPageData.reverse("edit_ccz_hosting_link", id);
-            self.pageUrl = initialPageData.reverse("ccz_hosting", identifier);
+            self.editUrl = initialPageData.reverse("edit_hosted_ccz_link", id);
+            self.pageUrl = initialPageData.reverse("hosted_ccz", identifier);
             return self;
         };
         var links = initialPageData.get("links");
         if ($("#links").length) {
             $("#links").koApplyBindings({
-                'links': _.map(links, function (link) { return cczHostingLink(link.id, link.identifier); }),
+                'links': _.map(links, function (link) { return hostedCCZLink(link.id, link.identifier); }),
             });
         }
     });

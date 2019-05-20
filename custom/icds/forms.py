@@ -21,17 +21,17 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from custom.icds.models import (
     HostedCCZ,
-    CCZHostingLink,
+    HostedCCZLink,
 )
 
 
-class CCZHostingLinkForm(forms.ModelForm):
+class HostedCCZLinkForm(forms.ModelForm):
     class Meta:
-        model = CCZHostingLink
+        model = HostedCCZLink
         exclude = ('domain',)
 
     def __init__(self, domain, *args, **kwargs):
-        super(CCZHostingLinkForm, self).__init__(*args, **kwargs)
+        super(HostedCCZLinkForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         save_button_text = _('Update') if self.instance.pk else _('Create')
         self.helper.layout.append(Submit('save', save_button_text))
@@ -46,7 +46,7 @@ class CCZHostingLinkForm(forms.ModelForm):
         self.instance.domain = domain
 
 
-class CCZHostingForm(forms.Form):
+class HostedCCZForm(forms.Form):
     link_id = forms.ChoiceField(label=ugettext_lazy("Link"), choices=(), required=True)
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=True, widget=Select(choices=[]))
@@ -56,7 +56,7 @@ class CCZHostingForm(forms.Form):
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
-        super(CCZHostingForm, self).__init__(*args, **kwargs)
+        super(HostedCCZForm, self).__init__(*args, **kwargs)
         self.fields['link_id'].choices = self.link_choices()
         self.fields['app_id'].choices = self.app_id_choices()
         self.helper = HQFormHelper()
@@ -87,7 +87,7 @@ class CCZHostingForm(forms.Form):
 
     def link_choices(self):
         choices = [(None, _('Select Link'))]
-        for link in CCZHostingLink.objects.filter(domain=self.domain):
+        for link in HostedCCZLink.objects.filter(domain=self.domain):
             choices.append((link.id, link.identifier))
         return choices
 

@@ -4,16 +4,16 @@ from __future__ import unicode_literals
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from custom.icds.models import CCZHostingLink
+from custom.icds.models import HostedCCZLink
 from custom.nic_compliance.utils import verify_password
 
 
-class TestCCZHostingLink(TestCase):
+class TestHostedCCZLink(TestCase):
     raw_password = "123456"
 
     def setUp(self):
-        super(TestCCZHostingLink, self).setUp()
-        self.link = CCZHostingLink(username="user", domain="test", identifier="abcdef",
+        super(TestHostedCCZLink, self).setUp()
+        self.link = HostedCCZLink(username="user", domain="test", identifier="abcdef",
                                    password=self.raw_password)
 
     def tearDown(self):

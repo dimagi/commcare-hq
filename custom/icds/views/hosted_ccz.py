@@ -37,38 +37,38 @@ from custom.icds.const import (
     FILE_TYPE_CHOICE_ZIP,
 )
 from custom.icds.forms import (
-    CCZHostingForm,
-    CCZHostingLinkForm,
+    HostedCCZForm,
+    HostedCCZLinkForm,
 )
 from custom.icds.models import (
-    CCZHostingLink,
+    HostedCCZLink,
     HostedCCZ,
-    CCZHostingSupportingFile,
+    HostedCCZSupportingFile,
 )
 from custom.nic_compliance.utils import verify_password
 
 
 @location_safe
 @method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
-class ManageCCZHostingLink(BaseDomainView):
-    urlname = "manage_ccz_hosting_links"
+class ManageHostedCCZLink(BaseDomainView):
+    urlname = "manage_hosted_ccz_links"
     page_title = ugettext_lazy("Manage CCZ Hosting Links")
-    template_name = 'icds/manage_ccz_hosting_links.html'
+    template_name = 'icds/manage_hosted_ccz_links.html'
     section_name = ugettext_lazy("CCZ Hosting Links")
 
     @cached_property
     def section_url(self):
-        return reverse(ManageCCZHostingLink.urlname, args=[self.domain])
+        return reverse(ManageHostedCCZLink.urlname, args=[self.domain])
 
     @cached_property
     def form(self):
-        return CCZHostingLinkForm(
+        return HostedCCZLinkForm(
             domain=self.domain,
             data=self.request.POST if self.request.method == "POST" else None
         )
 
     def get_context_data(self, **kwargs):
-        links = [l.to_json() for l in CCZHostingLink.objects.filter(domain=self.domain)]
+        links = [l.to_json() for l in HostedCCZLink.objects.filter(domain=self.domain)]
         return {
             'form': self.form,
             'links': links,
@@ -79,32 +79,32 @@ class ManageCCZHostingLink(BaseDomainView):
         link_id = self.kwargs.get('link_id')
         if link_id:
             try:
-                ccz_hosting_link = CCZHostingLink.objects.get(pk=link_id, domain=self.domain)
-            except CCZHostingLink.DoesNotExist:
+                hosted_ccz_link = HostedCCZLink.objects.get(pk=link_id, domain=self.domain)
+            except HostedCCZLink.DoesNotExist:
                 pass
             else:
-                ccz_hosting_link.delete()
+                hosted_ccz_link.delete()
                 messages.success(self.request, _("Successfully removed link and all associated ccz hosting."))
 
     def post(self, request, *args, **kwargs):
         if self.request.POST.get('delete'):
             self.delete()
-            return redirect(ManageCCZHostingLink.urlname, domain=self.domain)
+            return redirect(ManageHostedCCZLink.urlname, domain=self.domain)
         if self.form.is_valid():
             self.form.save()
-            return redirect(ManageCCZHostingLink.urlname, domain=self.domain)
+            return redirect(ManageHostedCCZLink.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 
-class EditCCZHostingLink(ManageCCZHostingLink):
-    urlname = "edit_ccz_hosting_link"
+class EditHostedCCZLink(ManageHostedCCZLink):
+    urlname = "edit_hosted_ccz_link"
 
     @cached_property
     def form(self):
-        link = CCZHostingLink.objects.get(id=self.kwargs['link_id'], domain=self.domain)
+        link = HostedCCZLink.objects.get(id=self.kwargs['link_id'], domain=self.domain)
         if self.request.POST:
-            return CCZHostingLinkForm(domain=self.domain, instance=link, data=self.request.POST)
-        return CCZHostingLinkForm(domain=self.domain, instance=link)
+            return HostedCCZLinkForm(domain=self.domain, instance=link, data=self.request.POST)
+        return HostedCCZLinkForm(domain=self.domain, instance=link)
 
     def get_context_data(self, **kwargs):
         return {
@@ -115,23 +115,23 @@ class EditCCZHostingLink(ManageCCZHostingLink):
 
 @location_safe
 @method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
-class ManageCCZHosting(BaseDomainView):
-    urlname = "manage_ccz_hosting"
+class ManageHostedCCZ(BaseDomainView):
+    urlname = "manage_hosted_ccz"
     page_title = ugettext_lazy("Manage CCZ Hosting")
-    template_name = 'icds/manage_ccz_hosting.html'
+    template_name = 'icds/manage_hosted_ccz.html'
     section_name = ugettext_noop('CCZ Hostings')
 
     @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
-        return super(ManageCCZHosting, self).dispatch(request, *args, **kwargs)
+        return super(ManageHostedCCZ, self).dispatch(request, *args, **kwargs)
 
     @cached_property
     def section_url(self):
-        return reverse(ManageCCZHosting.urlname, args=[self.domain])
+        return reverse(ManageHostedCCZ.urlname, args=[self.domain])
 
     @cached_property
     def form(self):
-        return CCZHostingForm(
+        return HostedCCZForm(
             self.request,
             self.domain,
             data=self.request.POST if self.request.method == "POST" else None
@@ -153,21 +153,21 @@ class ManageCCZHosting(BaseDomainView):
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         if self.request.GET.get('link_id'):
-            ccz_hostings = HostedCCZ.objects.filter(link_id=self.request.GET.get('link_id'))
+            hosted_cczs = HostedCCZ.objects.filter(link_id=self.request.GET.get('link_id'))
         else:
-            ccz_hostings = HostedCCZ.objects.filter(link__domain=self.domain)
+            hosted_cczs = HostedCCZ.objects.filter(link__domain=self.domain)
         if self.request.GET.get('app_id'):
-            ccz_hostings = ccz_hostings.filter(app_id=self.request.GET.get('app_id'))
+            hosted_cczs = hosted_cczs.filter(app_id=self.request.GET.get('app_id'))
         version = self.request.GET.get('version')
         if version:
-            ccz_hostings = ccz_hostings.filter(version=self.request.GET.get('version'))
+            hosted_cczs = hosted_cczs.filter(version=self.request.GET.get('version'))
         if self.request.GET.get('profile_id'):
-            ccz_hostings = ccz_hostings.filter(profile_id=self.request.GET.get('profile_id'))
-        ccz_hostings = [h.to_json(app_names) for h in ccz_hostings]
+            hosted_cczs = hosted_cczs.filter(profile_id=self.request.GET.get('profile_id'))
+        hosted_cczs = [h.to_json(app_names) for h in hosted_cczs]
         return {
             'form': self.form,
             'domain': self.domain,
-            'ccz_hostings': ccz_hostings,
+            'hosted_cczs': hosted_cczs,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
             'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }
@@ -182,26 +182,26 @@ class ManageCCZHosting(BaseDomainView):
         return self.get(request, *args, **kwargs)
 
 
-class CCZHostingView(DomainViewMixin, TemplateView):
-    urlname = "ccz_hosting"
+class HostedCCZView(DomainViewMixin, TemplateView):
+    urlname = "hosted_ccz"
     page_title = ugettext_lazy("CCZ Hosting")
-    template_name = 'icds/ccz_hosting.html'
+    template_name = 'icds/hosted_ccz.html'
 
     @cached_property
-    def ccz_hosting_link(self):
-        return CCZHostingLink.objects.get(identifier=self.identifier)
+    def hosted_ccz_link(self):
+        return HostedCCZLink.objects.get(identifier=self.identifier)
 
     def get(self, request, *args, **kwargs):
         self.identifier = kwargs.get('identifier')
         try:
-            ccz_hosting_link = self.ccz_hosting_link
-        except CCZHostingLink.DoesNotExist:
+            hosted_ccz_link = self.hosted_ccz_link
+        except HostedCCZLink.DoesNotExist:
             return HttpResponse(status=404)
 
         username, password = get_username_and_password_from_request(request)
         if username and password:
-            if username == ccz_hosting_link.username and verify_password(password, ccz_hosting_link.password):
-                return super(CCZHostingView, self).get(request, *args, **kwargs)
+            if username == hosted_ccz_link.username and verify_password(password, hosted_ccz_link.password):
+                return super(HostedCCZView, self).get(request, *args, **kwargs)
         # User did not provide an authorization header or gave incorrect credentials.
         response = HttpResponse(status=401)
         response['WWW-Authenticate'] = 'Basic realm="%s"' % ''
@@ -209,13 +209,13 @@ class CCZHostingView(DomainViewMixin, TemplateView):
 
     @property
     def _page_title(self):
-        return self.ccz_hosting_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
+        return self.hosted_ccz_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
 
     def _get_files_for(self, display):
         return {
-            supporting_file.file_name: reverse('ccz_hosting_download_supporting_files',
+            supporting_file.file_name: reverse('hosted_ccz_download_supporting_files',
                                                args=[supporting_file.domain, supporting_file.pk])
-            for supporting_file in CCZHostingSupportingFile.objects.filter(domain=self.domain,
+            for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain,
                                                                            display=display)
         }
 
@@ -223,7 +223,7 @@ class CCZHostingView(DomainViewMixin, TemplateView):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
             'page_title': self._page_title,
-            'ccz_hostings': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.ccz_hosting_link)],
+            'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
             'supporting_list_files': self._get_files_for(DISPLAY_CHOICE_LIST),
             'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
@@ -231,33 +231,33 @@ class CCZHostingView(DomainViewMixin, TemplateView):
 
 
 @login_and_domain_required
-def remove_ccz_hosting(request, domain, hosting_id):
+def remove_hosted_ccz(request, domain, hosting_id):
     try:
-        ccz_hosting = HostedCCZ.objects.get(pk=hosting_id, link__domain=domain)
-        ccz_hosting.delete()
+        hosted_ccz = HostedCCZ.objects.get(pk=hosting_id, link__domain=domain)
+        hosted_ccz.delete()
     except HostedCCZ.DoesNotExist:
         pass
-    return HttpResponseRedirect(reverse(ManageCCZHosting.urlname, args=[domain]))
+    return HttpResponseRedirect(reverse(ManageHostedCCZ.urlname, args=[domain]))
 
 
 @location_safe
 def download_ccz(request, domain, hosting_id):
-    ccz_hosting = HostedCCZ.objects.get(pk=hosting_id, link__domain=domain)
-    file_size = ccz_hosting.utility.get_file_meta().content_length
+    hosted_ccz = HostedCCZ.objects.get(pk=hosting_id, link__domain=domain)
+    file_size = hosted_ccz.utility.get_file_meta().content_length
     # check for file name of the ccz hosting object first because
     # the file meta might be coming from CCZ stored for another ccz hosting instance
     # since we don't re-store already present CCZs
-    file_name = ccz_hosting.file_name or ccz_hosting.utility.get_file_meta().name
+    file_name = hosted_ccz.file_name or hosted_ccz.utility.get_file_meta().name
     if not file_name.endswith('.ccz'):
         file_name = file_name + '.ccz'
     content_format = Format('', Format.ZIP, '', True)
-    return get_download_response(ccz_hosting.utility.get_file(), file_size, content_format, file_name,
+    return get_download_response(hosted_ccz.utility.get_file(), file_size, content_format, file_name,
                                  request)
 
 
 @location_safe
 def download_ccz_supporting_files(request, domain, hosting_supporting_file_id):
-    ccz_supporting_file = CCZHostingSupportingFile.objects.get(pk=hosting_supporting_file_id, domain=domain)
+    ccz_supporting_file = HostedCCZSupportingFile.objects.get(pk=hosting_supporting_file_id, domain=domain)
     ccz_utility = ccz_supporting_file.utility
     file_name = ccz_supporting_file.file_name or ccz_utility.get_file_meta().name
     if ccz_supporting_file.file_type == FILE_TYPE_CHOICE_ZIP:

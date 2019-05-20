@@ -10,7 +10,7 @@ from corehq.blobs import (
 )
 
 
-class CCZHostingUtility:
+class HostedCCZUtility:
     def __init__(self, file_hosting):
         self.domain = file_hosting.domain
         self.file_hosting = file_hosting
@@ -28,7 +28,7 @@ class CCZHostingUtility:
     @memoized
     def get_file_meta(self):
         if self.file_exists():
-            return get_blob_db().metadb.get(key=self.blob_id, parent_id='CCZHosting')
+            return get_blob_db().metadb.get(key=self.blob_id, parent_id='HostedCCZ')
 
     def get_file_name(self):
         return self.get_file_meta().name if self.get_file_meta() else ''
@@ -37,14 +37,14 @@ class CCZHostingUtility:
     def ccz_details(self):
         return {
             'name': self.file_hosting.file_name,
-            'download_url': reverse('ccz_hosting_download_ccz', args=[
+            'download_url': reverse('hosted_ccz_download_ccz', args=[
                 self.domain, self.file_hosting.id])
         }
 
     def store_file_in_blobdb(self, file_obj, name):
         kw = {
             "domain": self.file_hosting.domain,
-            "parent_id": 'CCZHosting',
+            "parent_id": 'HostedCCZ',
             "type_code": CODES.tempfile,
             "key": self.blob_id,
             "name": name,

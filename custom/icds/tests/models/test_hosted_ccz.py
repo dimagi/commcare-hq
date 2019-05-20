@@ -6,74 +6,74 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 
 from custom.icds.models import (
-    CCZHostingLink,
+    HostedCCZLink,
     HostedCCZ,
 )
 
 
 @mock.patch('custom.icds.tasks.setup_ccz_file_for_hosting.delay')
-class TestCCZHosting(TestCase):
+class TestHostedCCZ(TestCase):
     def setUp(self):
-        super(TestCCZHosting, self).setUp()
-        self.link = CCZHostingLink.objects.create(username="username", password="password",
+        super(TestHostedCCZ, self).setUp()
+        self.link = HostedCCZLink.objects.create(username="username", password="password",
                                                   identifier="link123", domain="test")
-        self.ccz_hosting = HostedCCZ(link=self.link, app_id="dummy", version=12, profile_id="12345")
+        self.hosted_ccz = HostedCCZ(link=self.link, app_id="dummy", version=12, profile_id="12345")
 
     def tearDown(self):
         self.link.delete()
-        super(TestCCZHosting, self).tearDown()
+        super(TestHostedCCZ, self).tearDown()
 
     @mock.patch('custom.icds.models.get_build_doc_by_version', return_value={'is_released': True, 'name': 'App'})
-    def test_valid_ccz_hosting(self, *_):
-        self.ccz_hosting.full_clean()
+    def test_valid_hosted_ccz(self, *_):
+        self.hosted_ccz.full_clean()
 
     def test_build_not_present(self, _):
         with self.assertRaisesMessage(ValidationError, "Build not found for app dummy and version 12."):
-            self.ccz_hosting.full_clean()
+            self.hosted_ccz.full_clean()
 
     @mock.patch('custom.icds.models.get_build_doc_by_version', return_value={'is_released': False, 'name': 'App'})
     def test_released_version(self, *_):
         with self.assertRaisesMessage(ValidationError, "Version not released. Please mark it as released."):
-            self.ccz_hosting.full_clean()
+            self.hosted_ccz.full_clean()
 
     def test_blob_id(self, _):
-        self.assertEqual(self.ccz_hosting.blob_id, "dummy1212345")
+        self.assertEqual(self.hosted_ccz.blob_id, "dummy1212345")
 
     @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_setup_ccz_file_for_hosting_on_save(self, setup_mock):
-        self.ccz_hosting.save()
-        setup_mock.assert_called_with(self.ccz_hosting.pk)
-        self.ccz_hosting.delete()
+        self.hosted_ccz.save()
+        setup_mock.assert_called_with(self.hosted_ccz.pk)
+        self.hosted_ccz.delete()
 
     @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_uniqueness(self, *_):
-        self.ccz_hosting.save()
+        self.hosted_ccz.save()
         error_message = "Hosted ccz with this Link, App id, Version and Profile id already exists."
         with self.assertRaisesMessage(ValidationError, error_message):
             HostedCCZ.objects.create(
-                link=self.ccz_hosting.link,
-                app_id=self.ccz_hosting.app_id,
-                version=self.ccz_hosting.version,
-                profile_id=self.ccz_hosting.profile_id,
+                link=self.hosted_ccz.link,
+                app_id=self.hosted_ccz.app_id,
+                version=self.hosted_ccz.version,
+                profile_id=self.hosted_ccz.profile_id,
             )
-        self.ccz_hosting.delete()
+        self.hosted_ccz.delete()
 
-    @mock.patch('custom.icds.models.CCZHostingUtility.remove_file_from_blobdb')
+    @mock.patch('custom.icds.models.HostedCCZUtility.remove_file_from_blobdb')
     @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_delete_ccz(self, mock_delete, _):
-        self.ccz_hosting.save()
-        link2 = CCZHostingLink.objects.create(username="username", password="password",
+        self.hosted_ccz.save()
+        link2 = HostedCCZLink.objects.create(username="username", password="password",
                                               identifier="link1234", domain="test")
-        ccz_hosting = HostedCCZ.objects.create(
+        hosted_ccz = HostedCCZ.objects.create(
             link=link2,
-            app_id=self.ccz_hosting.app_id,
-            version=self.ccz_hosting.version,
-            profile_id=self.ccz_hosting.profile_id
+            app_id=self.hosted_ccz.app_id,
+            version=self.hosted_ccz.version,
+            profile_id=self.hosted_ccz.profile_id
         )
-        self.assertEqual(self.ccz_hosting.blob_id, ccz_hosting.blob_id)
+        self.assertEqual(self.hosted_ccz.blob_id, hosted_ccz.blob_id)
 
-        self.ccz_hosting.delete()
+        self.hosted_ccz.delete()
         self.assertFalse(mock_delete.called)
 
-        ccz_hosting.delete()
+        hosted_ccz.delete()
         self.assertTrue(mock_delete.called)

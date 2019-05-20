@@ -3,16 +3,16 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "icds/js/manage_ccz_hosting" %}
+{% requirejs_main "icds/js/manage_hosted_ccz" %}
 
 {% block page_content %}
-{% initial_page_data 'ccz_hostings' ccz_hostings %}
+{% initial_page_data 'hosted_cczs' hosted_cczs %}
 {% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
 {% initial_page_data 'appProfileInitialValues' initial_app_profile_details %}
 {% initial_page_data 'appVersionOnlyShowReleased' True %}
 {% registerurl "paginate_releases" domain '---' %}
-{% registerurl "remove_ccz_hosting" domain '---' %}
-{% registerurl "ccz_hosting" domain '---' %}
+{% registerurl "remove_hosted_ccz" domain '---' %}
+{% registerurl "hosted_ccz" domain '---' %}
 <div class="container" id="manage-ccz-hostings">
   <div class="row">
     <div class="page-header">
@@ -32,7 +32,7 @@
   </div>
   <div class="row">
     <div>
-      {% if ccz_hostings %}
+      {% if hosted_cczs %}
         <table id="ccz-hostings" class="table">
           <thead>
             <tr>

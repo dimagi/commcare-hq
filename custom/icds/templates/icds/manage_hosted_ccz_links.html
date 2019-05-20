@@ -3,12 +3,12 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "icds/js/manage_ccz_hosting_links" %}
+{% requirejs_main "icds/js/manage_hosted_ccz_links" %}
 
 {% block page_content %}
 {% initial_page_data 'links' links %}
-{% registerurl 'edit_ccz_hosting_link' domain '---' %}
-{% registerurl 'ccz_hosting' domain '---' %}
+{% registerurl 'edit_hosted_ccz_link' domain '---' %}
+{% registerurl 'hosted_ccz' domain '---' %}
 
 <div class="container">
   <div class="row">

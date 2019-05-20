@@ -1,4 +1,4 @@
-hqDefine('icds/js/manage_ccz_hosting', [
+hqDefine('icds/js/manage_hosted_ccz', [
     'jquery',
     'knockout',
     'underscore',
@@ -12,21 +12,21 @@ hqDefine('icds/js/manage_ccz_hosting', [
 ) {
     'use strict';
     $(function () {
-        var cczHosting = function (id, link, appName, version, profileName, fileName) {
+        var hostedCCZ = function (id, link, appName, version, profileName, fileName) {
             var self = {};
             self.link = link;
             self.appName = appName;
             self.version = version;
             self.profileName = profileName;
             self.fileName = fileName;
-            self.url = initialPageData.reverse("remove_ccz_hosting", id);
-            self.viewUrl = initialPageData.reverse("ccz_hosting", link);
+            self.url = initialPageData.reverse("remove_hosted_ccz", id);
+            self.viewUrl = initialPageData.reverse("hosted_ccz", link);
             return self;
         };
-        var cczHostingsView = function (hostings) {
+        var hostedCCZsView = function (hostings) {
             var self = {};
             self.hostings = _.map(hostings, function (hosting) {
-                return cczHosting(hosting.id, hosting.link_name, hosting.app_name, hosting.version,
+                return hostedCCZ(hosting.id, hosting.link_name, hosting.app_name, hosting.version,
                     hosting.profile_name, hosting.file_name);
             });
             self.search = function () {
@@ -42,6 +42,6 @@ hqDefine('icds/js/manage_ccz_hosting', [
             };
             return self;
         };
-        $("#manage-ccz-hostings").koApplyBindings(cczHostingsView(initialPageData.get("ccz_hostings")));
+        $("#manage-ccz-hostings").koApplyBindings(hostedCCZsView(initialPageData.get("hosted_cczs")));
     });
 });

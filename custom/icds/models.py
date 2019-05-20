@@ -15,14 +15,14 @@ from custom.icds.const import (
     DISPLAY_CHOICE_LIST,
     DISPLAY_CHOICE_FOOTER,
 )
-from custom.icds.utils.ccz_hosting import CCZHostingUtility
+from custom.icds.utils.hosted_ccz import HostedCCZUtility
 from custom.icds.validators import (
     LowercaseAlphanumericValidator,
 )
 from custom.nic_compliance.utils import hash_password
 
 
-class CCZHostingLink(models.Model):
+class HostedCCZLink(models.Model):
     identifier = models.CharField(null=False, unique=True, max_length=255, db_index=True,
                                   validators=[LowercaseAlphanumericValidator])
     username = models.CharField(null=False, max_length=255)
@@ -31,17 +31,17 @@ class CCZHostingLink(models.Model):
     page_title = models.CharField(blank=True, max_length=255)
 
     def to_json(self):
-        from custom.icds.serializers import CCZHostingLinkSerializer
-        return CCZHostingLinkSerializer(self).data
+        from custom.icds.serializers import HostedCCZLinkSerializer
+        return HostedCCZLinkSerializer(self).data
 
     def save(self, *args, **kwargs):
         if not self.pk:
             self.password = hash_password(self.password)
         self.full_clean()
-        super(CCZHostingLink, self).save(*args, **kwargs)
+        super(HostedCCZLink, self).save(*args, **kwargs)
 
 
-class CCZHostingSupportingFile(models.Model):
+class HostedCCZSupportingFile(models.Model):
     FILE_TYPE_CHOICES = (
         (FILE_TYPE_CHOICE_ZIP, 'zip'),
         (FILE_TYPE_CHOICE_DOC, 'document'),
@@ -61,17 +61,17 @@ class CCZHostingSupportingFile(models.Model):
 
     @cached_property
     def utility(self):
-        return CCZHostingUtility(self)
+        return HostedCCZUtility(self)
 
     def delete_file(self):
         # if no other domain is using this file/doc, delete the file from blobdb
-        if not (CCZHostingSupportingFile.objects.filter(blob_id=self.blob_id)
+        if not (HostedCCZSupportingFile.objects.filter(blob_id=self.blob_id)
                 .exclude(domain=self.domain).exists()):
             self.utility.remove_file_from_blobdb()
 
     def delete(self, *args, **kwargs):
         self.delete_file()
-        super(CCZHostingSupportingFile, self).delete(*args, **kwargs)
+        super(HostedCCZSupportingFile, self).delete(*args, **kwargs)
 
     @classmethod
     def create(cls, domain, file_name, file_type, display, file_obj):
@@ -86,7 +86,7 @@ class CCZHostingSupportingFile(models.Model):
 
 
 class HostedCCZ(models.Model):
-    link = models.ForeignKey(CCZHostingLink, on_delete=models.CASCADE)
+    link = models.ForeignKey(HostedCCZLink, on_delete=models.CASCADE)
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
     profile_id = models.CharField(max_length=255, blank=True)
@@ -97,7 +97,7 @@ class HostedCCZ(models.Model):
 
     @cached_property
     def utility(self):
-        return CCZHostingUtility(self)
+        return HostedCCZUtility(self)
 
     @cached_property
     def domain(self):
@@ -138,7 +138,7 @@ class HostedCCZ(models.Model):
         super(HostedCCZ, self).clean()
 
     def save(self, *args, **kwargs):
-        from custom.icds.tasks.ccz_hosting import setup_ccz_file_for_hosting
+        from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
         self.full_clean()
         super(HostedCCZ, self).save(*args, **kwargs)
         if not self.utility.file_exists():
@@ -156,8 +156,8 @@ class HostedCCZ(models.Model):
 
 
 def delete_ccz_for_link(sender, instance, **kwargs):
-    for ccz_hosting in HostedCCZ.objects.filter(link=instance):
-        ccz_hosting.delete_ccz()
+    for hosted_ccz in HostedCCZ.objects.filter(link=instance):
+        hosted_ccz.delete_ccz()
 
 
-pre_delete.connect(delete_ccz_for_link, sender=CCZHostingLink)
+pre_delete.connect(delete_ccz_for_link, sender=HostedCCZLink)

@@ -37,15 +37,15 @@
           <h3 class="text-center underlined mb-40">
             <strong>{{ page_title }}</strong>
           </h3>
-          {% if ccz_hostings %}
+          {% if hosted_cczs %}
             <div class="mb-40">
               <p class="file-titles font-weight-bold underlined">
                 CCZ Files
               </p>
-              {% for ccz_hosting in ccz_hostings %}
+              {% for hosted_ccz in hosted_cczs %}
                 <p>
-                  <a href="{{ ccz_hosting.ccz_details.download_url }}">
-                    {{ ccz_hosting.ccz_details.name }}
+                  <a href="{{ hosted_ccz.ccz_details.download_url }}">
+                    {{ hosted_ccz.ccz_details.name }}
                   </a>
                 </p>
               {% endfor %}
