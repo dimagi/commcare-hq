@@ -14,7 +14,7 @@ class TestHostedCCZLinkSerializer(SimpleTestCase):
     def setUp(self):
         super(TestHostedCCZLinkSerializer, self).setUp()
         self.link = HostedCCZLink(username="user", domain="test", identifier="abcdef",
-                                   page_title="page title")
+                                  page_title="page title")
         self.link.password = hash_password(self.raw_password)
 
     def test_data(self):

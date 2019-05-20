@@ -16,7 +16,7 @@ class TestHostedCCZ(TestCase):
     def setUp(self):
         super(TestHostedCCZ, self).setUp()
         self.link = HostedCCZLink.objects.create(username="username", password="password",
-                                                  identifier="link123", domain="test")
+                                                 identifier="link123", domain="test")
         self.hosted_ccz = HostedCCZ(link=self.link, app_id="dummy", version=12, profile_id="12345")
 
     def tearDown(self):
@@ -63,7 +63,7 @@ class TestHostedCCZ(TestCase):
     def test_delete_ccz(self, mock_delete, _):
         self.hosted_ccz.save()
         link2 = HostedCCZLink.objects.create(username="username", password="password",
-                                              identifier="link1234", domain="test")
+                                             identifier="link1234", domain="test")
         hosted_ccz = HostedCCZ.objects.create(
             link=link2,
             app_id=self.hosted_ccz.app_id,

@@ -23,7 +23,7 @@ class TestHostedCCZSerializer(TestCase):
     def setUpClass(cls):
         super(TestHostedCCZSerializer, cls).setUpClass()
         cls.link = HostedCCZLink.objects.create(username="username", password="password",
-                                                 identifier="link123", domain="test")
+                                                identifier="link123", domain="test")
         cls.hosted_ccz = HostedCCZ(link=cls.link, app_id="dummy", version=12, profile_id="12345",
                                    file_name="my file")
 

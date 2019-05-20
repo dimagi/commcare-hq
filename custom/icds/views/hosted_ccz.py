@@ -215,8 +215,7 @@ class HostedCCZView(DomainViewMixin, TemplateView):
         return {
             supporting_file.file_name: reverse('hosted_ccz_download_supporting_files',
                                                args=[supporting_file.domain, supporting_file.pk])
-            for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain,
-                                                                           display=display)
+            for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain, display=display)
         }
 
     def get_context_data(self, **kwargs):

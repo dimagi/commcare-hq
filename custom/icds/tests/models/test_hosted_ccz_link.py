@@ -14,7 +14,7 @@ class TestHostedCCZLink(TestCase):
     def setUp(self):
         super(TestHostedCCZLink, self).setUp()
         self.link = HostedCCZLink(username="user", domain="test", identifier="abcdef",
-                                   password=self.raw_password)
+                                  password=self.raw_password)
 
     def tearDown(self):
         if self.link.pk:
