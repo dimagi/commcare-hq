@@ -86,10 +86,7 @@ class _Importer(object):
         )
         self.log_case_lookup()
 
-        if case:
-            if case.type != self.config.case_type:
-                return  # TODO Add error message about skipped row
-        elif error == LookupErrors.NotFound:
+        if error == LookupErrors.NotFound:
             if not self.config.create_new_cases:
                 return
         elif error == LookupErrors.MultipleResults:
