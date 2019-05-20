@@ -721,7 +721,6 @@ def iter_media_files(media_objects):
     errors will not include all error messages until the iterator is exhausted
 
     """
-    from dimagi.utils.logging import notify_exception
     errors = []
 
     def _media_files():
@@ -891,7 +890,6 @@ class ViewMultimediaFile(View):
 
 def iter_index_files(app, build_profile_id=None, download_targeted_version=False):
     from corehq.apps.app_manager.views.download import download_index_files
-    from dimagi.utils.logging import notify_exception
     skip_files = [
         text_format.format(suffix)
         for text_format in ['profile{}.xml', 'profile{}.ccpr', 'media_profile{}.xml']
