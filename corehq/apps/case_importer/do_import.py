@@ -219,7 +219,7 @@ class CaseImportRow(object):
         self.owner_id = owner_id or self.user_id
 
     def set_parent_id(self, log_case_lookup):
-        for column, search_field, search_id  in [
+        for column, search_field, search_id in [
                 ('parent_id', 'case_id', self.parent_id),
                 ('parent_external_id', 'external_id', self.parent_external_id),
         ]:
