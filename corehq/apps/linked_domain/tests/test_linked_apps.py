@@ -67,6 +67,14 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
 
 
 class TestLinkedApps(BaseLinkedAppsTest):
+    def _make_new_plain_master_build(self):
+        self.plain_master_app.save()  # increment version number
+        copy = self.plain_master_app.make_build()
+        copy.is_released = True
+        copy.save()
+        self.addCleanup(copy.delete)
+        return copy
+
     def test_missing_ucrs(self):
         with self.assertRaises(AppEditingError):
             overwrite_app(self.linked_app, self.master_app_with_report_modules, {})
@@ -103,12 +111,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.assertIsNone(self.linked_app.get_master_version())
 
-        self.plain_master_app.save()  # increment version number
-        copy1 = self.plain_master_app.make_build()
-        copy1.is_released = True
-        copy1.save()
-        self.addCleanup(copy1.delete)
-
+        copy1 = self._make_new_plain_master_build()
         self.assertEqual(copy1.version, self.linked_app.get_master_version())
 
     def test_get_latest_master_release(self):
@@ -122,15 +125,29 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
-        self.plain_master_app.save()  # increment version number
-        copy1 = self.plain_master_app.make_build()
-        copy1.is_released = True
-        copy1.save()
-        self.addCleanup(copy1.delete)
+        copy1 = self._make_new_plain_master_build()
 
         latest_master_release = self.linked_app.get_latest_master_release()
         self.assertEqual(copy1.get_id, latest_master_release.get_id)
         self.assertEqual(copy1._rev, latest_master_release._rev)
+
+    def test_incremental_versioning(self):
+        self.linked_app.master = self.plain_master_app.get_id
+        original_master_version = self.plain_master_app.version or 0
+        original_linked_version = self.linked_app.version or 0
+
+        # Make a few versions of master app
+        self._make_new_plain_master_build()
+        self._make_new_plain_master_build()
+        self._make_new_plain_master_build()
+        current_master = self._make_new_plain_master_build()
+
+        # Pull linked app and refresh from database
+        update_linked_app(self.linked_app, 'test_incremental_versioning')
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+
+        self.assertEqual(current_master.version, original_master_version + 4)
+        self.assertEqual(self.linked_app.version, original_linked_version + 1)
 
     def test_get_latest_master_release_not_permitted(self):
         self.linked_app.master = self.plain_master_app.get_id
