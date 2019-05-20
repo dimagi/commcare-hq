@@ -53,10 +53,9 @@ branches:
   #- jls/reports-select2-v4  # Jenny April 9
   - nh/cdc/one_domain  # Norman March 26
   - sr-ucr-mirror # Sravan May 1
-#  - mk/ccz-hosting-revamp # MK May 6
+  - mk/ccz-hosting-revamp # MK May 6
   - fr/case-templates      # FR May 15
   - mk/media-version-on-revert   # MK May 16
   - update-jsonobject  # Nick P May 17
-  - jls/notify-integrity-checks # Jenny May 20
 #  - web-user-reports-project-access  # Gabriella May 13
 submodules: {}
