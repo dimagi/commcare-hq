@@ -50,7 +50,6 @@ trunk: master
 name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
-  #- jls/reports-select2-v4  # Jenny April 9
   - nh/cdc/one_domain  # Norman March 26
   - sr-ucr-mirror # Sravan May 1
   - mk/ccz-hosting-revamp # MK May 6
@@ -58,6 +57,6 @@ branches:
   - mk/media-version-on-revert   # MK May 16
   - update-jsonobject  # Nick P May 17
 #  - web-user-reports-project-access  # Gabriella May 13
-#  - jls/linked-app-incremental-versioning # Jenny May 20
+  - jls/linked-app-incremental-versioning # Jenny May 20
   - es/case-import  # Ethan May 20
 submodules: {}
