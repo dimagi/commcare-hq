@@ -5584,6 +5584,9 @@ class LinkedApplication(Application):
     @classmethod
     def wrap(cls, data):
         self = super(LinkedApplication, cls).wrap(data)
+
+        # Legacy linked apps pulled the master's version along with its content.
+        # So if the master's version wasn't recorded, that means it matches this app's version.
         if not self.pulled_from_master_version:
             self.pulled_from_master_version = self.version
 
