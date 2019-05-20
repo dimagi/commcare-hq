@@ -252,15 +252,10 @@ class CaseImportRow(object):
             self.extras['date_opened'] = self.date_opened
 
     def set_external_id(self, is_new_case):
-        # This can almost certainly be simplified, will worry about that later
-        if is_new_case:
-            if self.config.search_field == 'external_id':
-                self.extras['external_id'] = self.search_id
-            elif self.external_id:
-                self.extras['external_id'] = self.external_id
-        else:
-            if self.external_id:
-                self.extras['external_id'] = self.external_id
+        if is_new_case and self.config.search_field == 'external_id':
+            self.extras['external_id'] = self.search_id
+        elif self.external_id:
+            self.extras['external_id'] = self.external_id
 
     def get_create_caseblock(self):
         return CaseBlock(
