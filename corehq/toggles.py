@@ -1781,7 +1781,7 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
 )
 
 PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg'
+    'parallel_agg',
     'This makes the icds dashboard aggregation run on both distributed and monolith backends',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
