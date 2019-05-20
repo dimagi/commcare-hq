@@ -254,7 +254,7 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
     return [
         _("Locale ID {id} present in suite.xml but not in default app strings.").format(id=id)
-        for id in (suite_ids - app_strings_ids) if id
+        for id in (suite_ids) if id
     ]
 
 
@@ -278,7 +278,7 @@ def check_ccz_multimedia_integrity(domain, fpath):
                     resources = {node.text for node in
                                  parsed.findall("media/resource/location[@authority='local']")}
                     names = z.namelist()
-                    missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
+                    missing = [r for r in resources if re.sub(r'^\.\/', '', r) in names]
                     errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
 
     return errors
