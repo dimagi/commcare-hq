@@ -11,6 +11,8 @@ from memoized import memoized
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime
 
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.const import AggregationLevels
@@ -66,43 +68,43 @@ def get_sql_scripts(state_id):
     # check all tables have non-empty awc_id
     tables_with_awc_id = [
         # some awc_id of this UCR are null
-        'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
+        _table_name('static-pregnant-tasks_cases'),
         # some forms are from deleted locations, so loc table doesn't have data on some rows
-        'config_report_icds-cas_static-usage_forms_92fbe2aa',
-        'config_report_icds-cas_static-child_tasks_cases_3548e54b',
+        _table_name('static-usage_forms'),
+        _table_name('static-child_tasks_cases'),
     ]
 
     child_health_ucrs = [
         # child_health_cases_a46c129f loc table has some empty supervisor_id
-        'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
-        'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
-        'config_report_icds-cas_static-complementary_feeding_fo_4676987e'
+        _table_name('dashboard_child_health_daily_feeding_forms'),
+        _table_name('static-dashboard_growth_monitoring_forms'),
+        _table_name('static-complementary_feeding_forms')
     ]
 
     # some supervisor_id on loc table are null
     ccs_record_ucrs = [
-        'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
-        'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
-        'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
+        _table_name('static-dashboard_birth_preparedness_forms'),
+        _table_name('static-dashboard_thr_forms'),
+        _table_name('static-postnatal_care_forms'),
     ]
 
     # has column 'case_load_ccs_record0'
     # some supervisor_id on loc table are null
-    unclear_ccs_record = ['config_report_icds-cas_static-dashboard_delivery_forms_946d56bd']
+    unclear_ccs_record = [_table_name('static-dashboard_delivery_forms')]
 
     ucr_to_sql = [
         # ([ucr_table_list, (join_table_name, ucr_column, join_table_column)])
-        (tables_with_awc_id, ('config_report_icds-cas_static-awc_location_88b3f9c3', 'awc_id', 'doc_id')),
+        (tables_with_awc_id, (_table_name('static-awc_location'), 'awc_id', 'doc_id')),
         (child_health_ucrs, (
-            'config_report_icds-cas_static-child_health_cases_a46c129f',
+            _table_name('static-child_health_cases'),
             'child_health_case_id',
             'doc_id')),
         (ccs_record_ucrs, (
-            'config_report_icds-cas_static-ccs_record_cases_cedcca39',
+            _table_name('static-ccs_record_cases'),
             'ccs_record_case_id',
             'doc_id')),
         (unclear_ccs_record, (
-            'config_report_icds-cas_static-ccs_record_cases_cedcca39',
+            _table_name('static-ccs_record_cases'),
             'case_load_ccs_record0',
             'doc_id')),
     ]
@@ -111,6 +113,10 @@ def get_sql_scripts(state_id):
         for table in ucrs:
             sql_scripts[table] = get_raw_sql(table, join_table, ucr_column, join_table_column, state_id)
     return sql_scripts
+
+
+def _table_name(table_id):
+    return get_table_name('icds-cas', table_id)
 
 
 @memoized
