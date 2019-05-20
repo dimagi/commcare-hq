@@ -23,7 +23,8 @@ function(doc){
             build_profiles: doc.build_profiles,
             vellum_case_management: !!doc.vellum_case_management,
             target_commcare_flavor: doc.target_commcare_flavor,
-            upstream_version: doc.doc_type == 'LinkedApplication' ? doc.upstream_version : null,
+            // In legacy linked apps, the linked and master versions correspond, but newer linked apps stored the pulled master version
+            upstream_version: doc.doc_type == 'LinkedApplication' ? doc.upstream_version || doc.version : null,
         });
     }
 }
