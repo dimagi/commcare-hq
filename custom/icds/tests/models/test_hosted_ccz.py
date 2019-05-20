@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 
 from custom.icds.models import (
     CCZHostingLink,
-    CCZHosting,
+    HostedCCZ,
 )
 
 
@@ -17,7 +17,7 @@ class TestCCZHosting(TestCase):
         super(TestCCZHosting, self).setUp()
         self.link = CCZHostingLink.objects.create(username="username", password="password",
                                                   identifier="link123", domain="test")
-        self.ccz_hosting = CCZHosting(link=self.link, app_id="dummy", version=12, profile_id="12345")
+        self.ccz_hosting = HostedCCZ(link=self.link, app_id="dummy", version=12, profile_id="12345")
 
     def tearDown(self):
         self.link.delete()
@@ -48,9 +48,9 @@ class TestCCZHosting(TestCase):
     @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_uniqueness(self, *_):
         self.ccz_hosting.save()
-        error_message = "Ccz hosting with this Link, App id, Version and Profile id already exists."
+        error_message = "Hosted ccz with this Link, App id, Version and Profile id already exists."
         with self.assertRaisesMessage(ValidationError, error_message):
-            CCZHosting.objects.create(
+            HostedCCZ.objects.create(
                 link=self.ccz_hosting.link,
                 app_id=self.ccz_hosting.app_id,
                 version=self.ccz_hosting.version,
@@ -64,7 +64,7 @@ class TestCCZHosting(TestCase):
         self.ccz_hosting.save()
         link2 = CCZHostingLink.objects.create(username="username", password="password",
                                               identifier="link1234", domain="test")
-        ccz_hosting = CCZHosting.objects.create(
+        ccz_hosting = HostedCCZ.objects.create(
             link=link2,
             app_id=self.ccz_hosting.app_id,
             version=self.ccz_hosting.version,

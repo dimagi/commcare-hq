@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 
 from custom.icds.tasks import setup_ccz_file_for_hosting
 from custom.icds.models import (
-    CCZHosting,
+    HostedCCZ,
     CCZHostingLink,
 )
 
@@ -15,19 +15,19 @@ from custom.icds.models import (
 @mock.patch('custom.icds.tasks.ccz_hosting.wrap_app')
 @mock.patch('custom.icds.tasks.ccz_hosting.get_build_doc_by_version')
 @mock.patch('custom.icds.tasks.ccz_hosting.create_files_for_ccz')
-@mock.patch('custom.icds.tasks.ccz_hosting.CCZHosting.objects.get')
+@mock.patch('custom.icds.tasks.ccz_hosting.HostedCCZ.objects.get')
 @mock.patch('custom.icds.models.CCZHostingUtility')
 class TestSetUpCCZFileForHosting(SimpleTestCase):
     def setUp(self):
         super(TestSetUpCCZFileForHosting, self).setUp()
         self.link = CCZHostingLink(username="username", password="password", identifier="link1234", domain="test")
-        self.ccz_hosting = CCZHosting(link=self.link, app_id="dummy", version=12, profile_id="123456")
+        self.ccz_hosting = HostedCCZ(link=self.link, app_id="dummy", version=12, profile_id="123456")
 
     def test_hosting_not_present(self, mock_ccz_utility, mock_get, *_):
         mock_result = mock.MagicMock()
         mock_result.return_value = True
         mock_ccz_utility.return_value.file_exists = mock_result
-        mock_get.side_effect = CCZHosting.DoesNotExist
+        mock_get.side_effect = HostedCCZ.DoesNotExist
         setup_ccz_file_for_hosting(3)
         self.assertFalse(mock_result.called)
 

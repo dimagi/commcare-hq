@@ -20,7 +20,7 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from custom.icds.models import (
-    CCZHosting,
+    HostedCCZ,
     CCZHostingLink,
 )
 
@@ -104,7 +104,7 @@ class CCZHostingForm(forms.Form):
 
     def save(self):
         try:
-            CCZHosting.objects.create(
+            HostedCCZ.objects.create(
                 link_id=self.cleaned_data['link_id'], app_id=self.cleaned_data['app_id'],
                 version=self.cleaned_data['version'], profile_id=self.cleaned_data['profile_id'],
                 file_name=self.cleaned_data['file_name']

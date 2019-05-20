@@ -42,7 +42,7 @@ from custom.icds.forms import (
 )
 from custom.icds.models import (
     CCZHostingLink,
-    CCZHosting,
+    HostedCCZ,
     CCZHostingSupportingFile,
 )
 from custom.nic_compliance.utils import verify_password
@@ -153,9 +153,9 @@ class ManageCCZHosting(BaseDomainView):
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         if self.request.GET.get('link_id'):
-            ccz_hostings = CCZHosting.objects.filter(link_id=self.request.GET.get('link_id'))
+            ccz_hostings = HostedCCZ.objects.filter(link_id=self.request.GET.get('link_id'))
         else:
-            ccz_hostings = CCZHosting.objects.filter(link__domain=self.domain)
+            ccz_hostings = HostedCCZ.objects.filter(link__domain=self.domain)
         if self.request.GET.get('app_id'):
             ccz_hostings = ccz_hostings.filter(app_id=self.request.GET.get('app_id'))
         version = self.request.GET.get('version')
@@ -223,7 +223,7 @@ class CCZHostingView(DomainViewMixin, TemplateView):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
             'page_title': self._page_title,
-            'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)],
+            'ccz_hostings': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.ccz_hosting_link)],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
             'supporting_list_files': self._get_files_for(DISPLAY_CHOICE_LIST),
             'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
@@ -233,16 +233,16 @@ class CCZHostingView(DomainViewMixin, TemplateView):
 @login_and_domain_required
 def remove_ccz_hosting(request, domain, hosting_id):
     try:
-        ccz_hosting = CCZHosting.objects.get(pk=hosting_id, link__domain=domain)
+        ccz_hosting = HostedCCZ.objects.get(pk=hosting_id, link__domain=domain)
         ccz_hosting.delete()
-    except CCZHosting.DoesNotExist:
+    except HostedCCZ.DoesNotExist:
         pass
     return HttpResponseRedirect(reverse(ManageCCZHosting.urlname, args=[domain]))
 
 
 @location_safe
 def download_ccz(request, domain, hosting_id):
-    ccz_hosting = CCZHosting.objects.get(pk=hosting_id, link__domain=domain)
+    ccz_hosting = HostedCCZ.objects.get(pk=hosting_id, link__domain=domain)
     file_size = ccz_hosting.utility.get_file_meta().content_length
     # check for file name of the ccz hosting object first because
     # the file meta might be coming from CCZ stored for another ccz hosting instance

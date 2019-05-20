@@ -9,14 +9,14 @@ from celery.task import task
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.app_manager.dbaccessors import wrap_app
-from custom.icds.models import CCZHosting
+from custom.icds.models import HostedCCZ
 
 
 @task
 def setup_ccz_file_for_hosting(ccz_hosting_id):
     try:
-        ccz_hosting = CCZHosting.objects.get(pk=ccz_hosting_id)
-    except CCZHosting.DoesNotExist:
+        ccz_hosting = HostedCCZ.objects.get(pk=ccz_hosting_id)
+    except HostedCCZ.DoesNotExist:
         return
     version = ccz_hosting.version
     ccz_utility = ccz_hosting.utility

@@ -85,7 +85,7 @@ class CCZHostingSupportingFile(models.Model):
         return supporting_file.utility.file_exists()
 
 
-class CCZHosting(models.Model):
+class HostedCCZ(models.Model):
     link = models.ForeignKey(CCZHostingLink, on_delete=models.CASCADE)
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
@@ -104,8 +104,8 @@ class CCZHosting(models.Model):
         return self.link.domain
 
     def to_json(self, app_names):
-        from custom.icds.serializers import CCZHostingSerializer
-        return CCZHostingSerializer(self, context={'app_names': app_names}).data
+        from custom.icds.serializers import HostedCCZSerializer
+        return HostedCCZSerializer(self, context={'app_names': app_names}).data
 
     @cached_property
     def blob_id(self):
@@ -135,28 +135,28 @@ class CCZHosting(models.Model):
                 'version': _("Version not released. Please mark it as released.")})
         if not self.file_name:
             self.file_name = "%s-v%s" % (self.build_doc['name'], self.version)
-        super(CCZHosting, self).clean()
+        super(HostedCCZ, self).clean()
 
     def save(self, *args, **kwargs):
         from custom.icds.tasks.ccz_hosting import setup_ccz_file_for_hosting
         self.full_clean()
-        super(CCZHosting, self).save(*args, **kwargs)
+        super(HostedCCZ, self).save(*args, **kwargs)
         if not self.utility.file_exists():
             setup_ccz_file_for_hosting.delay(self.pk)
 
     def delete_ccz(self):
         # if no other link is using this app+version+profile, delete the file from blobdb
-        if not (CCZHosting.objects.filter(app_id=self.app_id, version=self.version, profile_id=self.profile_id)
+        if not (HostedCCZ.objects.filter(app_id=self.app_id, version=self.version, profile_id=self.profile_id)
                 .exclude(link=self.link).exists()):
             self.utility.remove_file_from_blobdb()
 
     def delete(self, *args, **kwargs):
         self.delete_ccz()
-        super(CCZHosting, self).delete(*args, **kwargs)
+        super(HostedCCZ, self).delete(*args, **kwargs)
 
 
 def delete_ccz_for_link(sender, instance, **kwargs):
-    for ccz_hosting in CCZHosting.objects.filter(link=instance):
+    for ccz_hosting in HostedCCZ.objects.filter(link=instance):
         ccz_hosting.delete_ccz()
 
 

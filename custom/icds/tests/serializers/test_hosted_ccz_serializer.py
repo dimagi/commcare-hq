@@ -5,10 +5,10 @@ import mock
 from django.test import TestCase
 
 from custom.icds.models import (
-    CCZHosting,
+    HostedCCZ,
     CCZHostingLink,
 )
-from custom.icds.serializers import CCZHostingSerializer
+from custom.icds.serializers import HostedCCZSerializer
 BUILD = {
     'build_profiles': {
         '12345': {'name': 'Dummy Build Profile'},
@@ -16,21 +16,21 @@ BUILD = {
 }
 
 
-class TestCCZHostingSerializer(TestCase):
+class TestHostedCCZSerializer(TestCase):
     raw_password = "123456"
 
     @classmethod
     def setUpClass(cls):
-        super(TestCCZHostingSerializer, cls).setUpClass()
+        super(TestHostedCCZSerializer, cls).setUpClass()
         cls.link = CCZHostingLink.objects.create(username="username", password="password",
                                                  identifier="link123", domain="test")
-        cls.ccz_hosting = CCZHosting(link=cls.link, app_id="dummy", version=12, profile_id="12345",
-                                     file_name="my file")
+        cls.ccz_hosting = HostedCCZ(link=cls.link, app_id="dummy", version=12, profile_id="12345",
+                                    file_name="my file")
 
     @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: BUILD)
     def test_data(self):
         self.assertEqual(
-            CCZHostingSerializer(self.ccz_hosting, context={'app_names': {
+            HostedCCZSerializer(self.ccz_hosting, context={'app_names': {
                 'dummy': 'Dummy App',
             }}).data,
             {'app_name': 'Dummy App', 'file_name': self.ccz_hosting.file_name,
@@ -44,4 +44,4 @@ class TestCCZHostingSerializer(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.link.delete()
-        super(TestCCZHostingSerializer, cls).tearDownClass()
+        super(TestHostedCCZSerializer, cls).tearDownClass()
