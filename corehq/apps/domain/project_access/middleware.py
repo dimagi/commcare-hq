@@ -28,4 +28,4 @@ class ProjectAccessMiddleware(MiddlewareMixin):
         membership = user.get_domain_membership(domain)
         yesterday = (datetime.today() - timedelta(hours=24)).date()
         if membership and (not membership.last_accessed or membership.last_accessed < yesterday):
-            update_domain_date.delay(user, domain)
+            update_domain_date.delay(user.user_id, domain)
