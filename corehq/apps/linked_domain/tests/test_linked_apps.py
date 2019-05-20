@@ -128,6 +128,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_incremental_versioning(self):
         self.linked_app.master = self.plain_master_app.get_id
+        original_master_version = self.plain_master_app.version or 0
+        original_linked_version = self.linked_app.version or 0
 
         # Make a few versions of master app
         self._make_new_plain_master_build()
@@ -139,8 +141,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         update_linked_app(self.linked_app, 'test_incremental_versioning')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
 
-        self.assertEqual(current_master.version, 5)
-        self.assertEqual(self.linked_app.version, 1)
+        self.assertEqual(current_master.version, original_master_version + 4)
+        self.assertEqual(self.linked_app.version, original_linked_version + 1)
 
     def test_get_latest_master_release_not_permitted(self):
         self.linked_app.master = self.plain_master_app.get_id
