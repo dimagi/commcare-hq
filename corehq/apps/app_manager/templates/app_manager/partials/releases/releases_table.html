@@ -160,7 +160,11 @@
           <!--/ko-->
         </div>
         <h4 class="panel-release-title">
-          <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
+          <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong>
+          <span data-bind="visible: doc_type() == 'LinkedApplication'">
+            (master v<span data-bind="text: pulled_from_master_version"></span>)
+          </span>
+          |
           <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
           <span data-bind="text: comment_user_name"></span>
           <!--ko if: menu_item_label() -->
