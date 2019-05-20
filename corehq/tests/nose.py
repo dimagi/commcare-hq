@@ -10,32 +10,34 @@ Django-nose database context to run tests in two phases:
 Adapted from testrunner.TwoStageTestRunner
 Based on http://www.caktusgroup.com/blog/2013/10/02/skipping-test-db-creation/
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
+from __future__ import absolute_import, print_function, unicode_literals
+
 import logging
 import os
 import sys
 import threading
 from fnmatch import fnmatch
 
-from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django import loading
-from django.core.management import call_command
-from django.test.utils import get_unique_databases_and_mirrors
-from mock import patch, Mock
-from nose.plugins import Plugin
-from nose.tools import nottest
 from django.conf import settings
+from django.core.management import call_command
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
+from django.test.utils import get_unique_databases_and_mirrors
+
+from couchdbkit import ResourceNotFound
+from couchdbkit.ext.django import loading
 from django_nose.plugin import DatabaseContext
+from mock import Mock, patch
+from nose.plugins import Plugin
+from nose.tools import nottest
+from requests import HTTPError
+from six.moves import zip
+
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import unit_testing_only
-from six.moves import zip
 
 log = logging.getLogger(__name__)
 
@@ -337,7 +339,7 @@ def flush_databases():
     for db in get_all_test_dbs():
         try:
             db.flush()
-        except ResourceNotFound:
+        except (ResourceNotFound, HTTPError):
             pass
     call_command('flush', interactive=False)
 
