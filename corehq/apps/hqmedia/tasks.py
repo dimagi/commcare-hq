@@ -9,6 +9,7 @@ import zipfile
 from io import open
 from wsgiref.util import FileWrapper
 
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
@@ -186,10 +187,24 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                         file_cache[path] = data
 
         if toggles.LOCALE_ID_INTEGRITY.enabled(app.domain):
-            errors.extend(find_missing_locale_ids_in_ccz(file_cache))
+            locale_errors = find_missing_locale_ids_in_ccz(file_cache)
+            if locale_errors:
+                errors.extend(locale_errors)
+                notify_exception(
+                    None,
+                    message="CCZ missing locale ids from default/app_strings.txt",
+                    details={'domain': domain, 'app_id': app_id, 'errors': locale_errors}
+                )
 
         if include_index_files and include_multimedia_files:
-            errors.extend(check_ccz_multimedia_integrity(app.domain, fpath))
+            multimedia_errors = check_ccz_multimedia_integrity(app.domain, fpath)
+            errors.extend(multimedia_errors)
+            if multimedia_errors:
+                notify_exception(
+                    None,
+                    message="CCZ missing multimedia files",
+                    details={'domain': domain, 'app_id': app_id, 'errors': multimedia_errors}
+                )
 
         if errors:
             os.remove(fpath)
@@ -239,7 +254,7 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
     return [
         _("Locale ID {id} present in suite.xml but not in default app strings.").format(id=id)
-        for id in (suite_ids - app_strings_ids) if id
+        for id in (suite_ids) if id
     ]
 
 
@@ -263,7 +278,7 @@ def check_ccz_multimedia_integrity(domain, fpath):
                     resources = {node.text for node in
                                  parsed.findall("media/resource/location[@authority='local']")}
                     names = z.namelist()
-                    missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
+                    missing = [r for r in resources if re.sub(r'^\.\/', '', r) in names]
                     errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
 
     return errors
