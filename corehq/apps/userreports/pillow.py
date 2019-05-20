@@ -1,38 +1,31 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 import hashlib
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 
 import six
-from alembic.autogenerate.api import compare_metadata
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
 from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import metadata
+from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
-from dimagi.utils.logging import notify_exception
-from fluff.signals import (
-    migrate_tables,
-    get_migration_context,
-    get_tables_to_migrate,
-    get_tables_to_rebuild,
-    reformat_alembic_diffs
-)
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.dao.exceptions import DocumentMismatchError
@@ -72,6 +65,16 @@ def _filter_by_hash(configs, ucr_division):
         if ucr_start <= table_hash <= ucr_end:
             filtered_configs.append(config)
     return filtered_configs
+
+
+def _filter_missing_domains(configs):
+    """Return a list of configs whose domain exists on this environment"""
+    domain_names = [config.domain for config in configs if config.is_static]
+    existing_domains = list(get_domain_ids_by_names(domain_names))
+    return [
+        config for config in configs
+        if not config.is_static or config.domain in existing_domains
+    ]
 
 
 class ConfigurableReportTableManagerMixin(object):
@@ -116,6 +119,8 @@ class ConfigurableReportTableManagerMixin(object):
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
 
+        configs = _filter_missing_domains(configs)
+
         return configs
 
     def needs_bootstrap(self):
@@ -137,7 +142,7 @@ class ConfigurableReportTableManagerMixin(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, raise_errors=True)
+                get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
             )
 
         self.rebuild_tables_if_necessary()
@@ -153,10 +158,15 @@ class ConfigurableReportTableManagerMixin(object):
 
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
+        all_adapters = []
         for adapter in adapters:
-            sql_adapter = get_indicator_adapter(adapter.config)
+            if getattr(adapter, 'all_adapters', None):
+                all_adapters.extend(adapter.all_adapters)
+            else:
+                all_adapters.append(adapter)
+        for adapter in all_adapters:
             try:
-                tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
+                tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
             except BadSpecError:
                 _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
                 _soft_assert(False, "Broken data source {}".format(adapter.config.get_id))
@@ -165,37 +175,49 @@ class ConfigurableReportTableManagerMixin(object):
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
 
         for engine_id, table_map in tables_by_engine.items():
-            engine = connection_manager.get_engine(engine_id)
             table_names = list(table_map)
-            with engine.begin() as connection:
-                migration_context = get_migration_context(connection, table_names)
-                raw_diffs = compare_metadata(migration_context, metadata)
-                diffs = reformat_alembic_diffs(raw_diffs)
+            engine = connection_manager.get_engine(engine_id)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
-            for table_name in tables_to_rebuild:
+            diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
+
+            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            for table_name in tables_to_act_on.rebuild:
+                pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
+                table_diffs = [diff for diff in diffs.formatted if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
-                        self.rebuild_table(sql_adapter)
+                        self.rebuild_table(sql_adapter, table_diffs)
                     except TableRebuildError as e:
                         _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
                 else:
-                    self.rebuild_table(sql_adapter)
+                    self.rebuild_table(sql_adapter, table_diffs)
 
-            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
-            tables_to_migrate -= tables_to_rebuild
-            migrate_tables(engine, raw_diffs, tables_to_migrate)
+            self.migrate_tables(engine, diffs.raw, tables_to_act_on.migrate, table_map)
 
-    def rebuild_table(self, adapter):
+    def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
+        pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
+        changes = migrate_tables(engine, diffs, table_names)
+        for table, diffs in changes.items():
+            adapter = adapters_by_table[table]
+            adapter.log_table_migrate(source='pillowtop', diffs=diffs)
+
+    def rebuild_table(self, adapter, diffs=None):
         config = adapter.config
         if not config.is_static:
             latest_rev = config.get_db().get_rev(config._id)
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-        adapter.rebuild_table()
+
+        if config.disable_destructive_rebuild and adapter.table_exists:
+            diff_dicts = [diff.to_dict() for diff in diffs]
+            adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
+            return
+
         if config.is_static:
-            rebuild_indicators.delay(adapter.config.get_id)
+            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
+        else:
+            adapter.rebuild_table(source='pillowtop')
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
@@ -247,7 +269,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         for doc in docs:
             eval_context = EvaluationContext(doc)
             for adapter in adapters:
-                if adapter.config.filter(doc):
+                if adapter.config.filter(doc, eval_context):
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
@@ -256,7 +278,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                         except Exception as e:
                             change_exceptions.append((changes_by_id[doc["_id"]], e))
                         eval_context.reset_iteration()
-                elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
+                else:
+                    # Delete regardless whether doc exists or not to avoid individual doc lookups
                     to_delete_by_adapter[adapter].append(doc['_id'])
 
         # bulk delete by adapter
@@ -265,21 +288,13 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             delete_ids = to_delete_by_adapter[adapter] + to_delete
             try:
                 adapter.bulk_delete(delete_ids)
-            except Exception as ex:
-                notify_exception(
-                    None,
-                    "Error in deleting changes chunk {ids}: {ex}".format(
-                        ids=delete_ids, ex=ex))
+            except Exception:
                 retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
         # bulk update by adapter
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             try:
                 adapter.save_rows(rows)
-            except Exception as ex:
-                notify_exception(
-                    None,
-                    "Error in saving changes chunk {ids}: {ex}".format(
-                        ids=[c.id for c in to_update], ex=repr(ex)))
+            except Exception:
                 retry_changes.update(to_update)
         if async_configs_by_doc_id:
             doc_type_by_id = {
@@ -351,7 +366,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             # make copy to avoid modifying list during iteration
             adapters = list(self.table_adapters_by_domain[domain])
             for table in adapters:
-                if table.config.filter(doc):
+                if table.config.filter(doc, eval_context):
                     if table.run_asynchronous:
                         async_tables.append(table.config._id)
                     else:

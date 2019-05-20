@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
+from django.utils.functional import Promise
+
 from .couch import get_document_or_404
 from .view_utils import reverse
 
@@ -16,3 +21,17 @@ def flatten_non_iterable_list(elements):
         else:
             items.append(element)
     return items
+
+
+def eval_lazy(value):
+    if isinstance(value, Promise):
+        value = value._proxy____cast()
+    return value
+
+
+def cmp(a, b):
+    """Comparison function for Python 3
+
+    https://stackoverflow.com/a/22490617/10840
+    """
+    return (a > b) - (a < b)

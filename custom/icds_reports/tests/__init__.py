@@ -18,10 +18,13 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
+from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
+
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
+    build_incentive_report,
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
@@ -29,37 +32,40 @@ from io import open
 from six.moves import range
 from six.moves import zip
 
+from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
+
 FILE_NAME_TO_TABLE_MAPPING = {
-    'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
-    'ccs_monthly': 'config_report_icds-cas_static-ccs_record_cases_monthly_d0e2e49e',
-    "ccs_cases": "config_report_icds-cas_static-ccs_record_cases_cedcca39",
-    'child_cases': 'config_report_icds-cas_static-child_health_cases_a46c129f',
-    'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
-    'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
-    'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
-    'infrastructure_v2': 'config_report_icds-cas_static-infrastructure_form_v2_36e9ebb0',
-    'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
-    'person_cases': 'config_report_icds-cas_static-person_cases_v3_2ae0879a',
-    'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
-    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
-    'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
-    'aww_user': 'config_report_icds-cas_static-commcare_user_cases_85763310',
-    'child_tasks': 'config_report_icds-cas_static-child_tasks_cases_3548e54b',
-    'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
-    'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
-    'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
-    'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
-    'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
-    'ls_awc_mgt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
-    'ls_home_vists': 'config_report_icds-cas_static-ls_home_visit_forms_fill_53a43d79',
-    'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
-    'cbe_form': 'config_report_icds-cas_static-cbe_form_f7988a04',
+    'awc_mgmt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
+    "ccs_cases": get_table_name('icds-cas', 'static-ccs_record_cases'),
+    'child_cases': get_table_name('icds-cas', 'static-child_health_cases'),
+    'daily_feeding': get_table_name('icds-cas', 'static-daily_feeding_forms'),
+    'household_cases': get_table_name('icds-cas', 'static-household_cases'),
+    'infrastructure': get_table_name('icds-cas', 'static-infrastructure_form'),
+    'infrastructure_v2': get_table_name('icds-cas', 'static-infrastructure_form_v2'),
+    'location_ucr': get_table_name('icds-cas', 'static-awc_location'),
+    'person_cases': get_table_name('icds-cas', 'static-person_cases_v3'),
+    'usage': get_table_name('icds-cas', 'static-usage_forms'),
+    'vhnd': get_table_name('icds-cas', 'static-vhnd_form'),
+    'complementary_feeding': get_table_name('icds-cas', 'static-complementary_feeding_forms'),
+    'aww_user': get_table_name('icds-cas', 'static-commcare_user_cases'),
+    'child_tasks': get_table_name('icds-cas', 'static-child_tasks_cases'),
+    'pregnant_tasks': get_table_name('icds-cas', 'static-pregnant-tasks_cases'),
+    'thr_form': get_table_name('icds-cas', 'static-dashboard_thr_forms'),
+    'gm_form': get_table_name('icds-cas', 'static-dashboard_growth_monitoring_forms'),
+    'pnc_forms': get_table_name('icds-cas', 'static-postnatal_care_forms'),
+    'dashboard_daily_feeding': get_table_name('icds-cas', 'dashboard_child_health_daily_feeding_forms'),
+    'ls_awc_mgt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
+    'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
+    'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
+    'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
     'agg_awc': 'agg_awc',
-    'birth_preparedness': 'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
-    'delivery_form': 'config_report_icds-cas_static-dashboard_delivery_forms_946d56bd',
+    'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
+    'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
+
+_use_citus = override_settings(ICDS_USE_CITUS=True)
 
 
 def setUpModule():
@@ -71,8 +77,11 @@ def setUpModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
+    # _use_citus.enable()
 
     domain = create_domain('icds-cas')
+    SQLLocation.objects.all().delete()
+    LocationType.objects.all().delete()
     location_type = LocationType.objects.create(
         domain=domain.name,
         name='block',
@@ -171,6 +180,8 @@ def setUpModule():
                         null='' if six.PY3 else b'', columns=columns
                     )
 
+        _distribute_tables_for_citus(engine)
+
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
@@ -178,18 +189,42 @@ def setUpModule():
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
-        except AssertionError as e:
-            # we always use soft assert to email when the aggregation has completed
-            if "Aggregation completed" not in str(e):
-                print(e)
-                tearDownModule()
-                raise
+            build_incentive_report(agg_date=datetime(2017, 5, 28))
         except Exception as e:
             print(e)
             tearDownModule()
             raise
         finally:
             _call_center_domain_mock.stop()
+
+
+def _distribute_tables_for_citus(engine):
+    if not getattr(settings, 'ICDS_USE_CITUS', False):
+        return
+
+    for table, col in DISTRIBUTED_TABLES:
+        with engine.begin() as conn:
+
+            # TODO: remove this after citus migration
+            res = conn.execute(
+                """
+                SELECT c.relname AS child
+                FROM
+                    pg_inherits JOIN pg_class AS c ON (inhrelid=c.oid)
+                    JOIN pg_class as p ON (inhparent=p.oid)
+                    where p.relname = %s;
+                """,
+                table
+            )
+            for child in [row.child for row in res]:
+                # only need this because of reusedb if testing on master and this branch
+                conn.execute('drop table if exists "{}"'.format(child))
+
+            create_citus_distributed_table(conn, table, col)
+
+    for table in REFERENCE_TABLES:
+        with engine.begin() as conn:
+            create_citus_reference_table(conn, table)
 
 
 def tearDownModule():
@@ -221,6 +256,7 @@ def tearDownModule():
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
     Domain.get_by_name('icds-cas').delete()
+    # _use_citus.disable()
     _call_center_domain_mock.stop()
 
 

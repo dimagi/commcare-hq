@@ -1,13 +1,9 @@
 hqDefine('aaa/js/filters/beneficiary_type_filter', [
     'jquery',
     'knockout',
-    'underscore',
-    'moment/moment',
 ], function (
     $,
-    ko,
-    _,
-    moment
+    ko
 ) {
     return {
         viewModel: function (params) {
@@ -20,15 +16,18 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
                 {id: 'child', name: 'Child'},
             ]);
 
-            self.selectedType = ko.observable();
+            self.selectedType = ko.observable(params.postData.selectedBeneficiaryType() || null);
+            self.showErrorMessage = ko.observable(false);
 
-            params.disableSubmit(true);
+            params.filters[self.slug].applyFilter = function () {
+                params.postData.selectedBeneficiaryType(self.selectedType() || null);
+            };
 
-            self.selectedType.subscribe(function (newValue) {
-                params.disableSubmit(newValue === null);
-                params.postData.selectedBeneficiaryType(newValue || null);
-            });
-
+            params.filters[self.slug].verify = function () {
+                var isSelected = self.selectedType() !== void(0);
+                self.showErrorMessage(!isSelected);
+                return isSelected;
+            };
 
             if (params.filters.hasOwnProperty(self.slug)) {
                 params.filters[self.slug].resetFilters = function () {
@@ -36,7 +35,7 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
                 };
             }
 
-            return self
+            return self;
         },
         template: '<div data-bind="template: { name: \'beneficiary-type-template\' }"></div>',
     };

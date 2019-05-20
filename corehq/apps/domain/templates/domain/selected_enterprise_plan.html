@@ -3,12 +3,12 @@
 {% load i18n %}
 
 {% block form_content %}
-    <p class="lead">
-        {% blocktrans %}
-        Dimagi handles Enterprise plans on a case-by-case basis. Please fill out your information
-        below to request a quote.
-        {% endblocktrans %}
-    </p>
+  <p class="lead">
+    {% blocktrans %}
+      Dimagi handles Enterprise plans on a case-by-case basis. Please fill out your information
+      below to request a quote.
+    {% endblocktrans %}
+  </p>
 
-    {% crispy enterprise_contact_form %}
+  {% crispy enterprise_contact_form %}
 {% endblock %}

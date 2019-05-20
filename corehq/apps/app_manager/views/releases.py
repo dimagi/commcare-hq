@@ -30,7 +30,7 @@ from phonelog.models import UserErrorEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_or_api_key, track_domain_request
@@ -51,8 +51,11 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_version,
     get_latest_released_app_version,
 )
-from corehq.apps.app_manager.models import BuildProfile, LatestEnabledBuildProfiles
-from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
+from corehq.apps.app_manager.models import (
+    BuildProfile,
+    LatestEnabledBuildProfiles,
+    AppReleaseByLocation,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
@@ -103,8 +106,10 @@ def paginate_releases(request, domain, app_id):
             descending=True,
             limit=limit,
             skip=skip,
-            wrapper=lambda x: SavedAppBuild.wrap(x['value'],
-                                                 scrap_old_conventions=False).releases_list_json(timezone),
+            wrapper=lambda x: (
+                SavedAppBuild.wrap(x['value'], scrap_old_conventions=False)
+                .releases_list_json(timezone)
+            ),
         ).all()
 
     if not bool(only_show_released or query):
@@ -126,7 +131,10 @@ def paginate_releases(request, domain, app_id):
             app_es = app_es.is_released()
         if query:
             app_es = app_es.add_query(build_comment(query), queries.SHOULD)
-            app_es = app_es.add_query(version(query), queries.SHOULD)
+            try:
+                app_es = app_es.add_query(version(int(query)), queries.SHOULD)
+            except ValueError:
+                pass
 
         results = app_es.exclude_source().run()
         total_apps = results.total
@@ -137,16 +145,6 @@ def paginate_releases(request, domain, app_id):
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
             for app in apps
         ]
-
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-    for app in saved_apps:
-        app['include_media'] = app['doc_type'] != 'RemoteApp'
-        app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
-        app['target_commcare_flavor'] = (
-            SavedAppBuild.get(app['_id']).target_commcare_flavor
-            if toggles.TARGET_COMMCARE_FLAVOR.enabled(domain)
-            else 'none'
-        )
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -186,7 +184,6 @@ def get_releases_context(request, domain, app_id):
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
-        'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
@@ -237,8 +234,10 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists():
-            return json_response({'error': _('Please disable any enabled profiles to un-release this build.')})
+        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists() or
+                AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
+            return json_response({'error': _('Please disable any enabled profiles/location restriction '
+                                             'to un-release this build.')})
     ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
@@ -271,7 +270,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    track_built_app_on_hubspot_v2.delay(request.couch_user)
+    track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
@@ -306,10 +305,6 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
-    if copy:
-        # Set if build is supported for Java Phones
-        j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-        copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
 
     return json_response({
         "saved_app": copy,
@@ -343,19 +338,29 @@ def revert_to_copy(request, domain, app_id):
     """
     app = get_app(domain, app_id)
     copy = get_app(domain, request.POST['saved_app'])
+    if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
+        copy.convert_to_application()
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(
         request,
-        "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
+        _("Successfully reverted to version %(old_version)s, now at version %(new_version)s") % {
+            'old_version': copy.version,
+            'new_version': app.version,
+        }
     )
+    copy_build_comment_params = {
+        "old_version": copy.version,
+        "original_comment": copy.build_comment,
+    }
     if copy.build_comment:
-        new_build_comment = "Reverted to version {old_version}\n\n{original_comment}".format(
-            old_version=copy.version, original_comment=copy.build_comment)
+        copy_build_comment_template = _(
+            "Reverted to version {old_version}\n\nPrevious build comments:\n{original_comment}")
     else:
-        new_build_comment = "Reverted to version {old_version}".format(old_version=copy.version)
+        copy_build_comment_template = _("Reverted to version {old_version}")
+
     copy = app.make_build(
-        comment=new_build_comment,
+        comment=copy_build_comment_template.format(**copy_build_comment_params),
         user_id=request.couch_user.get_id,
     )
     copy.save(increment_version=False)

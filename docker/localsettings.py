@@ -2,34 +2,13 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
-    },
-    'icds-ucr': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
-    },
-    'aaa-data': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
@@ -106,6 +85,27 @@ if USE_PARTITIONED_DATABASE:
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
+
+# Remove this until we're ready to switch tests to using it
+# # See CITUSDB_SETUP.md for explanation
+# DATABASES.update({
+#     'icds-ucr': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'DISABLE_SERVER_SIDE_CURSORS': True,
+#         'NAME': 'commcare_ucr_citus',
+#         'USER': 'commcarehq',
+#         'PASSWORD': 'commcarehq',
+#         'HOST': 'citus_master',
+#         'PORT': '5432',
+#         'TEST': {
+#             # use the same DB for tests to skip expensive setup time in Travs
+#             'NAME': 'commcare_ucr_citus',
+#             'SERIALIZE': False,
+#         },
+#     },
+# })
+
+
 ####### Couch Config ######
 COUCH_DATABASES = {
     'default': {
@@ -160,7 +160,7 @@ ALLOWED_HOSTS = ['*']
 
 # faster compressor that doesn't do source maps
 COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
 SHARED_DRIVE_ROOT = '/sharedfiles'
@@ -257,6 +257,4 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
 BIGCOUCH = True
 
-LOCAL_APPS = (
-    'kombu.transport.django',  # required for celery
-)
+LOCAL_APPS = ()

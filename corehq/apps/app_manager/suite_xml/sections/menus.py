@@ -4,9 +4,17 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
     UserCaseXPathValidationError)
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
-from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
-from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
-    xpath_references_user_case)
+from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Command,
+    LocalizedMenu,
+    Menu,
+)
+from corehq.apps.app_manager.util import (
+    is_usercase_in_use,
+    xpath_references_case,
+    xpath_references_user_case,
+)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath)
 from memoized import memoized
@@ -75,7 +83,8 @@ class MenuContributor(SuiteContributorByModule):
 
         menus = []
         if hasattr(module, 'get_menus'):
-            for menu in module.get_menus(supports_module_filter=supports_module_filter):
+            for menu in module.get_menus(supports_module_filter=supports_module_filter,
+                                         build_profile_id=self.build_profile_id):
                 menus.append(menu)
         else:
             from corehq.apps.app_manager.models import ShadowModule
@@ -113,9 +122,10 @@ class MenuContributor(SuiteContributorByModule):
                     if self.app.enable_localized_menu_media:
                         module_custom_icon = module.custom_icon
                         menu_kwargs.update({
-                            'menu_locale_id': id_strings.module_locale(module),
-                            'media_image': bool(len(module.all_image_paths())),
-                            'media_audio': bool(len(module.all_audio_paths())),
+                            'menu_locale_id': get_module_locale_id(module),
+                            'menu_enum_text': get_module_enum_text(module),
+                            'media_image': module.uses_image(build_profile_id=self.build_profile_id),
+                            'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
                             'image_locale_id': id_strings.module_icon_locale(module),
                             'audio_locale_id': id_strings.module_audio_locale(module),
                             'custom_icon_locale_id': (
@@ -132,14 +142,19 @@ class MenuContributor(SuiteContributorByModule):
                                 and not module.root_module.put_in_root):
                             # Mobile will combine this module with its parent
                             # Reference the parent's name to avoid ambiguity
-                            locale_id = id_strings.module_locale(module.root_module)
+                            locale_kwargs = {
+                                'locale_id': get_module_locale_id(module.root_module),
+                                'enum_text': get_module_enum_text(module.root_module),
+                            }
                         else:
-                            locale_id = id_strings.module_locale(module)
+                            locale_kwargs = {
+                                'locale_id': get_module_locale_id(module),
+                                'enum_text': get_module_enum_text(module),
+                            }
                         menu_kwargs.update({
-                            'locale_id': locale_id,
                             'media_image': module.default_media_image,
                             'media_audio': module.default_media_audio,
-                        })
+                        }, **locale_kwargs)
                         menu = Menu(**menu_kwargs)
 
                     excluded_form_ids = []

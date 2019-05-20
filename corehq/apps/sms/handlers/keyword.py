@@ -27,9 +27,6 @@ from corehq import toggles
 from six.moves import filter
 
 
-LOCATION_KEYWORD = 'LOCATION'
-
-
 class StructuredSMSException(Exception):
 
     def __init__(self, *args, **kwargs):
@@ -55,7 +52,6 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
         "#START": global_keyword_start,
         "#STOP": global_keyword_stop,
         "#CURRENT": global_keyword_current,
-        "#UPDATE": global_keyword_update
     }
 
     inbound_metadata = MessageMetadata(
@@ -65,58 +61,6 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
 
     fcn = global_keywords.get(global_keyword, global_keyword_unknown)
     return fcn(v, text, msg, text_words, open_sessions)
-
-
-def can_update_location_via_sms(domain):
-    return toggles.ALLOW_LOCATION_UPDATE_OVER_SMS.enabled(domain)
-
-
-def global_keyword_update(v, text, msg, text_words, open_sessions):
-
-    outbound_metadata = MessageMetadata(
-        workflow=WORKFLOW_KEYWORD,
-    )
-
-    if v.owner_doc_type != 'CommCareUser':
-        send_sms_to_verified_number(v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v), metadata=outbound_metadata)
-        return True
-
-    if len(text_words) > 1:
-        keyword = text_words[1]
-        if keyword.upper() == LOCATION_KEYWORD and can_update_location_via_sms(v.domain):
-            site_code = text_words[2:]
-            if not site_code:
-                send_sms_to_verified_number(v, get_message(MSG_UPDATE_LOCATION_SYNTAX, v),
-                                            metadata=outbound_metadata)
-                return True
-
-            site_code = site_code[0].lower()
-
-            location = SQLLocation.objects.get_or_None(domain=v.domain,
-                                                       site_code=site_code)
-            if location:
-                v.owner.set_location(location)
-                send_sms_to_verified_number(
-                    v,
-                    get_message(MSG_UPDATE_LOCATION_SUCCESS),
-                    metadata=outbound_metadata
-                )
-                return True
-            else:
-                send_sms_to_verified_number(
-                    v,
-                    get_message(MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND, v, context=[site_code]),
-                    metadata=outbound_metadata
-                )
-                return True
-        else:
-            send_sms_to_verified_number(
-                v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v, (keyword,)), metadata=outbound_metadata
-            )
-    else:
-        send_sms_to_verified_number(v, get_message(MSG_UPDATE, v),
-                                    metadata=outbound_metadata)
-    return True
 
 
 def global_keyword_start(v, text, msg, text_words, open_sessions):
@@ -154,7 +98,7 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
             reminder_id=session.reminder_id,
             xforms_session_couch_id=session._id,
         )
-        
+
         resp = current_question(session.session_id, v.domain)
         send_sms_to_verified_number(v, resp.event.text_prompt,
             metadata=outbound_metadata)

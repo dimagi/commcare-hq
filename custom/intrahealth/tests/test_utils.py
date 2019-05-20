@@ -7,7 +7,7 @@ from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, make_location
 from corehq.apps.products.models import Product
-from corehq.apps.sms.tests.update_location_keyword_test import create_mobile_worker
+from corehq.apps.users.models import CommCareUser
 from corehq.sql_db.connections import connection_manager
 from custom.intrahealth.models import (
     RecapPassageFluff,
@@ -43,7 +43,7 @@ class IntraHealthTestCase(TestCase):
         cls.pps = make_location(domain=TEST_DOMAIN, name='Test PPS', location_type='PPS', parent=cls.district)
         cls.pps.save()
 
-        cls.mobile_worker = create_mobile_worker(
+        cls.mobile_worker = CommCareUser.create(
             domain=TEST_DOMAIN, username='dummy', password='dummy', phone_number='777777'
         )
         cls.mobile_worker.location_id = cls.pps.get_id
@@ -82,6 +82,7 @@ class IntraHealthTestCase(TestCase):
             cls.couverture_table.drop(connection, checkfirst=True)
 
         cls.engine.dispose()
+        cls.mobile_worker.delete()
         cls.domain.delete()
         delete_all_xforms()
         super(IntraHealthTestCase, cls).tearDownClass()

@@ -40,7 +40,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     def case_update_strategy(self):
         return None
 
-    def __init__(self, domain=None, strip_history=False, deleted_ok=False,
+    def __init__(self, domain=None, deleted_ok=False,
                  lock=False, wrap=True, initial=None, xforms=None,
                  load_src="unknown"):
 
@@ -48,7 +48,6 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         self._populate_from_initial(initial)
         self.domain = domain
         self.cached_xforms = xforms if xforms is not None else []
-        self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
         self.wrap = wrap
@@ -96,7 +95,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         if case_id in self.cache:
             return self.cache[case_id]
 
-        case, lock = self.processor_interface.get_case_with_lock(case_id, self.lock, self.strip_history, self.wrap)
+        case, lock = self.processor_interface.get_case_with_lock(case_id, self.lock, self.wrap)
         if lock:
             self.locks.append(lock)
 

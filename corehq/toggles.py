@@ -56,7 +56,8 @@ TAG_INTERNAL = Tag(
     css_class='default',
     description="These are tools for our engineering team to use to manage the product",
 )
-ALL_TAGS = [TAG_CUSTOM, TAG_DEPRECATED, TAG_PRODUCT, TAG_SOLUTIONS, TAG_INTERNAL]
+# Order roughly corresponds to how much we want you to use it
+ALL_TAGS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
 
 
 class StaticToggle(object):
@@ -462,7 +463,7 @@ CASE_LIST_LOOKUP = StaticToggle(
 
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
-    "Enables biometric integration (simprints) features. [IN DEVELOPMENT]",
+    "Enables biometric integration (simprints) features.",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
 )
@@ -559,13 +560,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
     notification_emails=['jemord']
-)
-
-EXPORT_NO_SORT = StaticToggle(
-    'export_no_sort',
-    'Do not sort exports',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -736,12 +730,6 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     "Specify stock rates per location type.",
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
-)
-
-BULK_ARCHIVE_FORMS = StaticToggle(
-    'bulk_archive_forms',
-    'Bulk archive forms with Excel',
-    TAG_SOLUTIONS
 )
 
 TRANSFER_DOMAIN = StaticToggle(
@@ -1041,6 +1029,26 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LEGACY_CHILD_MODULES = StaticToggle(
+    'legacy_child_modules',
+    'Legacy, non-nested child modules',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Child Menus are now displayed nested under their parent menu. Some "
+        "apps built before this change will require that their modules be "
+        "reordered to fit this paradigm. This feature flag exists to support "
+        "those applications until they're transitioned."
+    )
+)
+
+APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
+    'APP_BUILDER_CONDITIONAL_NAMES',
+    'ICDS/REACH: Conditional, calculation-based  mapping for menu and form names',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
@@ -1070,6 +1078,15 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SMS_LOG_CHANGES = StaticToggle(
+    'sms_log_changes',
+    "Message Log Report: Test new additions",
+    TAG_CUSTOM,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description=("Include failed messages, show message status, show event. "
+                 "This feature flag exists to QA on real prod data."),
+)
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
@@ -1097,6 +1114,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     'Include message id in Message Log export.',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+BULK_CONDITIONAL_ALERTS = StaticToggle(
+    'bulk_conditional_alerts',
+    'Allow bulk download and upload of conditional alerts.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(
@@ -1154,23 +1178,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     'to allow migrating ICDS to a new cluster.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-
-NEW_REMINDERS_MIGRATOR = StaticToggle(
-    'new_reminders_migrator',
-    "Enables features to handle migrating domains to the new reminders framework",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-
-REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
-    'reminders_migration_in_progress',
-    "Disables editing of reminders so that the migration to the new framework can happen.",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 
@@ -1237,13 +1244,6 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
-    'allow_location_update_over_sms',
-    'Allow users to update their location over SMS.',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1273,14 +1273,6 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
-    'language_linked_multimedia',
-    'Add a setting to link multimedia to the default language',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
-)
-
 CAUTIOUS_MULTIMEDIA = StaticToggle(
     'cautious_multimedia',
     'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
@@ -1289,11 +1281,11 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     always_enabled={'icds', 'icds-cas'},
 )
 
-PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
-    'profile_bulk_multimedia_upload',
-    'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
-    TAG_INTERNAL,
-    [NAMESPACE_USER],
+LOCALE_ID_INTEGRITY = StaticToggle(
+    'locale_id_integrity',
+    'Verify all locale ids in suite are present in app strings before allowing CCZ download',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
@@ -1336,7 +1328,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'icds-new', 'india', 'staging'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1406,7 +1398,7 @@ UATBC_ADHERENCE_TASK = StaticToggle(
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
@@ -1541,6 +1533,13 @@ CUSTOM_ICON_BADGES = StaticToggle(
 ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     'icds_ucr_elasticsearch_doc_loading',
     'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
+    'icds_compare_queries_against_citus',
+    'ICDS: Compare quereies against citus',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
 )
@@ -1712,13 +1711,11 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
-SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
-    'set_scheduled_report_start_date',
-    'Allow users to set an effective start date for scheduled reports.',
-    TAG_INTERNAL,
+MANAGE_RELEASES_PER_LOCATION = StaticToggle(
+    'manage_releases_per_location',
+    'Manage releases per location',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
 )
 
 
@@ -1750,5 +1747,49 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     'partial_ui_translations',
     'Enable uploading a subset of translations in the UI Translations Excel upload',
     TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
+
+
+DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
+    'demo_workflow_v2_ab_variant',
+    'Enables the "variant" version of the Demo Workflow A/B test after login',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
+
+
+PARALLEL_MPR_ASR_REPORT = StaticToggle(
+    'parallel_mpr_asr_report',
+    'Release parallel loading of MPR and ASR report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+IMPROVED_ASR_REPORT = StaticToggle(
+    'improved_asr_report',
+    'This makes ASR report use the new asr_2_3 UCR report',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
+    'load_dashboard_from_citus',
+    'Use CitusDB for loading ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+PARALLEL_AGGREGATION = StaticToggle(
+    'parallel_agg'
+    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
+    'skip_orm_fixture_upload',
+    'Exposes an option in fixture api upload to skip saving through couchdbkit',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

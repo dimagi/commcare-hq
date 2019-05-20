@@ -10,12 +10,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.users.models import Permissions
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq import privileges
 from django.http import HttpResponse, Http404
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.validation import Validation
 import six
-
 
 FieldDefinition = namedtuple('FieldDefinition', 'name required type')
 
@@ -47,6 +47,8 @@ class SelfRegistrationUserInfo(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    __hash__ = None
+
     def __init__(self, phone_number, custom_user_data=None):
         self.phone_number = phone_number
         self.custom_user_data = custom_user_data
@@ -72,6 +74,7 @@ class SelfRegistrationReinstallInfo(object):
     def __init__(self, app_id, reinstall_message=None):
         self.app_id = app_id
         if isinstance(reinstall_message, six.string_types):
+            soft_assert_type_text(reinstall_message)
             self.reinstall_message = reinstall_message.strip()
         else:
             self.reinstall_message = None
@@ -99,6 +102,8 @@ class BaseUserSelfRegistrationValidation(Validation):
                 )
 
             if field_def.name in data:
+                if isinstance(data[field_def.name], six.string_types):
+                    soft_assert_type_text(data[field_def.name])
                 if not isinstance(data[field_def.name], field_def.type):
                     if isinstance(field_def.type, tuple):
                         if len(field_def.type) > 1:
@@ -240,6 +245,7 @@ class UserSelfRegistrationResource(BaseUserSelfRegistrationResource):
 
         custom_registration_message = data.get('custom_registration_message')
         if isinstance(custom_registration_message, six.string_types):
+            soft_assert_type_text(custom_registration_message)
             custom_registration_message = custom_registration_message.strip()
             if not custom_registration_message:
                 custom_registration_message = None

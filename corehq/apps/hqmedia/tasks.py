@@ -1,42 +1,33 @@
 from __future__ import absolute_import, division, unicode_literals
-from io import open
-import os
-import tempfile
-from wsgiref.util import FileWrapper
-from celery import states
-from celery.exceptions import Ignore
-from celery.task import task
-from celery.utils.log import get_task_logger
-from django.conf import settings
+
 import itertools
 import json
+import os
 import re
+import tempfile
 import zipfile
+from io import open
+from wsgiref.util import FileWrapper
+
+from django.conf import settings
+from django.utils.translation import ugettext as _
+
+from celery import states
+from celery.task import task
+from celery.utils.log import get_task_logger
+
+from soil import DownloadBase
+from soil.util import expose_cached_download, expose_file_download
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
-from dimagi.utils.decorators.profile import profile_prod
-from dimagi.utils.logging import notify_exception
-from corehq.util.soft_assert import soft_assert
-from soil import DownloadBase
-from django.utils.translation import ugettext as _
-
-from soil.progress import update_task_state
-from soil.util import expose_file_download, expose_cached_download
 
 logging = get_task_logger(__name__)
 
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
-
-
-@profile_prod('process_bulk_upload_zip.prof', probability=1, limit=None)
-@task(serializer='pickle')
-def profile_and_process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
-                                        license_name=None, author=None, attribution_notes=None):
-    return process_bulk_upload_zip(processing_id, domain, app_id, username, share_media,
-                                   license_name, author, attribution_notes)
 
 
 @task(serializer='pickle')
@@ -180,6 +171,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             }, indent=4)
             files = itertools.chain(files, [('manifest.json', manifest)])
 
+        file_cache = {}
         with open(fpath, 'wb') as tmp:
             with zipfile.ZipFile(tmp, "w") as z:
                 progress = initial_progress
@@ -190,39 +182,18 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     z.writestr(path, data, file_compression)
                     progress += file_progress / file_count
                     DownloadBase.set_progress(build_application_zip, progress, 100)
+                    if extension not in MULTIMEDIA_EXTENSIONS:
+                        file_cache[path] = data
 
-        # Integrity check that all media files present in media_suite.xml were added to the zip
-        if include_multimedia_files and include_index_files and toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
-            with open(fpath, 'rb') as tmp:
-                with zipfile.ZipFile(tmp, "r") as z:
-                    media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
-                    if len(media_suites) != 1:
-                        message = _('Could not identify media_suite.xml in CCZ')
-                        errors.append(message)
-                        notify_exception(None, "[ICDS-291] {}".format(message))
-                    else:
-                        with z.open(media_suites[0]) as media_suite:
-                            from corehq.apps.app_manager.xform import parse_xml
-                            parsed = parse_xml(media_suite.read())
-                            resources = {node.text for node in
-                                         parsed.findall("media/resource/location[@authority='local']")}
-                            names = z.namelist()
-                            missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
-                            if missing:
-                                soft_assert(notify_admins=True)(False, '[ICDS-291] Files missing from CCZ', [{
-                                    'missing file count': len(missing),
-                                    'app_id': app._id,
-                                    'version': app.version,
-                                    'build_profile_id': build_profile_id,
-                                }, {
-                                    'files': missing,
-                                }])
-                            errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
+        if toggles.LOCALE_ID_INTEGRITY.enabled(app.domain):
+            errors.extend(find_missing_locale_ids_in_ccz(file_cache))
+
+        if include_index_files and include_multimedia_files:
+            errors.extend(check_ccz_multimedia_integrity(app.domain, fpath))
 
         if errors:
             os.remove(fpath)
-            update_task_state(build_application_zip, states.FAILURE, {'errors': errors})
-            raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
+            raise Exception('\t' + '\t'.join(errors))
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
@@ -246,3 +217,53 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
 
     DownloadBase.set_progress(build_application_zip, 100, 100)
+
+
+def find_missing_locale_ids_in_ccz(file_cache):
+    errors = [
+        _("Could not find {file_path} in CCZ").format(file_path)
+        for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
+    if errors:
+        return errors
+
+    # Each line of an app_strings.txt file is of the format "name.of.key=value of key"
+    # decode is necessary because Application._make_language_files calls .encode('utf-8')
+    app_strings_ids = {
+        line.decode("utf-8").split('=')[0]
+        for line in file_cache['default/app_strings.txt'].splitlines()
+    }
+
+    from corehq.apps.app_manager.xform import parse_xml
+    parsed = parse_xml(file_cache['suite.xml'])
+    suite_ids = {locale.get("id") for locale in parsed.iter("locale")}
+
+    return [
+        _("Locale ID {id} present in suite.xml but not in default app strings.").format(id=id)
+        for id in (suite_ids - app_strings_ids) if id
+    ]
+
+
+# Check that all media files present in media_suite.xml were added to the zip
+def check_ccz_multimedia_integrity(domain, fpath):
+    if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
+        return []
+
+    errors = []
+
+    with open(fpath, 'rb') as tmp:
+        with zipfile.ZipFile(tmp, "r") as z:
+            media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
+            if len(media_suites) != 1:
+                message = _('Could not find media_suite.xml in CCZ')
+                errors.append(message)
+            else:
+                with z.open(media_suites[0]) as media_suite:
+                    from corehq.apps.app_manager.xform import parse_xml
+                    parsed = parse_xml(media_suite.read())
+                    resources = {node.text for node in
+                                 parsed.findall("media/resource/location[@authority='local']")}
+                    names = z.namelist()
+                    missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
+                    errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
+
+    return errors

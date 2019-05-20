@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.app_manager.models import Form
 from corehq.apps.app_manager.xform import XForm
+from corehq.util.python_compatibility import soft_assert_type_text
 
 DATA_SOURCE_TYPE_CASE = 'case'
 DATA_SOURCE_TYPE_FORM = 'form'
@@ -155,6 +156,7 @@ def make_form_meta_block_indicator(spec, column_id=None, root_doc=False):
     """
     field_name = spec[0]
     if isinstance(field_name, six.string_types):
+        soft_assert_type_text(field_name)
         field_name = [field_name]
     data_type = spec[1]
     column_id = column_id or field_name[0]

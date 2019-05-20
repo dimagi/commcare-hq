@@ -3,7 +3,10 @@
 <div>
   <div data-bind="foreach: selected_path">
     <select class="form-control"
-            data-bind="enable: children_are_editable(),
+      {% if attrs.disabled %}
+            disabled="disabled"
+      {% endif %}
+            data-bind="{% if not attrs.disabled %}enable: children_are_editable(),{% endif %}
                        options: children,
                        optionsText: 'display_name',
                        value: selected_child">

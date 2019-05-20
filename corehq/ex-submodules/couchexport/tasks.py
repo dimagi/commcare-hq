@@ -5,60 +5,14 @@ from unidecode import unidecode
 from celery.task import task
 import zipfile
 from couchexport.files import Temp
-from couchexport.models import Format, ExportSchema, GroupExportConfiguration
+from couchexport.models import Format
 import tempfile
 import os
 
 from soil import DownloadBase
 from soil.util import expose_cached_download
-from couchexport.export import SchemaMismatchException, ExportConfiguration
 
 logging = get_task_logger(__name__)
-
-
-@task(serializer='pickle')
-def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
-    try:
-        export_files = custom_export.get_export_files(format=format, process=export_async, **kwargs)
-    except SchemaMismatchException as e:
-        # fire off a delayed force update to prevent this from happening again
-        rebuild_schemas.delay(custom_export.index)
-        expiry = 10*60*60
-        expose_cached_download(
-            "Sorry, the export failed for %s, please try again later" % custom_export._id,
-            expiry,
-            None,
-            content_disposition="",
-            mimetype="text/html",
-            download_id=download_id
-        ).save(expiry)
-    else:
-        if export_files:
-            if export_files.format is not None:
-                format = export_files.format
-            if not filename:
-                filename = custom_export.name
-            return cache_file_to_be_served(export_files.file, export_files.checkpoint, download_id, format, filename)
-        else:
-            return cache_file_to_be_served(None, None, download_id, format, filename)
-
-
-@task(serializer='pickle')
-def rebuild_schemas(index):
-    """
-    Resets the schema for all checkpoints to the latest version based off the
-    current document structure. Returns the number of checkpoints updated.
-    """
-    db = ExportSchema.get_db()
-    all_checkpoints = ExportSchema.get_all_checkpoints(index)
-    config = ExportConfiguration(db, index, disable_checkpoints=True)
-    latest = config.create_new_checkpoint()
-    counter = 0
-    for cp in all_checkpoints:
-        cp.schema = latest.schema
-        cp.save()
-        counter += 1
-    return counter
 
 
 @task(serializer='pickle')

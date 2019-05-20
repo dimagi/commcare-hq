@@ -2,12 +2,12 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/widgets.js' %}"></script>
+  <script src="{% static 'accounting/js/widgets.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
-    {% for adjust_balance_form in adjust_balance_forms %}
-        {% include 'accounting/partials/adjust_balance.html' %}
-    {% endfor %}
-    {{ block.super }}
+  {% for adjust_balance_form in adjust_balance_forms %}
+    {% include 'accounting/partials/adjust_balance.html' %}
+  {% endfor %}
+  {{ block.super }}
 {% endblock %}

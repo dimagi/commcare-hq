@@ -94,10 +94,14 @@ class TestMeteredLock(TestCase):
         self.assertListEqual(tracer.mock_calls, [
             call.trace("commcare.lock.acquire", resource="key"),
             call.trace().__enter__(),
-            call.trace().__enter__().set_tags({"name": "test", "acquired": "true"}),
+            call.trace().__enter__().set_tags({
+                "key": "key",
+                "name": "test",
+                "acquired": "true",
+            }),
             call.trace().__exit__(None, None, None),
             call.trace("commcare.lock.locked", resource="key"),
-            call.trace().set_tag("name", "test"),
+            call.trace().set_tags({"key": "key", "name": "test"}),
         ])
 
     def test_release_trace(self):
@@ -129,7 +133,11 @@ class TestMeteredLock(TestCase):
         self.assertListEqual(tracer.mock_calls, [
             call.trace("commcare.lock.acquire", resource="key"),
             call.trace().__enter__(),
-            call.trace().__enter__().set_tags({"name": "test", "acquired": "true"}),
+            call.trace().__enter__().set_tags({
+                "key": "key",
+                "name": "test",
+                "acquired": "true",
+            }),
             call.trace().__exit__(None, None, None),
         ])
 

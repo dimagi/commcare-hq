@@ -5,12 +5,13 @@ from __future__ import unicode_literals
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
-from custom.icds_reports.utils import percent
+from custom.icds_reports.utils import percent, phone_number_function
 
 
-class PregnantWomenExport(ExportableMixin, SqlData):
+class PregnantWomenExport(ExportableMixin, IcdsSqlData):
     title = 'Pregnant Women'
     table_name = 'agg_ccs_record_monthly'
 
@@ -30,6 +31,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns

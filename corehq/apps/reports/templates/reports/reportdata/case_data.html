@@ -8,246 +8,247 @@
 {% block title %}Case: {{ case.name }}{% endblock %}
 
 {% block head %} {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
 {% requirejs_main 'reports/js/case_details' %}
 
 {% block page_content %}
 
-{% initial_page_data 'context_case_id' case.case_id %}
-{% initial_page_data 'dynamic_properties' dynamic_properties %}
-{% initial_page_data 'timezone_offset' timezone_offset %}
-{% initial_page_data 'xform_api_url' xform_api_url %}
-{% initial_page_data 'xform_ids' case.xform_ids %}
-{% registerurl "case_form_data" case.domain case.case_id '---' %}
-{% registerurl "case_property_names" case.domain case.case_id %}
-{% registerurl "edit_case" case.domain case.case_id %}
-{% registerurl "edit_form" case.domain '---' %}
-{% registerurl "case_property_changes" case.domain case.case_id '---' %}
+  {% initial_page_data 'context_case_id' case.case_id %}
+  {% initial_page_data 'dynamic_properties' dynamic_properties %}
+  {% initial_page_data 'timezone_offset' timezone_offset %}
+  {% initial_page_data 'xform_api_url' xform_api_url %}
+  {% initial_page_data 'xform_ids' case.xform_ids %}
+  {% registerurl "case_form_data" case.domain case.case_id '---' %}
+  {% registerurl "case_property_names" case.domain case.case_id %}
+  {% registerurl "edit_case" case.domain case.case_id %}
+  {% registerurl "edit_form" case.domain '---' %}
+  {% registerurl "case_property_changes" case.domain case.case_id '---' %}
 
-{# This is used in case/partials/repeat_records.html #}
-{% registerurl 'requeue_repeat_record' case.domain %}
+  {# This is used in case/partials/repeat_records.html #}
+  {% registerurl 'requeue_repeat_record' case.domain %}
 
-<div class="hq-generic-report">
+  <div class="hq-generic-report">
     <div id="report-content">
-    <div id="tabbed-content-container">
+      <div id="tabbed-content-container">
         <div class="row">
-            <div class="col-sm-12">
-                {% include "hqwebapp/proptable/property_table.html" with tables=default_properties_as_table %}
-            </div>
+          <div class="col-sm-12">
+            {% include "hqwebapp/proptable/property_table.html" with tables=default_properties_as_table %}
+          </div>
         </div>
         <div class="row">
-            <div class="col-sm-12">
-                <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
-                    <li>
-                        <a href="#properties" data-toggle="tab">
-                            {% trans "Case Properties" %}
-                        </a>
-                    </li>
-                    <li><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
-                    {% if case.has_indices %}
-                    <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
-                    {% endif %}
-                {% if case.case_attachments %}
-                    <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
-                {% endif %}
-                {% if ledgers %}
-                    <li><a href="#case-ledgers" data-toggle="tab">{% trans "Ledger Sections" %}</a></li>
-                {% endif %}
-                {% if repeat_records %}
-                    <li><a href="#repeat-records" data-toggle="tab">{% trans "Forwarded Records" %}</a></li>
-                {% endif %}
-                </ul>
+          <div class="col-sm-12">
+            <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+              <li>
+                <a href="#properties" data-toggle="tab">
+                  {% trans "Case Properties" %}
+                </a>
+              </li>
+              <li><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
+              {% if case.has_indices %}
+                <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
+              {% endif %}
+              {% if case.case_attachments %}
+                <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
+              {% endif %}
+              {% if ledgers %}
+                <li><a href="#case-ledgers" data-toggle="tab">{% trans "Ledger Sections" %}</a></li>
+              {% endif %}
+              {% if repeat_records %}
+                <li><a href="#repeat-records" data-toggle="tab">{% trans "Forwarded Records" %}</a></li>
+              {% endif %}
+            </ul>
 
-                <div class="tab-content">
-                    <div class="tab-pane" id="properties">
-                        <div class="row-fluid">
-                            {% if dynamic_properties %}
-                                {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
-                            {% else %}
-                        <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
-                            <a target="_blank" class="pull-right"
-                               href="https://www.youtube.com/watch?v=AVSLmCJxPjY&feature=youtu.be&t=3m34s">
-                                <img src="{% static 'hqwebapp/images/case_properties_video.png' %}"
-                                     style="margin-left: 20px; width: 320px; height: 180px" /><!-- have to specify width & height -->
-                            </a>
-                            {% blocktrans %}
-                                <p>
-                                    You haven't saved any questions as case properties.
-                                    Only case properties become part of a case.
-                                </p>
-                                <p>
-                                    Watch this video to learn how to save questions as case properties.
-                                </p>
-                            {% endblocktrans %}
-                        </div>
-                            {% endif %}
-                        </div>
-                    </div><!-- end properties tab -->
-
-                    {% if case.has_indices %}
-                    <div class="tab-pane" id="related">
-                        {% include "case/partials/case_hierarchy.html" %}
+            <div class="tab-content">
+              <div class="tab-pane" id="properties">
+                <div class="row-fluid">
+                  {% if dynamic_properties %}
+                    {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
+                  {% else %}
+                    <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
+                      <a target="_blank" class="pull-right"
+                         href="https://www.youtube.com/watch?v=AVSLmCJxPjY&feature=youtu.be&t=3m34s">
+                        <img src="{% static 'hqwebapp/images/case_properties_video.png' %}"
+                             style="margin-left: 20px; width: 320px; height: 180px" /><!-- have to specify width & height -->
+                      </a>
+                      {% blocktrans %}
+                        <p>
+                          You haven't saved any questions as case properties.
+                          Only case properties become part of a case.
+                        </p>
+                        <p>
+                          Watch this video to learn how to save questions as case properties.
+                        </p>
+                      {% endblocktrans %}
                     </div>
-                    {% endif %}
-
-                    {% if case.case_attachments %}
-                    <div class="tab-pane" id="case-attachments">
-                        {% include "case/partials/case_attachments.html" %}
-                    </div> <!-- end case-attachments tab -->
-                    {% endif %}
-
-                    {% if repeat_records %}
-                        <div class="tab-pane" id="repeat-records">
-                            {% include "case/partials/repeat_records.html" %}
-                        </div>
-                    {% endif %}
-
-                    {% if ledgers %}
-                    <div class="tab-pane" id="case-ledgers">
-                    {% if show_transaction_export %}
-                        <a href="{% url 'export_case_transactions' case.domain case.case_id %}" class="pull-right">{% trans "download complete transaction history" %}</a>
-                    {% endif %}
-                    {% for section_id, product_map in ledgers.items %}
-                        <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
-                        <table class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>{% trans "Product" %}</th>
-                                <th>{% trans "Balance" %}</th>
-                                <th>{% trans "Last Updated" %}</th>
-                            </tr>
-                        </thead>
-                        {% for product_name, stock_state in product_map %}
-                        <tr>
-                            <td>{{ product_name }}</td>
-                            <td>{{ stock_state.stock_on_hand }}</td>
-                            {% if stock_state and stock_state.last_modified_form_id %}
-                            <td><a href="{% url 'render_form_data' case.domain stock_state.last_modified_form_id %}">{{ stock_state.last_modified_date }}</a></td>
-                            {% else %}
-                            <td>{% trans "No transaction found" %}</td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                        </table>
-                    {% endfor %}
-                    </div> <!-- end case-ledgers tab -->
-                    {% endif %}
-
-                    <div class="tab-pane row" id="history">
-                        <div class="col-sm-5 dataTables_wrapper">
-                            <ul data-bind="foreach: $root.form_type_facets">
-                                <li>
-                                    <strong><span data-bind="text: form_name"></span></strong>:
-                                    <span data-bind="text: form_count"></span>
-                                </li>
-                            </ul>
-                            <div class="hq-loading" data-bind="visible: $root.data_loading">
-                                {% trans "Loading" %}
-                                <img src="/static/hqwebapp/images/ajax-loader.gif" alt="loading indicator"></div>
-                            <table class="table table-striped datatable table-hover">
-                                <thead>
-                                <tr>
-                                    <th class="col-sm-2">{% trans "Received" %} ({{ tz_abbrev }})</th>
-                                    <th class="col-sm-2">{% trans "Form" %}</th>
-                                    <th class="col-sm-2">{% trans "User" %}</th>
-                                </tr>
-                                </thead>
-                                <tbody data-bind="foreach: xforms">
-                                    <tr data-bind='click: $root.clickRow, css: { info: $data.id() == $root.selected_xform_doc_id() }'>
-                                        <td>
-                                            <span data-bind="text: received_on"></span>
-                                        <td>
-                                            <span data-bind="text: readable_name, css: { 'break-all-words': !readable_name().match(/\s/) }"></span>
-                                        </td>
-                                        <td>
-                                            <span data-bind="text: username"></span>
-                                            <div class="pull-right"><i class="fa fa-chevron-right"></i></div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div class="dataTables_control">
-                                <div class="dataTables_info">
-                                    <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
-                                </div>
-                                <div class="dataTables_length form-inline">
-                                    <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
-                                </div>
-
-                                <div class="pull-right" data-bind="visible: $root.page_count() > 1">
-                                    <ul class="pagination">
-                                        <li>
-                                            <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
-                                        </li>
-                                        <li class="active">
-                                            <select class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
-                                        </li>
-                                        <li>
-                                            <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-7">
-                            <div id="xform_data_panel"></div>
-                        </div>
-                    </div> <!-- end case-history tab -->
+                  {% endif %}
                 </div>
+              </div><!-- end properties tab -->
 
+              {% if case.has_indices %}
+                <div class="tab-pane" id="related">
+                  {% include "case/partials/case_hierarchy.html" %}
+                </div>
+              {% endif %}
+
+              {% if case.case_attachments %}
+                <div class="tab-pane" id="case-attachments">
+                  {% include "case/partials/case_attachments.html" %}
+                </div> <!-- end case-attachments tab -->
+              {% endif %}
+
+              {% if repeat_records %}
+                <div class="tab-pane" id="repeat-records">
+                  {% include "case/partials/repeat_records.html" %}
+                </div>
+              {% endif %}
+
+              {% if ledgers %}
+                <div class="tab-pane" id="case-ledgers">
+                  {% if show_transaction_export %}
+                    <a href="{% url 'export_case_transactions' case.domain case.case_id %}" class="pull-right">{% trans "download complete transaction history" %}</a>
+                  {% endif %}
+                  {% for section_id, product_map in ledgers.items %}
+                    <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
+                    <table class="table table-striped table-hover">
+                      <thead>
+                      <tr>
+                        <th>{% trans "Product" %}</th>
+                        <th>{% trans "Balance" %}</th>
+                        <th>{% trans "Last Updated" %}</th>
+                      </tr>
+                      </thead>
+                      {% for product_name, stock_state in product_map %}
+                        <tr>
+                          <td>{{ product_name }}</td>
+                          <td>{{ stock_state.stock_on_hand }}</td>
+                          {% if stock_state and stock_state.last_modified_form_id %}
+                            <td><a href="{% url 'render_form_data' case.domain stock_state.last_modified_form_id %}">{{ stock_state.last_modified_date }}</a></td>
+                          {% else %}
+                            <td>{% trans "No transaction found" %}</td>
+                          {% endif %}
+                        </tr>
+                      {% endfor %}
+                    </table>
+                  {% endfor %}
+                </div> <!-- end case-ledgers tab -->
+              {% endif %}
+
+              <div class="tab-pane row" id="history">
+                <div class="col-sm-5 dataTables_wrapper">
+                  <ul data-bind="foreach: $root.form_type_facets">
+                    <li>
+                      <strong><span data-bind="text: form_name"></span></strong>:
+                      <span data-bind="text: form_count"></span>
+                    </li>
+                  </ul>
+                  <div class="hq-loading" data-bind="visible: $root.data_loading">
+                    <i class="fa fa-spin fa-spinner"></i>
+                    {% trans "Loading" %}
+                  </div>
+                  <table class="table table-striped datatable table-hover">
+                    <thead>
+                    <tr>
+                      <th class="col-sm-2">{% trans "Received" %} ({{ tz_abbrev }})</th>
+                      <th class="col-sm-2">{% trans "Form" %}</th>
+                      <th class="col-sm-2">{% trans "User" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody data-bind="foreach: xforms">
+                    <tr data-bind='click: $root.clickRow, css: { info: $data.id() == $root.selected_xform_doc_id() }'>
+                      <td>
+                        <span data-bind="text: received_on"></span>
+                      <td>
+                        <span data-bind="text: readable_name, css: { 'break-all-words': !readable_name().match(/\s/) }"></span>
+                      </td>
+                      <td>
+                        <span data-bind="text: username"></span>
+                        <div class="pull-right"><i class="fa fa-chevron-right"></i></div>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                  <div class="dataTables_control">
+                    <div class="dataTables_info">
+                      <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
+                    </div>
+                    <div class="dataTables_length form-inline">
+                      <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
+                    </div>
+
+                    <div class="pull-right" data-bind="visible: $root.page_count() > 1">
+                      <ul class="pagination">
+                        <li>
+                          <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
+                        </li>
+                        <li class="active">
+                          <select class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
+                        </li>
+                        <li>
+                          <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-7">
+                  <div id="xform_data_panel"></div>
+                </div>
+              </div> <!-- end case-history tab -->
             </div>
+
+          </div>
         </div>
 
-    </div> {# end tabbed-content-container div #}
+      </div> {# end tabbed-content-container div #}
     </div> {# end report-container #}
 
     {% include "case/partials/case_property_modal.html" %}
 
     {% if can_edit_data %}
-    <div id="case-actions" class="clearfix form-actions">
+      <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
-            <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
-                <i class="fa fa-cloud-download"></i>
-                {% trans 'Download Case History' %}
-            </a>
-            {% if show_properties_edit %}
-                <button type="button" class="btn btn-default pull-left data-corrections-trigger">
-                    <i class="fa fa-shower"></i>
-                    {% trans 'Clean Case Data' %}
-                </button>
-            {% endif %}
-        {% if show_case_rebuild and not is_usercase %}
+          <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
+            <i class="fa fa-cloud-download"></i>
+            {% trans 'Download Case History' %}
+          </a>
+          {% if show_properties_edit %}
+            <button type="button" class="btn btn-default pull-left data-corrections-trigger">
+              <i class="fa fa-shower"></i>
+              {% trans 'Clean Case Data' %}
+            </button>
+          {% endif %}
+          {% if show_case_rebuild and not is_usercase %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
-                <button type="submit" class="btn btn-default disable-on-submit" >
-                    <i class="fa fa-save"></i>
-                    {% trans 'Resave Case' %}
-                </button>
+              <button type="submit" class="btn btn-default disable-on-submit" >
+                <i class="fa fa-save"></i>
+                {% trans 'Resave Case' %}
+              </button>
             </form>
             <form action="{% url 'rebuild_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
-                <button type="submit" class="btn btn-default disable-on-submit" >
-                    <i class="fa fa-cubes"></i>
-                    {% trans 'Rebuild Case' %}
-                </button>
+              <button type="submit" class="btn btn-default disable-on-submit" >
+                <i class="fa fa-cubes"></i>
+                {% trans 'Rebuild Case' %}
+              </button>
             </form>
-        {% endif %}
-        {% if not case.closed and not is_usercase %}
+          {% endif %}
+          {% if not case.closed and not is_usercase %}
             <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case" class="pull-left">{% csrf_token %}
-                <button type="submit" class="btn btn-danger disable-on-submit" >
-                    <i class="fa fa-archive"></i>
-                    {% trans 'Close Case' %}
-                </button>
+              <button type="submit" class="btn btn-danger disable-on-submit" >
+                <i class="fa fa-archive"></i>
+                {% trans 'Close Case' %}
+              </button>
             </form>
-        {% endif %}
+          {% endif %}
         </div>
-    </div>
+      </div>
     {% endif %}
-</div>
+  </div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% if show_properties_edit %}
-        {% include 'reports/partials/data_corrections_modal.html' %}
-    {% endif %}
+  {% if show_properties_edit %}
+    {% include 'reports/partials/data_corrections_modal.html' %}
+  {% endif %}
 {% endblock %}

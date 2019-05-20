@@ -1,30 +1,42 @@
-from __future__ import print_function
+# encoding: utf-8
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
+
+import logging
 from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    do_couch_to_sql_migration, delete_diff_db, get_diff_db)
+    delete_diff_db,
+    do_couch_to_sql_migration,
+    get_diff_db,
+    setup_logging,
+)
 from corehq.apps.couch_sql_migration.progress import (
-    set_couch_sql_migration_started, couch_sql_migration_in_progress,
-    set_couch_sql_migration_not_started, set_couch_sql_migration_complete
+    couch_sql_migration_in_progress,
+    get_couch_sql_migration_status,
+    set_couch_sql_migration_complete,
+    set_couch_sql_migration_not_started,
+    set_couch_sql_migration_started,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import doc_types, XFormInstance
-from six.moves import input, zip_longest
+from couchforms.models import XFormInstance, doc_types
 
-import logging
-_logger = logging.getLogger('main_couch_sql_datamigration')
+log = logging.getLogger('main_couch_sql_datamigration')
 
 
 class Command(BaseCommand):
@@ -45,7 +57,17 @@ class Command(BaseCommand):
         parser.add_argument('--show-diffs', action='store_true', default=False)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
-        parser.add_argument('--dry-run', action='store_true', default=False)
+        parser.add_argument('--log-dir', help="""
+            Directory for couch2sql logs, which are not written if this is not
+            provided. Standard HQ logs will be used regardless of this setting.
+        """)
+        parser.add_argument('--dry-run', action='store_true', default=False,
+            help='''
+                Do migration in a way that will not be seen by
+                `any_migrations_in_progress(...)` so it does not block
+                operations like syncs, form submissions, sms activity,
+                etc. Dry-run migrations cannot be committed.
+            ''')
         parser.add_argument(
             '--run-timestamp',
             type=int,
@@ -80,6 +102,7 @@ class Command(BaseCommand):
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('no-input only allowed for unit testing')
 
+        setup_logging(options['log_dir'])
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
 
@@ -107,7 +130,7 @@ class Command(BaseCommand):
                     "Are you sure you want to continue?".format(domain)
                 )
             set_couch_sql_migration_not_started(domain)
-            _blow_away_migration(domain)
+            blow_away_migration(domain)
 
         if options['stats_short'] or options['stats_long']:
             self.print_stats(domain, short=options['stats_short'])
@@ -120,7 +143,7 @@ class Command(BaseCommand):
                 raise CommandError("cannot commit a migration that is not in state in_progress")
             if not self.no_input:
                 _confirm(
-                    "This will allow convert the domain to use the SQL backend and"
+                    "This will convert the domain to use the SQL backend and"
                     "allow new form submissions to be processed. "
                     "Are you sure you want to do this for domain '{}'?".format(domain)
                 )
@@ -135,6 +158,8 @@ class Command(BaseCommand):
                 print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
 
     def print_stats(self, domain, short=True, diffs_only=False):
+        status = get_couch_sql_migration_status(domain)
+        print("Couch to SQL migration status for {}: {}".format(domain, status))
         db = get_diff_db(domain)
         try:
             diff_stats = db.get_diff_stats()
@@ -191,7 +216,7 @@ class Command(BaseCommand):
     def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
         n_couch = len(ids_in_couch)
         n_sql = len(ids_in_sql)
-        has_diff = n_couch != n_sql or diff_count
+        has_diff = ids_in_couch != ids_in_sql or diff_count
 
         if diffs_only and not has_diff:
             return False
@@ -199,12 +224,12 @@ class Command(BaseCommand):
         def _highlight(text):
             return shell_red(text) if has_diff else text
 
-        row = "{:^40} | {:^40}"
-        doc_count_row = row.format(n_couch, n_sql)
-        header = ((82 - len(name)) // 2) * '_'
+        row = "{:^38} {} {:^38}"
+        sep = "|" if ids_in_couch == ids_in_sql else "≠"
+        doc_count_row = row.format(n_couch, sep, n_sql)
 
-        print('\n{} {} {}'.format(header, name, header))
-        print(row.format('Couch', 'SQL'))
+        print('\n{:_^79}'.format(" %s " % name))
+        print(row.format('Couch', '|', 'SQL'))
         print(_highlight(doc_count_row))
         if diff_count:
             print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
@@ -214,21 +239,18 @@ class Command(BaseCommand):
                 couch_only = list(ids_in_couch - ids_in_sql)
                 sql_only = list(ids_in_sql - ids_in_couch)
                 for couch, sql in zip_longest(couch_only, sql_only):
-                    print(row.format(couch or '', sql or ''))
+                    print(row.format(couch or '', '|', sql or ''))
 
         return True
 
 
 def _confirm(message):
-    if input(
-            '{} [y/n]'.format(message)
-    ).lower() == 'y':
-        return
-    else:
+    response = input('{} [y/N]'.format(message)).lower()
+    if response != 'y':
         raise CommandError('abort')
 
 
-def _blow_away_migration(domain):
+def blow_away_migration(domain):
     assert not should_use_sql_backend(domain)
     delete_diff_db(domain)
 
@@ -244,4 +266,4 @@ def _blow_away_migration(domain):
 
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
     CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
-    _logger.info("blew away migration for domain {}".format(domain))
+    log.info("blew away migration for domain {}\n".format(domain))

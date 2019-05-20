@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from celery import states
+from celery.exceptions import Ignore
 from django.test import TestCase
 from django.utils.dateparse import parse_datetime
+from mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
@@ -12,13 +16,12 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.util.workbook_reading import make_worksheet
 from corehq.util.test_utils import flag_enabled
 from corehq.util.timezones.conversions import PhoneTime
-import six
+from corehq.util.workbook_reading import make_worksheet
 
 
 class ImporterTest(TestCase):
@@ -59,10 +62,13 @@ class ImporterTest(TestCase):
         )
 
     @run_with_all_backends
-    def testImportNone(self):
-        res = bulk_import_async(self._config(['anything']), self.domain, None)
-        self.assertEqual('Sorry, your session has expired. Please start over and try again.',
-                         six.text_type(res['errors']))
+    @patch('corehq.apps.case_importer.tasks.bulk_import_async.update_state')
+    def testImportNone(self, update_state):
+        res = bulk_import_async.delay(self._config(['anything']), self.domain, None)
+        self.assertIsInstance(res.result, Ignore)
+        update_state.assert_called_with(
+            state=states.FAILURE,
+            meta={'errors': 'Sorry, your session has expired. Please start over and try again.'})
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     @run_with_all_backends

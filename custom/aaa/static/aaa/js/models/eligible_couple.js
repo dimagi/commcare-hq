@@ -13,26 +13,45 @@ hqDefine("aaa/js/models/eligible_couple", [
     moment,
     initialPageData,
     childUtils,
-    personUtils,
+    personUtils
 ) {
     var eligibleCoupleList = function (options, postData) {
         var self = {};
         self.id = options.id;
         self.name = ko.observable(options.name);
-        self.age = ko.observable(options.age);
-        self.currentFamilyPlanningMethod = ko.observable(options.currentFamilyPlanningMethod);
+        self.dob = ko.observable(options.dob);
         self.adoptionDateOfFamilyPlaning = ko.observable(options.adoptionDateOfFamilyPlaning);
 
-        self.name = ko.computed(function () {
-            var url = initialPageData.reverse('unified_beneficiary_details');
-            url = url.replace('details_type', 'eligible_couples');
-            url = url.replace('beneficiary_id', self.id);
-            url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
-            return '<a href="' + url + '">' + self.name() + '</a>';
+        self.age = ko.computed(function () {
+            if (self.dob() === 'N/A') {
+                return self.dob();
+            }
+            var age = Math.floor(moment(postData.selectedDate()).diff(
+                moment(self.dob(), "YYYY-MM-DD"),'months',true)
+            );
+            if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
         });
 
         self.currentFamilyPlanningMethod = ko.computed(function () {
-            return self.currentFamilyPlanningMethod() === 1 ? 'Yes' : 'No';
+            return options.currentFamilyPlanningMethod !== null ? options.currentFamilyPlanningMethod : 'N/A';
+        });
+
+        self.adoptionDateOfFamilyPlaning = ko.computed(function () {
+            return options.adoptionDateOfFamilyPlaning !== null ? options.adoptionDateOfFamilyPlaning : 'N/A';
+        });
+
+        self.name = ko.computed(function () {
+            var url = initialPageData.reverse('unified_beneficiary_details');
+            url = url.replace('details_type', 'eligible_couple');
+            url = url.replace('beneficiary_id', self.id);
+            url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
+            return '<a href="' + url + '">' + self.name() + '</a>';
         });
 
         return self;
@@ -42,7 +61,7 @@ hqDefine("aaa/js/models/eligible_couple", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'currentFamilyPlanningMethod()', name: 'currentFamilyPlanningMethod', title: 'Current Family Planning Method'},
             {data: 'adoptionDateOfFamilyPlaning()', name: 'adoptionDateOfFamilyPlaning', title: 'Adoption Date Of Family Planing'},
         ];
@@ -62,11 +81,11 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.preferredFamilyPlaningMethod = data.preferredFamilyPlaningMethod;
 
         self.childrenBorn = ko.computed(function () {
-            return self.maleChildrenBorn + ' (Male), ' + self.femaleChildrenBorn + ' (Female)'
+            return self.maleChildrenBorn + ' (Male), ' + self.femaleChildrenBorn + ' (Female)';
         });
 
         self.childrenAlive = ko.computed(function () {
-            return self.maleChildrenAlive + ' (Male), ' + self.femaleChildrenAlive + ' (Female)'
+            return self.maleChildrenAlive + ' (Male), ' + self.femaleChildrenAlive + ' (Female)';
         });
 
         return self;
@@ -77,7 +96,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.personDetails = {
             person: ko.observable(personUtils.personModel),
             husband: ko.observable(personUtils.personModel),
-            other: ko.observable(personUtils.personOtherInfoModel),
         };
         self.childDetails = ko.observableArray([]);
         self.eligibleCoupleDetails = ko.observable(eligibleCoupleModel);
@@ -86,48 +104,47 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.sections = [
             'person_details',
             'children_list',
-            'eligible_couple_details'
+            'eligible_couple_details',
         ];
 
 
         self.getPersonDetails = function () {
             var params = Object.assign({
-                section: 'eligible_couples',
+                section: 'eligible_couple',
                 subsection: 'person_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.personDetails.person(personUtils.personModel(data.person));
-                self.personDetails.husband(personUtils.personModel(data.husband));
-                self.personDetails.other(personUtils.personOtherInfoModel(data.other));
-            })
+                self.personDetails.person(personUtils.personModel(data.person, self.postData));
+                self.personDetails.husband(personUtils.personModel(data.husband, self.postData));
+            });
         };
 
         self.getChildDetails = function () {
             var params = Object.assign({
-                section: 'eligible_couples',
+                section: 'eligible_couple',
                 subsection: 'child_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                _.forEach(data.children, function(child) {
-                    self.childDetails.push(childUtils.childModel(child));
+                _.forEach(data.children, function (child) {
+                    self.childDetails.push(childUtils.childModel(child, self.postData));
                 });
                 while (self.childDetails().length % 4 > 0) {
-                    self.childDetails.push({})
+                    self.childDetails.push({});
                 }
-            })
+            });
         };
 
         self.getEligibleCoupleDetails = function () {
             var params = Object.assign({
-                section: 'eligible_couples',
+                section: 'eligible_couple',
                 subsection: 'eligible_couple_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.eligibleCoupleDetails(eligibleCoupleModel(data))
-            })
+                self.eligibleCoupleDetails(eligibleCoupleModel(data));
+            });
         };
 
         self.callback = function () {
@@ -143,5 +160,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         config: eligibleCoupleListConfig,
         listView: eligibleCoupleList,
         detailsView: eligibleCoupleDetailsView,
-    }
+        eligibleCoupleModel: eligibleCoupleModel,
+    };
 });

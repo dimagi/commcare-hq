@@ -63,3 +63,27 @@ class ICDSAuditEntryRecord(models.Model):
         )
         record.save()
         return record.id
+
+
+class CitusDashboardException(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    data_source = models.TextField()
+    context = JSONField()
+    exception = models.TextField()
+
+
+class CitusDashboardDiff(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    data_source = models.TextField()
+    context = JSONField()
+    control = JSONField()
+    candidate = JSONField()
+    diff = JSONField()
+
+
+class CitusDashboardTiming(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    data_source = models.TextField()
+    context = JSONField()
+    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
+    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

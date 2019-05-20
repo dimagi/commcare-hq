@@ -3,6 +3,5 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    {# Temporary for select2 migration: allow child templates to override this with v4 #}
-    {% block locations_widgets %}<script src="{% static "locations/js/widgets_main_v3.js" %}"></script>{% endblock %}
+  <script src="{% static "locations/js/widgets.js" %}"></script>
 {% endblock %}

@@ -1,37 +1,39 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import io
 from collections import namedtuple
 
-from django.urls import reverse
 from django.http import Http404
-from django.utils.translation import ugettext_noop, ugettext_lazy as _
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
-from dimagi.utils.web import json_response
 
-from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.views.utils import get_langs
-from corehq.apps.app_manager.const import WORKFLOW_FORM
-from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
-from corehq.apps.app_manager.xform import VELLUM_TYPES
-from corehq.apps.domain.views.base import LoginAndDomainMixin
-from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.reports.formdetails.readable import FormQuestionResponse, get_app_summary_formdata
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
 import six
 from six.moves import range
 
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.web import json_response
+
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    FormQuestionResponse,
+)
+from corehq.apps.app_manager.app_schemas.form_metadata import (
+    get_app_diff,
+    get_app_summary_formdata,
+)
+from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.utils import get_langs
+from corehq.apps.app_manager.xform import VELLUM_TYPES
+from corehq.apps.domain.views.base import LoginAndDomainMixin
+from corehq.apps.hqwebapp.views import BasePageView
+
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary'
-    page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property
     def main_context(self):
@@ -41,37 +43,27 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         })
         return context
 
+    def _app_dict(self, app):
+        lang, langs = get_langs(self.request, app)
+        return {
+            'VELLUM_TYPES': VELLUM_TYPES,
+            'form_name_map': _get_name_map(app),
+            'lang': lang,
+            'langs': langs,
+            'app_langs': app.langs,
+            'app_id': app.id,
+            'app_name': app.name,
+            'read_only': app.doc_type == 'LinkedApplication' or app.id != app.master_id,
+            'app_version': app.version,
+            'latest_app_id': app.master_id,
+        }
+
     @property
     def page_context(self):
         if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
-        lang, langs = get_langs(self.request, self.app)
-        return {
-            'VELLUM_TYPES': VELLUM_TYPES,
-            'form_name_map': _get_name_map(self.app),
-            'lang': lang,
-            'langs': langs,
-            'app_langs': self.app.langs,
-            'app_id': self.app.id,
-            'app_name': self.app.name,
-            'read_only': self.app.doc_type == 'LinkedApplication',
-            'app_version': self.app.version,
-            'latest_app_id': self.app.master_id,
-        }
-
-    @property
-    def parent_pages(self):
-        return [
-            {
-                'title': _("Applications"),
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            },
-            {
-                'title': self.app.name,
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            }
-        ]
+        return self._app_dict(self.app)
 
     @property
     def page_url(self):
@@ -80,7 +72,6 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    page_title = ugettext_noop("Case Summary")
     template_name = 'app_manager/case_summary.html'
 
     @property
@@ -93,7 +84,7 @@ class AppCaseSummaryView(AppSummaryView):
             metadata = {}
             has_form_errors = True
         context.update({
-            'is_case_summary': True,
+            'page_type': 'case_summary',
             'case_metadata': metadata,
             'has_form_errors': has_form_errors,
         })
@@ -102,7 +93,6 @@ class AppCaseSummaryView(AppSummaryView):
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    page_title = ugettext_noop("Form Summary")
     template_name = 'app_manager/form_summary.html'
 
     @property
@@ -110,11 +100,59 @@ class AppFormSummaryView(AppSummaryView):
         context = super(AppFormSummaryView, self).page_context
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
-            'is_form_summary': True,
+            'page_type': 'form_summary',
             'modules': modules,
             'errors': errors,
         })
         return context
+
+
+class FormSummaryDiffView(AppSummaryView):
+    urlname = "app_form_summary_diff"
+    template_name = 'app_manager/form_summary_diff.html'
+
+    @property
+    def app(self):
+        return self.get_app(self.first_app.master_id)
+
+    @property
+    def first_app(self):
+        return self.get_app(self.kwargs.get('first_app_id'))
+
+    @property
+    def second_app(self):
+        return self.get_app(self.kwargs.get('second_app_id'))
+
+    @property
+    def page_context(self):
+        context = super(FormSummaryDiffView, self).page_context
+
+        if self.first_app.master_id != self.second_app.master_id:
+            # This restriction is somewhat arbitrary, as you might want to
+            # compare versions between two different apps on the same domain.
+            # However, it breaks a bunch of assumptions in the UI
+            raise Http404()
+
+        first = self._app_dict(self.first_app)
+        second = self._app_dict(self.second_app)
+
+        first['modules'], second['modules'] = get_app_diff(self.first_app, self.second_app)
+
+        context.update({
+            'page_type': 'form_diff',
+            'app_id': self.app.master_id,
+            'first': first,
+            'second': second,
+        })
+        return context
+
+    @property
+    def parent_pages(self):
+        pass
+
+    @property
+    def page_url(self):
+        pass
 
 
 class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):

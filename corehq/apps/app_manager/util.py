@@ -30,6 +30,7 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError,
 from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
@@ -43,7 +44,6 @@ from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.make_uuid import random_hex
 
 
 logger = logging.getLogger(__name__)
@@ -401,7 +401,7 @@ def update_form_unique_ids(app_source, id_map=None):
 
     def change_form_unique_id(form, map):
         unique_id = form['unique_id']
-        new_unique_id = map.get(form['xmlns'], random_hex())
+        new_unique_id = map.get(form['xmlns'], uuid.uuid4().hex)
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
@@ -450,7 +450,7 @@ def _app_callout_templates():
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
     else:
         logger.info("not found: %s", path)
         data = []
@@ -636,6 +636,46 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
                             .first())
     if latest_enabled_build:
         return get_app(domain, latest_enabled_build.build_id)
+
+
+@quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
+def get_latest_app_release_by_location(domain, location_id, app_id):
+    """
+    for a location search for enabled app releases for all parent locations.
+    Child location's setting takes precedence over parent
+    """
+    from corehq.apps.app_manager.models import AppReleaseByLocation
+    location = SQLLocation.active_objects.get(location_id=location_id)
+    location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
+        'location_id', flat=True).reverse()
+    # get all active enabled releases and order by version desc to get one with the highest version in the end
+    # for a location. Do not use the first object itself in order to respect the location hierarchy and use
+    # the closest location to determine the valid active release
+    latest_enabled_releases = {
+        release.location_id: release.build_id
+        for release in
+        AppReleaseByLocation.objects.filter(
+            location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True).order_by(
+            'version')
+    }
+    for loc_id in location_and_ancestor_ids:
+        build_id = latest_enabled_releases.get(loc_id)
+        if build_id:
+            return get_app(domain, build_id)
+
+
+def expire_get_latest_app_release_by_location_cache(app_release_by_location):
+    """
+    expire cache for the location and its descendants for the app corresponding to this enabled app release
+    why? : Latest enabled release for a location is dependent on restrictions added for
+    itself and its ancestors. Hence we expire the cache for location and its descendants for which the
+    latest enabled release would depend on this location
+    """
+    location = SQLLocation.active_objects.get(location_id=app_release_by_location.location_id)
+    location_and_descendants = location.get_descendants(include_self=True)
+    for loc in location_and_descendants:
+        get_latest_app_release_by_location.clear(app_release_by_location.domain, loc.location_id,
+                                          app_release_by_location.app_id)
 
 
 @quickcache(['app_id'], timeout=24 * 60 * 60)

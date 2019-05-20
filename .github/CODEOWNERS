@@ -29,6 +29,7 @@
 /corehq/apps/accounting/static/ @nickpell @orangejenny
 /corehq/apps/accounting/templates/ @nickpell @orangejenny
 /corehq/apps/analytics/ @orangejenny
+/corehq/apps/api/odata/ @nickpell
 /corehq/apps/app_manager/ @orangejenny @proteusvacuum
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/case_search/ @proteusvacuum

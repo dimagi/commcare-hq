@@ -13,8 +13,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
                 if (self.home.length) {
                     self.home.koApplyBindings(self);
                     self.home.on('textchange', 'input', self.change)
-                        // all select2's are represented by an input[type="hidden"]
-                        .on('change', 'select, input[type="hidden"]', self.change)
+                        .on('change', 'select', self.change)
                         .on('click', 'a:not(.header)', self.change)
                         .on('change', 'input[type="checkbox"]', self.change);
 
@@ -50,7 +49,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         var phaseModel = function (id, anchor, forms) {
             var self = {};
             self.id = id;
-            self.anchor = hqImport('hqwebapp/js/ui-element').input().val(anchor);
+            self.anchor = hqImport('hqwebapp/js/ui-element').select(params.caseProperties).val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function () {
                 self.anchor.observableVal(self.anchor.val());
@@ -184,8 +183,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             _.defer(function () {
                 self.home.koApplyBindings(self);
                 self.home.on('textchange', 'input', self.change)
-                    // all select2's are represented by an input[type="hidden"]
-                    .on('change', 'select, input[type="hidden"]', self.change)
+                    .on('change', 'select', self.change)
                     .on('click', 'a:not(.header)', self.change)
                     .on('change', 'input[type="checkbox"]', self.change);
 
@@ -402,28 +400,6 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         moduleScheduler: moduleScheduler,
     };
 });
-
-// Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-//connect items with observableArrays
-ko.bindingHandlers.sortableList = {
-    init: function (element, valueAccessor) {
-        var list = valueAccessor();
-        $(element).sortable({
-            update: function (event, ui) {
-                //retrieve our actual data item
-                var item = ko.dataFor(ui.item.get(0));
-                //figure out its new position
-                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-                //remove the item and add it back in the right spot
-                if (position >= 0) {
-                    list.remove(item);
-                    list.splice(position, 0, item);
-                }
-                ui.item.remove();
-            },
-        });
-    },
-};
 
 // Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //control visibility, give element focus, and select the contents (in order)

@@ -2,49 +2,67 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'userreports/js/data_source_evaluator.js' %}"></script>
+  <script src="{% static 'userreports/js/data_source_evaluator.js' %}"></script>
 {% endblock %}
 {% block page_content %}
-    {% registerurl "data_source_evaluator" domain %}
-    <h1>{% trans "UCR Data Source Debugger" %}</h1>
-    <form id="data-source-debugger" class="form-horizontal" data-bind="submit: evaluateDataSource">
-        <div class="form-group">
-            <label for="data_source_id" class="col-sm-2 control-label">{% trans "Data Source" %}</label>
-            <div class="col-sm-6">
-                <select class="form-control" id="data_source_id" data-bind="value: dataSourceId">
-                    {% for data_source in data_sources %}
-                        <option value="{{ data_source.get_id }}">{{ data_source.display_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label for="doc_id" class="col-sm-2 control-label">{% trans "Documents ID" %}</label>
-            <div class="col-sm-6">
-                <input type="text" class="form-control" id="doc_id" data-bind="value: documentsId">
-                <p class="help-block">Comma separated</p>
-            </div>
-        </div>
-        <p class="col-sm-offset-2 col-sm-10" data-bind="html: uiFeedback"></p>
-        <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-primary" data-bind="disable: loading">{% trans "Submit!" %}</button>
-            </div>
-        </div>
+  {% registerurl "data_source_evaluator" domain %}
+  <h1>{% trans "UCR Data Source Debugger" %}</h1>
+  <form id="data-source-debugger" class="form-horizontal" data-bind="submit: evaluateDataSource">
+    <div class="form-group">
+      <label for="data_source_id" class="col-sm-2 control-label">{% trans "Data Source" %}</label>
+      <div class="col-sm-6">
+        <select class="form-control" id="data_source_id" data-bind="value: dataSourceId">
+          {% for data_source in data_sources %}
+            <option value="{{ data_source.get_id }}">{{ data_source.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="doc_id" class="col-sm-2 control-label">{% trans "Documents ID" %}</label>
+      <div class="col-sm-6">
+        <input type="text" class="form-control" id="doc_id" data-bind="value: documentsId">
+        <p class="help-block">Comma separated</p>
+      </div>
+    </div>
+    <p class="col-sm-offset-2 col-sm-10" data-bind="html: uiFeedback"></p>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="submit" class="btn btn-primary" data-bind="disable: loading">{% trans "Submit!" %}</button>
+      </div>
+    </div>
 
-        <div class="table-responsive">
-            <table class="table table-hovered">
-                <thead>
-                    <tr data-bind="foreach: columns">
-                        <th data-bind="text: $data"></th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: { data: rows, as: 'row' }">
-                    <tr data-bind="foreach: row">
-                        <td data-bind="text: $data"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </form>
+    <h3 data-bind="visible: columns">{% trans "Evaluated rows" %}</h3>
+    <div class="table-responsive">
+      <table class="table table-hovered">
+        <thead>
+          <tr data-bind="foreach: columns">
+            <th data-bind="text: $data"></th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: { data: rows, as: 'row' }">
+          <tr data-bind="foreach: row">
+            <td data-bind="text: $data"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 data-bind="visible: columns">{% trans "Rows from the database" %}</h3>
+    <p data-bind="html: dbError"></p>
+    <div class="table-responsive">
+      <table class="table table-hovered">
+        <thead>
+          <tr data-bind="foreach: columns">
+            <th data-bind="text: $data"></th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: { data: dbRows, as: 'row' }">
+          <tr data-bind="foreach: row">
+            <td data-bind="text: $data"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </form>
 {% endblock %}

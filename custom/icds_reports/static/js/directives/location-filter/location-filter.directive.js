@@ -133,7 +133,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.isVisible = function(level) {
-        if ($location.path().indexOf('lady_supervisor') !== -1 && level === 4) {
+        if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === 4) {
             return false;
         }
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all' && vm.selectedLocations[level - 1].location_id !== 'all');
@@ -329,6 +329,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 });
                 vm.selectedLocations[levelOfSelectedLocation] = selectedLocation;
                 vm.onSelect(selectedLocation, levelOfSelectedLocation);
+                storageService.setKey('selectedLocation', selectedLocation);
 
                 levelOfSelectedLocation -= 1;
 
@@ -371,6 +372,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                     ($location.path().indexOf('lady_supervisor') !== -1 && selectedLocationIndex() !== 3)) {
                     vm.open();
                 }
+                storageService.setKey('selectedLocation', {name: 'National'});
             });
         }
 

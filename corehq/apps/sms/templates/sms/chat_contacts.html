@@ -5,29 +5,28 @@
 {% requirejs_main 'sms/js/chat_contacts' %}
 
 {% block page_content %}
-    {% registerurl "chat_contact_list" domain %}
-    {% initial_page_data "ajax_loader" "hqwebapp/images/ajax-loader.gif"|static %}
+  {% registerurl "chat_contact_list" domain %}
 
-    <div id="id_filter" style="padding-bottom: 40px;" class="row">
-        <div class="col-xs-8">
-            <input id="id_filter_text"
-                   type="text"
-                   data-bind="value: filterText"
-                   placeholder="{% trans "Search by name or phone number" %}"
-                   class="form-control" />
-        </div>
-        <div class="col-xs-4">
-            <button class="btn btn-primary" data-bind="click: performFilter">{% trans "Search" %}</button>
-            <button class="btn btn-default" data-bind="click: clearFilter">{% trans "Clear" %}</button>
-        </div>
+  <div id="id_filter" style="padding-bottom: 40px;" class="row">
+    <div class="col-xs-8">
+      <input id="id_filter_text"
+             type="text"
+             data-bind="value: filterText"
+             placeholder="{% trans "Search by name or phone number" %}"
+             class="form-control" />
     </div>
-    <table id="contact_list" class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                <th>{% trans "Contact Name" %}</th>
-                <th>{% trans "Contact Type" %}</th>
-                <th>{% trans "Phone Number" %}</th>
-            </tr>
-        </thead>
-    </table>
+    <div class="col-xs-4">
+      <button class="btn btn-primary" data-bind="click: performFilter">{% trans "Search" %}</button>
+      <button class="btn btn-default" data-bind="click: clearFilter">{% trans "Clear" %}</button>
+    </div>
+  </div>
+  <table id="contact_list" class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th>{% trans "Contact Name" %}</th>
+        <th>{% trans "Contact Type" %}</th>
+        <th>{% trans "Phone Number" %}</th>
+      </tr>
+    </thead>
+  </table>
 {% endblock %}

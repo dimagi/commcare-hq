@@ -115,6 +115,10 @@ def get_langs(request, app):
     return lang, langs
 
 
+def set_lang_cookie(response, lang):
+    response.set_cookie('lang', encode_if_unicode(lang))
+
+
 def bail(request, domain, app_id, not_found=""):
     if not_found:
         messages.error(request, 'Oops! We could not find that %s. Please try again' % not_found)
@@ -172,16 +176,15 @@ def overwrite_app(app, master_build, report_map=None):
             app_json[key] = value
     app_json['version'] = master_json['version']
     wrapped_app = wrap_app(app_json)
-    for module in wrapped_app.modules:
-        if isinstance(module, ReportModule):
-            if report_map is not None:
-                for config in module.report_configs:
-                    try:
-                        config.report_id = report_map[config.report_id]
-                    except KeyError:
-                        raise AppEditingError(config.report_id)
-            else:
-                raise AppEditingError('Report map not passed to overwrite_app')
+    for module in wrapped_app.get_report_modules():
+        if report_map is None:
+            raise AppEditingError('Report map not passed to overwrite_app')
+
+        for config in module.report_configs:
+            try:
+                config.report_id = report_map[config.report_id]
+            except KeyError:
+                raise AppEditingError(config.report_id)
 
     wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
     enable_usercase_if_necessary(wrapped_app)
@@ -322,7 +325,7 @@ def update_linked_app(app, user_id):
             'Unable to pull latest master from remote CommCare HQ. Please try again later.'
         ))
 
-    if master_version > app.version:
+    if app.version is None or master_version > app.version:
         try:
             latest_master_build = app.get_latest_master_release()
         except ActionNotPermitted:
@@ -354,15 +357,10 @@ def update_linked_app(app, user_id):
 
     if app.master_is_remote:
         try:
-            missing_mm_populated = pull_missing_multimedia_for_app(app)
+            pull_missing_multimedia_for_app(app)
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'
-            ))
-        if not missing_mm_populated:
-            raise MultimediaMissingError(_(
-                'Application has missing multimedia even after an attempt to pull them. '
-                'An email has been sent with details. Please try again. If persists, report an issue.'
             ))
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))

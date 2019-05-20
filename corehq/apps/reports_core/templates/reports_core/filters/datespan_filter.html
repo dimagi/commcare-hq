@@ -1,11 +1,11 @@
 {% extends "reports_core/filters/filter_base.html" %}
 {% load hq_shared_tags %}
 {% block filter-controls %}
-    <input type="text"
-           class="form-control report-filter-datespan-filter"
-           id="{{ filter.css_id }}-input"
-           name="{{ filter.css_id }}"
-           data-css-id='{{ filter.css_id }}'/>
-    <input type="hidden" id="{{ filter.css_id }}-start" name="{{ filter.css_id }}-start" />
-    <input type="hidden" id="{{ filter.css_id }}-end" name="{{ filter.css_id }}-end" />
+  <input type="text"
+         class="form-control report-filter-datespan-filter"
+         id="{{ filter.css_id }}-input"
+         name="{{ filter.css_id }}"
+         data-css-id='{{ filter.css_id }}'/>
+  <input type="hidden" id="{{ filter.css_id }}-start" name="{{ filter.css_id }}-start" />
+  <input type="hidden" id="{{ filter.css_id }}-end" name="{{ filter.css_id }}-end" />
 {% endblock %}

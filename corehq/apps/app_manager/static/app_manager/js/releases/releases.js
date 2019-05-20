@@ -32,9 +32,13 @@ hqDefine('app_manager/js/releases/releases', function () {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
         self.build_profiles = function () {
-            var profiles = [{'label': gettext('(Default)'), 'value': ''}];
-            _.each(appData.build_profiles, function (value, key) {
-                profiles.push({'label': value['name'], 'value': key});
+            var profiles = [{'label': gettext('(Default)'), 'value': ''}],
+                appProfilesList = _.map(appData.build_profiles, function (profile, key) {
+                    return _.extend(profile, {id: key});
+                });
+            appProfilesList = _.sortBy(appProfilesList, 'name');
+            _.each(appProfilesList, function (profile) {
+                profiles.push({label: profile.name, value: profile.id});
             });
             return profiles;
         };
@@ -220,7 +224,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildErrorCode = ko.observable('');
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
-        self.fetchLimit = ko.observable(o.fetchLimit || 5);
+        self.fetchLimit = ko.observable();
         self.currentAppVersion = ko.observable(self.options.currentAppVersion);
         self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
@@ -331,20 +335,6 @@ hqDefine('app_manager/js/releases/releases', function () {
                     self.fetchState('error');
                 },
             });
-        };
-
-        self.searchOnEnter = function(value, event) {
-            if (event.keyCode === 13){
-                self.goToPage(1);
-            }
-            return true;
-        };
-
-        self.initQuery = function(){
-            if (self.buildComment()){
-                self.buildComment('');
-                self.goToPage(1);
-            }
         };
 
         self.toggleRelease = function (savedApp, event) {

@@ -9,6 +9,7 @@ from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_MONT
 from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
     SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter, WeekColumnAdapter
 from corehq.apps.userreports.models import get_datasource_config, SQLSettings, AbstractUCRDataSource
+from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
@@ -69,6 +70,10 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
         return '{} ({})'.format(self.display_name or self.table_id, self.domain)
 
     @property
+    def mirrored_engine_ids(self):
+        return []
+
+    @property
     def data_source_id(self):
         return self.id
 
@@ -109,6 +114,15 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
             yield self.time_aggregation.get_column_adapter()
         for primary_column in self.primary_columns.all():
             yield PrimaryColumnAdapter.from_db_column(primary_column)
+
+    @property
+    def pk_columns(self):
+        columns = []
+        for col in self.get_columns():
+            if col.is_primary_key:
+                column_name = decode_column_name(col)
+                columns.append(column_name)
+        return columns
 
 
 class PrimaryColumn(models.Model):

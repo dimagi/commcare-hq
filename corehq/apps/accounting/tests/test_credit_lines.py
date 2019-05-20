@@ -22,6 +22,8 @@ from six.moves import range
 
 
 class TestCreditLines(BaseInvoiceTestCase):
+
+    is_using_test_plans = True
     min_subscription_length = 5
 
     @classmethod

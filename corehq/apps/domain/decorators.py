@@ -27,7 +27,7 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth,
     BASIC, DIGEST, API_KEY,
     get_username_and_password_from_request, FORMPLAYER,
-    formplayer_auth, formplayer_as_user_auth)
+    formplayer_auth, formplayer_as_user_auth, basic_or_api_key)
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -40,6 +40,7 @@ from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 
 ########################################################################################################
@@ -204,6 +205,10 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
+def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(basic_or_api_key(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
@@ -291,6 +296,8 @@ digest_auth = login_or_digest_ex(allow_sessions=False)
 basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
+basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
+
 
 def two_factor_check(view_func, api_key):
     def _outer(fn):
@@ -298,7 +305,12 @@ def two_factor_check(view_func, api_key):
         def _inner(request, domain, *args, **kwargs):
             domain_obj = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and domain_obj and _two_factor_required(view_func, domain_obj, couch_user):
+            if (
+                not api_key and
+                not getattr(request, 'skip_two_factor_check', False) and
+                domain_obj and
+                _two_factor_required(view_func, domain_obj, couch_user)
+            ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
                     with mutable_querydict(request.GET):
@@ -499,6 +511,7 @@ def track_domain_request(calculated_prop):
                     isinstance(args[1], HttpRequest) and
                     isinstance(args[2], six.string_types)
             ):
+                soft_assert_type_text(args[2])
                 # class-based view; args == (self, request, domain, ...)
                 domain = args[2]
             elif (
@@ -506,6 +519,7 @@ def track_domain_request(calculated_prop):
                     isinstance(args[0], HttpRequest) and
                     isinstance(args[1], six.string_types)
             ):
+                soft_assert_type_text(args[1])
                 # view function; args == (request, domain, ...)
                 domain = args[1]
             else:

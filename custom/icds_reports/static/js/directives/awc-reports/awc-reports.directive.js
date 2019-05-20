@@ -1703,7 +1703,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['ageServiceDeliveryDashboard', 'gender', 'age'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
 
@@ -2564,12 +2564,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         demographics: {route: "/awc_reports/demographics", label: "Demographics"},
         awc_infrastructure: {route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
         beneficiary: {route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
+        pregnant: {route: "/awc_reports/pregnant", label: "Pregnant Women"},
+        lactating: {route: "/awc_reports/lactating", label: "Lactating Women"},
     };
-
-    if (haveAccessToFeatures) {
-        vm.steps.pregnant = {route: "/awc_reports/pregnant", label: "Pregnant Women"};
-        vm.steps.lactating = {route: "/awc_reports/lactating", label: "Lactating Women"};
-    }
 
     if (vm.step === 'beneficiary_details') {
         vm.steps.beneficiary = {

@@ -38,11 +38,23 @@
         "title": "Supervisory Report 2019",
         "sort_expression": [
             {
+                "field": "form_name",
+                "order": "ASC"
+            },
+            {
                 "field": "received_on",
                 "order": "DESC"
             },
             {
-                "field": "username",
+                "field": "level_1",
+                "order": "ASC"
+            },
+            {
+                "field": "level_2",
+                "order": "ASC"
+            },
+            {
+                "field": "level_3",
                 "order": "ASC"
             },
             {
@@ -50,7 +62,7 @@
                 "order": "ASC"
             },
             {
-                "field": "form_name",
+                "field": "username",
                 "order": "ASC"
             }
         ],

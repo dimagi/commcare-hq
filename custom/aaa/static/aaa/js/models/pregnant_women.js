@@ -2,26 +2,46 @@ hqDefine("aaa/js/models/pregnant_women", [
     'jquery',
     'knockout',
     'underscore',
+    'moment/moment',
     'hqwebapp/js/initial_page_data',
     'aaa/js/models/child',
     'aaa/js/models/person',
+    'aaa/js/models/model_utils',
+    'aaa/js/utils/reach_utils',
 ], function (
     $,
     ko,
     _,
+    moment,
     initialPageData,
     childUtils,
     personUtils,
+    modelUtils,
+    reachUtils
 ) {
     var pregnantWomenList = function (options, postData) {
         var self = {};
         self.id = options.id;
         self.name = ko.observable(options.name);
-        self.age = ko.observable(options.age);
+        self.dob = ko.observable(options.dob);
         self.pregMonth = ko.observable(options.pregMonth);
         self.highRiskPregnancy = ko.observable(options.highRiskPregnancy);
         self.noOfAncCheckUps = ko.observable(options.noOfAncCheckUps);
 
+        self.age = ko.computed(function () {
+            if (self.dob() === 'N/A') {
+                return self.dob();
+            }
+            var age = Math.floor(moment(postData.selectedDate()).diff(
+                moment(self.dob(), "YYYY-MM-DD"),'months',true)
+            );if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
+        });
 
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
@@ -32,7 +52,11 @@ hqDefine("aaa/js/models/pregnant_women", [
         });
 
         self.highRiskPregnancy = ko.computed(function () {
-            return self.highRiskPregnancy === 1 ? 'Yes': 'No';
+            return self.highRiskPregnancy() === 'yes' ? 'Yes' : 'No';
+        });
+
+        self.noOfAncCheckUps = ko.computed(function () {
+            return self.noOfAncCheckUps() === null ? 0 : self.noOfAncCheckUps();
         });
         return self;
     };
@@ -41,7 +65,7 @@ hqDefine("aaa/js/models/pregnant_women", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'pregMonth()', name: 'pregMonth', title: 'Preg. Month'},
             {data: 'highRiskPregnancy()', name: 'highRiskPregnancy', title: 'High Risk Pregnancy'},
             {data: 'noOfAncCheckUps()', name: 'noOfAncCheckUps', title: 'No. Of ANC Check-Ups'},
@@ -49,82 +73,15 @@ hqDefine("aaa/js/models/pregnant_women", [
         return self;
     };
 
-    var pncModel = function (options) {
-        var self = {};
-
-        self.pncDate = ko.observable(options.pncDate);
-        self.postpartumHeamorrhage = ko.observable(options.postpartumHeamorrhage);
-        self.fever = ko.observable(options.fever);
-        self.convulsions = ko.observable(options.convulsions);
-        self.abdominalPain = ko.observable(options.abdominalPain);
-        self.painfulUrination = ko.observable(options.painfulUrination);
-        self.congestedBreasts = ko.observable(options.congestedBreasts);
-        self.painfulNipples = ko.observable(options.painfulNipples);
-        self.otherBreastsIssues = ko.observable(options.otherBreastsIssues);
-        self.managingBreastProblems = ko.observable(options.managingBreastProblems);
-        self.increasingFoodIntake = ko.observable(options.increasingFoodIntake);
-        self.possibleMaternalComplications = ko.observable(options.possibleMaternalComplications);
-        self.beneficiaryStartedEating = ko.observable(options.beneficiaryStartedEating);
-
-        self.pncDate = ko.computed(function () {
-            if (self.pncDate() === void(0)) {
-                return 'Not Done'
-            }
-            return self.pncDate;
-        });
-
-        self.marked = function (value) {
-            if (value === void(0)) {
-                return 'fa fa-minus black';
-            } else if (value === 0) {
-                return 'fa fa-times red';
-            } else {
-                return 'fa fa-check green';
-            }
-        };
-
-        _.each(self, function(value, key) {
-            if (key !== 'pncDate' && key !== 'marked') {
-                self[key] = ko.computed(function () {
-                    return self.marked(value())
-                })
-            }
-        });
-
-        return self;
-    };
-
-    var ancModel = function (options) {
-        var self = {};
-
-        self.ancDate = ko.observable(options.ancDate || '-');
-        self.ancLocation = ko.observable(options.ancLocation || '-');
-        self.pwWeight = ko.observable(options.pwWeight || '-');
-        self.bloodPressure = ko.observable(options.bloodPressure || '-');
-        self.hb = ko.observable(options.hb || '-');
-        self.abdominalExamination = ko.observable(options.abdominalExamination || '-');
-        self.abnormalitiesDetected = ko.observable(options.abnormalitiesDetected || '-');
-
-        self.ancDate = ko.computed(function () {
-            if (self.ancDate() === void(0)) {
-                return 'Not Done'
-            }
-            return self.ancDate;
-        });
-
-        return self;
-    };
-
-    var pregnantWomenDetails = function (options) {
+    var pregnantWomenDetails = function () {
         var self = {};
         // pregnancy_details
-        self.dateOfLmp = ko.observable();
         self.weightOfPw = ko.observable();
         self.dateOfRegistration = ko.observable();
         self.edd = ko.observable();
-        self.twelveWeeksPregnancyRegistration = ko.observable();
+        self.add = ko.observable();
+        self.lmp = ko.observable();
         self.bloodGroup = ko.observable();
-        self.pregnancyStatus = ko.observable();
         // pregnancy_risk
         self.riskPregnancy = ko.observable();
         self.referralDate = ko.observable();
@@ -169,38 +126,73 @@ hqDefine("aaa/js/models/pregnant_women", [
         self.ancVisits = ko.observableArray();
 
         self.updateModel = function (data) {
-            _.each(data, function(value, key) {
+            _.each(data, function (value, key) {
                 self[key](value);
-            })
+            });
         };
 
         self.updatePncVisits = function (data) {
             _.each(data, function (visit) {
-                self.pncVisits.push(pncModel(visit))
+                self.pncVisits.push(modelUtils.pncModel(visit));
             });
             while (self.pncVisits().length < 4) {
-                self.pncVisits.push(pncModel({}))
+                self.pncVisits.push(modelUtils.pncModel({}));
             }
         };
 
         self.updateAncVisits = function (data) {
             _.each(data, function (visit) {
-                self.ancVisits.push(ancModel(visit))
+                self.ancVisits.push(modelUtils.ancModel(visit));
             });
             while (self.ancVisits().length < 4) {
-                self.ancVisits.push(ancModel({}))
+                self.ancVisits.push(modelUtils.ancModel({}));
             }
         };
 
-        self.pregnancyStatusClass = function(status) {
+        self.pregnancyStatusClass = function (status) {
             if (status < self.pregnancyStatus()) {
-                return 'previous-status'
+                return 'previous-status';
             } else if (status === self.pregnancyStatus()) {
-                return 'current-status'
+                return 'current-status';
             } else {
                 return '';
             }
         };
+
+        self.twelveWeeksPregnancyRegistration = ko.computed(function () {
+            var diffAddAndLmp = Math.floor(moment(self.add(), "YYYY-MM-DD").diff(moment(self.lmp(), "YYYY-MM-DD"),'weeks',true));
+            return diffAddAndLmp < 12 ? 'Yes' : 'No';
+        });
+
+        self.pregnancyStatus = ko.computed(function () {
+            // 3 - PNC
+            // 2 - Due for delivery
+            // 1 - Pregnancy
+            var diffEddAndLmp = Math.floor(moment(self.edd(), "YYYY-MM-DD").diff(moment(self.lmp(), "YYYY-MM-DD"), 'days', true));
+            var diffNowAndAdd = Math.floor(moment(new Date()).diff(moment(self.add(), "YYYY-MM-DD"), 'days', true));
+            if (diffNowAndAdd <= 42) {
+                return 3;
+            } else if (diffEddAndLmp <= 90) {
+                return 2;
+            } else {
+                return 1;
+            }
+        });
+
+        self.personBloodGroup = ko.computed(function () {
+            if (!reachUtils.BLOODGROUPS.hasOwnProperty(self.bloodGroup())) {
+                return 'N/A';
+            }
+            return reachUtils.BLOODGROUPS[self.bloodGroup()];
+        });
+
+        self.abortionWeeks = ko.computed(function () {
+            if (self.abortionDays() !== undefined) {
+                return Number.isInteger(self.abortionDays()) ? self.abortionDays / 7 : self.abortionDays();
+            } else {
+                return 'N/A';
+            }
+        });
 
         return self;
     };
@@ -210,10 +202,8 @@ hqDefine("aaa/js/models/pregnant_women", [
         self.personDetails = {
             person: ko.observable(personUtils.personModel),
             husband: ko.observable(personUtils.personModel),
-            other: ko.observable(personUtils.personOtherInfoModel),
         };
         self.childDetails = ko.observableArray([]);
-        // self.eligibleCoupleDetails = ko.observable(eligibleCoupleModel);
 
         self.pregnantDetails = ko.observable(pregnantWomenDetails());
 
@@ -235,14 +225,14 @@ hqDefine("aaa/js/models/pregnant_women", [
 
         self.getPersonDetails = function () {
             var params = Object.assign({
+                section: 'pregnant_women',
                 subsection: 'person_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.personDetails.person(personUtils.personModel(data.person));
-                self.personDetails.husband(personUtils.personModel(data.husband));
-                self.personDetails.other(personUtils.personOtherInfoModel(data.other));
-            })
+                self.personDetails.person(personUtils.personModel(data.person, self.postData));
+                self.personDetails.husband(personUtils.personModel(data.husband, self.postData));
+            });
         };
 
         self.getChildDetails = function () {
@@ -251,16 +241,16 @@ hqDefine("aaa/js/models/pregnant_women", [
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                _.forEach(data.children, function(child) {
-                    self.childDetails.push(childUtils.childModel(child));
+                _.forEach(data.children, function (child) {
+                    self.childDetails.push(childUtils.childModel(child, self.postData));
                 });
                 while (self.childDetails().length % 4 > 0) {
-                    self.childDetails.push({})
+                    self.childDetails.push({});
                 }
-            })
+            });
         };
 
-        self.getPregnantDetails = function(subsection) {
+        self.getPregnantDetails = function (subsection) {
             var params = Object.assign({
                 section: 'pregnant_women',
                 subsection: subsection,
@@ -268,13 +258,13 @@ hqDefine("aaa/js/models/pregnant_women", [
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 if (subsection === 'postnatal_care_details') {
-                    self.pregnantDetails().updatePncVisits(data.visits)
+                    self.pregnantDetails().updatePncVisits(data.visits);
                 } else if (subsection === 'antenatal_care_details') {
-                    self.pregnantDetails().updateAncVisits(data.visits)
+                    self.pregnantDetails().updateAncVisits(data.visits);
                 } else {
-                    self.pregnantDetails().updateModel(data)
+                    self.pregnantDetails().updateModel(data);
                 }
-            })
+            });
         };
 
         self.callback = function () {
@@ -297,6 +287,7 @@ hqDefine("aaa/js/models/pregnant_women", [
     return {
         config: pregnantWomenListConfig,
         listView: pregnantWomenList,
-        detailsView: pregnantWomenDetailsView
-    }
+        detailsView: pregnantWomenDetailsView,
+        pregnantModel: pregnantWomenDetails,
+    };
 });

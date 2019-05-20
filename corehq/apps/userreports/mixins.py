@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 from corehq.apps.userreports.reports.filters.specs import create_filter_value
 from corehq.apps.userreports.util import get_table_name
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 
 
@@ -22,6 +23,7 @@ class ConfigurableReportDataSourceMixin(object):
         else:
             assert isinstance(config_or_config_id, six.string_types), \
                 '{} is not an allowed type'.format(type(config_or_config_id))
+            soft_assert_type_text(config_or_config_id)
             self._config = None
             self._config_id = config_or_config_id
 
@@ -38,6 +40,7 @@ class ConfigurableReportDataSourceMixin(object):
                     self._config_id, self.domain, column.column_id,
                 )
             self._column_configs[column.column_id] = column
+        self._engine_id = None
 
     @property
     def aggregation_columns(self):

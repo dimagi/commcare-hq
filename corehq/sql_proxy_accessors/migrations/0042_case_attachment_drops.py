@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             "DROP FUNCTION IF EXISTS get_case_attachment_by_identifier(TEXT, TEXT)",
             "SELECT 1"
         ),

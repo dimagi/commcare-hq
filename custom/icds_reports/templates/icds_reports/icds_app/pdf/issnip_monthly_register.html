@@ -4,35 +4,11 @@
 {% load i18n %}
 {% load icds_format %}
 <!DOCTYPE html>
+{% load staticfiles %}
 <html>
     <head>
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
         <title>ICDS-CAS Monthly Register</title>
-        <style type="text/css">
-            @page {
-                margin: 1cm 1cm;
-                size: A4;
-                border: 1px solid white;
-            }
-
-            h1 {
-                text-align: center;
-            }
-
-            th, td {
-                padding: 5px;
-                padding-bottom: 0px !important;
-                vertical-align: middle;
-            }
-
-            table.table {
-                border: 1px solid black;
-            }
-            .row:after {
-                content: "";
-                display: table;
-                clear: both;
-            }
-        </style>
     </head>
     <body>
         {% for report in reports %}
@@ -58,7 +34,7 @@
                                     <td>*Name Of Supervisor: </td>
                                 </tr>
                                 <tr>
-                                    <td>Name of AWW: {{ report.agg_awc_monthly_data|icds_format:"aww_name" }}</td>
+                                    <td>Name of AWW: <span class="aww_name">{{ report.agg_awc_monthly_data|icds_format:"aww_name"|safe }}</span></td>
                                     <td>Mobile number of AWW: {{ report.agg_awc_monthly_data|icds_format:"contact_phone_number" }}</td>
                                     <td>*Name of AW Helper: </td>
                                 </tr>
@@ -445,7 +421,7 @@
                 <br/>
                 <p style="text-align: right; padding-right: 100px;">* Signature of AWW</p>
                 <div class="row" style="bottom: 0;">
-                    <img src="data:image/png;base64,{{ report.agg_awc_monthly_data.awc_site_code|icds_qr_code }}" width="150" alt="QR Code"/>
+                    <img src="data:image/png;base64,{{ report.agg_awc_monthly_data.awc_site_code|icds_qr_code }}" style="width: 150px; height: 150px" alt="QR Code"/>
                 </div>
             </div>
         {% endfor %}

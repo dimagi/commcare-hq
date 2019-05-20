@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import models
 
+from custom.icds_reports.models.manager import CitusComparisonManager
+
 
 class AggAwcDailyView(models.Model):
     awc_id = models.TextField(primary_key=True)
@@ -50,8 +52,10 @@ class AggAwcDailyView(models.Model):
     cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
     cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_daily_view'
 
@@ -106,8 +110,10 @@ class DailyAttendanceView(models.Model):
     )
     image_name = models.TextField(blank=True, null=True, help_text="/form/photo_children_present")
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'daily_attendance_view'
 
@@ -196,8 +202,10 @@ class ChildHealthMonthlyView(models.Model):
     aww_phone_number = models.TextField(blank=True, null=True)
     mother_phone_number = models.TextField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'child_health_monthly_view'
 
@@ -238,8 +246,10 @@ class AggLsMonthly(models.Model):
         help_text="number of AWCs that have at least one Household registration form"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_ls_monthly'
 
@@ -320,8 +330,10 @@ class ServiceDeliveryMonthly(models.Model):
         help_text="Expected Home visits"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'service_delivery_monthly'
 
@@ -546,10 +558,46 @@ class AggAwcMonthly(models.Model):
         help_text="last date an infrastrucutre form was submitted"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_monthly'
+
+
+class AWWIncentiveReportMonthly(models.Model):
+    """Monthly updated table that holds metrics for the incentive report"""
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    district_id = models.TextField(blank=True, null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    awc_id = models.CharField(max_length=40, primary_key=True)
+    is_launched = models.TextField(null=True)
+    block_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+    state_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
+    block_name = models.TextField(null=True)
+    supervisor_name = models.TextField(null=True)
+    awc_name = models.TextField(null=True)
+    aww_name = models.TextField(null=True)
+    contact_phone_number = models.TextField(null=True)
+    wer_weighed = models.SmallIntegerField(null=True)
+    wer_eligible = models.SmallIntegerField(null=True)
+    awc_num_open = models.SmallIntegerField(null=True)
+    valid_visits = models.SmallIntegerField(null=True)
+    expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
+
+    objects = CitusComparisonManager()
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'aww_incentive_report_monthly'
 
 
 class AggCcsRecordMonthly(models.Model):
@@ -624,8 +672,10 @@ class AggCcsRecordMonthly(models.Model):
     valid_visits = models.SmallIntegerField(blank=True, null=True)
     expected_visits = models.SmallIntegerField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_ccs_record_monthly'
 
@@ -704,9 +754,15 @@ class CcsRecordMonthlyView(models.Model):
     eating_extra = models.SmallIntegerField(blank=True, null=True)
     resting = models.SmallIntegerField(blank=True, null=True)
     immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
+    caste = models.TextField(blank=True, null=True)
+    disabled = models.TextField(blank=True, null=True)
+    minority = models.TextField(blank=True, null=True)
+    resident = models.TextField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'ccs_record_monthly_view'
 
@@ -885,8 +941,10 @@ class AggChildHealthMonthly(models.Model):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_child_health_monthly'
 
@@ -916,8 +974,10 @@ class AwcLocationMonths(models.Model):
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'awc_location_months'
 
@@ -976,7 +1036,9 @@ class DishaIndicatorView(models.Model):
     stunting_moderate_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'icds_disha_indicators'

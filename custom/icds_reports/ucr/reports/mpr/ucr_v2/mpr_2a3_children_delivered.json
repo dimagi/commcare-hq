@@ -1,0 +1,251 @@
+{
+  "domains": [
+    "icds-cas",
+    "icds-cas-sandbox",
+    "cas-lab",
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_2a3_children_delivered",
+  "data_source_table": "static-child_delivery_forms",
+  "config": {
+    "title": "MPR 2a,3 - Children Delivered (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "display": "Submission Date",
+        "slug": "submitted_on",
+        "type": "date",
+        "field": "submitted_on",
+        "datatype": "date"
+      },
+      {
+        "display": "Date of Birth",
+        "slug": "add",
+        "type": "date",
+        "field": "add",
+        "datatype": "date"
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        }
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      }
+    ],
+    "columns": [
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "add",
+        "format": "%Y-%m"
+      },
+      {
+        "display": "live_F_resident_birth_count",
+        "column_id": "live_F_resident_birth_count",
+        "type": "field",
+        "field": "live_F_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "live_M_resident_birth_count",
+        "column_id": "live_M_resident_birth_count",
+        "type": "field",
+        "field": "live_M_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "live_F_migrant_birth_count",
+        "column_id": "live_F_migrant_birth_count",
+        "type": "field",
+        "field": "live_F_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "live_M_migrant_birth_count",
+        "column_id": "live_M_migrant_birth_count",
+        "type": "field",
+        "field": "live_M_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "still_F_resident_birth_count",
+        "column_id": "still_F_resident_birth_count",
+        "type": "field",
+        "field": "still_F_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "still_M_resident_birth_count",
+        "column_id": "still_M_resident_birth_count",
+        "type": "field",
+        "field": "still_M_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "still_F_migrant_birth_count",
+        "column_id": "still_F_migrant_birth_count",
+        "type": "field",
+        "field": "still_F_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "still_M_migrant_birth_count",
+        "column_id": "still_M_migrant_birth_count",
+        "type": "field",
+        "field": "still_M_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "weighed_F_resident_birth_count",
+        "column_id": "weighed_F_resident_birth_count",
+        "type": "field",
+        "field": "weighed_F_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "weighed_M_resident_birth_count",
+        "column_id": "weighed_M_resident_birth_count",
+        "type": "field",
+        "field": "weighed_M_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "weighed_F_migrant_birth_count",
+        "column_id": "weighed_F_migrant_birth_count",
+        "type": "field",
+        "field": "weighed_F_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "weighed_M_migrant_birth_count",
+        "column_id": "weighed_M_migrant_birth_count",
+        "type": "field",
+        "field": "weighed_M_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "lbw_F_resident_birth_count",
+        "column_id": "lbw_F_resident_birth_count",
+        "type": "field",
+        "field": "lbw_F_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "lbw_M_resident_birth_count",
+        "column_id": "lbw_M_resident_birth_count",
+        "type": "field",
+        "field": "lbw_M_resident_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "lbw_F_migrant_birth_count",
+        "column_id": "lbw_F_migrant_birth_count",
+        "type": "field",
+        "field": "lbw_F_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "lbw_M_migrant_birth_count",
+        "column_id": "lbw_M_migrant_birth_count",
+        "type": "field",
+        "field": "lbw_M_migrant_birth_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

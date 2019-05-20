@@ -3,15 +3,15 @@
 {% load i18n %}
 
 {% block page_content %}
-<div class="row">
+  <div class="row">
     <div class="col-xs-12">
-        <h2>{{ current_page.title }}</h2>
-        <p class="help-block">
+      <h2>{{ current_page.title }}</h2>
+      <p class="help-block">
         {% blocktrans %}
-            Please type comma-separated email addresses of users to grant/revoke superuser privileges.
+          Please type comma-separated email addresses of users to grant/revoke superuser privileges.
         {% endblocktrans %}
-        </p>
-        {% crispy form %}
+      </p>
+      {% crispy form %}
     </div>
-</div>
+  </div>
 {% endblock %}

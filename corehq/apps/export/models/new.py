@@ -34,6 +34,7 @@ from soil.progress import set_task_progress
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.utils import get_timezone_for_domain
 from memoized import memoized
 from couchdbkit import (
@@ -149,6 +150,9 @@ class PathNode(DocumentSchema):
     def __eq__(self, other):
         return self.__key() == other.__key()
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash(self.__key())
 
@@ -193,6 +197,9 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
 
     def __eq__(self, other):
         return self.__key() == other.__key()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def wrap(cls, data):
@@ -648,13 +655,13 @@ class ExportInstanceFilters(DocumentSchema):
 
 class CaseExportInstanceFilters(ExportInstanceFilters):
     sharing_groups = ListProperty(StringProperty)
-    show_all_data = BooleanProperty(default=True)
-    show_project_data = BooleanProperty()
+    show_all_data = BooleanProperty()
+    show_project_data = BooleanProperty(default=True)
     show_deactivated_data = BooleanProperty()
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
-    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE])
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE, HQUserType.DEACTIVATED])
 
 
 class ExportInstance(BlobMixin, Document):
@@ -666,7 +673,7 @@ class ExportInstance(BlobMixin, Document):
     name = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
-    export_format = StringProperty(default='csv')
+    export_format = StringProperty(default='xlsx')
     app_id = StringProperty()
 
     # The id of the schema that was used to generate the instance.
@@ -1635,7 +1642,7 @@ class ExportDataSchema(Document):
     def record_update(self, app_id, app_version):
         self.last_app_versions[app_id] = max(
             self.last_app_versions.get(app_id, 0),
-            app_version,
+            app_version or 0,
         )
 
     @staticmethod
@@ -2284,6 +2291,8 @@ class SplitUserDefinedExportColumn(ExportColumn):
 
         if not isinstance(value, six.string_types):
             return [None] * len(self.user_defined_options) + [value]
+        else:
+            soft_assert_type_text(value)
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
@@ -2369,6 +2378,8 @@ class SplitGPSExportColumn(ExportColumn):
 
         if not isinstance(value, six.string_types):
             return values
+        else:
+            soft_assert_type_text(value)
 
         for index, coordinate in enumerate(value.split(' ')):
             values[index] = coordinate
@@ -2420,6 +2431,8 @@ class SplitExportColumn(ExportColumn):
         if not isinstance(value, six.string_types):
             unspecified_options = [] if self.ignore_unspecified_options else [value]
             return [EMPTY_VALUE] * len(self.item.options) + unspecified_options
+        else:
+            soft_assert_type_text(value)
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []

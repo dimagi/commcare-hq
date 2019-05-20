@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from datetime import date
 
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import F, Func, Q
-from django.db.models.functions import ExtractYear
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.http.response import Http404
 from django.shortcuts import redirect
@@ -16,29 +13,38 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView, View
 
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser_or_contractor
+from celery.result import AsyncResult
+from dateutil.relativedelta import relativedelta
+
+from couchexport.models import Format
+from dimagi.utils.dates import force_to_date
+
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser_or_contractor,
+)
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
-
+from corehq.util.files import safe_filename_header
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.models import Woman
-from custom.aaa.tasks import (
-    update_agg_awc_table,
-    update_agg_village_table,
-    update_ccs_record_table,
-    update_child_table,
-    update_child_history_table,
-    update_woman_table,
-    update_woman_history_table,
+from custom.aaa.dbaccessors import (
+    ChildQueryHelper,
+    EligibleCoupleQueryHelper,
+    PregnantWomanQueryHelper,
 )
-from custom.aaa.utils import build_location_filters, get_location_model_for_ministry
+from custom.aaa.models import Child, Woman
+from custom.aaa.tasks import prepare_export_reports, run_aggregation
+from custom.aaa.utils import (
+    build_location_filters,
+    get_file_from_blobdb,
+    get_location_model_for_ministry,
+)
 
-from dimagi.utils.dates import force_to_date
 
-
+@location_safe
 class ReachDashboardView(TemplateView):
     @property
     def domain(self):
@@ -73,10 +79,15 @@ class ReachDashboardView(TemplateView):
         parent_ids = [loc.location_id for loc in user_locations_with_parents]
         kwargs['user_location_ids'] = parent_ids
         kwargs['is_details'] = False
+
+        selected_location = self.request.GET.get('selectedLocation', '')
+        if selected_location:
+            location = SQLLocation.objects.get(location_id=selected_location)
+            selected_hierarchy = [loc.location_id for loc in location.get_ancestors(include_self=True)]
+            kwargs['selected_location_ids'] = selected_hierarchy
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramOverviewReport(ReachDashboardView):
     template_name = 'aaa/reports/program_overview.html'
@@ -98,10 +109,11 @@ class ProgramOverviewReportAPI(View):
         selected_year = int(self.request.POST.get('selectedYear'))
         selected_location = self.request.POST.get('selectedLocation')
         selected_date = date(selected_year, selected_month, 1)
+        selected_ministry = self.request.POST.get('selectedMinistry')
         prev_month = date(selected_year, selected_month, 1) - relativedelta(months=1)
 
-        location_filters = build_location_filters(selected_location)
-        data = get_location_model_for_ministry(self.user_ministry).objects.filter(
+        location_filters = build_location_filters(selected_location, selected_ministry)
+        data = get_location_model_for_ministry(selected_ministry).objects.filter(
             (Q(month=selected_date) | Q(month=prev_month)),
             domain=self.request.domain,
             **location_filters
@@ -167,7 +179,6 @@ class ProgramOverviewReportAPI(View):
         ]})
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class UnifiedBeneficiaryReport(ReachDashboardView):
     template_name = 'aaa/reports/unified_beneficiary.html'
@@ -177,73 +188,53 @@ class UnifiedBeneficiaryReport(ReachDashboardView):
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class UnifiedBeneficiaryReportAPI(View):
     def post(self, request, *args, **kwargs):
-        # TODO add query to database
-        # Prepared to the ajax pagination, remember that we need to return number of rows = length
-        # start - selected page on the UI (if first page selected then start = 0)
-        # sortColumn - name of the sorting column
-        # sortColumnDir - asc or desc
-
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
         selected_date = date(selected_year, selected_month, 1)
+        next_month_start = selected_date + relativedelta(months=1)
         selected_location = self.request.POST.get('selectedLocation')
+        selected_ministry = self.request.POST.get('selectedMinistry')
         beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
         draw = self.request.POST.get('draw', 0)
-        length = self.request.POST.get('length', 0)
-        start = self.request.POST.get('start', 0)
-        sortColumn = self.request.POST.get('sortColumn', 0)
-        sortColumnDir = self.request.POST.get('sortColumnDir', 0)
+        length = int(self.request.POST.get('length', 0))
+        start = int(self.request.POST.get('start', 0))
+        sort_column = self.request.POST.get('sortColumn', 'name')
+        sort_column_dir = self.request.POST.get('sortColumnDir', 'asc')
+
+        location_filters = build_location_filters(selected_location, selected_ministry, with_child=False)
+        sort_column_with_dir = sort_column
+        if sort_column_dir == 'desc':
+            sort_column_with_dir = '-' + sort_column
         data = []
         if beneficiary_type == 'child':
-            data = [
-                dict(id=1, name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=2, name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=3, name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=4, name='test 4', age='5', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=5, name='test 5', age='16', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=6, name='test 6', age='19', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-            ]
+            data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column_with_dir)
         elif beneficiary_type == 'eligible_couple':
-            data = (
-                Woman.objects
-                .annotate(
-                    age=ExtractYear(Func(F('dob'), function='age')),
-                )
-                .filter(
-                    # should filter for location
-                    domain=request.domain,
-                    age__range=(19, 49),
-                    marital_status='married',
-                )
-                .exclude(migration_status='yes')
-                .extra(
-                    select={
-                        'currentFamilyPlanningMethod': 0,
-                        'adoptionDateOfFamilyPlaning': '2018-03-01',
-                        'id': 'person_case_id',
-                    },
-                    where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
-                    params=[selected_date, selected_date + relativedelta(months=1)]
-                )
-                .values(
-                    'id', 'name', 'age',
-                    'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
-            )[:10]
-            data = list(data)
+            sort_column_with_dir = '"%s" %s' % (sort_column, sort_column_dir)
+            data = EligibleCoupleQueryHelper.list(
+                request.domain,
+                selected_date,
+                location_filters,
+                sort_column_with_dir
+            )
         elif beneficiary_type == 'pregnant_women':
-            data = [
-                dict(id=1, name='test 1', age='22', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(id=2, name='test 2', age='32', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
-                dict(id=3, name='test 3', age='17', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(id=4, name='test 4', age='56', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(id=5, name='test 5', age='48', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
-                dict(id=6, name='test 6', age='19', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-            ]
+            sort_column_with_dir = '"%s" %s' % (sort_column, sort_column_dir)
+            data = PregnantWomanQueryHelper.list(
+                request.domain,
+                selected_date,
+                location_filters,
+                sort_column_with_dir
+            )
+        if data:
+            number_of_data = len(data)
+            data = data[start:start + length]
+        else:
+            number_of_data = 0
+        data = list(data)
         return JsonResponse(data={
             'rows': data,
             'draw': draw,
-            'recordsTotal': len(data),
-            'recordsFiltered': len(data),
+            'recordsTotal': number_of_data,
+            'recordsFiltered': number_of_data,
         })
 
 
@@ -251,15 +242,16 @@ class UnifiedBeneficiaryReportAPI(View):
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class LocationFilterAPI(View):
     def post(self, request, *args, **kwargs):
-        selected_location = self.request.POST.get('selectedParentId', None)
+        selected_location = self.request.POST.get('parentSelectedId', None)
         location_type = self.request.POST.get('locationType', None)
         domain = self.kwargs['domain']
         locations = SQLLocation.objects.filter(
             domain=domain,
             location_type__code=location_type
-        )
+        ).order_by('name')
+
         if selected_location:
-            locations.filter(parent__location_id=selected_location)
+            locations = locations.filter(parent__location_id=selected_location).order_by('name')
 
         return JsonResponse(data={'data': [
             dict(
@@ -273,7 +265,7 @@ class LocationFilterAPI(View):
 @method_decorator([login_and_domain_required, require_superuser_or_contractor], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
-    urlname = 'aggregation_script_page'
+    urlname = 'aaa_aggregation_script_page'
     template_name = 'icds_reports/aggregation_script.html'
 
     @use_daterangepicker
@@ -296,13 +288,7 @@ class AggregationScriptPage(BaseDomainView):
             messages.error(request, 'Date is required')
             return redirect(self.urlname, domain=self.domain)
         date = force_to_date(date_param)
-        update_child_table(self.domain)
-        update_child_history_table(self.domain)
-        update_ccs_record_table(self.domain)
-        update_woman_table(self.domain)
-        update_woman_history_table(self.domain)
-        update_agg_awc_table(self.domain, date)
-        update_agg_village_table(self.domain, date)
+        run_aggregation(self.domain, date)
         messages.success(request, 'Aggregation task has run.')
         return redirect(self.urlname, domain=self.domain)
 
@@ -318,13 +304,17 @@ class UnifiedBeneficiaryDetailsReport(ReachDashboardView):
         context['selected_type'] = kwargs.get('details_type')
         context['selected_month'] = int(request.GET.get('month'))
         context['selected_year'] = int(request.GET.get('year'))
+
+        person_model = Woman if context['selected_type'] != 'child' else Child
+
+        village_id = person_model.objects.get(person_case_id=context['beneficiary_id']).village_id
+
+        locations = SQLLocation.objects.get(
+            domain=request.domain, location_id=village_id
+        ).get_ancestors(include_self=True)
+
         context['beneficiary_location_names'] = [
-            'Haryana',
-            'Ambala',
-            'Shahzadpur',
-            'PHC Shahzadpur',
-            'SC shahzadpur',
-            'Rasidpur'
+            loc.name for loc in locations
         ]
         return self.render_to_response(context)
 
@@ -335,191 +325,178 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
     def post(self, request, *args, **kwargs):
         selected_month = int(self.request.POST.get('selectedMonth', 0))
         selected_year = int(self.request.POST.get('selectedYear', 0))
+        month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
         section = self.request.POST.get('section', '')
         sub_section = self.request.POST.get('subsection', '')
         beneficiary_id = self.request.POST.get('beneficiaryId', '')
         data = {}
 
         if sub_section == 'person_details':
-            person = dict(
-                name='Reena Kumar',
-                gender='Female',
-                status='Pregnant Woman',
-                dob=date(1991, 5, 11),
-                marriedAt=25,
-                aadhaarNo='Yes'
-            )
-            husband = dict(
-                name='Raju Kumar',
-                gender='Female',
-                dob=date(1991, 5, 11),
-                marriedAt=26,
-                aadhaarNo='Yes'
-            )
-            other = dict(
-                address='J-142, Saket, New Delhi, Delhi',
-                subcentre='Rasidpur',
-                village='Rasidpur',
-                anganwadiCentre='Aspataal Ward',
-                phone='844-860-4774',
-                religion='Hinduk',
-                caste='Sudra',
-                bplOrApl='BPL',
+            person_model = Woman if section != 'child' else Child
 
+            values = [
+                'dob', 'name', 'sex', 'has_aadhar_number', 'hh_address', 'contact_phone_number',
+                'hh_religion', 'hh_caste', 'hh_bpl_apl', 'sc_id', 'village_id', 'awc_id'
+            ]
+
+            if section != 'child':
+                values.extend([
+                    'migration_status',
+                    'age_marriage',
+                    'husband_name'
+                ])
+            else:
+                values.append('mother_case_id')
+
+            person = person_model.objects.values(*values).get(
+                domain=request.domain,
+                person_case_id=beneficiary_id
             )
+
+            location_details = SQLLocation.objects.filter(
+                domain=request.domain,
+                location_id__in=[person['sc_id'], person['village_id'], person['awc_id']]
+            )
+
+            for location in location_details:
+                person[location.location_type.code] = location.name
+
             data = dict(
                 person=person,
-                husband=husband,
-                other=other,
             )
+
+            if section == 'child':
+                mother = Woman.objects.extra(
+                    select={
+                        'id': 'person_case_id'
+                    }
+                ).values('id', 'name').get(person_case_id=person['mother_case_id'])
+                data.update(dict(mother=mother))
+            else:
+                # TODO update when the model will be created
+                husband = dict(
+                    name=person['husband_name'],
+                    sex='N/A',
+                    dob='N/A',
+                    age_marriage='N/A',
+                    has_aadhar_number='N/A'
+                )
+                data.update(dict(husband=husband))
         elif sub_section == 'child_details':
-            children = [
-                dict(id=1, name='Ritu Kummar', age=8),
-                dict(id=2, name='Rahul Kumar', age=6),
-                dict(id=3, name='Jhanvi Kumar', age=3),
-                dict(id=4, name='Rohit Kumar', age=1),
-            ]
             data = dict(
-                children=children
+                children=list(Child.objects.filter(
+                    domain=request.domain,
+                    mother_case_id=beneficiary_id
+                ).extra(
+                    select={
+                        'id': 'person_case_id'
+                    }
+                ).values('id', 'name', 'dob'))
             )
 
         if section == 'child':
-            data = {}
+            helper = ChildQueryHelper(request.domain, beneficiary_id, month_end)
+            if sub_section == 'infant_details':
+                data = helper.infant_details()
+            elif sub_section == 'child_postnatal_care_details':
+                data = {'visits': helper.postnatal_care_details()}
+            elif sub_section == 'vaccination_details':
+                period = self.request.POST.get('period', 'atBirth')
+                data = {'vitamins': helper.vaccination_details(period)}
+            elif sub_section == 'growth_monitoring':
+                data = helper.growth_monitoring()
+            elif sub_section == 'weight_for_age_chart':
+                data = {'points': helper.weight_for_age_chart()}
+            elif sub_section == 'height_for_age_chart':
+                data = {'points': helper.height_for_age_chart()}
+            elif sub_section == 'weight_for_height_chart':
+                data = {'points': helper.weight_for_height_chart()}
         elif section == 'pregnant_women':
+            helper = PregnantWomanQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'pregnancy_details':
-                data = dict(
-                    dateOfLmp='2018-11-10',
-                    weightOfPw=55,
-                    dateOfRegistration='2019-01-01',
-                    edd='2019-08-10',
-                    twelveWeeksPregnancyRegistration='Yes',
-                    bloodGroup='B+',
-                    pregnancyStatus=2
-                )
+                data = helper.pregnancy_details()
             elif sub_section == 'pregnancy_risk':
-                data = dict(
-                    riskPregnancy='Yes',
-                    referralDate='2019-06-17',
-                    hrpSymptoms='Bleeding',
-                    illnessHistory='Yes',
-                    referredOutFacilityType='CHC',
-                    pastIllnessDetails='Tuberculosis',
-                )
+                data = helper.pregnancy_risk()
             elif sub_section == 'consumables_disbursed':
-                data = dict(
-                    ifaTablets='180',
-                    thrDisbursed='Yes',
-                )
+                data = helper.consumables_disbursed()
             elif sub_section == 'immunization_counseling_details':
-                data = dict(
-                    ttDoseOne='2019-01-10',
-                    ttDoseTwo='2019-02-10',
-                    ttBooster='Not Done',
-                    birthPreparednessVisitsByAsha=2,
-                    birthPreparednessVisitsByAww=1,
-                    counsellingOnMaternal='Yes',
-                    counsellingOnEbf='Yes',
-                )
+                data = helper.immunization_counseling_details()
             elif sub_section == 'abortion_details':
-                data = dict(
-                    abortionDate='2019-03-18',
-                    abortionType='Spontaneous',
-                    abortionDays=27,
-                )
+                data = helper.abortion_details()
             elif sub_section == 'maternal_death_details':
-                data = dict(
-                    maternalDeathOccurred='Yes',
-                    maternalDeathPlace='Rasidpur',
-                    maternalDeathDate='2019-04-19',
-                    authoritiesInformed='Yes',
-                )
+                data = helper.maternal_death_details()
             elif sub_section == 'delivery_details':
-                data = dict(
-                    dod='2019-08-15',
-                    assistanceOfDelivery='Midwife',
-                    timeOfDelivery='08:25',
-                    dateOfDischarge='2019-08-17',
-                    typeOfDelivery='Caesarean',
-                    timeOfDischarge='17:11',
-                    placeOfBirth='Rasidpur',
-                    deliveryComplications='Yes',
-                    placeOfDelivery='Hospital',
-                    complicationDetails='Postpartum Haemorrhage',
-                    hospitalType='Private',
-                )
+                data = helper.delivery_details()
             elif sub_section == 'postnatal_care_details':
-                data = dict(
-                    visits=[
-                        dict(
-                            pncDate='2019-08-20',
-                            postpartumHeamorrhage=0,
-                            fever=1,
-                            convulsions=0,
-                            abdominalPain=0,
-                            painfulUrination=0,
-                            congestedBreasts=1,
-                            painfulNipples=0,
-                            otherBreastsIssues=0,
-                            managingBreastProblems=0,
-                            increasingFoodIntake=1,
-                            possibleMaternalComplications=1,
-                            beneficiaryStartedEating=0,
-                        ),
-                        dict(
-                            pncDate='2019-08-22',
-                            postpartumHeamorrhage=0,
-                            fever=1,
-                            convulsions=0,
-                            abdominalPain=0,
-                            painfulUrination=0,
-                            congestedBreasts=1,
-                            painfulNipples=0,
-                            otherBreastsIssues=0,
-                            managingBreastProblems=0,
-                            increasingFoodIntake=1,
-                            possibleMaternalComplications=1,
-                            beneficiaryStartedEating=0,
-                        )
-                    ]
-                )
+                data = {'visits': helper.postnatal_care_details()}
             elif sub_section == 'antenatal_care_details':
-                data = dict(
-                    visits=[
-                        dict(
-                            ancDate='2019-01-10',
-                            ancLocation='PHC Shahzadpur',
-                            pwWeight=55,
-                            bloodPressure='118/76',
-                            hb=13.1,
-                            abdominalExamination='Yes',
-                            abnormalitiesDetected='Yes',
-                        ),
-                        dict(
-                            ancDate='2019-03-19',
-                            ancLocation='PHC Shahzadpur',
-                            pwWeight=57,
-                            bloodPressure='117/74',
-                            hb=14,
-                            abdominalExamination='No',
-                            abnormalitiesDetected='No',
-                        )
-                    ]
-                )
-
-        elif section == 'eligible_couples':
+                data = {'visits': helper.antenatal_care_details()}
+        elif section == 'eligible_couple':
+            helper = EligibleCoupleQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'eligible_couple_details':
-                data = dict(
-                    maleChildrenBorn=3,
-                    femaleChildrenBorn=2,
-                    maleChildrenAlive=2,
-                    femaleChildrenAlive=2,
-                    familyPlaningMethod='OC pills',
-                    familyPlanningMethodDate='2018-07-14',
-                    ashaVisit='2019-01-11',
-                    previousFamilyPlanningMethod='Condom',
-                    preferredFamilyPlaningMethod='Male sterilization'
-                )
+                data = helper.eligible_couple_details()
 
         if not data:
             raise Http404()
         return JsonResponse(data=data)
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class ExportData(View):
+    def post(self, request, *args, **kwargs):
+        selected_month = int(self.request.POST.get('selectedMonth'))
+        selected_year = int(self.request.POST.get('selectedYear'))
+        selected_date = date(selected_year, selected_month, 1)
+        next_month_start = selected_date + relativedelta(months=1)
+        selected_location = self.request.POST.get('selectedLocation')
+        selected_ministry = self.request.POST.get('selectedMinistry')
+        beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
+
+        task = prepare_export_reports.delay(
+            request.domain,
+            selected_date,
+            next_month_start,
+            selected_location,
+            selected_ministry,
+            beneficiary_type
+        )
+        return JsonResponse(data={
+            'task_id': task.task_id
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class CheckExportTask(View):
+    def get(self, request, *args, **kwargs):
+        task_id = self.kwargs.get('task_id', None)
+        res = AsyncResult(task_id) if task_id else None
+        status = res and res.ready()
+
+        if status:
+            return JsonResponse(
+                {
+                    'task_ready': status,
+                    'task_successful': res.successful(),
+                    'task_result': res.result if res.successful() else None
+                }
+            )
+        return JsonResponse({'task_ready': status})
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class DownloadFile(View):
+    def get(self, request, *args, **kwargs):
+        file_id = self.kwargs.get('file_id', None)
+        content_type = Format.from_format('xlsx')
+        response = HttpResponse(
+            get_file_from_blobdb(file_id).read(),
+            content_type=content_type.mimetype
+        )
+        response['Content-Disposition'] = safe_filename_header(
+            'unified_beneficiary_list',
+            content_type.extension
+        )
+        return response

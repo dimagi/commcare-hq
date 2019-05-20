@@ -6,19 +6,19 @@
   {% include 'app_manager/partials/app_summary_button.html' %}
 </div>
 <div class="appmanager-edit-title">
-  {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-module_name']); return appManager.updateDOM(data.update);}" %}
-  {% if module.is_training_module %}
-      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-book' postSave=postSave %}
-  {% elif module.is_surveys %}
-      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave=postSave %}
-  {% else %}
-      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave=postSave %}
-  {% endif %}
+  {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-module_name']); return appManager.updateDOM(data.update);}" disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true"%}
+    {% if module.is_training_module %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-book' postSave=postSave disallow_edit=disallow_edit %}
+    {% elif module.is_surveys %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave=postSave disallow_edit=disallow_edit %}
+    {% else %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave=postSave disallow_edit=disallow_edit %}
+    {% endif %}
   {% endwith %}
 </div>
 
 <div class="appmanager-edit-description">
-<inline-edit params="
+  <inline-edit params="
     name: 'comment',
     id:'comment-id',
     value: '{{ module.comment|escapejs }}',
@@ -26,7 +26,8 @@
     url: '{% url "edit_module_attr" domain app.id module.unique_id 'comment' %}',
     saveValueName: 'comment',
     cols: 50,
+    disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
 "></inline-edit>
-<br />
+  <br />
 
-<div id="build_errors"></div>
+  <div id="build_errors"></div>

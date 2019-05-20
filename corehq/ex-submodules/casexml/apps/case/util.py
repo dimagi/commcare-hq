@@ -166,14 +166,10 @@ def primary_actions(case):
     return [a for a in case.actions if not a.is_case_rebuild]
 
 
-def iter_cases(case_ids, strip_history=False, wrap=True):
+def iter_cases(case_ids, wrap=True):
     from casexml.apps.case.models import CommCareCase
-    if not strip_history:
-        for doc in iter_docs(CommCareCase.get_db(), case_ids):
-            yield CommCareCase.wrap(doc) if wrap else doc
-    else:
-        for case in CommCareCase.bulk_get_lite(case_ids, wrap=wrap):
-            yield case
+    for doc in iter_docs(CommCareCase.get_db(), case_ids):
+        yield CommCareCase.wrap(doc) if wrap else doc
 
 
 def property_changed_in_action(domain, case_transaction, case_id, case_property_name):

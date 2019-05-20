@@ -27,6 +27,8 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import re
 
 from memoized import memoized
+
+from corehq.apps.hqwebapp.crispy import make_form_readonly
 from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -57,7 +59,6 @@ from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
     use_select2_v4,
     use_angular_js,
     use_multiselect,
@@ -70,7 +71,10 @@ from corehq.apps.users.bulkupload import (
     UserUploadError,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.decorators import (
+    require_can_edit_commcare_users,
+    require_can_edit_or_view_commcare_users,
+)
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
@@ -86,9 +90,13 @@ from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
-    InvalidExcelFileException
+from corehq.util.workbook_json.excel import (
+    enforce_string_type,
+    get_workbook,
+    StringTypeRequiredError,
+    WorkbookJSONError,
+    WorksheetNotFound,
+)
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 import six
@@ -116,15 +124,21 @@ class EditCommCareUserView(BaseEditUserView):
     page_title = ugettext_noop("Edit Mobile Worker")
 
     @property
+    def page_name(self):
+        if self.request.is_view_only:
+            return _("Edit Mobile Worker (View Only)")
+        return self.page_title
+
+    @property
     def template_name(self):
         if self.editable_user.is_deleted():
             return "users/deleted_account.html"
         else:
             return "users/edit_commcare_user.html"
 
-    @use_select2
+    @use_select2_v4
     @use_multiselect
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
 
@@ -195,7 +209,7 @@ class EditCommCareUserView(BaseEditUserView):
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         program_id = self.editable_user.get_domain_membership(self.domain).program_id
-        assigned_locations = ','.join(self.editable_user.assigned_location_ids)
+        assigned_locations = self.editable_user.assigned_location_ids
         return CommtrackUserForm(
             domain=self.domain,
             initial={
@@ -207,6 +221,12 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def page_context(self):
         from corehq.apps.users.views.mobile import GroupsListView
+
+        if self.request.is_view_only:
+            make_form_readonly(self.commtrack_form)
+            make_form_readonly(self.form_user_update.user_form)
+            make_form_readonly(self.form_user_update.custom_data.form)
+
         context = {
             'are_groups': bool(len(self.all_groups)),
             'groups_url': reverse('all_groups', args=[self.domain]),
@@ -216,7 +236,7 @@ class EditCommCareUserView(BaseEditUserView):
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'can_create_groups': (
-                self.request.couch_user.has_permission(self.domain, 'edit_commcare_users') and
+                self.request.couch_user.has_permission(self.domain, 'edit_groups') and
                 self.request.couch_user.has_permission(self.domain, 'access_all_locations')
             ),
             'needs_to_downgrade_locations': (
@@ -224,7 +244,8 @@ class EditCommCareUserView(BaseEditUserView):
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
-            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'group_names': [g.name for g in self.groups],
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -247,7 +268,9 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def form_user_update(self):
-        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
+        if (self.request.method == "POST"
+                and self.request.POST['form_type'] == "update-user"
+                and not self.request.is_view_only):
             data = self.request.POST
         else:
             data = None
@@ -256,7 +279,7 @@ class EditCommCareUserView(BaseEditUserView):
 
         form.user_form.load_language(language_choices=get_domain_languages(self.domain))
 
-        if self.can_change_user_roles:
+        if self.can_change_user_roles or self.couch_user.can_view_roles():
             form.user_form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
         else:
             del form.user_form.fields['role']
@@ -271,6 +294,12 @@ class EditCommCareUserView(BaseEditUserView):
         }]
 
     def post(self, request, *args, **kwargs):
+        if self.request.is_view_only:
+            messages.error(
+                request,
+                _("You do not have permission to update Mobile Workers.")
+            )
+            return super(EditCommCareUserView, self).get(request, *args, **kwargs)
         if self.request.POST['form_type'] == "add-phonenumber":
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub(r'\s', '', phone_number)
@@ -547,9 +576,9 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_select2
+    @use_select2_v4
     @use_angular_js
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
 
@@ -560,7 +589,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_bulk_edit_users(self):
-        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
+        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT) and not self.request.is_view_only
 
     @property
     def can_add_extra_users(self):
@@ -655,6 +684,10 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
+        if self.request.is_view_only:
+            return {
+                'error': _("You do not have permission to create mobile workers.")
+            }
         fields = [
             'username',
             'password',
@@ -760,7 +793,7 @@ def _modify_user_status(request, domain, user_id, is_active):
     })
 
 
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
 def paginate_mobile_workers(request, domain):
@@ -885,7 +918,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
 
 
 class UploadCommCareUsers(BaseManageCommCareUserView):
-    template_name = 'users/upload_commcare_users.html'
+    template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
@@ -916,27 +949,11 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
-        upload = request.FILES.get('bulk_upload_file')
         try:
-            self.workbook = WorkbookJSONReader(upload)
-        except InvalidExcelFileException:
-            try:
-                csv.DictReader(io.StringIO(upload.read().decode('ascii'),
-                                           newline=None))
-                return HttpResponseBadRequest(
-                    "CommCare HQ no longer supports CSV upload. "
-                    "Please convert to Excel 2007 or higher (.xlsx) "
-                    "and try again."
-                )
-            except UnicodeDecodeError:
-                return HttpResponseBadRequest("Unrecognized format")
-        except JSONReaderError as e:
-            messages.error(request,
-                           'Your upload was unsuccessful. %s' % six.text_type(e))
+            self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, six.text_type(e))
             return self.get(request, *args, **kwargs)
-        except HeaderValueError as e:
-            return HttpResponseBadRequest("Upload encountered a data type error: %s"
-                                          % six.text_type(e))
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')

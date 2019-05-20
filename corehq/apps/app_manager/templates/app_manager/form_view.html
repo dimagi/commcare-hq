@@ -7,110 +7,112 @@
 {% block title %}{# controlled by app_manager/js/form_view.js #}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <style>
-        .nodeset {
-            min-width: 400px;
-        }
-    </style>
+  <style>
+    .nodeset {
+      min-width: 400px;
+    }
+  </style>
 {% endblock %}
 
 {% block head %}{{ block.super }}
-    {% include 'analytics/fullstory.html' %}
+  {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
+  {% compress js %}
     <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% compress js %}
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
-    {% endcompress %}
-    {% if module.doc_type == 'AdvancedModule' %}
-        {% compress js %}
-        <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
-        <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
-        <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
-        <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
-        {% endcompress %}
-    {% else %}
-        {% compress js %}
-        <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
-    <style>
-        #open-referral-action,
-        #update-referral-action,
-        #close-referral-action,
-        #referral-preload-action {
-            display: none;
-        }
-        .indent {
-            margin-left: 15px;
-        }
-    </style>
-
+  {% endcompress %}
+  {% include 'hqwebapp/partials/key_value_mapping.html' %}
+  {% if module.doc_type == 'AdvancedModule' %}
     {% compress js %}
+      <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
+      <script src="{% static 'app_manager/js/forms/advanced/actions.js' %}"></script>
+      <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
+      <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
+    {% endcompress %}
+  {% else %}
+    {% compress js %}
+      <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
+  <style>
+    #open-referral-action,
+    #update-referral-action,
+    #close-referral-action,
+    #referral-preload-action {
+      display: none;
+    }
+    .indent {
+      margin-left: 15px;
+    }
+  </style>
+
+  {% compress js %}
     <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 
-    {% include "app_manager/partials/xpathValidator.html" %}
-    {% include 'hqmedia/partials/multimedia_js.html' %}
-    {% compress js %}
+  {% include "app_manager/partials/xpathValidator.html" %}
+  {% include 'hqmedia/partials/multimedia_js.html' %}
+  {% compress js %}
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
+  {% endcompress %}
+  {% if allow_form_workflow %}
+    {% compress js %}
+      <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
     {% endcompress %}
-    {% if allow_form_workflow %}
-        {% compress js %}
-        <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
-    {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-        {% compress js %}
-        <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
-    {% if request|toggle_enabled:"CUSTOM_ASSERTIONS"%}
-        {% compress js %}
-        <script src="{% static 'app_manager/js/forms/custom_assertions.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
-    {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
-        {% compress js %}
-        <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
+  {% endif %}
+  {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+    {% compress js %}
+      <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
+  {% if request|toggle_enabled:"CUSTOM_ASSERTIONS"%}
+    {% compress js %}
+      <script src="{% static 'app_manager/js/forms/custom_assertions.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
+  {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
+    {% compress js %}
+      <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
 {% endblock %}
 
 {% block pre_form_content %}
-    <div class="appmanager-page-actions">
-        {% include 'app_manager/partials/app_summary_button.html' %}
-        <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
-            <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
-        </a>
-    </div>
+  <div class="appmanager-page-actions">
+    {% include 'app_manager/partials/app_summary_button.html' %}
+    <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
+      <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
+    </a>
+  </div>
 
-    <div class="appmanager-edit-title">
-      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" %}
+  <div class="appmanager-edit-title">
+    {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
       {% if form.get_action_type == 'open' %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave disallow_edit=disallow_edit %}
       {% elif form.requires_case %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave disallow_edit=disallow_edit %}
       {% elif form.form_type == 'shadow_form' %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-moon-o' postSave=postSave %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-moon-o' postSave=postSave disallow_edit=disallow_edit %}
       {% else %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave disallow_edit=disallow_edit %}
       {% endif %}
-      {% endwith %}
-    </div>
+    {% endwith %}
+  </div>
 
-    <div class="appmanager-edit-description">
-      <inline-edit params="
+  <div class="appmanager-edit-description">
+    <inline-edit params="
           name: 'comment',
           id:'comment-id',
           value: '{{ form.comment|escapejs }}',
@@ -118,220 +120,223 @@
           url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
           saveValueName: 'comment',
           cols: 50,
+          disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
       "></inline-edit>
-    </div>
+  </div>
 
-    <div id="build_errors"></div>
+  <div id="build_errors"></div>
 {% endblock %}
 
 {% block form-view %}
-    {% initial_page_data 'all_other_forms_require_a_case' form.all_other_forms_require_a_case %}
-    {% initial_page_data 'allow_form_filtering' allow_form_filtering %}
-    {% initial_page_data 'auto_gps_capture' form.auto_gps_capture %}
-    {% initial_page_data 'case_config_options' case_config_options %}
-    {% initial_page_data 'custom_instances' custom_instances %}
-    {% initial_page_data 'custom_assertions' custom_assertions %}
-    {% initial_page_data 'form_filter' form.form_filter %}
-    {% initial_page_data 'form_filter_patterns' form_filter_patterns %}
-    {% initial_page_data 'form_name' form.name|trans:app.langs %}
-    {% initial_page_data 'form_requires' form.requires %}
-    {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
-    {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
-    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
-    {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
-    {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
-    {% initial_page_data 'no_vellum' form.no_vellum %}
-    {% initial_page_data 'root_requires_same_case' root_requires_same_case %}
-    {% initial_page_data 'put_in_root' module.put_in_root %}
-    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
-    {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
-    {% initial_page_data 'is_release_notes_form' form.is_release_notes_form %}
-    {% initial_page_data 'enable_release_notes' form.enable_release_notes %}
-    {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
-    {% initial_page_data 'is_training_module' is_training_module %}
-    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
-    {% initial_page_data 'default_language' app.default_language %}
-    {% initial_page_data 'current_language' lang %}
-    {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
-        {% initial_page_data 'apps_modules' apps_modules %}
-    {% endif %}
-    {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
+  {% initial_page_data 'all_other_forms_require_a_case' form.all_other_forms_require_a_case %}
+  {% initial_page_data 'allow_form_filtering' allow_form_filtering %}
+  {% initial_page_data 'auto_gps_capture' form.auto_gps_capture %}
+  {% initial_page_data 'case_config_options' case_config_options %}
+  {% initial_page_data 'current_language' lang %}
+  {% initial_page_data 'custom_instances' custom_instances %}
+  {% initial_page_data 'custom_assertions' custom_assertions %}
+  {% initial_page_data 'default_language' app.default_language %}
+  {% initial_page_data 'enable_release_notes' form.enable_release_notes %}
+  {% initial_page_data 'form_filter' form.form_filter %}
+  {% initial_page_data 'form_filter_patterns' form_filter_patterns %}
+  {% initial_page_data 'form_name' form.name|trans:app.langs %}
+  {% initial_page_data 'form_requires' form.requires %}
+  {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+  {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
+  {% initial_page_data 'langs' app.langs %}
+  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+  {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
+  {% initial_page_data 'name_enum' form.name_enum %}
+  {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+  {% initial_page_data 'no_vellum' form.no_vellum %}
+  {% initial_page_data 'root_requires_same_case' root_requires_same_case %}
+  {% initial_page_data 'put_in_root' module.put_in_root %}
+  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+  {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
+  {% initial_page_data 'is_release_notes_form' form.is_release_notes_form %}
+  {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
+  {% initial_page_data 'is_training_module' is_training_module %}
+  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+  {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
+    {% initial_page_data 'apps_modules' apps_modules %}
+  {% endif %}
+  {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
-    {# End of form navigation #}
-    {% initial_page_data 'allow_form_workflow' allow_form_workflow %}
-    {% initial_page_data 'form_links' form.form_links %}
-    {% initial_page_data 'linkable_forms' linkable_forms %}
-    {% initial_page_data 'module_name' module.name|trans:langs %}
-    {% if module.root_module_id %}
-        {% initial_page_data 'root_module_name' module.root_module.name|trans:langs %}
-    {% endif %}
-    {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
-    {% initial_page_data 'post_form_workflow_fallback' form.post_form_workflow_fallback %}
-    {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
-    {% registerurl "get_form_datums" domain app.id %}
+  {# End of form navigation #}
+  {% initial_page_data 'allow_form_workflow' allow_form_workflow %}
+  {% initial_page_data 'form_links' form.form_links %}
+  {% initial_page_data 'linkable_forms' linkable_forms %}
+  {% initial_page_data 'module_name' module.name|trans:langs %}
+  {% if module.root_module_id %}
+    {% initial_page_data 'root_module_name' module.root_module.name|trans:langs %}
+  {% endif %}
+  {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
+  {% initial_page_data 'post_form_workflow_fallback' form.post_form_workflow_fallback %}
+  {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
+  {% registerurl "get_form_datums" domain app.id %}
 
-    <div class="tabbable appmanager-tabs-container">
-        <ul class="nav nav-tabs sticky-tabs">
+  <div class="tabbable appmanager-tabs-container">
+    <ul class="nav nav-tabs sticky-tabs">
 
-            {% if form.uses_cases %}
-            <li>
-                <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
-                    {% trans "Case Management" %}
-                </a>
-            </li>
-            {% endif %}
+      {% if form.uses_cases %}
+        <li>
+          <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
+            {% trans "Case Management" %}
+          </a>
+        </li>
+      {% endif %}
 
-            <li>
-                <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
-            </li>
+      <li>
+        <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
+      </li>
 
-            {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
-            <li>
-                <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-                    {% trans "User Properties" %}
-                </a>
-            </li>
-            {% endif %}{% endif %}
+      {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
+        <li>
+          <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+            {% trans "User Properties" %}
+          </a>
+        </li>
+      {% endif %}{% endif %}
 
-            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
-                {% if module.has_schedule %}
-                    <li>
-                        <a href="#visit-scheduler" data-toggle="tab">
-                             {% trans "Visit Scheduler" %}
-                         </a>
-                     </li>
-                {% endif %}
-            {% endif %}
+      {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+        {% if module.has_schedule %}
+          <li>
+            <a href="#visit-scheduler" data-toggle="tab">
+              {% trans "Visit Scheduler" %}
+            </a>
+          </li>
+        {% endif %}
+      {% endif %}
 
-            {% if form.form_type != "shadow_form" %}
-            <li>
-                <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
-            </li>
-            {% endif %}
-        </ul>
+      {% if form.form_type != "shadow_form" %}
+        <li>
+          <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
+        </li>
+      {% endif %}
+    </ul>
 
-        {% include 'app_manager/partials/forms/case_config_ko_templates.html' %}
+    {% include 'app_manager/partials/forms/case_config_ko_templates.html' %}
 
-        <div class="tab-content appmanager-tab-content">
+    <div class="tab-content appmanager-tab-content">
 
-            {% if form.uses_cases %}
-              <div class="tab-pane" id="case-configuration">
-                  {% if xform_validation_missing %}
-                      <p class="alert alert-warning">
-                          {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
-                      </p>
-                  {% endif %}
-                  {% if form.form_type == "shadow_form" %}
-                    <div class="alert alert-warning">
-                        {% trans "You are viewing a shadow form, therefore:" %}
-                        <ul>
-                            <li>{% trans 'You will be unable to add "Open case" action' %}</li>
-                            <li>{% trans 'Load/Update actions will be "merged" with the source form actions'%}</li>
-                            <li>{% trans 'Every case tag in the source form load/update action configuration must appear in this configuration'%}</li>
-                            <li>{% trans 'You are not allowed to specify load or save case properties'%}</li>
-                            <li>{% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.'%}</li>
-                            <li>{% trans 'You are not allowed to specify case closures here'%}</li>
-                        </ul>
-                    </div>
-                  {% endif %}
-                  {% if form_errors or xform_validation_errored %}
-                      <p class="alert alert-warning">
-                          {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
-                      </p>
-                  {% elif form.source %}
-                      <div class="casexml" id="casexml_home">
-                        {% if module.doc_type == 'AdvancedModule' %}
-                            {% initial_page_data 'schedule_options' schedule_options %}
-                            {% include 'app_manager/partials/forms/case_config_advanced.html' %}
-                        {% else %}
-                            {% include 'app_manager/partials/forms/case_config.html' %}
-                        {% endif %}
-                      </div>
-                  {% else %}
-                      <p class="alert alert-warning">
-                          {% trans "Add questions to your form to make use of case management." %}
-                      </p>
-                  {% endif %}
-              </div>
-            {% endif %}
-
-
-            {% if nav_form %}
-                {% include "app_manager/partials/forms/form_tab_settings.html" %}
-            {% endif %}
-
-
-            {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
-            <div class="tab-pane" id="usercase-configuration">
-                {% if form_errors or xform_validation_errored %}
-                    <p class="alert alert-warning">
-                        {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
-                    </p>
-                {% elif form.source %}
-                    <div class="casexml" id="usercasexml_home">
-                        {% block usercase_management_content %}
-                            {%  if form.uses_usercase and not allow_usercase %}
-                                <div>
-                                    <p>{% blocktrans %}
-                                        The User Properties feature is no longer available because of the change in your
-                                        CommCare subscription. Although currently-deployed applications will still
-                                        function properly, it will not be possible to update or redeploy them unless
-                                        the User Properties functionality is removed, or you upgrade your CommCare
-                                        subscription.
-                                    {% endblocktrans %}</p>
-
-                                    <p class="alert alert-danger">{% blocktrans %}
-                                        WARNING: By clicking "Remove User Properties" you will lose User Properties
-                                        functionality if you redeploy your application. However, you will still be
-                                        able to see all previously collected data.
-                                    {% endblocktrans %}</p>
-
-                                    <p>
-                                        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
-                                            {% trans "Change your subscription" %}
-                                        </a>
-                                        <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
-                                            {% trans "Remove User Properties" %}
-                                        </a>
-                                    </p>
-                                </div>
-                            {% endif %}
-                            {% include 'app_manager/partials/forms/usercase_config.html' %}
-                        {% endblock %}
-                    </div>
-                {% else %}
-                    <p class="alert alert-warning">
-                        {% trans "You have not created a form yet. Create a form in order to view and edit User Properties." %}
-                    </p>
-                {% endif %}
+      {% if form.uses_cases %}
+        <div class="tab-pane" id="case-configuration">
+          {% if xform_validation_missing %}
+            <p class="alert alert-warning">
+              {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
+            </p>
+          {% endif %}
+          {% if form.form_type == "shadow_form" %}
+            <div class="alert alert-warning">
+              {% trans "You are viewing a shadow form, therefore:" %}
+              <ul>
+                <li>{% trans 'You will be unable to add "Open case" action' %}</li>
+                <li>{% trans 'Load/Update actions will be "merged" with the source form actions'%}</li>
+                <li>{% trans 'Every case tag in the source form load/update action configuration must appear in this configuration'%}</li>
+                <li>{% trans 'You are not allowed to specify load or save case properties'%}</li>
+                <li>{% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.'%}</li>
+                <li>{% trans 'You are not allowed to specify case closures here'%}</li>
+              </ul>
             </div>
-            {% endif %}{% endif %}
-
-            {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
-                {% if module.has_schedule  %}
-                    {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
-                {% endif %}
-            {% endif %}
-            {% if form.form_type != "shadow_form" %}
-                {% include "app_manager/partials/forms/form_tab_advanced.html" %}
-            {% endif %}
+          {% endif %}
+          {% if form_errors or xform_validation_errored %}
+            <p class="alert alert-warning">
+              {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
+            </p>
+          {% elif form.source %}
+            <div class="casexml" id="casexml_home">
+              {% if module.doc_type == 'AdvancedModule' %}
+                {% initial_page_data 'schedule_options' schedule_options %}
+                {% include 'app_manager/partials/forms/case_config_advanced.html' %}
+              {% else %}
+                {% include 'app_manager/partials/forms/case_config.html' %}
+              {% endif %}
+            </div>
+          {% else %}
+            <p class="alert alert-warning">
+              {% trans "Add questions to your form to make use of case management." %}
+            </p>
+          {% endif %}
         </div>
+      {% endif %}
+
+
+      {% if nav_form %}
+        {% include "app_manager/partials/forms/form_tab_settings.html" %}
+      {% endif %}
+
+
+      {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
+        <div class="tab-pane" id="usercase-configuration">
+          {% if form_errors or xform_validation_errored %}
+            <p class="alert alert-warning">
+              {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
+            </p>
+          {% elif form.source %}
+            <div class="casexml" id="usercasexml_home">
+              {% block usercase_management_content %}
+                {%  if form.uses_usercase and not allow_usercase %}
+                  <div>
+                    <p>{% blocktrans %}
+                      The User Properties feature is no longer available because of the change in your
+                      CommCare subscription. Although currently-deployed applications will still
+                      function properly, it will not be possible to update or redeploy them unless
+                      the User Properties functionality is removed, or you upgrade your CommCare
+                      subscription.
+                    {% endblocktrans %}</p>
+
+                    <p class="alert alert-danger">{% blocktrans %}
+                      WARNING: By clicking "Remove User Properties" you will lose User Properties
+                      functionality if you redeploy your application. However, you will still be
+                      able to see all previously collected data.
+                    {% endblocktrans %}</p>
+
+                    <p>
+                      <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
+                        {% trans "Change your subscription" %}
+                      </a>
+                      <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
+                        {% trans "Remove User Properties" %}
+                      </a>
+                    </p>
+                  </div>
+                {% endif %}
+                {% include 'app_manager/partials/forms/usercase_config.html' %}
+              {% endblock %}
+            </div>
+          {% else %}
+            <p class="alert alert-warning">
+              {% trans "You have not created a form yet. Create a form in order to view and edit User Properties." %}
+            </p>
+          {% endif %}
+        </div>
+      {% endif %}{% endif %}
+
+      {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
+        {% if module.has_schedule  %}
+          {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
+        {% endif %}
+      {% endif %}
+      {% if form.form_type != "shadow_form" %}
+        {% include "app_manager/partials/forms/form_tab_advanced.html" %}
+      {% endif %}
     </div>
-    <div id="questions"></div>
+  </div>
+  <div id="questions"></div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/partials/forms/form_view_modals.html" %}
-{% include "app_manager/partials/nav_menu_media_modals.html" %}
+  {% include "app_manager/partials/forms/form_view_modals.html" %}
+  {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
-    {{ block.super }}
-    {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
-    <li>
-        <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
-           data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
-            <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-        </a>
-    </li>
+  {{ block.super }}
+  {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
+  <li>
+    <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
+       data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
+      <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
+    </a>
+  </li>
 {% endblock %}

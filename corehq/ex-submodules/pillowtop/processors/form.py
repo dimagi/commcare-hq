@@ -11,6 +11,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.users.models import CouchUser, LastSubmission, DeviceAppMeta
 from corehq.pillows.utils import format_form_meta_for_es
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.apps.receiverwrapper.util import get_app_version_info
 
@@ -102,8 +103,11 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
 
     last_submission = filter_by_app(user.reporting_metadata.last_submissions, app_id)
 
-    if metadata and metadata.get('appVersion') and not isinstance(metadata['appVersion'], six.string_types):
-        metadata = format_form_meta_for_es(metadata)
+    if metadata and metadata.get('appVersion'):
+        if not isinstance(metadata['appVersion'], six.string_types):
+            metadata = format_form_meta_for_es(metadata)
+        else:
+            soft_assert_type_text(metadata['appVersion'])
 
     app_version_info = get_app_version_info(
         domain,

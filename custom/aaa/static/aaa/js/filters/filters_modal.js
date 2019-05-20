@@ -5,7 +5,7 @@ hqDefine('aaa/js/filters/filters_modal', [
 ], function (
     $,
     ko,
-    _,
+    _
 ) {
     return {
         viewModel: function (params) {
@@ -15,24 +15,51 @@ hqDefine('aaa/js/filters/filters_modal', [
             self.callback = params.callback;
             self.localStorage = params.localStorage;
 
-            self.disableSubmit = ko.observable(false);
-
             self.resetFilter = function () {
                 _.each(self.filters, function (filter) {
-                    if(filter.hasOwnProperty('resetFilters')) {
+                    if (filter.hasOwnProperty('resetFilters')) {
                         filter.resetFilters();
                     }
                 });
             };
 
             self.applyFilters = function () {
-                self.localStorage.showModal(false);
-                params.callback();
+                var allFiltersSelected = true;
+
+                _.each(self.filters, function (filter) {
+                    if (!filter.verify()) {
+                        allFiltersSelected = false;
+                    }
+                });
+
+                if (allFiltersSelected) {
+                    _.each(self.filters, function (filter) {
+                        if (filter.hasOwnProperty('applyFilter')) {
+                            filter.applyFilter();
+                        }
+                    });
+                    var urlParams = [];
+                    _.each(self.postData, function (value, key) {
+                        var val = _.isFunction(value) ? value() : value;
+                        urlParams.push(key + '=' + (val || ''));
+                    });
+                    history.pushState('', '', '?' + urlParams.join('&'));
+
+                    self.localStorage.showModal(false);
+                    params.callback();
+                }
             };
 
             self.hideFilter = function (filterSlug) {
                 return !self.filters.hasOwnProperty(filterSlug);
             };
+
+            var paramsString = window.location.href.split("?")[1];
+            if (paramsString !== void(0)) {
+                self.localStorage.showModal(false);
+                params.callback();
+            }
+
             return self;
         },
         template: '<div data-bind="template: { name: \'filters-modal-template\' }"></div>',

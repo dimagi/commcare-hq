@@ -9,6 +9,9 @@ from openpyxl.utils.exceptions import InvalidFileException
 import six
 from six.moves import zip
 from django.core.files.uploadedfile import UploadedFile
+from django.utils.translation import ugettext as _
+
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 class InvalidExcelFileException(Exception):
@@ -24,6 +27,10 @@ class HeaderValueError(Exception):
 
 
 class StringTypeRequiredError(Exception):
+    pass
+
+
+class WorkbookJSONError(Exception):
     pass
 
 
@@ -70,12 +77,15 @@ class IteratorJSONReader(object):
         for field, value in zip(self.headers, [''] * len(self.headers)):
             if not isinstance(field, six.string_types):
                 raise HeaderValueError('Field %s is not a string.' % field)
+            soft_assert_type_text(field)
             self.set_field_value(obj, field, value)
         return list(obj)
 
     @classmethod
     def set_field_value(cls, obj, field, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        if isinstance(value, six.text_type):
             value = value.strip()
         # try dict
         try:
@@ -141,6 +151,42 @@ class IteratorJSONReader(object):
             )
 
         obj[field] = value
+
+
+def get_workbook(file_or_filename):
+    try:
+        return WorkbookJSONReader(file_or_filename)
+    except (HeaderValueError, InvalidExcelFileException) as e:
+        raise WorkbookJSONError(_(
+            "Upload failed! "
+            "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+            "Error details: {}."
+        ).format(e))
+    except JSONReaderError as e:
+        raise WorkbookJSONError(_(
+            "Upload failed due to a problem with Excel columns. Error details: {}."
+        ).format(e))
+    except HeaderValueError as e:
+        raise WorkbookJSONError(_(
+            "Upload encountered a data type error: {}."
+        ).format(e))
+    except AttributeError as e:
+        raise WorkbookJSONError(_(
+            "Error processing Excel file: {}."
+        ).format(e))
+
+
+def get_single_worksheet(file_or_filename, title=None):
+    workbook = get_workbook(file_or_filename)
+
+    try:
+        worksheet = workbook.get_worksheet(title=title)
+    except WorksheetNotFound:
+        raise WorkbookJSONError(_(
+            "Could not find sheet '{title}'."
+        ).format(title=title) if title else _("Uploaded file does not contian any sheets."))
+
+    return worksheet
 
 
 class WorksheetNotFound(Exception):
@@ -258,6 +304,7 @@ def format_header(path, value):
     s = path[0]
     for p in path[1:]:
         if isinstance(p, six.string_types):
+            soft_assert_type_text(p)
             s += ': %s' % p
         elif isinstance(p, int):
             s += ' %s' % (p + 1)
@@ -288,6 +335,7 @@ def alphanumeric_sort_key(key):
 
 def enforce_string_type(value):
     if isinstance(value, six.string_types):
+        soft_assert_type_text(value)
         return value
 
     if isinstance(value, six.integer_types):

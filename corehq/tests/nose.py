@@ -22,6 +22,7 @@ from fnmatch import fnmatch
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from django.core.management import call_command
+from django.test.utils import get_unique_databases_and_mirrors
 from mock import patch, Mock
 from nose.plugins import Plugin
 from nose.tools import nottest
@@ -203,6 +204,7 @@ class HqdbContext(DatabaseContext):
 
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
+        self.old_names = self._get_databases()
 
         if self.skip_setup_for_reuse_db and self._databases_ok():
             if self.reuse_db == "migrate":
@@ -212,17 +214,31 @@ class HqdbContext(DatabaseContext):
             return  # skip remaining setup
 
         if self.reuse_db == "reset":
-            self.delete_couch_databases()
+            self.reset_databases()
 
         print("", file=sys.__stdout__)  # newline for creating database message
         if self.reuse_db:
             print("REUSE_DB={} ".format(self.reuse_db), file=sys.__stdout__, end="")
+        if self.skip_setup_for_reuse_db:
+            # pass this on to the Django runner to avoid creating databases
+            # that already exist
+            self.runner.keepdb = True
         super(HqdbContext, self).setup()
 
+    def reset_databases(self):
+        self.delete_couch_databases()
+        # tear down all databases together to avoid dependency issues
+        teardown = []
+        for connection, db_name, is_first in self.old_names:
+            try:
+                connection.ensure_connection()
+                teardown.append((connection, db_name, is_first))
+            except OperationalError:
+                pass  # ignore databases that don't exist
+        self.runner.teardown_databases(reversed(teardown))
+
     def _databases_ok(self):
-        from django.db import connections
-        old_names = []
-        for connection in connections.all():
+        for connection, db_name, _ in self.old_names:
             db = connection.settings_dict
             assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
             try:
@@ -230,10 +246,18 @@ class HqdbContext(DatabaseContext):
             except OperationalError as e:
                 print(str(e), file=sys.__stderr__)
                 return False
-            old_names.append((connection, db["NAME"], True))
-
-        self.old_names = old_names
         return True
+
+    def _get_databases(self):
+        from django.db import connections
+        old_names = []
+        test_databases, mirrored_aliases = get_unique_databases_and_mirrors()
+        assert not mirrored_aliases, "DB mirrors not supported"
+        for signature, (db_name, aliases) in test_databases.items():
+            alias = list(aliases)[0]
+            connection = connections[alias]
+            old_names.append((connection, db_name, True))
+        return old_names
 
     def delete_couch_databases(self):
         for db in get_all_test_dbs():
@@ -259,6 +283,11 @@ class HqdbContext(DatabaseContext):
         from corehq.sql_db.connections import connection_manager
         connection_manager.dispose_all()
 
+        # in case this was set before we want to remove it now
+        self.runner.keepdb = False
+
+        # tear down in reverse order
+        self.old_names = reversed(self.old_names)
         super(HqdbContext, self).teardown()
 
 

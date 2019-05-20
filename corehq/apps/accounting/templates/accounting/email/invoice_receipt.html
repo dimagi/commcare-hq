@@ -1,61 +1,61 @@
 {% load i18n %}
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Dear {{ name }},
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     This email is a receipt for your payment of {{ amount }} toward Invoice No.
     {{ invoice_num }} for your project {{ project }}.
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>
 
 {% if is_paid %}
-<p>
+  <p>
     {% blocktrans %}
-    This invoice is now marked as paid as of {{ date_paid }}.
+      This invoice is now marked as paid as of {{ date_paid }}.
     {% endblocktrans %}
-</p>
+  </p>
 
-<ul>
+  <ul>
     <li><strong>{% trans 'Invoice No.' %}:</strong> {{ invoice_num }}</li>
     <li><strong>{% trans 'Amount Paid' %}:</strong> {{ amount }}</li>
     <li><strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }}</li>
     <li><strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}</li>
-</ul>
+  </ul>
 {% else %}
-<ul>
+  <ul>
     <li><strong>{% trans 'Invoice No.' %}:</strong> {{ invoice_num }}</li>
     <li><strong>{% trans 'Amount Paid' %}:</strong> {{ amount }}</li>
     <li><strong>{% trans 'Payment Date' %}:</strong> {{ date_paid }}</li>
     <li><strong>{% trans 'Transaction No.' %}:</strong> {{ transaction_id }}</li>
     <li><strong>{% trans 'Remaining Balance' %}:</strong> {{ balance }}</li>
     <li><strong>{% trans 'Date Due' %}:</strong> {{ date_due }}</li>
-</ul>
+  </ul>
 {% endif %}
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Thank you for using CommCare. If you have any questions, please don't
     hesitate to contact {{ invoicing_contact_email }}.
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Best Regards,<br />
     The CommCare HQ Team<br />
     <a href="http://www.commcarehq.org/">www.commcarehq.org</a>
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Email From:<br />
     CommCare HQ and the corporation Dimagi, Inc.<br />
     585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>

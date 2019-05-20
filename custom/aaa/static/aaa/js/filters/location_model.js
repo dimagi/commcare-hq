@@ -23,6 +23,7 @@ hqDefine('aaa/js/filters/location_model', [
         self.userLocationId = params.userLocationId;
         self.locations = ko.observableArray([reachUtils.DEFAULTLOCATION]);
         self.selectedLocation = ko.observable(reachUtils.DEFAULTLOCATION.id);
+        self.loc = ko.observable(reachUtils.DEFAULTLOCATION.id);
 
         self.getLocations = function (parentSelectedId) {
             var params = {
@@ -41,7 +42,10 @@ hqDefine('aaa/js/filters/location_model', [
                     return item.id === self.userLocationId;
                 });
                 self.selectedLocation(location.id);
+            } else {
+                self.selectedLocation(params.selectedLocation || reachUtils.DEFAULTLOCATION.id);
             }
+            self.loc(params.selectedLocation || self.userLocationId || reachUtils.DEFAULTLOCATION.id);
         };
 
         self.setChild = function (child) {
@@ -73,23 +77,34 @@ hqDefine('aaa/js/filters/location_model', [
             return self.parent.selectedLocation() === reachUtils.DEFAULTLOCATION.id;
         };
 
-        self.setDefaultOption = function () {
+        self.setDefaultOption = function (runCallback) {
             self.selectedLocation(self.userLocationId || reachUtils.DEFAULTLOCATION.id);
+            self.loc(self.userLocationId || reachUtils.DEFAULTLOCATION.id);
+            if (self.child !== null) {
+                self.child.setDefaultOption(false);
+            }
+            if (runCallback) {
+                params.callback();
+            }
         };
 
-        self.locationName = ko.computed(function() {
+        self.locationName = ko.computed(function () {
             var location = _.find(self.locations(), function (location) {
-                return location.id === self.selectedLocation();
+                return location.id === self.loc();
             });
             return location.name;
         }, self);
 
         self.hideName = ko.computed(function () {
-            if (self.parent === '' || self.parent.selectedLocation() !== reachUtils.DEFAULTLOCATION.id) {
-                return false
+            if (self.parent === '' || self.parent.loc() !== reachUtils.DEFAULTLOCATION.id) {
+                return false;
             }
-            return self.selectedLocation() === reachUtils.DEFAULTLOCATION.id;
+            return self.loc() === reachUtils.DEFAULTLOCATION.id;
         }, self);
+
+        self.applyFilter = function () {
+            self.loc(self.selectedLocation());
+        };
 
         return self;
     };

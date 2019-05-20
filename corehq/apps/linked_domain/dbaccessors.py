@@ -25,7 +25,7 @@ def get_linked_domains(domain):
     :param domain:
     :return: List of ``DomainLink`` objects for each domain linked to this one.
     """
-    return list(DomainLink.objects.filter(master_domain=domain).all())
+    return list(DomainLink.all_objects.filter(master_domain=domain).all())
 
 
 @quickcache(['domain'], timeout=60 * 60)

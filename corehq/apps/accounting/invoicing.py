@@ -7,6 +7,7 @@ import datetime
 import six
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import transaction
@@ -29,7 +30,7 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SubscriptionType, InvoicingPlan, DomainUserHistory
+    SubscriptionType, InvoicingPlan, DomainUserHistory, SoftwarePlanEdition
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -266,7 +267,7 @@ class DomainWireInvoiceFactory(object):
             invoices = CustomerInvoice.objects.filter(account=self.account)
         else:
             invoices = Invoice.objects.filter(
-                subscription__subscriber__domain=self.domain,
+                subscription__subscriber__domain=self.domain.name,
                 is_hidden=False,
                 date_paid__exact=None
             ).order_by('-date_start')
@@ -344,15 +345,13 @@ class CustomerAccountInvoiceFactory(object):
         self.account = account
         self.recipients = recipients
         self.customer_invoice = None
-        self.subscriptions = {}
+        self.subscriptions = defaultdict(list)
 
     def create_invoice(self):
-        for subscription in self.account.subscription_set.all():
-            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
-                if subscription.plan_version in self.subscriptions:
-                    self.subscriptions[subscription.plan_version].append(subscription)
-                else:
-                    self.subscriptions[subscription.plan_version] = [subscription]
+        for sub in self.account.subscription_set.filter(do_not_invoice=False):
+            if not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
+                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
+                self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
             return
         try:
@@ -487,9 +486,14 @@ class LineItemFactory(object):
         if self.subscription.subscriber.domain is None:
             raise LineItemError("No domain could be obtained as the subscriber.")
         if self.subscription.account.is_customer_billing_account:
-            return [sub.subscriber.domain for sub in
-                    self.subscription.account.subscription_set
-                        .filter(plan_version=self.subscription.plan_version)]
+            return list(self.subscription.account.subscription_set.filter(
+                Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+                date_start__lte=self.invoice.date_end
+            ).filter(
+                plan_version=self.subscription.plan_version
+            ).values_list(
+                'subscriber__domain', flat=True
+            ))
         return [self.subscription.subscriber.domain]
 
     def create(self):

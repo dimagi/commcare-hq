@@ -64,6 +64,7 @@ from corehq.apps.accounting.forms import (
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
     HideInvoiceForm,
+    RemoveAutopayForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
@@ -215,6 +216,13 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return CreditForm(self.account, None)
 
     @property
+    @memoized
+    def remove_autopay_form(self):
+        if self.request.method == 'POST' and 'remove_autopay' in self.request.POST:
+            return RemoveAutopayForm(self.account, self.request.POST)
+        return RemoveAutopayForm(self.account)
+
+    @property
     def page_context(self):
         return {
             'account': self.account,
@@ -226,6 +234,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'credit_list': CreditLine.objects.filter(account=self.account, is_active=True),
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
+            'remove_autopay_form': self.remove_autopay_form,
             'subscription_list': [
                 (
                     sub,
@@ -271,6 +280,9 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                     % e
                 )
                 messages.error(request, "Issue adding credit: %s" % e)
+        elif 'remove_autopay' in self.request.POST:
+            self.remove_autopay_form.remove_autopay_user_from_account()
+            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
 

@@ -33,7 +33,7 @@ class ZippedExportWriterTests(SimpleTestCase):
         self.path_mock.get_path.return_value = 'tmp'
 
         self.writer = ZippedExportWriter()
-        self.writer.archive_basepath = '✓path'.encode('utf-8')
+        self.writer.archive_basepath = '✓path'
         self.writer.tables = [self.path_mock]
         self.writer.file = Mock()
 
@@ -45,31 +45,19 @@ class ZippedExportWriterTests(SimpleTestCase):
         mock_zip_file = self.MockZipFile.return_value
         self.writer.table_names = {0: 'ひらがな'}
         self.writer._write_final_result()
-        if six.PY3:
-            mock_zip_file.write.assert_called_with(
-                'tmp',
-                os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
-            )
-        else:
-            mock_zip_file.write.assert_called_with(
-                'tmp',
-                os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
-            )
+        filename = os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
+        if six.PY2:
+            filename = filename.encode('utf-8')
+        mock_zip_file.write.assert_called_with('tmp', filename)
 
     def test_zipped_export_writer_utf8(self):
         mock_zip_file = self.MockZipFile.return_value
         self.writer.table_names = {0: b'\xe3\x81\xb2\xe3\x82\x89\xe3\x81\x8c\xe3\x81\xaa'}
         self.writer._write_final_result()
-        if six.PY3:
-            mock_zip_file.write.assert_called_with(
-                'tmp',
-                os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
-            )
-        else:
-            mock_zip_file.write.assert_called_with(
-                'tmp',
-                os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
-            )
+        filename = os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
+        if six.PY2:
+            filename = filename.encode('utf-8')
+        mock_zip_file.write.assert_called_with('tmp', filename)
 
 
 class CsvFileWriterTests(SimpleTestCase):

@@ -18,6 +18,7 @@ import re
 
 import operator
 import six
+from ddtrace import tracer
 from django.conf import settings
 from django.db import connections, InternalError, transaction
 from django.db.models import Q, F
@@ -367,7 +368,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         try:
             return XFormInstanceSQL.objects.partitioned_get(form_id)
         except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
+            raise XFormNotFound(form_id)
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
@@ -648,13 +649,8 @@ class FormAccessorSQL(AbstractFormAccessor):
             if form.form_id_updated():
                 operations = form.original_operations + new_operations
                 with transaction.atomic(db_name):
-                    # Reparent must happen before form.save() changes the
-                    # form id; otherwise the form's attachments will disappear
-                    # from the blobs_blobmeta view because of the INNER JOIN
-                    # with the old form attachments table in the view.
-                    # This can be removed when with the blobs_blobmeta view.
-                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
                     form.save()
+                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
                     for model in operations:
                         model.form = form
                         model.save()
@@ -874,6 +870,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
+    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_transaction_order_for_case(case_id):
         """ Returns whether the order of transactions needs to be reconciled by client_date
 
@@ -1274,7 +1271,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             try:
                 return xform_map[form_id]
             except KeyError:
-                raise XFormNotFound
+                raise XFormNotFound(form_id)
 
         for case_transaction in transactions:
             if case_transaction.form_id:

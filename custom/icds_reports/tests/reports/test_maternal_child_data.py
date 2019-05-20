@@ -106,12 +106,12 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "maternal_and_child/low_birth",
                 "color": "red",
-                "all": 4,
+                "all": 3,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": new_born_with_low_weight_help_text(html=False),
                 "percent": "Data in the previous reporting period was 0",
-                "value": 2,
+                "value": 1,
                 "label": "Newborns with Low Birth Weight"
             }
         )
@@ -129,12 +129,12 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "maternal_and_child/early_initiation",
                 "color": "green",
-                "all": 7,
+                "all": 5,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": early_initiation_breastfeeding_help_text(),
-                "percent": 128.57142857142856,
-                "value": 4,
+                "percent": 20.000000000000018,
+                "value": 2,
                 "label": "Early Initiation of Breastfeeding"
             }
         )
@@ -198,15 +198,15 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "maternal_and_child/institutional_deliveries",
                 "color": "green",
-                "all": 26,
+                "all": 14,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Of the total number of women enrolled for Anganwadi services who gave birth in "
                              "the last month, the percentage who delivered in a public or private medical "
                              "facility. Delivery in medical instituitions is associated with a decrease in "
                              "maternal mortality rate",
-                "percent": 156.41025641025647,
-                "value": 20,
+                "percent": 80.0,
+                "value": 14,
                 "label": "Institutional Deliveries"
             }
         )

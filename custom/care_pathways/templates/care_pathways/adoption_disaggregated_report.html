@@ -4,59 +4,59 @@
 {% load i18n %}
 
 {% block reportcontent %}
-    <style>
-        tr:nth-child({{ chunk_size }}n+1) > td {
-            font-weight: 800;
-            background-color: #a2a2a8 !important;
-        }
-    </style>
-{{ block.super }}
+  <style>
+    tr:nth-child({{ chunk_size }}n+1) > td {
+      font-weight: 800;
+      background-color: #a2a2a8 !important;
+    }
+  </style>
+  {{ block.super }}
 {% endblock %}
 
 {% block js-inline %}
-    <link href="{% static 'care_pathways/css/care_pathways.css' %}" rel="stylesheet"/>
-    <script>
-        $(function() {
-            var filter_section = $('<section id="filters"></section>');
-            var group_section = $('<section id="groups"></section>');
-            var legend = $('fieldset legend');
-            legend.after(group_section);
-            legend.after(filter_section);
-            $( "<legend><span>Grouping</span></legend>").appendTo(group_section);
-            $( "<legend><span>Filtering</span></legend>").appendTo(filter_section);
+  <link href="{% static 'care_pathways/css/care_pathways.css' %}" rel="stylesheet"/>
+  <script>
+    $(function() {
+      var filter_section = $('<section id="filters"></section>');
+      var group_section = $('<section id="groups"></section>');
+      var legend = $('fieldset legend');
+      legend.after(group_section);
+      legend.after(filter_section);
+      $( "<legend><span>Grouping</span></legend>").appendTo(group_section);
+      $( "<legend><span>Filtering</span></legend>").appendTo(filter_section);
 
-            $('fieldset fieldset').slice(0, -2).appendTo(filter_section);
-            $('fieldset fieldset').slice(-2).appendTo(group_section);
-        });
+      $('fieldset fieldset').slice(0, -2).appendTo(filter_section);
+      $('fieldset fieldset').slice(-2).appendTo(group_section);
+    });
 
-        {% if report_table and report_table.datatables %}
-        $(function() {
-            var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
-                dataTableElem: '#report_table_{{ report.slug }}',
-                defaultRows: {{ report_table.default_rows|default:10 }},
-                startAtRowNum: {{ report_table.start_at_row|default:0 }},
-                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
-                defaultSort: false,
-            });
-            var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
-            if (typeof standardHQReport !== 'undefined') {
-                standardHQReport.handleTabularReportCookies(reportTables);
-            }
-            reportTables.render();
+    {% if report_table and report_table.datatables %}
+      $(function() {
+        var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
+          dataTableElem: '#report_table_{{ report.slug }}',
+          defaultRows: {{ report_table.default_rows|default:10 }},
+          startAtRowNum: {{ report_table.start_at_row|default:0 }},
+          showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+          defaultSort: false,
         });
-        {% endif %}
+        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+        if (typeof standardHQReport !== 'undefined') {
+          standardHQReport.handleTabularReportCookies(reportTables);
+        }
+        reportTables.render();
+      });
+    {% endif %}
 
-        $(function() {
-            $('.header-popover').popover({
-                trigger: 'hover',
-                placement: 'bottom',
-                container: 'body'
-            });
-        });
-    </script>
-    {% for chart in charts %}
-        {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
-            {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
-        {% endwith %}
-    {% endfor %}
+    $(function() {
+      $('.header-popover').popover({
+        trigger: 'hover',
+        placement: 'bottom',
+        container: 'body'
+      });
+    });
+  </script>
+  {% for chart in charts %}
+    {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
+      {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
+    {% endwith %}
+  {% endfor %}
 {% endblock js-inline %}

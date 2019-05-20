@@ -13,6 +13,8 @@
  *          with a spinner when this observable's value is truthy. Useful for ajax-based pagination
  *          (calling code should set the observable to true before kicking off ajax request, then false
  *          in the success and error callbacks).
+ *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
+ *          in a cookie.
  *
  *  See releases_table.html for an example.
  */
@@ -28,22 +30,45 @@ hqDefine('hqwebapp/js/components/pagination', [
         viewModel: function (params) {
             var self = {};
 
-            self.currentPage = ko.observable(params.currentPage || 1);
+            // load initial values based on GET parameters
+            self.initialValues = {};
+            self._url = new URL(window.location.href);
+            if (params.pageSlug) {
+                self.initialValues.page = parseInt(self._url.searchParams.get(params.pageSlug));
+            }
+            if (params.limitSlug) {
+                self.initialValues.limit = parseInt(self._url.searchParams.get(params.limitSlug));
+            }
+
+            self.currentPage = ko.observable(self.initialValues.page || self.currentPage || 1);
+
             self.totalItems = params.totalItems;
             self.totalItems.subscribe(function (newValue) {
                 self.goToPage(1);
             });
+
+            self.slug = params.slug;
+            self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
+            if (!self.inlinePageListOnly) {
+                self.perPageCookieName = 'ko-pagination-' + self.slug;
+                self.perPage(self.initialValues.limit || $.cookie(self.perPageCookieName) || self.perPage());
+                self.perPage.subscribe(function (newValue) {
+                    self.goToPage(1);
+                    if (self.slug) {
+                        $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/' });
+                    }
+                });
+            }
+
             self.perPageOptionsText = function (num) {
                 return _.template(gettext('<%= num %> per page'))({ num: num });
             };
+
             self.numPages = ko.computed(function () {
                 return Math.ceil(self.totalItems() / self.perPage());
             });
-            self.perPage.subscribe(function () {
-                self.goToPage(1);
-            });
-            self.inlinePageListOnly = !!params.inlinePageListOnly;
+
             self.maxPagesShown = params.maxPagesShown || 9;
             self.showSpinner = params.showSpinner || ko.observable(false);
 
@@ -54,7 +79,9 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.goToPage(Math.max(self.currentPage() - 1, 1), e);
             };
             self.goToPage = function (page, e) {
-                self.currentPage(page);
+                // make sure that the first goToPage that's called does not override the initialValues from GET
+                self.currentPage(self.initialValues.page || page);
+                self.initialValues.page = undefined;
                 params.goToPage(self.currentPage());
                 if (e) {
                     e.stopPropagation();

@@ -160,7 +160,8 @@ def download_locations_async(domain, download_id, include_consumption, headers_o
              queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id, user_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
-    results = new_locations_import(domain, importer, CouchUser.get_by_user_id(user_id))
+    user = CouchUser.get_by_user_id(user_id)
+    results = new_locations_import(domain, importer, user)
     importer.mark_complete()
 
     if LOCATIONS_IN_UCR.enabled(domain):
@@ -170,11 +171,13 @@ def import_locations_async(domain, file_ref_id, user_id):
         # and need to have its row updated
         datasources = get_datasources_for_domain(domain, "Location", include_static=True)
         for datasource in datasources:
-            rebuild_indicators_in_place.delay(datasource.get_id)
+            rebuild_indicators_in_place.delay(
+                datasource.get_id, initiated_by=user.username, source='import_locations'
+            )
 
-    if getattr(settings, 'CELERY_ALWAYS_EAGER', False):
+    if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
         # Log results because they are not sent to the view when
-        # CELERY_ALWAYS_EAGER is true
+        # CELERY_TASK_ALWAYS_EAGER is true
         logging.getLogger(__name__).info(
             "import_locations_async %s results: %s -> success=%s",
             file_ref_id,
@@ -187,7 +190,12 @@ def import_locations_async(domain, file_ref_id, user_id):
         )
 
     return {
-        'messages': results
+        'messages': {
+            'messages': results.messages,
+            'errors': results.errors,
+            'warnings': results.warnings,
+            'success': results.success,
+        }
     }
 
 

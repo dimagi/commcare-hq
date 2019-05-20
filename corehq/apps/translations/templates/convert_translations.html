@@ -3,8 +3,8 @@
 {% load i18n %}
 
 {% block page_content %}
-<form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
+  <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
     <legend>{% trans "Convert Translations" %}</legend>
     {% crispy convert_translations_form %}
-</form>
+  </form>
 {% endblock %}

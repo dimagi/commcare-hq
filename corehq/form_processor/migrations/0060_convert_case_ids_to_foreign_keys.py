@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import models, migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     operations = [
         # The other way to convert a field to a foreign key involves creating a new column
         # doing a data migration and then dropping the old column which seemed ridiculous to me
-        HqRunSQL(
+        migrations.RunSQL(
             'ALTER TABLE "form_processor_ledgervalue" '
             'ADD CONSTRAINT "cd40c15ceaad5d793e09d0b69eb4ed88" FOREIGN KEY ("case_id") '
             'REFERENCES "form_processor_commcarecasesql" ("case_id") DEFERRABLE INITIALLY DEFERRED',
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ),
             ]
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             'ALTER TABLE "form_processor_ledgertransaction" '
             'ADD CONSTRAINT "D35e6052ba235dcd116c9c37ba096e19" FOREIGN KEY ("case_id") '
             'REFERENCES "form_processor_commcarecasesql" ("case_id") DEFERRABLE INITIALLY DEFERRED;',

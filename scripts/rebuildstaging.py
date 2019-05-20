@@ -37,7 +37,6 @@ import re
 import sh
 import sys
 
-from fabric.colors import red
 import gevent
 from gitutils import (
     OriginalBranch,
@@ -347,10 +346,24 @@ class DisableGitHooks(object):
             sh.mv(self.hidden_path, self.path)
 
 
+def _wrap_with(code):
+
+    def inner(text, bold=False):
+        c = code
+
+        if bold:
+            c = "1;%s" % c
+        return "\033[%sm%s\033[0m" % (c, text)
+    return inner
+
+
+red = _wrap_with('31')
+
+
 def main():
     from sys import stdin
     import yaml
-    config = yaml.load(stdin)
+    config = yaml.safe_load(stdin)
     config = BranchConfig.wrap(config)
     config.normalize()
     if not config.check_trunk_is_recent():

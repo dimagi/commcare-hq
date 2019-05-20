@@ -3,59 +3,59 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/report_config_models.js' %}"></script>
-    <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
-    <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
+  <script src="{% static 'reports/js/reports.util.js' %}"></script>
+  <script src="{% static 'reports/js/hq_report.js' %}"></script>
+  <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+  <script src="{% static 'reports/js/report_config_models.js' %}"></script>
+  <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
+  <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
 {% endblock %}
 
 {% block report_alerts %}
-    {{ block.super }}
-    {% if not report.data_source.config.is_static %}
-        {% include 'userreports/partials/build_in_progress_warning.html' %}
-    {% endif %}
+  {{ block.super }}
+  {% if not report.data_source.config.is_static %}
+    {% include 'userreports/partials/build_in_progress_warning.html' %}
+  {% endif %}
 {% endblock %}
 
 {% block page_actions %}
-    {% registerurl 'configurable_data_source_status' domain report.spec.config_id %}
-    {% registerurl 'add_report_config' domain %}
-    {% initial_page_data 'standardHQReport' True %}
-    {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
-    {% initial_page_data 'report_builder_events' report_builder_events %}
-    {% initial_page_data 'is_static_data_source' report.data_source.config.is_static %}
-    {% initial_page_data 'default_config' default_config %}
-    {% initial_page_data 'report_configs' report_configs %}
-    {% initial_page_data 'has_datespan' report.has_datespan %}
-    {% initial_page_data 'datespan_filters' datespan_filters %}
-    {% initial_page_data 'daterangepicker-show-clear' 'true'%}
-    {% if request.datespan %}
-        {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
-        {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
-    {% endif %}
-    {% initial_page_data 'domain' domain %}
-    {% initial_page_data 'url_root' report.url_root %}
-    {% initial_page_data 'slug' report.slug %}
-    {% initial_page_data 'sub_slug' report.sub_slug %}
-    {% initial_page_data 'type' report.type %}
-    {% initial_page_data 'filter_set' report.filter_set %}
-    {% initial_page_data 'needs_filters' report.needs_filters %}
-    {% initial_page_data 'is_exportable' report.is_exportable %}
-    {% initial_page_data 'is_export_all' report.is_export_all %}
-    {% initial_page_data 'is_emailable' report.is_emailable %}
-    {% initial_page_data 'title' report.title %}
+  {% registerurl 'configurable_data_source_status' domain report.spec.config_id %}
+  {% registerurl 'add_report_config' domain %}
+  {% initial_page_data 'standardHQReport' True %}
+  {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
+  {% initial_page_data 'report_builder_events' report_builder_events %}
+  {% initial_page_data 'is_static_data_source' report.data_source.config.is_static %}
+  {% initial_page_data 'default_config' default_config %}
+  {% initial_page_data 'report_configs' report_configs %}
+  {% initial_page_data 'has_datespan' report.has_datespan %}
+  {% initial_page_data 'datespan_filters' datespan_filters %}
+  {% initial_page_data 'daterangepicker-show-clear' 'true'%}
+  {% if request.datespan %}
+    {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+    {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+  {% endif %}
+  {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'url_root' report.url_root %}
+  {% initial_page_data 'slug' report.slug %}
+  {% initial_page_data 'sub_slug' report.sub_slug %}
+  {% initial_page_data 'type' report.type %}
+  {% initial_page_data 'filter_set' report.filter_set %}
+  {% initial_page_data 'needs_filters' report.needs_filters %}
+  {% initial_page_data 'is_exportable' report.is_exportable %}
+  {% initial_page_data 'is_export_all' report.is_export_all %}
+  {% initial_page_data 'is_emailable' report.is_emailable %}
+  {% initial_page_data 'title' report.title %}
 
-    {% if has_report_builder_trial %}
+  {% if has_report_builder_trial %}
     <a class="btn btn-primary" href="{% url 'report_builder_paywall_pricing' domain %}">
-        {% trans "Subscribe to Report Builder" %}
+      {% trans "Subscribe to Report Builder" %}
     </a>
-    {% endif %}
-    {% if can_edit_report %}
-        {% include 'userreports/partials/edit_report_button.html' %}
-    {% endif %}
+  {% endif %}
+  {% if can_edit_report %}
+    {% include 'userreports/partials/edit_report_button.html' %}
+  {% endif %}
 {% endblock %}
 
 {% block filter_panel %}
-    {% include "userreports/partials/filter_panel.html" %}
+  {% include "userreports/partials/filter_panel.html" %}
 {% endblock %}

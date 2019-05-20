@@ -1,34 +1,34 @@
 {% load i18n %}
 <p>
-    {% blocktrans %}
-        Dear {{ domain }} administrator,
-    {% endblocktrans %}
+  {% blocktrans %}
+    Dear {{ domain_or_account }} administrator,
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
-        Your CommCare subscription for {{ domain }} will be downgraded <b><i>after tomorrow</i></b> because your CommCare Billing Statements are more than 60 days overdue. If you do not make a payment before tomorrow, you will automatically be subscribed to the CommCare Community plan and lose access to all pay-only features and direct email support!
-    {% endblocktrans %}
+  {% blocktrans %}
+    Your CommCare {{ subscriptions_to_downgrade }} will be downgraded <b><i>after tomorrow</i></b> because your CommCare Billing Statements are more than 60 days overdue. If you do not make a payment before tomorrow, you will automatically be subscribed to the CommCare Community plan and lose access to all pay-only features and direct email support!
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}To see the full list of unpaid invoices you can follow this link: {% endblocktrans %}<a href="{{ statements_url }}">{{ statements_url }}</a>
+  {% blocktrans %}To see the full list of unpaid invoices you can follow this link: {% endblocktrans %}<a href="{{ statements_url }}">{{ statements_url }}</a>
 <ul>
-    <li>{% blocktrans %}As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following these <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">instructions</a>.{% endblocktrans %}</li>
-    <li>{% blocktrans %}You can also pre-pay for several months at any time by following <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment">these steps</a>.{% endblocktrans %}</li>
+  <li>{% blocktrans %}As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following these <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">instructions</a>.{% endblocktrans %}</li>
+  <li>{% blocktrans %}You can also pre-pay for several months at any time by following <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment">these steps</a>.{% endblocktrans %}</li>
 </ul>
 </p>
 
 <p>
-    {% blocktrans %}
-        If you have any questions, please don’t hesitate to contact <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Thank you for using CommCare.
-    {% endblocktrans %}
+  {% blocktrans %}
+    If you have any questions, please don’t hesitate to contact <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Thank you for using CommCare.
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
-        Best regards, <br />
-        The CommCare HQ Team <br />
-        www.commcarehq.org
-    {% endblocktrans %}
+  {% blocktrans %}
+    Best regards, <br />
+    The CommCare HQ Team <br />
+    www.commcarehq.org
+  {% endblocktrans %}
 </p>

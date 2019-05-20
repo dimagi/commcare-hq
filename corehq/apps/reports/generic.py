@@ -16,10 +16,10 @@ from django.urls import NoReverseMatch
 from corehq.apps.domain.utils import normalize_domain_name
 
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports.util import DatatablesParams, get_report_timezone
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
@@ -29,6 +29,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
 from corehq.apps.users.models import CouchUser
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse, request_as_dict
 from couchexport.export import export_from_tables
@@ -39,10 +40,11 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
-from .export import get_writer
+from couchexport.export import get_writer
 import six
 from six.moves import zip
 from six.moves import range
+from itertools import chain
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -162,6 +164,7 @@ class GenericReportView(object):
         self.context = base_context or {}
         self._update_initial_context()
         self.is_rendered_as_email = False # setting this to true in email_response
+        self.is_rendered_as_export = False
         self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
@@ -208,6 +211,7 @@ class GenericReportView(object):
 
         request_data = state.get('request')
         request = FakeHttpRequest()
+        request.domain = self.domain
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
@@ -251,13 +255,7 @@ class GenericReportView(object):
     @property
     @memoized
     def timezone(self):
-        if not self.domain:
-            return pytz.utc
-        else:
-            try:
-                return get_timezone_for_user(self.request.couch_user, self.domain)
-            except AttributeError:
-                return get_timezone_for_user(None, self.domain)
+        return get_report_timezone(self.request, self.domain)
 
     @property
     @memoized
@@ -307,6 +305,7 @@ class GenericReportView(object):
         fields = self.fields
         for field in fields or []:
             if isinstance(field, six.string_types):
+                soft_assert_type_text(field)
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
@@ -437,6 +436,8 @@ class GenericReportView(object):
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
+            if isinstance(field, six.string_types):
+                soft_assert_type_text(field)
             field_fn = to_function(field) if isinstance(field, six.string_types) else field
             return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
 
@@ -681,6 +682,7 @@ class GenericReportView(object):
         Intention: Not to be overridden in general.
         Returns the tabular export of the data, if available.
         """
+        self.is_rendered_as_export = True
         if self.exportable_all:
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
@@ -824,6 +826,7 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
+    exporting_as_excel = False
 
     # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
     sortable = True
@@ -960,6 +963,7 @@ class GenericTabularReport(GenericReportView):
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return re.sub('<[^>]*?>', '', value)
         return value
 
@@ -990,7 +994,6 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
@@ -1000,12 +1003,13 @@ class GenericTabularReport(GenericReportView):
             return [_unformat_val(val) for val in row]
 
         table = headers.as_export_table
-        rows = [_unformat_row(row) for row in self.export_rows]
-        table.extend(rows)
+        self.exporting_as_excel = True
+        rows = (_unformat_row(row) for row in self.export_rows)
+        table = chain(table, rows)
         if self.total_row:
-            table.append(_unformat_row(self.total_row))
+            table = chain(table, [_unformat_row(self.total_row)])
         if self.statistics_rows:
-            table.extend([_unformat_row(row) for row in self.statistics_rows])
+            table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
 

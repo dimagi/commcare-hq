@@ -20,6 +20,7 @@ from corehq.blobs import get_blob_db
 import six
 from io import open
 
+from corehq.util.python_compatibility import soft_assert_type_text
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
@@ -106,6 +107,7 @@ class DownloadBase(object):
         headers and causes the download to fail.
         """
         if isinstance(content_disposition, six.string_types):
+            soft_assert_type_text(content_disposition)
             return re.compile('[\r\n]').sub('', content_disposition)
 
         return content_disposition
@@ -139,9 +141,10 @@ class DownloadBase(object):
     @property
     def task_id(self):
         timeout = 60 * 60 * 24
-        task_id = self.get_cache().get(self._task_key(), None)
-        # This resets the timeout whenever a task is accessed in any way
-        self.get_cache().set(self._task_key(), task_id, timeout)
+        task_id = self.get_cache().get(self._task_key())
+        if task_id is not None:
+            # This resets the timeout whenever a task in the cache is accessed in any way
+            self.get_cache().set(self._task_key(), task_id, timeout)
         return task_id
 
     @property

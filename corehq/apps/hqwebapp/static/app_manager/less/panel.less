@@ -113,12 +113,12 @@
 
   .release-trash-container {
     float: right;
+    padding: 11px 18px 13px;
 
     .release-remove {
       color: @text-color;
       .transition(all 500ms ease-in-out);
       font-size: 15px;
-      padding: 11px 18px 13px;
       display: block;
       &:hover {
         color: @cc-att-neg-mid;
@@ -154,12 +154,14 @@
 .panel-case-actions {
   position: relative;
 }
-.panel-case-actions .case-action-remove {
+.panel-case-actions .panel-case-actions-actions {
   position: absolute;
   right: 10px;
   top: 8px;
-  border: none;
-  .transition(background-color 1s);
+  > .btn {
+      .transition(background-color 1s);
+      border: none;
+  }
 }
 
 .panel-case-actions {

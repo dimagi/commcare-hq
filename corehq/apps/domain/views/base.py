@@ -6,6 +6,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 
+from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.users.models import Invitation
 from corehq.apps.domain.decorators import login_required, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -20,6 +21,8 @@ from memoized import memoized
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
+        from corehq.apps.registration.views import track_domainless_new_user
+        track_domainless_new_user(request)
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()
@@ -86,7 +89,7 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
-class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
+class BaseDomainView(LoginAndDomainMixin, BillingModalsMixin, BaseSectionPageView, DomainViewMixin):
 
     @property
     def main_context(self):

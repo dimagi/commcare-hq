@@ -1,0 +1,183 @@
+{
+  "domains": [
+    "icds-cas",
+    "icds-cas-sandbox",
+    "cas-lab",
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_7_growth_monitored",
+  "data_source_table": "static-gm_forms",
+  "config": {
+    "title": "MPR 7 - Growth Monitored (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id",
+      "month",
+      "age_group"
+    ],
+    "filters": [
+      {
+        "slug": "age_in_months_in_bounds",
+        "type": "pre",
+        "field": "age_in_months",
+        "pre_operator": "between",
+        "pre_value": [0, 60],
+        "datatype": "integer"
+      },
+      {
+        "display": "Date Last Weighed",
+        "slug": "last_date_gmp",
+        "type": "date",
+        "field": "last_date_gmp",
+        "datatype": "date"
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        }
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      }
+    ],
+    "columns": [
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "last_date_gmp",
+        "format": "%Y-%m"
+      },
+      {
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+            "age_in_months BETWEEN 0 AND 11": "0_to_11",
+            "age_in_months BETWEEN 12 AND 35": "12_to_35",
+            "age_in_months BETWEEN 36 AND 60": "36_to_60"
+        }
+      },
+      {
+        "display": "M_resident_weighed_count",
+        "column_id": "M_resident_weighed_count",
+        "type": "field",
+        "field": "M_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "F_resident_weighed_count",
+        "column_id": "F_resident_weighed_count",
+        "type": "field",
+        "field": "F_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "M_mod_resident_weighed_count",
+        "column_id": "M_mod_resident_weighed_count",
+        "type": "field",
+        "field": "M_mod_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "F_mod_resident_weighed_count",
+        "column_id": "F_mod_resident_weighed_count",
+        "type": "field",
+        "field": "F_mod_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "M_sev_resident_weighed_count",
+        "column_id": "M_sev_resident_weighed_count",
+        "type": "field",
+        "field": "M_sev_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      },
+      {
+        "display": "F_sev_resident_weighed_count",
+        "column_id": "F_sev_resident_weighed_count",
+        "type": "field",
+        "field": "F_sev_resident_weighed_count",
+        "aggregation": "sum",
+        "calculate_total": true
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

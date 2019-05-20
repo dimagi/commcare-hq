@@ -24,7 +24,7 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties_v2, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
+from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -49,13 +49,14 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
@@ -77,7 +78,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     UserQueryError,
-)
+    translate_programming_error, TableNotFoundWarning)
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -101,7 +102,6 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     resume_building_indicators,
@@ -215,7 +215,25 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
+            'referring_apps': self.get_referring_apps(),
         }
+
+    def get_referring_apps(self):
+        to_ret = []
+        apps = get_apps_in_domain(self.domain)
+        for app in apps:
+            app_url = reverse('view_app', args=[self.domain, app.id])
+            for module in app.get_report_modules():
+                module_url = reverse('view_module', args=[self.domain, app.id, module.unique_id])
+                for config in module.report_configs:
+                    if config.report_id == self.report_id:
+                        to_ret.append({
+                            "app_url": app_url,
+                            "app_name": app.name,
+                            "module_url": module_url,
+                            "module_name": module.default_name()
+                        })
+        return to_ret
 
     @property
     @memoized
@@ -369,7 +387,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
-        update_hubspot_properties_v2.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
@@ -743,7 +761,7 @@ def delete_report(request, domain, report_id):
     else:
         if data_source.get_report_count() <= 1:
             # No other reports reference this data source.
-            data_source.deactivate()
+            data_source.deactivate(initiated_by=request.user.username)
 
     soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
@@ -863,7 +881,8 @@ def evaluate_expression(request, domain):
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
-        document_store = get_document_store_for_doc_type(domain, usable_type)
+        document_store = get_document_store_for_doc_type(
+            domain, usable_type, load_source="eval_expression")
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
@@ -910,18 +929,6 @@ def evaluate_data_source(request, domain):
     docs_id = request.POST['docs_id']
     try:
         data_source = get_datasource_config(data_source_id, domain)[0]
-        docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-        document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
-        rows = []
-        for doc in document_store.iter_documents(docs_id):
-            for row in data_source.get_all_values(doc):
-                rows.append({i.column.database_column_name: i.value for i in row})
-        return JsonResponse(data={
-            'rows': rows,
-            'columns': [
-                column.database_column_name for column in data_source.get_columns()
-            ],
-        })
     except DataSourceConfigurationNotFoundError:
         return JsonResponse(
             {"error": _("Data source with id {} not found in domain {}.").format(
@@ -929,6 +936,45 @@ def evaluate_data_source(request, domain):
             )},
             status=404,
         )
+
+    docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
+    document_store = get_document_store_for_doc_type(
+        domain, data_source.referenced_doc_type, load_source="eval_data_source")
+    rows = []
+    docs = 0
+    for doc in document_store.iter_documents(docs_id):
+        docs += 1
+        for row in data_source.get_all_values(doc):
+            rows.append({i.column.database_column_name.decode(): i.value for i in row})
+
+    if not docs:
+        return JsonResponse(data={'error': _('No documents found. Check the IDs and try again.')}, status=404)
+
+    data = {
+        'rows': rows,
+        'db_rows': [],
+        'columns': [
+            column.database_column_name.decode() for column in data_source.get_columns()
+        ],
+    }
+
+    try:
+        adapter = get_indicator_adapter(data_source)
+        table = adapter.get_table()
+        query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
+        db_rows = [
+            {column.name: getattr(row, column.name) for column in table.columns}
+            for row in query
+        ]
+        data['db_rows'] = db_rows
+    except ProgrammingError as e:
+        err = translate_programming_error(e)
+        if err and isinstance(err, TableNotFoundWarning):
+            data['db_error'] = _("Datasource table does not exist. Try rebuilding the datasource.")
+        else:
+            data['db_error'] = _("Error querying database for data.")
+
+    return JsonResponse(data=data)
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
@@ -1083,7 +1129,9 @@ def delete_data_source(request, domain, config_id):
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
-    adapter.drop_table()
+    username = request.user.username if request else None
+    skip = not request  # skip logging when we remove temporary tables
+    adapter.drop_table(initiated_by=username, source='delete_data_source', skip_log=skip)
     soft_delete(config)
     if request:
         messages.success(
@@ -1181,7 +1229,7 @@ def build_data_source_in_place(request, domain, config_id):
         )
     )
 
-    rebuild_indicators_in_place.delay(config_id, request.user.username)
+    rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1290,7 +1338,7 @@ def process_url_params(params, columns):
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    adapter = IndicatorSqlAdapter(config)
+    adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
     return export_sql_adapter_view(request, domain, adapter, url)
 
@@ -1335,6 +1383,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     def get_table(q):
         yield list(table.columns.keys())
         for row in q:
+            adapter.track_load()
             yield row
 
     fd, path = tempfile.mkstemp()
