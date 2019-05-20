@@ -357,7 +357,7 @@ class Migrator(object):
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **kw):
         if 'date_range' in kw:
-            doc_provider = self.get_document_provider(date_range=kw.pop('date_range', None))
+            doc_provider = self.get_document_provider(date_range=kw['date_range'])
         else:
             doc_provider = self.get_document_provider()
         iterable = doc_provider.get_document_iterator(chunk_size)
@@ -422,6 +422,7 @@ class BackendMigrator(Migrator):
         iteration_key = self.iteration_key
         if date_range:
             (start, end) = date_range
+            self.reindexer.date_range = date_range
             iteration_key = '{}-{}-{}'.format(self.iteration_key, start, end)
         return SqlDocumentProvider(iteration_key, self.reindexer)
 
