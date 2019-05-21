@@ -45,7 +45,7 @@ class _Importer(object):
         self.domain = domain
         self.config = config
         self.task = task
-        self._record_form_callback = record_form_callback
+        self.record_form_callback = record_form_callback
 
         self.results = _ImportResults()
 
@@ -103,7 +103,6 @@ class _Importer(object):
 
         self.add_caseblock(RowAndCase(row_num, caseblock))
 
-
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
@@ -140,7 +139,8 @@ class _Importer(object):
             for row_number, case in caseblocks:
                 self.results.add_error(row_number, exceptions.ImportErrorMessage())
         else:
-            self.record_form(form.form_id)
+            if self.record_form_callback:
+                self.record_form_callback(form.form_id)
             properties = {p for c in cases for p in c.dynamic_case_properties().keys()}
             if self.config.case_type and len(properties):
                 add_inferred_export_properties.delay(
@@ -156,10 +156,6 @@ class _Importer(object):
                     'error adding inferred export properties in domain '
                     '({}): {}'.format(self.domain, ", ".join(properties))
                 )
-
-    def record_form(self, form_id):
-        if self._record_form_callback:
-            self._record_form_callback(form_id)
 
 
 class _CaseImportRow(object):
