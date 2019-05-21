@@ -150,7 +150,7 @@ class _Importer(object):
                 self.results.add_error(row_number, exceptions.ImportErrorMessage())
         else:
             self.record_form(form.form_id)
-            properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
+            properties = {p for c in cases for p in c.dynamic_case_properties().keys()}
             if self.config.case_type and len(properties):
                 add_inferred_export_properties.delay(
                     'CaseImporter',
