@@ -5583,14 +5583,12 @@ class LinkedApplication(Application):
 
     @classmethod
     def wrap(cls, data):
-        self = super(LinkedApplication, cls).wrap(data)
-
         # Legacy linked apps pulled the master's version along with its content.
         # So if the master's version wasn't recorded, that means it matches this app's version.
-        if not self.pulled_from_master_version:
-            self.pulled_from_master_version = self.version
+        if not hasattr(data, 'pulled_from_master_version'):
+            data['pulled_from_master_version'] = data['version']
 
-        return self
+        return super(LinkedApplication, cls).wrap(data)
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
