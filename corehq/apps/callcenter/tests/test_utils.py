@@ -17,7 +17,8 @@ from corehq.apps.callcenter.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
-from corehq.apps.users.models import CommCareUser, format_username
+from corehq.apps.users.util import format_username
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups
 from django.test import TestCase, SimpleTestCase, override_settings
 
