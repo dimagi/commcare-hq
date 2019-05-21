@@ -186,7 +186,7 @@ class BaseReportFilter(BaseFilter):
     def __init__(self, request, domain, context):
         self.request = request
         self.domain = domain
-        self.value = context['value']
+        self.value = context.get('value')
 
     @classmethod
     def get_context(cls):
