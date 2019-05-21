@@ -29,6 +29,7 @@ keep_child_tables = [
     'agg_ls',
     'agg_awc_daily',
     AWW_INCENTIVE_TABLE,
+    ICDSAuditEntryRecord._meta.db_table,
 ]
 
 """
@@ -64,7 +65,6 @@ plain_tables = [
     'awc_location_local',
     AggregateInactiveAWW._meta.db_table,
     IcdsFile._meta.db_table,
-    ICDSAuditEntryRecord._meta.db_table,
 ]
 
 
