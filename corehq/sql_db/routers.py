@@ -67,7 +67,7 @@ def allow_migrate(db, app_label):
     """
     if app_label == ICDS_REPORTS_APP:
         db_aliases = [get_icds_ucr_db_alias(), get_icds_ucr_citus_db_alias()]
-        return bool(db in db_aliases)
+        return db in db_aliases
     elif app_label == AAA_APP:
         db_alias = get_aaa_db_alias()
         return bool(db_alias and db_alias == db)
