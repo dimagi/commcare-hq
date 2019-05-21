@@ -240,10 +240,6 @@ def _check_for_sheet_warnings(app, sheet, headers):
     missing_cols = _get_missing_cols(app, sheet, headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
 
-    # Backwards compatibility for old "sheet_name" header
-    extra_cols = extra_cols - {'sheet_name'}
-    missing_cols = missing_cols - {'menu_or_form'}
-
     if len(missing_cols) > 0:
         warnings.append((_('Sheet "%s" has fewer columns than expected. '
             'Sheet will be processed but the following translations will be unchanged: %s')
@@ -275,7 +271,7 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         """
         self.msgs = []
         for row in get_unicode_dicts(rows):
-            sheet_name = row.get('menu_or_form', row.get('sheet_name', ''))
+            sheet_name = row.get('menu_or_form', '')
             # The unique_id column is populated on the "Menus_and_forms" sheet in multi-sheet translation files,
             # and in the "name / menu media" row in single-sheet translation files.
             unique_id = row.get('unique_id')
