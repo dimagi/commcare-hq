@@ -18,14 +18,6 @@ class CaseOwnerReportFilter(BaseReportFilter):
     name = 'report_case_owner'
     endpoint_slug = CaseOwnerEndpoint.slug
 
-    @classmethod
-    def get_context(cls):
-        return {
-            'title': cls.title,
-            'name': cls.name,
-            'endpointSlug': cls.endpoint_slug,
-        }
-
     def get_filtered_query(self, query):
         if self.request.can_access_all_locations and (
             EMWF.show_all_data(self.value)

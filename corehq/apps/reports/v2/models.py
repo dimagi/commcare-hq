@@ -180,11 +180,21 @@ class BaseFilter(six.with_metaclass(ABCMeta)):
 
 class BaseReportFilter(BaseFilter):
     name = None
+    title = None
+    endpoint_slug = None
 
     def __init__(self, request, domain, context):
         self.request = request
         self.domain = domain
         self.value = context['value']
+
+    @classmethod
+    def get_context(cls):
+        return {
+            'title': cls.title,
+            'name': cls.name,
+            'endpointSlug': cls.endpoint_slug,
+        }
 
     @abstractmethod
     def get_filtered_query(self, query):
