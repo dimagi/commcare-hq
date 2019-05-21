@@ -37,8 +37,7 @@ RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
     importer = _Importer(domain, config, task, record_form_callback)
-    importer.do_import(spreadsheet)
-    return importer.results.to_json()
+    return importer.do_import(spreadsheet)
 
 
 class _Importer(object):
@@ -55,18 +54,11 @@ class _Importer(object):
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
 
-    @cached_property
-    def user(self):
-        return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
-
     def do_import(self, spreadsheet):
-        row_count = spreadsheet.max_row
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
-            set_task_progress(self.task, row_num, row_count)
-
-            # skip first row (header row)
+            set_task_progress(self.task, row_num, spreadsheet.max_row)
             if row_num == 1:
-                continue
+                continue  # skip first row (header row)
 
             try:
                 self.import_row(row_num, row)
@@ -74,6 +66,7 @@ class _Importer(object):
                 self.results.add_error(row_num, error)
 
         self.commit_caseblocks()
+        return self.results.to_json()
 
     def import_row(self, row_num, raw_row):
         search_id = _parse_search_id(self.config, raw_row)
@@ -119,6 +112,10 @@ class _Importer(object):
             raise exceptions.CaseGeneration()
 
         self.add_caseblock(RowAndCase(row_num, caseblock))
+
+    @cached_property
+    def user(self):
+        return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
