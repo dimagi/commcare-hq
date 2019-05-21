@@ -146,7 +146,8 @@ class Command(BaseCommand):
                         print("while processing date range {}".format(options['date_range']))
                     sys.exit(1)
 
-        if 'date_range' in options and options.pop('process_day_by_day'):
+        process_day_by_day = options.pop('process_day_by_day')
+        if 'date_range' in options and process_day_by_day:
             start, end = options.pop('date_range')
             num_days = (end - start).days
             for day in range(num_days + 1):
