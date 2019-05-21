@@ -709,7 +709,7 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         patient, = patients
         save_match_ids(case, openmrs_config.case_config, patient)
         return patient
-    if not patients and patient_finder.create_missing:
+    if not patients and patient_finder.create_missing.get_value(info):
         patient = create_patient(requests, info, openmrs_config.case_config)
         if patient:
             save_match_ids(case, openmrs_config.case_config, patient)
