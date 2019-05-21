@@ -270,7 +270,7 @@ class CouchSqlDomainMigrator(object):
         if self.domain:
             log.info('migrating domain {}'.format(self.domain))
         else:
-            self.log_info('migrating domain {} to {}'.format(self.src_domain, self.dst_domain))
+            log.info('migrating domain {} to {}'.format(self.src_domain, self.dst_domain))
         log.info('run timestamp is {}'.format(self.run_timestamp))
 
         if self.src_domain != self.dst_domain:
