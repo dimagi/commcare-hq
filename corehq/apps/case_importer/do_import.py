@@ -38,14 +38,11 @@ class _Importer(object):
         self.id_cache = {}
         self.name_cache = {}
         self.uncreated_external_ids = set()
-        self._caseblocks = []
+        self._unsubmitted_caseblocks = []
 
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
-
-    def log_case_lookup(self):
-        case_load_counter("case_importer", self.domain)
 
     def do_import(self, spreadsheet):
         row_count = spreadsheet.max_row
@@ -81,7 +78,7 @@ class _Importer(object):
             self.domain,
             self.config.case_type
         )
-        self.log_case_lookup()
+        log_case_lookup(self.domain)
 
         if error == LookupErrors.NotFound:
             if not self.config.create_new_cases:
@@ -90,7 +87,7 @@ class _Importer(object):
             raise exceptions.TooManyMatches()
 
         row.set_owner_id(self.name_cache, self.id_cache)
-        row.set_parent_id(self.log_case_lookup)
+        row.set_parent_id()
         row.set_date_opened()
         row.set_external_id(is_new_case=not case)
 
@@ -109,51 +106,53 @@ class _Importer(object):
         self.add_caseblock(RowAndCase(row_num, caseblock))
 
     def add_caseblock(self, caseblock):
-        self._caseblocks.append(caseblock)
+        self._unsubmitted_caseblocks.append(caseblock)
         # check if we've reached a reasonable chunksize and if so, submit
-        if len(self._caseblocks) >= CASEBLOCK_CHUNKSIZE:
+        if len(self._unsubmitted_caseblocks) >= CASEBLOCK_CHUNKSIZE:
             self.commit_caseblocks()
 
     def commit_caseblocks(self):
-        if self._caseblocks:
-            self._submit_caseblocks(self._caseblocks)
+        if self._unsubmitted_caseblocks:
+            self._submit_caseblocks(self._unsubmitted_caseblocks)
             self.results.num_chunks += 1
-            self._caseblocks = []
+            self._unsubmitted_caseblocks = []
             self.uncreated_external_ids = set()
 
     def _submit_caseblocks(self, caseblocks):
-        if caseblocks:
-            try:
-                form, cases = submit_case_blocks(
-                    [cb.case.as_string().decode('utf-8') for cb in caseblocks],
+        if not caseblocks:
+            return
+
+        try:
+            form, cases = submit_case_blocks(
+                [cb.case.as_string().decode('utf-8') for cb in caseblocks],
+                self.domain,
+                self.user.username,
+                self.user.user_id,
+                device_id=__name__ + ".do_import",
+            )
+            if form.is_error:
+                raise Exception("Form error during case import: {}".format(form.problem))
+        except Exception:
+            notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
+            for row_number, case in caseblocks:
+                self.results.add_error(row_number, exceptions.ImportErrorMessage())
+        else:
+            self.record_form(form.form_id)
+            properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
+            if self.config.case_type and len(properties):
+                add_inferred_export_properties.delay(
+                    'CaseImporter',
                     self.domain,
-                    self.user.username,
-                    self.user.user_id,
-                    device_id=__name__ + ".do_import",
+                    self.config.case_type,
+                    properties,
                 )
-                if form.is_error:
-                    raise Exception("Form error during case import: {}".format(form.problem))
-            except Exception:
-                notify_exception(None, "Case Importer: Uncaught failure submitting caseblocks")
-                for row_number, case in caseblocks:
-                    self.results.add_error(row_number, exceptions.ImportErrorMessage())
             else:
-                self.record_form(form.form_id)
-                properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
-                if self.config.case_type and len(properties):
-                    add_inferred_export_properties.delay(
-                        'CaseImporter',
-                        self.domain,
-                        self.config.case_type,
-                        properties,
-                    )
-                else:
-                    _soft_assert = soft_assert(notify_admins=True)
-                    _soft_assert(
-                        len(properties) == 0,
-                        'error adding inferred export properties in domain '
-                        '({}): {}'.format(self.domain, ", ".join(properties))
-                    )
+                _soft_assert = soft_assert(notify_admins=True)
+                _soft_assert(
+                    len(properties) == 0,
+                    'error adding inferred export properties in domain '
+                    '({}): {}'.format(self.domain, ", ".join(properties))
+                )
 
     def record_form(self, form_id):
         if self._record_form_callback:
@@ -218,7 +217,7 @@ class CaseImportRow(object):
         # if they didn't supply an owner, default to current user
         self.owner_id = owner_id or self.user_id
 
-    def set_parent_id(self, log_case_lookup):
+    def set_parent_id(self):
         for column, search_field, search_id in [
                 ('parent_id', 'case_id', self.parent_id),
                 ('parent_external_id', 'external_id', self.parent_external_id),
@@ -226,7 +225,7 @@ class CaseImportRow(object):
             if search_id:
                 parent_case, error = importer_util.lookup_case(
                     search_field, search_id, self.domain, self.parent_type)
-                log_case_lookup()
+                log_case_lookup(self.domain)
                 if parent_case:
                     self.extras['index'] = {
                         self.parent_ref: (parent_case.type, parent_case.case_id)
@@ -270,6 +269,10 @@ class CaseImportRow(object):
             update=self.fields_to_update,
             **self.extras
         )
+
+
+def log_case_lookup(domain):
+    case_load_counter("case_importer", domain)
 
 
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
