@@ -30,6 +30,9 @@ hqDefine('reports/v2/js/datagrid', [
             'initialColumns',
             'columnFilters',
             'reportFilters',
+        ], [
+            'hideColumnFilterCondition',
+            'noDeleteColumnCondition',
         ]);
 
         var self = {};
@@ -47,6 +50,8 @@ hqDefine('reports/v2/js/datagrid', [
         self.editColumnController = columns.editColumnController({
             endpoint: options.columnEndpoint,
             availableFilters: options.columnFilters,
+            hideColumnFilterCondition: options.hideColumnFilterCondition,
+            noDeleteColumnCondition: options.noDeleteColumnCondition,
         });
 
         self.init = function () {

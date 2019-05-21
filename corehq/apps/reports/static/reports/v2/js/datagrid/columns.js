@@ -76,6 +76,22 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.isNew = ko.observable();
         self.hasFilterUpdate = ko.observable(false);
 
+        self.hideColumnFilterCondition = options.hideColumnFilterCondition;
+        self.noDeleteColumnCondition = options.noDeleteColumnCondition;
+
+        self.showColumnFilters = ko.computed(function () {
+            if (!self.column()) return false;
+            if (!self.column().name()) return false;
+            if (!_.isFunction(self.hideColumnFilterCondition)) return true;
+            return !self.hideColumnFilterCondition(self.column());
+        });
+
+        self.showDelete = ko.computed(function () {
+            if (!_.isFunction(self.noDeleteColumnCondition)) return true;
+            if (!self.column()) return true;
+            return !self.noDeleteColumnCondition(self.column());
+        });
+
         self.availableFilters = ko.observableArray(_.map(options.availableFilters, function (data) {
             return columnFilters.columnFilter(data);
         }));
