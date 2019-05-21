@@ -370,10 +370,23 @@ hqDefine("export/js/export_list", [
             self.startDate(newSelectedExport.emailedExport.filters.start_date());
             self.endDate(newSelectedExport.emailedExport.filters.end_date());
             self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
+
             // select2s require programmatic update
-            self.$emwfCaseFilter.val(self.emwfCaseFilter());
-            self.$emwfFormFilter.val(self.emwfFormFilter());
+            self._initSelect2Value(self.$emwfCaseFilter, self.emwfCaseFilter());
+            self._initSelect2Value(self.$emwfFormFilter, self.emwfFormFilter());
         });
+
+        // $el is a select element backing a select2.
+        // value is an array of objects, each with properties 'text' and 'id'
+        self._initSelect2Value = function ($el, value) {
+            $el.empty();
+            _.each(value, function (item) {
+                $el.append(new Option(item.text, item.id));
+            });
+            $el.val(_.pluck(value, 'id'));
+            $el.trigger('change.select2');
+        };
+
         self.showEmwfCaseFilter = ko.computed(function () {
             return self.selectedExportModelType() === 'case';
         });
