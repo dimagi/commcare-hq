@@ -661,7 +661,7 @@ def _get_attachment_dicts_from_form(form):
     return []
 
 
-@quickcache(['domain'], timeout=24 * 3600)
+@quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
 def get_case_types_for_domain_es(domain, use_case_search=False):
     index_class = CaseSearchES if use_case_search else CaseES
     query = (
