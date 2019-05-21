@@ -1,29 +1,44 @@
 from __future__ import absolute_import, unicode_literals
 
 import uuid
-from collections import namedtuple
+from collections import Counter, defaultdict, namedtuple
 
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext_lazy as _
+
+import six
+from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
+from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import set_task_progress
 
 from corehq.apps.export.tasks import add_inferred_export_properties
+from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.datadog.utils import case_load_counter
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 
 from . import exceptions
-from . import util as importer_util
 from .const import LookupErrors
+from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
 
 CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
+
+
+def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
+    importer = _Importer(domain, config, task, record_form_callback)
+    importer.do_import(spreadsheet)
+    return importer.results.to_json()
 
 
 class _Importer(object):
@@ -33,7 +48,7 @@ class _Importer(object):
         self.task = task
         self._record_form_callback = record_form_callback
 
-        self.results = importer_util.ImportResults()
+        self.results = _ImportResults()
 
         self.id_cache = {}
         self.name_cache = {}
@@ -61,24 +76,24 @@ class _Importer(object):
         self.commit_caseblocks()
 
     def import_row(self, row_num, raw_row):
-        search_id = importer_util.parse_search_id(self.config, raw_row)
-        fields_to_update = importer_util.populate_updated_fields(self.config, raw_row)
+        search_id = _parse_search_id(self.config, raw_row)
+        fields_to_update = _populate_updated_fields(self.config, raw_row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
             return
 
-        row = CaseImportRow(search_id, fields_to_update, self.config, self.domain, self.user.user_id)
+        row = _CaseImportRow(search_id, fields_to_update, self.config, self.domain, self.user.user_id)
         row.check_valid_external_id()
         if row.relies_on_uncreated_case(self.uncreated_external_ids):
             self.commit_caseblocks()
 
-        case, error = importer_util.lookup_case(
+        case, error = lookup_case(
             self.config.search_field,
             row.search_id,
             self.domain,
             self.config.case_type
         )
-        log_case_lookup(self.domain)
+        _log_case_lookup(self.domain)
 
         if error == LookupErrors.NotFound:
             if not self.config.create_new_cases:
@@ -113,12 +128,12 @@ class _Importer(object):
 
     def commit_caseblocks(self):
         if self._unsubmitted_caseblocks:
-            self._submit_caseblocks(self._unsubmitted_caseblocks)
+            self.submit_caseblocks(self._unsubmitted_caseblocks)
             self.results.num_chunks += 1
             self._unsubmitted_caseblocks = []
             self.uncreated_external_ids = set()
 
-    def _submit_caseblocks(self, caseblocks):
+    def submit_caseblocks(self, caseblocks):
         if not caseblocks:
             return
 
@@ -159,7 +174,7 @@ class _Importer(object):
             self._record_form_callback(form_id)
 
 
-class CaseImportRow(object):
+class _CaseImportRow(object):
     def __init__(self, search_id, fields_to_update, config, domain, user_id):
         self.search_id = search_id
         self.fields_to_update = fields_to_update
@@ -196,7 +211,7 @@ class CaseImportRow(object):
             # If an owner name was provided, use the id of the provided or
             # owner rather than the uploaded_owner_id
             try:
-                owner_id = importer_util.get_id_from_name(
+                owner_id = _get_id_from_name(
                     self.uploaded_owner_name, self.domain, name_cache
                 )
             except SQLLocation.MultipleObjectsReturned:
@@ -208,7 +223,7 @@ class CaseImportRow(object):
         if owner_id:
             # If an owner_id mapping exists, verify it is a valid user
             # or case sharing group
-            if importer_util.is_valid_id(owner_id, self.domain, id_cache):
+            if _is_valid_id(owner_id, self.domain, id_cache):
                 id_cache[owner_id] = True
             else:
                 id_cache[owner_id] = False
@@ -223,9 +238,9 @@ class CaseImportRow(object):
                 ('parent_external_id', 'external_id', self.parent_external_id),
         ]:
             if search_id:
-                parent_case, error = importer_util.lookup_case(
+                parent_case, error = lookup_case(
                     search_field, search_id, self.domain, self.parent_type)
-                log_case_lookup(self.domain)
+                _log_case_lookup(self.domain)
                 if parent_case:
                     self.extras['index'] = {
                         self.parent_ref: (parent_case.type, parent_case.case_id)
@@ -271,11 +286,202 @@ class CaseImportRow(object):
         )
 
 
-def log_case_lookup(domain):
+def _log_case_lookup(domain):
     case_load_counter("case_importer", domain)
 
 
-def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
-    importer = _Importer(domain, config, task, record_form_callback)
-    importer.do_import(spreadsheet)
-    return importer.results.to_json()
+def _convert_custom_fields_to_struct(config):
+    excel_fields = config.excel_fields
+    case_fields = config.case_fields
+    custom_fields = config.custom_fields
+
+    field_map = {}
+    for i, field in enumerate(excel_fields):
+        if field:
+            field_map[field] = {}
+
+            if case_fields[i]:
+                field_map[field]['field_name'] = case_fields[i]
+            elif custom_fields[i]:
+                # if we have configured this field for external_id populate external_id instead
+                # of the default property name from the column
+                if config.search_field == EXTERNAL_ID and field == config.search_column:
+                    field_map[field]['field_name'] = EXTERNAL_ID
+                else:
+                    field_map[field]['field_name'] = custom_fields[i]
+    # hack: make sure the external_id column ends up in the field_map if the user
+    # didn't explicitly put it there
+    if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
+        field_map[config.search_column] = {
+            'field_name': EXTERNAL_ID
+        }
+    return field_map
+
+
+class _ImportResults(object):
+    CREATED = 'created'
+    UPDATED = 'updated'
+    FAILED = 'failed'
+
+    def __init__(self):
+        self._results = {}
+        self._errors = defaultdict(dict)
+        self.num_chunks = 0
+
+    def add_error(self, row_num, error):
+        self._results[row_num] = self.FAILED
+
+        key = error.title
+        column_name = error.column_name
+        self._errors[key].setdefault(column_name, {})
+        self._errors[key][column_name]['error'] = _(error.title)
+
+        try:
+            self._errors[key][column_name]['description'] = error.message
+        except KeyError:
+            self._errors[key][column_name]['description'] = exceptions.CaseGeneration.message
+
+        if 'rows' not in self._errors[key][column_name]:
+            self._errors[key][column_name]['rows'] = []
+
+        self._errors[key][column_name]['rows'].append(row_num)
+
+    def add_created(self, row_num):
+        self._results[row_num] = self.CREATED
+
+    def add_updated(self, row_num):
+        self._results[row_num] = self.UPDATED
+
+    def to_json(self):
+        counts = Counter(six.itervalues(self._results))
+        return {
+            'created_count': counts.get(self.CREATED, 0),
+            'match_count': counts.get(self.UPDATED, 0),
+            'errors': dict(self._errors),
+            'num_chunks': self.num_chunks,
+        }
+
+
+def _convert_field_value(value):
+    # coerce to string unless it's a unicode string then we want that
+    if isinstance(value, six.text_type):
+        return value
+    else:
+        return str(value)
+
+
+def _parse_search_id(config, row):
+    """ Find and convert the search id in an Excel row """
+
+    # Find index of user specified search column
+    search_column = config.search_column
+    search_id = row[search_column] or ''
+
+    try:
+        # if the spreadsheet gives a number, strip any decimals off
+        # float(x) is more lenient in conversion from string so both
+        # are used
+        search_id = int(float(search_id))
+    except (ValueError, TypeError, OverflowError):
+        # if it's not a number that's okay too
+        pass
+
+    return _convert_field_value(search_id)
+
+
+def _populate_updated_fields(config, row):
+    """
+    Returns a dict map of fields that were marked to be updated
+    due to the import. This can be then used to pass to the CaseBlock
+    to trigger updates.
+    """
+    field_map = _convert_custom_fields_to_struct(config)
+    fields_to_update = {}
+    for key in field_map:
+        try:
+            update_value = row[key]
+        except Exception:
+            continue
+
+        if 'field_name' in field_map[key]:
+            update_field_name = field_map[key]['field_name'].strip()
+        else:
+            # nothing was selected so don't add this value
+            continue
+
+        if update_field_name in RESERVED_FIELDS:
+            raise exceptions.InvalidCustomFieldNameException(
+                _('Field name "{}" is reserved').format(update_field_name))
+
+        if isinstance(update_value, six.string_types) and update_value.strip() == SCALAR_NEVER_WAS:
+            soft_assert_type_text(update_value)
+            # If we find any instances of blanks ('---'), convert them to an
+            # actual blank value without performing any data type validation.
+            # This is to be consistent with how the case export works.
+            update_value = ''
+        elif update_value is not None:
+            update_value = _convert_field_value(update_value)
+
+        fields_to_update[update_field_name] = update_value
+
+    return fields_to_update
+
+
+def _is_valid_id(uploaded_id, domain, cache):
+    if uploaded_id in cache:
+        return cache[uploaded_id]
+
+    owner = get_wrapped_owner(uploaded_id)
+    return _is_valid_owner(owner, domain)
+
+
+def _is_valid_owner(owner, domain):
+    return (
+        (isinstance(owner, CouchUser) and owner.is_member_of(domain)) or
+        (isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)) or
+        _is_valid_location_owner(owner, domain)
+    )
+
+
+def _is_valid_location_owner(owner, domain):
+    if isinstance(owner, SQLLocation):
+        return owner.domain == domain and owner.location_type.shares_cases
+    else:
+        return False
+
+
+def _get_id_from_name(name, domain, cache):
+    '''
+    :param name: A username, group name, or location name/site_code
+    :param domain:
+    :param cache:
+    :return: Looks for the given name and returns the corresponding id if the
+    user or group exists and None otherwise. Searches for user first, then
+    group, then location
+    '''
+    if name in cache:
+        return cache[name]
+
+    def get_from_user(name):
+        try:
+            name_as_address = name
+            if '@' not in name_as_address:
+                name_as_address = format_username(name, domain)
+            user = CouchUser.get_by_username(name_as_address)
+            return getattr(user, 'couch_id', None)
+        except NoResultFound:
+            return None
+
+    def get_from_group(name):
+        group = Group.by_name(domain, name, one=True)
+        return getattr(group, 'get_id', None)
+
+    def get_from_location(name):
+        try:
+            return SQLLocation.objects.get_from_user_input(domain, name).location_id
+        except SQLLocation.DoesNotExist:
+            return None
+
+    id = get_from_user(name) or get_from_group(name) or get_from_location(name)
+    cache[name] = id
+    return id
