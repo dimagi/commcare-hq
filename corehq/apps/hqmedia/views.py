@@ -54,7 +54,7 @@ from corehq.apps.hqmedia.controller import (
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
-    build_application_zip,
+    build_application_zip_v2,
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
@@ -787,10 +787,11 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
             build_profile_id = request.GET.get('profile')
         download_targeted_version = request.GET.get('download_targeted_version') == 'true'
-        download.set_task(build_application_zip.delay(
+        download.set_task(build_application_zip_v2.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
-            app=self.app,
+            domain=self.app.domain,
+            app_id=self.app.id,
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,
