@@ -85,10 +85,12 @@ def migrate_tables(tables, source_db, source_host, source_user, target_db, targe
         source_tables = {source_table for source_table, target_table in tables}
         total_size = sum([size for table, size in table_sizes.items() if table in source_tables])
 
-    commands = get_dump_load_commands(tables, source_db, source_host, source_user, target_db, target_host,
-                                      target_user)
+    commands = get_dump_load_commands(
+        tables, source_db, source_host, source_user, target_db, target_host, target_user
+    )
 
-    for source_table, target_table, cmd in commands:
+    total_tables = len(tables)
+    for table_index, [source_table, target_table, cmd] in enumerate(commands):
         print(cmd)
         if not dry_run and (not confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
             code = subprocess.call(cmd, shell=True)
@@ -96,7 +98,10 @@ def migrate_tables(tables, source_db, source_host, source_user, target_db, targe
                 sys.exit(code)
         if table_sizes:
             progress += table_sizes[source_table]
-            print('\nProgress: {:.1f}% ({} of {})\n'.format(100 * progress / total_size, int(progress), total_size))
+            print('\nProgress: {:.1f}% data ({} of {}), {:.1f}% tables ({} of {})\n'.format(
+                100 * progress / total_size, int(progress), total_size,
+                100 * float(table_index) / total_tables, table_index, total_tables,
+            ))
 
 
 def filter_tables_by_date(tables, start_date, end_date):
