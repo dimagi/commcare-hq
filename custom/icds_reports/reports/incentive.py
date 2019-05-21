@@ -1,6 +1,6 @@
 from __future__ import unicode_literals, absolute_import, division
 
-from custom.icds_reports.models.aggregate import AWWIncentiveReport
+from custom.icds_reports.models.views import AWWIncentiveReportMonthly
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 
 
@@ -17,23 +17,27 @@ class IncentiveReport(object):
         def _format_infrastructure_data(data):
             return data if data else DATA_NOT_ENTERED
 
+        model = AWWIncentiveReport if self.beta else AWWIncentiveReportMonthly
         if self.aggregation_level == 1:
-            data = AWWIncentiveReport.objects.filter(
+            data = model.objects.filter(
                 month=self.month, state_id=self.location
             ).order_by('-district_name', '-block_name', '-supervisor_name')
         elif self.aggregation_level == 2:
-            data = AWWIncentiveReport.objects.filter(
+            data = model.objects.filter(
                 month=self.month, district_id=self.location
             ).order_by('-block_name', '-supervisor_name')
         else:
-            data = AWWIncentiveReport.objects.filter(
+            data = model.objects.filter(
                 month=self.month, block_id=self.location
             ).order_by('-supervisor_name', 'awc_name')
-        data = data.values(
+        values = [
             'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'aww_name',
             'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits',
-            'visit_denominator', 'is_launched', 'awh_eligible', 'incentive_eligible'
-        )
+            'expected_visits', 'is_launched'
+        ]
+        if self.beta:
+            values.extend(['visit_denominator', 'awh_eligible', 'incentive_eligible'])
+        data = data.values(*values)
 
         if self.beta:
             headers = [
@@ -60,7 +64,8 @@ class IncentiveReport(object):
             ]
 
             # AWC not launched
-            if not row['is_launched']:
+            is_launched = row_data['is_launched'] if self.beta else row_data['is_launched'] == 'yes'
+            if not is_launched:
                 AWC_NOT_LAUNCHED = 'AWC not launched'
                 row_data.extend([
                     AWC_NOT_LAUNCHED,
@@ -73,8 +78,16 @@ class IncentiveReport(object):
                 if self.beta:
                     row_data.append(AWC_NOT_LAUNCHED)
             else:
-                home_visit_percent = row['valid_visits'] / row['visit_denominator'] if \
-                    row['visit_denominator'] else 1
+                if self.beta:
+                    visit_denominator = row_data['visit_denominator']
+                else:
+                    if self.month.year < 2019 or (self.month.year == 2019 and self.month.month < 3):
+                        func = int
+                    else:
+                        func = round
+                    visit_denominator = func(row['expected_visits'])
+                home_visit_percent = row['valid_visits'] / visit_denominator if \
+                    visit_denominator else 1
                 weighing_efficiency_percent = row['wer_weighed'] / row['wer_eligible'] if \
                     row['wer_eligible'] else 1
                 if home_visit_percent > 1:
@@ -82,19 +95,28 @@ class IncentiveReport(object):
                 home_visit_conducted = '{:.2%}'.format(home_visit_percent)
                 if row['awc_num_open'] is None:
                     num_open = DATA_NOT_ENTERED
+                    awh_eligible_for_incentive = 'No'
                 else:
                     num_open = row['awc_num_open']
+
                 weighing_efficiency = '{:.2%}'.format(weighing_efficiency_percent)
-                eligible_for_incentive = 'Yes' if row['incentive_eligible'] else 'No'
-                no_visits = row['valid_visits'] == 0 and row['visit_denominator'] == 0
+                if self.beta:
+                    awh_eligibile_for_incentive = 'Yes' if row['awh_eligible'] else 'No'
+                    eligible_for_incentive = 'Yes' if row['incentive_eligible'] else 'No'
+                else:
+                    awh_eligible_for_incentive = 'Yes' if int(num_open) >= 21 else 'No'
+                    eligible_for_incentive = 'Yes' if weighing_efficiency_percent >= 0.6 \
+                                             and home_visit_percent >= 0.6 else 'No'
+                no_visits = row['valid_visits'] == 0 and visit_denominator == 0
                 no_weights = row['wer_eligible'] == 0
                 if no_visits:
                     home_visit_conducted = "No expected home visits"
                 if no_weights:
                     weighing_efficiency = "No expected weight measurement"
+                if no_visits and no_weights:
+                    eligible_for_incentive = "Yes"
 
                 if self.beta:
-                    awh_eligible = 'Yes' if row['awh_eligible'] else 'No'
                     row_data.extend([
                         _format_infrastructure_data(row['aww_name']),
                         _format_infrastructure_data(row['contact_phone_number']),
@@ -102,7 +124,7 @@ class IncentiveReport(object):
                         weighing_efficiency,
                         eligible_for_incentive,
                         num_open,
-                        awh_eligible
+                        awh_eligible_for_incentive
                     ])
                 else:
                     row_data.extend([
