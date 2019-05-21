@@ -1,10 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from memoized import memoized
+
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+    get_most_recent_case_type,
+)
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
 from corehq.apps.reports.v2.endpoints.case_properties import (
     CasePropertiesEndpoint,
@@ -67,17 +72,28 @@ class ExploreCaseDataReport(BaseReport):
         CaseTypeReportFilter,
     ]
 
-    initial_report_filters = [
-        ReportFilterData(
-            name=CaseOwnerReportFilter.name,
-            value=[
-                {
-                    'text': "[{}]".format(ugettext_lazy("Project Data")),
-                    'id': 'project_data',
-                },
-            ],
-        ),
-    ]
+    @property
+    def initial_report_filters(self):
+        return [
+            ReportFilterData(
+                name=CaseOwnerReportFilter.name,
+                value=[
+                    {
+                        'text': "[{}]".format(ugettext_lazy("Project Data")),
+                        'id': 'project_data',
+                    },
+                ],
+            ),
+            ReportFilterData(
+                name=CaseTypeReportFilter.name,
+                value=self._initial_case_type,
+            ),
+        ]
+
+    @property
+    @memoized
+    def _initial_case_type(self):
+        return get_most_recent_case_type(self.domain)
 
     def _get_base_query(self):
         return (CaseSearchES()
