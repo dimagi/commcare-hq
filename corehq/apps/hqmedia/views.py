@@ -56,7 +56,6 @@ from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
     build_application_zip,
 )
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -308,10 +307,6 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
     urlname = "multimedia_translations_coverage"
     template_name = "hqmedia/translations_coverage.html"
     page_title = ugettext_noop("Translations Coverage")
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(MultimediaTranslationsCoverageView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):

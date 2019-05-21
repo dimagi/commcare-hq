@@ -26,7 +26,7 @@ from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, Messaging
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datatables, use_select2_v4, use_jquery_ui, use_timepicker, use_nvd3
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -419,7 +419,6 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
     @use_timepicker
-    @use_select2_v4
     def dispatch(self, *args, **kwargs):
         return super(CreateScheduleView, self).dispatch(*args, **kwargs)
 
@@ -560,16 +559,21 @@ class ConditionalAlertBaseView(BaseMessagingSectionView):
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertBaseView, self).dispatch(*args, **kwargs)
 
-    def get_conditional_alerts_queryset(self, query_string=''):
+    @staticmethod
+    def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
         query = (
             AutomaticUpdateRule
             .objects
-            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
+            .filter(domain=domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
         )
         if query_string:
             query = query.filter(name__icontains=query_string)
         query = query.order_by('case_type', 'name', 'id')
         return query
+
+    def get_conditional_alerts_queryset(self, query_string=''):
+        return ConditionalAlertBaseView.get_conditional_alerts_queryset_by_domain(self.domain,
+                                                                                  query_string=query_string)
 
 
 class ConditionalAlertListView(ConditionalAlertBaseView):
@@ -786,7 +790,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
     @use_timepicker
-    @use_select2_v4
     def dispatch(self, *args, **kwargs):
         return super(CreateConditionalAlertView, self).dispatch(*args, **kwargs)
 
@@ -1023,11 +1026,8 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
     def get(self, request, domain):
         title = _("Conditional Alerts")
         headers = ((title, (_('id'), _('name'), _('case_type'))),)
-        rows = [(
-            rule.pk,
-            rule.name,
-            rule.case_type,
-        ) for rule in self.get_conditional_alerts_queryset() if isinstance(_get_rule_content(rule), SMSContent)]
+
+        rows = get_conditional_alert_rows(self.domain)
 
         temp = io.BytesIO()
         export_raw(headers, [(title, rows)], temp)
@@ -1035,6 +1035,17 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
             domain=domain,
             title=title)
         return export_response(temp, Format.XLS_2007, filename)
+
+
+def get_conditional_alert_rows(domain):
+    rows = []
+
+    for rule in ConditionalAlertBaseView.get_conditional_alerts_queryset_by_domain(domain):
+        if not isinstance(_get_rule_content(rule), SMSContent):
+            continue
+        rows.append([rule.pk, rule.name, rule.case_type])
+
+    return rows
 
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
@@ -1077,38 +1088,48 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             messages.error(request, six.text_type(e))
             return self.get(request, *args, **kwargs)
 
-        success_count = 0
-        for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
-            rule = None
-            try:
-                rule = AutomaticUpdateRule.objects.get(
-                    pk=row['id'],
-                    domain=self.domain,
-                    workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-                    deleted=False,
-                )
-            except AutomaticUpdateRule.DoesNotExist:
-                messages.error(request, _("Could not find rule for row {index}, with id {id}.").format(
-                    index=index, id=row['id']))
-            dirty = False
-            if rule:
-                if not isinstance(_get_rule_content(rule), SMSContent):
-                    messages.error(request, _("Row {index}, with rule id {id}, does not use SMS content.").format(
-                        index=index, id=row['id']))
-                else:
-                    if rule.name != row['name']:
-                        dirty = True
-                        rule.name = row['name']
-                    if rule.case_type != row['case_type']:
-                        dirty = True
-                        rule.case_type = row['case_type']
-            if dirty:
-                rule.save()
-                success_count += 1
-
-        messages.success(request, _("Updated {count} rule(s).").format(count=success_count))
+        msgs = upload_conditional_alert_rows(self.domain, worksheet)
+        for msg in msgs:
+            msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
+
+
+def upload_conditional_alert_rows(domain, rows):
+    msgs = []
+    success_count = 0
+
+    for index, row in enumerate(rows, start=2):    # one-indexed, plus header row
+        rule = None
+        try:
+            rule = AutomaticUpdateRule.objects.get(
+                pk=row['id'],
+                domain=domain,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                deleted=False,
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            msgs.append((messages.error,
+                        _("Could not find rule for row {index}, with id {id}").format(index=index, id=row['id'])))
+        dirty = False
+        if rule:
+            if not isinstance(_get_rule_content(rule), SMSContent):
+                msgs.append((messages.error, _("Row {index}, with rule id {id}, does not use SMS content.").format(
+                    index=index, id=row['id'])))
+            else:
+                if rule.name != row['name']:
+                    dirty = True
+                    rule.name = row['name']
+                if rule.case_type != row['case_type']:
+                    dirty = True
+                    rule.case_type = row['case_type']
+        if dirty:
+            rule.save()
+            success_count += 1
+
+    msgs.append((messages.success, _("Updated {count} rule(s)").format(count=success_count)))
+
+    return msgs
 
 
 def _get_rule_content(rule):

@@ -2,10 +2,9 @@
 {% load hq_shared_tags %}
 
 {% compress css %}
-  {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+  {# Explicitly include this because app manager doesn't do class-based views, so it doesn't use @use_jquery_ui #}
   <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
 {% endcompress %}
-<link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
 
 {% if less_debug %}
   <link type="text/less"

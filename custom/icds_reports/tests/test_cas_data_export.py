@@ -59,13 +59,13 @@ class TestLocationView(CSVTestCase):
         )
         self._fasterAssertListEqual(
             sorted(
-                expected_csv_file,
+                csv_data,
                 key=lambda x: x['case_id']
             ),
             sorted(
-                csv_data,
+                expected_csv_file,
                 key=lambda x: x['case_id']
-            )
+            ),
         )
 
     def test_agg_awc_cas_data(self):

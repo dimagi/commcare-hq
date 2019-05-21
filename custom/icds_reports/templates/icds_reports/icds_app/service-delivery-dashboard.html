@@ -1,6 +1,6 @@
 {% load i18n %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-5">
             <div class="row">
                 <span id="reportTitle" class="breadcrump-element" ng-bind="$ctrl.label"></span>
@@ -22,6 +22,7 @@
                      is-open-modal="$ctrl.message"></filters>
         </div>
     </div>
+    <info-message></info-message>
     <div class="report-content report-content-without-message">
         <div ng-if="$ctrl.data">
             <div class="row black">

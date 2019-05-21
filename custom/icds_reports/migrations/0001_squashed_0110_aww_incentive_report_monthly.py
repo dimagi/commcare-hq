@@ -1884,4 +1884,3 @@ class Migration(migrations.Migration):
         'aggregateawcinfrastructureforms',
         'dailyattendance',
     ]))
-    operations.extend(get_view_migrations())

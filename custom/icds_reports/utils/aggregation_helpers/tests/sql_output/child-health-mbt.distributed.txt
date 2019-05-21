@@ -1,0 +1,14 @@
+
+        COPY (
+            SELECT t.awc_id,t.case_id,t.month,t.age_in_months,t.open_in_month,t.alive_in_month,t.wer_eligible,t.nutrition_status_last_recorded,t.current_month_nutrition_status,t.nutrition_status_weighed,t.num_rations_distributed,t.pse_eligible,t.pse_days_attended,t.born_in_month,t.low_birth_weight_born_in_month,t.bf_at_birth_born_in_month,t.ebf_eligible,t.ebf_in_month,t.ebf_not_breastfeeding_reason,t.ebf_drinking_liquid,t.ebf_eating,t.ebf_no_bf_no_milk,t.ebf_no_bf_pregnant_again,t.ebf_no_bf_child_too_old,t.ebf_no_bf_mother_sick,t.cf_eligible,t.cf_in_month,t.cf_diet_diversity,t.cf_diet_quantity,t.cf_handwashing,t.cf_demo,t.fully_immunized_eligible,t.fully_immunized_on_time,t.fully_immunized_late,t.counsel_ebf,t.counsel_adequate_bf,t.counsel_pediatric_ifa,t.counsel_comp_feeding_vid,t.counsel_increase_food_bf,t.counsel_manage_breast_problems,t.counsel_skin_to_skin,t.counsel_immediate_breastfeeding,t.recorded_weight,t.recorded_height,t.has_aadhar_id,t.thr_eligible,t.pnc_eligible,t.cf_initiation_in_month,t.cf_initiation_eligible,t.height_measured_in_month,t.current_month_stunting,t.stunting_last_recorded,t.wasting_last_recorded,t.current_month_wasting,t.valid_in_month,t.valid_all_registered_in_month,t.ebf_no_info_recorded,t.dob,t.sex,t.age_tranche,t.caste,t.disabled,t.minority,t.resident,t.immunization_in_month,t.days_ration_given_child,t.zscore_grading_hfa,t.zscore_grading_hfa_recorded_in_month,t.zscore_grading_wfh,t.zscore_grading_wfh_recorded_in_month,t.muac_grading,ccs.case_id as ccs_record_case_id,t.date_death,awc.state_name,awc.district_name,awc.block_name,awc.awc_name,awc.awc_site_code FROM child_health_monthly t
+            LEFT JOIN awc_location awc on t.awc_id=awc.doc_id and awc.supervisor_id=t.supervisor_id
+            LEFT JOIN "ucr_icds-cas_static-person_cases_v3_2ae0879a" mother on mother.doc_id=t.mother_case_id
+              AND awc.state_id = mother.state_id and mother.supervisor_id=t.supervisor_id
+              AND lower(substring(mother.state_id, '.{3}$'::text)) = 'st1'
+            LEFT JOIN "ccs_record_monthly" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob
+                AND (ccs.child_name is null OR ccs.child_name=t.person_name)
+                AND ccs.month=t.month AND ccs.supervisor_id=t.supervisor_id
+            WHERE awc.state_id='st1' AND t.month='2019-01-01 00:00:00'
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
+        
+{}
