@@ -6,22 +6,28 @@ hqDefine("reports/js/case_list", ['jquery', 'analytix/js/kissmetrix', 'hqwebapp/
                     kissAnalytics.track.event("Clicked Case Name in Case List Report");
                 });
                 var userTypes = initialPageData.get('user_types');
-                var selector = "#paramSelectorForm input[name='case_list_filter']";
+                var selector = "#paramSelectorForm select[name='case_list_filter']";
                 $(document).on('click', '#apply-filters', function () {
-                    kissAnalytics.track.event("[Case List Report] Clicked Apply",
-                        {"filters": _.map($(selector).val().split(','),
-                            function (item, index) {
-                                if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
-                                else if (item.substring(0,3) === "u__") {
-                                    if ($(selector).select2("data")[index].is_active)
-                                    {return item + " [Active]"; }
-                                    else
-                                    {return item + " [Deactivated]"; }
-                                }
-                                else { return item; }
+                    var typePrefix = "t__",
+                        userPrefix = "u__";
+                    kissAnalytics.track.event("[Case List Report] Clicked Apply", {
+                        "filters": _.map($(selector).select2("data"), function (item) {
+                            if (item.id.startsWith(typePrefix)) {
+                                return userTypes[item.id.substring(typePrefix.length)];
                             }
-                        ).join()}
-                    );
+                            else if (item.id.startsWith(userPrefix)) {
+                                // TODO: same issue as submit_history.js
+                                if (item.is_active) {
+                                    return item.id + " [Active]";
+                                } else {
+                                    return item.id + " [Deactivated]";
+                                }
+                            }
+                            else {
+                                return item.id;
+                            }
+                        }).join(),
+                    });
                 });
             }
         });

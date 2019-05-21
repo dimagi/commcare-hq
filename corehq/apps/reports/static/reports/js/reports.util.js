@@ -22,9 +22,6 @@ hqDefine('reports/js/reports.util', ['jquery'], function ($) {
                     if (val === null) {
                         return null;
                     }
-                    if (elem.getAttribute('data-ajax-select2')) {
-                        val = val.split(',');
-                    }
                     return $.isArray(val) ?
                         $.map(val, function (val) {
                             return {

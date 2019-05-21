@@ -241,19 +241,18 @@ hqDefine("reports/js/report_config_models", [
         self.modalSaveButton = {
             state: ko.observable(),
             saveOptions: function () {
-                var config_data = self.configBeingEdited().unwrap();
-                var select2 = $("[data-ajax-select2]").map(function () {
-                    return $(this).attr('name');
-                }).toArray();
-                for (var key in config_data["filters"]) {
-                    // Make ajax select2 fields into lists so they serialize properly
-                    if (select2.indexOf(key) >= 0) {
-                        config_data["filters"][key] = config_data["filters"][key].split(',');
-                    }
+                // TODO: Ideally the separator would be defined in one place. Right now it is
+                //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
+                var separator = "\u001F",
+                    config_data = self.configBeingEdited().unwrap();
+                for (var key in config_data.filters) {
                     // remove null filters
-                    if (config_data["filters"].hasOwnProperty(key)) {
-                        if (config_data["filters"][key] === null) {
-                            delete config_data["filters"][key];
+                    if (config_data.filters.hasOwnProperty(key)) {
+                        if (config_data.filters[key] === null) {
+                            delete config_data.filters[key];
+                        }
+                        if (_.isArray(config_data.filters[key])) {
+                            config_data.filters[key] = config_data.filters[key].join(separator);
                         }
                     }
                 }
