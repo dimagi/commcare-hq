@@ -15,18 +15,83 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
 ) {
     'use strict';
 
+    var _select2Init = function ($select, options, params) {
+        var initialValue;
+
+        $select.select2(params);
+
+        if (!_.isFunction(options.getInitialValue)) return;
+
+        initialValue = options.getInitialValue();
+
+        if (_.isObject(initialValue) || _.isArray(initialValue)) {
+            // value is for a multi-select
+            // https://select2.org/programmatic-control/add-select-clear-items#preselecting-options-in-an-remotely-sourced-ajax-select2
+
+            if (!_.isArray(initialValue) && options.multiple) {
+                initialValue = [initialValue];
+            }
+
+            if (options.url && options.multiple) {
+                // only hard load options when async select2 is being used
+                _.each(initialValue, function (valObj) {
+                    var option = new Option(valObj.text, valObj.id, true, true);
+                    $select.append(option);
+                });
+                $select.trigger('change');
+                $select.trigger({type: 'select2:select', params: {data: initialValue}});
+            }
+
+            if (!options.multiple && _.isObject(initialValue)) {
+                if (options.createNodes) {
+                    var option = new Option(initialValue.text, initialValue.id, true, true);
+                    $select.append(option);
+                }
+                $select.val(initialValue.id).trigger('change');
+            }
+
+        } else {
+            $select.val(initialValue).trigger('change');
+        }
+    };
+
     ko.bindingHandlers.select2 = {
         init: function (element, valueAccessor) {
             var $select = $(element),
                 options = ko.utils.unwrapObservable(valueAccessor()),
-                ajax = {};
+                select2Params = {
+                    allowClear: options.allowClear,
+                    minimumInputLength: 0,
+                    multiple: !!options.multiple,
+                    placeholder: options.placeholder || gettext("Search..."), // some placeholder required for allowClear
+                    width: options.width || '100%',
+                    data: options.data,
+                    templateResult: function (result) {
+                        if (_.isFunction(options.templateResult)) {
+                            return options.templateResult(result);
+                        }
+                        if (result.labelText) {
+                            var $label = $('<span class="label pull-right"></span>')
+                                         .addClass(result.labelStyle)
+                                         .text(result.labelText);
+                            return $('<span>' + result.text + '</span>').append($label);
+                        }
+                        return result.text;
+                    },
+                    templateSelection: function (selection) {
+                        if (_.isFunction(options.templateSelection)) {
+                            return options.templateSelection(selection);
+                        }
+                        return selection.text;
+                    },
+                };
 
             ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
                 $select.select2('destroy');
             });
 
             if (options.url) {
-                ajax = {
+                select2Params.ajax = {
                     delay: options.delay || 150,
                     url: options.url,
                     dataType: 'json',
@@ -55,48 +120,39 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
                 };
             }
 
-            $select.select2({
-                minimumInputLength: 0,
-                allowClear: true,
-                multiple: !!options.multiple,
-                placeholder: options.placeholder || gettext("Search..."), // some placeholder required for allowClear
-                width: options.width || '100%',
-                data: options.data,
-                ajax: ajax,
-                templateResult: function (result) {
-                    if (_.isFunction(options.templateResult)) {
-                        return options.templateResult(result);
-                    }
-                    if (result.labelText) {
-                        var $label = $('<span class="label pull-right"></span>')
-                                     .addClass(result.labelStyle)
-                                     .text(result.labelText);
-                        return $('<span>' + result.text + '</span>').append($label);
-                    }
-                    return result.text;
-                },
-                templateSelection: function (selection) {
-                    if (_.isFunction(options.templateSelection)) {
-                        return options.templateSelection(selection);
-                    }
-                    return selection.text;
-                },
-            });
-
-            if (_.isFunction(options.getInitialValue) && (_.isObject(options.getInitialValue()) || _.isArray(options.getInitialValue()))) {
-                // https://select2.org/programmatic-control/add-select-clear-items#preselecting-options-in-an-remotely-sourced-ajax-select2
-                var initialValue = options.getInitialValue();
-                if (!_.isArray(options.getInitialValue())) {
-                    initialValue = [initialValue];
+            if (options.dataUrl) {
+                var data = {};
+                if (_.isFunction(options.getData)) {
+                    data = options.getData(data);
                 }
-                _.each(initialValue, function (valObj) {
-                    var option = new Option(valObj.text, valObj.id, true, true);
-                    $select.append(option);
-                });
-                $select.trigger('change');
-                $select.trigger({type: 'select2:select', params: {data: initialValue}});
-            }
+                if (_.isFunction(options.getInitialValue)) {
+                    data.currentValue = JSON.stringify(options.getInitialValue());
+                }
+                if (options.dataObservable) {
+                    select2Params.data = options.dataObservable();
+                    options.createNodes = true;
+                    _select2Init($select, options, select2Params);
+                    options.createNodes = false;
+                }
 
+                $.ajax({
+                    url: options.dataUrl,
+                    method: 'post',
+                    dataType: 'json',
+                    data: data,
+                })
+                    .done(function (data) {
+                        select2Params.data = data.options;
+                        if (options.dataObservable) {
+                            $select.select2('destroy');
+                            $select.html('');
+                            options.dataObservable(data.options);
+                        }
+                        _select2Init($select, options, select2Params);
+                    });
+            } else {
+                _select2Init($select, options, select2Params);
+            }
         },
     };
 
