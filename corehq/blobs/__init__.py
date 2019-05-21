@@ -84,6 +84,8 @@ class CODES:
     demo_user_restore = 14  # DemoUserRestore
     data_file = 15      # domain data file (see DataFile class)
 
+    case_template = 16  # Prototype XML to create case templates (see CaseTemplate class)
+
 
 CODES.name_of = {code: name
     for name, code in vars(CODES).items() if isinstance(code, int)}.get
