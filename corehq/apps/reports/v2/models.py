@@ -21,6 +21,11 @@ ColumnMeta = namedtuple('ColumnMeta', 'title name width')
 ReportFilterData = namedtuple('ReportFilterData', 'name value')
 
 
+class ReportFilterWidget(object):
+    SELECT2_MULTI_ASYNC = 'select2-multi-async'
+    SELECT2_SINGLE = 'select2-single'
+
+
 class BaseReport(object):
     """
     This is the glue that ties all the moving parts of a report together.
@@ -182,6 +187,7 @@ class BaseReportFilter(BaseFilter):
     name = None
     title = None
     endpoint_slug = None
+    widget = None
 
     def __init__(self, request, domain, context):
         self.request = request
@@ -194,6 +200,7 @@ class BaseReportFilter(BaseFilter):
             'title': cls.title,
             'name': cls.name,
             'endpointSlug': cls.endpoint_slug,
+            'widget': cls.widget,
         }
 
     @abstractmethod

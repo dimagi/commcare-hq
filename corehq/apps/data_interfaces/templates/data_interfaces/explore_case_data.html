@@ -24,6 +24,34 @@
   {% breadcrumbs page section %}
 {% endblock %}
 
+{% block js %}{{ block.super }}
+  <script type="text/html" id="ko-select2-multi-async">
+    <select type="text"
+            class="form-control"
+            data-bind="selectedOptions: value,
+                       select2: {
+                         placeholder: placeholder(),
+                         multiple: true,
+                         allowClear: true,
+                         url: endpoint.getUrl(),
+                         getInitialValue: getInitialValue,
+                       },
+                       attr: { id: 'filter_' + name() }"></select>
+  </script>
+  <script type="text/html" id="ko-select2-single">
+    <select type="text"
+            class="form-control"
+            data-bind="value: value,
+                       select2: {
+                         placeholder: placeholder(),
+                         getInitialValue: getInitialValue,
+                         dataUrl: endpoint.getUrl(),
+                         allowClear: false,
+                       },
+                       attr: { id: 'filter_' + name() }"></select>
+  </script>
+{% endblock %}
+
 {% block page_content %}
   {% registerurl "endpoint_options" domain report.slug '---' %}
   {% registerurl "endpoint_data" domain report.slug '---' %}
@@ -71,16 +99,11 @@
               <label class="{% css_label_class %} control-label"
                      data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
               <div class="{% css_field_class %}">
-                <select type="text"
-                        class="form-control"
-                        data-bind="selectedOptions: value,
-                                 select2: {
-                                   placeholder: placeholder(),
-                                   multiple: true,
-                                   url: endpoint.getUrl(),
-                                   getInitialValue: getInitialValue,
-                                 },
-                                 attr: { id: 'filter_' + name() }"></select>
+                <div data-bind="template: {
+                                  name: templateName,
+                                  data: $data,
+                                }"></div>
+
               </div>
             </div>
 

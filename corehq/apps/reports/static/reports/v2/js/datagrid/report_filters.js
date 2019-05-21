@@ -12,8 +12,14 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
 
         self.title = ko.observable(data.title);
         self.name = ko.observable(data.name);
-        self.value = ko.observableArray();
-        self.defaultValue = ko.observable(data.defaultValue);
+        self.widget = ko.observable(data.widget);
+
+        if (data.widget.indexOf('multi') > 0) {
+            self.value = ko.observableArray(data.value);
+        } else {
+            self.value = ko.observable(data.value);
+        }
+
         self.placeholder = ko.computed(function () {
             return _.template(gettext("Select <%= title %>..."))({ title: self.title() });
         });
@@ -25,6 +31,10 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
                 name: self.name(),
                 value: self.value(),
             };
+        });
+
+        self.templateName = ko.computed (function () {
+            return 'ko-' + self.widget();
         });
 
         self.getInitialValue = function () {

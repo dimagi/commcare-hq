@@ -42,6 +42,7 @@ class CaseTypeReportFilter(BaseReportFilter):
     title = ugettext_lazy("Case Type")
     name = 'report_case_type'
     endpoint_slug = CaseTypeEndpoint.slug
+    widget = ReportFilterWidget.SELECT2_SINGLE
 
     def get_filtered_query(self, query):
         return query.case_type(self.value)
