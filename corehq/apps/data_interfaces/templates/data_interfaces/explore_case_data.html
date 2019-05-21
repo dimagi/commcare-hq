@@ -190,9 +190,11 @@
                                    select2: {
                                      placeholder: '{% trans_html_attr "Select Property" %}',
                                      delay: 250,
+                                     allowClear: true,
                                      getInitialValue: getInitialNameValue,
-                                     url: $root.editColumnController.endpoint.getUrl(),
+                                     dataUrl: $root.editColumnController.endpoint.getUrl(),
                                      getData: $root.editColumnController.getData,
+                                     dataObservable: $root.editColumnController.columnNameOptions,
                                    }" ></select>
               </div>
               <!-- ko if: $root.editColumnController.showColumnFilters -->
