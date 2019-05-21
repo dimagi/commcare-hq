@@ -4,7 +4,7 @@
 hqDefine("reports/js/filters/select2s", [
     'jquery',
     'knockout',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko
@@ -25,35 +25,39 @@ hqDefine("reports/js/filters/select2s", [
                 url: $filter.data('url'),
                 type: 'POST',
                 dataType: 'json',
-                quietMills: 250,
-                data: function (term, page) {
+                delay: 250,
+                data: function (params) {
                     return {
-                        q: term,
-                        page: page,
+                        q: params.term,
+                        page: params.page,
                         handler: $filter.data('handler'),
                         action: $filter.data('action'),
                     };
                 },
-                results: function (data, page) {
+                processResults: function (data, params) {
+                    params.page = params.page || 1;
                     if (data.success) {
                         var limit = data.limit;
-                        var hasMore = (page * limit) < data.total;
+                        var hasMore = (params.page * limit) < data.total;
                         return {
                             results: data.items,
-                            more: hasMore,
+                            pagination: {
+                                more: hasMore,
+                            },
                         };
                     }
                 },
+                width: '100%',
             },
             allowClear: true,
-            initSelection: function (elem, callback) {
-                var val = $(elem).val();
-                callback({
-                    id: val,
-                    text: val,
-                });
-            },
+            placeholder: " ",
         });
+        var initial = $filter.data("selected");
+        if (initial) {
+            $filter.append(new Option(initial.text, initial.id));
+            $filter.val(initial.id);
+            $filter.trigger('change.select2');
+        }
     };
 
     var initMulti = function (el) {
@@ -65,7 +69,9 @@ hqDefine("reports/js/filters/select2s", [
         });
 
         if (!data.endpoint) {
-            $filter.select2();
+            $filter.select2({
+                width: '100%',
+            });
             return;
         }
 
@@ -88,28 +94,43 @@ hqDefine("reports/js/filters/select2s", [
          *      ]
          * }
          */
+        var pageLimit = 10;
         $filter.select2({
             ajax: {
                 url: data.endpoint,
                 dataType: 'json',
-                data: function (term, page) {
+                data: function (params) {
                     return {
-                        q: term,
-                        page_limit: 10,
-                        page: page,
+                        q: params.term,
+                        page_limit: pageLimit,
+                        page: params.page,
                     };
                 },
-                results: function (data, page) {
-                    var more = data.more || (page * 10) < data.total;
-                    return {results: data.results, more: more};
+                processResults: function (data, params) {
+                    // TODO: params.page should be || 1 everywhere probably
+                    params.page = params.page || 1;
+                    var more = data.more || data.pagination && data.pagination.more || (params.page * pageLimit) < data.total;
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: more,
+                        },
+                    };
                 },
-            },
-            initSelection: function (element, callback) {
-                callback(data.selected);
             },
             multiple: true,
             escapeMarkup: function (m) { return m; },
-        }).select2('val', data.selected);
+            width: '100%',
+        });
+
+        if (data.selected && data.selected.length) {
+            _.each(data.selected, function (item) {
+                $filter.append(new Option(item.text, item.id));
+            });
+            $filter.trigger({type: 'select2:select', params: { data: data.selected }});
+            $filter.val(_.map(data.selected, function (item) { return item.id }));
+            $filter.trigger('change.select2');
+        }
     };
 
     return {

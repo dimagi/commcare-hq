@@ -11,7 +11,7 @@
 
 {% block js %}{{ block.super }}
   {% compress js %}
-    <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v3.ko.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v4.ko.js' %}"></script>
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'reports/js/datepicker.js' %}"></script>
     <script src="{% static 'reports/js/hq_report.js' %}"></script>
@@ -29,8 +29,7 @@
     <script src="{% static 'data_interfaces/js/case_management.js' %}"></script>
     <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
     <script src="{% static 'hqpillow_retry/js/pillow_errors.js' %}"></script>
-    <script src="{% static 'reports/js/case_list.js' %}"></script>
-    <script src="{% static 'reports/js/submit_history.js' %}"></script>
+    <script src="{% static 'reports/js/inspect_data.js' %}"></script>
     <script src="{% static 'reports/js/project_health_dashboard.js' %}"></script>
     <script src="{% static 'reports/js/aggregate_user_status.js' %}"></script>
   {% endcompress %}
