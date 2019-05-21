@@ -5,7 +5,6 @@ from django.db import migrations
 import six
 
 from corehq.apps.case_importer.exceptions import TooManyMatches
-from corehq.apps.case_importer.models import CaseUploadRecord
 from corehq.apps.case_importer.tracking.task_status import (
     TaskStatusResultError,
 )
@@ -21,18 +20,20 @@ def iterator(queryset):
 
 
 def migrate_record_duplicates(apps, schema_editor):
+    CaseUploadRecord = apps.get_model('case_importer', 'CaseUploadRecord')
     for record in iterator(CaseUploadRecord.objects.all()):
-        result = record.task_status_json['result']
-        if result and 'too_many_matches' in result:
-            if result.pop('too_many_matches', 0):
-                result['errors'].append(
-                    TaskStatusResultError(
-                        title=TooManyMatches.title,
-                        description=six.text_type(TooManyMatches.message),
-                        rows=[],
-                    ).to_json()
-                )
-            record.save()
+        if record.task_status_json:
+            result = record.task_status_json.get('result')
+            if result and 'too_many_matches' in result:
+                if result.pop('too_many_matches', 0):
+                    result['errors'].append(
+                        TaskStatusResultError(
+                            title=TooManyMatches.title,
+                            description=six.text_type(TooManyMatches.message),
+                            rows=[],
+                        ).to_json()
+                    )
+                record.save()
 
 
 class Migration(migrations.Migration):
