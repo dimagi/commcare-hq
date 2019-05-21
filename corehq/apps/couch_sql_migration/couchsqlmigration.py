@@ -737,6 +737,9 @@ def _fix_replacement_form_problem_in_couch(doc):
         "migration. Original problem: %s" % problem,
     ))
     form.problem = None
+    old_form = XFormInstance.get(deprecated_id)
+    if old_form.initial_processing_complete and not form.initial_processing_complete:
+        form.initial_processing_complete = True
     form.save()
     return form.to_json()
 
