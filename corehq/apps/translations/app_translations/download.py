@@ -29,7 +29,7 @@ def get_bulk_app_single_sheet_by_name(app, lang):
         for module_row in get_module_rows([lang], module):
             rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
-        for form in module.forms:
+        for form in module.get_forms():
             sheet_name = get_form_sheet_name(form)
             rows.append(get_name_menu_media_row(form, sheet_name, lang))
             for label_name_media in get_form_question_label_name_media([lang], form):
