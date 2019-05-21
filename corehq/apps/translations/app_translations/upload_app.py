@@ -248,19 +248,6 @@ def _check_for_sheet_warnings(app, sheet, headers):
     missing_cols = _get_missing_cols(app, sheet, headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
 
-    # Backwards compatibility for old "filepath" header names
-    not_missing_cols = set()
-    for col in missing_cols:
-        for key, legacy in (
-            ('image_', 'icon_filepath_'),
-            ('audio_', 'audio_filepath_'),
-        ):
-            for lang in app.langs:
-                if key + lang in missing_cols and legacy + lang in extra_cols:
-                    not_missing_cols.add(key + lang)
-                    extra_cols.remove(legacy + lang)
-    missing_cols = missing_cols - not_missing_cols
-
     # Backwards compatibility for old "sheet_name" header
     extra_cols = extra_cols - {'sheet_name'}
     missing_cols = missing_cols - {'menu_or_form'}
@@ -321,17 +308,12 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
             self.update_translation_dict('default_', document.name, row)
 
             # Update menu media
-            # For backwards compatibility with previous code, accept old "filepath" header names
             for lang in self.langs:
                 image_header = 'image_%s' % lang
-                if image_header not in row:
-                    image_header = 'icon_filepath_%s' % lang
                 if image_header in row:
                     document.set_icon(lang, row[image_header])
 
                 audio_header = 'audio_%s' % lang
-                if audio_header not in row:
-                    audio_header = 'audio_filepath_%s' % lang
                 if audio_header in row:
                     document.set_audio(lang, row[audio_header])
 
