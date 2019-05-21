@@ -121,11 +121,11 @@ def get_form_sheet_name(form):
 
 
 def is_form_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' in identifier
+    return 'menu' in identifier and 'form' in identifier
 
 
 def is_module_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
+    return 'menu' in identifier and 'form' not in identifier
 
 
 def is_modules_and_forms_sheet(identifier):
@@ -159,7 +159,7 @@ def get_menu_or_form_by_unique_id(app, unique_id, sheet_name):
 
 
 def get_module_from_sheet_name(app, identifier):
-    module_index = int(identifier.replace("module", "").replace("menu", "")) - 1
+    module_index = int(identifier.replace("menu", "")) - 1
     try:
         return app.get_module(module_index)
     except ModuleNotFoundException:
@@ -201,7 +201,7 @@ def get_unicode_dicts(iterable):
 
 class BulkAppTranslationUpdater(object):
     '''
-        Class to help translatea particular model (app, module, or form).
+        Class to help translate a particular model (app, module, or form).
     '''
 
     def __init__(self, app, lang=None):

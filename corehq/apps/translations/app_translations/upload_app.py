@@ -208,7 +208,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
         raise BulkAppTranslationsException(_('Sheet "%s" was repeated. Only the first occurrence has been '
                                              'processed.') % sheet.worksheet.title)
 
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
     if expected_headers is None:
         raise BulkAppTranslationsException(_('Skipping sheet "%s", could not recognize title') %
                                            sheet.worksheet.title)
@@ -232,18 +232,10 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
                                                  expected=", ".join(expected_required_headers)))
 
 
-def _get_expected_headers(sheet, expected_sheets):
-    elif is_module_sheet(sheet.worksheet.title) or is_form_sheet(sheet.worksheet.title):
-        expected_headers = expected_sheets.get(sheet.worksheet.title.replace("module", "menu"), None)
-    else:
-        expected_headers = expected_sheets.get(sheet.worksheet.title, None)
-    return expected_headers
-
-
 def _check_for_sheet_warnings(app, sheet, headers):
     warnings = []
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
 
     missing_cols = _get_missing_cols(app, sheet, headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
@@ -267,7 +259,7 @@ def _check_for_sheet_warnings(app, sheet, headers):
 
 def _get_missing_cols(app, sheet, headers):
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_columns = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
     return set(expected_columns) - set(sheet.headers)
 
 
