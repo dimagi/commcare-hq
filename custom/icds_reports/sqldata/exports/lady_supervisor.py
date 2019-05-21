@@ -20,7 +20,7 @@ class LadySupervisorExport(ExportableMixin, IcdsSqlData):
             DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'),
             DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'),
             DatabaseColumn('Sector Name', SimpleColumn('supervisor_name'), slug='supervisor_name'),
-            DatabaseColumn('Name of Lady Supervisor', SimpleColumn('supervisor_site_code'),
+            DatabaseColumn('Lady Supervisor User ID', SimpleColumn('supervisor_site_code'),
                            slug='supervisor_site_code'),
             DatabaseColumn('Total No. of AWCs visited', SimpleColumn('awc_visits'), slug='awc_visits'),
             DatabaseColumn(

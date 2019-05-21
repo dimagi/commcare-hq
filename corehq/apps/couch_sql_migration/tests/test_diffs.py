@@ -435,6 +435,17 @@ class DiffTestCases(SimpleTestCase):
             FormJsonDiff('diff', ('case_attachments', 'xyz', 'properties'), 'value', 'eulav'),
         ])
 
+    def test_form_with_couch_attachments(self):
+        couch_form = {
+            "doc_type": "XFormInstance",
+            "_attachments": {'form.xml': {}},
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+        }
+        diffs = json_diff(couch_form, sql_form, track_list_indices=False)
+        self._test_form_diff_filter(couch_form, sql_form, REAL_DIFFS + diffs)
+
     def test_form_with_obsolete_location_id(self):
         couch_doc = {
             "doc_type": "XFormInstance",
@@ -452,3 +463,20 @@ class DiffTestCases(SimpleTestCase):
             )
         ]
         self._test_form_diff_filter(couch_doc, sql_doc, REAL_DIFFS + diffs)
+
+    def test_form_with_opened_by_diff(self):
+        couch_case = {
+            "doc_type": "XFormInstance",
+            "opened_by": "somebody",
+            "actions": [
+                {"action_type": "close"},
+                {"action_type": "rebuild"},
+            ],
+        }
+        sql_case = {
+            "doc_type": "XFormInstance",
+            "opened_by": "somebody else",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])

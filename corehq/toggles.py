@@ -952,28 +952,6 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
-NINETYNINE_DOTS = StaticToggle(
-    '99dots_integration',
-    'Enikshay: Enable access to 99DOTS',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-NIKSHAY_INTEGRATION = StaticToggle(
-    'nikshay_integration',
-    'Enikshay: Enable patient registration in Nikshay',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-BETS_INTEGRATION = StaticToggle(
-    'bets_repeaters',
-    'Enikshay: Enable BETS data forwarders',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_enabled={"enikshay"},
-)
-
 RETRY_SMS_INDEFINITELY = StaticToggle(
     'retry_sms_indefinitely',
     'Enikshay: Retry SMS indefinitely',
@@ -1328,7 +1306,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'icds-new', 'india', 'staging'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1385,13 +1363,6 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'include_metadata_in_ucr_excel_exports',
     'Include metadata in UCR excel exports',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
-)
-
-UATBC_ADHERENCE_TASK = StaticToggle(
-    'uatbc_adherence_calculations',
-    'Enikshay: This runs backend adherence calculations for enikshay domains',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1781,7 +1752,7 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
 )
 
 PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg'
+    'parallel_agg',
     'This makes the icds dashboard aggregation run on both distributed and monolith backends',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
