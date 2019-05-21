@@ -30,6 +30,8 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.currentPage = ko.observable(undefined);
         self.totalRecords = ko.observable(1);
 
+        self.resetPagination = ko.observable(false);
+
         self.limit.subscribe(function () {
             // needed to stay in sync with pagination widget
             // to prevent unnecessary reloads of data
@@ -40,7 +42,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             if (page !== self.currentPage() || self.hasLimitBeenModified()) {
                 self.currentPage(page);
                 self.hasLimitBeenModified(false);
-                self.loadRecords();
+                if (!self.resetPagination()) {
+                    self.loadRecords();
+                }
+                self.resetPagination(false);
             }
         };
 
@@ -72,10 +77,12 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 data: {
                     limit: self.limit(),
                     page: self.currentPage(),
+                    totalRecords: self.totalRecords(),
                     reportContext: JSON.stringify(self.reportContext()),
                 },
             })
                 .done(function (data) {
+                    self.resetPagination(data.resetPagination);
                     self.rows(data.rows);
                     self.totalRecords(data.totalRecords);
                     self._pushState();
