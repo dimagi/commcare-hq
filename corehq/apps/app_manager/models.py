@@ -3076,7 +3076,7 @@ class AdvancedModule(ModuleBase):
         if self.case_list.show:
             return True
 
-        for form in self.forms:
+        for form in self.get_forms():
             if any(action.case_type == self.case_type for action in form.actions.load_update_cases):
                 return True
 
