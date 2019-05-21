@@ -96,7 +96,7 @@ def migrate_tables(tables, source_db, source_host, source_user, target_db, targe
                 sys.exit(code)
         if table_sizes:
             progress += table_sizes[source_table]
-            print('Progress: {:.1f} ({} of {})'.format(100 * progress / total_size, progress, total_size))
+            print('Progress: {:.1f}% ({} of {})'.format(100 * progress / total_size, progress, total_size))
 
 
 def filter_tables_by_date(tables, start_date, end_date):
