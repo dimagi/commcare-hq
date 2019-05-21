@@ -9,7 +9,8 @@ from corehq.apps.reports.standard.cases.utils import (
     get_case_owners,
 )
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
-from corehq.apps.reports.v2.models import BaseReportFilter
+from corehq.apps.reports.v2.endpoints.case_type import CaseTypeEndpoint
+from corehq.apps.reports.v2.models import BaseReportFilter, ReportFilterWidget
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 
 
@@ -17,6 +18,7 @@ class CaseOwnerReportFilter(BaseReportFilter):
     title = ugettext_lazy("Case Owner(s)")
     name = 'report_case_owner'
     endpoint_slug = CaseOwnerEndpoint.slug
+    widget = ReportFilterWidget.SELECT2_MULTI_ASYNC
 
     def get_filtered_query(self, query):
         if self.request.can_access_all_locations and (
@@ -34,3 +36,12 @@ class CaseOwnerReportFilter(BaseReportFilter):
         # otherwise only return explicit matches
         case_owners = get_case_owners(self.request, self.domain, self.value)
         return query.owner(case_owners)
+
+
+class CaseTypeReportFilter(BaseReportFilter):
+    title = ugettext_lazy("Case Type")
+    name = 'report_case_type'
+    endpoint_slug = CaseTypeEndpoint.slug
+
+    def get_filtered_query(self, query):
+        return query.case_type(self.value)

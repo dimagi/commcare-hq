@@ -7,10 +7,14 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
 from corehq.apps.reports.v2.endpoints.case_properties import (
-    CasePropertiesEndpoint
+    CasePropertiesEndpoint,
 )
+from corehq.apps.reports.v2.endpoints.case_type import CaseTypeEndpoint
 from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
-from corehq.apps.reports.v2.filters.case_report import CaseOwnerReportFilter
+from corehq.apps.reports.v2.filters.case_report import (
+    CaseOwnerReportFilter,
+    CaseTypeReportFilter,
+)
 from corehq.apps.reports.v2.filters.xpath_column import (
     TextXpathColumnFilter,
     NumericXpathColumnFilter,
@@ -36,6 +40,7 @@ class ExploreCaseDataReport(BaseReport):
     options_endpoints = (
         CasePropertiesEndpoint,
         CaseOwnerEndpoint,
+        CaseTypeEndpoint,
     )
 
     columns = [
@@ -59,6 +64,7 @@ class ExploreCaseDataReport(BaseReport):
 
     report_filters = [
         CaseOwnerReportFilter,
+        CaseTypeReportFilter,
     ]
 
     initial_report_filters = [
