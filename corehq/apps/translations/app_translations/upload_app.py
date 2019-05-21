@@ -24,7 +24,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_menu_or_form_by_sheet_name,
     get_menu_or_form_by_unique_id,
 )
-from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
 from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
@@ -233,8 +233,6 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
 
 
 def _get_expected_headers(sheet, expected_sheets):
-    if sheet.worksheet.title == LEGACY_MODULES_AND_FORMS_SHEET_NAME:
-        expected_headers = expected_sheets.get(MODULES_AND_FORMS_SHEET_NAME, None)
     elif is_module_sheet(sheet.worksheet.title) or is_form_sheet(sheet.worksheet.title):
         expected_headers = expected_sheets.get(sheet.worksheet.title.replace("module", "menu"), None)
     else:
