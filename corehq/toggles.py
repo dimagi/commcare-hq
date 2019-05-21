@@ -1744,6 +1744,13 @@ IMPROVED_ASR_REPORT = StaticToggle(
     [NAMESPACE_USER]
 )
 
+MANAGE_CCZ_HOSTING = StaticToggle(
+    'manage_ccz_hosting',
+    'Allow project to configure ccz hosting',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
     'load_dashboard_from_citus',
     'Use CitusDB for loading ICDS Dashboard',
