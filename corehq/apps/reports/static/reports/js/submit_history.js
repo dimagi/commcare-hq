@@ -6,22 +6,29 @@ hqDefine("reports/js/submit_history", ['jquery', 'analytix/js/kissmetrix', 'hqwe
                     kissAnalytics.track.event("Clicked View Form in Submit History Report");
                 });
                 var userTypes = initialPageData.get('user_types');
-                var selector = "#paramSelectorForm input[name='emw']";
+                var selector = "#paramSelectorForm select[name='emw']";
                 $(document).on('click', '#apply-filters', function () {
-                    kissAnalytics.track.event("[Submit History Report] Clicked Apply",
-                        {"filters": _.map($(selector).val().split(','),
-                            function (item, index) {
-                                if (item.substring(0,3) === "t__") { return userTypes[item.substring(3)]; }
-                                else if (item.substring(0,3) === "u__") {
-                                    if ($(selector).select2("data")[index].is_active)
-                                    {return item + " [Active]"; }
-                                    else
-                                    {return item + " [Deactivated]"; }
-                                }
-                                else { return item; }
+                    var typePrefix = "t__",
+                        userPrefix = "u__";
+                    kissAnalytics.track.event("[Submit History Report] Clicked Apply", {
+                        "filters": _.map($(selector).select2("data"), function (item) {
+                            if (item.id.startsWith(typePrefix)) {
+                                return userTypes[item.id.substring(typePrefix.length)];
                             }
-                        ).join()}
-                    );
+                            else if (item.id.startsWith(userPrefix)) {
+                                // TODO: when there's an initial value, the is_active flag isn't part of it,
+                                // so .select2('data') doesn't pick it up and the worker is always marked as deactivated
+                                if (item.is_active) {
+                                    return item.id + " [Active]";
+                                } else {
+                                    return item.id + " [Deactivated]";
+                                }
+                            }
+                            else {
+                                return item.id;
+                            }
+                        }).join(),
+                    });
                 });
             }
         });
