@@ -10,6 +10,7 @@ from mock import patch
 from tastypie.models import ApiKey
 
 from corehq.apps.api.odata.tests.utils import OdataTestMixin
+from corehq.apps.api.odata.views import ODataCaseMetadataView
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -20,7 +21,7 @@ PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
 class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
 
-    view_urlname = 'odata_meta'
+    view_urlname = ODataCaseMetadataView.urlname
 
     @classmethod
     def setUpClass(cls):
