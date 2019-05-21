@@ -237,7 +237,7 @@ def _check_for_sheet_warnings(app, sheet, headers):
     expected_sheets = {h[0]: h[1] for h in headers}
     expected_headers = expected_sheets.get(sheet.worksheet.title, None)
 
-    missing_cols = _get_missing_cols(app, sheet, headers)
+    missing_cols = set(expected_headers) - set(sheet.headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
 
     if len(missing_cols) > 0:
@@ -251,12 +251,6 @@ def _check_for_sheet_warnings(app, sheet, headers):
             % (sheet.worksheet.title, ", ".join(extra_cols)))
 
     return warnings
-
-
-def _get_missing_cols(app, sheet, headers):
-    expected_sheets = {h[0]: h[1] for h in headers}
-    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
-    return set(expected_columns) - set(sheet.headers)
 
 
 class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
