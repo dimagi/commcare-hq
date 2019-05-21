@@ -9,6 +9,9 @@ from corehq.blobs import get_blob_db, CODES
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
+from custom.icds.tasks.hosted_ccz import (
+    setup_ccz_file_for_hosting,
+)
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(minute=0, hour='22'))
