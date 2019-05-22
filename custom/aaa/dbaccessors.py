@@ -262,7 +262,7 @@ class PregnantWomanQueryHelper(object):
                 woman.domain = %(domain)s AND
                 {location_where}
                 (daterange(%(start_date)s, %(end_date)s) && ANY(pregnant_ranges)) AND
-                ccs_record.add < %(start_date)s
+                (ccs_record.add < %(start_date)s or ccs_record.add is NULL)
             ) ORDER BY {sort_col}
         """.format(
             location_where=location_query,
