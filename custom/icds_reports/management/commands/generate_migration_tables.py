@@ -10,6 +10,7 @@ from sqlalchemy import inspect as sqlinspect
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, UCR_TABLE_PREFIX
 from corehq.sql_db.connections import connection_manager
+from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.management.commands.create_citus_child_tables import keep_child_tables, plain_tables, \
     drop_child_tables, get_parent_child_mapping
 from custom.icds_reports.models import AggregateSQLProfile
@@ -64,7 +65,7 @@ class Command(BaseCommand):
                 for line in self.get_table_date_target(insp, table, all_in_parent=True):
                     self.stdout.write(','.join(line))
 
-            for datasource in StaticDataSourceConfiguration.by_domain('icds-cas'):
+            for datasource in StaticDataSourceConfiguration.by_domain(DASHBOARD_DOMAIN):
                 adapter = get_indicator_adapter(datasource)
                 table_name = adapter.get_table().name
 
@@ -77,7 +78,7 @@ class Command(BaseCommand):
 
             all_tables = get_all_tables(source_conn)
             remaining_tables = all_tables - self.seen_tables - IGNORE_TABLES
-            icds_ucr_prefix = '{}{}_'.format(UCR_TABLE_PREFIX, 'icds-cas')
+            icds_ucr_prefix = '{}{}_'.format(UCR_TABLE_PREFIX, DASHBOARD_DOMAIN)
 
             def keep_table(table):
                 root_table = self.child_parent_mapping.get(table, table)
