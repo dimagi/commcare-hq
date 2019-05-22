@@ -124,13 +124,14 @@
       <thead>
         <tr>
           <!-- ko foreach: columns -->
-          <th data-bind="style: { width: width() + 'px' }">
-            <span data-bind="text: title"></span>
-            <button type="button"
-                    class="btn btn-default"
-                    data-bind="click: $root.editColumnController.set">
-              {% trans "Edit" %}
-            </button>
+          <th data-bind="style: { width: width() + 'px' },
+                         columnResize: width">
+            <a class="datagrid-edit-link"
+               href="#"
+               data-bind="click: $root.editColumnController.set">
+              <span data-bind="text: title"></span>
+              <i class="fa fa-pencil"></i>
+            </a>
           </th>
           <!-- /ko -->
           <th>

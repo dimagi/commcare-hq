@@ -171,4 +171,52 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
         },
     };
 
+    ko.bindingHandlers.columnResize = {
+        /**
+         * Makes any table column header resizeable when passed an observable
+         * that sets the width of that column in the value accessor.
+         *
+         * example:
+         * <th data-bind="style: { width: width() + 'px' },
+         *                columnResize: width"> ... </th>
+         *
+         * @param element - the column header (th) element
+         * @param valueAccessor - observable that sets the width of the column
+         */
+        init: function (element, valueAccessor) {
+            var $column = $(element),
+                columnWidth = valueAccessor(),
+                $grip = $('<div class="grip">');
+
+            $column.css('position', 'relative');
+
+            $grip
+                .css('width', '15px')
+                .css('cursor', 'col-resize')
+                .css('top', '0')
+                .css('right', '0')
+                .css('bottom', '0')
+                .css('position', 'absolute');
+
+            $grip.on('mousedown', function (e) {
+                window.datagridColumnOffset = columnWidth() - e.pageX;
+                window.datagridColumnWidth = columnWidth;
+            });
+
+            $column.append($grip);
+        },
+    };
+
+    $(document).on('mousemove', function (e) {
+        // needed for columnResize bindingHandler
+        if (window.datagridColumnWidth) {
+            window.datagridColumnWidth(window.datagridColumnOffset + e.pageX);
+        }
+    });
+
+    $(document).on('mouseup', function () {
+        // needed for columnResize bindingHandler
+        window.datagridColumnWidth = undefined;
+    });
+
 });
