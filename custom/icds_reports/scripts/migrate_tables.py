@@ -169,7 +169,7 @@ class Migrator(object):
 
         self.db = Database(self.db_path)
 
-    def run(self):
+    def run(self, max_concurrent):
         with self.db:
             if self.only_table:
                 table = self.db.get_table(self.only_table)
@@ -181,9 +181,9 @@ class Migrator(object):
                 raise Exception("No table to migrate")
 
             if self.dry_run or _confirm('Preparing to migrate {} tables.'.format(len(tables))):
-                self.migrate_tables(tables)
+                self.migrate_tables(tables, max_concurrent)
 
-    def migrate_tables(self, tables):
+    def migrate_tables(self, tables, max_concurrent):
         table_sizes = None
         total_size = None
         progress = float(0)
@@ -208,7 +208,7 @@ class Migrator(object):
         commands = self.get_dump_load_commands(tables)
 
         total_tables = len(tables)
-        pool = MigrationPool(5)
+        pool = MigrationPool(max_concurrent)
         for table_index, [source_table, target_table, cmd] in enumerate(commands):
             if not self.dry_run and (not self.confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
                 complete = pool.run(TableMigration(source_table, cmd))
@@ -338,6 +338,12 @@ def main():
         action='store_true',
         help='Only output the commands.',
     )
+    parser.add_argument(
+        '--parallel',
+        type=int,
+        default=1,
+        help='How many commands to run in parallel',
+    )
 
     args = parser.parse_args()
 
@@ -347,7 +353,7 @@ def main():
         args.start_date, args.end_date,
         args.start_after_table, args.table, args.confirm, args.dry_run
     )
-    migrator.run()
+    migrator.run(args.parallel)
 
 
 if __name__ == "__main__":
