@@ -72,6 +72,8 @@ def get_sql_scripts(state_id):
         # some forms are from deleted locations, so loc table doesn't have data on some rows
         _table_name('static-usage_forms'),
         _table_name('static-child_tasks_cases'),
+        _table_name('static-ccs_record_cases_monthly_v2'),
+        _table_name('static-child_cases_monthly_v2'),
         'child_health_monthly',
         'daily_attendance',
         AGG_INFRASTRUCTURE_TABLE,
