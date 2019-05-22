@@ -4,13 +4,14 @@ from __future__ import unicode_literals
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
 from corehq.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
+from six.moves import range
 
 
 DEFAULT_WORKER_POOL_SIZE = 10
@@ -77,6 +78,15 @@ class Command(BaseCommand):
                 "parameter. Example value: 20180109-20190109"
             ),
         )
+        add_argument(
+            '--process_day_by_day',
+            action='store_true',
+            default=False,
+            help=(
+                "Run migration for each day in the given date-range separately "
+                "to allow cancelling and resuming on any day. Only applicable with date-range option"
+            ),
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
@@ -124,14 +134,31 @@ class Command(BaseCommand):
             assert not os.path.exists(summary_file), summary_file
             assert not os.path.exists(log_file), log_file
 
-        with tee_output(summary_file):
-            try:
-                total, skips = migrator.migrate(log_file, **options)
-                if skips:
-                    sys.exit(skips)
-            except KeyboardInterrupt:
-                print("stopped by operator")
-                sys.exit(1)
+        def _migrate():
+            with tee_output(summary_file):
+                try:
+                    total, skips = migrator.migrate(log_file, **options)
+                    if skips:
+                        sys.exit(skips)
+                except KeyboardInterrupt:
+                    print("stopped by operator")
+                    if options.get('date_range'):
+                        print("while processing date range {}".format(options['date_range']))
+                    sys.exit(1)
+
+        process_day_by_day = options.pop('process_day_by_day')
+        if 'date_range' in options and process_day_by_day:
+            start, end = options.pop('date_range')
+            num_days = (end - start).days
+            for day in range(num_days + 1):
+                date = start + timedelta(days=day)
+                options['date_range'] = (date, date)
+                print("Migrating for date {} ".format(date))
+                _migrate()
+                print("Finished migration for date {} ".format(date))
+        else:
+            _migrate()
+
 
 
 def get_date(value):

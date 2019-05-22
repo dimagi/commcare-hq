@@ -5,6 +5,7 @@
 #    `make requirements` or `make upgrade-requirements`
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+-e git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
 alabaster==0.7.12         # via sphinx
 alembic==0.8.6
@@ -21,7 +22,6 @@ boto3==1.9.143
 botocore==1.12.143
 cairocffi==0.9.0
 cairosvg==1.0.22
-celery==4.1.1
 certifi==2019.3.9
 cffi==1.12.3
 chardet==3.0.4
@@ -86,11 +86,11 @@ fixture==1.5.11
 freezegun==0.3.11
 funcsigs==1.0.2
 future==0.17.1            # via commonmark
-gevent==1.2.2
+gevent==1.4.0
 ghdiff==0.4
 gnureadline==6.3.8
 graphviz==0.7
-greenlet==0.4.12
+greenlet==0.4.15
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1

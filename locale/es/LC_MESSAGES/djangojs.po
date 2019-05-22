@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-14 20:07+0000\n"
+"POT-Creation-Date: 2019-05-21 19:04+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -351,7 +351,7 @@ msgstr ""
 "Debe empezar con letras y puede incluir solo letras, números,  '-' y '_' "
 
 #: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js:6
-#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:349
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:350
 msgid ""
 "Sorry, something went wrong with the download. If you see this repeatedly "
 "please report an issue."
@@ -3440,10 +3440,8 @@ msgid "Failed to re-process"
 msgstr "Reproceso fallido"
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:18
-#, fuzzy
-#| msgid "Select a language..."
 msgid "Select <%= title %>..."
-msgstr "Seleccionar un idioma..."
+msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
@@ -3735,51 +3733,7 @@ msgstr "¿Está seguro que desea eliminar esta invitación?"
 msgid "Requeued"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:29
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:30
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:97
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:98
-msgid "There are no messages to display."
-msgstr "No hay mensajes que mostrar."
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:31
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:99
-msgid "Show _MENU_ messages per page"
-msgstr "Mostrar_MENÚ_mensajes por página"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:32
-msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
-msgstr "Mostrando_INICIO_ a _FIN_ del _TOTAL_ de transmisiones"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:33
-msgid "(filtered from _MAX_ total broadcasts)"
-msgstr "(filtrado de _MAX_ total de transmisiones)"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:62
-msgid "Active"
-msgstr "Activo"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:64
-msgid "Inactive"
-msgstr "Inactivo"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:74
-msgid "Deactivate"
-msgstr "Desactivar"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:77
-msgid "Activate"
-msgstr "Activo"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:100
-msgid "Showing _START_ to _END_ of _TOTAL_ messages"
-msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_ de mensajes"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:101
-msgid "(filtered from _MAX_ total messages)"
-msgstr "(filtrado del _MAX_total de mensajes)"
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:154
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:28
 msgid "Are you sure you want to delete this scheduled message?"
 msgstr ""
 
@@ -3969,5 +3923,32 @@ msgstr ""
 msgid "Search Locations..."
 msgstr ""
 
-#~ msgid "Select"
-#~ msgstr "Seleccione"
+#~ msgid "There are no messages to display."
+#~ msgstr "No hay mensajes que mostrar."
+
+#~ msgid "Show _MENU_ messages per page"
+#~ msgstr "Mostrar_MENÚ_mensajes por página"
+
+#~ msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
+#~ msgstr "Mostrando_INICIO_ a _FIN_ del _TOTAL_ de transmisiones"
+
+#~ msgid "(filtered from _MAX_ total broadcasts)"
+#~ msgstr "(filtrado de _MAX_ total de transmisiones)"
+
+#~ msgid "Active"
+#~ msgstr "Activo"
+
+#~ msgid "Inactive"
+#~ msgstr "Inactivo"
+
+#~ msgid "Deactivate"
+#~ msgstr "Desactivar"
+
+#~ msgid "Activate"
+#~ msgstr "Activo"
+
+#~ msgid "Showing _START_ to _END_ of _TOTAL_ messages"
+#~ msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_ de mensajes"
+
+#~ msgid "(filtered from _MAX_ total messages)"
+#~ msgstr "(filtrado del _MAX_total de mensajes)"
