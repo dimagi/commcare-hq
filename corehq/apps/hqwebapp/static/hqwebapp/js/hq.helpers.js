@@ -155,6 +155,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
         }
         ko.applyBindings(context, this.get(0));
         this.removeClass('ko-template');
+        $('.ko-loading').addClass('hide');
     };
 
     $.ajaxSetup({
