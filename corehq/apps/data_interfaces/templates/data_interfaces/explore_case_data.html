@@ -135,11 +135,13 @@
           </th>
           <!-- /ko -->
           <th>
-            <button class="btn btn-default"
-                    type="button"
-                    data-bind="click: $root.editColumnController.setNew">
-              {% trans "Add Column" %}
-            </button>
+            <a class="datagrid-add-link"
+               href="#"
+               type="button"
+               data-bind="click: $root.editColumnController.setNew">
+              <i class="fa fa-plus-circle"></i>
+              {% trans "Add" %}
+            </a>
           </th>
         </tr>
       </thead>
