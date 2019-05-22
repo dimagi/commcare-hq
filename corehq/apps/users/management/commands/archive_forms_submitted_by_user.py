@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import print_function
 
 from io import open
 from six.moves import input
@@ -23,8 +24,8 @@ class Command(BaseCommand):
         response = input("Are you sure you want to archive them? (yes to proceed)")
         if response == 'yes':
             with open("archived_forms_for_user_%s.txt" % user_id, 'wb') as log:
-                for _ids in chunked(with_progress_bar(form_ids), 100):
-                    _ids = list([_f for _f in _ids if _f])
-                    for form in form_accessor.get_forms(_ids):
+                for ids in chunked(with_progress_bar(form_ids), 100):
+                    ids = list([f for f in ids if f])
+                    for form in form_accessor.get_forms(ids):
                         log.write(form.form_id + '\n')
                         form.archive()
