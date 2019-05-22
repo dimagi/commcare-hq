@@ -46,12 +46,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('output_database')
         parser.add_argument(
-            '--source-db-alias', default='icds-ucr',
+            '--source-engine-id', default='icds-ucr',
             help='Django alias for source database'
         )
 
-    def handle(self, output_database, source_db_alias, **options):
-        with connection_manager.get_engine(source_db_alias).begin() as conn:
+    def handle(self, output_database, source_engine_id, **options):
+        with connection_manager.get_engine(source_engine_id).begin() as conn:
             self.parent_child_mapping = get_parent_child_mapping(conn)
             self.child_parent_mapping = {
                 child: parent
@@ -63,7 +63,7 @@ class Command(BaseCommand):
         self.db = sqlite3.connect(output_database)
         try:
             self.setup_sqlite_db()
-            self.generate_dump_script(source_db_alias)
+            self.generate_dump_script(source_engine_id)
             self.stdout.write("\n{} tables processed\n".format(self.table_count))
         finally:
             self.db.close()
@@ -80,10 +80,10 @@ class Command(BaseCommand):
         with self.db:
             self.db.execute('INSERT INTO tables(source_table, date, target_table) values (?,?,?)', row)
 
-    def generate_dump_script(self, source_db_alias):
+    def generate_dump_script(self, source_engine_id):
         self.seen_tables = set()
 
-        source_engine = connection_manager.get_engine(source_db_alias)
+        source_engine = connection_manager.get_engine(source_engine_id)
         # direct dump and load from parent + child tables
         with source_engine.begin() as source_conn:
             insp = sqlinspect(source_conn)
@@ -98,15 +98,16 @@ class Command(BaseCommand):
                     self.insert_row(line)
 
             for datasource in StaticDataSourceConfiguration.by_domain(DASHBOARD_DOMAIN):
-                adapter = get_indicator_adapter(datasource)
-                table_name = adapter.get_table().name
+                if source_engine_id == datasource.engine_id or source_engine_id in datasource.mirrored_engine_ids:
+                    adapter = get_indicator_adapter(datasource)
+                    table_name = adapter.get_table().name
 
-                # direct dump and load from parent
-                # dump from all child tables into parent table
-                #  - if table is distrubuted, citus will distribute the data
-                #  - if table is partitioned the triggers on the parent will distribute the data
-                for line in self.get_table_date_target(insp, table_name, all_in_parent=True):
-                    self.insert_row(line)
+                    # direct dump and load from parent
+                    # dump from all child tables into parent table
+                    #  - if table is distrubuted, citus will distribute the data
+                    #  - if table is partitioned the triggers on the parent will distribute the data
+                    for line in self.get_table_date_target(insp, table_name, all_in_parent=True):
+                        self.insert_row(line)
 
             all_tables = get_all_tables(source_conn)
             remaining_tables = all_tables - self.seen_tables - IGNORE_TABLES
