@@ -127,7 +127,7 @@ class ConditionalAlertUploader(object):
             ScheduleForm.SEND_IMMEDIATELY: lambda: None, # TODO: self.save_immediate_schedule,
             ScheduleForm.SEND_DAILY: self.save_daily_schedule,
             ScheduleForm.SEND_WEEKLY: self.save_weekly_schedule,
-            ScheduleForm.SEND_MONTHLY: lambda: None, # TODO: self.save_monthly_schedule,
+            ScheduleForm.SEND_MONTHLY: self.save_monthly_schedule,
             ScheduleForm.SEND_CUSTOM_DAILY: lambda: None, # TODO:, self.save_custom_daily_schedule,
             ScheduleForm.SEND_CUSTOM_IMMEDIATE: lambda: None, # TODO: self.save_custom_immediate_schedule,
         }[send_frequency](schedule, message)
@@ -155,6 +155,19 @@ class ConditionalAlertUploader(object):
             repeat_every=schedule.repeat_every,
         )
 
+    def save_monthly_schedule(self, schedule, message):
+        # Negative numbers are used for monthly schedules.
+        # See comment on TimedSchedule.repeat_every
+        repeat_every = schedule.repeat_every * -1
+
+        schedule = schedule.set_simple_monthly_schedule(
+            schedule.memoized_events[0],
+            [e.day for e in schedule.memoized_events],
+            SMSContent(message=message),
+            total_iterations=schedule.total_iterations,
+            extra_options=schedule.get_extra_scheduling_options(),
+            repeat_every=repeat_every,
+        )
 
 
 class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
