@@ -37,6 +37,11 @@ from corehq.util.workbook_json.excel import get_workbook
 class TestBulkConditionalAlerts(TestCase):
     domain = 'bulk-conditional-alert-test'
 
+    EMAIL_RULE = 'email_rule'
+    UNTRANSLATED_RULE = 'untranslated_rule'
+    DAILY_RULE = 'daily_rule'
+    WEEKLY_RULE = 'weekly_rule'
+
     @classmethod
     def setUpClass(cls):
         super(TestBulkConditionalAlerts, cls).setUpClass()
@@ -49,17 +54,23 @@ class TestBulkConditionalAlerts(TestCase):
         cls.langs = ['en', 'es']
 
     def setUp(self):
-        self._translated_rule = self._add_rule(SMSContent(message={
-            'en': 'Diamonds and Rust',
-            'es': 'Diamantes y Óxido',
-        }))
-        self._untranslated_rule = self._add_rule(SMSContent(message={
-            '*': 'Joan',
-        }))
-        self._email_rule = self._add_rule(EmailContent(
-            subject={'*': 'You just won something'},
-            message={'*': 'This is a scam'},
-        ))
+        self._rules = {
+            self.EMAIL_RULE: self._add_daily_rule(EmailContent(
+                subject={'*': 'You just won something'},
+                message={'*': 'This is a scam'},
+            )),
+            self.UNTRANSLATED_RULE: self._add_daily_rule(SMSContent(message={
+                '*': 'Joan',
+            })),
+            self.DAILY_RULE: self._add_daily_rule(SMSContent(message={
+                'en': 'Diamonds and Rust',
+                'es': 'Diamantes y Óxido',
+            })),
+            self.WEEKLY_RULE: self._add_weekly_rule(SMSContent(message={
+                'en': 'It\'s Too Late',
+                'es': 'Es Demasiado Tarde',
+            })),
+        }
 
     @classmethod
     def tearDownClass(cls):
@@ -76,49 +87,56 @@ class TestBulkConditionalAlerts(TestCase):
 
         delete_timed_schedules(self.domain)
 
-    @property
-    def translated_rule(self):
-        return AutomaticUpdateRule.objects.get(id=self._translated_rule.id)
-
-    @property
-    def untranslated_rule(self):
-        return AutomaticUpdateRule.objects.get(id=self._untranslated_rule.id)
-
-    @property
-    def email_rule(self):
-        return AutomaticUpdateRule.objects.get(id=self._email_rule.id)
+    def _get_rule(self, type):
+        return AutomaticUpdateRule.objects.get(id=self._rules[type].id)
 
     def _assertPatternIn(self, pattern, collection):
         self.assertTrue(any(re.match(pattern, item) for item in collection))
 
-    def _add_rule(self, content):
+    def _add_daily_rule(self, content):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
             TimedEvent(time=time(9, 0)),
             content
         )
+        return self._add_rule(schedule)
 
+    def _add_weekly_rule(self, content):
+        schedule = TimedSchedule.create_simple_weekly_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            content,
+            [0, 4],
+            0,
+            total_iterations=3,
+            repeat_every=2,
+        )
+        return self._add_rule(schedule)
+
+    def _add_rule(self, schedule):
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         self.addCleanup(rule.delete)
-
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             timed_schedule_id=schedule.schedule_id,
             recipients=(('CommCareUser', self.user.get_id),)
         )
-
         rule.save()
-
         return rule
 
     def test_download(self):
         (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, self.langs)
 
-        self.assertEqual(len(translated_rows), 1)
-        self.assertListEqual(translated_rows[0][1:], ['test', 'person', 'Diamonds and Rust', 'Diamantes y Óxido'])
-
+        self.assertEqual(len(translated_rows), 2)
         self.assertEqual(len(untranslated_rows), 1)
-        self.assertListEqual(untranslated_rows[0][1:], ['test', 'person', 'Joan'])
+
+        rows_by_id = {row[0]: row[1:] for row in translated_rows + untranslated_rows}
+        self.assertListEqual(rows_by_id[self._get_rule(self.UNTRANSLATED_RULE).id],
+                                       ['test', 'person', 'Joan'])
+        self.assertListEqual(rows_by_id[self._get_rule(self.DAILY_RULE).id],
+                                       ['test', 'person', 'Diamonds and Rust', 'Diamantes y Óxido'])
+        self.assertListEqual(rows_by_id[self._get_rule(self.WEEKLY_RULE).id],
+                                       ['test', 'person', 'It\'s Too Late', 'Es Demasiado Tarde'])
 
     def test_upload(self):
         headers = (
@@ -127,14 +145,15 @@ class TestBulkConditionalAlerts(TestCase):
         )
         data = (
             ("translated", (
-                (self.translated_rule.id, 'test translated', 'song', 'Rustier', 'Más Oxidado'),
-                (self.untranslated_rule.id, 'test wrong sheet', 'wrong', 'wrong'),
-                (self.email_rule.id, 'test email', 'song', 'Email content', 'does not fit'),
+                (self._get_rule(self.DAILY_RULE).id, 'test daily', 'song', 'Rustier', 'Más Oxidado'),
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test wrong sheet', 'wrong', 'wrong'),
+                (self._get_rule(self.EMAIL_RULE).id, 'test email', 'song', 'Email content', 'does not fit'),
                 (1000, 'Not a rule', 'person'),
+                (self._get_rule(self.WEEKLY_RULE).id, 'test weekly', 'song', 'It\'s On Time', 'Está a Tiempo'),
             )),
             ("not translated", (
-                (self.untranslated_rule.id, 'test untranslated', 'song', 'Joanie'),
-                (self.translated_rule.id, 'test wrong sheet', 'wrong', 'wrong', 'wrong')
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
+                (self._get_rule(self.DAILY_RULE).id, 'test wrong sheet', 'wrong', 'wrong', 'wrong'),
             )),
         )
         file = BytesIO()
@@ -150,26 +169,37 @@ class TestBulkConditionalAlerts(TestCase):
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'translated' sheet.", msgs)
             self._assertPatternIn(r"Row 4 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
             self._assertPatternIn(r"Could not find rule for row 5 in 'translated' sheet, with id \d+", msgs)
-            self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
+            self.assertIn("Updated 2 rule(s) in 'translated' sheet", msgs)
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'not translated' sheet.", msgs)
             self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
 
-            self.assertEqual(self.translated_rule.name, 'test translated')
-            self.assertEqual(self.translated_rule.case_type, 'song')
-            self.assertEqual(self.untranslated_rule.name, 'test untranslated')
-            self.assertEqual(self.untranslated_rule.case_type, 'song')
-
-            translated_message = ContentForm.compute_initial(
-                self.translated_rule.get_messaging_rule_schedule().memoized_events[0].content
+            untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
+            self.assertEqual(untranslated_rule.name, 'test untranslated')
+            self.assertEqual(untranslated_rule.case_type, 'song')
+            untranslated_message = ContentForm.compute_initial(
+                untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
             )['message']
-            self.assertEqual(translated_message, {
+            self.assertEqual(untranslated_message, {
+                '*': 'Joanie',
+            })
+
+            # TODO: assert that schedules were preserved
+            daily_rule = self._get_rule(self.DAILY_RULE)
+            self.assertEqual(daily_rule.name, 'test daily')
+            self.assertEqual(daily_rule.case_type, 'song')
+            daily_message = ContentForm.compute_initial(
+                daily_rule.get_messaging_rule_schedule().memoized_events[0].content
+            )['message']
+            self.assertEqual(daily_message, {
                 'en': 'Rustier',
                 'es': 'Más Oxidado',
             })
 
-            untranslated_message = ContentForm.compute_initial(
-                self.untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
+            weekly_rule = self._get_rule(self.WEEKLY_RULE)
+            weekly_message = ContentForm.compute_initial(
+                weekly_rule.get_messaging_rule_schedule().memoized_events[0].content
             )['message']
-            self.assertEqual(untranslated_message, {
-                '*': 'Joanie',
+            self.assertEqual(weekly_message, {
+                'en': 'It\'s On Time',
+                'es': 'Está a Tiempo',
             })

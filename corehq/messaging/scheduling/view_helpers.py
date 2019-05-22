@@ -128,31 +128,35 @@ class ConditionalAlertUploader(object):
         {
             ScheduleForm.SEND_IMMEDIATELY: lambda: None, # TODO: self.save_immediate_schedule,
             ScheduleForm.SEND_DAILY: self.save_daily_schedule,
-            ScheduleForm.SEND_WEEKLY: lambda: None, # TODO: self.save_weekly_schedule,
+            ScheduleForm.SEND_WEEKLY: self.save_weekly_schedule,
             ScheduleForm.SEND_MONTHLY: lambda: None, # TODO: self.save_monthly_schedule,
             ScheduleForm.SEND_CUSTOM_DAILY: lambda: None, # TODO:, self.save_custom_daily_schedule,
             ScheduleForm.SEND_CUSTOM_IMMEDIATE: lambda: None, # TODO: self.save_custom_immediate_schedule,
         }[send_frequency](schedule, message)
 
     def save_daily_schedule(self, schedule, message):
-        extra_scheduling_options = {
-            'active': schedule.active,
-            'default_language_code': schedule.default_language_code,
-            'include_descendant_locations': schedule.include_descendant_locations,
-            'location_type_filter': schedule.location_type_filter,
-            'use_utc_as_default_timezone': schedule.use_utc_as_default_timezone,
-            'user_data_filter': schedule.user_data_filter,
-        }
-
         TimedSchedule.assert_is(schedule)
         schedule.set_simple_daily_schedule(
             schedule.memoized_events[0],
             SMSContent(message=message),
             total_iterations=schedule.total_iterations,
             start_offset=schedule.start_offset,
-            extra_options=extra_scheduling_options,
+            extra_options=schedule.get_extra_scheduling_options(),
             repeat_every=schedule.repeat_every,
         )
+
+    def save_weekly_schedule(self, schedule, message):
+        TimedSchedule.assert_is(schedule)
+        schedule.set_simple_weekly_schedule(
+            schedule.memoized_events[0],
+            SMSContent(message=message),
+            [e.day for e in schedule.memoized_events],
+            schedule.start_day_of_week,
+            total_iterations=schedule.total_iterations,
+            extra_options=schedule.get_extra_scheduling_options(),
+            repeat_every=schedule.repeat_every,
+        )
+
 
 
 class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
