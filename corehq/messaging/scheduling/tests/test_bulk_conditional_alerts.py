@@ -176,10 +176,8 @@ class TestBulkConditionalAlerts(TestCase):
             untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
             self.assertEqual(untranslated_rule.name, 'test untranslated')
             self.assertEqual(untranslated_rule.case_type, 'song')
-            untranslated_message = ContentForm.compute_initial(
-                untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
-            )['message']
-            self.assertEqual(untranslated_message, {
+            untranslated_content = untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
+            self.assertEqual(untranslated_content.message, {
                 '*': 'Joanie',
             })
 
@@ -187,19 +185,15 @@ class TestBulkConditionalAlerts(TestCase):
             daily_rule = self._get_rule(self.DAILY_RULE)
             self.assertEqual(daily_rule.name, 'test daily')
             self.assertEqual(daily_rule.case_type, 'song')
-            daily_message = ContentForm.compute_initial(
-                daily_rule.get_messaging_rule_schedule().memoized_events[0].content
-            )['message']
-            self.assertEqual(daily_message, {
+            daily_content = daily_rule.get_messaging_rule_schedule().memoized_events[0].content
+            self.assertEqual(daily_content.message, {
                 'en': 'Rustier',
                 'es': 'Más Oxidado',
             })
 
             weekly_rule = self._get_rule(self.WEEKLY_RULE)
-            weekly_message = ContentForm.compute_initial(
-                weekly_rule.get_messaging_rule_schedule().memoized_events[0].content
-            )['message']
-            self.assertEqual(weekly_message, {
+            weekly_content = weekly_rule.get_messaging_rule_schedule().memoized_events[0].content
+            self.assertEqual(weekly_content.message, {
                 'en': 'It\'s On Time',
                 'es': 'Está a Tiempo',
             })
