@@ -66,6 +66,7 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
                     placeholder: options.placeholder || gettext("Search..."), // some placeholder required for allowClear
                     width: options.width || '100%',
                     data: options.data,
+                    tags: options.tags,
                     templateResult: function (result) {
                         if (_.isFunction(options.templateResult)) {
                             return options.templateResult(result);
