@@ -13,7 +13,6 @@ from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-from celery import states
 from celery.task import task
 from celery.utils.log import get_task_logger
 
