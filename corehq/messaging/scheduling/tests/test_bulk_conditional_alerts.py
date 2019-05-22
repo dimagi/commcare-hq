@@ -41,6 +41,7 @@ class TestBulkConditionalAlerts(TestCase):
     UNTRANSLATED_RULE = 'untranslated_rule'
     DAILY_RULE = 'daily_rule'
     WEEKLY_RULE = 'weekly_rule'
+    MONTHLY_RULE = 'monthly_rule'
 
     @classmethod
     def setUpClass(cls):
@@ -69,6 +70,10 @@ class TestBulkConditionalAlerts(TestCase):
             self.WEEKLY_RULE: self._add_weekly_rule(SMSContent(message={
                 'en': 'It\'s Too Late',
                 'es': 'Es Demasiado Tarde',
+            })),
+            self.MONTHLY_RULE: self._add_monthly_rule(SMSContent(message={
+                'en': 'Both Sides Now',
+                'es': 'Ahora Ambos Lados',
             })),
         }
 
@@ -123,6 +128,16 @@ class TestBulkConditionalAlerts(TestCase):
         )
         return self._add_rule(schedule)
 
+    def _add_monthly_rule(self, content):
+        schedule = TimedSchedule.create_simple_monthly_schedule(
+            self.domain,
+            TimedEvent(time=time(11, 0)),
+            [23, -1],
+            content,
+            total_iterations=2,
+        )
+        return self._add_rule(schedule)
+
     def _add_rule(self, schedule):
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         self.addCleanup(rule.delete)
@@ -137,7 +152,7 @@ class TestBulkConditionalAlerts(TestCase):
     def test_download(self):
         (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, self.langs)
 
-        self.assertEqual(len(translated_rows), 2)
+        self.assertEqual(len(translated_rows), 3)
         self.assertEqual(len(untranslated_rows), 1)
 
         rows_by_id = {row[0]: row[1:] for row in translated_rows + untranslated_rows}
@@ -147,6 +162,8 @@ class TestBulkConditionalAlerts(TestCase):
                                        ['test', 'person', 'Diamonds and Rust', 'Diamantes y Óxido'])
         self.assertListEqual(rows_by_id[self._get_rule(self.WEEKLY_RULE).id],
                                        ['test', 'person', 'It\'s Too Late', 'Es Demasiado Tarde'])
+        self.assertListEqual(rows_by_id[self._get_rule(self.MONTHLY_RULE).id],
+                                       ['test', 'person', 'Both Sides Now', 'Ahora Ambos Lados'])
 
     def test_upload(self):
         headers = (
@@ -160,6 +177,7 @@ class TestBulkConditionalAlerts(TestCase):
                 (self._get_rule(self.EMAIL_RULE).id, 'test email', 'song', 'Email content', 'does not fit'),
                 (1000, 'Not a rule', 'person'),
                 (self._get_rule(self.WEEKLY_RULE).id, 'test weekly', 'song', 'It\'s On Time', 'Está a Tiempo'),
+                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', 'song', 'One Side Now', 'Un Lado Ahora'),
             )),
             ("not translated", (
                 (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
@@ -176,6 +194,7 @@ class TestBulkConditionalAlerts(TestCase):
 
             old_daily_schedule = self._get_rule(self.DAILY_RULE).get_messaging_rule_schedule()
             old_weekly_schedule = self._get_rule(self.WEEKLY_RULE).get_messaging_rule_schedule()
+            old_monthly_schedule = self._get_rule(self.MONTHLY_RULE).get_messaging_rule_schedule()
             msgs = upload_conditional_alert_workbook(self.domain, self.langs, workbook)
             msgs = [m[1] for m in msgs]     # msgs is tuples of (type, message); ignore the type
 
@@ -183,7 +202,7 @@ class TestBulkConditionalAlerts(TestCase):
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'translated' sheet.", msgs)
             self._assertPatternIn(r"Row 4 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
             self._assertPatternIn(r"Could not find rule for row 5 in 'translated' sheet, with id \d+", msgs)
-            self.assertIn("Updated 2 rule(s) in 'translated' sheet", msgs)
+            self.assertIn("Updated 3 rule(s) in 'translated' sheet", msgs)
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'not translated' sheet.", msgs)
             self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
 
@@ -213,4 +232,13 @@ class TestBulkConditionalAlerts(TestCase):
             self.assertEqual(weekly_content.message, {
                 'en': 'It\'s On Time',
                 'es': 'Está a Tiempo',
+            })
+
+            monthly_rule = self._get_rule(self.MONTHLY_RULE)
+            monthly_schedule = monthly_rule.get_messaging_rule_schedule()
+            self._assertTimedScheduleEventsEqual(monthly_schedule, old_monthly_schedule)
+            monthly_content = monthly_rule.get_messaging_rule_schedule().memoized_events[0].content
+            self.assertEqual(monthly_content.message, {
+                'en': 'One Side Now',
+                'es': 'Un Lado Ahora',
             })
