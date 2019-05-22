@@ -28,7 +28,10 @@ class CasePropertiesEndpoint(BaseOptionsEndpoint):
     @property
     @memoized
     def excluded_types(self):
-        return ['name'] + self.report_context.get('existingColumnNames', [])
+        return [
+           'name',
+           '_link',
+        ] + self.report_context.get('existingColumnNames', [])
 
     @property
     def current_value(self):

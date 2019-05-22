@@ -104,16 +104,11 @@ class CaseDataFormatter(BaseDataFormatter):
     @property
     def _link(self):
         try:
-            link = absolute_reverse(
+            return absolute_reverse(
                 'case_data', args=[self.domain, self.raw_data.get('_id')]
             )
         except NoReverseMatch:
-            return _("No link found")
-        return html.mark_safe(
-            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(
-                link, _("View Case")
-            )
-        )
+            return None
 
     @property
     def _case_info_context(self):

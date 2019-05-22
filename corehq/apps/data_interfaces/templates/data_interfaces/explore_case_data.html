@@ -150,6 +150,13 @@
         <tr>
           <!-- ko foreach: { data: $root.columns, as: 'column' } -->
           <td data-bind="style: { width: column.width() + 'px' }">
+            <!-- ko if: $index() === 0 && row._link -->
+              <a class="datagrid-external-link"
+                 target="_blank"
+                 data-bind="attr: { href: row._link }">
+                <i class="fa fa-external-link"></i>
+              </a>
+            <!-- /ko -->
             <span data-bind="text: row[column.name()]"></span>
           </td>
           <!-- /ko -->
