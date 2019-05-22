@@ -24,7 +24,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_menu_or_form_by_sheet_name,
     get_menu_or_form_by_unique_id,
 )
-from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
 from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
@@ -208,7 +208,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
         raise BulkAppTranslationsException(_('Sheet "%s" was repeated. Only the first occurrence has been '
                                              'processed.') % sheet.worksheet.title)
 
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
     if expected_headers is None:
         raise BulkAppTranslationsException(_('Skipping sheet "%s", could not recognize title') %
                                            sheet.worksheet.title)
@@ -232,40 +232,13 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
                                                  expected=", ".join(expected_required_headers)))
 
 
-def _get_expected_headers(sheet, expected_sheets):
-    if sheet.worksheet.title == LEGACY_MODULES_AND_FORMS_SHEET_NAME:
-        expected_headers = expected_sheets.get(MODULES_AND_FORMS_SHEET_NAME, None)
-    elif is_module_sheet(sheet.worksheet.title) or is_form_sheet(sheet.worksheet.title):
-        expected_headers = expected_sheets.get(sheet.worksheet.title.replace("module", "menu"), None)
-    else:
-        expected_headers = expected_sheets.get(sheet.worksheet.title, None)
-    return expected_headers
-
-
 def _check_for_sheet_warnings(app, sheet, headers):
     warnings = []
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
 
-    missing_cols = _get_missing_cols(app, sheet, headers)
+    missing_cols = set(expected_headers) - set(sheet.headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
-
-    # Backwards compatibility for old "filepath" header names
-    not_missing_cols = set()
-    for col in missing_cols:
-        for key, legacy in (
-            ('image_', 'icon_filepath_'),
-            ('audio_', 'audio_filepath_'),
-        ):
-            for lang in app.langs:
-                if key + lang in missing_cols and legacy + lang in extra_cols:
-                    not_missing_cols.add(key + lang)
-                    extra_cols.remove(legacy + lang)
-    missing_cols = missing_cols - not_missing_cols
-
-    # Backwards compatibility for old "sheet_name" header
-    extra_cols = extra_cols - {'sheet_name'}
-    missing_cols = missing_cols - {'menu_or_form'}
 
     if len(missing_cols) > 0:
         warnings.append((_('Sheet "%s" has fewer columns than expected. '
@@ -280,12 +253,6 @@ def _check_for_sheet_warnings(app, sheet, headers):
     return warnings
 
 
-def _get_missing_cols(app, sheet, headers):
-    expected_sheets = {h[0]: h[1] for h in headers}
-    expected_columns = _get_expected_headers(sheet, expected_sheets)
-    return set(expected_columns) - set(sheet.headers)
-
-
 class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
     def __init__(self, app, names_map, lang=None):
         super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
@@ -298,7 +265,7 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         """
         self.msgs = []
         for row in get_unicode_dicts(rows):
-            sheet_name = row.get('menu_or_form', row.get('sheet_name', ''))
+            sheet_name = row.get('menu_or_form', '')
             # The unique_id column is populated on the "Menus_and_forms" sheet in multi-sheet translation files,
             # and in the "name / menu media" row in single-sheet translation files.
             unique_id = row.get('unique_id')
@@ -323,17 +290,12 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
             self.update_translation_dict('default_', document.name, row)
 
             # Update menu media
-            # For backwards compatibility with previous code, accept old "filepath" header names
             for lang in self.langs:
                 image_header = 'image_%s' % lang
-                if image_header not in row:
-                    image_header = 'icon_filepath_%s' % lang
                 if image_header in row:
                     document.set_icon(lang, row[image_header])
 
                 audio_header = 'audio_%s' % lang
-                if audio_header not in row:
-                    audio_header = 'audio_filepath_%s' % lang
                 if audio_header in row:
                     document.set_audio(lang, row[audio_header])
 
