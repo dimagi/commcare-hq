@@ -9,6 +9,7 @@ import zipfile
 from io import open
 from wsgiref.util import FileWrapper
 
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
@@ -124,6 +125,15 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 
 @task(serializer='pickle')
+def build_application_zip_v2(include_multimedia_files, include_index_files, domain, app_id,
+                             download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
+                             download_targeted_version=False):
+    app = get_app(domain, app_id)
+    return build_application_zip(include_multimedia_files, include_index_files, app, download_id,
+                                 build_profile_id, compress_zip, filename, download_targeted_version)
+
+
+@task(serializer='pickle')
 def build_application_zip(include_multimedia_files, include_index_files, app,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
@@ -186,10 +196,24 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                         file_cache[path] = data
 
         if toggles.LOCALE_ID_INTEGRITY.enabled(app.domain):
-            errors.extend(find_missing_locale_ids_in_ccz(file_cache))
+            locale_errors = find_missing_locale_ids_in_ccz(file_cache)
+            if locale_errors:
+                errors.extend(locale_errors)
+                notify_exception(
+                    None,
+                    message="CCZ missing locale ids from default/app_strings.txt",
+                    details={'domain': app.domain, 'app_id': app.id, 'errors': locale_errors}
+                )
 
         if include_index_files and include_multimedia_files:
-            errors.extend(check_ccz_multimedia_integrity(app.domain, fpath))
+            multimedia_errors = check_ccz_multimedia_integrity(app.domain, fpath)
+            errors.extend(multimedia_errors)
+            if multimedia_errors:
+                notify_exception(
+                    None,
+                    message="CCZ missing multimedia files",
+                    details={'domain': app.domain, 'app_id': app.id, 'errors': multimedia_errors}
+                )
 
         if errors:
             os.remove(fpath)

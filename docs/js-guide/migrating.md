@@ -155,7 +155,7 @@ makes it harder to bundle and share code across pages effectively.
 | Version        |  4.0.0                             | 3.5.2                             |
 | Docs           | https://select2.org/               | http://select2.github.io/select2/ |
 | JS module      | `select2/dist/js/select2.full.min` | `select2-3.5.2-legacy/select2`    |
-| View decorator | `@use_select2_v4`                  | `@use_select2`                    |
+| View decorator | none                               | `@use_select2_legacy`             |
 
 This is a fairly complicated migration both because the old and new version differ in multiple significant ways and because of how code is shared in HQ.
 
@@ -163,9 +163,9 @@ This is a fairly complicated migration both because the old and new version diff
 
 Migrating one select2 widget typically leads to migrating a number of other dependent ones. There are a couple of ways to pick a starting point:
 
-- Pick a view that uses the `use_select2` decorator
+- Pick a view that uses the `use_select2_legacy` decorator
 - Pick a javascript module that directly depends on `select2-3.5.2-legacy/select2`
-- Pick a page that includes a script tag for `select2-3.5.2-legacy/select2.js` (rare, because most pages use the `@use_select2` decorator rather than including a script tag)
+- Pick a page that includes a script tag for `select2-3.5.2-legacy/select2.js` (rare, because most pages use the `@use_select2_legacy` decorator rather than including a script tag)
 - Browse the [requirejs bundle configuration](https://www.commcarehq.org/static/build.txt) to find modules that indirectly depend on `select2-3.5.2-legacy/select2`
 - Javascript modules that don't yet declare dependencies but that call the `.select2()` function
 - Pages that use a select2-dependent knockout binding like `select2`, `autocompleteSelect2`, or `questionsSelect`

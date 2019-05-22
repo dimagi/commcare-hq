@@ -13,7 +13,7 @@ from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
+    use_select2_legacy,
     use_daterangepicker,
     use_jquery_ui,
     use_nvd3,
@@ -141,7 +141,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             return self._domain
         return super(ConfigurableReportView, self).domain
 
-    @use_select2
+    @use_select2_legacy
     @use_daterangepicker
     @use_jquery_ui
     @use_datatables

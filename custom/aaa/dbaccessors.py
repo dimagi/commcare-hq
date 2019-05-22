@@ -1,4 +1,5 @@
 from __future__ import absolute_import, unicode_literals
+from __future__ import division
 
 from collections import OrderedDict
 from datetime import date

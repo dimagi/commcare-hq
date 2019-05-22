@@ -11,6 +11,7 @@ from corehq.blobs.migrate import MIGRATIONS
 from corehq.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
+from six.moves import range
 
 
 DEFAULT_WORKER_POOL_SIZE = 10
@@ -145,7 +146,8 @@ class Command(BaseCommand):
                         print("while processing date range {}".format(options['date_range']))
                     sys.exit(1)
 
-        if 'date_range' in options and options.pop('process_day_by_day'):
+        process_day_by_day = options.pop('process_day_by_day')
+        if 'date_range' in options and process_day_by_day:
             start, end = options.pop('date_range')
             num_days = (end - start).days
             for day in range(num_days + 1):

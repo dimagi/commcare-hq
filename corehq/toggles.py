@@ -952,28 +952,6 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
-NINETYNINE_DOTS = StaticToggle(
-    '99dots_integration',
-    'Enikshay: Enable access to 99DOTS',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-NIKSHAY_INTEGRATION = StaticToggle(
-    'nikshay_integration',
-    'Enikshay: Enable patient registration in Nikshay',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-BETS_INTEGRATION = StaticToggle(
-    'bets_repeaters',
-    'Enikshay: Enable BETS data forwarders',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_enabled={"enikshay"},
-)
-
 RETRY_SMS_INDEFINITELY = StaticToggle(
     'retry_sms_indefinitely',
     'Enikshay: Retry SMS indefinitely',
@@ -1388,13 +1366,6 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-UATBC_ADHERENCE_TASK = StaticToggle(
-    'uatbc_adherence_calculations',
-    'Enikshay: This runs backend adherence calculations for enikshay domains',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
@@ -1781,7 +1752,7 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
 )
 
 PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg'
+    'parallel_agg',
     'This makes the icds dashboard aggregation run on both distributed and monolith backends',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
