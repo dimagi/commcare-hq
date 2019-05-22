@@ -93,6 +93,16 @@ class TestBulkConditionalAlerts(TestCase):
     def _assertPatternIn(self, pattern, collection):
         self.assertTrue(any(re.match(pattern, item) for item in collection))
 
+    def _assertTimedScheduleEventsEqual(self, schedule1, schedule2):
+        self.assertEqual(len(schedule1.memoized_events), len(schedule2.memoized_events))
+        for i in range(len(schedule1.memoized_events)):
+            event1 = schedule1.memoized_events[i]
+            event2 = schedule2.memoized_events[i]
+            self.assertTrue(isinstance(event1, TimedEvent))
+            self.assertTrue(isinstance(event2, TimedEvent))
+            self.assertEqual(event1.day, event2.day)
+            self.assertEqual(event1.get_scheduling_info(), event2.get_scheduling_info())
+
     def _add_daily_rule(self, content):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
@@ -163,7 +173,11 @@ class TestBulkConditionalAlerts(TestCase):
             f.write(file.getvalue())
             f.seek(0)
             workbook = get_workbook(f)
-            msgs = [m[1] for m in upload_conditional_alert_workbook(self.domain, self.langs, workbook)]
+
+            old_daily_schedule = self._get_rule(self.DAILY_RULE).get_messaging_rule_schedule()
+            old_weekly_schedule = self._get_rule(self.WEEKLY_RULE).get_messaging_rule_schedule()
+            msgs = upload_conditional_alert_workbook(self.domain, self.langs, workbook)
+            msgs = [m[1] for m in msgs]     # msgs is tuples of (type, message); ignore the type
 
             self.assertEqual(len(msgs), 6)
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'translated' sheet.", msgs)
@@ -181,17 +195,20 @@ class TestBulkConditionalAlerts(TestCase):
                 '*': 'Joanie',
             })
 
-            # TODO: assert that schedules were preserved
             daily_rule = self._get_rule(self.DAILY_RULE)
             self.assertEqual(daily_rule.name, 'test daily')
             self.assertEqual(daily_rule.case_type, 'song')
-            daily_content = daily_rule.get_messaging_rule_schedule().memoized_events[0].content
+            daily_schedule = daily_rule.get_messaging_rule_schedule()
+            self._assertTimedScheduleEventsEqual(daily_schedule, old_daily_schedule)
+            daily_content = daily_schedule.memoized_events[0].content
             self.assertEqual(daily_content.message, {
                 'en': 'Rustier',
                 'es': 'Más Oxidado',
             })
 
             weekly_rule = self._get_rule(self.WEEKLY_RULE)
+            weekly_schedule = weekly_rule.get_messaging_rule_schedule()
+            self._assertTimedScheduleEventsEqual(weekly_schedule, old_weekly_schedule)
             weekly_content = weekly_rule.get_messaging_rule_schedule().memoized_events[0].content
             self.assertEqual(weekly_content.message, {
                 'en': 'It\'s On Time',
