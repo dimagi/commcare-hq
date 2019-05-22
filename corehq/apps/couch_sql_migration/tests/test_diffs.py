@@ -161,6 +161,19 @@ class DiffTestCases(SimpleTestCase):
         filtered = filter_case_diffs(couch_case, sql_case, DELETION_DIFFS + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
+    def test_filter_case_deleted_on_in_sql(self):
+        couch_case = {
+            'doc_type': 'CommCareCase-Deleted',
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase-Deleted',
+            'deleted_on': '123',
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        self.assertTrue(diffs)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
+        self.assertEqual(filtered, REAL_DIFFS)
+
     def test_filter_case_diffs(self):
         couch_case = {'doc_type': 'CommCareCase'}
         diffs = _make_ignored_diffs('CommCareCase') + DATE_DIFFS + REAL_DIFFS
