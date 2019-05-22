@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.messaging.scheduling.forms import (
-    ContentForm,
     ConditionalAlertCriteriaForm,
     ConditionalAlertScheduleForm,
     ScheduleForm,
@@ -36,10 +35,8 @@ def get_conditional_alert_rows(domain, langs):
     for rule in get_conditional_alerts_queryset_by_domain(domain):
         if not isinstance(_get_rule_content(rule), SMSContent):
             continue
+        message = rule.get_messaging_rule_schedule().memoized_events[0].content.message
         common_columns = [rule.pk, rule.name, rule.case_type]
-        message = ContentForm.compute_initial(
-            rule.get_messaging_rule_schedule().memoized_events[0].content
-        ).get('message', {})
         if '*' in message or len(message) == 0:
             untranslated_rows.append(common_columns + [message.get('*', '')])
         else:
@@ -67,9 +64,10 @@ class ConditionalAlertUploader(object):
         return True
 
     def rule_message(self, rule):
-        return ContentForm.compute_initial(
-            rule.get_messaging_rule_schedule().memoized_events[0].content
-        ).get('message', {})
+        content = _get_rule_content(rule)
+        if not isinstance(content, SMSContent):
+            return {}
+        return content.message
 
     def upload(self, workbook):
         self.msgs = []
