@@ -1771,3 +1771,10 @@ SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+ENABLE_UCR_MIRRORS = StaticToggle(
+    'enable_ucr_mirrors',
+    'Enable the mirrored engines for UCRs in this domain',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
