@@ -63,17 +63,24 @@
   {% initial_page_data "report.reportFilters" report.report_filters %}
   {% initial_page_data "report.initialReportFilters" report.initial_report_filters %}
 
-  <div id="report-datagrid">
 
-    <p class="lead">
-      {% trans "Explore Case Data" %}
-    </p>
-    <p class="help-block">
-      {% blocktrans %}
-        Create a custom report or look for data inconsistencies.
-      {% endblocktrans %}
-    </p>
+  <p class="lead">
+    {% trans "Explore Case Data" %}
+  </p>
+  <p class="help-block">
+    {% blocktrans %}
+      Create a custom report or look for data inconsistencies.
+    {% endblocktrans %}
+  </p>
+  <div class="ko-loading">
+    <i class="fa fa-spinner fa-spin"></i>
+    {% blocktrans %}
+      Loading...
+    {% endblocktrans %}
+  </div>
 
+  <div id="report-datagrid"
+       class="ko-template">
     <div class="panel panel-default">
       <div class="panel-heading"
            role="tab"
@@ -135,7 +142,8 @@
           </th>
         </tr>
       </thead>
-      <tbody data-bind="foreach: { data: data.rows, as: 'row' }">
+      <tbody id="js-datagrid-rows"
+             data-bind="foreach: { data: data.rows, as: 'row' }">
         <tr>
           <!-- ko foreach: { data: $root.columns, as: 'column' } -->
           <td data-bind="style: { width: column.width() + 'px' }">
@@ -146,6 +154,16 @@
         </tr>
       </tbody>
     </table>
+    <div id="js-datagrid-loading"
+         class="datagrid-loading"
+         data-bind="visible: data.isDataLoading">
+      <div class="loading-text">
+        <i class="fa fa-spinner fa-spin"></i>
+        {% blocktrans %}
+          Loading...
+        {% endblocktrans %}
+      </div>
+    </div>
 
     <pagination data-apply-bindings="false"
                 params="goToPage: $root.data.goToPage,

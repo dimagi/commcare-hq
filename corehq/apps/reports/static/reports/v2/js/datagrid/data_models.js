@@ -22,6 +22,26 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.isDataLoading = ko.observable(false);
         self.isLoadingError = ko.observable(false);
 
+        self.isDataLoading.subscribe(function (isLoading) {
+            if (!isLoading) return;
+
+            var $rows = $('#js-datagrid-rows'),
+                $loading = $('#js-datagrid-loading'),
+                position = $rows.position(),
+                marginTop = $rows.height()/2 - 50;
+
+            if (position.top === 0) return;
+
+            $loading
+                .height(Math.max(100, $rows.height()))
+                .width($rows.width())
+                .css('left', position.left + 'px')
+                .css('top', position.top + "px");
+
+            $loading.find('.loading-text')
+                .css('margin-top', marginTop + 'px');
+        });
+
         self.rows = ko.observableArray([]);
 
         self.limit = ko.observable(undefined);
