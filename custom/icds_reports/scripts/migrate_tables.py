@@ -83,10 +83,12 @@ class Database(object):
 
 
 class Migrator(object):
-    def __init__(self, table_path, source_db, source_host, source_user,
+    def __init__(self, db_path, source_db, source_host, source_user,
                  target_db, target_host, target_user,
                  start_date, end_date,
                  start_table, only_table, confirm, dry_run):
+        self.db_path = db_path
+        self.source_db = source_db
         self.source_host = source_host
         self.source_user = source_user
         self.target_db = target_db
@@ -98,10 +100,8 @@ class Migrator(object):
         self.only_table = only_table
         self.confirm = confirm
         self.dry_run = dry_run
-        self.source_db = source_db
-        self.table_path = table_path
 
-        self.db = Database(self.table_path)
+        self.db = Database(self.db_path)
 
     def run(self):
         with self.db:
@@ -191,17 +191,13 @@ def _confirm(msg):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Migrate DB tables from one DB to another using pg_dump")
+    parser = argparse.ArgumentParser(description="""
+        Migrate DB tables from one DB to another using pg_dump.
+        Compainion to custom/icds_reports/management_commands/generate_migration_tables.py
+    """)
     parser.add_argument(
-        'table_path',
-        help=inspect.cleandoc("""
-        Path to list file containing list of tables formatted as CSV.
-        File should have 3 columns in this order: source_table_name,table_date,target_table_name
-            source_table_name: name of table in source DB
-            table_date: For tables partitioned by month this should be the month of the data
-                        in the table e.g. 2018-03-01
-            target_table_name: name of the table to load the data into in the target database
-        """)
+        'db_path',
+        help='Path to sqlite DB containing list of tables to migrate'
     )
     parser.add_argument(
         '-D', '--source-db',
@@ -266,7 +262,7 @@ def main():
     args = parser.parse_args()
 
     migrator = Migrator(
-        args.table_path, args.source_db, args.source_host, args.source_user,
+        args.db_path, args.source_db, args.source_host, args.source_user,
         args.target_db, args.target_host, args.target_user,
         args.start_date, args.end_date,
         args.start_after_table, args.table, args.confirm, args.dry_run
