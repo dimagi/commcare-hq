@@ -1072,13 +1072,6 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BROADCAST_TO_LOCATIONS = StaticToggle(
-    'broadcast_to_locations',
-    'Send broadcasts to locations',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'UW: Allow mobile workers to self register',
