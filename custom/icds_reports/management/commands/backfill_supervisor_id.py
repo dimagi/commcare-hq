@@ -15,7 +15,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
 from custom.icds_reports.models.aggregate import AwcLocation
-from custom.icds_reports.const import AggregationLevels, DASHBOARD_DOMAIN
+from custom.icds_reports.const import AggregationLevels, DASHBOARD_DOMAIN, AGG_INFRASTRUCTURE_TABLE
 from dimagi.utils.logging import notify_exception
 
 
@@ -73,7 +73,8 @@ def get_sql_scripts(state_id):
         _table_name('static-usage_forms'),
         _table_name('static-child_tasks_cases'),
         'child_health_monthly',
-        'daily_attendance'
+        'daily_attendance',
+        AGG_INFRASTRUCTURE_TABLE,
     ]
 
     child_health_ucrs = [
