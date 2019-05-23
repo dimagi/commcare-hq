@@ -73,7 +73,7 @@ django==1.11.20
 djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14
-dropbox==7.3.1
+dropbox==9.3.0
 elasticsearch==1.9.0
 email_validator==1.0.3
 enum34==1.1.6
