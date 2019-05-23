@@ -76,7 +76,6 @@ hqDefine("aaa/js/models/pregnant_women", [
     var pregnantWomenDetails = function () {
         var self = {};
         // pregnancy_details
-        self.dateOfLmp = ko.observable();
         self.weightOfPw = ko.observable();
         self.dateOfRegistration = ko.observable();
         self.edd = ko.observable();

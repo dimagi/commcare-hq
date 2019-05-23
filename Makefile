@@ -1,4 +1,4 @@
-.PHONY: requirements upgrade-requirements
+.PHONY: requirements upgrade-requirements docs
 
 scripts/_vendor/pip-post-compile.sh:
 	mkdir -p scripts/_vendor
@@ -11,7 +11,6 @@ requirements: scripts/_vendor/pip-post-compile.sh
 	pip-compile -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
 	pip-compile -o requirements/test-requirements.txt requirements/test-requirements.in
 	pip-compile -o requirements/dev-requirements.txt requirements/dev-requirements.in
-	pip-compile -o requirements/docs-requirements.txt requirements/docs-requirements.in
 	bash scripts/pip-post-compile.sh requirements/*requirements.txt
 
 	cp requirements/*requirements.txt requirements-python3_6/
@@ -19,7 +18,6 @@ requirements: scripts/_vendor/pip-post-compile.sh
 	grep -v '^futures==' requirements-python3_6/prod-requirements.txt > temp && mv temp requirements-python3_6/prod-requirements.txt
 	grep -v '^futures==' requirements-python3_6/test-requirements.txt > temp && mv temp requirements-python3_6/test-requirements.txt
 	grep -v '^futures==' requirements-python3_6/dev-requirements.txt > temp && mv temp requirements-python3_6/dev-requirements.txt
-	grep -v '^futures==' requirements-python3_6/docs-requirements.txt > temp && mv temp requirements-python3_6/docs-requirements.txt
 
 upgrade-requirements: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 upgrade-requirements: scripts/_vendor/pip-post-compile.sh
@@ -27,7 +25,6 @@ upgrade-requirements: scripts/_vendor/pip-post-compile.sh
 	pip-compile --upgrade -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
 	pip-compile --upgrade -o requirements/test-requirements.txt requirements/test-requirements.in
 	pip-compile --upgrade -o requirements/dev-requirements.txt requirements/dev-requirements.in
-	pip-compile --upgrade -o requirements/docs-requirements.txt requirements/docs-requirements.in
 	bash scripts/pip-post-compile.sh requirements/*requirements.txt
 
 	cp requirements/*requirements.txt requirements-python3_6/
@@ -35,4 +32,6 @@ upgrade-requirements: scripts/_vendor/pip-post-compile.sh
 	grep -v '^futures==' requirements-python3_6/prod-requirements.txt > temp && mv temp requirements-python3_6/prod-requirements.txt
 	grep -v '^futures==' requirements-python3_6/test-requirements.txt > temp && mv temp requirements-python3_6/test-requirements.txt
 	grep -v '^futures==' requirements-python3_6/dev-requirements.txt > temp && mv temp requirements-python3_6/dev-requirements.txt
-	grep -v '^futures==' requirements-python3_6/docs-requirements.txt > temp && mv temp requirements-python3_6/docs-requirements.txt
+
+docs:
+	cd docs && $(MAKE) html

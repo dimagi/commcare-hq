@@ -110,9 +110,6 @@ COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.couch.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
-UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
-UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
-UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
@@ -1088,30 +1085,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'ucr_diff': {
-            'level': 'INFO',
-            'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
-            'formatter': 'ucr_diff',
-            'filename': UCR_DIFF_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_exception': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_exception',
-            'filename': UCR_EXCEPTION_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_timing': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_timing',
-            'filename': UCR_TIMING_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1213,21 +1186,6 @@ LOGGING = {
             'handlers': ['formplayer_diff'],
             'level': 'INFO',
             'propogate': True,
-        },
-        'ucr_timing': {
-            'handlers': ['ucr_timing'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_diff': {
-            'handlers': ['ucr_diff'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_exception': {
-            'handlers': ['ucr_exception'],
-            'level': 'INFO',
-            'propagate': True,
         },
         'boto3': {
             'handlers': ['console'],
@@ -2121,7 +2079,7 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
-if UNIT_TESTING or DEBUG:
+if UNIT_TESTING or DEBUG or SERVER_ENVIRONMENT != 'production':
     try:
         from ddtrace import tracer
         tracer.enabled = False

@@ -1,6 +1,6 @@
 <script type="text/ng-template" id="locationModalContent.html">
     <div class="modal-header">
-        <h3 class="modal-title" id="modal-title">Select Location <i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
+        <h3 class="modal-title" id="modal-title">Select Location <i ng-show="!$ctrl.isAwcReport()" style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
     </div>
     <div class="modal-body" id="modal-body" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
         <div class="alert alert-info" ng-show="$ctrl.showMessage">

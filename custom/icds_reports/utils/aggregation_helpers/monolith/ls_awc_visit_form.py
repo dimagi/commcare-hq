@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
+    helper_key = 'ls-awc-mgt-form'
     ucr_data_source_id = 'static-awc_mgt_forms'
     aggregate_parent_table = AGG_LS_AWC_VISIT_TABLE
     aggregate_child_table_prefix = 'icds_db_ls_awc_mgt_form_'

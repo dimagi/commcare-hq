@@ -9,133 +9,133 @@
 <link rel="stylesheet" type="text/css" href="{% static "case/css/jquery.treetable.css" %}">
 
 <style>
-    .touchforms-inline.webforms #form {
-        padding: .2em 0 .2em 1.5em;
-    }
+  .touchforms-inline.webforms #form {
+    padding: .2em 0 .2em 1.5em;
+  }
 
-    .touchforms-inline.webforms #title {
-        display: none;
-    }
+  .touchforms-inline.webforms #title {
+    display: none;
+  }
 
-    .touchforms-inline {
-        margin: 10px 0;
-    }
+  .touchforms-inline {
+    margin: 10px 0;
+  }
 
-    .webforms {
-        max-width: 750px;
-    }
+  .webforms {
+    max-width: 750px;
+  }
 
-    .webforms .q {
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
+  .webforms .q {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
 
-    .case-tree-spacer {
-        width: 10px;
-    }
+  .case-tree-spacer {
+    width: 10px;
+  }
 
-    .case-tree-description {
-        max-width: 750px;
-    }
+  .case-tree-description {
+    max-width: 750px;
+  }
 </style>
 
 <table id="related_cases" class="table table-striped case_history">
-    <thead>
-        <tr>
-            <th>{% trans "Name" %}</th>
-            {% for column in columns %}
-            <th>{{ column.name }}</th>
-            {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for case in case_list %}
-        {% if case == None %}
-        <tr>
-            <td>
-                {% trans "Parent case not found" %}
-            </td>
-        </tr>
-        {% else %}
-        <tr data-tt-id="{{ case.case_id }}"
-            class="{% if case.closed %}case-closed{% endif %}"
-            {% if case.treetable_parent_node_id %}
-            data-tt-parent-id="{{ case.treetable_parent_node_id }}"
-            {% endif %}>
-            <td>
-                {% if case.case_id == current_case.case_id %}
-                <strong>{{ case.name }}</strong>
-                {% else %}
-                {{ case.name }}
-                {% endif %}
-                <span class="case-tree-spacer"></span>
+  <thead>
+    <tr>
+      <th>{% trans "Name" %}</th>
+      {% for column in columns %}
+        <th>{{ column.name }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for case in case_list %}
+    {% if case == None %}
+      <tr>
+        <td>
+          {% trans "Parent case not found" %}
+        </td>
+      </tr>
+    {% else %}
+      <tr data-tt-id="{{ case.case_id }}"
+          class="{% if case.closed %}case-closed{% endif %}"
+        {% if case.treetable_parent_node_id %}
+          data-tt-parent-id="{{ case.treetable_parent_node_id }}"
+        {% endif %}>
+        <td>
+          {% if case.case_id == current_case.case_id %}
+            <strong>{{ case.name }}</strong>
+          {% else %}
+            {{ case.name }}
+          {% endif %}
+          <span class="case-tree-spacer"></span>
 
-                {% if case.add_child_data and case.add_child_data.edit_form_id != None %}
-                {% with case.add_child_data as data %}
+          {% if case.add_child_data and case.add_child_data.edit_form_id != None %}
+            {% with case.add_child_data as data %}
+              <a href="#" class="btn btn-sm btn-default formplayer-link"
+                 data-target="#edit_{{ case.get_id }}"
+                 data-app-id="{{ data.app_id }}"
+                 data-module-id="{{ data.create_module_id }}"
+                 data-form-id="{{ data.create_form_id }}"
+                 data-session-data='{{ data.session_data|JSON }}'
+                 data-submit-url-root='{{ data.submit_url_root }}'
+                 data-form-url-root='{{ data.form_url_root }}'>
+                <i class="fa fa-edit"></i> {{ data.link_text }}
+              </a>
+            {% endwith %}
+          {% endif %}
+
+          <div class="pull-right btn-group">
+            {% if case.edit_data.edit_form_id != None and not case.closed %}
+              {% with case.edit_data as data %}
                 <a href="#" class="btn btn-sm btn-default formplayer-link"
-                    data-target="#edit_{{ case.get_id }}"
-                    data-app-id="{{ data.app_id }}"
-                    data-module-id="{{ data.create_module_id }}"
-                    data-form-id="{{ data.create_form_id }}"
-                    data-session-data='{{ data.session_data|JSON }}'
-                    data-submit-url-root='{{ data.submit_url_root }}'
-                    data-form-url-root='{{ data.form_url_root }}'>
-                    <i class="fa fa-edit"></i> {{ data.link_text }}
+                   data-target="#edit_{{ case.get_id }}"
+                   data-app-id="{{ data.app_id }}"
+                   data-module-id="{{ data.edit_module_id }}"
+                   data-form-id="{{ data.edit_form_id }}"
+                   data-session-data='{{ data.session_data|JSON }}'
+                   data-submit-url-root='{{ data.submit_url_root }}'
+                   data-form-url-root='{{ data.form_url_root }}'>
+                  <i class="fa fa-edit"></i> {% trans "Edit" %}
                 </a>
-                {% endwith %}
-                {% endif %}
-                
-                <div class="pull-right btn-group">
-                    {% if case.edit_data.edit_form_id != None and not case.closed %}
-                    {% with case.edit_data as data %}
-                    <a href="#" class="btn btn-sm btn-default formplayer-link"
-                        data-target="#edit_{{ case.get_id }}"
-                        data-app-id="{{ data.app_id }}"
-                        data-module-id="{{ data.edit_module_id }}"
-                        data-form-id="{{ data.edit_form_id }}"
-                        data-session-data='{{ data.session_data|JSON }}'
-                        data-submit-url-root='{{ data.submit_url_root }}'
-                        data-form-url-root='{{ data.form_url_root }}'>
-                        <i class="fa fa-edit"></i> {% trans "Edit" %}
-                    </a>
-                    {% endwith %}
-                    {% endif %}
-                    
-                    {% if show_view_buttons and case.case_id != current_case.case_id %}
-                    <a class="btn btn-sm btn-default view-related-case-link" href="{{ case.edit_data.view_url }}">
-                        <i class="fa fa-eye"></i> {% trans "View" %}
-                    </a>
-                    {% endif %}
-                </div>
+              {% endwith %}
+            {% endif %}
 
-                {% if case.edit_data.description %}
-                <br>
-                <span class="indenter" style="line-height:0; padding: 0 {{ case.edit_data.indent_px }}px"></span>
-                <div style="display:inline-block" class="case-tree-description">
-                    <span class="text-muted">{{ case.edit_data.description }}</span>
-                </div>
-                {% endif %}
+            {% if show_view_buttons and case.case_id != current_case.case_id %}
+              <a class="btn btn-sm btn-default view-related-case-link" href="{{ case.edit_data.view_url }}">
+                <i class="fa fa-eye"></i> {% trans "View" %}
+              </a>
+            {% endif %}
+          </div>
 
-                {% if case.edit_data.edit_form_id != None or case.add_child_data.create_form_id != None %}
-                <br style="line-height:0">
-                <span class="indenter" style="line-height:0; padding: 0 {{ case.edit_data.indent_px }}px"></span>
-                <div class="touchforms-inline" id="edit_{{ case.get_id }}">
-                    <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
-                </div>
-                {% endif %}
-            </td>
+          {% if case.edit_data.description %}
+            <br>
+            <span class="indenter" style="line-height:0; padding: 0 {{ case.edit_data.indent_px }}px"></span>
+            <div style="display:inline-block" class="case-tree-description">
+              <span class="text-muted">{{ case.edit_data.description }}</span>
+            </div>
+          {% endif %}
 
-            {% for column in case.columns %}
-            <td>{{ column.value|safe }}</td>
-            {% endfor %}
-        </tr>
-        {% endif%}
+          {% if case.edit_data.edit_form_id != None or case.add_child_data.create_form_id != None %}
+            <br style="line-height:0">
+            <span class="indenter" style="line-height:0; padding: 0 {{ case.edit_data.indent_px }}px"></span>
+            <div class="touchforms-inline" id="edit_{{ case.get_id }}">
+              <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+            </div>
+          {% endif %}
+        </td>
 
-        {% empty %}
-        <tr>
-            <td colspan="4" class="no_data">{% trans "No related cases" %}</td>
-        </tr>
+        {% for column in case.columns %}
+          <td>{{ column.value|safe }}</td>
         {% endfor %}
+      </tr>
+    {% endif%}
 
-    </tbody>
+  {% empty %}
+    <tr>
+      <td colspan="4" class="no_data">{% trans "No related cases" %}</td>
+    </tr>
+  {% endfor %}
+
+  </tbody>
 </table>

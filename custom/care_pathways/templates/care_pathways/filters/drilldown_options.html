@@ -2,47 +2,47 @@
 {% load i18n %}
 <label for="{{ css_id }}" class="{{ css_label_class }}">{{ label }}</label>
 <div class="{{ css_field_class }}">
-    {% block filter_content %}
+  {% block filter_content %}
     <div id="{{ css_id }}" class="well well-sm" style="padding-bottom: 0;">
-        <div data-bind="foreach: controls" style="display: inline-flex">
-            <div class="form-group">
-                <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
-                       class="control-label col-xs-4 col-md-2" style="margin-left: 20px; width: auto; display: flex"></label>
-                <div class="col-xs-8 col-md-10" style="margin-left: 0;">
-                    <div data-bind="if: level == {{ single_option_select }}">
-                            {% if single_option_select_without_default_text == 1 %}
-                                <select  class="{{ css_class }} form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+      <div data-bind="foreach: controls" style="display: inline-flex">
+        <div class="form-group">
+          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
+                 class="control-label col-xs-4 col-md-2" style="margin-left: 20px; width: auto; display: flex"></label>
+          <div class="col-xs-8 col-md-10" style="margin-left: 0;">
+            <div data-bind="if: level == {{ single_option_select }}">
+              {% if single_option_select_without_default_text == 1 %}
+                <select  class="{{ css_class }} form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                                 options: control_options, optionsText: 'text', optionsValue: 'val',
                                 selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
-                            {% else %}
-                                <select  class="{{ css_class }} form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+              {% else %}
+                <select  class="{{ css_class }} form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                                 options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
                                 selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
-                            {% endif %}
-                    </div>
-                    <div data-bind="if: level != {{ single_option_select }}" >
-                        <select id="multi_sel" class="{{ css_class }} form-control" multiple="true" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+              {% endif %}
+            </div>
+            <div data-bind="if: level != {{ single_option_select }}" >
+              <select id="multi_sel" class="{{ css_class }} form-control" multiple="true" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                         options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text, enable: is_visible,
                         selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }},
                         select2: {}"></select>
-                    </div>
-                </div>
             </div>
+          </div>
         </div>
-        <div class="alert alert-info" data-bind="fadeVisible: notification.is_visible, html: notification.message"></div>
-     </div>
-    {% endblock %}
+      </div>
+      <div class="alert alert-info" data-bind="fadeVisible: notification.is_visible, html: notification.message"></div>
+    </div>
+  {% endblock %}
 </div>
 
 {% block filter_js %}
-<script>
+  <script>
     $.getScript("{% static 'care_pathways/ko/report_filter.drilldown_options.js' %}", function () {
-       $('#{{ css_id }}').drilldownOptionFilter({
-           selected: {{ selected|JSON }},
-           drilldown_map: {{ option_map|JSON }},
-           controls: {{ controls|JSON }},
-           notifications: {{ notifications|JSON }}
-       });
+      $('#{{ css_id }}').drilldownOptionFilter({
+        selected: {{ selected|JSON }},
+        drilldown_map: {{ option_map|JSON }},
+        controls: {{ controls|JSON }},
+        notifications: {{ notifications|JSON }}
+      });
     });
-</script>
+  </script>
 {% endblock %}

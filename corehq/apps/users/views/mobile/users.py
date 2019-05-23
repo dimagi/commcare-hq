@@ -59,7 +59,6 @@ from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.hqwebapp.decorators import (
-    use_select2_v4,
     use_angular_js,
     use_multiselect,
 )
@@ -136,7 +135,6 @@ class EditCommCareUserView(BaseEditUserView):
         else:
             return "users/edit_commcare_user.html"
 
-    @use_select2_v4
     @use_multiselect
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
@@ -345,7 +343,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
-    @use_select2_v4
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
@@ -576,7 +573,6 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_select2_v4
     @use_angular_js
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):

@@ -3,13 +3,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <div class="col-xs-2 col-md-2 left-menu">
-    <div class="logo">
-        <img src="{% static 'aaa/images/dimagi_logo.png' %}">
-    </div>
-    <div>
-        <ul class="nav nav-list" >
-            <li data-bind="css: {'active': isActive('program_overview')}"><a href="{% url 'program_overview' domain %}">Program Overview</a></li>
-            <li data-bind="css: {'active': isActive('unified_beneficiary') || isActive('unified_beneficiary_details')}"><a href="{% url 'unified_beneficiary' domain %}">Unified Beneficiary Report</a></li>
-        </ul>
-    </div>
+  <div class="logo">
+    <img src="{% static 'aaa/images/dimagi_logo.png' %}">
+  </div>
+  <div>
+    <ul class="nav nav-list" >
+      <li data-bind="css: {'active': isActive('program_overview')}"><a href="{% url 'program_overview' domain %}">Program Overview</a></li>
+      <li data-bind="css: {'active': isActive('unified_beneficiary') || isActive('unified_beneficiary_details')}"><a href="{% url 'unified_beneficiary' domain %}">Unified Beneficiary Report</a></li>
+    </ul>
+  </div>
 </div>

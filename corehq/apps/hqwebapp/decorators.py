@@ -3,37 +3,19 @@ from __future__ import unicode_literals
 from functools import wraps
 
 
-def use_select2(view_func):
+def use_select2_legacy(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the select2 js library at the base template.
 
     Example:
 
-    @use_select2
+    @use_select2_legacy
     def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
     def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_select2 = True
-        return view_func(class_based_view, request, *args, **kwargs)
-    return _wrapped
-
-
-def use_select2_v4(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the 4.0 Version of select2 js library at
-    the base template. (4.0 is still in testing phase)
-
-    Example:
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    @wraps(view_func)
-    def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_select2_v4 = True
+        request.use_select2_legacy = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 

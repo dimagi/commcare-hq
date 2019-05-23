@@ -1,0 +1,29 @@
+DROP TABLE IF EXISTS "icds_db_ls_beneficiary_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_ls_beneficiary_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_ls_beneficiary_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_ls_beneficiary_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        CREATE TEMPORARY TABLE "temp_icds_db_ls_beneficiary_form_7a197ee47818209780c23ed9" AS (
+            SELECT
+            state_id,
+            location_id as supervisor_id,
+            %(start_date)s::DATE AS month,
+            count(*) as beneficiary_vists
+            FROM "ucr_icds-cas_static-ls_home_visit_forms_f_dff88f6d"
+            WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
+            AND visit_type_entered is not null AND visit_type_entered <> ''
+            AND  state_id=%(state_id)s
+            GROUP BY state_id,location_id
+        );
+        INSERT INTO "icds_db_ls_beneficiary_form_7a197ee47818209780c23ed9" (
+        state_id, supervisor_id, month, beneficiary_vists
+        ) (
+             SELECT * FROM "temp_icds_db_ls_beneficiary_form_7a197ee47818209780c23ed9"
+        )
+        
+{"end_date": "2019-02-01", "start_date": "2019-01-01", "state_id": "st1"}

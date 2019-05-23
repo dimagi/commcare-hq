@@ -16,7 +16,10 @@ from corehq.sql_db import connections
 from corehq.sql_db.tests.utils import temporary_database
 from six.moves import range
 
+from corehq.util.test_utils import flag_enabled
 
+
+@flag_enabled('ENABLE_UCR_MIRRORS')
 class UCRMultiDBTest(TestCase):
 
     @classmethod

@@ -42,7 +42,7 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 NUM_OF_DAYS_AWC_WAS_OPEN,
                 SumColumn('awc_days_open'),
-                format_fn=lambda x: (x or 0) if self.loc_level > 4 else "Not Applicable",
+                format_fn=lambda x: (x or 0) if self.loc_level > 4 else "Applicable at only AWC level",
                 slug='num_awc_open'
             ),
             DatabaseColumn(
