@@ -1,7 +1,7 @@
 {% extends "hqwebapp/base.html" %}
 {% load hq_shared_tags %}
 
-{% block title %}Doc {{ doc_id }}{% endblock %}
+{% block title %}Doc {{ doc_id }} ({{ doc_type }}){% endblock %}
 
 {% block js %}{{ block.super }}
   {% requirejs_main 'hqadmin/js/raw_doc' %}
