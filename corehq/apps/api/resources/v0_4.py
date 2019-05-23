@@ -264,18 +264,6 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
         return MOCK_CASE_ES or CaseES(domain)
 
-    def obj_get_list(self, bundle, domain, **kwargs):
-        try:
-            es_query = es_search(bundle.request, domain)
-        except Http400 as e:
-            raise BadRequest(six.text_type(e))
-
-        return ElasticAPIQuerySet(
-            payload=es_query,
-            model=ESCase,
-            es_client=self.case_es(domain)
-        ).order_by('server_modified_on')
-
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 1000
         serializer = CommCareCaseSerializer()

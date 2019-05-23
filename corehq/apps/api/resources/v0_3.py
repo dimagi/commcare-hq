@@ -1,8 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from tastypie import fields
+from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.es import es_search, ElasticAPIQuerySet
+from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import DomainSpecificResourceMixin
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
@@ -13,11 +18,12 @@ from corehq.apps.data_interfaces.forms import is_valid_case_property_name
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from no_exceptions.exceptions import Http400
 
 
 class CaseListFilters(object):
     format = 'json'
-    
+
     def __init__(self, params):
 
         self.filters = dict((k, v) for k, v in params.items() if k and is_valid_case_property_name(k))
@@ -79,8 +85,16 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
             raise object_does_not_exist("CommCareCase", case_id)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        filters = CaseListFilters(bundle.request.GET)
-        return es_filter_cases(domain, filters=filters.filters)
+        try:
+            es_query = es_search(bundle.request, domain)
+        except Http400 as e:
+            raise BadRequest(six.text_type(e))
+
+        return ElasticAPIQuerySet(
+            payload=es_query,
+            model=ESCase,
+            es_client=self.case_es(domain)
+        ).order_by('server_modified_on')
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
