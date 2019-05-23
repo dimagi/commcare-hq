@@ -24,11 +24,17 @@ from corehq.motech.openmrs.const import (
     PERSON_UUID_IDENTIFIER_TYPE_ID,
     XMLNS_OPENMRS,
 )
-from corehq.motech.openmrs.exceptions import OpenmrsConfigurationError
+from corehq.motech.openmrs.exceptions import (
+    OpenmrsConfigurationError,
+    OpenmrsException,
+    OpenmrsHtmlUiChanged,
+)
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.value_source import CaseTriggerInfo
 from corehq.util.quickcache import quickcache
+from dimagi.utils.logging import notify_exception
+
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
@@ -661,22 +667,41 @@ def get_identifier_source_id(requests, identifier_type):
         'redirect': '',
         'refererURL': '',
     }
-    session.post(
+    response = session.post(
         requests.get_url('/ms/legacyui/loginServlet'),
         login_data,
         verify=requests.verify
     )
+    if not 200 <= response.status_code < 300:
+        raise OpenmrsHtmlUiChanged(
+            'Domain "{}": Unexpected OpenMRS login page at "{}".'.format(requests.domain_name, response.url)
+        )
 
     response = session.get(
         requests.get_url('/module/idgen/manageIdentifierSources.list'),
         verify=requests.verify
     )
+    if not 200 <= response.status_code < 300:
+        raise OpenmrsHtmlUiChanged(
+            'Domain "{}": Unexpected response from OpenMRS idgen module at "{}". '
+            'Is it installed?'.format(requests.domain_name, response.url)
+        )
+
     tree = html.fromstring(response.content)
     for row in tree.xpath('//table[@id="sourceTable"]/tbody/tr'):
         ident_type, source_type, source_name, actions = row.xpath('td')
         if ident_type.text == identifier_type_name:
-            onclick = actions.xpath('button')[1].attrib['onclick']
+            try:
+                onclick = actions.xpath('button')[1].attrib['onclick']
+            except (AttributeError, IndexError, KeyError):
+                raise OpenmrsHtmlUiChanged(
+                    'Domain "{}": Unexpected page format at "{}".'.format(requests.domain_name, response.url)
+                )
             match = re.match(r"document\.location\.href='viewIdentifierSource\.form\?source=(\d+)';", onclick)
+            if not match:
+                raise OpenmrsHtmlUiChanged(
+                    'Domain "{}": Unexpected "onclick" value at "{}".'.format(requests.domain_name, response.url)
+                )
             source_id = match.group(1)
             return source_id
 
@@ -692,13 +717,32 @@ def generate_identifier(requests, identifier_type):
     """
     try:
         source_id = get_identifier_source_id(requests, identifier_type)
-        if source_id:
-            # Example request: http://www.example.com/openmrs/module/idgen/generateIdentifier.form?source=1
-            response = requests.get('/module/idgen/generateIdentifier.form', {'source': source_id})
-            # Example response: {"identifiers": ["CHR203007"]}
-            return response.json()['identifiers'][0]
-    except:
+    except OpenmrsHtmlUiChanged as err:
+        notify_exception(
+            request=None,
+            message='Unexpected OpenMRS HTML UI',
+            details=str(err),
+        )
         return None
+    if source_id:
+        # Example request: http://www.example.com/openmrs/module/idgen/generateIdentifier.form?source=1
+        response = requests.get('/module/idgen/generateIdentifier.form', {'source': source_id})
+        try:
+            if not (200 <= response.status_code < 300 and response.content):
+                raise OpenmrsException()
+            try:
+                # Example response: {"identifiers": ["CHR203007"]}
+                return response.json()['identifiers'][0]
+            except (ValueError, IndexError, KeyError):
+                raise OpenmrsException()
+        except OpenmrsException:
+            notify_exception(
+                request=None,
+                message='OpenMRS idgen module returned an unexpected response',
+                details='OpenMRS idgen module at "{}" returned an unexpected response {}: "{}"'.format(
+                    response.url, response.status_code, response.content)
+            )
+    return None
 
 
 def find_or_create_patient(requests, domain, info, openmrs_config):
