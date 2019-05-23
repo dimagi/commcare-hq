@@ -275,75 +275,27 @@ def main():
         Migrate DB tables from one DB to another using pg_dump.
         Compainion to custom/icds_reports/management_commands/generate_migration_tables.py
     """)
-    parser.add_argument(
-        'db_path',
-        help='Path to sqlite DB containing list of tables to migrate'
-    )
-    parser.add_argument(
-        '-D', '--source-db',
-        required=True,
-        help='Name for source database'
-    )
-    parser.add_argument(
-        '-O', '--source-host',
-        required=True,
-        help='Name for source database'
-    )
-    parser.add_argument(
-        '-U', '--source-user',
-        required=True,
-        help='Name for source database'
-    )
-    parser.add_argument(
-        '-d', '--target-db',
-        required=True,
-        help='Name for target database'
-    )
-    parser.add_argument(
-        '-o', '--target-host',
-        required=True,
-        help='Name for target database'
-    )
-    parser.add_argument(
-        '-u', '--target-user',
-        required=True,
-        help='PG user to connect to target DB as. This user should be able to connect to the target'
-             'DB without a password.',
-    )
-    parser.add_argument(
-        '--start-date',
-        type=parse_date,
-        help='Only migrate tables with date on or after this date. Format YYYY-MM-DD',
-    )
-    parser.add_argument(
-        '--end-date',
-        type=parse_date,
-        help='Only migrate tables with date before this date. Format YYYY-MM-DD',
-    )
-    parser.add_argument(
-        '--start-after-table',
-        help='Skip all tables up to and including this one',
-    )
-    parser.add_argument(
-        '--table',
-        help='Only migrate this table',
-    )
-    parser.add_argument(
-        '--confirm',
-        action='store_true',
-        help='Confirm before each table.',
-    )
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Only output the commands.',
-    )
-    parser.add_argument(
-        '--parallel',
-        type=int,
-        default=1,
-        help='How many commands to run in parallel',
-    )
+    parser.add_argument('db_path', help='Path to sqlite DB containing list of tables to migrate')
+    parser.add_argument('-D', '--source-db', required=True, help='Name for source database')
+    parser.add_argument('-O', '--source-host', required=True, help='Name for source database')
+    parser.add_argument('-U', '--source-user', required=True, help='Name for source database')
+    parser.add_argument('-d', '--target-db', required=True, help='Name for target database')
+    parser.add_argument('-o', '--target-host', required=True, help='Name for target database')
+    parser.add_argument('-u', '--target-user', required=True, help=(
+        'PG user to connect to target DB as. This user should be able to connect to the target'
+        'DB without a password.'
+    ))
+    parser.add_argument('--start-date', type=parse_date, help=(
+        'Only migrate tables with date on or after this date. Format YYYY-MM-DD'
+    ))
+    parser.add_argument('--end-date', type=parse_date, help=(
+        'Only migrate tables with date before this date. Format YYYY-MM-DD'
+    ))
+    parser.add_argument('--start-after-table', help='Skip all tables up to and including this one')
+    parser.add_argument('--table', help='Only migrate this table')
+    parser.add_argument('--confirm', action='store_true', help='Confirm before each table.')
+    parser.add_argument('--dry-run', action='store_true', help='Only output the commands.')
+    parser.add_argument('--parallel', type=int, default=1, help='How many commands to run in parallel')
 
     args = parser.parse_args()
 
