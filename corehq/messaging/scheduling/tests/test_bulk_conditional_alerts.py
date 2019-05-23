@@ -40,6 +40,7 @@ class TestBulkConditionalAlerts(TestCase):
     domain = 'bulk-conditional-alert-test'
 
     EMAIL_RULE = 'email_rule'
+    LOCKED_RULE = 'locked_rule'
     UNTRANSLATED_RULE = 'untranslated_rule'
     IMMEDIATE_RULE = 'immediate_rule'
     DAILY_RULE = 'daily_rule'
@@ -64,6 +65,9 @@ class TestBulkConditionalAlerts(TestCase):
                 subject={'*': 'You just won something'},
                 message={'*': 'This is a scam'},
             )),
+            self.LOCKED_RULE: self._add_immediate_rule(SMSContent(message={
+                '*': 'Fool That I Am',
+            })),
             self.UNTRANSLATED_RULE: self._add_daily_rule(SMSContent(message={
                 '*': 'Joan',
             })),
@@ -87,6 +91,9 @@ class TestBulkConditionalAlerts(TestCase):
                 SMSContent(message={'*': 'Free Man in Paris'}),
             ]),
         }
+        locked_rule = self._get_rule(self.LOCKED_RULE)
+        locked_rule.locked_for_editing = True
+        locked_rule.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -191,7 +198,7 @@ class TestBulkConditionalAlerts(TestCase):
         (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, self.langs)
 
         self.assertEqual(len(translated_rows), 3)
-        self.assertEqual(len(untranslated_rows), 2)
+        self.assertEqual(len(untranslated_rows), 3)
 
         rows_by_id = {row[0]: row[1:] for row in translated_rows + untranslated_rows}
         self.assertListEqual(rows_by_id[self._get_rule(self.UNTRANSLATED_RULE).id],
@@ -204,6 +211,8 @@ class TestBulkConditionalAlerts(TestCase):
                                        ['test', 'person', 'It\'s Too Late', 'Es Demasiado Tarde'])
         self.assertListEqual(rows_by_id[self._get_rule(self.MONTHLY_RULE).id],
                                        ['test', 'person', 'Both Sides Now', 'Ahora Ambos Lados'])
+        self.assertListEqual(rows_by_id[self._get_rule(self.LOCKED_RULE).id],
+                                       ['test', 'person', 'Fool That I Am'])
 
     def test_upload(self):
         headers = (
@@ -221,10 +230,10 @@ class TestBulkConditionalAlerts(TestCase):
             )),
             ("not translated", (
                 (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
-                (self._get_rule(self.DAILY_RULE).id, 'test wrong sheet', 'wrong', 'wrong', 'wrong'),
                 (self._get_rule(self.IMMEDIATE_RULE).id, 'test immediate', 'song', 'Bicycle on a Hill'),
                 (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Just Like This Train'),
                 (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Free Man in Paris'),
+                (self._get_rule(self.LOCKED_RULE).id, 'test locked', 'nope', 'nope', 'nope'),
             )),
         )
         file = BytesIO()
@@ -248,9 +257,9 @@ class TestBulkConditionalAlerts(TestCase):
             self._assertPatternIn(r"Row 4 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
             self._assertPatternIn(r"Could not find rule for row 5 in 'translated' sheet, with id \d+", msgs)
             self.assertIn("Updated 3 rule(s) in 'translated' sheet", msgs)
-            self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'not translated' sheet.", msgs)
+            self._assertPatternIn(r"Row 4 in 'not translated' sheet.* rule id \d+, uses a custom schedule", msgs)
             self._assertPatternIn(r"Row 5 in 'not translated' sheet.* rule id \d+, uses a custom schedule", msgs)
-            self._assertPatternIn(r"Row 6 in 'not translated' sheet.* rule id \d+, uses a custom schedule", msgs)
+            self._assertPatternIn(r"Row 6 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
             self.assertIn("Updated 2 rule(s) in 'not translated' sheet", msgs)
 
             untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)

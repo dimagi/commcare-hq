@@ -15,6 +15,7 @@ from corehq.messaging.scheduling.models.abstract import Schedule
 from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
+from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq import toggles
 
 
@@ -94,8 +95,12 @@ class ConditionalAlertUploader(object):
                                    """with id {id}""").format(index=index,
                                                               id=row['id'],
                                                               sheet_name=self.sheet_name)))
+                continue
 
-            if not rule:
+            if rule.locked_for_editing:
+                self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
+                                  "is currently processing and cannot be updated.").format(index=index,
+                                    id=row['id'], sheet_name=self.sheet_name)))
                 continue
 
             schedule = rule.get_messaging_rule_schedule()
@@ -121,6 +126,7 @@ class ConditionalAlertUploader(object):
                 dirty = self.update_rule(rule, row)
                 if dirty:
                     rule.save()
+                    initiate_messaging_rule_run(self.domain, rule.pk)
                     success_count += 1
 
         self.msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
