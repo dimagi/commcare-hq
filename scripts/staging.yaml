@@ -59,5 +59,6 @@ branches:
   - form-odata  # Nick P May 21
   - web-user-reports-project-access  # Gabriella May 13
   - jls/linked-app-incremental-versioning # Jenny May 20
+  - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
 #  - es/case-import  # Ethan May 20
 submodules: {}
