@@ -1,10 +1,10 @@
 {% extends "hqwebapp/base.html" %}
 {% load hq_shared_tags %}
 
-{% block title %}Doc {{ doc_id }}{% endblock %}
+{% block title %}Doc {{ doc_id }} ({{ doc_type }}){% endblock %}
 
 {% block js %}{{ block.super }}
-  {% requirejs_main 'hqadmin/js/raw_couch_main' %}
+  {% requirejs_main 'hqadmin/js/raw_doc' %}
 {% endblock %}
 
 
@@ -39,7 +39,7 @@
                 <tr>
                   <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
                   {% if db.result == "found"  %}
-                    <td><a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
+                    <td><a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
                       {{ db.dbname }}
                     </a></td>
                   {% else %}
@@ -55,16 +55,17 @@
           <h3>Doc {{ doc_id }}</h3>
           <p>Doc type: {{ doc_type }}</p>
           <p>Database or table: {{ dbname }}</p>
+          <p>Domain: {{ domain }}</p>
           <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
             <img src="{% static 'hqwebapp/images/commcare-flower.png' %}"
                  alt="CommCare" witdth="14px" height="14px"
                  title="Open in HQ" />
           </a>
           <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
-          <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
+          <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
           <div>
             <h3>Raw Doc:</h3>
-            <pre id="couch-document" data-doc="{% html_attr doc %}"></pre>
+            <pre id="doc-element" data-doc="{% html_attr doc %}"></pre>
           </div>
         </div>
       </div>
