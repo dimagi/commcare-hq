@@ -83,69 +83,68 @@ class Database(object):
         self.db.close()
 
 
-class TableMigration(object):
-    def __init__(self, table, command):
-        self.table = table
+class CommandWithContext(object):
+    def __init__(self, command, context, callback=None):
+        self.context = context
         self.command = command
         self.process = None
+        self.callback = callback
 
     def run(self):
-        print(self.command)
-        self.process = subprocess.Popen(self.command, shell=True)
+        self.process = subprocess.Popen(self.command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return self
 
     def poll(self):
-        return self.process.poll()
+        ret = self.process.poll()
+        if ret is not None:
+            self.call_callback(ret)
+        return ret
 
     def wait(self):
-        return self.process.wait()
+        ret = self.process.wait()
+        self.call_callback(ret)
+        return ret
+
+    def call_callback(self, ret_code):
+        if self.callback:
+            stdout = self.process.stdout.read()
+            stderr = self.process.stderr.read()
+            self.callback(self.context, ret_code, stdout, stderr)
 
     def __repr__(self):
-        return 'TableMigration({})'.format(self.table)
+        return 'CommandWithContext({})'.format(self.context)
 
 
 class MigrationPool(object):
-    def __init__(self, max_size):
+    def __init__(self, max_size, callback):
         self.max_size = max_size
         self._pool = set()
-        self.errors = []
+        self.has_errors = False
+        self.callback = callback
 
-    def run(self, process):
-        if self.errors:
+    def run(self, command, context):
+        if self.has_errors:
             return
 
-        complete = self.wait_for_capacity()
+        self.wait_for_capacity()
+
+        process = CommandWithContext(command, context, self.callback)
         self._pool.add(process.run())
-        return complete
 
     def wait_for_capacity(self):
-        if len(self._pool) < self.max_size:
-            return
-
-        complete = []
-        while not complete:
+        while len(self._pool) >= self.max_size:
             sleep(0.5)
             for process in frozenset(self._pool):
                 code = process.poll()
                 if code is not None:
                     self._pool.remove(process)
-                    complete.append(process)
-                    if code != 0:
-                        self.errors.append(process)
-        return complete
+                    self.has_errors |= code != 0
 
     def wait(self):
-        complete = []
         for process in frozenset(self._pool):
             code = process.poll()
-            if code is not None:
-                if code > 0:
-                    self.errors.append(process)
-                else:
-                    complete.append(process)
-            else:
+            if code is None:
                 process.wait()
-        return complete
 
 
 class Migrator(object):
@@ -186,7 +185,9 @@ class Migrator(object):
     def migrate_tables(self, tables, max_concurrent):
         table_sizes = None
         total_size = None
-        progress = float(0)
+        progress = []
+        completed = []
+        total_tables = len(tables)
 
         if not self.dry_run:
             table_sizes = get_table_sizes(self.source_db, self.source_host, self.source_user)
@@ -195,37 +196,43 @@ class Migrator(object):
                 source_tables = {source_table for source_table, target_table in tables}
                 total_size = sum([size for table, size in table_sizes.items() if table in source_tables])
 
-        def _update_progress(tables, progress):
-            if table_sizes:
-                for table in tables:
-                    progress += table_sizes[table]
-                print('\nProgress: {:.1f}% data ({} of {}), {:.1f}% tables ({} of {})\n'.format(
-                    (100 * progress / total_size) if total_size else 100, int(progress), total_size,
-                    100 * float(table_index) / total_tables, table_index, total_tables,
-                ))
-            return progress
+        def _update_progress(context, ret_code, stdout, stderr):
+            completed.append(context['table'])
+            success = ret_code == 0
+            print('{} {}'.format('[ERROR] ' if not success else '', context['cmd']))
+            if stdout:
+                print(stdout.decode())
+            if stderr:
+                print(stderr.decode())
+            if success:
+                self.db.mark_migrated([context['table']])
+                if table_sizes:
+                    progress.append(context['size'])
+                    data_progress = sum(progress)
+                    table_progress = len(completed) + 1
+                    print('\nProgress: {:.1f}% data ({} of {}), {:.1f}% tables ({} of {})\n'.format(
+                        (100 * float(data_progress) / total_size) if total_size else 100,
+                        data_progress, total_size,
+                        100 * float(table_progress) / total_tables,
+                        table_progress, total_tables,
+                    ))
 
         commands = self.get_dump_load_commands(tables)
 
-        total_tables = len(tables)
-        pool = MigrationPool(max_concurrent)
+        pool = MigrationPool(max_concurrent, _update_progress)
         for table_index, [source_table, target_table, cmd] in enumerate(commands):
             if not self.dry_run and (not self.confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
-                complete = pool.run(TableMigration(source_table, cmd))
-                if complete:
-                    complete_tables = [m.table for m in complete if m not in pool.errors]
-                    self.db.mark_migrated(complete_tables)
-                    progress = _update_progress(complete_tables, progress)
+                pool.run(cmd, {
+                    'cmd': cmd,
+                    'table': source_table,
+                    'size': table_sizes[source_table] if table_sizes else 0
+                })
             else:
                 print(cmd)
 
-        complete = pool.wait()
-        self.db.mark_migrated([m.table for m in complete])
+        pool.wait()
 
-        if pool.errors:
-            print("\nErrors encountered:")
-            for process in pool.errors:
-                print("\t{}".format(process.table))
+        if pool.has_errors:
             sys.exit(1)
 
     def get_dump_load_commands(self, tables):
