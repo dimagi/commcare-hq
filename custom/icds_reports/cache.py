@@ -1,33 +1,24 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from quickcache import get_quickcache, ForceSkipCache
+from quickcache import get_quickcache
 from quickcache.django_quickcache import tiered_django_cache
 
 from corehq.sql_db.routers import forced_citus
 from corehq.util.quickcache import quickcache_soft_assert, get_session_key
 
 
-def get_cache_prefix_func(catch_force_skip=False):
-    def prefix_func():
-        try:
-            prefix = get_session_key()
-        except ForceSkipCache:
-            if not catch_force_skip:
-                raise
-            else:
-                prefix = ''
+def get_default_prefix():
+    return 'c' if forced_citus() else ''
 
-        if forced_citus():
-            prefix += 'c'
-        return prefix
 
-    return prefix_func
+def get_locmem_prefix():
+    return get_session_key() + get_default_prefix()
 
 
 cache = tiered_django_cache([
-    ('locmem', 10, get_cache_prefix_func()),
-    ('default', 5 * 60, get_cache_prefix_func(catch_force_skip=True))
+    ('locmem', 10, get_locmem_prefix),
+    ('default', 5 * 60, get_default_prefix)
 ])
 
 
