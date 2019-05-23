@@ -36,7 +36,11 @@ def get_conditional_alert_rows(domain, langs):
     for rule in get_conditional_alerts_queryset_by_domain(domain):
         if not isinstance(_get_rule_content(rule), SMSContent):
             continue
-        message = rule.get_messaging_rule_schedule().memoized_events[0].content.message
+        schedule = rule.get_messaging_rule_schedule()
+        send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
+        if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
+            continue
+        message = schedule.memoized_events[0].content.message
         common_columns = [rule.pk, rule.name, rule.case_type]
         if '*' in message or len(message) == 0:
             untranslated_rows.append(common_columns + [message.get('*', '')])
@@ -91,20 +95,33 @@ class ConditionalAlertUploader(object):
                                                               id=row['id'],
                                                               sheet_name=self.sheet_name)))
 
-            if rule:
-                if not isinstance(_get_rule_content(rule), SMSContent):
-                    self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
-                                      "does not use SMS content.").format(index=index, id=row['id'],
-                                                                          sheet_name=self.sheet_name)))
-                elif self.applies_to_rule(rule):
-                    with transaction.atomic():
-                        dirty = self.update_rule(rule, row)
-                        if dirty:
-                            rule.save()
-                            success_count += 1
-                else:
-                    self.msgs.append((messages.error, _("Rule in row {index} with id {id} does not belong in " \
-                        "'{sheet_name}' sheet.".format(index=index, id=row['id'], sheet_name=self.sheet_name))))
+            if not rule:
+                continue
+
+            schedule = rule.get_messaging_rule_schedule()
+            send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
+            if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
+                self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
+                                  "uses a custom schedule and cannot be updated.").format(index=index,
+                                    id=row['id'], sheet_name=self.sheet_name)))
+                continue
+
+            if not isinstance(_get_rule_content(rule), SMSContent):
+                self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
+                                  "does not use SMS content.").format(index=index, id=row['id'],
+                                                                      sheet_name=self.sheet_name)))
+                continue
+
+            if not self.applies_to_rule(rule):
+                self.msgs.append((messages.error, _("Rule in row {index} with id {id} does not belong in " \
+                    "'{sheet_name}' sheet.".format(index=index, id=row['id'], sheet_name=self.sheet_name))))
+                continue
+
+            with transaction.atomic():
+                dirty = self.update_rule(rule, row)
+                if dirty:
+                    rule.save()
+                    success_count += 1
 
         self.msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
             count=success_count, sheet_name=self.sheet_name)))
@@ -129,8 +146,6 @@ class ConditionalAlertUploader(object):
             ScheduleForm.SEND_DAILY: self.save_daily_schedule,
             ScheduleForm.SEND_WEEKLY: self.save_weekly_schedule,
             ScheduleForm.SEND_MONTHLY: self.save_monthly_schedule,
-            ScheduleForm.SEND_CUSTOM_DAILY: lambda: None, # TODO:, self.save_custom_daily_schedule,
-            ScheduleForm.SEND_CUSTOM_IMMEDIATE: lambda: None, # TODO: self.save_custom_immediate_schedule,
         }[send_frequency](schedule, message)
 
     def save_immediate_schedule(self, schedule, message):

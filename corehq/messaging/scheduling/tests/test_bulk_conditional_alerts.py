@@ -45,6 +45,7 @@ class TestBulkConditionalAlerts(TestCase):
     DAILY_RULE = 'daily_rule'
     WEEKLY_RULE = 'weekly_rule'
     MONTHLY_RULE = 'monthly_rule'
+    CUSTOM_DAILY_RULE = 'custom_daily_rule'
 
     @classmethod
     def setUpClass(cls):
@@ -81,6 +82,10 @@ class TestBulkConditionalAlerts(TestCase):
                 'en': 'Both Sides Now',
                 'es': 'Ahora Ambos Lados',
             })),
+            self.CUSTOM_DAILY_RULE: self._add_custom_daily_rule([
+                SMSContent(message={'*': 'Just Like This Train'}),
+                SMSContent(message={'*': 'Free Man in Paris'}),
+            ]),
         }
 
     @classmethod
@@ -157,6 +162,18 @@ class TestBulkConditionalAlerts(TestCase):
         )
         return self._add_rule(timed_schedule_id=schedule.schedule_id)
 
+    def _add_custom_daily_rule(self, content_list):
+        event_and_content_objects = [
+            (TimedEvent(day=i % 7, time=time(i * 2 % 24, 30 + i % 60)), content)
+            for i, content in enumerate(content_list)
+        ]
+        schedule = TimedSchedule.create_custom_daily_schedule(
+            self.domain,
+            event_and_content_objects,
+            repeat_every=2,
+        )
+        return self._add_rule(timed_schedule_id=schedule.schedule_id)
+
     def _add_rule(self, alert_schedule_id=None, timed_schedule_id=None):
         assert(alert_schedule_id or timed_schedule_id)
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
@@ -206,6 +223,8 @@ class TestBulkConditionalAlerts(TestCase):
                 (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
                 (self._get_rule(self.DAILY_RULE).id, 'test wrong sheet', 'wrong', 'wrong', 'wrong'),
                 (self._get_rule(self.IMMEDIATE_RULE).id, 'test immediate', 'song', 'Bicycle on a Hill'),
+                (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Just Like This Train'),
+                (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Free Man in Paris'),
             )),
         )
         file = BytesIO()
@@ -224,12 +243,14 @@ class TestBulkConditionalAlerts(TestCase):
             msgs = upload_conditional_alert_workbook(self.domain, self.langs, workbook)
             msgs = [m[1] for m in msgs]     # msgs is tuples of (type, message); ignore the type
 
-            self.assertEqual(len(msgs), 6)
+            self.assertEqual(len(msgs), 8)
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'translated' sheet.", msgs)
             self._assertPatternIn(r"Row 4 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
             self._assertPatternIn(r"Could not find rule for row 5 in 'translated' sheet, with id \d+", msgs)
             self.assertIn("Updated 3 rule(s) in 'translated' sheet", msgs)
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'not translated' sheet.", msgs)
+            self._assertPatternIn(r"Row 5 in 'not translated' sheet.* rule id \d+, uses a custom schedule", msgs)
+            self._assertPatternIn(r"Row 6 in 'not translated' sheet.* rule id \d+, uses a custom schedule", msgs)
             self.assertIn("Updated 2 rule(s) in 'not translated' sheet", msgs)
 
             untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
