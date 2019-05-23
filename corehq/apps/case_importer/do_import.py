@@ -277,7 +277,7 @@ class _CaseImportRow(object):
     def get_update_caseblock(self):
         extras = self._get_caseblock_kwargs()
         if self.uploaded_owner_id or self.uploaded_owner_name:
-            extras['owner_id'] = self._get_owner_id(),
+            extras['owner_id'] = self._get_owner_id()
         if self.case_name is not None:
             extras['case_name'] = self.case_name
         return CaseBlock(
