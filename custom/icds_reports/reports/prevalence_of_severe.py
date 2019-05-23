@@ -10,7 +10,7 @@ from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import wasting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
@@ -19,7 +19,7 @@ from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, i
     default_age_interval, wfh_recorded_in_month_column
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False, icds_feature_flag=False):
 
     def get_data_for(filters):
@@ -158,7 +158,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=False, icds_feature_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -288,7 +288,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False,
                                          icds_feature_flag=False):
     group_by = ['%s_name' % loc_level]

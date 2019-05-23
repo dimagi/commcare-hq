@@ -7,9 +7,8 @@ from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 
 from django.db.models.aggregates import Sum
-from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.models import AggAwcMonthly
@@ -18,7 +17,7 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indi
 import six
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
 def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
@@ -76,7 +75,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'beta'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'beta'], timeout=30 * 60)
 def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=False, beta=False):
     group_by = ['%s_name' % loc_level]
 
@@ -147,7 +146,7 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
 def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)

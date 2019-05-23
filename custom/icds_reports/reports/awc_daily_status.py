@@ -10,14 +10,14 @@ from dateutil.rrule import rrule, DAILY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     date = datetime(*config['month'])
     del config['month']
@@ -87,7 +87,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     last = datetime(*config['month']) - relativedelta(days=30)
@@ -186,7 +186,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
