@@ -55,7 +55,6 @@ branches:
   - mk/ccz-hosting-revamp # MK May 6
   - fr/case-templates      # FR May 15
   - mk/media-version-on-revert   # MK May 16
-  - upgrade-dropbox  # Nick P May 23
   - form-odata  # Nick P May 21
   - web-user-reports-project-access  # Gabriella May 13
   - jls/linked-app-incremental-versioning # Jenny May 20
