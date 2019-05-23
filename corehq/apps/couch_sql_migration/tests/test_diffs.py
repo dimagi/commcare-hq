@@ -474,8 +474,7 @@ class DiffTestCases(SimpleTestCase):
         sql_form = {
             "doc_type": "XFormInstance",
         }
-        diffs = json_diff(couch_form, sql_form, track_list_indices=False)
-        self._test_form_diff_filter(couch_form, sql_form, REAL_DIFFS + diffs)
+        self._test_form_diff_filter(couch_form, sql_form)
 
     def test_form_with_obsolete_location_fields(self):
         couch_doc = {
