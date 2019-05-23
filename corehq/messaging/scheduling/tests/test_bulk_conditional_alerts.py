@@ -18,7 +18,6 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
-from corehq.messaging.scheduling.forms import ContentForm
 from corehq.messaging.scheduling.models import (
     AlertEvent,
     AlertSchedule,

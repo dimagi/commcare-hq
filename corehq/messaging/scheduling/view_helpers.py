@@ -5,18 +5,12 @@ from django.contrib import messages
 from django.db import transaction
 from django.utils.translation import ugettext as _
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
-from corehq.messaging.scheduling.forms import (
-    ConditionalAlertCriteriaForm,
-    ConditionalAlertScheduleForm,
-    ScheduleForm,
-)
-from corehq.messaging.scheduling.models.abstract import Schedule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
 from corehq.messaging.tasks import initiate_messaging_rule_run
-from corehq import toggles
 
 
 def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
@@ -29,6 +23,7 @@ def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
         query = query.filter(name__icontains=query_string)
     query = query.order_by('case_type', 'name', 'id')
     return query
+
 
 def get_conditional_alert_rows(domain, langs):
     translated_rows = []
@@ -129,7 +124,7 @@ class ConditionalAlertUploader(object):
                 continue
 
             if not self.applies_to_rule(rule):
-                self.msgs.append((messages.error, _("Rule in row {index} with id {id} does not belong in " \
+                self.msgs.append((messages.error, _("Rule in row {index} with id {id} does not belong in "
                     "'{sheet_name}' sheet.".format(index=index, id=row['id'], sheet_name=self.sheet_name))))
                 continue
 
