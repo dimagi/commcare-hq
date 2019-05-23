@@ -39,7 +39,7 @@
                 <tr>
                   <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
                   {% if db.result == "found"  %}
-                    <td><a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
+                    <td><a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
                       {{ db.dbname }}
                     </a></td>
                   {% else %}
@@ -62,7 +62,7 @@
                  title="Open in HQ" />
           </a>
           <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
-          <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
+          <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
           <div>
             <h3>Raw Doc:</h3>
             <pre id="couch-document" data-doc="{% html_attr doc %}"></pre>

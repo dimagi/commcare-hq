@@ -140,12 +140,6 @@ def doc_in_es(request):
 
 
 @require_superuser
-def raw_couch(request):
-    get_params = dict(six.iteritems(request.GET))
-    return HttpResponseRedirect(reverse("raw_doc", params=get_params))
-
-
-@require_superuser
 def raw_doc(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
