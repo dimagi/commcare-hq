@@ -65,8 +65,8 @@ def get_table_diffs(engine, table_names, metadata):
     with engine.begin() as connection:
         migration_context = get_migration_context(connection, table_names)
         raw_diffs = compare_metadata(migration_context, metadata)
-        diffs = reformat_alembic_diffs(raw_diffs)
-    return TableDiffs(raw=raw_diffs, formatted=diffs)
+        flattened_raw, diffs = reformat_alembic_diffs(raw_diffs)
+    return TableDiffs(raw=flattened_raw, formatted=diffs)
 
 
 def get_tables_rebuild_migrate(diffs, table_names):
