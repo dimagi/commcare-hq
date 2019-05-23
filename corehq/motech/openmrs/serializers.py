@@ -8,7 +8,10 @@ import re
 import six
 from dateutil import parser as dateutil_parser
 
-from corehq.motech.const import COMMCARE_DATA_TYPE_DATE, COMMCARE_DATA_TYPE_TEXT
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DATE,
+    COMMCARE_DATA_TYPE_TEXT,
+)
 from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_BOOLEAN,
     OPENMRS_DATA_TYPE_DATE,
@@ -54,6 +57,15 @@ def to_omrs_datetime(value):
         return value.strftime('%Y-%m-%dT%H:%M:%S.{f}{z}'.format(f=micros, z=tz))
 
 
+def to_omrs_boolean(value):
+    if (
+        isinstance(value, six.string_types)
+        and value.lower() in ('false', '0')
+    ):
+        return False
+    return bool(value)
+
+
 def omrs_datetime_to_date(value):
     """
     Converts an OpenMRS datetime to a CommCare date
@@ -75,6 +87,7 @@ serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATE): to_omrs_date,
     (None, OPENMRS_DATA_TYPE_DATETIME): to_omrs_datetime,
+    (None, OPENMRS_DATA_TYPE_BOOLEAN): to_omrs_boolean,
     (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,
     (OPENMRS_DATA_TYPE_BOOLEAN, COMMCARE_DATA_TYPE_TEXT): omrs_boolean_to_text,
 })

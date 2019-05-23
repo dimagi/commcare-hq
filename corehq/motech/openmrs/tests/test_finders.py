@@ -1,13 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import doctest
 
 from django.test import SimpleTestCase
 
-from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
-from corehq.motech.openmrs.openmrs_config import get_property_map, OpenmrsCaseConfig
-import corehq.motech.openmrs.finders_utils
+from nose.tools import assert_false
+
+from corehq.motech.openmrs import finders_utils
+from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
+from corehq.motech.openmrs.finders import (
+    PatientFinder,
+    WeightedPropertyPatientFinder,
+    constant_false,
+)
+from corehq.motech.openmrs.openmrs_config import (
+    OpenmrsCaseConfig,
+    get_property_map,
+)
+from corehq.motech.value_source import ConstantString
 
 
 PATIENT = {
@@ -74,8 +84,57 @@ class PatientFinderTests(SimpleTestCase):
             'searchable_properties': [],
             'property_weights': [],
         })
-        self.assertFalse(finder.create_missing)
+        self.assertEqual(
+            finder.create_missing,
+            ConstantString(
+                external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
+                commcare_data_type=None,
+                direction=None,
+                doc_type='ConstantString',
+                value='False',
+            )
+        )
 
+    def test_create_missing_true(self):
+        finder = PatientFinder.wrap({
+            'doc_type': 'WeightedPropertyPatientFinder',
+            'searchable_properties': [],
+            'property_weights': [],
+            'create_missing': True,
+        })
+        self.assertEqual(
+            finder.create_missing,
+            ConstantString(
+                external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
+                commcare_data_type=None,
+                direction=None,
+                doc_type='ConstantString',
+                value='True',
+            )
+        )
+
+    def test_create_missing_false(self):
+        finder = PatientFinder.wrap({
+            'doc_type': 'WeightedPropertyPatientFinder',
+            'searchable_properties': [],
+            'property_weights': [],
+            'create_missing': False,
+        })
+        self.assertEqual(
+            finder.create_missing,
+            ConstantString(
+                external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
+                commcare_data_type=None,
+                direction=None,
+                doc_type='ConstantString',
+                value='False',
+            )
+        )
+
+
+def test_constant_false():
+    info = {}
+    assert_false(constant_false.get_value(info))
 
 
 class WeightedPropertyPatientFinderTests(SimpleTestCase):
@@ -225,5 +284,5 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 class DocTests(SimpleTestCase):
 
     def test_doctests(self):
-        results = doctest.testmod(corehq.motech.openmrs.finders_utils)
+        results = doctest.testmod(finders_utils)
         self.assertEqual(results.failed, 0)
