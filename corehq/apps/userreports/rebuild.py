@@ -46,10 +46,25 @@ class DataSourceResumeHelper(object):
         return self._client.exists(self._key)
 
 
-@attr.s
 class TableDiffs(object):
-    raw = attr.ib()
-    formatted = attr.ib()
+    def __init__(self, raw=None, formatted=None):
+        self.raw = raw or []
+        self.formatted = formatted or []
+        self.validate()
+
+    def validate(self):
+        if len(self.raw) != len(self.formatted):
+            raise ValueError("Expecting 'raw' and 'formatted' to be of the same length")
+
+    def filter(self, table_names):
+        self.validate()
+        new = TableDiffs()
+        for raw, formatted in zip(self.raw, self.formatted):
+            if formatted.table_name in table_names:
+                new.raw.append(raw)
+                new.formatted.append(formatted)
+        new.validate()
+        return new
 
 
 @attr.s

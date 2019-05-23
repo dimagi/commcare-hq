@@ -193,7 +193,8 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter, table_diffs)
 
-            self.migrate_tables(engine, diffs.raw, tables_to_act_on.migrate, table_map)
+            migration_diffs = diffs.filter(tables_to_act_on.migrate)
+            self.migrate_tables(engine, migration_diffs.raw, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
         pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)

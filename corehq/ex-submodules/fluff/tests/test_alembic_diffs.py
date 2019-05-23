@@ -7,6 +7,7 @@ from alembic.autogenerate import compare_metadata
 from django.test.testcases import TestCase, SimpleTestCase
 from nose.tools import assert_list_equal
 
+from corehq.apps.userreports.rebuild import TableDiffs
 from corehq.sql_db.connections import connection_manager
 from fluff.signals import (
     get_migration_context, reformat_alembic_diffs,
@@ -26,6 +27,20 @@ def test_flatten_raw_diffs():
         ('diff2', None),
         ('diff3', None),
     ])
+
+
+def test_filter_diffs():
+    raw = [
+        ('add_table', 't1'),
+        ('remove_table', 't2')
+    ]
+    formatted = [
+        SimpleDiff(DiffTypes.ADD_TABLE, 't1', None),
+        SimpleDiff(DiffTypes.REMOVE_TABLE, 't2', None),
+    ]
+    filtered = TableDiffs(raw=raw, formatted=formatted).filter(['t1'])
+    assert_list_equal(filtered.raw, [('add_table', 't1')])
+    assert_list_equal(filtered.formatted, [SimpleDiff(DiffTypes.ADD_TABLE, 't1', None)])
 
 
 class TestAlembicDiffs(TestCase):
