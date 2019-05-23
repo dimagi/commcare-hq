@@ -100,6 +100,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
             response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder),
                 "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
+                "domain": doc.get('domain', 'Unknown'),
                 "dbname": db.dbname,
             })
 
