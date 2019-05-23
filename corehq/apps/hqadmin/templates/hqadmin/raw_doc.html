@@ -4,7 +4,7 @@
 {% block title %}Doc {{ doc_id }}{% endblock %}
 
 {% block js %}{{ block.super }}
-  {% requirejs_main 'hqadmin/js/raw_couch_main' %}
+  {% requirejs_main 'hqadmin/js/raw_doc' %}
 {% endblock %}
 
 
@@ -65,7 +65,7 @@
           <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
           <div>
             <h3>Raw Doc:</h3>
-            <pre id="couch-document" data-doc="{% html_attr doc %}"></pre>
+            <pre id="doc-element" data-doc="{% html_attr doc %}"></pre>
           </div>
         </div>
       </div>
