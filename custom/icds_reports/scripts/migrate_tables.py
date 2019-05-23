@@ -265,13 +265,6 @@ def get_table_sizes(source_db, source_host, source_user):
         }
 
 
-def filter_tables_by_date(tables, start_date, end_date):
-    return [
-        (source_table, target_table) for source_table, table_date, target_table in tables
-        if (not start_date or table_date >= start_date) and (not end_date or table_date < end_date)
-    ]
-
-
 def _confirm(msg):
     confirm_update = input(msg + ' [yes / no] ')
     return confirm_update == 'yes'
