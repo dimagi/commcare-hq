@@ -83,7 +83,11 @@ class DiffTestCases(SimpleTestCase):
 
     maxDiff = None
 
-    def _test_form_diff_filter(self, couch_form, sql_form, diffs, expected=REAL_DIFFS):
+    def _test_form_diff_filter(self, couch_form, sql_form, diffs=None, expected=REAL_DIFFS):
+        if diffs is None:
+            diffs = json_diff(couch_form, sql_form, track_list_indices=False)
+            self.assertTrue(diffs)
+            diffs += REAL_DIFFS
         filtered = filter_form_diffs(couch_form, sql_form, diffs)
         self.assertEqual(filtered, expected)
 
@@ -339,6 +343,20 @@ class DiffTestCases(SimpleTestCase):
         filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual([], filtered_diffs)
 
+    def test_case_obsolete_location_field(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'location_': ['abc', 'def']
+        }
+
+        sql_case = {
+            'doc_type': 'CommCareCase',
+        }
+
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        self.assertTrue(diffs)
+        self.assertEqual(filter_case_diffs(couch_case, sql_case, diffs), [])
+
     def test_multiple_case_indices_real_diff(self):
         couch_case = {
             'doc_type': 'CommCareCase',
@@ -459,23 +477,18 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_form, sql_form, track_list_indices=False)
         self._test_form_diff_filter(couch_form, sql_form, REAL_DIFFS + diffs)
 
-    def test_form_with_obsolete_location_id(self):
+    def test_form_with_obsolete_location_fields(self):
         couch_doc = {
             "doc_type": "XFormInstance",
             "location_id": "deadbeef",
+            "location_": ["deadbeef", "cafebabe"],
             "xmlns": "http://commtrack.org/supply_point",
         }
         sql_doc = {
             "doc_type": "XFormInstance",
             "xmlns": "http://commtrack.org/supply_point",
         }
-        diffs = [
-            FormJsonDiff(
-                diff_type='missing', path=('location_id',),
-                old_value='deadbeef', new_value=MISSING
-            )
-        ]
-        self._test_form_diff_filter(couch_doc, sql_doc, REAL_DIFFS + diffs)
+        self._test_form_diff_filter(couch_doc, sql_doc)
 
     def test_form_with_opened_by_diff(self):
         couch_case = {

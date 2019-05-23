@@ -36,7 +36,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
         Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
-        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('missing', 'location_', new=MISSING),
         Ignore('type', 'xmlns', old=None, new=''),
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
@@ -99,7 +99,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'closed_by', old='', new=None),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
-        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('missing', 'location_', new=MISSING),
         Ignore('type', 'type', old=None, new=''),
         # this happens for cases where the creation form has been archived but the case still has other forms
         Ignore('type', 'owner_id', old=None, new=''),
