@@ -13,39 +13,10 @@ from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import object_does_not_exist, get_obj
-from corehq.apps.cloudcare.api import es_filter_cases
-from corehq.apps.data_interfaces.forms import is_valid_case_property_name
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from no_exceptions.exceptions import Http400
-
-
-class CaseListFilters(object):
-    format = 'json'
-
-    def __init__(self, params):
-
-        self.filters = dict((k, v) for k, v in params.items() if k and is_valid_case_property_name(k))
-
-        #hacky hack for v0.3.
-        #for v0.4, the API will explicitly require name and type
-        #for this version, magically behind the scenes override the query for case_name and case_type to be name, type
-        #note, on return output, the name will return as case_name, and type will return as case_type
-
-        if 'case_name' in self.filters:
-            self.filters['name'] = self.filters['case_name']
-            del(self.filters['case_name'])
-        if 'case_type' in self.filters:
-            self.filters['type'] = self.filters['case_type']
-            del(self.filters['case_type'])
-
-        if 'format' in self.filters:
-            self.format = self.filters['format']
-            del self.filters['format']
-
-        if 'order_by' in self.filters:
-            del self.filters['order_by']
 
 
 class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
