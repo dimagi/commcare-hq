@@ -12,6 +12,7 @@ from corehq.messaging.scheduling.forms import (
     ScheduleForm,
 )
 from corehq.messaging.scheduling.models.abstract import Schedule
+from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
 from corehq import toggles
@@ -124,13 +125,18 @@ class ConditionalAlertUploader(object):
         schedule = rule.get_messaging_rule_schedule()
         send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
         {
-            ScheduleForm.SEND_IMMEDIATELY: lambda: None, # TODO: self.save_immediate_schedule,
+            ScheduleForm.SEND_IMMEDIATELY: self.save_immediate_schedule,
             ScheduleForm.SEND_DAILY: self.save_daily_schedule,
             ScheduleForm.SEND_WEEKLY: self.save_weekly_schedule,
             ScheduleForm.SEND_MONTHLY: self.save_monthly_schedule,
             ScheduleForm.SEND_CUSTOM_DAILY: lambda: None, # TODO:, self.save_custom_daily_schedule,
             ScheduleForm.SEND_CUSTOM_IMMEDIATE: lambda: None, # TODO: self.save_custom_immediate_schedule,
         }[send_frequency](schedule, message)
+
+    def save_immediate_schedule(self, schedule, message):
+        AlertSchedule.assert_is(schedule)
+        schedule.set_simple_alert(SMSContent(message=message),
+                                  extra_options=schedule.get_extra_scheduling_options())
 
     def save_daily_schedule(self, schedule, message):
         TimedSchedule.assert_is(schedule)

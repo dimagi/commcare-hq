@@ -20,6 +20,8 @@ from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.messaging.scheduling.forms import ContentForm
 from corehq.messaging.scheduling.models import (
+    AlertEvent,
+    AlertSchedule,
     EmailContent,
     SMSContent,
     TimedEvent,
@@ -39,6 +41,7 @@ class TestBulkConditionalAlerts(TestCase):
 
     EMAIL_RULE = 'email_rule'
     UNTRANSLATED_RULE = 'untranslated_rule'
+    IMMEDIATE_RULE = 'immediate_rule'
     DAILY_RULE = 'daily_rule'
     WEEKLY_RULE = 'weekly_rule'
     MONTHLY_RULE = 'monthly_rule'
@@ -62,6 +65,9 @@ class TestBulkConditionalAlerts(TestCase):
             )),
             self.UNTRANSLATED_RULE: self._add_daily_rule(SMSContent(message={
                 '*': 'Joan',
+            })),
+            self.IMMEDIATE_RULE: self._add_immediate_rule(SMSContent(message={
+                '*': 'Car on a Hill',
             })),
             self.DAILY_RULE: self._add_daily_rule(SMSContent(message={
                 'en': 'Diamonds and Rust',
@@ -98,6 +104,15 @@ class TestBulkConditionalAlerts(TestCase):
     def _assertPatternIn(self, pattern, collection):
         self.assertTrue(any(re.match(pattern, item) for item in collection))
 
+    def _assertAlertScheduleEventsEqual(self, schedule1, schedule2):
+        self.assertEqual(len(schedule1.memoized_events), len(schedule2.memoized_events))
+        for i in range(len(schedule1.memoized_events)):
+            event1 = schedule1.memoized_events[i]
+            event2 = schedule2.memoized_events[i]
+            self.assertTrue(isinstance(event1, AlertEvent))
+            self.assertTrue(isinstance(event2, AlertEvent))
+            self.assertEqual(event1.minutes_to_wait, event2.minutes_to_wait)
+
     def _assertTimedScheduleEventsEqual(self, schedule1, schedule2):
         self.assertEqual(len(schedule1.memoized_events), len(schedule2.memoized_events))
         for i in range(len(schedule1.memoized_events)):
@@ -108,13 +123,17 @@ class TestBulkConditionalAlerts(TestCase):
             self.assertEqual(event1.day, event2.day)
             self.assertEqual(event1.get_scheduling_info(), event2.get_scheduling_info())
 
+    def _add_immediate_rule(self, content):
+        schedule = AlertSchedule.create_simple_alert(self.domain, content)
+        return self._add_rule(alert_schedule_id=schedule.schedule_id)
+
     def _add_daily_rule(self, content):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
             TimedEvent(time=time(9, 0)),
             content
         )
-        return self._add_rule(schedule)
+        return self._add_rule(timed_schedule_id=schedule.schedule_id)
 
     def _add_weekly_rule(self, content):
         schedule = TimedSchedule.create_simple_weekly_schedule(
@@ -126,7 +145,7 @@ class TestBulkConditionalAlerts(TestCase):
             total_iterations=3,
             repeat_every=2,
         )
-        return self._add_rule(schedule)
+        return self._add_rule(timed_schedule_id=schedule.schedule_id)
 
     def _add_monthly_rule(self, content):
         schedule = TimedSchedule.create_simple_monthly_schedule(
@@ -136,15 +155,17 @@ class TestBulkConditionalAlerts(TestCase):
             content,
             total_iterations=2,
         )
-        return self._add_rule(schedule)
+        return self._add_rule(timed_schedule_id=schedule.schedule_id)
 
-    def _add_rule(self, schedule):
+    def _add_rule(self, alert_schedule_id=None, timed_schedule_id=None):
+        assert(alert_schedule_id or timed_schedule_id)
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         self.addCleanup(rule.delete)
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
-            timed_schedule_id=schedule.schedule_id,
-            recipients=(('CommCareUser', self.user.get_id),)
+            recipients=(('CommCareUser', self.user.get_id),),
+            alert_schedule_id=alert_schedule_id,
+            timed_schedule_id=timed_schedule_id,
         )
         rule.save()
         return rule
@@ -153,11 +174,13 @@ class TestBulkConditionalAlerts(TestCase):
         (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, self.langs)
 
         self.assertEqual(len(translated_rows), 3)
-        self.assertEqual(len(untranslated_rows), 1)
+        self.assertEqual(len(untranslated_rows), 2)
 
         rows_by_id = {row[0]: row[1:] for row in translated_rows + untranslated_rows}
         self.assertListEqual(rows_by_id[self._get_rule(self.UNTRANSLATED_RULE).id],
                                        ['test', 'person', 'Joan'])
+        self.assertListEqual(rows_by_id[self._get_rule(self.IMMEDIATE_RULE).id],
+                                       ['test', 'person', 'Car on a Hill'])
         self.assertListEqual(rows_by_id[self._get_rule(self.DAILY_RULE).id],
                                        ['test', 'person', 'Diamonds and Rust', 'Diamantes y Óxido'])
         self.assertListEqual(rows_by_id[self._get_rule(self.WEEKLY_RULE).id],
@@ -182,6 +205,7 @@ class TestBulkConditionalAlerts(TestCase):
             ("not translated", (
                 (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
                 (self._get_rule(self.DAILY_RULE).id, 'test wrong sheet', 'wrong', 'wrong', 'wrong'),
+                (self._get_rule(self.IMMEDIATE_RULE).id, 'test immediate', 'song', 'Bicycle on a Hill'),
             )),
         )
         file = BytesIO()
@@ -192,9 +216,11 @@ class TestBulkConditionalAlerts(TestCase):
             f.seek(0)
             workbook = get_workbook(f)
 
-            old_daily_schedule = self._get_rule(self.DAILY_RULE).get_messaging_rule_schedule()
-            old_weekly_schedule = self._get_rule(self.WEEKLY_RULE).get_messaging_rule_schedule()
-            old_monthly_schedule = self._get_rule(self.MONTHLY_RULE).get_messaging_rule_schedule()
+            test_cases = (self.UNTRANSLATED_RULE, self.IMMEDIATE_RULE,
+                          self.DAILY_RULE, self.WEEKLY_RULE, self.MONTHLY_RULE)
+            old_schedules = {test_case: self._get_rule(test_case).get_messaging_rule_schedule()
+                             for test_case in test_cases}
+
             msgs = upload_conditional_alert_workbook(self.domain, self.langs, workbook)
             msgs = [m[1] for m in msgs]     # msgs is tuples of (type, message); ignore the type
 
@@ -204,21 +230,32 @@ class TestBulkConditionalAlerts(TestCase):
             self._assertPatternIn(r"Could not find rule for row 5 in 'translated' sheet, with id \d+", msgs)
             self.assertIn("Updated 3 rule(s) in 'translated' sheet", msgs)
             self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'not translated' sheet.", msgs)
-            self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
+            self.assertIn("Updated 2 rule(s) in 'not translated' sheet", msgs)
 
             untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
             self.assertEqual(untranslated_rule.name, 'test untranslated')
             self.assertEqual(untranslated_rule.case_type, 'song')
-            untranslated_content = untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
+            untranslated_schedule = untranslated_rule.get_messaging_rule_schedule()
+            self._assertTimedScheduleEventsEqual(untranslated_schedule, old_schedules[self.UNTRANSLATED_RULE])
+            untranslated_content = untranslated_schedule.memoized_events[0].content
             self.assertEqual(untranslated_content.message, {
                 '*': 'Joanie',
+            })
+
+            immediate_rule = self._get_rule(self.IMMEDIATE_RULE)
+            self.assertEqual(immediate_rule.name, 'test immediate')
+            immediate_schedule = immediate_rule.get_messaging_rule_schedule()
+            self._assertAlertScheduleEventsEqual(immediate_schedule, old_schedules[self.IMMEDIATE_RULE])
+            immediate_content = immediate_schedule.memoized_events[0].content
+            self.assertEqual(immediate_content.message, {
+                '*': 'Bicycle on a Hill',
             })
 
             daily_rule = self._get_rule(self.DAILY_RULE)
             self.assertEqual(daily_rule.name, 'test daily')
             self.assertEqual(daily_rule.case_type, 'song')
             daily_schedule = daily_rule.get_messaging_rule_schedule()
-            self._assertTimedScheduleEventsEqual(daily_schedule, old_daily_schedule)
+            self._assertTimedScheduleEventsEqual(daily_schedule, old_schedules[self.DAILY_RULE])
             daily_content = daily_schedule.memoized_events[0].content
             self.assertEqual(daily_content.message, {
                 'en': 'Rustier',
@@ -227,7 +264,7 @@ class TestBulkConditionalAlerts(TestCase):
 
             weekly_rule = self._get_rule(self.WEEKLY_RULE)
             weekly_schedule = weekly_rule.get_messaging_rule_schedule()
-            self._assertTimedScheduleEventsEqual(weekly_schedule, old_weekly_schedule)
+            self._assertTimedScheduleEventsEqual(weekly_schedule, old_schedules[self.WEEKLY_RULE])
             weekly_content = weekly_rule.get_messaging_rule_schedule().memoized_events[0].content
             self.assertEqual(weekly_content.message, {
                 'en': 'It\'s On Time',
@@ -236,7 +273,7 @@ class TestBulkConditionalAlerts(TestCase):
 
             monthly_rule = self._get_rule(self.MONTHLY_RULE)
             monthly_schedule = monthly_rule.get_messaging_rule_schedule()
-            self._assertTimedScheduleEventsEqual(monthly_schedule, old_monthly_schedule)
+            self._assertTimedScheduleEventsEqual(monthly_schedule, old_schedules[self.MONTHLY_RULE])
             monthly_content = monthly_rule.get_messaging_rule_schedule().memoized_events[0].content
             self.assertEqual(monthly_content.message, {
                 'en': 'One Side Now',
