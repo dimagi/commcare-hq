@@ -1089,9 +1089,10 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 BULK_CONDITIONAL_ALERTS = StaticToggle(
     'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts.',
-    TAG_PRODUCT,
+    'Allow bulk download and upload of conditional alerts',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts',
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(
