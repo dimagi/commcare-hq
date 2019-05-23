@@ -89,6 +89,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    get_build_doc_by_version,
+    wrap_app,
 )
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
@@ -4386,8 +4388,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, build_profile_id=None):
-        all_files = self.create_all_files(build_profile_id)
+    def create_build_files(self, build_profile_id=None, version_reverted_to=None):
+        all_files = self.create_all_files(build_profile_id=build_profile_id,
+                                          version_reverted_to=version_reverted_to)
         for filepath in all_files:
             self.lazy_put_attachment(all_files[filepath],
                                      'files/%s' % filepath)
@@ -4509,14 +4512,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.get_jadjar().fetch_jar()
 
     @time_method()
-    def make_build(self, comment=None, user_id=None):
+    def make_build(self, comment=None, user_id=None, version_reverted_to=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        copy.create_build_files()
+        copy.create_build_files(version_reverted_to=version_reverted_to)
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4582,7 +4585,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # by default doing nothing here is fine.
         pass
 
-    def set_media_versions(self):
+    def set_media_versions(self, version_reverted_to=None):
         pass
 
     def get_build_langs(self, build_profile_id=None):
@@ -4793,27 +4796,32 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 else:
                     form.version = None
 
-    def set_media_versions(self):
+    def set_media_versions(self, version_reverted_to=None):
         """
         Set the media version numbers for all media in the app to the current app version
-        if the media is new or has changed since the last build. Otherwise set it to the
-        version from the last build.
+        if the media is new or has changed since the last build or the build reverting to.
+        Otherwise set it to the version from the last build/version reverted to.
         """
+        icds_toggle_enabled = toggles.ICDS.enabled(self.domain)
 
-        # access to .multimedia_map is slow
-        previous_version = self.get_previous_version()
+        if version_reverted_to and icds_toggle_enabled:
+            previous_version = wrap_app(get_build_doc_by_version(self.domain, self.copy_of, version_reverted_to))
+        else:
+            previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
-
+        is_linked_app = isinstance(self, LinkedApplication)
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
                 map_item.unique_id = prev_map_item.unique_id
-            if (prev_map_item and prev_map_item.version
-                    and prev_map_item.multimedia_id == map_item.multimedia_id):
-                map_item.version = prev_map_item.version
-            else:
-                map_item.version = self.version
+            # if its a linked app and the map item already has a version don't need to set it up again
+            if not (icds_toggle_enabled and is_linked_app and map_item.version):
+                if (prev_map_item and prev_map_item.version
+                        and prev_map_item.multimedia_id == map_item.multimedia_id):
+                    map_item.version = prev_map_item.version
+                else:
+                    map_item.version = self.version
 
     def ensure_module_unique_ids(self, should_save=False):
         """
@@ -5040,9 +5048,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
     @time_method()
     @memoized
-    def create_all_files(self, build_profile_id=None):
+    def create_all_files(self, build_profile_id=None, version_reverted_to=None):
         self.set_form_versions()
-        self.set_media_versions()
+        self.set_media_versions(version_reverted_to=version_reverted_to)
         prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
