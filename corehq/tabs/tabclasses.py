@@ -1,69 +1,93 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
 from django.utils.html import escape, strip_tags
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves import map
 from six.moves.urllib.parse import urlencode
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.dispatcher import (
+    AccountingAdminInterfaceDispatcher,
+)
 from corehq.apps.accounting.models import Invoice, Subscription
-from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial, is_accounting_admin
-from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    domain_is_on_trial,
+    is_accounting_admin,
+)
+from corehq.apps.app_manager.dbaccessors import (
+    domain_has_apps,
+    get_brief_apps_in_domain,
+)
 from corehq.apps.builds.views import EditMenuView
+from corehq.apps.case_templates.views import CaseTemplatesListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.releases import ManageReleases
-from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
-    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
-    DeviceLogSoftAssertReport, UserAuditReport
+from corehq.apps.hqadmin.reports import (
+    CommConnectProjectSpacesReport,
+    CommTrackProjectSpacesReport,
+    DeviceLogSoftAssertReport,
+    RealProjectSpacesReport,
+    UserAuditReport,
+)
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
-    KeywordsListView,
     AddNormalKeywordView,
     AddStructuredKeywordView,
     EditNormalKeywordView,
     EditStructuredKeywordView,
+    KeywordsListView,
 )
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
-    CustomProjectReportDispatcher
+from corehq.apps.reports.dispatcher import (
+    CustomProjectReportDispatcher,
+    ProjectReportDispatcher,
+)
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
-from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
+from corehq.apps.styleguide.views import MainStyleGuideView
+from corehq.apps.translations.integrations.transifex.utils import (
+    transifex_details_available_for_domain,
+)
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
-    can_view_sms_exports,
     can_download_data_files,
+    can_view_sms_exports,
 )
+from corehq.messaging.scheduling.views import \
+    BroadcastListView as NewBroadcastListView
 from corehq.messaging.scheduling.views import (
-    MessagingDashboardView,
-    BroadcastListView as NewBroadcastListView,
-    CreateScheduleView,
-    EditScheduleView,
     ConditionalAlertListView,
     CreateConditionalAlertView,
+    CreateScheduleView,
     EditConditionalAlertView,
+    EditScheduleView,
+    MessagingDashboardView,
     UploadConditionalAlertView,
 )
-from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.messaging.util import show_messaging_dashboard
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
+from corehq.motech.dhis2.view import DataSetMapView, Dhis2ConnectionView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
-from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
+from corehq.tabs.utils import (
+    dropdown_dict,
+    regroup_sidebar_items,
+    sidebar_to_dropdown,
+)
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.icds.views.hosted_ccz import (
     ManageHostedCCZLink,
@@ -380,7 +404,8 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data/',
         '/a/{domain}/fixtures/',
         '/a/{domain}/data_dictionary/',
-        '/a/{domain}/importer/'
+        '/a/{domain}/importer/',
+        '/a/{domain}/case_templates/',
     )
 
     @property
@@ -401,6 +426,11 @@ class ProjectDataTab(UITab):
     @memoized
     def can_use_data_cleanup(self):
         return domain_has_privilege(self.domain, privileges.DATA_CLEANUP)
+
+    @property
+    @memoized
+    def can_manage_case_templates(self):
+        return toggles.CASE_TEMPLATES.enabled(self.domain)
 
     @property
     @memoized
@@ -702,6 +732,12 @@ class ProjectDataTab(UITab):
                 edit_section[0][1].append({
                     'title': _(AutomaticUpdateRuleListView.page_title),
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                })
+
+            if self.can_manage_case_templates:
+                edit_section[0][1].append({
+                    'title': _(CaseTemplatesListView.page_title),
+                    'url': reverse(CaseTemplatesListView.urlname, args=[self.domain]),
                 })
 
             items.extend(edit_section)
