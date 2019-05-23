@@ -312,3 +312,68 @@ class TestBulkConditionalAlerts(TestCase):
             'en': 'One Side Now',
             'es': 'Un Lado Ahora',
         })
+
+    def test_partial_upload(self):
+        headers = (
+            ("translated", ("id", "name", "message_es")),
+            ("not translated", ("id", "name", "case_type")),
+        )
+        data = (
+            ("translated", (
+                (self._get_rule(self.DAILY_RULE).id, 'test daily', 'Más Oxidado'),
+            )),
+            ("not translated", (
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song'),
+            )),
+        )
+
+        msgs = self._upload(headers, data)
+
+        self.assertEqual(len(msgs), 2)
+        self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
+        self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
+
+        untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
+        self.assertEqual(untranslated_rule.name, 'test untranslated')
+        self.assertEqual(untranslated_rule.case_type, 'song')
+        untranslated_content = untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
+        self.assertEqual(untranslated_content.message, {
+            '*': 'Joan',
+        })
+
+        daily_rule = self._get_rule(self.DAILY_RULE)
+        self.assertEqual(daily_rule.name, 'test daily')
+        self.assertEqual(daily_rule.case_type, 'person')
+        daily_content = daily_rule.get_messaging_rule_schedule().memoized_events[0].content
+        self.assertEqual(daily_content.message, {
+            'en': 'Diamonds and Rust',
+            'es': 'Más Oxidado',
+        })
+
+    def test_upload_missing_id_column(self):
+        headers = (
+            ("translated", ("name", "case_type", "message_en", "message_es")),
+            ("not translated", ("id", "name", "case_type", "message")),
+        )
+        data = (
+            ("translated", (
+                ('test daily', 'song', 'Rustier', 'Más Oxidado'),
+            )),
+            ("not translated", (
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
+            )),
+        )
+
+        msgs = self._upload(headers, data)
+
+        self.assertEqual(len(msgs), 2)
+        self.assertIn("The 'translated' sheet is missing an id column. This sheet has been skipped.", msgs)
+        self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
+
+        untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
+        self.assertEqual(untranslated_rule.name, 'test untranslated')
+        self.assertEqual(untranslated_rule.case_type, 'song')
+        untranslated_content = untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
+        self.assertEqual(untranslated_content.message, {
+            '*': 'Joanie',
+        })

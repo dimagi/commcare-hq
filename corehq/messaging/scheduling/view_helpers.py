@@ -75,12 +75,23 @@ class ConditionalAlertUploader(object):
             return {}
         return content.message
 
+    def get_worksheet_errors(self, worksheet):
+        if 'id' not in worksheet.headers:
+            return [(messages.error, _("The '{sheet_name}' sheet is missing an id column. "
+                                       "This sheet has been skipped.".format(sheet_name=self.sheet_name)))]
+
+        return []
+
     def upload(self, workbook):
         self.msgs = []
         success_count = 0
-        rows = workbook.get_worksheet(title=self.sheet_name)
+        worksheet = workbook.get_worksheet(title=self.sheet_name)
 
-        for index, row in enumerate(rows, start=2):    # one-indexed, plus header row
+        errors = self.get_worksheet_errors(worksheet)
+        if errors:
+            return errors
+
+        for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
             rule = None
             try:
                 rule = AutomaticUpdateRule.objects.get(
@@ -136,10 +147,10 @@ class ConditionalAlertUploader(object):
 
     def update_rule(self, rule, row):
         dirty = False
-        if rule.name != row['name']:
+        if 'name' in row and rule.name != row['name']:
             dirty = True
             rule.name = row['name']
-        if rule.case_type != row['case_type']:
+        if 'case_type' in row and rule.case_type != row['case_type']:
             dirty = True
             rule.case_type = row['case_type']
         return dirty
@@ -209,8 +220,9 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
         message = self.rule_message(rule)
         message_dirty = False
         for lang in self.langs:
-            if message.get(lang, '') != row['message_' + lang]:
-                message.update({lang: row['message_' + lang]})
+            key = 'message_' + lang
+            if key in row and message.get(lang, '') != row[key]:
+                message.update({lang: row[key]})
                 message_dirty = True
         if message_dirty:
             self.update_rule_message(rule, message)
@@ -226,6 +238,9 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
     def update_rule(self, rule, row):
         dirty = super(UntranslatedConditionalAlertUploader, self).update_rule(rule, row)
+        if 'message' not in row:
+            return dirty
+
         message = self.rule_message(rule)
         if message.get('*', '') != row['message']:
             message.update({'*': row['message']})
