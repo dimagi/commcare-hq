@@ -28,7 +28,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2_v4
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
@@ -185,7 +185,6 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
-    @use_select2_v4
     @method_decorator(check_pending_locations_import())
     @method_decorator(require_can_edit_or_view_locations)
     def dispatch(self, request, *args, **kwargs):
@@ -272,7 +271,6 @@ class LocationTypesView(BaseDomainView):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
     @use_jquery_ui
-    @use_select2_v4
     @method_decorator(can_edit_location_types)
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import())
@@ -602,7 +600,6 @@ class NewLocationView(BaseEditLocationView):
     page_title = ugettext_noop("New Location")
 
     @use_multiselect
-    @use_select2_v4
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
@@ -681,7 +678,6 @@ class EditLocationView(BaseEditLocationView):
     creates_new_location = False
 
     @use_multiselect
-    @use_select2_v4
     @method_decorator(check_pending_locations_import(redirect=True))
     @method_decorator(can_edit_or_view_location)
     def dispatch(self, request, *args, **kwargs):

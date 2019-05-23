@@ -81,7 +81,7 @@ class AppTranslationsGenerator(object):
         necessary_labels = defaultdict(set)
 
         for module in self.app.modules:
-            for form in module.forms:
+            for form in module.get_forms():
                 questions = form.get_questions(self.app.langs, include_triggers=True,
                                                include_groups=True, include_translations=True)
                 for question in questions:

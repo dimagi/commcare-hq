@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text, \
     percent_children_enrolled_help_text, percent_pregnant_women_enrolled_help_text, \
     percent_lactating_women_enrolled_help_text, percent_adolescent_girls_enrolled_help_text
@@ -18,7 +17,6 @@ from custom.icds_reports.utils import (
 )
 
 
-@quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
 def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)
     current_month = datetime(*config['month'])
