@@ -1523,6 +1523,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ('case', 'server_date', 'sync_log_id'),
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
