@@ -10,6 +10,7 @@ from mock import patch
 from tastypie.models import ApiKey
 
 from corehq.apps.api.odata.tests.utils import OdataTestMixin
+from corehq.apps.api.odata.views import ODataCaseServiceView
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
@@ -17,7 +18,7 @@ from corehq.util.test_utils import flag_enabled
 
 class TestServiceDocument(TestCase, OdataTestMixin):
 
-    view_urlname = 'odata_service'
+    view_urlname = ODataCaseServiceView.urlname
 
     @classmethod
     def setUpClass(cls):
