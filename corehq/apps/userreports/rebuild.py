@@ -46,47 +46,22 @@ class DataSourceResumeHelper(object):
         return self._client.exists(self._key)
 
 
-class TableDiffs(object):
-    def __init__(self, raw=None, formatted=None):
-        self.raw = raw or []
-        self.formatted = formatted or []
-        self.validate()
-
-    def validate(self):
-        if len(self.raw) != len(self.formatted):
-            raise ValueError("Expecting 'raw' and 'formatted' to be of the same length")
-
-    def filter(self, table_names):
-        self.validate()
-        new = TableDiffs()
-        for raw, formatted in zip(self.raw, self.formatted):
-            if formatted.table_name in table_names:
-                new.raw.append(raw)
-                new.formatted.append(formatted)
-        new.validate()
-        return new
-
-
 @attr.s
 class MigrateRebuildTables(object):
     migrate = attr.ib()
     rebuild = attr.ib()
 
 
-SimpleIndexDiff = namedtuple('SimpleIndexDiff', 'action index')
-
-
 def get_table_diffs(engine, table_names, metadata):
     with engine.begin() as connection:
         migration_context = get_migration_context(connection, table_names)
         raw_diffs = compare_metadata(migration_context, metadata)
-        flattened_raw, diffs = reformat_alembic_diffs(raw_diffs)
-    return TableDiffs(raw=flattened_raw, formatted=diffs)
+        return reformat_alembic_diffs(raw_diffs)
 
 
 def get_tables_rebuild_migrate(diffs, table_names):
-    tables_to_rebuild = get_tables_to_rebuild(diffs.formatted, table_names)
-    tables_to_migrate = get_tables_to_migrate(diffs.formatted, table_names)
+    tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
+    tables_to_migrate = get_tables_to_migrate(diffs, table_names)
     tables_to_migrate -= tables_to_rebuild
     return MigrateRebuildTables(migrate=tables_to_migrate, rebuild=tables_to_rebuild)
 
@@ -116,9 +91,9 @@ def get_tables_with_added_nullable_columns(diffs, table_names):
     }
 
 
-def migrate_tables(engine, raw_diffs, table_names):
-    column_changes = add_columns(engine, raw_diffs, table_names)
-    index_changes = apply_index_changes(engine, raw_diffs, table_names)
+def migrate_tables(engine, diffs):
+    column_changes = add_columns(engine, diffs)
+    index_changes = apply_index_changes(engine, diffs)
 
     for table, changes in index_changes.items():
         if table in column_changes:
@@ -128,12 +103,12 @@ def migrate_tables(engine, raw_diffs, table_names):
     return column_changes
 
 
-def add_columns(engine, raw_diffs, table_names):
+def add_columns(engine, diffs):
     changes = defaultdict(list)
     with engine.begin() as conn:
-        ctx = get_migration_context(conn, table_names)
+        ctx = get_migration_context(conn)
         op = Operations(ctx)
-        columns = _get_columns_to_add(raw_diffs, table_names)
+        columns = _get_columns_to_add(diffs)
         for col in columns:
             table_name = col.table.name
             # the column has a reference to a table definition that already
@@ -148,11 +123,11 @@ def add_columns(engine, raw_diffs, table_names):
     return dict(changes)
 
 
-def apply_index_changes(engine, raw_diffs, table_names):
+def apply_index_changes(engine, diffs):
     changes = defaultdict(list)
-    indexes = _get_indexes_to_change(raw_diffs, table_names)
-    remove_indexes = [index.index for index in indexes if index.action == DiffTypes.REMOVE_INDEX]
-    add_indexes = [index.index for index in indexes if index.action == DiffTypes.ADD_INDEX]
+    index_diffs = _get_indexes_diffs_to_change(diffs)
+    remove_indexes = [index.raw[1] for index in index_diffs if index.type == DiffTypes.REMOVE_INDEX]
+    add_indexes = [index.raw[1] for index in index_diffs if index.type == DiffTypes.ADD_INDEX]
 
     with engine.begin() as conn:
         for index in add_indexes:
@@ -171,27 +146,24 @@ def apply_index_changes(engine, raw_diffs, table_names):
     return dict(changes)
 
 
-def _get_columns_to_add(raw_diffs, table_names):
-    # raw diffs come in as a list of (action, index)
+def _get_columns_to_add(raw_diffs):
     return [
-        diff[3]
+        diff.raw[3]
         for diff in raw_diffs
-        if diff[0] in DiffTypes.ADD_COLUMN and diff[3].nullable is True
+        if diff.type == DiffTypes.ADD_NULLABLE_COLUMN
     ]
 
 
-def _get_indexes_to_change(raw_diffs, table_names):
+def _get_indexes_diffs_to_change(diffs):
     # raw diffs come in as a list of (action, index)
     index_diffs = [
-        SimpleIndexDiff(action=diff[0], index=diff[1])
-        for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES
+        diff for diff in diffs
+        if diff.type in DiffTypes.INDEX_TYPES
     ]
     index_diffs_by_table_and_col = defaultdict(list)
 
     for index_diff in index_diffs:
-        index = index_diff.index
-        if index.table.name not in table_names:
-            continue
+        index = index_diff.raw[1]
 
         column_names = tuple(index.columns.keys())
         index_diffs_by_table_and_col[(index.table.name, column_names)].append(index_diff)
@@ -203,7 +175,7 @@ def _get_indexes_to_change(raw_diffs, table_names):
             indexes_to_change.append(index_diffs[0])
         else:
             # do nothing if alembic attempts to remove and add an index on the same column
-            actions = [diff.action for diff in index_diffs]
+            actions = [diff.type for diff in index_diffs]
             if (
                     len(actions) != 2
                     or DiffTypes.ADD_INDEX not in actions
