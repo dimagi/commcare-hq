@@ -28,8 +28,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         agg_query, agg_params = self.aggregation_query()
         index_queries = self.indexes()
 
-        cursor.execute(create_query, create_params)
         cursor.execute(self.drop_table_query())
+        cursor.execute(create_query, create_params)
         cursor.execute(agg_query, agg_params)
         for query in index_queries:
             cursor.execute(query)
@@ -69,7 +69,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
 
     @property
     def person_case_ucr_tablename(self):
