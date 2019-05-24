@@ -704,7 +704,8 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         web_user.save()
 
     def _test_specified_recipients(self):
-        calculate_users_in_all_domains(datetime.date(self.subscription.date_start.year, self.subscription.date_start.month + 1, 1))
+        calculate_users_in_all_domains(
+            datetime.date(self.subscription.date_start.year, self.subscription.date_start.month + 1, 1))
         DomainInvoiceFactory(
             self.subscription.date_start,
             utils.months_from_date(self.subscription.date_start, 1) - datetime.timedelta(days=1),
