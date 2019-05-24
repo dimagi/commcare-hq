@@ -147,13 +147,10 @@ class DBAccessorsTest(TestCase):
             return domain._id
 
         names = ['b', 'a', 'c']
-        expected_ids = [_create_domain(name) for name in names]
+        expected_ids = {name: _create_domain(name) for name in names}
 
         ids = get_domain_ids_by_names(names)
         self.assertEqual(ids, expected_ids)
-
-        ids = get_domain_ids_by_names(names[:-1])
-        self.assertEqual(ids, expected_ids[:-1])
 
     def test_count_downloads_for_all_snapshots(self):
         counts = [5, 12, 10]

@@ -1,7 +1,15 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.contrib import admin
-from .models import AsyncIndicator, DataSourceActionLog, InvalidUCRData
+
+from .models import (
+    AsyncIndicator,
+    DataSourceActionLog,
+    InvalidUCRData,
+    ReportComparisonDiff,
+    ReportComparisonException,
+    ReportComparisonTiming,
+)
 
 
 @admin.register(AsyncIndicator)
@@ -47,6 +55,20 @@ class DataSourceActionLogAdmin(admin.ModelAdmin):
         'initiated_by',
         'action_source',
         'action',
+        'skip_destructive'
     ]
-    list_filter = ('action_source', 'action')
+    list_filter = ('action_source', 'action', 'skip_destructive')
     search_fields = ('domain', 'indicator_config_id',)
+
+
+@admin.register(ReportComparisonException)
+@admin.register(ReportComparisonDiff)
+class ReportComparisonAdmin(admin.ModelAdmin):
+    list_display = ('domain', 'control_report_config_id', 'candidate_report_config_id', 'date_created')
+    list_filter = ('domain',)
+    ordering = ('-date_created',)
+
+
+@admin.register(ReportComparisonTiming)
+class ReportComparisonTimingAdmin(ReportComparisonAdmin):
+    list_display = ('domain', 'control_report_config_id', 'control_duration', 'candidate_duration', 'date_created')

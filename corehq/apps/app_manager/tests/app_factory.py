@@ -1,11 +1,29 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import uuid
-from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
-    FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase, CaseIndex, PreloadAction, ReportModule, ShadowModule
+
 import six
+
+from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Module,
+    UpdateCaseAction,
+    LoadUpdateAction,
+    FormActionCondition,
+    OpenSubCaseAction,
+    OpenCaseAction,
+    AdvancedOpenCaseAction,
+    Application,
+    AdvancedForm,
+    AutoSelectCase,
+    CaseIndex,
+    PreloadAction,
+    ReportModule,
+    ShadowModule,
+    DetailColumn,
+)
 
 
 class AppFactory(object):
@@ -197,4 +215,15 @@ class AppFactory(object):
                 value_source=value_source,
                 value_key=value_key
             )
+        ))
+
+    @staticmethod
+    def add_module_case_detail_column(module, display, field, trans, lang='en'):
+        assert display in ('short', 'long')
+        details = module.case_details.long if display == 'long' else module.case_details.short
+        details.columns.append(DetailColumn(
+            format='plain',
+            field=field,
+            header={lang: trans},
+            model='case',
         ))

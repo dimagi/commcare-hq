@@ -138,7 +138,7 @@ def prepare_export_reports(domain, selected_date, next_month_start, selected_loc
     if beneficiary_type == 'child':
         columns = (
             ('name', 'Name'),
-            ('age', 'Age'),
+            ('age_in_months', 'Age (in Months)'),
             ('gender', 'Gender'),
             ('lastImmunizationType', 'Last Immunization Type'),
             ('lastImmunizationDate', 'Last Immunization Date'),
@@ -147,17 +147,15 @@ def prepare_export_reports(domain, selected_date, next_month_start, selected_loc
     elif beneficiary_type == 'eligible_couple':
         columns = (
             ('name', 'Name'),
-            ('age', 'Age'),
+            ('age_in_months', 'Age (in Months)'),
             ('currentFamilyPlanningMethod', 'Current Family Planing Method'),
             ('adoptionDateOfFamilyPlaning', 'Adoption Date Of Family Planning'),
         )
         data = EligibleCoupleQueryHelper.list(domain, selected_date, location_filters, sort_column)
-        month_end = selected_date + relativedelta(months=1) - relativedelta(days=1)
-        data = EligibleCoupleQueryHelper.update_list(data, month_end)
     elif beneficiary_type == 'pregnant_women':
         columns = (
             ('name', 'Name'),
-            ('age', 'Age'),
+            ('age_in_months', 'Age (in Months)'),
             ('pregMonth', 'Preg. Month'),
             ('highRiskPregnancy', 'High Risk Pregnancy'),
             ('noOfAncCheckUps', 'No. Of ANC Check-Ups'),

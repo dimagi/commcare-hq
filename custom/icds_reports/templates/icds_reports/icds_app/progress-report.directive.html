@@ -1,7 +1,7 @@
 {% load static %}
 
 <div class="progress-report-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-5">
             <div class="row">
                 <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
@@ -21,6 +21,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
+    <info-message></info-message>
     <div class="report-content report-content-without-message">
         <div ng-if="$ctrl.data === void(0)">
             <h2>No Data</h2>

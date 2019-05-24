@@ -98,7 +98,7 @@
     <span data-bind="css: getDiffClass('type')">
       <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
       <!-- ko ifnot: $root.readOnly -->
-      <a data-bind="attr: { 'href': $parent.url + hashtagValue }, css: getDiffClass('label'), text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
+      <a data-bind="attr: { 'href': $parents[$parents.length - 3].url + hashtagValue }, css: getDiffClass('label'), text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
       <!-- /ko  -->
       <!-- ko if: $root.readOnly -->
       <span data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data), css: getDiffClass('label')"></span>

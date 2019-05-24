@@ -18,6 +18,12 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-commcare_user_cases",
     "display_name": "Cases - commcare-user (Static)",
@@ -91,6 +97,7 @@
         }
       }
     ],
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "disable_destructive_rebuild": true
   }
 }

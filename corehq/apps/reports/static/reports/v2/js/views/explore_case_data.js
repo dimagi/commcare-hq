@@ -20,7 +20,8 @@ hqDefine('reports/v2/js/views/explore_case_data', [
         dataModel: datagrid.dataModels.scrollingDataModel(view.config.endpoint.datagrid),
         initialColumns: context.getColumns(),
         columnEndpoint: view.config.endpoint.case_properties,
-        availableFilters: context.getColumnFilters(),
+        columnFilters: context.getColumnFilters(),
+        reportFilters: context.getReportFilters(),
     });
 
     view.datagridController.init();

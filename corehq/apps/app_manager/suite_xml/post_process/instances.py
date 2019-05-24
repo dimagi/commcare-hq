@@ -190,7 +190,7 @@ def get_all_instances_referenced_in_xpaths(domain, xpaths):
     instances = set()
     unknown_instance_ids = set()
     for xpath in xpaths:
-        instance_names = re.findall(instance_re, xpath)
+        instance_names = re.findall(instance_re, xpath, re.UNICODE)
         for instance_name in instance_names:
             try:
                 scheme, _ = instance_name.split(':', 1)

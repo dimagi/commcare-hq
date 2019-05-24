@@ -3,11 +3,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
-from collections import namedtuple
 from functools import partial
 
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
+import attr
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
@@ -81,7 +81,7 @@ def catch_signal(sender, **kwargs):
         migration_context = get_migration_context(connection, list(table_pillow_map))
         raw_diffs = compare_metadata(migration_context, fluff_metadata)
 
-    diffs = reformat_alembic_diffs(raw_diffs)
+    _, diffs = reformat_alembic_diffs(raw_diffs)
     tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_pillow_map))
 
     for table in tables_to_rebuild:
@@ -91,7 +91,17 @@ def catch_signal(sender, **kwargs):
     engine.dispose()
 
 
-SimpleDiff = namedtuple('SimpleDiff', 'type table_name item_name')
+@attr.s(frozen=True)
+class SimpleDiff(object):
+    type = attr.ib()
+    table_name = attr.ib()
+    item_name = attr.ib()
+
+    def to_dict(self):
+        return {
+            'type': self.type,
+            'item_name': self.item_name
+        }
 
 
 def reformat_alembic_diffs(raw_diffs):
@@ -129,14 +139,17 @@ def reformat_alembic_diffs(raw_diffs):
         else:
             diffs.append(SimpleDiff(type_, None, None))
 
+    flattened_raw = []
     for diff in raw_diffs:
         if isinstance(diff, list):
             for d in diff:
+                flattened_raw.append(d)
                 _simplify_diff(d)
         else:
+            flattened_raw.append(diff)
             _simplify_diff(diff)
 
-    return diffs
+    return flattened_raw, diffs
 
 
 def get_tables_to_rebuild(diffs, table_names):

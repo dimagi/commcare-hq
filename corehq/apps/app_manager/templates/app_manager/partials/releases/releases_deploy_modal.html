@@ -110,8 +110,7 @@
                                                         {% trans "Enter app code on installation screen: " %}
                                                         <code class="bitly" data-bind="text: app_code"></code>
                                                     </span>
-                          <img data-bind="visible: generating_url()"
-                               src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
+                          <i data-bind="visible: generating_url()" class='fa fa-spin fa-spinner'></i>
                           <span class="text-warning" data-bind="
                                                         visible: failed_url_generation() && !generating_url()
                                                         ">
@@ -166,7 +165,7 @@
                                 Note: Offline install automatically installs all multimedia
                                 included in your form. All subsequent remote updates will also
                                 include multimedia which could require a lot of data. See the
-                                <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>
+                                <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCare+for+Android+Smartphones'>
                                   Help Site
                                 </a> for more info.
                               {% endblocktrans %}

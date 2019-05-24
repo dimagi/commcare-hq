@@ -5,12 +5,42 @@ import uuid
 import sqlalchemy
 from alembic.autogenerate import compare_metadata
 from django.test.testcases import TestCase, SimpleTestCase
+from nose.tools import assert_list_equal
 
+from corehq.apps.userreports.rebuild import TableDiffs
 from corehq.sql_db.connections import connection_manager
 from fluff.signals import (
     get_migration_context, reformat_alembic_diffs,
     SimpleDiff, DiffTypes, get_tables_to_rebuild
 )
+
+
+def test_flatten_raw_diffs():
+    raw_diffs = [
+        [('diff1', None)],
+        [('diff2', None)],
+        ('diff3', None),
+    ]
+    flattened, _ = reformat_alembic_diffs(raw_diffs)
+    assert_list_equal(flattened, [
+        ('diff1', None),
+        ('diff2', None),
+        ('diff3', None),
+    ])
+
+
+def test_filter_diffs():
+    raw = [
+        ('add_table', 't1'),
+        ('remove_table', 't2')
+    ]
+    formatted = [
+        SimpleDiff(DiffTypes.ADD_TABLE, 't1', None),
+        SimpleDiff(DiffTypes.REMOVE_TABLE, 't2', None),
+    ]
+    filtered = TableDiffs(raw=raw, formatted=formatted).filter(['t1'])
+    assert_list_equal(filtered.raw, [('add_table', 't1')])
+    assert_list_equal(filtered.formatted, [SimpleDiff(DiffTypes.ADD_TABLE, 't1', None)])
 
 
 class TestAlembicDiffs(TestCase):
@@ -46,7 +76,7 @@ class TestAlembicDiffs(TestCase):
         migration_context = get_migration_context(self.engine, [self.table_name])
         sqlalchemy.Table('new_table', self.metadata)
         raw_diffs = compare_metadata(migration_context, self.metadata)
-        diffs = reformat_alembic_diffs(raw_diffs)
+        _, diffs = reformat_alembic_diffs(raw_diffs)
         self.assertEqual(0, len(diffs))
 
     def test_add_remove_table(self):
@@ -88,7 +118,7 @@ class TestAlembicDiffs(TestCase):
     def _test_diffs(self, metadata, expected_diffs, table_names=None):
         migration_context = get_migration_context(self.engine, table_names or [self.table_name, 'new_table'])
         raw_diffs = compare_metadata(migration_context, metadata)
-        diffs = reformat_alembic_diffs(raw_diffs)
+        _, diffs = reformat_alembic_diffs(raw_diffs)
         self.assertEqual(set(diffs), expected_diffs)
 
 

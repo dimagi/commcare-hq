@@ -949,6 +949,11 @@ class CaseRuleActionResult(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    __hash__ = None
+
     def _validate_int(self, value):
         if not isinstance(value, int):
             raise ValueError("Expected int")

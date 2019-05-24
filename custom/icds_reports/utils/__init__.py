@@ -27,7 +27,6 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
@@ -855,11 +854,6 @@ def format_decimal(num):
 
 def percent_or_not_entered(x, y):
     return percent(x, y) if y and x is not None else DATA_NOT_ENTERED
-
-
-class ICDSDatabaseColumn(DatabaseColumn):
-    def get_raw_value(self, row):
-        return (self.view.get_value(row) or '') if row else ''
 
 
 def india_now():

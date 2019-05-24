@@ -109,7 +109,8 @@
             "field":"structures_found",
             "aggregation":"sum",
             "display":{
-                "fra":"# Structures Trouvées",
+                "fra":"# Structures/Pièces Trouvées",
+                "frm":"# Structures/Pièces Trouvées",
                 "en":"# Structures Found"
             }
         },
@@ -119,7 +120,8 @@
             "field":"structures_sprayed",
             "aggregation":"sum",
             "display":{
-                "fra":"# Structures Traitées",
+                "fra":"# Structures/Pièces Traitées",
+                "frm":"# Structures/Pièces Traitées",
                 "en":"# Structures Sprayed"
             }
         },
@@ -150,7 +152,8 @@
                 "aggregation":"sum"
             },
             "display":{
-                "fra":"Moyenne de pièces par applicateur",
+                "fra":"Moyenne de structures/pièces par applicateur",
+                "frm":"Moyenne de structures/pièces par applicateur",
                 "en":"# Structures per SOP"
             }
         },
@@ -171,7 +174,8 @@
                 "aggregation":"sum"
             },
             "display":{
-                "fra":"Moyenne de pièces par bouteille",
+                "fra":"Moyenne de structures/pièces par bouteille",
+                "frm":"Moyenne de structures/pièces par bouteille",
                 "en":"# Structures per IU"
             }
         },

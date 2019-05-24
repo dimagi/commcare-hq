@@ -199,6 +199,7 @@ hqDefine("fixtures/js/lookup-manage", [
                 tag: self.tag(),
                 view_link: self.view_link(),
                 is_global: self.is_global(),
+                description: self.description(),
                 fields: (function () {
                     var fields = {},
                         i;
@@ -357,6 +358,7 @@ hqDefine("fixtures/js/lookup-manage", [
                 tag: "",
                 fields: ko.observableArray([]),
                 is_global: true,
+                description: "",
             }, self);
             dataType.editing(true);
             self.data_types.push(dataType);

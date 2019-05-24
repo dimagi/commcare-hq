@@ -6,35 +6,35 @@
 {% block title %}Case: {{ report.name }}{% endblock %}
 
 {% block head %} {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 
-    <style type="text/css">
-        .hq-generic-report {
-            padding: 10px;
-        }
-    </style>
+  <style type="text/css">
+    .hq-generic-report {
+      padding: 10px;
+    }
+  </style>
 {% endblock %}
 
 {% block page_breadcrumbs %}
-     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-        <li>
-            <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a>
-        </li>
-        <li>
-            <a href="{% url "custom_project_report_dispatcher" domain report.slug %}">Case List</a>
-        </li>
-        <li class="active">
-            <a href="#">{{ report.name }}</a>
-        </li>
-    </ol>
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li>
+      <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a>
+    </li>
+    <li>
+      <a href="{% url "custom_project_report_dispatcher" domain report.slug %}">Case List</a>
+    </li>
+    <li class="active">
+      <a href="#">{{ report.name }}</a>
+    </li>
+  </ol>
 {% endblock %}
 
 {% block page_content %}
-<div class="hq-generic-report">
+  <div class="hq-generic-report">
     <div>
-        <a href="{{ report.slug }}/to_pdf" >{% trans "Print to PDF" %}</a>
+      <a href="{{ report.slug }}/to_pdf" >{% trans "Print to PDF" %}</a>
     </div>
     {% include "crs_reports/partials/mothers_form_reports_template.html"  %}
 
-</div>
+  </div>
 {% endblock %}

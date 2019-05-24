@@ -85,7 +85,7 @@ Note that once you're up and running, you'll want to periodically re-run these s
 
 - [Create and activate virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments)
 - Install HQ requirements for Python 3.6
-    - `$ pip install -r requirements-python3_6/dev-requirements.txt`
+    - `$ pip install -r requirements-python3/dev-requirements.txt`
 
 #### Setup localsettings
 

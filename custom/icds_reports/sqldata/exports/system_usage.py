@@ -4,12 +4,13 @@ from __future__ import unicode_literals
 
 from sqlagg.columns import SumColumn, SimpleColumn
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin, NUM_LAUNCHED_AWCS, NUM_OF_DAYS_AWC_WAS_OPEN
 from custom.icds_reports.utils import phone_number_function
 
 
-class SystemUsageExport(ExportableMixin, SqlData):
+class SystemUsageExport(ExportableMixin, IcdsSqlData):
     title = 'System Usage'
     table_name = 'agg_awc_monthly'
 
@@ -41,7 +42,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 NUM_OF_DAYS_AWC_WAS_OPEN,
                 SumColumn('awc_days_open'),
-                format_fn=lambda x: (x or 0) if self.loc_level > 4 else "Not Applicable",
+                format_fn=lambda x: (x or 0) if self.loc_level > 4 else "Applicable at only AWC level",
                 slug='num_awc_open'
             ),
             DatabaseColumn(

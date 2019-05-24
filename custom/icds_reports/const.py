@@ -118,3 +118,24 @@ VALID_LEVELS_FOR_DUMP = [
     '2',  # district
     '3',  # block
 ]
+
+DISTRIBUTED_TABLES = [
+    (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id'),
+    (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
+    (AGG_CCS_RECORD_CF_TABLE, 'supervisor_id'),
+    (AGG_CHILD_HEALTH_THR_TABLE, 'supervisor_id'),
+    (AGG_GROWTH_MONITORING_TABLE, 'supervisor_id'),
+    (AGG_CHILD_HEALTH_PNC_TABLE, 'supervisor_id'),
+    (AGG_CCS_RECORD_PNC_TABLE, 'supervisor_id'),
+    (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
+    (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
+    (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
+    ('child_health_monthly', 'supervisor_id'),
+    ('ccs_record_monthly', 'supervisor_id'),
+    ('daily_attendance', 'supervisor_id'),
+]
+
+REFERENCE_TABLES = [
+    'awc_location',
+    'icds_months'
+]

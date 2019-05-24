@@ -21,7 +21,7 @@ def purge_old_device_report_entries():
     with connection.cursor() as cursor:
         partitoned_db_format = 'phonelog_daily_partitioned_devicereportentry_y%Yd%j'
         table_to_drop = (max_age - timedelta(days=1)).strftime(partitoned_db_format)
-        cursor.execute("DROP TABLE {}".format(table_to_drop))
+        cursor.execute("DROP TABLE IF EXISTS {}".format(table_to_drop))
     UserErrorEntry.objects.filter(server_date__lt=max_age).delete()
     ForceCloseEntry.objects.filter(server_date__lt=max_age).delete()
     UserEntry.objects.filter(server_date__lt=max_age).delete()

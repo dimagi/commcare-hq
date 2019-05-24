@@ -57,7 +57,7 @@
     {% block csrf_token_block %}
       <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
     {% endblock %}
-    {% if request.use_select2 %}
+    {% if request.use_select2_legacy %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
@@ -70,7 +70,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_select2_v4 %}
+    {% if not request.use_select2_legacy %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
@@ -470,13 +470,13 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_select2 and not requirejs_main %}
+    {% if request.use_select2_legacy and not requirejs_main %}
       {% compress js %}
         <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_select2_v4 and not requirejs_main %}
+    {% if not request.use_select2_legacy and not requirejs_main %}
       {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
       {% endcompress %}

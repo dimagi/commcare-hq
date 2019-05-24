@@ -2,45 +2,45 @@
 {% load i18n %}
 
 {% block title %}
-    {% trans "Audit Viewer" %}
+  {% trans "Audit Viewer" %}
 {% endblock %}
 
 {% block content %}
-    <h2>Website Usage ({{ audit_views|length }})</h2>
-    <div class="span12">
-        <table class="table table-bordered table-striped">
-            <tr>
-                <thead>
-                <th>View</th>
-                <th>Date</th>
-                <th>User</th>
-                <th>Result</th>
-                <th>URL</th>
-                </thead>
-            </tr>
-            <tbody>
-            {% for v in audit_views %}
-                <tr>
-                    <td>
-                        <a href="{% url 'raw_couch' %}?id={{ v.id }}">View
-                        </a>
-                    </td>
-                    <td>
-                        {{ v.key.1 }}/{{ v.key.2 }}/{{ v.key.3 }}
-                    </td>
-                    <td>
-                        {{ v.key.0 }}
-                    </td>
-                    <td>
-                        {{ v.value.status_code}}
-                    </td>
-                    <td>
-                        {{ v.value.request_path}}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
+  <h2>Website Usage ({{ audit_views|length }})</h2>
+  <div class="span12">
+    <table class="table table-bordered table-striped">
+      <tr>
+        <thead>
+        <th>View</th>
+        <th>Date</th>
+        <th>User</th>
+        <th>Result</th>
+        <th>URL</th>
+        </thead>
+      </tr>
+      <tbody>
+      {% for v in audit_views %}
+        <tr>
+          <td>
+            <a href="{% url 'raw_doc' %}?id={{ v.id }}">View
+            </a>
+          </td>
+          <td>
+            {{ v.key.1 }}/{{ v.key.2 }}/{{ v.key.3 }}
+          </td>
+          <td>
+            {{ v.key.0 }}
+          </td>
+          <td>
+            {{ v.value.status_code}}
+          </td>
+          <td>
+            {{ v.value.request_path}}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
 
-        </table>
-    </div>
+    </table>
+  </div>
 {% endblock %}

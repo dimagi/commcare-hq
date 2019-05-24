@@ -276,6 +276,9 @@ class IndexedSchema(DocumentSchema):
             and (self._parent == other._parent)
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     class Getter(object):
 
         def __init__(self, attr):
@@ -1430,7 +1433,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def get_app(self):
         raise NotImplementedError
 
-    def _get_media_by_language(self, media_attr, lang, strict=False):
+    def _get_media_by_language(self, media_attr, lang, strict=False, build_profile_id=None):
         """
         Return media-path for given language if one exists, else 1st path in the
         sorted lang->media-path list
@@ -1440,7 +1443,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
             lang: language code
         **kwargs:
             strict: whether to return None if media-path is not set for lang or
-            to return first path in sorted lang->media-path list
+                to return first path in sorted lang->media-path list
+            build_profile_id: If this is provided and strict is False, only return
+                media in one of the profile's languages
         """
         assert media_attr in ('media_image', 'media_audio')
         app = self.get_app()
@@ -1458,7 +1463,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
             # if the queried lang key doesn't exist,
             # return the first in the sorted list
             for lang, item in sorted(media_dict.items()):
-                return item
+                if not build_profile_id or lang in app.build_profiles[build_profile_id].langs:
+                    return item
 
     @property
     def default_media_image(self):
@@ -1484,11 +1490,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
 
-    def icon_by_language(self, lang, strict=False):
-        return self._get_media_by_language('media_image', lang, strict=strict)
+    def icon_by_language(self, lang, strict=False, build_profile_id=None):
+        return self._get_media_by_language('media_image', lang, strict=strict, build_profile_id=build_profile_id)
 
-    def audio_by_language(self, lang, strict=False):
-        return self._get_media_by_language('media_audio', lang, strict=strict)
+    def audio_by_language(self, lang, strict=False, build_profile_id=None):
+        return self._get_media_by_language('media_audio', lang, strict=strict, build_profile_id=build_profile_id)
 
     def custom_icon_form_and_text_by_language(self, lang):
         custom_icon = self.custom_icon
@@ -1534,13 +1540,15 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 valid_media_paths.add(value)
         return valid_media_paths
 
-    def uses_image(self):
+    def uses_image(self, build_profile_id=None):
         app = self.get_app()
-        return bool(self.icon_app_string(app.langs[0], for_default=True))
+        langs = app.build_profiles[build_profile_id].langs if build_profile_id else app.langs
+        return any([self.icon_app_string(lang) for lang in langs])
 
-    def uses_audio(self):
+    def uses_audio(self, build_profile_id=None):
         app = self.get_app()
-        return bool(self.audio_app_string(app.langs[0], for_default=True))
+        langs = app.build_profiles[build_profile_id].langs if build_profile_id else app.langs
+        return any([self.audio_app_string(lang) for lang in langs])
 
     def all_image_paths(self, lang=None):
         return self._all_media_paths('media_image', lang=lang)
@@ -1548,7 +1556,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def all_audio_paths(self, lang=None):
         return self._all_media_paths('media_audio', lang=lang)
 
-    def icon_app_string(self, lang, for_default=False):
+    def icon_app_string(self, lang, for_default=False, build_profile_id=None):
         """
         Return lang/app_strings.txt translation for given lang
         if a path exists for the lang
@@ -1561,9 +1569,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return self.icon_by_language(lang, strict=True)
 
         if for_default:
-            return self.icon_by_language(lang, strict=False)
+            return self.icon_by_language(lang, strict=False, build_profile_id=build_profile_id)
 
-    def audio_app_string(self, lang, for_default=False):
+    def audio_app_string(self, lang, for_default=False, build_profile_id=None):
         """
             see note on self.icon_app_string
         """
@@ -1572,7 +1580,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return self.audio_by_language(lang, strict=True)
 
         if for_default:
-            return self.audio_by_language(lang, strict=False)
+            return self.audio_by_language(lang, strict=False, build_profile_id=build_profile_id)
 
     @property
     def custom_icon(self):
@@ -3068,7 +3076,7 @@ class AdvancedModule(ModuleBase):
         if self.case_list.show:
             return True
 
-        for form in self.forms:
+        for form in self.get_forms():
             if any(action.case_type == self.case_type for action in form.actions.load_update_cases):
                 return True
 
@@ -3556,7 +3564,7 @@ class ReportModule(ModuleBase):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
-    def get_menus(self, supports_module_filter=False):
+    def get_menus(self, supports_module_filter=False, build_profile_id=None):
         from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
         kwargs = {}
         if supports_module_filter:
@@ -3566,8 +3574,8 @@ class ReportModule(ModuleBase):
             id=id_strings.menu_id(self),
             menu_locale_id=get_module_locale_id(self),
             menu_enum_text=get_module_enum_text(self),
-            media_image=self.uses_image(),
-            media_audio=self.uses_audio(),
+            media_image=self.uses_image(build_profile_id=build_profile_id),
+            media_audio=self.uses_audio(build_profile_id=build_profile_id),
             image_locale_id=id_strings.module_icon_locale(self),
             audio_locale_id=id_strings.module_audio_locale(self),
             **kwargs
