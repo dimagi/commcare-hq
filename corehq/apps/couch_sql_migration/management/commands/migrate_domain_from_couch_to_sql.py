@@ -12,18 +12,20 @@ from django.core.management.base import BaseCommand, CommandError
 from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
+from corehq import toggles
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    delete_diff_db,
     do_couch_to_sql_migration,
+    delete_diff_db,
     get_diff_db,
+    revert_form_attachment_meta_domain,
     setup_logging,
 )
 from corehq.apps.couch_sql_migration.progress import (
-    couch_sql_migration_in_progress,
     get_couch_sql_migration_status,
-    set_couch_sql_migration_complete,
-    set_couch_sql_migration_not_started,
     set_couch_sql_migration_started,
+    couch_sql_migration_in_progress,
+    set_couch_sql_migration_not_started,
+    set_couch_sql_migration_complete,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
@@ -49,6 +51,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('--dest')
         parser.add_argument('--MIGRATE', action='store_true', default=False)
         parser.add_argument('--COMMIT', action='store_true', default=False)
         parser.add_argument('--blow-away', action='store_true', default=False)
@@ -102,6 +105,8 @@ class Command(BaseCommand):
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('no-input only allowed for unit testing')
 
+        dst_domain = options.pop('dest', None) or domain
+
         setup_logging(options['log_dir'])
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
@@ -111,14 +116,19 @@ class Command(BaseCommand):
                     raise CommandError("Migration must be in progress if run_timestamp is passed in")
             else:
                 set_couch_sql_migration_started(domain, self.dry_run)
+                if domain != dst_domain:
+                    set_couch_sql_migration_started(dst_domain, self.dry_run)
 
             do_couch_to_sql_migration(
                 domain,
+                dst_domain=dst_domain,
                 with_progress=not self.no_input,
                 debug=self.debug,
-                run_timestamp=options.get('run_timestamp'))
+                run_timestamp=options.get('run_timestamp'),
+                dry_run=self.dry_run,
+            )
 
-            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+            has_diffs = self.print_stats(domain, dst_domain, short=True, diffs_only=True)
             if has_diffs:
                 print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
 
@@ -127,17 +137,22 @@ class Command(BaseCommand):
             if not self.no_input:
                 _confirm(
                     "This will delete all SQL forms and cases for the domain {}. "
-                    "Are you sure you want to continue?".format(domain)
+                    "Are you sure you want to continue?".format(dst_domain)
                 )
             set_couch_sql_migration_not_started(domain)
-            blow_away_migration(domain)
+            if domain != dst_domain:
+                set_couch_sql_migration_not_started(dst_domain)
+            _blow_away_migration(domain, dst_domain)
 
         if options['stats_short'] or options['stats_long']:
-            self.print_stats(domain, short=options['stats_short'])
+            self.print_stats(domain, dst_domain, short=options['stats_short'])
         if options['show_diffs']:
             self.show_diffs(domain)
 
         if options['COMMIT']:
+            # This is not applicable when domain != dst_domain. Once
+            # domain has been migrated, it should continue to prevent
+            # form submissions.
             self.require_only_option('COMMIT', options)
             if not couch_sql_migration_in_progress(domain, include_dry_runs=False):
                 raise CommandError("cannot commit a migration that is not in state in_progress")
@@ -147,7 +162,10 @@ class Command(BaseCommand):
                     "allow new form submissions to be processed. "
                     "Are you sure you want to do this for domain '{}'?".format(domain)
                 )
-            set_couch_sql_migration_complete(domain)
+            if domain != dst_domain:
+                toggles.DATA_MIGRATION.enable(domain)  # Prevent any more changes on domain
+                set_couch_sql_migration_not_started(domain)
+            set_couch_sql_migration_complete(dst_domain)
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
@@ -157,10 +175,10 @@ class Command(BaseCommand):
             for diff in diffs:
                 print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
 
-    def print_stats(self, domain, short=True, diffs_only=False):
-        status = get_couch_sql_migration_status(domain)
-        print("Couch to SQL migration status for {}: {}".format(domain, status))
-        db = get_diff_db(domain)
+    def print_stats(self, src_domain, dst_domain, short=True, diffs_only=False):
+        status = get_couch_sql_migration_status(src_domain)
+        print("Couch to SQL migration status for {}: {}".format(src_domain, status))
+        db = get_diff_db(src_domain)
         try:
             diff_stats = db.get_diff_stats()
         except OperationalError:
@@ -168,34 +186,34 @@ class Command(BaseCommand):
 
         has_diffs = False
         for doc_type in doc_types():
-            form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
-            form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
+            form_ids_in_couch = set(get_form_ids_by_type(src_domain, doc_type))
+            form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(dst_domain, doc_type))
             diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             has_diffs |= self._print_status(
                 doc_type, form_ids_in_couch, form_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
             )
 
         form_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-            domain, "XFormInstance-Deleted", XFormInstance.get_db())
+            src_domain, "XFormInstance-Deleted", XFormInstance.get_db())
         )
-        form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
+        form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(dst_domain))
         diff_count, num_docs_with_diffs = diff_stats.pop("XFormInstance-Deleted", (0, 0))
         has_diffs |= self._print_status(
             "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql,
             diff_count, num_docs_with_diffs, short, diffs_only
         )
 
-        case_ids_in_couch = set(get_case_ids_in_domain(domain))
-        case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
+        case_ids_in_couch = set(get_case_ids_in_domain(src_domain))
+        case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(dst_domain))
         diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase", (0, 0))
         has_diffs |= self._print_status(
             'CommCareCase', case_ids_in_couch, case_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
         )
 
         case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-            domain, "CommCareCase-Deleted", XFormInstance.get_db())
+            src_domain, "CommCareCase-Deleted", XFormInstance.get_db())
         )
-        case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
+        case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain))
         diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase-Deleted", (0, 0))
         has_diffs |= self._print_status(
             'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql,
@@ -250,20 +268,28 @@ def _confirm(message):
         raise CommandError('abort')
 
 
-def blow_away_migration(domain):
-    assert not should_use_sql_backend(domain)
+def _blow_away_migration(domain, dst_domain=None):
+    if dst_domain is None:
+        # If domain and dst_domain are different then their backends don't change
+        assert not should_use_sql_backend(domain)
+        delete_attachments = False
+        dst_domain = domain
+    else:
+        revert_form_attachment_meta_domain(domain)
+        delete_attachments = True
+
     delete_diff_db(domain)
 
     for doc_type in doc_types():
-        sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
-        FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+        sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(dst_domain, doc_type)
+        FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=delete_attachments)
 
-    sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
-    FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+    sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(dst_domain)
+    FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=delete_attachments)
 
-    sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
+    sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(dst_domain)
+    CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
 
-    sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
+    sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain)
+    CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
     log.info("blew away migration for domain {}\n".format(domain))
