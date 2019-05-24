@@ -712,13 +712,15 @@ def edit_app_ui_translations(request, domain, app_id):
     translations.pop('modules.m0', None)
 
     app.set_translations(lang, translations)
-    response = {}
-    app.save(response)
-    return json_response(response)
+    app.save(response_json={})  # Updates the app version without updating app properties
+    return json_response({})
 
 
 @require_GET
 def get_app_ui_translations(request, domain):
+    """
+    Retrieves translations from all domains
+    """
     params = json_request(request.GET)
     lang = params.get('lang', 'en')
     key = params.get('key', None)

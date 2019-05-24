@@ -22,6 +22,7 @@ from corehq.util.quickcache import quickcache
 class TranslationMixin(Document):
     translations = DictProperty()
 
+    # TODO: Unused? Kill
     def init(self, lang):
         self.translations[lang] = Translation.get_translations(lang, one=True)
 
