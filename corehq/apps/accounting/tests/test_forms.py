@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 import random
 
-from corehq.apps.accounting.tasks import generate_invoices
+from corehq.apps.accounting.tasks import calculate_users_in_all_domains, generate_invoices
 from corehq.apps.accounting.forms import AdjustBalanceForm
 from corehq.apps.accounting.models import (
     CreditAdjustmentReason,
@@ -27,7 +27,9 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestAdjustBalanceForm, self).setUp()
-        generate_invoices(self.subscription.date_start + relativedelta(months=1))
+        invoice_date = self.subscription.date_start + relativedelta(months=1)
+        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
+        generate_invoices(invoice_date)
         self.invoice = Invoice.objects.first()
 
     def tearDown(self):
@@ -121,7 +123,9 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestAdjustBalanceFormForCustomerAccount, self).setUp()
-        generate_invoices(self.subscription.date_start + relativedelta(months=1))
+        invoice_date = self.subscription.date_start + relativedelta(months=1)
+        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
+        generate_invoices(invoice_date)
         self.invoice = CustomerInvoice.objects.first()
 
     def tearDown(self):
