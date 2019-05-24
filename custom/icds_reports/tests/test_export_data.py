@@ -2100,7 +2100,7 @@ class TestExportData(TestCase):
             data
         )
 
-    def test_aww_performance_export_2(self):
+    def test_aww_performance_export(self):
         data = IncentiveReport(
             location='b2',
             month=datetime(2017, 5, 1),
