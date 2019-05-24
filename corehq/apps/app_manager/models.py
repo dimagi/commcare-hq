@@ -4801,6 +4801,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
+        pass
+        '''
         previous_version = self.get_previous_version()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
@@ -4814,6 +4816,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 map_item.version = prev_map_item.version
             else:
                 map_item.version = self.version
+        '''
 
     def ensure_module_unique_ids(self, should_save=False):
         """
