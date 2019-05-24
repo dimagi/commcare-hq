@@ -17,14 +17,14 @@ from custom.icds.const import (
 )
 from custom.icds.utils.hosted_ccz import HostedCCZUtility
 from custom.icds.validators import (
-    LowercaseAlphanumericValidator,
+    HostedCCZLinkIdentifierValidator,
 )
 from custom.nic_compliance.utils import hash_password
 
 
 class HostedCCZLink(models.Model):
     identifier = models.CharField(null=False, unique=True, max_length=255, db_index=True,
-                                  validators=[LowercaseAlphanumericValidator])
+                                  validators=[HostedCCZLinkIdentifierValidator])
     username = models.CharField(null=False, max_length=255)
     password = models.CharField(null=False, max_length=255)
     domain = models.CharField(null=False, max_length=255)
