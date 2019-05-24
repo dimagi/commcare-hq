@@ -68,9 +68,11 @@ def get_tables_rebuild_migrate(diffs, table_names):
 
 
 def get_tables_to_migrate(diffs):
-    tables_with_indexes = _filter_diffs(diffs, *DiffTypes.INDEX_TYPES)
-    tables_with_added_columns = _filter_diffs(diffs, DiffTypes.ADD_NULLABLE_COLUMN)
-    return tables_with_indexes | tables_with_added_columns
+    return _filter_diffs(
+        diffs,
+        DiffTypes.ADD_NULLABLE_COLUMN, DiffTypes.REMOVE_COLUMN,
+        DiffTypes.ADD_INDEX, DiffTypes.REMOVE_INDEX
+    )
 
 
 def _filter_diffs(diffs, *types):
@@ -98,8 +100,9 @@ def add_columns(engine, diffs):
     with engine.begin() as conn:
         ctx = get_migration_context(conn)
         op = Operations(ctx)
-        columns = _get_columns_to_add(diffs)
-        for col in columns:
+        col_diffs = _filter_diffs(diffs, DiffTypes.ADD_COLUMN)
+        for diff in col_diffs:
+            col = diff.column
             table_name = col.table.name
             # the column has a reference to a table definition that already
             # has the column defined, so remove that and add the column
@@ -136,20 +139,9 @@ def apply_index_changes(engine, diffs):
     return dict(changes)
 
 
-def _get_columns_to_add(raw_diffs):
-    return [
-        diff.column
-        for diff in raw_diffs
-        if diff.type == DiffTypes.ADD_NULLABLE_COLUMN
-    ]
-
-
 def _get_indexes_diffs_to_change(diffs):
     # raw diffs come in as a list of (action, index)
-    index_diffs = [
-        diff for diff in diffs
-        if diff.type in DiffTypes.INDEX_TYPES
-    ]
+    index_diffs = _filter_diffs(diffs, *DiffTypes.INDEX_TYPES)
     index_diffs_by_table_and_col = defaultdict(list)
 
     for index_diff in index_diffs:
