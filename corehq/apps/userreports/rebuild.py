@@ -84,19 +84,16 @@ def _filter_diffs(diffs, *types):
 
 
 def migrate_tables(engine, diffs):
-    column_changes = add_columns(engine, diffs)
-    index_changes = apply_index_changes(engine, diffs)
+    col_diffs = add_columns(engine, diffs)
+    index_diffs = apply_index_changes(engine, diffs)
 
-    for table, changes in index_changes.items():
-        if table in column_changes:
-            column_changes[table].extend(changes)
-        else:
-            column_changes[table] = changes
-    return column_changes
+    changes_by_table = defaultdict(list)
+    for diff in col_diffs | index_diffs:
+        changes_by_table[diff.table_name].append(diff.to_dict())
+    return changes_by_table
 
 
 def add_columns(engine, diffs):
-    changes = defaultdict(list)
     with engine.begin() as conn:
         ctx = get_migration_context(conn)
         op = Operations(ctx)
@@ -107,27 +104,18 @@ def add_columns(engine, diffs):
             # the column has a reference to a table definition that already
             # has the column defined, so remove that and add the column
             col.table = None
-            changes[table_name].append({
-                'type': DiffTypes.ADD_COLUMN,
-                'item_name': col.name
-            })
             op.add_column(table_name, col)
 
-    return dict(changes)
+    return col_diffs
 
 
 def apply_index_changes(engine, diffs):
-    changes = defaultdict(list)
     index_diffs = _get_indexes_diffs_to_change(diffs)
     remove_indexes = [index.index for index in index_diffs if index.type == DiffTypes.REMOVE_INDEX]
     add_indexes = [index.index for index in index_diffs if index.type == DiffTypes.ADD_INDEX]
 
     with engine.begin() as conn:
         for index in add_indexes:
-            changes[index.table.name].append({
-                'type': DiffTypes.ADD_INDEX,
-                'item_name': index.name
-            })
             index.create(conn)
 
     # don't remove indexes automatically because we want to be able to add them
@@ -136,7 +124,7 @@ def apply_index_changes(engine, diffs):
     for index in remove_indexes:
         _assert(False, "Index {} can be removed".format(index.name))
 
-    return dict(changes)
+    return index_diffs
 
 
 def _get_indexes_diffs_to_change(diffs):
