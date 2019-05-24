@@ -674,6 +674,8 @@ query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
+    DateRangeParams('date_modified'),
+    DateRangeParams('server_date_modified'),
     DateRangeParams('indexed_on'),
 ]
 
