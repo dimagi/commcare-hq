@@ -628,11 +628,6 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
         )
         self.sms_date = utils.months_from_date(self.invoice_date, -1)
 
-    def tearDown(self):
-        for user_history in DomainUserHistory.objects.all():
-            user_history.delete()
-        super(TestQuarterlyInvoicing, self).tearDown()
-
     def initialize_domain_user_history_objects(self):
         record_dates = []
         month_end = self.subscription.date_end

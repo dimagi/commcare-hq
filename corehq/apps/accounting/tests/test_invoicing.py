@@ -134,10 +134,10 @@ class TestInvoice(BaseInvoiceTestCase):
         have any per_excess charges on users or SMS messages
         """
         domain = generator.arbitrary_domain()
+        self.addCleanup(domain.delete)
         tasks.generate_invoices()
         self.assertRaises(Invoice.DoesNotExist,
                           lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
-        domain.delete()
 
     def test_community_invoice(self):
         """
@@ -146,10 +146,11 @@ class TestInvoice(BaseInvoiceTestCase):
         the community plan.
         """
         domain = generator.arbitrary_domain()
+        self.addCleanup(domain.delete)
         generator.create_excess_community_users(domain)
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
-        billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
+        generator.arbitrary_contact_info(account, self.dimagi_user)
         account.date_confirmed_extra_charges = datetime.date.today()
         account.save()
         today = datetime.date.today()
@@ -165,7 +166,6 @@ class TestInvoice(BaseInvoiceTestCase):
             invoice.subscription.date_end - datetime.timedelta(days=1),
             invoice.date_end
         )
-        domain.delete()
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
@@ -417,6 +417,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         - total and subtotals are equal to number of extra users * per_excess_fee
         """
         domain = generator.arbitrary_domain()
+        self.addCleanup(domain.delete)
         num_active = generator.create_excess_community_users(domain)
 
         account = BillingAccount.get_or_create_account_by_domain(
@@ -442,7 +443,6 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
-        domain.delete()
 
 
 class TestSmsLineItem(BaseInvoiceTestCase):

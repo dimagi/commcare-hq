@@ -483,8 +483,6 @@ class LineItemFactory(object):
     @property
     @memoized
     def subscribed_domains(self):
-        if self.subscription.subscriber.domain is None:
-            raise LineItemError("No domain could be obtained as the subscriber.")
         if self.subscription.account.is_customer_billing_account:
             return list(self.subscription.account.subscription_set.filter(
                 Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
