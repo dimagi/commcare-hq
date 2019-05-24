@@ -67,7 +67,7 @@ class TestBulkUiTranslation(SimpleTestCase):
         data = (('translations', tuple(data)),)
         temp = BytesIO()
         export_raw(headers, data, temp)
-        temp.seek(0)            # .read() is used somewhere so this needs to be at the begininng
+        temp.seek(0)  # .read() is used somewhere so this needs to be at the beginning
         return temp
 
     def test_not_upload_all_properties(self):
