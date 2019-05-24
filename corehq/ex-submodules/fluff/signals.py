@@ -81,7 +81,7 @@ def catch_signal(sender, **kwargs):
         migration_context = get_migration_context(connection, list(table_pillow_map))
         raw_diffs = compare_metadata(migration_context, fluff_metadata)
 
-    _, diffs = reformat_alembic_diffs(raw_diffs)
+    diffs = reformat_alembic_diffs(raw_diffs)
     tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_pillow_map))
 
     for table in tables_to_rebuild:
@@ -96,6 +96,7 @@ class SimpleDiff(object):
     type = attr.ib()
     table_name = attr.ib()
     item_name = attr.ib()
+    raw = attr.ib(cmp=False)
 
     def to_dict(self):
         return {
@@ -116,40 +117,39 @@ def reformat_alembic_diffs(raw_diffs):
         type_ = raw_diff[0]
         if type_ in DiffTypes.TABLE_TYPES:
             diffs.append(
-                SimpleDiff(type_, raw_diff[1].name, None)
+                SimpleDiff(type_, raw_diff[1].name, None, raw_diff)
             )
         elif type_ in DiffTypes.CONSTRAINT_TYPES:
             any_column = list(raw_diff[1].columns.values())[0]
             table_name = any_column.table.name
             diffs.append(
-                SimpleDiff(type_, table_name, raw_diff[1].name)
+                SimpleDiff(type_, table_name, raw_diff[1].name, raw_diff)
             )
         elif type_ in DiffTypes.MODIFY_TYPES:
             diffs.append(
-                SimpleDiff(type_, raw_diff[2], raw_diff[3])
+                SimpleDiff(type_, raw_diff[2], raw_diff[3], raw_diff)
             )
         elif type_ == DiffTypes.ADD_COLUMN and raw_diff[3].nullable:
             diffs.append(
-                SimpleDiff(DiffTypes.ADD_NULLABLE_COLUMN, raw_diff[2], raw_diff[3].name)
+                SimpleDiff(DiffTypes.ADD_NULLABLE_COLUMN, raw_diff[2], raw_diff[3].name, raw_diff)
             )
         elif type_ in DiffTypes.COLUMN_TYPES:
             diffs.append(
-                SimpleDiff(type_, raw_diff[2], raw_diff[3].name)
+                SimpleDiff(type_, raw_diff[2], raw_diff[3].name, raw_diff)
             )
+        elif type_ in DiffTypes.INDEX_TYPES:
+            diffs.append(SimpleDiff(type_, diff[1].table.name, diff[1].name, raw_diff))
         else:
-            diffs.append(SimpleDiff(type_, None, None))
+            diffs.append(SimpleDiff(type_, None, None, None))
 
-    flattened_raw = []
     for diff in raw_diffs:
         if isinstance(diff, list):
             for d in diff:
-                flattened_raw.append(d)
                 _simplify_diff(d)
         else:
-            flattened_raw.append(diff)
             _simplify_diff(diff)
 
-    return flattened_raw, diffs
+    return diffs
 
 
 def get_tables_to_rebuild(diffs, table_names):
@@ -158,7 +158,6 @@ def get_tables_to_rebuild(diffs, table_names):
         for diff in diffs
         if diff.table_name in table_names and diff.type in DiffTypes.TYPES_FOR_REBUILD
     }
-
 
 
 def rebuild_table(engine, pillow, indicator_doc):
