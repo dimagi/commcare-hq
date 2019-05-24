@@ -180,7 +180,7 @@ class ConfigurableReportTableManagerMixin(object):
 
             diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
 
-            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
                 pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]

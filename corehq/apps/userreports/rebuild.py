@@ -56,13 +56,15 @@ def get_table_diffs(engine, table_names, metadata):
     with engine.begin() as connection:
         migration_context = get_migration_context(connection, table_names)
         raw_diffs = compare_metadata(migration_context, metadata)
-        return reformat_alembic_diffs(raw_diffs)
+        return [
+            diff for diff in reformat_alembic_diffs(raw_diffs)
+            if diff.table_name in table_names
+        ]
 
 
-def get_tables_rebuild_migrate(diffs, table_names):
-    relevant_diffs = [diff for diff in diffs if diff.table_name in table_names]
-    tables_to_rebuild = get_tables_to_rebuild(relevant_diffs)
-    tables_to_migrate = get_tables_to_migrate(relevant_diffs)
+def get_tables_rebuild_migrate(diffs):
+    tables_to_rebuild = get_tables_to_rebuild(diffs)
+    tables_to_migrate = get_tables_to_migrate(diffs)
     tables_to_migrate -= tables_to_rebuild
     return MigrateRebuildTables(migrate=tables_to_migrate, rebuild=tables_to_rebuild)
 
