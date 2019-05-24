@@ -60,6 +60,5 @@ branches:
   - jls/linked-app-incremental-versioning # Jenny May 20
   - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
   - jls/no-media-versions # Jenny May 24
-  - jls/py3-settings # Jenny May 24
   - es/case-import  # Ethan May 23
 submodules: {}
