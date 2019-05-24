@@ -5635,7 +5635,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
 
     try:
         if not app.is_remote_app():
-            for path, media in app.get_media_objects():
+            for path, media in app.get_media_objects(remove_unused=True):
                 if domain not in media.valid_domains:
                     media.valid_domains.append(domain)
                     media.save()
