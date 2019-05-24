@@ -187,7 +187,7 @@ class CouchSqlDomainMigrator(object):
             if wrapped_form:
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
             else:
-                gevent.sleep(0.01)  # swap greenlets
+                gevent.sleep()  # swap greenlets
 
             remaining_items = self.queues.remaining_items + len(pool)
             now = datetime.now()
@@ -205,7 +205,7 @@ class CouchSqlDomainMigrator(object):
         if self.queues.try_obj(case_ids, wrapped_form):
             pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
         elif self.queues.full:
-            gevent.sleep(0.01)  # swap greenlets
+            gevent.sleep()  # swap greenlets
 
     def _try_to_process_queues(self, pool):
         # regularly check if we can empty the queues
