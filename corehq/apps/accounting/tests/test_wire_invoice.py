@@ -13,9 +13,11 @@ class TestWireInvoice(BaseInvoiceTestCase):
     def setUp(self):
         super(TestWireInvoice, self).setUp()
         invoice_date = utils.months_from_date(self.subscription.date_start, 2)
+        tasks.calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 3)
+        tasks.calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
 
         self.invoices = Invoice.objects.all()
@@ -44,9 +46,11 @@ class TestCustomerAccountWireInvoice(BaseInvoiceTestCase):
         self.account.save()
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 2)
+        tasks.calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
 
         invoice_date = utils.months_from_date(self.subscription.date_start, 3)
+        tasks.calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
 
         self.invoices = CustomerInvoice.objects.all()

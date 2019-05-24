@@ -79,6 +79,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         """
         # invoice date is 2 months before the end of the subscription (this is arbitrary)
         invoice_date = utils.months_from_date(cls.subscription.date_start, cls.subscription_length - 2)
+        tasks.calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
 
     @mock.patch.object(StripePaymentMethod, 'customer')
