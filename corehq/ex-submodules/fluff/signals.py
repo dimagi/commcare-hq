@@ -82,7 +82,10 @@ def catch_signal(sender, **kwargs):
         raw_diffs = compare_metadata(migration_context, fluff_metadata)
 
     diffs = reformat_alembic_diffs(raw_diffs)
-    tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_pillow_map))
+    table_names = set(table_pillow_map)
+    tables_to_rebuild = get_tables_to_rebuild([
+        diff for diff in diffs if diff.table_name in table_names
+    ])
 
     for table in tables_to_rebuild:
         info = table_pillow_map[table]
@@ -169,12 +172,8 @@ def reformat_alembic_diffs(raw_diffs):
     return diffs
 
 
-def get_tables_to_rebuild(diffs, table_names):
-    return {
-        diff.table_name
-        for diff in diffs
-        if diff.table_name in table_names and diff.type in DiffTypes.TYPES_FOR_REBUILD
-    }
+def get_tables_to_rebuild(diffs):
+    return {diff.table_name for diff in diffs if diff.type in DiffTypes.TYPES_FOR_REBUILD}
 
 
 def rebuild_table(engine, pillow, indicator_doc):

@@ -98,35 +98,33 @@ class TestAlembicDiffs(TestCase):
             sqlalchemy.Column('email_address', sqlalchemy.String(60), key='email'),
             sqlalchemy.Column('password', sqlalchemy.Integer, nullable=False)
         )
-        self._test_diffs(metadata, {
+        diffs = self._test_diffs(metadata, {
             SimpleDiff(DiffTypes.MODIFY_TYPE, self.table_name, 'password', None),
             SimpleDiff(DiffTypes.MODIFY_NULLABLE, self.table_name, 'user_name', None),
         })
+        modify_type = [diff for diff in diffs if diff.type == DiffTypes.MODIFY_TYPE][0]
+        modify_nullable = [diff for diff in diffs if diff.type == DiffTypes.MODIFY_NULLABLE][0]
+
+        self.assertIsInstance(modify_type.existing_type, sqlalchemy.String)
+        self.assertIsInstance(modify_type.modify_type, sqlalchemy.Integer)
+        self.assertEqual(modify_nullable.existing_nullable, False)
+        self.assertEqual(modify_nullable.modify_nullable, True)
 
     def _test_diffs(self, metadata, expected_diffs, table_names=None):
         migration_context = get_migration_context(self.engine, table_names or [self.table_name, 'new_table'])
         raw_diffs = compare_metadata(migration_context, metadata)
         diffs = reformat_alembic_diffs(raw_diffs)
         self.assertEqual(set(diffs), expected_diffs)
+        return diffs
 
 
 class TestTablesToRebuild(SimpleTestCase):
-    def test_filter_by_table(self):
-        diffs = {
-            SimpleDiff(DiffTypes.ADD_TABLE, 't1', None, None),
-            SimpleDiff(DiffTypes.ADD_TABLE, 't2', None, None),
-            SimpleDiff(DiffTypes.ADD_COLUMN, 't1', None, None),
-        }
-        tables = get_tables_to_rebuild(diffs, {'t1'})
-        self.assertEqual(tables, {'t1'})
-
     def test_filter_by_type(self):
         diffs = {
             SimpleDiff(type_, type_, None, None)
             for type_ in DiffTypes.ALL
         }
-        tables = {diff.table_name for diff in diffs}
-        tables = get_tables_to_rebuild(diffs, tables)
+        tables = get_tables_to_rebuild(diffs)
         self.assertEqual(
             tables,
             set(DiffTypes.TYPES_FOR_REBUILD)

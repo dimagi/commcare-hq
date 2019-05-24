@@ -60,34 +60,24 @@ def get_table_diffs(engine, table_names, metadata):
 
 
 def get_tables_rebuild_migrate(diffs, table_names):
-    tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
-    tables_to_migrate = get_tables_to_migrate(diffs, table_names)
+    relevant_diffs = [diff for diff in diffs if diff.table_name in table_names]
+    tables_to_rebuild = get_tables_to_rebuild(relevant_diffs)
+    tables_to_migrate = get_tables_to_migrate(relevant_diffs)
     tables_to_migrate -= tables_to_rebuild
     return MigrateRebuildTables(migrate=tables_to_migrate, rebuild=tables_to_rebuild)
 
 
-def get_tables_to_migrate(diffs, table_names):
-    tables_with_indexes = get_tables_with_index_changes(diffs, table_names)
-    tables_with_added_columns = get_tables_with_added_nullable_columns(diffs, table_names)
+def get_tables_to_migrate(diffs):
+    tables_with_indexes = _filter_diffs(diffs, *DiffTypes.INDEX_TYPES)
+    tables_with_added_columns = _filter_diffs(diffs, DiffTypes.ADD_NULLABLE_COLUMN)
     return tables_with_indexes | tables_with_added_columns
 
 
-def get_tables_with_index_changes(diffs, table_names):
+def _filter_diffs(diffs, *types):
     return {
         diff.table_name
         for diff in diffs
-        if diff.table_name in table_names and diff.type in DiffTypes.INDEX_TYPES
-    }
-
-
-def get_tables_with_added_nullable_columns(diffs, table_names):
-    return {
-        diff.table_name
-        for diff in diffs
-        if (
-            diff.table_name in table_names
-            and diff.type == DiffTypes.ADD_NULLABLE_COLUMN
-        )
+        if diff.type in types
     }
 
 
