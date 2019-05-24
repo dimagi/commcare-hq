@@ -98,17 +98,10 @@ class TestAlembicDiffs(TestCase):
             sqlalchemy.Column('email_address', sqlalchemy.String(60), key='email'),
             sqlalchemy.Column('password', sqlalchemy.Integer, nullable=False)
         )
-        diffs = self._test_diffs(metadata, {
+        self._test_diffs(metadata, {
             SimpleDiff(DiffTypes.MODIFY_TYPE, self.table_name, 'password', None),
             SimpleDiff(DiffTypes.MODIFY_NULLABLE, self.table_name, 'user_name', None),
         })
-        modify_type = [diff for diff in diffs if diff.type == DiffTypes.MODIFY_TYPE][0]
-        modify_nullable = [diff for diff in diffs if diff.type == DiffTypes.MODIFY_NULLABLE][0]
-
-        self.assertIsInstance(modify_type.existing_type, sqlalchemy.String)
-        self.assertIsInstance(modify_type.modify_type, sqlalchemy.Integer)
-        self.assertEqual(modify_nullable.existing_nullable, False)
-        self.assertEqual(modify_nullable.modify_nullable, True)
 
     def _test_diffs(self, metadata, expected_diffs, table_names=None):
         migration_context = get_migration_context(self.engine, table_names or [self.table_name, 'new_table'])
