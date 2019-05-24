@@ -54,10 +54,11 @@ branches:
   - sr-ucr-mirror # Sravan May 1
   - mk/ccz-hosting-revamp # MK May 6
   - fr/case-templates      # FR May 15
-  - mk/media-version-on-revert   # MK May 16
+  #- mk/media-version-on-revert   # MK May 16
   - form-odata  # Nick P May 21
   - web-user-reports-project-access  # Gabriella May 13
   - jls/linked-app-incremental-versioning # Jenny May 20
   - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
+  - jls/no-media-versions
   - es/case-import  # Ethan May 23
 submodules: {}
