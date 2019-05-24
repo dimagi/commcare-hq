@@ -98,6 +98,11 @@ class Schedule(models.Model):
     class Meta(object):
         abstract = True
 
+    @classmethod
+    def assert_is(cls, schedule):
+        if not isinstance(schedule, cls):
+            raise TypeError("Expected " + cls.__name__)
+
     def set_first_event_due_timestamp(self, instance, start_date=None):
         raise NotImplementedError()
 
@@ -124,6 +129,16 @@ class Schedule(models.Model):
     def move_to_next_event_not_in_the_past(self, instance):
         while instance.active and instance.next_event_due < util.utcnow():
             self.move_to_next_event(instance)
+
+    def get_extra_scheduling_options(self):
+        return {
+            'active': self.active,
+            'default_language_code': self.default_language_code,
+            'include_descendant_locations': self.include_descendant_locations,
+            'location_type_filter': self.location_type_filter,
+            'use_utc_as_default_timezone': self.use_utc_as_default_timezone,
+            'user_data_filter': self.user_data_filter,
+        }
 
     def set_extra_scheduling_options(self, options):
         if not options:
