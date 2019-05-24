@@ -740,7 +740,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
     index_file_count = 0
     multimedia_file_count = 0
     if include_multimedia_files:
-        media_objects = list(app.get_media_objects(build_profile_id=build_profile_id))
+        media_objects = list(app.get_media_objects(build_profile_id=build_profile_id, remove_unused=True))
         multimedia_file_count = len(media_objects)
         file_iterator, errors = iter_media_files(media_objects)
     if include_index_files:
