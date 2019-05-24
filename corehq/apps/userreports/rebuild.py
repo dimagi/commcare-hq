@@ -88,7 +88,7 @@ def migrate_tables(engine, diffs):
     index_diffs = apply_index_changes(engine, diffs)
 
     changes_by_table = defaultdict(list)
-    for diff in col_diffs | index_diffs:
+    for diff in col_diffs | set(index_diffs):
         changes_by_table[diff.table_name].append(diff.to_dict())
     return changes_by_table
 
@@ -97,7 +97,7 @@ def add_columns(engine, diffs):
     with engine.begin() as conn:
         ctx = get_migration_context(conn)
         op = Operations(ctx)
-        col_diffs = _filter_diffs(diffs, DiffTypes.ADD_COLUMN)
+        col_diffs = _filter_diffs(diffs, DiffTypes.ADD_NULLABLE_COLUMN)
         for diff in col_diffs:
             col = diff.column
             table_name = col.table.name

@@ -109,7 +109,7 @@ class SimpleDiff(object):
 
     @property
     def column(self):
-        return self._item(3, DiffTypes.COLUMN_TYPES)
+        return self._item(3, DiffTypes.COLUMN_TYPES + (DiffTypes.ADD_NULLABLE_COLUMN,))
 
     @property
     def index(self):
