@@ -17,7 +17,7 @@
       <dl>
         <dt>{% trans "ID" %}</dt>
         <dd>{{ web_user.get_id }}
-          <small><a href="{% url 'raw_couch' %}?id={{ web_user.get_id }}">{% trans "couch doc" %}</a></small> |
+          <small><a href="{% url 'raw_doc' %}?id={{ web_user.get_id }}">{% trans "couch doc" %}</a></small> |
           <small><a href="{% url 'doc_in_es' %}?id={{ web_user.get_id }}">{% trans "elasticsearch lookup" %}</a></small>
         </dd>
       </dl>

@@ -1,6 +1,6 @@
 attrs~=18.1
 iso8601==0.1.12
-jsonobject==0.9.8
+jsonobject==0.9.9
 jsonobject-couchdbkit~=0.9
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed
@@ -12,7 +12,7 @@ django-braces==1.13.0
 django-celery-results~=1.0
 django-crispy-forms==1.7.0
 jsonfield==1.0.3
-dropbox==7.3.1
+dropbox==9.3.0
 defusedxml==0.5.0
 diff-match-patch==20120106
 dimagi-memoized==1.1.1

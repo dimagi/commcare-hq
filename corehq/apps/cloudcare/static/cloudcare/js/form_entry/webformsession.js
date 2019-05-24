@@ -432,7 +432,7 @@ WebFormSession.prototype.newRepeat = function (repeat) {
 
 WebFormSession.prototype.deleteRepeat = function (repetition) {
     var juncture = getIx(repetition.parent);
-    var rep_ix = +(repetition.rel_ix().replace('_', ':').split(":").slice(-1)[0]);
+    var rep_ix = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
     this.serverRequest(
         {
             'action': Formplayer.Const.DELETE_REPEAT,

@@ -18,6 +18,12 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-pregnant-tasks_cases",
     "display_name": "Cases - Pregnant Tasks (Static)",

@@ -22,6 +22,12 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-cbe_form",
     "display_name": "Forms - Community Based Events",

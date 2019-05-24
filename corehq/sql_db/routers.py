@@ -146,4 +146,4 @@ def force_citus_engine():
 
 
 def forced_citus():
-    getattr(_thread_local, 'force_citus', False)
+    return getattr(_thread_local, 'force_citus', False)
