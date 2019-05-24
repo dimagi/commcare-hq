@@ -68,16 +68,16 @@ def get_tables_rebuild_migrate(diffs, table_names):
 
 
 def get_tables_to_migrate(diffs):
-    return _filter_diffs(
+    return {diff.table_name for diff in _filter_diffs(
         diffs,
         DiffTypes.ADD_NULLABLE_COLUMN, DiffTypes.REMOVE_COLUMN,
         DiffTypes.ADD_INDEX, DiffTypes.REMOVE_INDEX
-    )
+    )}
 
 
 def _filter_diffs(diffs, *types):
     return {
-        diff.table_name
+        diff
         for diff in diffs
         if diff.type in types
     }
