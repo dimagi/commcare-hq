@@ -8,7 +8,7 @@ from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case import xform as casexml_xform
-from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
+from corehq.apps.api.es import XFormES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources import (
@@ -43,7 +43,6 @@ import six
 # so as a hack until this can be remedied, there is a global that
 # can be set to provide a mock.
 MOCK_XFORM_ES = None
-MOCK_CASE_ES = None
 
 xform_doc_types = doc_types()
 
@@ -259,10 +258,6 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         case_id = kwargs['pk']
         domain = kwargs['domain']
         return self.case_es(domain).get_document(case_id)
-
-    def case_es(self, domain):
-        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return MOCK_CASE_ES or CaseES(domain)
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 1000
