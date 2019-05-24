@@ -104,6 +104,23 @@ class SimpleDiff(object):
             'item_name': self.item_name
         }
 
+    @property
+    def column(self):
+        return self._item(3, DiffTypes.COLUMN_TYPES)
+
+    @property
+    def index(self):
+        return self._item(1, DiffTypes.INDEX_TYPES)
+
+    @property
+    def constraint(self):
+        return self._item(1, DiffTypes.CONSTRAINT_TYPES)
+
+    def _item(self, index, supported_types):
+        if self.type not in supported_types:
+            raise NotImplementedError
+        return self.raw[index]
+
 
 def reformat_alembic_diffs(raw_diffs):
     """

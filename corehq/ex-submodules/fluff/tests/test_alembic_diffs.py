@@ -81,10 +81,13 @@ class TestAlembicDiffs(TestCase):
             sqlalchemy.Column('email_address', sqlalchemy.String(60), key='email'),
             sqlalchemy.Column('new_password', sqlalchemy.String(20), nullable=False)
         )
-        self._test_diffs(metadata, {
+        diffs = self._test_diffs(metadata, {
             SimpleDiff(DiffTypes.ADD_COLUMN, self.table_name, 'new_password', None),
             SimpleDiff(DiffTypes.REMOVE_COLUMN, self.table_name, 'password', None)
         })
+        # check that we can get the column via the property
+        self.assertIsNotNone(diffs[0].column)
+        self.assertIsNotNone(diffs[1].column)
 
     def test_modify_column(self):
         metadata = sqlalchemy.MetaData()

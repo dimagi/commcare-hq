@@ -126,8 +126,8 @@ def add_columns(engine, diffs):
 def apply_index_changes(engine, diffs):
     changes = defaultdict(list)
     index_diffs = _get_indexes_diffs_to_change(diffs)
-    remove_indexes = [index.raw[1] for index in index_diffs if index.type == DiffTypes.REMOVE_INDEX]
-    add_indexes = [index.raw[1] for index in index_diffs if index.type == DiffTypes.ADD_INDEX]
+    remove_indexes = [index.index for index in index_diffs if index.type == DiffTypes.REMOVE_INDEX]
+    add_indexes = [index.index for index in index_diffs if index.type == DiffTypes.ADD_INDEX]
 
     with engine.begin() as conn:
         for index in add_indexes:
@@ -148,7 +148,7 @@ def apply_index_changes(engine, diffs):
 
 def _get_columns_to_add(raw_diffs):
     return [
-        diff.raw[3]
+        diff.column
         for diff in raw_diffs
         if diff.type == DiffTypes.ADD_NULLABLE_COLUMN
     ]
@@ -163,7 +163,7 @@ def _get_indexes_diffs_to_change(diffs):
     index_diffs_by_table_and_col = defaultdict(list)
 
     for index_diff in index_diffs:
-        index = index_diff.raw[1]
+        index = index_diff.index
 
         column_names = tuple(index.columns.keys())
         index_diffs_by_table_and_col[(index.table.name, column_names)].append(index_diff)
