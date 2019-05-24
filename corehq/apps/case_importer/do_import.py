@@ -56,7 +56,7 @@ class _Importer(object):
 
     def do_import(self, spreadsheet):
         for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
-            set_task_progress(self.task, row_num, spreadsheet.max_row)
+            set_task_progress(self.task, row_num - 1, spreadsheet.max_row)
             if row_num == 1:
                 continue  # skip first row (header row)
 
