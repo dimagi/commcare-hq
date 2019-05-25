@@ -9,7 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.models import ESCase
-from corehq.apps.api.resources import v0_4
+from corehq.apps.api.resources import v0_4, v0_3
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
@@ -36,7 +36,7 @@ class TestCommCareCaseResource(APIResourceTest):
 
         # the pillow is set to offline mode - elasticsearch not needed to validate
         fake_case_es = FakeXFormES()
-        v0_4.MOCK_CASE_ES = fake_case_es
+        v0_3.MOCK_CASE_ES = fake_case_es
 
         modify_date = datetime.utcnow()
 
@@ -60,7 +60,7 @@ class TestCommCareCaseResource(APIResourceTest):
     @run_with_all_backends
     def test_parent_and_child_cases(self):
         fake_case_es = FakeXFormES(ESCase)
-        v0_4.MOCK_CASE_ES = fake_case_es
+        v0_3.MOCK_CASE_ES = fake_case_es
 
         # Create cases
         parent_case_id = uuid.uuid4().hex
@@ -161,7 +161,7 @@ class TestHOPECaseResource(APIResourceTest):
         # read the changes and write it to ElasticSearch.
 
         fake_case_es = FakeXFormES()
-        v0_4.MOCK_CASE_ES = fake_case_es
+        v0_3.MOCK_CASE_ES = fake_case_es
 
         modify_date = datetime.utcnow()
 

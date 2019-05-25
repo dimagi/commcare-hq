@@ -1,45 +1,27 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from tastypie import fields
+from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.es import es_search, ElasticAPIQuerySet, CaseES
+from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import DomainSpecificResourceMixin
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import object_does_not_exist, get_obj
-from corehq.apps.cloudcare.api import es_filter_cases
-from corehq.apps.data_interfaces.forms import is_valid_case_property_name
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from no_exceptions.exceptions import Http400
 
-
-class CaseListFilters(object):
-    format = 'json'
-    
-    def __init__(self, params):
-
-        self.filters = dict((k, v) for k, v in params.items() if k and is_valid_case_property_name(k))
-
-        #hacky hack for v0.3.
-        #for v0.4, the API will explicitly require name and type
-        #for this version, magically behind the scenes override the query for case_name and case_type to be name, type
-        #note, on return output, the name will return as case_name, and type will return as case_type
-
-        if 'case_name' in self.filters:
-            self.filters['name'] = self.filters['case_name']
-            del(self.filters['case_name'])
-        if 'case_type' in self.filters:
-            self.filters['type'] = self.filters['case_type']
-            del(self.filters['case_type'])
-
-        if 'format' in self.filters:
-            self.format = self.filters['format']
-            del self.filters['format']
-
-        if 'order_by' in self.filters:
-            del self.filters['order_by']
+# By the time a test case is running, the resource is already instantiated,
+# so as a hack until this can be remedied, there is a global that
+# can be set to provide a mock.
+MOCK_CASE_ES = None
 
 
 class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -71,6 +53,10 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
             'pk': get_obj(bundle_or_obj).case_id
         }
 
+    def case_es(self, domain):
+        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
+        return MOCK_CASE_ES or CaseES(domain)
+
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
         try:
@@ -79,8 +65,16 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
             raise object_does_not_exist("CommCareCase", case_id)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        filters = CaseListFilters(bundle.request.GET)
-        return es_filter_cases(domain, filters=filters.filters)
+        try:
+            es_query = es_search(bundle.request, domain)
+        except Http400 as e:
+            raise BadRequest(six.text_type(e))
+
+        return ElasticAPIQuerySet(
+            payload=es_query,
+            model=ESCase,
+            es_client=self.case_es(domain)
+        ).order_by('server_modified_on')
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
