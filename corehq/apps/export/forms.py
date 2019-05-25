@@ -31,7 +31,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
-from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV4
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2Ajax
 from corehq.pillows import utils
 
 from crispy_forms import layout as crispy
@@ -275,13 +275,13 @@ class DashboardFeedFilterForm(forms.Form):
     emwf_case_filter = forms.Field(
         label=ugettext_lazy("Case Owner(s)"),
         required=False,
-        widget=Select2AjaxV4(multiple=True),
+        widget=Select2Ajax(multiple=True),
         help_text=location_query_help_text,
     )
     emwf_form_filter = forms.Field(
         label=ugettext_lazy("User(s)"),
         required=False,
-        widget=Select2AjaxV4(multiple=True),
+        widget=Select2Ajax(multiple=True),
         help_text=location_query_help_text,
     )
     date_range = forms.ChoiceField(
