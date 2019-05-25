@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/select_2_ajax_widget_v4", [
+hqDefine("hqwebapp/js/select_2_ajax_widget", [
     'jquery',
     'underscore',
     'select2/dist/js/select2.full.min',
