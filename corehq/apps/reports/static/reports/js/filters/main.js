@@ -10,7 +10,7 @@ hqDefine("reports/js/filters/main", [
     'locations/js/location_drilldown',
     'reports/js/filters/advanced_forms_options',
     'reports/js/filters/drilldown_options',
-    'reports_core/js/choice_list_utils_v4',
+    'reports_core/js/choice_list_utils',
     'reports/js/filters/case_list_explorer',
     'select2/dist/js/select2.full.min',
     'reports/js/filters/case_list_explorer_knockout_bindings',
