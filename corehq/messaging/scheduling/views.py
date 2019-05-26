@@ -24,6 +24,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
 from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
+from corehq.apps.sms.util import get_language_list
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
@@ -36,6 +37,7 @@ from corehq.messaging.scheduling.forms import (
     ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
     ConditionalAlertScheduleForm,
+    ContentForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -50,10 +52,17 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.messaging.scheduling.view_helpers import (
+    get_conditional_alert_rows,
+    get_conditional_alerts_queryset_by_domain,
+    TranslatedConditionalAlertUploader,
+    UntranslatedConditionalAlertUploader,
+    upload_conditional_alert_workbook,
+)
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.workbook_json.excel import get_single_worksheet, WorkbookJSONError
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -559,21 +568,8 @@ class ConditionalAlertBaseView(BaseMessagingSectionView):
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertBaseView, self).dispatch(*args, **kwargs)
 
-    @staticmethod
-    def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
-        query = (
-            AutomaticUpdateRule
-            .objects
-            .filter(domain=domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
-        )
-        if query_string:
-            query = query.filter(name__icontains=query_string)
-        query = query.order_by('case_type', 'name', 'id')
-        return query
-
     def get_conditional_alerts_queryset(self, query_string=''):
-        return ConditionalAlertBaseView.get_conditional_alerts_queryset_by_domain(self.domain,
-                                                                                  query_string=query_string)
+        return get_conditional_alerts_queryset_by_domain(self.domain, query_string=query_string)
 
 
 class ConditionalAlertListView(ConditionalAlertBaseView):
@@ -1024,28 +1020,24 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
 
     def get(self, request, domain):
-        title = _("Conditional Alerts")
-        headers = ((title, (_('id'), _('name'), _('case_type'))),)
+        common_headers = ['id', 'name', 'case_type']
 
-        rows = get_conditional_alert_rows(self.domain)
+        langs = get_language_list(self.domain)
+        headers = ((TranslatedConditionalAlertUploader.sheet_name,
+                    common_headers + ['message_' + lang for lang in langs]),
+                   (UntranslatedConditionalAlertUploader.sheet_name,
+                    common_headers + ['message']))
+
+        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, langs)
 
         temp = io.BytesIO()
-        export_raw(headers, [(title, rows)], temp)
-        filename = '{title} - {domain}'.format(
-            domain=domain,
-            title=title)
+        export_raw(
+            headers, [
+                (TranslatedConditionalAlertUploader.sheet_name, translated_rows),
+                (UntranslatedConditionalAlertUploader.sheet_name, untranslated_rows),
+            ], temp)
+        filename = 'Conditional Alerts - {domain}'.format(domain=domain)
         return export_response(temp, Format.XLS_2007, filename)
-
-
-def get_conditional_alert_rows(domain):
-    rows = []
-
-    for rule in ConditionalAlertBaseView.get_conditional_alerts_queryset_by_domain(domain):
-        if not isinstance(_get_rule_content(rule), SMSContent):
-            continue
-        rows.append([rule.pk, rule.name, rule.case_type])
-
-    return rows
 
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
@@ -1083,54 +1075,14 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         try:
-            worksheet = get_single_worksheet(request.FILES['bulk_upload_file'])
+            workbook = get_workbook(request.FILES['bulk_upload_file'])
         except WorkbookJSONError as e:
             messages.error(request, six.text_type(e))
             return self.get(request, *args, **kwargs)
 
-        msgs = upload_conditional_alert_rows(self.domain, worksheet)
+        langs = get_language_list(self.domain)
+        msgs = upload_conditional_alert_workbook(self.domain, langs, workbook)
         for msg in msgs:
             msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
-
-
-def upload_conditional_alert_rows(domain, rows):
-    msgs = []
-    success_count = 0
-
-    for index, row in enumerate(rows, start=2):    # one-indexed, plus header row
-        rule = None
-        try:
-            rule = AutomaticUpdateRule.objects.get(
-                pk=row['id'],
-                domain=domain,
-                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-                deleted=False,
-            )
-        except AutomaticUpdateRule.DoesNotExist:
-            msgs.append((messages.error,
-                        _("Could not find rule for row {index}, with id {id}").format(index=index, id=row['id'])))
-        dirty = False
-        if rule:
-            if not isinstance(_get_rule_content(rule), SMSContent):
-                msgs.append((messages.error, _("Row {index}, with rule id {id}, does not use SMS content.").format(
-                    index=index, id=row['id'])))
-            else:
-                if rule.name != row['name']:
-                    dirty = True
-                    rule.name = row['name']
-                if rule.case_type != row['case_type']:
-                    dirty = True
-                    rule.case_type = row['case_type']
-        if dirty:
-            rule.save()
-            success_count += 1
-
-    msgs.append((messages.success, _("Updated {count} rule(s)").format(count=success_count)))
-
-    return msgs
-
-
-def _get_rule_content(rule):
-    return rule.get_messaging_rule_schedule().memoized_events[0].content
