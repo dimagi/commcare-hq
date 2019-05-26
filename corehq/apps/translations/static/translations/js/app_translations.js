@@ -1,8 +1,8 @@
 hqDefine("translations/js/app_translations", [
     "jquery",
     "hqwebapp/js/initial_page_data",
-    "app_manager/js/widgets_v4",
-    "hqwebapp/js/widgets_v4",   // .hqwebapp-select2
+    "app_manager/js/widgets",
+    "hqwebapp/js/widgets",   // .hqwebapp-select2
 ], function (
     $,
     initialPageData,

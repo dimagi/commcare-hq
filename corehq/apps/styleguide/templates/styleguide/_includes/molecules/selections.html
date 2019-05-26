@@ -50,29 +50,6 @@
     questions. Before you add a new custom set of select2 options, look around and ask
     around for other parts of HQ that have similar behavior.
   </p>
-  <p>
-    We currently use two different versions of select2 and are in the process of migrating instances of the
-    <a href='http://select2.github.io/select2/' target='_blank'>old version</a>.
-    This means that adding a new page, or adding the first select2 to an existing page, can
-    unexpectedly break other pages, especially if you're working in a requirejs area.
-  </p>
-  <p>
-    If needed, you can check with version of select2 is in use by clicking the "Resources" tab in the
-    browser's web tools: normal pages will fetch <code>select2/dist/js/select2.full.min.js</code> and legacy
-    pages will fetch <code>select2-3.5.2-legacy/select2.js</code>. Note that this check only works locally,
-    since on staging and production, javascript files are bundled.
-  </p>
-  <p>
-    If you're working with a requirejs page* and are adding a select2, before releasing, deploy to staging and
-    verify that you didn't introduce a version conflict. Do this by checking staging's
-    <a href='https://staging.commcarehq.org/static/build.txt' target='_blank'>build.txt</a>, finding the
-    javascript that you're working with, and verifying that the <strong>bundle</strong> you're working in only
-    contains one version of select2, not both.
-  </p>
-  <p>
-    <small>* Don't know if you're on a requirejs page? Open the browser web tools and check the value of
-      <code>window.USE_REQUIRE_JS</code>.</small>
-  </p>
   {% include 'styleguide/example_html.html' with slug='select2' title='Select2' content=examples.selections.select2 %}
 
   <h2>Multiselects</h2>

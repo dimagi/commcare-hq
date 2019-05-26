@@ -1,11 +1,13 @@
-hqDefine("hqwebapp/js/select2_handler_v3", [
+hqDefine("hqwebapp/js/select2_handler", [
     "jquery",
     "knockout",
-    "select2-3.5.2-legacy/select2",
+    "underscore",
+    "select2/dist/js/select2.full.min",
     "bootstrap-timepicker/js/bootstrap-timepicker",
 ], function (
     $,
-    ko
+    ko,
+    _
 ) {
     var baseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
@@ -13,12 +15,13 @@ hqDefine("hqwebapp/js/select2_handler_v3", [
         'use strict';
         var self = {};
         self.fieldName = options.fieldName;
+        self.placeholder = options.placeholder;
         self.multiple = options.multiple || false;
         self.value = ko.observable();
-
+        self.createTags = options.createTags || false;
         self.clear = function () {
             var fieldInput = self.utils.getField();
-            fieldInput.select2('val', '');
+            fieldInput.val("").trigger("change");
         };
 
         self.getHandlerSlug = function () {
@@ -30,7 +33,7 @@ hqDefine("hqwebapp/js/select2_handler_v3", [
             return {};
         };
 
-        self.processResults = function (response) {
+        self.processResults = function (response, params) {
             // override this if you want to do something special with the response.
             return response;
         };
@@ -40,11 +43,12 @@ hqDefine("hqwebapp/js/select2_handler_v3", [
             // the user entered.
         };
 
-        self.formatResult = function (result) {
+        self.templateResult = function (result) {
+
             return result.text;
         };
 
-        self.formatSelection = function (result) {
+        self.templateSelection = function (result) {
             return result.text;
         };
 
@@ -60,42 +64,69 @@ hqDefine("hqwebapp/js/select2_handler_v3", [
 
         self.init = function () {
             var fieldInput = self.utils.getField();
+
+            fieldInput.select2(_.extend({
+                multiple: true,
+                tags: fieldInput.data("choices"),
+            }, {}));
+
             fieldInput.select2({
                 minimumInputLength: 0,
                 allowClear: true,
                 multiple: self.multiple,
+                placeholder: self.placeholder || ' ',   // some placeholder required for allowClear
+                width: '100%',
                 ajax: {
-                    quietMillis: 150,
+                    delay: 150,
                     url: '',
                     dataType: 'json',
                     type: 'post',
-                    data: function (term) {
-                        var data = self.getExtraData(term);
+                    data: function (params) {
+                        $('.select2-results__options').find('li:not(.loading-results)').remove();
+                        var data = self.getExtraData(params.term);
                         data['handler'] = self.getHandlerSlug();
                         data['action'] = self.fieldName;
-                        data['searchString'] = term;
+                        data['searchString'] = params.term || '';
                         return data;
                     },
-                    results: self.processResults,
-                    500: function () {
-                        self.error(
-                            gettext("There was an issue communicating with the server. Please try back later.")
-                        );
+                    processResults: self.processResults,
+                    error: function () {
+                        var select2options = $('.select2-results__options');
+
+                        select2options.empty();
+                        var errorMessage = $('<li role="treeitem" ' +
+                            'class="select2-results__option " ' +
+                            'aria-disabled="true">' +
+                            gettext("There was an issue communicating with the server. Please try back later.") +
+                            '</li>');
+
+                        select2options.append(errorMessage);
                     },
+
                 },
-                createSearchChoice: self.createNewChoice,
-                formatResult: self.formatResult,
-                formatSelection: self.formatSelection,
-                initSelection: function (element, callback) {
-                    if (element.val()) {
-                        var data = self.getInitialData(element);
-                        if (data) callback(data);
-                    }
-                },
+                tags: self.createTags,
+                createTag: self.createNewChoice,
+                templateResult: self.templateResult,
+                templateSelection: self.templateSelection,
+                escapeMarkup: function (m) { return m; },
             });
+
+            var initial = self.getInitialData(fieldInput);
+            if (initial) {
+                if (!_.isArray(initial)) {
+                    initial = [initial];
+                }
+                _.each(initial, function (result) {
+                    fieldInput.append(new Option(result.text, result.id));
+                });
+                fieldInput.val(_.pluck(initial, 'id')).trigger('change');
+            }
+
             if (self.onSelect2Change) {
                 fieldInput.on("change", self.onSelect2Change);
             }
+
+
         };
 
         return self;

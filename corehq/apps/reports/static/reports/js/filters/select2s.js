@@ -4,7 +4,7 @@
 hqDefine("reports/js/filters/select2s", [
     'jquery',
     'knockout',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko
@@ -20,39 +20,42 @@ hqDefine("reports/js/filters/select2s", [
 
     var initSinglePaginated = function (el) {
         var $filter = $(el);
-        $filter.select2({
+        $filter.select2({  // TODO: test
             ajax: {
                 url: $filter.data('url'),
                 type: 'POST',
                 dataType: 'json',
-                quietMills: 250,
-                data: function (term, page) {
+                delay: 250,
+                data: function (params) {
                     return {
-                        q: term,
-                        page: page,
+                        q: params.term,
+                        page: params.page,  // TODO: does params really have a page property?
                         handler: $filter.data('handler'),
                         action: $filter.data('action'),
                     };
                 },
-                results: function (data, page) {
+                processResults: function (data, params) {
                     if (data.success) {
                         var limit = data.limit;
-                        var hasMore = (page * limit) < data.total;
+                        var hasMore = (params.page * limit) < data.total;
                         return {
                             results: data.items,
                             more: hasMore,
                         };
                     }
                 },
+                width: '100%',
             },
             allowClear: true,
-            initSelection: function (elem, callback) {
+            placeholder: " ",
+            // TODO
+            /*initSelection: function (elem, callback) {
                 var val = $(elem).val();
                 callback({
                     id: val,
                     text: val,
                 });
-            },
+            },*/
         });
     };
 
@@ -65,7 +68,9 @@ hqDefine("reports/js/filters/select2s", [
         });
 
         if (!data.endpoint) {
-            $filter.select2();
+            $filter.select2({
+                width: '100%',
+            });
             return;
         }
 
@@ -88,28 +93,34 @@ hqDefine("reports/js/filters/select2s", [
          *      ]
          * }
          */
-        $filter.select2({
+        $filter.select2({   // TODO: test
             ajax: {
                 url: data.endpoint,
                 dataType: 'json',
-                data: function (term, page) {
+                data: function (params) {
                     return {
-                        q: term,
+                        q: params.term,
                         page_limit: 10,
-                        page: page,
+                        page: params.page,  // TODO: is this real?
                     };
                 },
-                results: function (data, page) {
-                    var more = data.more || (page * 10) < data.total;
+                processResults: function (data, params) {
+                    var more = data.more || (params.page * 10) < data.total;
                     return {results: data.results, more: more};
                 },
             },
-            initSelection: function (element, callback) {
-                callback(data.selected);
-            },
             multiple: true,
             escapeMarkup: function (m) { return m; },
-        }).select2('val', data.selected);
+            width: '100%',
+        });
+
+        if (data.selected && data.selected.length) {
+            _.each(data.selected, function (item) {
+                $filter.append(new Option(item.text, item.id));
+            });
+            $filter.val(_.map(data.selected, function (item) { return item.id }));
+            $filter.trigger('change.select2');
+        }
     };
 
     return {

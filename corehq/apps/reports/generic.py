@@ -24,7 +24,6 @@ from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_datatables,
-    use_select2_legacy,
     use_daterangepicker,
     use_nvd3,
 )
@@ -754,7 +753,6 @@ class GenericReportView(object):
 
     @use_nvd3
     @use_jquery_ui
-    @use_select2_legacy
     @use_datatables
     @use_daterangepicker
     def decorator_dispatcher(self, request, *args, **kwargs):

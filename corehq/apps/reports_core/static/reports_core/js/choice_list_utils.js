@@ -1,4 +1,4 @@
-hqDefine('reports_core/js/choice_list_utils_v4', ['underscore'], function (_) {
+hqDefine('reports_core/js/choice_list_utils', ['underscore'], function (_) {
     var module = {};
     var pageSize = 20;
 
