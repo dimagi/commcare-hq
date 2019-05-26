@@ -10,9 +10,9 @@ hqDefine("reports/js/filters/main", [
     'locations/js/location_drilldown',
     'reports/js/filters/advanced_forms_options',
     'reports/js/filters/drilldown_options',
-    'reports_core/js/choice_list_utils_v3',
+    'reports_core/js/choice_list_utils',
     'reports/js/filters/case_list_explorer',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
     'reports/js/filters/case_list_explorer_knockout_bindings',
 ], function (
     $,
@@ -122,7 +122,11 @@ hqDefine("reports/js/filters/main", [
 
         // Tags (to filter by CC version in global device logs soft asserts report)
         $('.report-filter-tags').each(function () {
-            $(this).select2({tags: $(this).data("tags"), allowClear: true});
+            $(this).select2({
+                tags: $(this).data("tags"),
+                allowClear: true,
+                placeholder: ' ',
+            });    // TODO: test
         });
 
         // Initialize any help bubbles
@@ -137,7 +141,7 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
 
             $('[name=rule_id]').each(function (i, el) {
-                $(el).select2({
+                $(el).select2({ // TODO: test
                     allowClear: true,
                     placeholder: gettext("All"),
                 });
@@ -183,12 +187,12 @@ hqDefine("reports/js/filters/main", [
         });
 
         $('[name=selected_group]').each(function (i, el) {
-            $(el).select2({
+            $(el).select2({ // TODO: test (phone number filter)
                 allowClear: true,
                 placeholder: gettext("Select a group"),
             });
         });
-        $('.report-filter-location-async').each(function (i, el) {
+        $('.report-filter-location-async').each(function (i, el) {  // TODO: test
             var $el = $(el), data = $el.data();
             var model = locationDrilldown.locationSelectViewModel({
                 "hierarchy": data.hierarchy,
@@ -207,7 +211,7 @@ hqDefine("reports/js/filters/main", [
             var model = drilldownOptions.drilldownOptionFilterControl({
                 drilldown_map: data.drilldownMap,
                 controls: data.controls,
-                selected: data.selected,
+                selected: data.selected,    // TODO: test
                 notifications: data.notifications,
             });
             $('#' + data.cssId).koApplyBindings(model);
@@ -221,7 +225,7 @@ hqDefine("reports/js/filters/main", [
                 var model = drilldownOptions.drilldownOptionFilterControl({
                     drilldown_map: data.drilldownMap,
                     controls: data.controls,
-                    selected: data.selected,
+                    selected: data.selected,    // TODO: test
                     notifications: data.notifications,
                 });
                 $('#' + data.cssId).koApplyBindings(model);
@@ -272,29 +276,33 @@ hqDefine("reports/js/filters/main", [
         $('.report-filter-dynamic-choice-list').each(function (i, el) {
             var $el = $(el), data = $el.data();
             var initialValues = _.map(data.initialValues, function (value) {
-                    return choiceListUtils.formatValueForSelect2(value);
-                }),
-                // TODO: Ideally the separator would be defined in one place. Right now it is
-                //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
-                separator = "\u001F";
+                return choiceListUtils.formatValueForSelect2(value);
+            });
 
-            $el.select2({
+            $el.select2({   // TODO: test
                 minimumInputLength: 0,
                 multiple: true,
-                separator: separator,
                 allowClear: true,
                 // allowClear only respected if there is a non empty placeholder
                 placeholder: " ",
                 ajax: {
                     url: data.ajaxFilterUrl,
                     dataType: 'json',
-                    quietMillis: 250,
+                    delay: 250,
                     data: choiceListUtils.getApiQueryParams,
-                    results: choiceListUtils.formatPageForSelect2,
+                    processResults: choiceListUtils.formatPageForSelect2,
                     cache: true,
                 },
+                width: '100%',
             });
-            $el.select2('data', initialValues);
+
+            if (initialValues && initialValues.length) {
+                _.each(initialValues, function (item) {
+                    $el.append(new Option(item.text, item.id));
+                });
+                $el.val(_.map(initialValues, function (item) { return item.id }));
+                $el.trigger('change.select2');
+            }
         });
     };
 

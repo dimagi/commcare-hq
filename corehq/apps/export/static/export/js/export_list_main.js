@@ -4,7 +4,7 @@ hqDefine("export/js/export_list_main", [
     'analytix/js/kissmetrix',
     'export/js/create_export',
     'export/js/export_list',
-    'hqwebapp/js/select_2_ajax_widget_v3',  // for case owner & user filters in DashboardFeedFilterForm
+    'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
 ], function (
     $,
     initialPageData,

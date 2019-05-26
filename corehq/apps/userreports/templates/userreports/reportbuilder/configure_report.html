@@ -246,13 +246,13 @@
               <div>
                 {% trans 'Location field' %}:
                 <!-- ko ifnot: optionsContainQuestions -->
-                <input type="text" class="form-control" data-bind="select2: selectablePropertyOptions, value: location_field">
+                <select class="form-control" data-bind="select2: selectablePropertyOptions, value: location_field"></select>
                 <!-- /ko -->
                 <!-- ko if: optionsContainQuestions -->
-                <input class="form-control" type="hidden" data-bind="
+                <select class="form-control" data-bind="
                   questionsSelect: selectablePropertyOptions,
                   value: location_field,
-                "/>
+                "></select>
                 <!-- /ko -->
               </div>
               <br/>

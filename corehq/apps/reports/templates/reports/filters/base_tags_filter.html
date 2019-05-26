@@ -1,9 +1,9 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-  <input class="{{ css_class }} form-control report-filter-tags"
-         data-tags="{% html_attr tags %}"
-         name="{{ slug }}"
-         placeholder="{{ placeholder }}"
-         value="{{ selected }}" />
+  <select class="{{ css_class }} form-control report-filter-tags"
+          data-tags="{% html_attr tags %}"
+          name="{{ slug }}"
+          placeholder="{{ placeholder }}"
+          value="{{ selected }}"></select>
 {% endblock %}
