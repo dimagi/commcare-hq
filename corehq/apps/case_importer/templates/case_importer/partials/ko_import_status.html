@@ -25,16 +25,6 @@
     {% trans "No cases were created or updated during this import." %}
   </p>
   <!--/ko-->
-
-  <!--ko if: result.too_many_matches > 0-->
-  <p>
-    {% blocktrans with too_many_matches='result.too_many_matches' %}
-      <strong data-bind="text: {{ too_many_matches }}"></strong> rows matched more
-      than one case at the same time - this means that there are cases
-      in your system with the same external ID.
-    {% endblocktrans %}
-  </p>
-  <!--/ko-->
 </div>
 <!--ko if: !_.isEmpty(result.errors)-->
 <div class="alert alert-warning">
