@@ -26,10 +26,15 @@
       <tr data-bind="attr: { 'data-hqmediapath': path }, event: { mediaUploadComplete: uploadComplete }">
         <td class="media-type-icon text-center"><i data-bind="attr: { class: type_icon }"></i></td>
         <td class="media-status-icon text-center"><i data-bind="attr: { class: status_icon }"></i></td>
-        <td><a data-toggle="modal"
-               data-bind="text: upload_button_text,
-                                       attr: { class: upload_button_class, href: upload_controller.container },
-                                       click: triggerUpload"></a></td>
+        <td>
+          <a data-toggle="modal"
+             data-bind="attr: { class: upload_button_class, href: upload_controller.container },
+                        click: triggerUpload">
+            <i class="fa" data-bind="css: {'fa-recycle': is_matched(), 'fa-cloud-upload': !is_matched()}"></i>
+            <span data-bind="visible: !is_matched()">{% trans "Upload" %}</span>
+            <span data-bind="visible: is_matched()">{% trans "Replace" %}</span>
+          </a>
+        </td>
         <td><div data-bind="visible: is_matched, template: preview_template"></div></td>
         <td>
           <code data-bind="visible: humanized_content_length, text: humanized_content_length"></code>

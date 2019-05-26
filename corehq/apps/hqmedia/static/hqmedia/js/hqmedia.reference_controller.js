@@ -217,15 +217,11 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         self.image_size = ko.observable();
 
         self.status_icon = ko.computed(function () {
-            return (self.is_matched()) ? "fa fa-check media-status-ok" : "fa fa-exclamation-triangle media-status-warning";
+            return (self.is_matched()) ? "fa fa-check text-success" : "fa fa-exclamation-triangle text-danger";
         }, self);
 
         self.upload_button_class = ko.computed(function () {
             return (self.is_matched()) ? "btn btn-success" : "btn btn-danger";
-        }, self);
-
-        self.upload_button_text = ko.computed(function () {
-            return ((self.is_matched()) ? gettext("Replace ") : gettext("Upload ")) + self.media_type;
         }, self);
 
         self.preview_template = null; // override
