@@ -29,10 +29,15 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         raise NotImplementedError()
 
     @property
+    def allow_conditional_agg(self):
+        # Todo; create a toggle
+        return True
+
+    @property
     @memoized
     def data_providers(self):
         config = self.report_config
-        return [provider_cls(config) for provider_cls in self.data_provider_classes]
+        return [provider_cls(config, allow_conditional_agg=self.allow_conditional_agg) for provider_cls in self.data_provider_classes]
 
     @property
     def template_context(self):

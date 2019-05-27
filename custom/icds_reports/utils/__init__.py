@@ -107,8 +107,9 @@ class ICDSMixin(object):
     has_sections = False
     posttitle = None
 
-    def __init__(self, config):
+    def __init__(self, config, allow_conditional_agg=False):
         self.config = config
+        self.allow_conditional_agg = allow_conditional_agg
 
     @property
     def subtitle(self):
