@@ -163,11 +163,9 @@ class ICDSMixin(object):
         else:
             loc_type = None
         datadog_histogram(
-            "commcare.icds.block_reports.custom_data_time",
+            "commcare.icds.block_reports.custom_data_duration",
             timer.duration,
-            tags="location_type:{}, report_slug:{}".format(
-                loc_type, self.slug
-            )
+            tags=["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug)]
         )
         return to_ret
 
