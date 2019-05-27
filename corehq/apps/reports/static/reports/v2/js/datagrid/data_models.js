@@ -19,6 +19,8 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
         self.endpoint = endpoint;
 
+        self.hasInitialLoadFinished = ko.observable(false);
+
         self.isDataLoading = ko.observable(false);
         self.isLoadingError = ko.observable(false);
 
@@ -106,6 +108,16 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                     self.rows(data.rows);
                     self.totalRecords(data.totalRecords);
                     self._pushState();
+
+                    if (!self.hasInitialLoadFinished()) {
+                        self.hasInitialLoadFinished(true);
+                        _.each(self.reportFilters(), function (reportFilter) {
+                            reportFilter.value.subscribe(function () {
+                                self.refresh();
+                            });
+                            reportFilter.isLoadingComplete(true);
+                        });
+                    }
                 })
                 .fail(function () {
                     self.isLoadingError(true);
@@ -115,8 +127,9 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 });
         };
 
-        self.init = function (reportContextObservable) {
+        self.init = function (reportContextObservable, reportFiltersObservable) {
             self.reportContext = reportContextObservable;
+            self.reportFilters = reportFiltersObservable;
             self.pageTitle = $(document).find("title").text();
 
             var _url = new URL(window.location.href);
