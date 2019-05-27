@@ -702,7 +702,7 @@ class ProjectDataTab(UITab):
 
             items.extend(edit_section)
 
-        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+        if toggles.EXPLORE_CASE_DATA.enabled(self.domain) and self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
             explore_data_views = [
                 {

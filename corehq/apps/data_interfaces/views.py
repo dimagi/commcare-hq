@@ -117,6 +117,7 @@ class DataInterfaceSection(BaseDomainView):
         return reverse("data_interfaces_default", args=[self.domain])
 
 
+@location_safe
 class ExploreCaseDataView(BaseDomainView):
     template_name = "data_interfaces/explore_case_data.html"
     urlname = "explore_case_data"
@@ -125,6 +126,8 @@ class ExploreCaseDataView(BaseDomainView):
     @use_daterangepicker
     @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
+        if not self.report_config.has_permission:
+            raise Http404()
         return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -136,10 +139,14 @@ class ExploreCaseDataView(BaseDomainView):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    @memoized
+    def report_config(self):
+        return ExploreCaseDataReport(self.request, self.domain)
+
+    @property
     def page_context(self):
-        report_config = ExploreCaseDataReport(self.request, self.domain)
         return {
-            'report': report_config.context,
+            'report': self.report_config.context,
             'section': PageInfoContext(
                 title=DataInterfaceSection.section_name,
                 url=reverse(DataInterfaceSection.urlname, args=[self.domain]),

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy
 
+from corehq import toggles
 from corehq.apps.case_search.const import (
     SPECIAL_CASE_PROPERTIES_MAP,
     CASE_COMPUTED_METADATA,
@@ -76,6 +77,11 @@ class ExploreCaseDataReport(BaseReport):
         CaseOwnerReportFilter,
         CaseTypeReportFilter,
     ]
+
+    @property
+    def has_permission(self):
+        return (toggles.EXPLORE_CASE_DATA.enabled(self.domain)
+                and self.request.couch_user.can_edit_data())
 
     @property
     def initial_report_filters(self):
