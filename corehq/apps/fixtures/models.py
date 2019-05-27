@@ -19,6 +19,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -114,7 +115,8 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
         for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
             transaction.delete(item)
             item_ids.append(item.get_id)
-        transaction.delete_all(FixtureOwnership.for_all_item_ids(item_ids, self.domain))
+        for item_id_chunk in chunked(item_ids, 1000):
+            transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
 
     @classmethod
