@@ -158,7 +158,7 @@
              data-bind="foreach: { data: data.rows, as: 'row' }">
         <tr>
           <!-- ko foreach: { data: $root.columns, as: 'column' } -->
-          <td data-bind="style: { width: column.width() + 'px' }">
+          <td>
             <!-- ko if: $index() === 0 && row._link -->
               <a class="datagrid-external-link"
                  target="_blank"
