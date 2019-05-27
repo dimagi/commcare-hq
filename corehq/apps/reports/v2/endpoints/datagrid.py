@@ -8,10 +8,6 @@ class DatagridEndpoint(BaseDataEndpoint):
     slug = 'datagrid'
 
     @property
-    def draw(self):
-        return int(self.data.get('draw', 1))
-
-    @property
     def page(self):
         return int(self.data.get('page', 1))
 
