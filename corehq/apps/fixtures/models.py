@@ -1,31 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
+
 from django.db import models
+
+import six
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from memoized import memoized
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SchemaListProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.couch.bulk import CouchTransaction
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
-    get_owner_ids_by_type,
     get_fixture_data_types_in_domain,
-    get_fixture_items_for_data_types
+    get_fixture_items_for_data_types,
+    get_owner_ids_by_type,
 )
-from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
+from corehq.apps.fixtures.exceptions import (
+    FixtureException,
+    FixtureTypeCheckError,
+    FixtureVersionError,
+)
 from corehq.apps.fixtures.utils import (
     clean_fixture_field_name,
     get_fields_without_attributes,
     remove_deleted_ownerships,
 )
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.fixtures.exceptions import FixtureVersionError
-from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.xml_utils import serialize
-from dimagi.utils.couch.bulk import CouchTransaction
-from memoized import memoized
-from corehq.apps.locations.models import SQLLocation
-import six
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
