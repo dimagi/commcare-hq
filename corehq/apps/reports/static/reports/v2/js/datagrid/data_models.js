@@ -63,10 +63,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.goToPage = function (page) {
             if (page !== self.currentPage() || self.hasLimitBeenModified()) {
                 self.currentPage(page);
-                self.hasLimitBeenModified(false);
-                if (!self.resetPagination()) {
+                if (!self.resetPagination() || self.hasLimitBeenModified()) {
                     self.loadRecords();
                 }
+                self.hasLimitBeenModified(false);
                 self.resetPagination(false);
             }
         };
