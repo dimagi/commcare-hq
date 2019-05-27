@@ -657,8 +657,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             awc_id,
             month,
             sum(add_household) AS usage_num_hh_reg,
-            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched
-            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs
+            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
+            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
             CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
             FROM "{usage_table}"
             WHERE month >= %(start_date)s GROUP BY awc_id, month
