@@ -35,7 +35,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return columnFilters.appliedColumnFilter(filterData);
         }));
 
-        self.showClause = ko.computed(function () {
+        self.hasFilters = ko.computed(function () {
             return self.appliedFilters().length > 0;
         });
 
