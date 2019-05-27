@@ -21,6 +21,13 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.title = ko.observable(data.title);
         self.name = ko.observable(data.name);
         self.width = ko.observable(data.width || 200);
+        self.sort = ko.observable(data.sort);
+
+        self.sortIconClass = ko.computed(function () {
+            if (self.sort() === 'asc') return 'glyphicon glyphicon-sort-by-attributes';
+            if (self.sort() === 'desc') return 'glyphicon glyphicon-sort-by-attributes-alt';
+            return 'glyphicon glyphicon-sort';
+        });
 
         self.clause = ko.observable(data.clause || 'all');
 
@@ -43,6 +50,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.context = ko.computed(function () {
             return {
                 name: self.name(),
+                sort: self.sort(),
                 clause: self.clause(),
                 filters: _.map(self.appliedFilters(), function (filterData) {
                     return {

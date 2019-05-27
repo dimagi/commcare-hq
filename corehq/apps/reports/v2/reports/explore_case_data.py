@@ -5,6 +5,10 @@ from memoized import memoized
 
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.case_search.const import (
+    SPECIAL_CASE_PROPERTIES_MAP,
+    CASE_COMPUTED_METADATA,
+)
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
@@ -53,11 +57,13 @@ class ExploreCaseDataReport(BaseReport):
             title=ugettext_lazy("Case Name"),
             name='case_name',
             width=200,
+            sort='asc',
         ),
         ColumnMeta(
             title=ugettext_lazy("Case Type"),
             name='@case_type',
             width=200,
+            sort=None,
         ),
     ]
 
@@ -66,6 +72,8 @@ class ExploreCaseDataReport(BaseReport):
         NumericXpathColumnFilter,
         DateXpathColumnFilter,
     ]
+
+    unsortable_column_names = CASE_COMPUTED_METADATA
 
     report_filters = [
         CaseOwnerReportFilter,
@@ -109,6 +117,18 @@ class ExploreCaseDataReport(BaseReport):
 
         expressions = []
         for column_context in endpoint.report_context.get('columns', []):
+            if column_context.get('sort'):
+                descending = column_context['sort'] == 'desc'
+                prop_name = column_context['name']
+
+                try:
+                    special_property = SPECIAL_CASE_PROPERTIES_MAP[prop_name]
+                    query = query.sort(special_property.sort_property,
+                                       desc=descending)
+                except KeyError:
+                    query = query.sort_by_case_property(prop_name,
+                                                        desc=descending)
+
             expression_builder = ColumnXpathExpressionBuilder(
                 self.request,
                 self.domain,

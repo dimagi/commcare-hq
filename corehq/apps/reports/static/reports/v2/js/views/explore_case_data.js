@@ -28,6 +28,7 @@ hqDefine('reports/v2/js/views/explore_case_data', [
         noDeleteColumnCondition: function (column) {
             return column.name() === 'case_name';
         },
+        unsortableColumnNames: context.getUnsortableColumnNames(),
     });
 
     view.datagridController.init();

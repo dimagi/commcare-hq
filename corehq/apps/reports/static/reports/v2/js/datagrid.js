@@ -33,6 +33,7 @@ hqDefine('reports/v2/js/datagrid', [
         ], [
             'hideColumnFilterCondition',
             'noDeleteColumnCondition',
+            'unsortableColumnNames',
         ]);
 
         var self = {};
@@ -109,6 +110,25 @@ hqDefine('reports/v2/js/datagrid', [
                 self.data.refresh();
             }
             self.editColumnController.unset();
+        };
+
+        self.isSortableColumn = function (columnName) {
+            if (!options.unsortableColumnNames) return true;
+            return (options.unsortableColumnNames.indexOf(columnName) === -1);
+        };
+
+        self.toggleSortColumn = function (column) {
+            if (column.sort() === 'asc') {
+                column.sort('desc');
+            } else if (column.sort() === 'desc') {
+                column.sort('asc');
+            } else {
+                _.each(self.columns(), function (col) {
+                    col.sort(undefined);
+                });
+                column.sort('asc');
+            }
+            self.data.refresh();
         };
 
         return self;
