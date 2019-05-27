@@ -60,6 +60,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             self.hasLimitBeenModified(true);
         });
 
+        self.hasNoData = ko.computed(function () {
+            return self.totalRecords() < 1;
+        });
+
         self.goToPage = function (page) {
             if (page !== self.currentPage() || self.hasLimitBeenModified()) {
                 self.currentPage(page);

@@ -183,6 +183,14 @@
         {% endblocktrans %}
       </div>
     </div>
+    <div class="datagrid-no-records"
+         data-bind="visible: $root.data.hasNoData">
+      <div class="alert alert-info">
+        {% blocktrans %}
+          No cases found.
+        {% endblocktrans %}
+      </div>
+    </div>
 
     <pagination data-apply-bindings="false"
                 params="goToPage: $root.data.goToPage,
