@@ -19,7 +19,6 @@ from corehq import toggles
 
 
 def non_empty_only(dct):
-    return dict([(key, value) for key, value in dct.items() if value])
     return {key: value for key, value in dct.items() if value}
 
 
