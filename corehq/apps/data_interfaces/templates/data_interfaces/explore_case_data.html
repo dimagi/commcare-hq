@@ -82,6 +82,22 @@
 
   <div id="report-datagrid"
        class="ko-template">
+
+    <div class="datagrid-save">
+      <button type="button"
+              data-bind="click: exportData"
+              class="btn btn-default">
+        <i class="fa fa-download"></i>
+        {% trans "Export Data" %}
+      </button>
+      <button type="button"
+              data-bind="click: saveFilters"
+              class="btn btn-default">
+        <i class="fa fa-save"></i>
+        {% trans "Save Filters" %}
+      </button>
+    </div>
+
     <div class="panel panel-default">
       <div class="panel-heading"
            role="tab"
@@ -355,6 +371,36 @@
               {% trans "Update" %}
             </span>
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade"
+         id="js-modal-unsupported-task"
+         data-bind="modal: unsupportedTaskName"
+         role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span>
+              <span class="sr-only">{% trans "Close" %}</span>
+            </button>
+            <h4 class="modal-title"
+                data-bind="text: unsupportedTaskName">
+            </h4>
+          </div>
+          <div class="modal-body">
+            {% blocktrans %}
+              This task is currently not supported, but we are happy to see
+              your interest.
+            {% endblocktrans %}
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-default"
+                    data-dismiss="modal">{% trans "Ok" %}</button>
           </div>
         </div>
       </div>

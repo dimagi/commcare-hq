@@ -127,6 +127,20 @@ hqDefine('reports/v2/js/datagrid', [
             self.data.refresh();
         };
 
+        self.unsupportedTaskName = ko.observable();
+
+        self.saveFilters = function () {
+            self.unsupportedTaskName(gettext("Save Filters"));
+        };
+
+        self.exportData = function () {
+            self.unsupportedTaskName(gettext("Export Data"));
+        };
+
+        $('#js-modal-unsupported-task').on('hide.bs.modal', function () {
+            self.unsupportedTaskName(undefined);
+        });
+
         return self;
     };
 
