@@ -119,26 +119,55 @@ ARGS = {
 }
 
 
+def _get_helper(helper_cls):
+    if not helper_cls:
+        return
+
+    args = inspect.getargspec(helper_cls.__init__)
+    arg_vals = [
+        ARGS[arg] for arg in args.args[1:]  # skip 'self'
+    ]
+    return helper_cls(*arg_vals)
+
+
 def _get_helper_sql(helper_cls):
+    helper = _get_helper(helper_cls)
     mock_cursor = MockCursor()
-    if helper_cls:
-        args = inspect.getargspec(helper_cls.__init__)
-        arg_vals = [
-            ARGS[arg] for arg in args.args[1:]  # skip 'self'
-        ]
-        helper = helper_cls(*arg_vals)
-        if hasattr(helper, 'aggregate'):
-            helper.aggregate(mock_cursor)
-        elif hasattr(helper, 'query'):
-            mock_cursor.execute(helper.query())
-        else:
-            raise AssertionError("Unexepcted helper type: {}".format(helper_cls))
+
+    if hasattr(helper, 'aggregate'):
+        helper.aggregate(mock_cursor)
+    elif hasattr(helper, 'query'):
+        mock_cursor.execute(helper.query())
+    elif helper is not None:
+        raise AssertionError("Unexepcted helper type: {}".format(helper_cls))
+
+    return mock_cursor.compile_output()
+
+
+def _get_helper_weekly_sql(helper_cls):
+    helper = _get_helper(helper_cls)
+    mock_cursor = MockCursor()
+
+    if hasattr(helper, 'weekly_aggregate'):
+        helper.aggregate(mock_cursor)
+
     return mock_cursor.compile_output()
 
 
 def get_agg_helper_outputs():
     with freeze_time(datetime(2019, 1, 11)):
         for pair in HELPERS:
-            monolith_sql = _get_helper_sql(pair.monolith)
-            distributed_sql = _get_helper_sql(pair.distributed)
-            yield SqlOutput(pair.monolith.helper_key, monolith_sql, distributed_sql)
+            yield SqlOutput(
+                pair.monolith.helper_key,
+                _get_helper_sql(pair.monolith),
+                _get_helper_sql(pair.distributed)
+            )
+
+            weekly_sql_monolith = _get_helper_weekly_sql(pair.monolith)
+            weekly_sql_disributed = _get_helper_weekly_sql(pair.distributed)
+            if weekly_sql_monolith or weekly_sql_disributed:
+                yield SqlOutput(
+                    '{}_weekly'.format(pair.monolith.helper_key),
+                    weekly_sql_monolith,
+                    weekly_sql_disributed
+                )
