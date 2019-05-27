@@ -2079,7 +2079,7 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
-if UNIT_TESTING or DEBUG or SERVER_ENVIRONMENT != 'production':
+if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
     try:
         from ddtrace import tracer
         tracer.enabled = False
