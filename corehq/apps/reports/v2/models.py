@@ -49,6 +49,15 @@ class BaseReport(object):
         self.request = request
         self.domain = domain
 
+    @property
+    def has_permission(self):
+        """
+        Override this property with permissions checks to determine whether
+        this report is viewable and the corresponding endpoints are viewable.
+        :return: boolean
+        """
+        return True
+
     def _get_endpoint(self, endpoint_slug, endpoints):
         slug_to_class = {e.slug: e for e in endpoints}
         try:
