@@ -58,6 +58,9 @@ class LogFilePlugin(Plugin):
     def log(self, label, test, err):
         if self.log_file is None:
             self.setup_log()
+        if isinstance(err[1], six.text_type):
+            value = type(err[0].__name__, (Exception,), {})(err[1])
+            err = (err[0], value, err[2])
         err_string = self.result._exc_info_to_string(err, test)
         self.result.printErrorList(label, [(test, err_string)])
         self.log_file.flush()
