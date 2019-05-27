@@ -147,7 +147,7 @@
                type="button"
                data-bind="click: $root.editColumnController.setNew">
               <i class="fa fa-plus-circle"></i>
-              {% trans "Add" %}
+              {% trans "Add Column" %}
             </a>
           </th>
         </tr>
@@ -210,103 +210,118 @@
             </h4>
           </div>
           <div class="modal-body">
-            <div class="form">
+            <div class="form form-horizontal">
               <div class="form-group">
-                <input type="text"
-                       class="form-control"
-                       placeholder="{% trans_html_attr "Title" %}"
-                       data-bind="textInput: title" />
+                <label class="col-xs-3 control-label">
+                  {% trans "Title" %}:
+                </label>
+                <div class="col-xs-9">
+                  <input type="text"
+                         class="form-control"
+                         placeholder="{% trans_html_attr "Title" %}"
+                         data-bind="textInput: title" />
+                </div>
               </div>
               <div class="form-group"
                    data-bind="visible: $root.editColumnController.showDelete">
-                <select type="text"
-                        class="form-control"
-                        data-bind="value: name,
-                                   select2: {
-                                     placeholder: '{% trans_html_attr "Select Property" %}',
-                                     delay: 250,
-                                     allowClear: true,
-                                     tags: true,
-                                     getInitialValue: getInitialNameValue,
-                                     dataUrl: $root.editColumnController.endpoint.getUrl(),
-                                     getData: $root.editColumnController.getData,
-                                     dataObservable: $root.editColumnController.columnNameOptions,
-                                   }" ></select>
+
+                <label class="col-xs-3 control-label">
+                  {% trans "Case Property" %}:
+                </label>
+                <div class="col-xs-9">
+                  <select type="text"
+                          class="form-control"
+                          data-bind="value: name,
+                                     select2: {
+                                       placeholder: '{% trans_html_attr "Enter Case Property" %}',
+                                       delay: 250,
+                                       allowClear: true,
+                                       tags: true,
+                                       getInitialValue: getInitialNameValue,
+                                       dataUrl: $root.editColumnController.endpoint.getUrl(),
+                                       getData: $root.editColumnController.getData,
+                                       dataObservable: $root.editColumnController.columnNameOptions,
+                                     }" ></select>
+                </div>
               </div>
               <!-- ko if: $root.editColumnController.showColumnFilters -->
+                <hr />
                 <div class="form-group"
                      data-bind="visible: showClause">
-                  {% trans "Match" %}
-                  <select data-bind="value: clause,
-                                   event: { change: $root.editColumnController.updateFilter }"
-                          class="form-control">
-                    <option value="all">
-                      {% trans "all of the" %}
-                    </option>
-                    <option value="any">
-                      {% trans "any of the" %}
-                    </option>
-                  </select>
-                  {% trans "following conditions:" %}
+                  <div class="datagrid-column-filter-clause">
+                    {% trans "Match" %}
+                    <select data-bind="value: clause,
+                                     event: { change: $root.editColumnController.updateFilter }"
+                            class="form-control">
+                      <option value="all">
+                        {% trans "all of the" %}
+                      </option>
+                      <option value="any">
+                        {% trans "any of the" %}
+                      </option>
+                    </select>
+                    {% trans "following conditions:" %}
+                  </div>
                 </div>
 
                 <!-- ko foreach: appliedFilters -->
-                <div class="row">
-                  <div class="col-xs-2">
-                    <!-- ko if: $index() == 0 -->
-                    <select class="form-control"
-                            data-bind="options: $root.editColumnController.availableFilterNames,
-                                       optionsText: function (val) {
-                                         return $root.editColumnController.filterTitleByName[val];
-                                       },
-                                       value: filterName,
-                                       event: { change: $root.editColumnController.updateFilterName }"></select>
-                    <!-- /ko -->
-                  </div>
-                  <div class="col-xs-4">
-                    <select class="form-control"
-                            data-bind="options: $root.editColumnController.availableChoiceNames,
-                                       optionsText: function (val) {
-                                         return $root.editColumnController.choiceTitleByName()[val];
-                                       },
-                                       value: choiceName,
-                                       event: { change: $root.editColumnController.updateFilter }"></select>
-                  </div>
-                  <div class="col-xs-4">
-                    <input type="text"
-                           class="form-control"
-                           data-bind="textInput: value,
-                                      visible: $root.editColumnController.isFilterText,
-                                      event: { change: $root.editColumnController.updateFilter }" />
+                <div class="datagrid-filter">
+                  <!-- ko if: $index() === 0 -->
+                  <select class="form-control datagrid-filter-type"
+                          data-bind="options: $root.editColumnController.availableFilterNames,
+                                     optionsText: function (val) {
+                                       return $root.editColumnController.filterTitleByName[val];
+                                     },
+                                     value: filterName,
+                                     event: { change: $root.editColumnController.updateFilterName }"></select>
+                  <!-- /ko -->
+                  <!-- ko if: $index() !== 0 -->
+                  <div class="datagrid-filter-type-spacer"></div>
+                  <!-- /ko -->
+                  <select class="form-control datagrid-filter-choice"
+                          data-bind="options: $root.editColumnController.availableChoiceNames,
+                                     optionsText: function (val) {
+                                       return $root.editColumnController.choiceTitleByName()[val];
+                                     },
+                                     value: choiceName,
+                                     event: { change: $root.editColumnController.updateFilter }"></select>
 
-                    <input type="number"
-                           class="form-control"
-                           data-bind="textInput: value,
-                                      visible: $root.editColumnController.isFilterNumeric,
-                                      event: { change: $root.editColumnController.updateFilter }" />
+                  <input type="text"
+                         class="form-control datagrid-filter-value"
+                         data-bind="textInput: value,
+                                    visible: $root.editColumnController.isFilterText,
+                                    event: { change: $root.editColumnController.updateFilter }" />
 
-                    <input type="text"
-                           class="form-control"
-                           data-bind="value: value,
-                                      visible: $root.editColumnController.isFilterDate,
-                                      singleDatePicker: $root.editColumnController.isFilterDate,
-                                      event: { change: $root.editColumnController.updateFilter }" />
-                  </div>
-                  <div class="col-xs-2">
-                    <button type="button"
-                            class="btn btn-danger"
-                            data-bind="click: $root.editColumnController.removeFilter">
-                      <i class="fa fa-remove"></i>
-                    </button>
+                  <input type="number"
+                         class="form-control datagrid-filter-value"
+                         data-bind="textInput: value,
+                                    visible: $root.editColumnController.isFilterNumeric,
+                                    event: { change: $root.editColumnController.updateFilter }" />
 
-                  </div>
+                  <input type="text"
+                         class="form-control datagrid-filter-value"
+                         data-bind="value: value,
+                                    visible: $root.editColumnController.isFilterDate,
+                                    singleDatePicker: $root.editColumnController.isFilterDate,
+                                    event: { change: $root.editColumnController.updateFilter }" />
+                  <a href="#"
+                     data-bind="click: $root.editColumnController.removeFilter">
+                    <i class="fa fa-remove"></i>
+                  </a>
                 </div>
                 <!-- /ko -->
                 <button type="button"
                         class="btn btn-default"
                         data-bind="click: $root.editColumnController.addFilter,
                                    visible: showAddFilter" >
-                  {% trans "Add Filter" %}
+                  {% trans "Filter Data in Column" %}
+                </button>
+                <button type="button"
+                        class="btn btn-default datagrid-add-expression"
+                        data-bind="click: $root.editColumnController.addFilter,
+                                   visible: showAddExpression">
+                  <i class="fa fa-plus-circle"></i>
+                  {% trans "Add Expression" %}
                 </button>
               <!-- /ko -->
             </div>

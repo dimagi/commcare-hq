@@ -40,7 +40,11 @@ hqDefine('reports/v2/js/datagrid/columns', [
         });
 
         self.showAddFilter = ko.computed(function () {
-            return self.appliedFilters().length < 2;
+            return self.appliedFilters().length === 0;
+        });
+
+        self.showAddExpression = ko.computed(function () {
+            return self.appliedFilters().length === 1;
         });
 
         self.unwrap = function () {
