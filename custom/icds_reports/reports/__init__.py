@@ -97,7 +97,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         if self.parallel_render:
             if self.should_render_subreport:
                 subreport = self.request.GET.get('provider_slug', None)
-                dp = [cls for cls in self.data_provider_classes if cls.slug == subreport][0](self.report_config)
+                dp = [_dp for _dp in self.data_providers if _dp.slug == subreport][0]
                 return {'report': self.get_report_context(dp)}
             else:
                 return {}
