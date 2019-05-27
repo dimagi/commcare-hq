@@ -7,6 +7,7 @@ from corehq.apps.reports.standard.cases.utils import (
     query_all_project_data,
     query_deactivated_data,
     get_case_owners,
+    get_most_recent_case_type,
 )
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
 from corehq.apps.reports.v2.endpoints.case_type import CaseTypeEndpoint
@@ -44,5 +45,14 @@ class CaseTypeReportFilter(BaseReportFilter):
     endpoint_slug = CaseTypeEndpoint.slug
     widget = ReportFilterWidget.SELECT2_SINGLE
 
+    @classmethod
+    def initial_value(cls, request, domain):
+        initial_value = super(CaseTypeReportFilter, cls).initial_value(request, domain)
+        if initial_value is None:
+            return get_most_recent_case_type(domain)
+        return initial_value
+
     def get_filtered_query(self, query):
+        if self.value is None:
+            return query
         return query.case_type(self.value)

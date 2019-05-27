@@ -10,6 +10,7 @@ from abc import ABCMeta, abstractmethod
 from memoized import memoized
 
 from django.utils.translation import ugettext as _
+from django.core.cache import cache
 
 from corehq.apps.reports.v2.exceptions import (
     EndpointNotFoundError,
@@ -195,6 +196,26 @@ class BaseReportFilter(BaseFilter):
         self.request = request
         self.domain = domain
         self.value = context.get('value')
+        self.cache_value(self.value)
+
+    @classmethod
+    def _cache_key(cls, request, domain):
+        return "{}_{}_initial_val_{}".format(
+            request.user.username,
+            domain,
+            cls.name
+        )
+
+    @classmethod
+    def initial_value(cls, request, domain):
+        return cache.get(cls._cache_key(request, domain))
+
+    def cache_value(self, value):
+        cache.set(
+            self._cache_key(self.request, self.domain),
+            value,
+            timeout=1000*60*60*24*7,  # 7 day timeout
+        )
 
     @classmethod
     def get_context(cls):
