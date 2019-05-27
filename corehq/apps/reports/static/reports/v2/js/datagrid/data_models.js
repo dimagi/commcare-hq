@@ -71,15 +71,6 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             }
         };
 
-        self._pushState = function () {
-            var stateInfo = {
-                    page: self.currentPage(),
-                    limit: self.limit(),
-                },
-                url = '?p=' + self.currentPage() + "&l=" + self.limit();
-            window.history.pushState(stateInfo, self.pageTitle, url);
-        };
-
         self.loadRecords = function () {
             if (!self.reportContext) {
                 throw new Error("Please call init() before calling loadRecords().");
@@ -107,7 +98,6 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                     self.resetPagination(data.resetPagination);
                     self.rows(data.rows);
                     self.totalRecords(data.totalRecords);
-                    self._pushState();
 
                     if (!self.hasInitialLoadFinished()) {
                         self.hasInitialLoadFinished(true);
