@@ -61,7 +61,7 @@ class CasePropertiesEndpoint(BaseOptionsEndpoint):
         from corehq.apps.reports.v2.filters.case_report import CaseTypeReportFilter
         for filter_context in self.report_context.get('reportFilters', []):
             if filter_context['name'] == CaseTypeReportFilter.name:
-                return filter_context['value']
+                return filter_context.get('value')
         return None
 
     @property
