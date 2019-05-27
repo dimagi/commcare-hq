@@ -44,7 +44,7 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
             };
         });
 
-        self.templateName = ko.computed (function () {
+        self.templateName = ko.computed(function () {
             return 'ko-' + self.widget();
         });
 

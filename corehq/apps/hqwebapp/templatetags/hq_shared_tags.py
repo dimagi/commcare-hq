@@ -24,7 +24,7 @@ from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
-from corehq.apps.hqwebapp.models import MaintenanceAlert, PageInfoContext
+from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six

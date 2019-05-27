@@ -223,7 +223,7 @@ class BaseReportFilter(BaseFilter):
         cache.set(
             self._cache_key(self.request, self.domain),
             value,
-            timeout=1000*60*60*24*7,  # 7 day timeout
+            timeout=1000 * 60 * 60 * 24 * 7,  # 7 day timeout
         )
 
     @classmethod

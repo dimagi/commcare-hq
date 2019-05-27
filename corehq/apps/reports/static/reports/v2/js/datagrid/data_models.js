@@ -30,7 +30,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             var $rows = $('#js-datagrid-rows'),
                 $loading = $('#js-datagrid-loading'),
                 position = $rows.position(),
-                marginTop = $rows.height()/2 - 50;
+                marginTop = $rows.height() / 2 - 50;
 
             if (position.top === 0) return;
 

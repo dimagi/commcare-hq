@@ -73,8 +73,8 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
                         }
                         if (result.labelText) {
                             var $label = $('<span class="label pull-right"></span>')
-                                         .addClass(result.labelStyle)
-                                         .text(result.labelText);
+                                .addClass(result.labelStyle)
+                                .text(result.labelText);
                             return $('<span>' + result.text + '</span>').append($label);
                         }
                         return result.text;
