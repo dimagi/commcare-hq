@@ -216,6 +216,8 @@ def update_xml(xml, path, old_value, new_value):
                 # namespaces cause KeyError: 'case' vs 'n0:case', 'meta' vs 'n1:meta'
                 # search keys of elem for the first one that ends with step
                 key = find_tag_with_ns(elem, step)
+                if key is None:
+                    raise KeyError('Unable to find node "{}" in element keys {}'.format(step, elem.keys()))
                 return recurse_elements(elem[key], next_steps[1:])
             else:
                 raise ValueError('unable to traverse element')
