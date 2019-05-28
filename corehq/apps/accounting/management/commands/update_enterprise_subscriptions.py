@@ -25,7 +25,7 @@ class Command(BaseCommand):
         print('plan = %s' % plan.name)
         print('new_plan_version = %s' % new_plan_version)
 
-        confirm = input('Proceed? Y/N')
+        confirm = input('Proceed? Y/N\n')
         if confirm != 'Y':
             print('Aborting!')
             return
