@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
+from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
@@ -14,6 +15,11 @@ from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, ex
     hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval, \
     get_color_with_red_positive, get_color_with_green_positive
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
+
+
+@quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_maternal_child_data_with_cache(domain, config, show_test=False, icds_feature_flag=False):
+    return get_maternal_child_data(domain, config, show_test, icds_feature_flag)
 
 
 def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
