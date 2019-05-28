@@ -441,7 +441,8 @@ class AppTranslations(BaseTranslationsView):
 
     def perform_download_request(self, request, form_data):
         download_project_from_hq.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+        messages.success(request, _('Submitted request to download translations. '
+                                    'You should receive an email shortly.'))
         return True
 
     def perform_request(self, request, form_data):
