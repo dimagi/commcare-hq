@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.test import TestCase
 import mock
 
-from custom.icds_reports.utils.data_accessor import get_program_summary_data, get_program_summary_data_with_retrying
+from custom.icds_reports.utils.data_accessor import get_program_summary_data_with_retrying
 
 
 class DataAccessorTest(TestCase):
