@@ -23,10 +23,10 @@ class MediaVersionTest(SimpleTestCase, TestXmlMixin):
         return linked_app_doc
 
     @staticmethod
-    def _get_media_resources_versions(Xml):
-        parsedXml = parse_normalize(Xml, to_string=False)
+    def _get_media_resources_versions(xml):
+        parsed_xml = parse_normalize(xml, to_string=False)
         return {resource_node.get('id'): resource_node.get('version')
-                for resource_node in parsedXml.findall("media/resource")}
+                for resource_node in parsed_xml.findall("media/resource")}
 
     @staticmethod
     def _add_image_media(app):
