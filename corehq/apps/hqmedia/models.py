@@ -768,8 +768,9 @@ class ApplicationMediaMixin(Document, MediaMixin):
         return media
 
     def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
-        if self.multimedia_map and remove_unused:
-            self.remove_unused_mappings()
+        if self.multimedia_map:
+            if remove_unused:
+                self.remove_unused_mappings()
         else:
             self.multimedia_map = {}
 
