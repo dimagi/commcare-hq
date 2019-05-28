@@ -1308,7 +1308,7 @@ class Subscription(models.Model):
                 setattr(self, property_name, property_value)
 
     @transaction.atomic
-    def change_plan(self, new_plan_version, date_end=None,
+    def change_plan(self, new_plan_version, today, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
@@ -1322,7 +1322,7 @@ class Subscription(models.Model):
         from corehq.apps.analytics.tasks import track_workflow
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
-        today = datetime.date.today()
+        # today = datetime.date.today()
         assert self.is_active
         assert date_end is None or date_end >= today
 
