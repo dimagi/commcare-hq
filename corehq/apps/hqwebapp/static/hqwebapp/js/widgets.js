@@ -1,34 +1,32 @@
-/**
- * Temporary for select2 migration.
- * This should only be referenced by hqwebapps/js/select2_v3 and hqwebapps/js/select2_v4
- * All client code should depend on one of those two modules.
- */
 hqDefine("hqwebapp/js/widgets", [
     'jquery',
+    'select2/dist/js/select2.full.min',
 ], function ($) {
-    var init = function (additionalConfig) {
-        additionalConfig = additionalConfig || {};
-
+    $(function () {
         // .hqwebapp-select2 is a basic select2-based dropdown or multiselect
         _.each($(".hqwebapp-select2"), function (element) {
-            $(element).select2(additionalConfig);
+            $(element).select2({
+                width: '100%',
+            });
         });
 
         // .hqwebapp-autocomplete also allows for free text entry
         _.each($(".hqwebapp-autocomplete"), function (input) {
             var $input = $(input);
-            $input.select2(_.extend({
+            $input.select2({
                 multiple: true,
                 tags: true,
-            }, additionalConfig));
+                width: '100%',
+            });
         });
 
         _.each($(".hqwebapp-autocomplete-email"), function (input) {
             var $input = $(input);
-            $input.select2(_.extend({
+            $input.select2({
                 multiple: true,
                 placeholder: ' ',
                 tags: true,
+                width: '100%',
                 createTag: function (params) {
                     // Support pasting in comma-separated values
                     var terms = parseEmails(params.term);
@@ -54,16 +52,15 @@ hqDefine("hqwebapp/js/widgets", [
 
                     return null;
                 },
-            }, additionalConfig));
+            });
         });
-    };
+    });
 
     var parseEmails = function (input) {
         return $.trim(input).split(/[, ]\s*/);
     };
 
     return {
-        init: init,
-        parseEmails: parseEmails,
+        parseEmails: parseEmails,   // export for testing
     };
 });

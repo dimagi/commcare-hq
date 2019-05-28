@@ -1,5 +1,5 @@
-// Note that this file exists only for select2 v4 and it depends on the paginate_releases URL being registered
-hqDefine("app_manager/js/widgets_v4", [
+// Note that this file depends on the paginate_releases URL being registered
+hqDefine("app_manager/js/widgets", [
     'jquery',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
