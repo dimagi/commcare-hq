@@ -11,6 +11,7 @@ from django.db.models import Q
 from six.moves import input
 
 from corehq.apps.accounting.models import BillingAccount, SoftwarePlan, SoftwarePlanVersion, Subscription
+from corehq.util.log import with_progress_bar
 
 APRIL_1 = date(2019, 4, 1)
 MAY_1 = date(2019, 5, 1)
@@ -47,7 +48,8 @@ class Command(BaseCommand):
         print('Proceeding...')
 
         with transaction.atomic():
-            for april_subscription in self.get_april_subscriptions_queryset(account, plan, april_plan_version):
+            april_subscriptions = self.get_april_subscriptions_queryset(account, plan, april_plan_version)
+            for april_subscription in with_progress_bar(april_subscriptions):
                 original_end_date = april_subscription.date_end
                 new_end_date = max(APRIL_1, april_subscription.date_start)
                 april_subscription.change_plan(
@@ -55,9 +57,11 @@ class Command(BaseCommand):
                     note='CRS Enterprise April 1 - May 1 2019'
                 )
 
-            for post_april_subscription in self.get_post_april_subscriptions_queryset(
+        with transaction.atomic():
+            post_april_subscriptions = self.get_post_april_subscriptions_queryset(
                 account, plan, post_april_plan_version
-            ):
+            )
+            for post_april_subscription in with_progress_bar(post_april_subscriptions):
                 original_end_date = post_april_subscription.date_end
                 new_end_date = max(MAY_1, post_april_subscription.date_start)
                 post_april_subscription.change_plan(
