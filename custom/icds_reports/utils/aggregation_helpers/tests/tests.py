@@ -16,6 +16,7 @@ from django.utils.functional import cached_property
 from freezegun import freeze_time
 
 from custom.icds_reports.utils.aggregation_helpers.helpers import HELPERS
+from io import open
 
 BASE_PATH = os.path.join(os.path.dirname(__file__), 'sql_output')
 

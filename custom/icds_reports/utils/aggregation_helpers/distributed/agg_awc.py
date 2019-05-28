@@ -12,6 +12,7 @@ from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from six.moves import range
 
 
 class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):

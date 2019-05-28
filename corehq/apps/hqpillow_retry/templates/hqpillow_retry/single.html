@@ -40,7 +40,7 @@
           <a class="btn btn-mini" href="{% url "global_quick_find" %}?q={{ error.doc_id }}" target="_blank">
             <i class="icon-search"></i> {% trans "Search HQ" %}
           </a>
-          <a class="btn btn-mini" href="{% url "raw_couch" %}?id={{ error.doc_id }}" target="_blank">
+          <a class="btn btn-mini" href="{% url "raw_doc" %}?id={{ error.doc_id }}" target="_blank">
             <i class="icon-file"></i> {% trans "Raw doc" %}
           </a>
         </td>

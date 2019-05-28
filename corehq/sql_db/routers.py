@@ -9,11 +9,11 @@ from django.db import connections
 from corehq.sql_db.connections import (
     AAA_DB_ENGINE_ID,
     ICDS_UCR_ENGINE_ID,
-    CITUS_MASTER,
+    ICDS_UCR_CITUS_ENGINE_ID,
     connection_manager,
     get_aaa_db_alias,
     get_icds_ucr_db_alias,
-)
+    get_icds_ucr_citus_db_alias)
 
 from .config import partition_config
 
@@ -66,8 +66,8 @@ def allow_migrate(db, app_label):
     :return: Must return a boolean value, not None.
     """
     if app_label == ICDS_REPORTS_APP:
-        db_alias = get_icds_ucr_db_alias()
-        return bool(db_alias and db_alias == db)
+        db_aliases = [get_icds_ucr_db_alias(), get_icds_ucr_citus_db_alias()]
+        return db in db_aliases
     elif app_label == AAA_APP:
         db_alias = get_aaa_db_alias()
         return bool(db_alias and db_alias == db)
@@ -108,7 +108,7 @@ def db_for_read_write(model, write=True):
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == ICDS_REPORTS_APP:
         if forced_citus():
-            engine_id = CITUS_MASTER
+            engine_id = ICDS_UCR_CITUS_ENGINE_ID
         else:
             engine_id = ICDS_UCR_ENGINE_ID
             if not write:
@@ -146,4 +146,4 @@ def force_citus_engine():
 
 
 def forced_citus():
-    getattr(_thread_local, 'force_citus', False)
+    return getattr(_thread_local, 'force_citus', False)

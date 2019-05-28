@@ -23,7 +23,7 @@ def update_app_translations_from_trans_dict(app, trans_dict):
         if isinstance(app, LinkedApplication):
             for lang, trans in six.iteritems(app.translations):
                 if lang in trans_dict:
-                    app.translations[lang].update(trans_dict[lang])
+                    app.linked_app_translations[lang].update(trans_dict[lang])
 
         for lang, trans in six.iteritems(app.translations):
             if lang in trans_dict:

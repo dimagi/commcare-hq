@@ -86,8 +86,10 @@ class IncentiveReport(object):
                 home_visit_conducted = '{:.2%}'.format(home_visit_percent)
                 if row['awc_num_open'] is None:
                     num_open = DATA_NOT_ENTERED
+                    awh_eligible_for_incentive = 'No'
                 else:
                     num_open = row['awc_num_open']
+                    awh_eligible_for_incentive = 'Yes' if int(num_open) >= 21 else 'No'
                 weighing_efficiency = '{:.2%}'.format(weighing_efficiency_percent)
                 eligible_for_incentive = 'Yes' if \
                     weighing_efficiency_percent >= 0.6 and home_visit_percent >= 0.6 else 'No'
@@ -101,7 +103,6 @@ class IncentiveReport(object):
                     eligible_for_incentive = "Yes"
 
                 if self.beta:
-                    awh_eligible_for_incentive = 'Yes' if num_open >= 21 else 'No'
                     row_data.extend([
                         _format_infrastructure_data(row['aww_name']),
                         _format_infrastructure_data(row['contact_phone_number']),

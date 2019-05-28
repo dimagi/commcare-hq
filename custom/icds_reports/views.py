@@ -106,6 +106,7 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
     get_datatables_ordering_info
+from custom.icds_reports.utils.data_accessor import get_program_summary_data
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -293,29 +294,9 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
-
-        data = {}
-        if step == 'maternal_child':
-            data = get_maternal_child_data(
-                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
-            )
-        elif step == 'icds_cas_reach':
-            data = get_cas_reach_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-            )
-        elif step == 'demographics':
-            data = get_demographics_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-                beta=icds_pre_release_features(request.couch_user)
-            )
-        elif step == 'awc_infrastructure':
-            data = get_awc_infrastructure_data(domain, config, include_test)
+        now = tuple(now.date().timetuple())[:3]
+        pre_release_features = icds_pre_release_features(self.request.couch_user)
+        data = get_program_summary_data(step, domain, config, now, include_test, pre_release_features)
         return JsonResponse(data=data)
 
 

@@ -27,7 +27,7 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_legacy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.views import should_update_export
@@ -463,7 +463,7 @@ class BaseExportListView(BaseProjectDataView):
         for use in third-party data analysis tools.
     ''')
 
-    @use_select2
+    @use_select2_legacy
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)

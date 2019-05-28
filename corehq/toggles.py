@@ -952,28 +952,6 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
-NINETYNINE_DOTS = StaticToggle(
-    '99dots_integration',
-    'Enikshay: Enable access to 99DOTS',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-NIKSHAY_INTEGRATION = StaticToggle(
-    'nikshay_integration',
-    'Enikshay: Enable patient registration in Nikshay',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-BETS_INTEGRATION = StaticToggle(
-    'bets_repeaters',
-    'Enikshay: Enable BETS data forwarders',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_enabled={"enikshay"},
-)
-
 RETRY_SMS_INDEFINITELY = StaticToggle(
     'retry_sms_indefinitely',
     'Enikshay: Retry SMS indefinitely',
@@ -1092,13 +1070,6 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-BROADCAST_TO_LOCATIONS = StaticToggle(
-    'broadcast_to_locations',
-    'Send broadcasts to locations',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
 )
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
@@ -1286,6 +1257,7 @@ LOCALE_ID_INTEGRITY = StaticToggle(
     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    notification_emails=['jschweers']
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
@@ -1385,13 +1357,6 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'include_metadata_in_ucr_excel_exports',
     'Include metadata in UCR excel exports',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
-)
-
-UATBC_ADHERENCE_TASK = StaticToggle(
-    'uatbc_adherence_calculations',
-    'Enikshay: This runs backend adherence calculations for enikshay domains',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1773,6 +1738,13 @@ IMPROVED_ASR_REPORT = StaticToggle(
     [NAMESPACE_USER]
 )
 
+MANAGE_CCZ_HOSTING = StaticToggle(
+    'manage_ccz_hosting',
+    'Allow project to configure ccz hosting',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
     'load_dashboard_from_citus',
     'Use CitusDB for loading ICDS Dashboard',
@@ -1781,7 +1753,7 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
 )
 
 PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg'
+    'parallel_agg',
     'This makes the icds dashboard aggregation run on both distributed and monolith backends',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
@@ -1790,6 +1762,13 @@ PARALLEL_AGGREGATION = StaticToggle(
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
     'Exposes an option in fixture api upload to skip saving through couchdbkit',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_UCR_MIRRORS = StaticToggle(
+    'enable_ucr_mirrors',
+    'Enable the mirrored engines for UCRs in this domain',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
