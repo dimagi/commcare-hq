@@ -9,8 +9,9 @@ from mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.case_importer.const import ImportErrors
-from corehq.apps.case_importer.tasks import bulk_import_async, do_import
+from corehq.apps.case_importer import exceptions
+from corehq.apps.case_importer.do_import import do_import
+from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
@@ -283,6 +284,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
+    @patch('corehq.apps.case_importer.do_import.CASEBLOCK_CHUNKSIZE', 2)
     def testBasicChunking(self):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
@@ -293,7 +295,7 @@ class ImporterTest(TestCase):
             ['case_id-3', 'age-3', 'sex-3', 'location-3'],
             ['case_id-4', 'age-4', 'sex-4', 'location-4'],
         )
-        res = do_import(file, config, self.domain, chunksize=2)
+        res = do_import(file, config, self.domain)
         # 5 cases in chunks of 2 = 3 chunks
         self.assertEqual(3, res['num_chunks'])
         self.assertEqual(5, res['created_count'])
@@ -357,7 +359,7 @@ class ImporterTest(TestCase):
         res = do_import(file_missing, config, self.domain)
         error_column_name = 'parent_id'
         self.assertEqual(rows,
-                         len(res['errors'][ImportErrors.InvalidParentId][error_column_name]['rows']),
+                         len(res['errors'][exceptions.InvalidParentId.title][error_column_name]['rows']),
                          "All cases should have missing parent")
 
     def import_mock_file(self, rows):
@@ -395,12 +397,12 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['location-owner-code'].owner_id, location.group_id)
         self.assertEqual(cases['location-owner-name'].owner_id, location.group_id)
 
-        error_message = ImportErrors.DuplicateLocationName
+        error_message = exceptions.DuplicateLocationName.title
         error_column_name = None
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
-        error_message = ImportErrors.InvalidOwnerId
+        error_message = exceptions.InvalidOwnerId.title
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
