@@ -1257,6 +1257,7 @@ LOCALE_ID_INTEGRITY = StaticToggle(
     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    notification_emails=['jschweers']
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
@@ -1506,6 +1507,15 @@ ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
     'ICDS: Compare quereies against citus',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
+)
+
+COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
+    'compare_ucr_reports',
+    'Compare UCR reports against other reports or against other databases. '
+    'Reports for comparison must be listed in settings.UCR_COMPARISONS.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0.001  # 1 in 1000
 )
 
 MOBILE_LOGIN_LOCKOUT = StaticToggle(

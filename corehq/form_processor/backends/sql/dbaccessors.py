@@ -724,11 +724,12 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None):
+    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None, case_type=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
         self.start_date = start_date
         self.end_date = end_date
+        self.case_type = case_type
 
     @property
     def model_class(self):
@@ -752,6 +753,8 @@ class CaseReindexAccessor(ReindexAccessor):
             filters.append(Q(server_modified_on__gte=self.start_date))
         if self.end_date is not None:
             filters.append(Q(server_modified_on__lt=self.end_date))
+        if self.case_type is not None:
+            filters.append(Q(type=self.case_type))
         return filters
 
 

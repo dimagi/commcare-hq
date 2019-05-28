@@ -914,7 +914,7 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if error.message != 'No module named localsettings':
+    if six.text_type(error) != 'No module named localsettings':
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
@@ -2079,7 +2079,7 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
-if UNIT_TESTING or DEBUG or SERVER_ENVIRONMENT != 'production':
+if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
     try:
         from ddtrace import tracer
         tracer.enabled = False

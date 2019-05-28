@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 
 import logging
 import re
+import sqlite3
 
+from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 from sqlalchemy import inspect as sqlinspect
 
@@ -14,6 +16,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.management.commands.create_citus_child_tables import keep_child_tables, plain_tables, \
     drop_child_tables, get_parent_child_mapping
 from custom.icds_reports.models import AggregateSQLProfile
+from six.moves import filter
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +28,16 @@ IGNORE_TABLES = {
 }
 
 
+CREATE_TABLE = """
+    CREATE TABLE IF NOT EXISTS tables (
+        id integer PRIMARY KEY,
+        source_table text NOT NULL,
+        date text,
+        target_table text,
+        migrated integer
+    ); """
+
+
 def get_all_tables(connection):
     res = connection.execute("select tablename from pg_tables where schemaname = 'public'")
     return {row.tablename for row in res}
@@ -32,13 +45,14 @@ def get_all_tables(connection):
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
+        parser.add_argument('output_database')
         parser.add_argument(
-            '--source-db-alias', default='icds-ucr',
+            '--source-engine-id', default='icds-ucr',
             help='Django alias for source database'
         )
 
-    def handle(self, source_db_alias, **options):
-        with connection_manager.get_engine(source_db_alias).begin() as conn:
+    def handle(self, output_database, source_engine_id, **options):
+        with connection_manager.get_engine(source_engine_id).begin() as conn:
             self.parent_child_mapping = get_parent_child_mapping(conn)
             self.child_parent_mapping = {
                 child: parent
@@ -46,35 +60,55 @@ class Command(BaseCommand):
                 for child in children
             }
 
-        self.generate_dump_script(source_db_alias)
+        self.table_count = 0
+        self.db = sqlite3.connect(output_database)
+        try:
+            self.setup_sqlite_db()
+            self.generate_dump_script(source_engine_id)
+            self.stdout.write("\n{} tables processed\n".format(self.table_count))
+        finally:
+            self.db.close()
 
-    def generate_dump_script(self, source_db_alias):
+    def setup_sqlite_db(self):
+        with self.db:
+            self.db.execute(CREATE_TABLE)
+            res = self.db.execute('select count(*) from tables')
+            if res.fetchone()[0] > 0:
+                raise CommandError('Database already has records. Delete it and re-run command.')
+
+    def insert_row(self, row):
+        self.table_count += 1
+        with self.db:
+            self.db.execute('INSERT INTO tables(source_table, date, target_table) values (?,?,?)', row)
+
+    def generate_dump_script(self, source_engine_id):
         self.seen_tables = set()
 
-        source_engine = connection_manager.get_engine(source_db_alias)
+        source_engine = connection_manager.get_engine(source_engine_id)
         # direct dump and load from parent + child tables
         with source_engine.begin() as source_conn:
             insp = sqlinspect(source_conn)
             for table in keep_child_tables + plain_tables:
                 for line in self.get_table_date_target(insp, table):
-                    self.stdout.write(','.join(line))
+                    self.insert_row(line)
 
             # direct dump and load from parent
             # dump from all child tables into parent table
             for table in drop_child_tables:
                 for line in self.get_table_date_target(insp, table, all_in_parent=True):
-                    self.stdout.write(','.join(line))
+                    self.insert_row(line)
 
             for datasource in StaticDataSourceConfiguration.by_domain(DASHBOARD_DOMAIN):
-                adapter = get_indicator_adapter(datasource)
-                table_name = adapter.get_table().name
+                if source_engine_id == datasource.engine_id or source_engine_id in datasource.mirrored_engine_ids:
+                    adapter = get_indicator_adapter(datasource)
+                    table_name = adapter.get_table().name
 
-                # direct dump and load from parent
-                # dump from all child tables into parent table
-                #  - if table is distrubuted, citus will distribute the data
-                #  - if table is partitioned the triggers on the parent will distribute the data
-                for line in self.get_table_date_target(insp, table_name, all_in_parent=True):
-                    self.stdout.write(','.join(line))
+                    # direct dump and load from parent
+                    # dump from all child tables into parent table
+                    #  - if table is distrubuted, citus will distribute the data
+                    #  - if table is partitioned the triggers on the parent will distribute the data
+                    for line in self.get_table_date_target(insp, table_name, all_in_parent=True):
+                        self.insert_row(line)
 
             all_tables = get_all_tables(source_conn)
             remaining_tables = all_tables - self.seen_tables - IGNORE_TABLES
@@ -96,11 +130,11 @@ class Command(BaseCommand):
                         self.stderr.write("\t{}".format(t))
 
     def get_table_date_target(self, sql_insepctor, table, all_in_parent=False):
-        yield table, '', ''
+        yield table, None, None
         self.seen_tables.add(table)
         for child in self.parent_child_mapping[table]:
             self.seen_tables.add(child)
-            yield child, get_table_date(sql_insepctor, child), table if all_in_parent else ''
+            yield child, get_table_date(sql_insepctor, child), table if all_in_parent else None
 
 
 def get_table_date(sql_insepctor, table):
@@ -117,4 +151,4 @@ def get_table_date(sql_insepctor, table):
         ]
         if constraints:
             date = _get_date(constraints[0]['sqltext'])
-    return date or ''
+    return date

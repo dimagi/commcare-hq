@@ -183,7 +183,7 @@ def run_move_ucr_data_into_aggregation_tables_task():
         move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
 
-@serial_task('move-ucr-data-into-aggregate-tables-{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
+@serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
 
     if force_citus:
@@ -786,8 +786,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 ).name if aggregation_level >= 2 else None,
                 block=SQLLocation.objects.get(
                     location_id=config['block_id'], domain=config['domain']
-                ).name if aggregation_level == 3 else None,
-                beta=beta
+                ).name if aggregation_level == 3 else None
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)

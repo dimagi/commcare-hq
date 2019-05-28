@@ -6,9 +6,15 @@ from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, get_color_with_green_positive
+
+
+@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
+def get_cas_reach_data_with_cache(domain, now_date, config, show_test=False):
+    return get_cas_reach_data(domain, now_date, config, show_test)
 
 
 def get_cas_reach_data(domain, now_date, config, show_test=False):
