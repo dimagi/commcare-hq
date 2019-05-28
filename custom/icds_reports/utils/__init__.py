@@ -84,19 +84,37 @@ class ASRData(object):
 
 class ICDSData(object):
 
-    def __init__(self, domain, filters, report_id):
+    def __init__(self, domain, filters, report_id, override_agg_column=None):
         report_config = ConfigurableReportDataSource.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
+            self._get_static_report_configuration_without_owner_transform(report_id, domain, override_agg_column)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain, override_agg_column):
+        report_id = report_id.format(domain=domain)
         static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
+
+        if override_agg_column and override_agg_column != 'awc_id':
+            static_report_configuration = self._override_agg(static_report_configuration, override_agg_column)
+
+        # this is explicitly after override, otherwise 'report_columns' attrib gets memoized too early
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':
                 report_column.transform = {}
+        return static_report_configuration
+
+    def _override_agg(self, static_report_configuration, override_agg_column):
+        level_order = ['owner_id', 'awc_id', 'supervisor_id', 'block_id', 'district_id', 'state_id']
+        # override aggregation level
+        static_report_configuration.aggregation_columns.remove("owner_id")
+        static_report_configuration.aggregation_columns.append(override_agg_column)
+        # remove columns below agg level
+        columns_to_remove = level_order[0:level_order.index(override_agg_column)]
+        for column in static_report_configuration.columns:
+            if column.get('field') in columns_to_remove:
+                static_report_configuration.columns.remove(column)
         return static_report_configuration
 
     def data(self):
@@ -175,10 +193,11 @@ class ICDSMixin(object):
 
         for config in self.sources['data_source']:
             filters = {}
+            location_type_column = None
             if selected_location:
-                key = selected_location.location_type.name.lower() + '_id'
+                location_type_column = selected_location.location_type.name.lower() + '_id'
                 filters = {
-                    key: [Choice(value=selected_location.location_id, display=selected_location.name)]
+                    location_type_column: [Choice(value=selected_location.location_id, display=selected_location.name)]
                 }
             if 'date_filter_field' in config:
                 filters.update({config['date_filter_field']: self.config['date_span']})
@@ -200,7 +219,8 @@ class ICDSMixin(object):
 
             timer = TimingContext()
             with timer:
-                report_data = ICDSData(domain, filters, config['id']).data()
+                override_agg_column = location_type_column if self.allow_conditional_agg else None
+                report_data = ICDSData(domain, filters, config['id'], override_agg_column).data()
             if selected_location:
                 loc_type = selected_location.location_type.name
             else:
