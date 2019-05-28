@@ -219,7 +219,8 @@ class ICDSMixin(object):
 
             timer = TimingContext()
             with timer:
-                override_agg_column = location_type_column if self.allow_conditional_agg else None
+                allow_conditional_agg = self.allow_conditional_agg and not config.get('disallow_conditional_agg', False)
+                override_agg_column = location_type_column if allow_conditional_agg else None
                 report_data = ICDSData(domain, filters, config['id'], override_agg_column).data()
             if selected_location:
                 loc_type = selected_location.location_type.name
