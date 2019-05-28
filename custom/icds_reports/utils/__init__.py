@@ -113,7 +113,7 @@ class ICDSData(object):
         # remove columns below agg level
         columns_to_remove = level_order[0:level_order.index(override_agg_column)]
         for column in static_report_configuration.columns:
-            if column.get('field') in columns_to_remove:
+            if column.get('column_id') in columns_to_remove:
                 static_report_configuration.columns.remove(column)
         return static_report_configuration
 
