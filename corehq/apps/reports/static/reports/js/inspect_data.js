@@ -29,24 +29,24 @@ hqDefine("reports/js/inspect_data", [
     };
 
     $(function () {
+        var userTypes = initialPageData.get('user_types');
         if (document.location.href.match(/reports\/case_list/)) {
             $(document).on('click', 'td.case-name-link', function () {
                 kissAnalytics.track.event("Clicked Case Name in Case List Report");
             });
-            var userTypes = initialPageData.get('user_types'),
-                selector = "#paramSelectorForm select[name='case_list_filter']",
-                originalSelectionWithData = {};
+            var caseListFilterSelector = "#paramSelectorForm select[name='case_list_filter']",
+                originalCaseListSelection = {};
 
             // This handles the initial selection if any values should be populated on page load.
             // The initial selection can pass extra data (in this case, the is_active flag) along to this
             // handler, but that extra data can't be retrieved via .select2("data"), so instead store it here.
-            $(document).one('select2:select', selector, function (e) {
-                originalSelectionWithData = _.indexBy(e.params.data, 'id');
-            })
+            $(document).one('select2:select', caseListFilterSelector, function (e) {
+                originalCaseListSelection = _.indexBy(e.params.data, 'id');
+            });
 
             $(document).on('click', '#apply-filters', function () {
                 kissAnalytics.track.event("[Case List Report] Clicked Apply", {
-                    "filters": generateFiltersForAnalytics(selector, userTypes, originalSelectionWithData),
+                    "filters": generateFiltersForAnalytics(caseListFilterSelector, userTypes, originalCaseListSelection),
                 });
             });
         }
@@ -55,20 +55,17 @@ hqDefine("reports/js/inspect_data", [
             $(document).on('click', 'td.view-form-link', function () {
                 kissAnalytics.track.event("Clicked View Form in Submit History Report");
             });
-            var userTypes = initialPageData.get('user_types'),
-                selector = "#paramSelectorForm select[name='emw']",
-                originalSelectionWithData = {};
+            var submitHistoryFilterSelector = "#paramSelectorForm select[name='emw']",
+                originalSubmitHistorySelection = {};
 
             // See comment above for case list's select2:select handler
-            $(document).one('select2:select', selector, function (e) {
-                originalSelectionWithData = _.indexBy(e.params.data, 'id');
-            })
+            $(document).one('select2:select', submitHistoryFilterSelector, function (e) {
+                originalSubmitHistorySelection = _.indexBy(e.params.data, 'id');
+            });
 
             $(document).on('click', '#apply-filters', function () {
-                var typePrefix = "t__",
-                    userPrefix = "u__";
                 kissAnalytics.track.event("[Submit History Report] Clicked Apply", {
-                    "filters": generateFiltersForAnalytics(selector, userTypes, originalSelectionWithData),
+                    "filters": generateFiltersForAnalytics(submitHistoryFilterSelector, userTypes, originalSubmitHistorySelection),
                 });
             });
         }

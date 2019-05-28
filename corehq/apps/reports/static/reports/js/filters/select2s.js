@@ -127,7 +127,7 @@ hqDefine("reports/js/filters/select2s", [
                 $filter.append(new Option(item.text, item.id));
             });
             $filter.trigger({type: 'select2:select', params: { data: data.selected }});
-            $filter.val(_.map(data.selected, function (item) { return item.id }));
+            $filter.val(_.map(data.selected, function (item) { return item.id; }));
             $filter.trigger('change.select2');
         }
     };

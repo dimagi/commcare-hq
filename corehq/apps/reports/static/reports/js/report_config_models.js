@@ -244,15 +244,15 @@ hqDefine("reports/js/report_config_models", [
                 // TODO: Ideally the separator would be defined in one place. Right now it is
                 //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
                 var separator = "\u001F",
-                    config_data = self.configBeingEdited().unwrap();
-                for (var key in config_data.filters) {
+                    configData = self.configBeingEdited().unwrap();
+                for (var key in configData.filters) {
                     // remove null filters
-                    if (config_data.filters.hasOwnProperty(key)) {
-                        if (config_data.filters[key] === null) {
-                            delete config_data.filters[key];
+                    if (configData.filters.hasOwnProperty(key)) {
+                        if (configData.filters[key] === null) {
+                            delete configData.filters[key];
                         }
-                        if (_.isArray(config_data.filters[key])) {
-                            config_data.filters[key] = config_data.filters[key].join(separator);
+                        if (_.isArray(configData.filters[key])) {
+                            configData.filters[key] = configData.filters[key].join(separator);
                         }
                     }
                 }

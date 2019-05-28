@@ -303,7 +303,7 @@ hqDefine("reports/js/filters/main", [
                 _.each(initialValues, function (item) {
                     $el.append(new Option(item.text, item.id));
                 });
-                $el.val(_.map(initialValues, function (item) { return item.id }));
+                $el.val(_.map(initialValues, function (item) { return item.id; }));
                 $el.trigger('change.select2');
             }
         });
