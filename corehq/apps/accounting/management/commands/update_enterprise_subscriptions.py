@@ -19,6 +19,6 @@ class Command(BaseCommand):
         plan = SoftwarePlan.objects.get(id=plan_id)
         new_plan_version = SoftwarePlanVersion.objects.get(id=new_plan_version_id)
 
-        print('account = %s' % account)
-        print('plan = %s' % plan)
+        print('account = %s' % account.name)
+        print('plan = %s' % plan.name)
         print('new_plan_version = %s' % new_plan_version)
