@@ -412,7 +412,10 @@ def _update_order_index(update):
 
 
 def get_case_ids_from_form(xform):
-    return set(cu.id for cu in get_case_updates(xform))
+    from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
+    case_ids = set(cu.id for cu in get_case_updates(xform))
+    case_ids.update(get_case_ids_from_stock_transactions(xform))
+    return case_ids
 
 
 def cases_referenced_by_xform(xform):
