@@ -1106,6 +1106,14 @@ def get_dashboard_users_not_logged_in(start_date, end_date, domain='icds-cas'):
     return not_logged_in
 
 
+def get_inactive_cpmu(start_date, end_date, user_names):
+    logged_in = ICDSAuditEntryRecord.objects.filter(
+        time_of_use__gte=start_date, time_of_use__lt=end_date
+    ).values_list('username', flat=True)
+
+    not_logged_in = user_names - logged_in
+    return not_logged_in
+
 
 @periodic_task(run_every=crontab(day_of_week=5, hour=19, minute=0), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
