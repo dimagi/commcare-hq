@@ -31,7 +31,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     @property
     def allow_conditional_agg(self):
         # Todo; create a toggle
-        return True
+        return toggles.MPR_ASR_CONDITIONAL_AGG.enabled_for_request(self.request)
 
     @property
     @memoized

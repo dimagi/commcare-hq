@@ -1772,3 +1772,10 @@ ENABLE_UCR_MIRRORS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+MPR_ASR_CONDITIONAL_AGG = StaticToggle(
+    'mpr_asr_conditional_agg',
+    'Improved MPR ASR by doing aggregation at selected level',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
