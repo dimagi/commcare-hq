@@ -40,6 +40,7 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFeeCriteria,
 )
 from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for_domain
+from six.moves import range
 
 
 class BaseCustomerInvoiceCase(BaseAccountingTest):
