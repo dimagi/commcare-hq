@@ -7,7 +7,7 @@ from django.core.management import BaseCommand
 from corehq.apps.accounting.models import BillingAccount, SoftwarePlan, SoftwarePlanVersion
 
 
-class(BaseCommand):
+class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('account_id')
