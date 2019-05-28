@@ -4811,6 +4811,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 # Re-use the id so CommCare knows it's the same resource
                 map_item.unique_id = prev_map_item.unique_id
             # if its a linked app and the map item already has a version don't need to set it up again
+            # this avoids unnecessary re-download of media on phone
+            # https://github.com/dimagi/commcare-hq/pull/24285
             if not (icds_toggle_enabled and is_linked_app and map_item.version):
                 if (prev_map_item and prev_map_item.version
                         and prev_map_item.multimedia_id == map_item.multimedia_id):
