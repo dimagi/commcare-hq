@@ -557,9 +557,7 @@ class EligibleCoupleQueryHelper(object):
             WHERE (
                 woman.domain = %(domain)s AND
                 woman.marital_status = 'married' AND
-                NOT (
-                    woman.migration_status = 'yes' AND woman.migration_status IS NOT NULL
-                ) AND
+                (woman.migration_status != 'migrated' OR woman.migration_status IS NULL) AND
                 {location_where}
                 dob BETWEEN %(dob_start_date)s AND %(dob_end_date)s AND
                 (
