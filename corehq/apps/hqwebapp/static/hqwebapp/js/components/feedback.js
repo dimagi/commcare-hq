@@ -55,7 +55,7 @@ hqDefine('hqwebapp/js/components/feedback', [
                         featureName: self.featureName(),
                         rating: self.rating(),
                         additionalFeedback: self.additionalFeedback(),
-                    }
+                    },
                 })
                     .done(function (data) {
                         if (data.success) {
