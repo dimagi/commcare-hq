@@ -56,6 +56,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL,
     XFormOperationSQL,
 )
+from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes, should_use_sql_backend
 from corehq.form_processor.utils.general import (
@@ -187,7 +188,7 @@ class CouchSqlDomainMigrator(object):
             if wrapped_form:
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
             else:
-                gevent.sleep(0.01)  # swap greenlets
+                gevent.sleep()  # swap greenlets
 
             remaining_items = self.queues.remaining_items + len(pool)
             now = datetime.now()
@@ -201,11 +202,11 @@ class CouchSqlDomainMigrator(object):
         self._log_main_forms_processed_count()
 
     def _try_to_process_form(self, wrapped_form, pool):
-        case_ids = get_case_ids_from_form(wrapped_form)
+        case_ids = _get_case_ids(wrapped_form)
         if self.queues.try_obj(case_ids, wrapped_form):
             pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
         elif self.queues.full:
-            gevent.sleep(0.01)  # swap greenlets
+            gevent.sleep()  # swap greenlets
 
     def _try_to_process_queues(self, pool):
         # regularly check if we can empty the queues
@@ -737,6 +738,9 @@ def _fix_replacement_form_problem_in_couch(doc):
         "migration. Original problem: %s" % problem,
     ))
     form.problem = None
+    old_form = XFormInstance.get(deprecated_id)
+    if old_form.initial_processing_complete and not form.initial_processing_complete:
+        form.initial_processing_complete = True
     form.save()
     return form.to_json()
 
@@ -811,6 +815,12 @@ def _get_case_and_ledger_updates(domain, sql_form):
         case_models=cases,
         stock_result=stock_result,
     )
+
+
+def _get_case_ids(xform):
+    case_ids = get_case_ids_from_form(xform)
+    case_ids.update(get_case_ids_from_stock_transactions(xform))
+    return case_ids
 
 
 def _save_migrated_models(sql_form, case_stock_result=None):

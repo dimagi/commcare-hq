@@ -692,6 +692,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             id_="test-form", datetime_="a day long ago")
         assert len(form.external_blobs) == 1, form.external_blobs
         form.external_blobs.pop("form.xml")
+        form.initial_processing_complete = False
         with bad_form.fetch_attachment("form.xml", stream=True) as xml:
             form.put_attachment(xml, "form.xml", content_type="text/xml")
         form.save()
