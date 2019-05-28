@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.test import TestCase
 import mock
 
-from custom.icds_reports.utils.data_accessor import get_program_summary_data
+from custom.icds_reports.utils.data_accessor import get_program_summary_data, get_program_summary_data_with_retrying
 
 
 class DataAccessorTest(TestCase):
@@ -66,8 +66,8 @@ class DataAccessorTest(TestCase):
             side_effect=self.side_effect,
             autospec=True
         ) as get_maternal_child_data:
-            get_program_summary_data(
-                step, self.domain, self.config, self.now, False, False
+            get_program_summary_data_with_retrying(
+                step, self.domain, self.config, self.now, False, True
             )
             self.assertEqual(get_maternal_child_data.call_count, 2)
 
@@ -78,8 +78,8 @@ class DataAccessorTest(TestCase):
             side_effect=self.side_effect,
             autospec=True
         ) as get_cas_reach_data:
-            get_program_summary_data(
-                step, self.domain, self.config, self.now, False, False
+            get_program_summary_data_with_retrying(
+                step, self.domain, self.config, self.now, False, True
             )
             self.assertEqual(get_cas_reach_data.call_count, 2)
 
@@ -90,8 +90,8 @@ class DataAccessorTest(TestCase):
             side_effect=self.side_effect,
             autospec=True
         ) as get_demographics_data:
-            get_program_summary_data(
-                step, self.domain, self.config, self.now, False, False
+            get_program_summary_data_with_retrying(
+                step, self.domain, self.config, self.now, False, True
             )
             self.assertEqual(get_demographics_data.call_count, 2)
 
@@ -102,7 +102,7 @@ class DataAccessorTest(TestCase):
             side_effect=self.side_effect,
             autospec=True
         ) as get_awc_infrastructure:
-            get_program_summary_data(
-                step, self.domain, self.config, self.now, False, False
+            get_program_summary_data_with_retrying(
+                step, self.domain, self.config, self.now, False, True
             )
             self.assertEqual(get_awc_infrastructure.call_count, 2)
