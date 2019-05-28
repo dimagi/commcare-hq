@@ -14,8 +14,9 @@
         ],
         "columns": [
           {
-            "column_name": "owner_id",
-            "agg_fun": "count"
+            "column_name": "awc_count",
+            "column_in_report": "owner_id",
+            "agg_fun": "sum"
           }
         ]
       }
@@ -547,6 +548,7 @@
     "data_source": [
       {
         "id": "static-{domain}-static-asr_4_6_infrastructure",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "where_housed",
@@ -787,6 +789,7 @@
     "data_source": [
       {
         "id": "static-{domain}-static-asr_4_6_infrastructure",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "medicine_kits_available",
