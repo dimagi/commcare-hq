@@ -42,7 +42,8 @@ def get_properties_by_xmlns(domain, app_id, xmlns):
         item for item in form_export_schema.group_schemas[0].items
         if isinstance(item, ExportItem)
     ]
-    return set([
-        item.label.split('.')[-1].replace('@', '') for item in export_items
-        if item.label.split('.')[-1].replace('@', '').strip()
-    ])
+
+    def _cleanup(item):
+        return item.label.split('.')[-1].replace('@', '').replace('#', '').strip()
+
+    return set([_cleanup(item) for item in export_items]) - {''}
