@@ -16,7 +16,8 @@ hqDefine("aaa/js/models/person", [
         self.id = data.id;
         self.name = data.name;
         self.gender = data.sex;
-        self.status = data.migration_status;
+        self.maritalStatus = data.marital_status || 'N/A';
+        self.migrationStatus = data.migration_status;
         self.dob = data.dob;
         self.marriedAt = data.age_marriage || 'N/A';
         self.aadhaarNo = data.has_aadhar_number;
