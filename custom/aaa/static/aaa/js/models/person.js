@@ -61,7 +61,7 @@ hqDefine("aaa/js/models/person", [
         self.nameLink = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'eligible_couple');
-            url = url.replace('beneficiary_id', 1);
+            url = url.replace('beneficiary_id', self.id);
             url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
             return '<a href="' + url + '">' + self.name + '</a>';
         });

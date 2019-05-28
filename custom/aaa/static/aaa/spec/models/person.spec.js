@@ -81,6 +81,7 @@ describe('Person models', function () {
             selectedYear: 2019,
         });
         var initialData = {
+            id: 1,
             name: 'test Person',
         };
         var personModel = personModels.personModel(initialData, postData);

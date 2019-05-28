@@ -16,6 +16,7 @@ from fluff.signals import (
     reformat_alembic_diffs,
     get_tables_to_rebuild,
     DiffTypes)
+from six.moves import zip
 
 
 def get_redis_key_for_config(config):

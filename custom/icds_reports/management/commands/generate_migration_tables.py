@@ -16,6 +16,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.management.commands.create_citus_child_tables import keep_child_tables, plain_tables, \
     drop_child_tables, get_parent_child_mapping
 from custom.icds_reports.models import AggregateSQLProfile
+from six.moves import filter
 
 logger = logging.getLogger(__name__)
 

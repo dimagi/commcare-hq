@@ -13,7 +13,7 @@ class TestHostedCCZLink(TestCase):
 
     def setUp(self):
         super(TestHostedCCZLink, self).setUp()
-        self.link = HostedCCZLink(username="user", domain="test", identifier="abcdef",
+        self.link = HostedCCZLink(username="user", domain="test", identifier="ab_cd-ef",
                                   password=self.raw_password)
 
     def tearDown(self):
@@ -25,8 +25,8 @@ class TestHostedCCZLink(TestCase):
         self.link.save()
 
     def test_identifier_validation(self):
-        self.link.identifier = "123-abd"
-        with self.assertRaisesMessage(ValidationError, "must be lowercase alphanumeric"):
+        self.link.identifier = "123+abd"
+        with self.assertRaisesMessage(ValidationError, "must contain lowercase alphanumeric or - or _"):
             self.link.full_clean()
 
     def test_encrypted_password(self):
