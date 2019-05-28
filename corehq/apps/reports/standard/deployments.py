@@ -228,13 +228,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         return location_type_map
 
-    def user_locations(self, location_map_id, current_location, location_type_map):
+    def user_locations(self, location_map_id, current_location_id, location_type_map):
         location_list = ['---'] * len(location_type_map)
 
-        while current_location is not None:
-            location_list[location_type_map[location_map_id[current_location].location_type_id]['position']] = \
-                location_map_id[current_location].name
-            current_location = location_map_id[current_location].parent_id
+        while current_location_id is not None:
+            current_location = location_map_id[current_location_id]
+            location_type_id = current_location.location_type_id
+            location_list[location_type_map[location_type_id]['position']] = current_location.name
+            current_location_id = current_location.parent_id
 
         return location_list
 
@@ -244,7 +245,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
                 toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and \
-                self.rendered_as in ['email', 'export']:
+                self.rendered_as in ['export']:
             location_map, location_map_id = self.get_bulk_locations(users)
             self.location_type_map = self.get_location_types(location_map_id)
 
@@ -294,15 +295,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             ]
 
             if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
-                    toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['email', 'export']:
+                    toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['export']:
                 current_location = location_map[user['location_id']].id \
                     if user['location_id'] in location_map else None
-                if current_location:
-                    location_data = self.user_locations(location_map_id, current_location, self.location_type_map)
-                else:
-                    location_data = ['---'] * len(self.location_type_map)
+                location_data = self.user_locations(location_map_id, current_location, self.location_type_map)
 
-                row_data[1:1] = location_data
+                row_data = location_data + row_data
 
             rows.append(row_data)
         return rows
@@ -398,13 +396,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         location_names = []
 
         if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
-                toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['email', 'export']:
+                toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['export']:
             location_names = [''] * len(self.location_type_map)
 
             for key, value in self.location_type_map.iteritems():
                 location_names[value['position']] = value['name']
 
-            table[0][1:1] = location_names
+            table[0] = location_names + table[0]
 
         for row in table[1:]:
             # Last submission
