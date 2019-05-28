@@ -39,7 +39,7 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
     'diff_type', 'path', 'old_value', 'new_value'])
 
 
-def _json_diff(obj1, obj2, path, track_list_indices=True):
+def _json_diff(obj1, obj2, path, track_list_indices=True, ignore_paths=None):
     obj1 = eval_lazy(obj1)
     obj2 = eval_lazy(obj2)
     if isinstance(obj1, str):
@@ -47,7 +47,9 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
     if isinstance(obj2, str):
         obj2 = six.text_type(obj2)
 
-    if obj1 == obj2:
+    if ignore_paths and path in ignore_paths:
+        return
+    elif obj1 == obj2:
         return
     elif MISSING in (obj1, obj2):
         yield FormJsonDiff('missing', path, obj1, obj2)
@@ -64,7 +66,8 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
                 for result in _json_diff(value_or_missing(obj1, key),
                                          value_or_missing(obj2, key),
                                          path=path + (key,),
-                                         track_list_indices=track_list_indices):
+                                         track_list_indices=track_list_indices,
+                                         ignore_paths=ignore_paths):
                     yield result
     elif type(obj1) != type(obj2):
         yield FormJsonDiff('type', path, obj1, obj2)
@@ -81,14 +84,15 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
             for result in _json_diff(value_or_missing(obj1, i),
                                      value_or_missing(obj2, i),
                                      path=path + (list_index,),
-                                     track_list_indices=track_list_indices):
+                                     track_list_indices=track_list_indices,
+                                     ignore_paths=ignore_paths):
                 yield result
     else:
         yield FormJsonDiff('diff', path, obj1, obj2)
 
 
-def json_diff(obj1, obj2, track_list_indices=True):
-    return list(_json_diff(obj1, obj2, path=(), track_list_indices=track_list_indices))
+def json_diff(obj1, obj2, track_list_indices=True, ignore_paths=None):
+    return list(_json_diff(obj1, obj2, path=(), track_list_indices=track_list_indices, ignore_paths=ignore_paths))
 
 
 def _run_timezone_migration_for_domain(domain):
