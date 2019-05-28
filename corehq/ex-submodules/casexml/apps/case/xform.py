@@ -1,11 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
-import logging
 from itertools import groupby
 
 import itertools
-from couchdbkit import ResourceNotFound
 from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.signals import cases_received
@@ -18,9 +16,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
-from casexml.apps.case.exceptions import (
-    NoDomainProvided,
-    InvalidCaseIndex, IllegalCaseId)
+from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 from django.conf import settings
 
 from casexml.apps.case import const
@@ -425,7 +421,6 @@ def cases_referenced_by_xform(xform):
     representation of an XFormInstance
     """
     assert xform.domain, "Form is missing 'domain'"
-    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
     case_ids = get_case_ids_from_form(xform)
     case_accessor = CaseAccessors(xform.domain)
     return list(case_accessor.get_cases(list(case_ids)))
