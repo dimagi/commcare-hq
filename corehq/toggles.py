@@ -1257,6 +1257,7 @@ LOCALE_ID_INTEGRITY = StaticToggle(
     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    notification_emails=['jschweers']
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(

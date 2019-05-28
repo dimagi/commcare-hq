@@ -15,8 +15,8 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 
 RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
-COPY requirements-python3_6/requirements.txt \
-     requirements-python3_6/test-requirements.txt \
+COPY requirements-python3/requirements.txt \
+     requirements-python3/test-requirements.txt \
      package.json \
      /vendor/
 
