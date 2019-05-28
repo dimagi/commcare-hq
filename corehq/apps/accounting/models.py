@@ -1344,7 +1344,7 @@ class Subscription(models.Model):
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=today,
             date_end=date_end,
-            is_active=True,
+            is_active=date_end is None or date_end > datetime.date.today(),
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
             auto_generate_credits=auto_generate_credits,
