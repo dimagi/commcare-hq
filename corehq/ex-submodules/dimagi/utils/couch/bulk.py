@@ -57,7 +57,7 @@ class CouchTransaction(object):
     """
     def __init__(self):
         self.depth = 0
-        self.docs_to_delete = defaultdict(list)
+        self.docs_to_delete = defaultdict(set)
         self.docs_to_save = defaultdict(dict)
         self.post_commit_actions = []
 
@@ -65,7 +65,7 @@ class CouchTransaction(object):
         self.post_commit_actions.append(action)
 
     def delete(self, doc):
-        self.docs_to_delete[doc.__class__].append(doc)
+        self.docs_to_delete[doc.__class__].add(doc)
 
     def delete_all(self, docs):
         for doc in docs:
