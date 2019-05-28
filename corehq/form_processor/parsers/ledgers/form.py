@@ -54,20 +54,17 @@ LedgerInstruction = namedtuple(
 
 
 def get_case_ids_from_stock_transactions(xform):
-    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
-    case_ids = {
+    return {
         transaction_helper.case_id
-        for stock_report_helper in stock_report_helpers
+        for stock_report_helper in get_all_stock_report_helpers_from_form(xform)
         for transaction_helper in stock_report_helper.transactions
     }
-    return case_ids
 
 
 def get_ledger_references_from_stock_transactions(xform):
-    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     return {
         UniqueLedgerReference(tx_helper.case_id, tx_helper.section_id, tx_helper.product_id)
-        for stock_report_helper in stock_report_helpers
+        for stock_report_helper in get_all_stock_report_helpers_from_form(xform)
         for tx_helper in stock_report_helper.transactions
     }
 
@@ -87,10 +84,9 @@ def get_stock_actions(xform):
     if is_device_report(xform):
         return _empty_actions()
 
-    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     transaction_helpers = [
         transaction_helper
-        for stock_report_helper in stock_report_helpers
+        for stock_report_helper in get_all_stock_report_helpers_from_form(xform)
         for transaction_helper in stock_report_helper.transactions
     ]
     if not transaction_helpers:
