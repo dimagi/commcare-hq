@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-21 19:04+0000\n"
+"POT-Creation-Date: 2019-05-28 19:34+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -722,7 +722,7 @@ msgid "Filter questions or cases"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:49
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:50
 msgid "Latest saved"
 msgstr ""
 
@@ -2400,6 +2400,11 @@ msgstr ""
 msgid "no comment"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:63
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:72
+msgid "Select profile"
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:18
 msgid "Form Data"
 msgstr ""
@@ -2833,14 +2838,6 @@ msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
 msgid "Show Only Missing References"
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Replace "
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Upload "
 msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7

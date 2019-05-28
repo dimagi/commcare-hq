@@ -4,19 +4,19 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
 # Marco Horta <mhorta@dimagi.com>, 2017
 # Claire O'Grady <cogrady@dimagi.com>, 2018
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2019
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-21 19:04+0000\n"
+"POT-Creation-Date: 2019-05-28 19:34+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Jensen Daniel <jdaniel@dimagi.com>, 2019\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -728,7 +728,7 @@ msgid "Filter questions or cases"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:49
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:50
 msgid "Latest saved"
 msgstr ""
 
@@ -2072,7 +2072,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Parameters"
-msgstr ""
+msgstr "Manejo de Casos"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid ""
@@ -2404,6 +2404,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:34
 msgid "no comment"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:63
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:72
+msgid "Select profile"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:18
@@ -2839,14 +2844,6 @@ msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
 msgid "Show Only Missing References"
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Replace "
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Upload "
 msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7

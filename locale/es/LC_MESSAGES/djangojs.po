@@ -4,17 +4,17 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
 # Gladys Teos <info@enestranslations.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2019
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-21 19:04+0000\n"
+"POT-Creation-Date: 2019-05-28 19:34+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -742,7 +742,7 @@ msgid "Filter questions or cases"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:49
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:50
 msgid "Latest saved"
 msgstr ""
 
@@ -2199,7 +2199,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Parameters"
-msgstr ""
+msgstr "Manejo de Casos"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid ""
@@ -2534,6 +2534,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:34
 msgid "no comment"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:63
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:72
+msgid "Select profile"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:18
@@ -2980,14 +2985,6 @@ msgstr "Mostar Todas las Referencias"
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
 msgid "Show Only Missing References"
 msgstr "Mostrar Solo las Referencias Faltantes"
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Replace "
-msgstr "Reemplazaar"
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Upload "
-msgstr "Cargar"
 
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7
 msgid ""
@@ -3922,33 +3919,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "There are no messages to display."
-#~ msgstr "No hay mensajes que mostrar."
-
-#~ msgid "Show _MENU_ messages per page"
-#~ msgstr "Mostrar_MENÚ_mensajes por página"
-
-#~ msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
-#~ msgstr "Mostrando_INICIO_ a _FIN_ del _TOTAL_ de transmisiones"
-
-#~ msgid "(filtered from _MAX_ total broadcasts)"
-#~ msgstr "(filtrado de _MAX_ total de transmisiones)"
-
-#~ msgid "Active"
-#~ msgstr "Activo"
-
-#~ msgid "Inactive"
-#~ msgstr "Inactivo"
-
-#~ msgid "Deactivate"
-#~ msgstr "Desactivar"
-
-#~ msgid "Activate"
-#~ msgstr "Activo"
-
-#~ msgid "Showing _START_ to _END_ of _TOTAL_ messages"
-#~ msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_ de mensajes"
-
-#~ msgid "(filtered from _MAX_ total messages)"
-#~ msgstr "(filtrado del _MAX_total de mensajes)"
