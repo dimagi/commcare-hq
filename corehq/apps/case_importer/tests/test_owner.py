@@ -1,24 +1,24 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
-from corehq.apps.case_importer.util import is_valid_owner
+from corehq.apps.case_importer.do_import import _is_valid_owner
 from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
 
 
-class ImporterUtilsTest(SimpleTestCase):
+class TestIsValidOwner(SimpleTestCase):
 
     def test_user_owner_match(self):
-        self.assertTrue(is_valid_owner(_mk_user(domain='match'), 'match'))
+        self.assertTrue(_is_valid_owner(_mk_user(domain='match'), 'match'))
 
     def test_user_owner_nomatch(self):
-        self.assertFalse(is_valid_owner(_mk_user(domain='match'), 'nomatch'))
+        self.assertFalse(_is_valid_owner(_mk_user(domain='match'), 'nomatch'))
 
     def test_web_user_owner_match(self):
-        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match'))
-        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match2'))
+        self.assertTrue(_is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match'))
+        self.assertTrue(_is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match2'))
 
     def test_web_user_owner_nomatch(self):
-        self.assertFalse(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
+        self.assertFalse(_is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
 
 
 def _mk_user(domain):
