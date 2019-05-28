@@ -412,9 +412,16 @@ def _update_order_index(update):
 
 
 def get_case_ids_from_form(xform):
-    from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
+    from corehq.form_processor.parsers.ledgers.form import (
+        get_case_ids_from_stock_transactions,
+        MissingFormXml,
+    )
     case_ids = set(cu.id for cu in get_case_updates(xform))
-    case_ids.update(get_case_ids_from_stock_transactions(xform))
+    if xform:
+        try:
+            case_ids.update(get_case_ids_from_stock_transactions(xform))
+        except MissingFormXml:
+            pass
     return case_ids
 
 
