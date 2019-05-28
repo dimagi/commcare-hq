@@ -166,7 +166,7 @@ def download_project_from_hq(domain, data, email):
     gen = AppTranslationsGenerator(domain, data.get('app_id'), data.get('version'), lang, lang, 'default_')
     parser = TranslationsParser(gen)
     try:
-        translation_file, filename = parser.generate_excel_file()
+        translation_file, __ = parser.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
             email = EmailMessage(
                 subject='[{}] - HQ translation download'.format(settings.SERVER_ENVIRONMENT),
@@ -177,4 +177,7 @@ def download_project_from_hq(domain, data, email):
             email.attach(filename=filename, content=file_obj.read())
             email.send()
     finally:
-        os.remove(translation_file.name)
+        try:
+            os.remove(translation_file.name)
+        except (NameError, OSError):
+            pass
