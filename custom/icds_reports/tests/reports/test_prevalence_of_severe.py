@@ -170,21 +170,14 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {
-                    'indicator': (
-                        'Total number of children (0 - 5 years) eligible for weight and height measurement:'
-                    ),
-                    'value': '31'
-                },
-                {
-                    'indicator': 'Total number of children (0 - 5 years) with weight and height measured:',
-                    'value': '27'
-                },
-                {'indicator': 'Total number of children (0 - 5 years) unmeasured:', 'value': '4'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:', 'value': '27'},
+                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '256'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
                 {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '29.63%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
             ]
+
         )
 
     def test_map_data_fills(self):

@@ -121,6 +121,55 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         (values_to_calculate_average['numerator'] * 100) /
         float(values_to_calculate_average['denominator'] or 1)
     )
+    if icds_feature_flag:
+        indicators = [
+            {
+                'indicator': (
+                    'Total number of children{} eligible for weight and height measurement:'.format(
+                        chosen_filters
+                    )
+                ),
+                'value': indian_formatted_number(weighed_and_height_for_all_locations)
+            }, {
+                'indicator': 'Total number of children{} with weight and height measured:'.format(
+                    chosen_filters
+                ),
+                'value': indian_formatted_number(measured_for_all_locations)
+            }, {
+                'indicator': 'Total number of children{} unmeasured:'.format(chosen_filters),
+                'value': indian_formatted_number(
+                    weighed_and_height_for_all_locations - measured_for_all_locations
+                )
+            },
+        ]
+    else:
+        indicators = [
+            {
+                'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
+                'value': indian_formatted_number(weighed_for_all_locations)
+            }, {
+                'indicator': 'Total Children{} with height measured in given month:'.format(chosen_filters),
+                'value': indian_formatted_number(measured_for_all_locations)
+            }, {
+                'indicator': 'Number of children{} unmeasured:'.format(chosen_filters),
+                'value': indian_formatted_number(height_eligible_for_all_locations - weighed_for_all_locations)
+            }
+        ]
+
+    indicators.extend([
+        {
+            'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
+            'value': '%.2f%%' % (severe_for_all_locations * 100 / float(measured_for_all_locations or 1))
+        },
+        {
+            'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
+            'value': '%.2f%%' % (moderate_for_all_locations * 100 / float(measured_for_all_locations or 1))
+        },
+        {
+            'indicator': '% Normal{}:'.format(chosen_filters),
+            'value': '%.2f%%' % (normal_for_all_locations * 100 / float(measured_for_all_locations or 1))
+        }
+    ])
 
     return {
         "slug": "severe",
@@ -132,40 +181,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         "rightLegend": {
             "average": "%.2f" % average,
             "info": wasting_help_text(age_label),
-            "extended_info": [
-                {
-                    'indicator': (
-                        'Total number of children{} eligible for weight and height measurement:'.format(
-                            chosen_filters
-                        )
-                    ),
-                    'value': indian_formatted_number(weighed_and_height_for_all_locations)
-                },
-                {
-                    'indicator': 'Total number of children{} with weight and height measured:'.format(
-                        chosen_filters
-                    ),
-                    'value': indian_formatted_number(measured_for_all_locations)
-                },
-                {
-                    'indicator': 'Total number of children{} unmeasured:'.format(chosen_filters),
-                    'value': indian_formatted_number(
-                        weighed_and_height_for_all_locations - measured_for_all_locations
-                    )
-                },
-                {
-                    'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (severe_for_all_locations * 100 / float(measured_for_all_locations or 1))
-                },
-                {
-                    'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (moderate_for_all_locations * 100 / float(measured_for_all_locations or 1))
-                },
-                {
-                    'indicator': '% Normal{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (normal_for_all_locations * 100 / float(measured_for_all_locations or 1))
-                }
-            ]
+            "extended_info": indicators
         },
         "data": dict(data_for_map),
     }

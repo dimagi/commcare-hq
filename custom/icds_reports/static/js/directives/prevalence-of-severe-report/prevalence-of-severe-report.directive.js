@@ -47,26 +47,48 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 
     vm.templatePopup = function (loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.total_weighed_and_height) : 'N/A';
         var totalMeasured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total_measured || 1)) : 'N/A';
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total_measured || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total_measured || 1)) : 'N/A';
-        var unmeasured = row ? $filter('indiaNumbers')(row.total_weighed_and_height - row.total_measured) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
-                indicator_name: 'Total number of children ' + vm.chosenFilters() + ' eligible for weight and height measurement: ',
-                indicator_value: total,
-            },
-            {
-                indicator_name: 'Total number of children ' + vm.chosenFilters() + ' with weight and height measured: ',
-                indicator_value: totalMeasured,
-            },
-            {
-                indicator_name: 'Total number of children ' + vm.chosenFilters() + ' unmeasured: ',
-                indicator_value: unmeasured,
-            },
+        var indicators = [];
+        var total, unmeasured;
+        if (haveAccessToFeatures) {
+            total = row ? $filter('indiaNumbers')(row.total_weighed_and_height) : 'N/A';
+            unmeasured = row ? $filter('indiaNumbers')(row.total_weighed_and_height - row.total_measured) : 'N/A';
+            indicators = [
+                {
+                    indicator_name: 'Total number of children ' + vm.chosenFilters() + ' eligible for weight and height measurement: ',
+                    indicator_value: total,
+                },
+                {
+                    indicator_name: 'Total number of children ' + vm.chosenFilters() + ' with weight and height measured: ',
+                    indicator_value: totalMeasured,
+                },
+                {
+                    indicator_name: 'Total number of children ' + vm.chosenFilters() + ' unmeasured: ',
+                    indicator_value: unmeasured,
+                },
+            ];
+        } else {
+            total = row ? $filter('indiaNumbers')(row.total_weighed) : 'N/A';
+            unmeasured = row ? $filter('indiaNumbers')(row.total_height_eligible - row.total_measured) : 'N/A';
+            indicators = [
+                {
+                    indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
+                    indicator_value: total,
+                },
+                {
+                    indicator_name: 'Total Children ' + vm.chosenFilters() + ' with height measured in given month: ',
+                    indicator_value: totalMeasured,
+                },
+                {
+                    indicator_name: 'Number of Children ' + vm.chosenFilters() + ' unmeasured: ',
+                    indicator_value: unmeasured,
+                },
+            ];
+        }
+        indicators = indicators.concat([
             {
                 indicator_name: '% Severely Acute Malnutrition ' + vm.chosenFilters() + ': ',
                 indicator_value: sever,
@@ -78,7 +100,11 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             {
                 indicator_name: '% Normal ' + vm.chosenFilters() + ': ',
                 indicator_value: normal,
-            }]
+            },
+        ]);
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            indicators
         );
     };
 
@@ -116,27 +142,48 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             var moderate = findValue(vm.chartData[1].values, d.value).y;
             var severe = findValue(vm.chartData[2].values, d.value).y;
             var totalMeasured = findValue(vm.chartData[0].values, d.value).total_measured;
+            var totalWeighed = findValue(vm.chartData[0].values, d.value).total_weighed;
+            var heightEligible = findValue(vm.chartData[0].values, d.value).total_height_eligible;
             var totalEligible = findValue(vm.chartData[0].values, d.value).weighed_and_height_measured;
-            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, totalMeasured, totalEligible);
+            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, totalMeasured, totalWeighed, heightEligible, totalEligible);
         });
         return chart;
     };
 
-    vm.tooltipContent = function (monthName, normal, moderate, severe, totalMeasured, totalEligible) {
-        return vm.createTooltipContent(
-            monthName,
-            [{
-                indicator_name: 'Total number of children ' + vm.chosenFilters() + ' eligible for weight and height measurement: ',
-                indicator_value: $filter('indiaNumbers')(totalEligible),
-            },
-            {
-                indicator_name: 'Total number of children ' + vm.chosenFilters() + ' with weight and height measured: ',
-                indicator_value: $filter('indiaNumbers')(totalMeasured),
-            },
-            {
-                indicator_name: 'Total number of children ' + vm.chosenFilters() + ' unmeasured: ',
-                indicator_value: $filter('indiaNumbers')(totalEligible - totalMeasured),
-            },
+    vm.tooltipContent = function (monthName, normal, moderate, severe, totalMeasured, totalWeighed, heightEligible, totalEligible) {
+        var indicators = [];
+        if (haveAccessToFeatures) {
+            indicators = [
+                {
+                    indicator_name: 'Total number of children ' + vm.chosenFilters() + ' eligible for weight and height measurement: ',
+                    indicator_value: $filter('indiaNumbers')(totalEligible),
+                },
+                {
+                    indicator_name: 'Total number of children ' + vm.chosenFilters() + ' with weight and height measured: ',
+                    indicator_value: $filter('indiaNumbers')(totalMeasured),
+                },
+                {
+                    indicator_name: 'Total number of children ' + vm.chosenFilters() + ' unmeasured: ',
+                    indicator_value: $filter('indiaNumbers')(totalEligible - totalMeasured),
+                },
+            ];
+        } else {
+            indicators = [
+                {
+                    indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
+                    indicator_value: $filter('indiaNumbers')(totalMeasured),
+                },
+                {
+                    indicator_name: 'Total Children ' + vm.chosenFilters() + ' with height measured in given month: ',
+                    indicator_value: $filter('indiaNumbers')(totalMeasured),
+                },
+                {
+                    indicator_name: 'Number of Children ' + vm.chosenFilters() + ' unmeasured: ',
+                    indicator_value: $filter('indiaNumbers')(heightEligible - totalMeasured),
+                },
+            ];
+        }
+        indicators = indicators.concat([
             {
                 indicator_name: '% children ' + vm.chosenFilters() + '  with Normal Acute Malnutrition: ',
                 indicator_value: d3.format('.2%')(normal),
@@ -148,7 +195,12 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             {
                 indicator_name: '% children ' + vm.chosenFilters() + '  with Severe Acute Malnutrition (SAM): ',
                 indicator_value: d3.format('.2%')(severe),
-            }]
+            },
+        ]);
+
+        return vm.createTooltipContent(
+            monthName,
+            indicators
         );
     };
 
