@@ -183,7 +183,7 @@ def run_move_ucr_data_into_aggregation_tables_task():
         move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
 
-@serial_task('move-ucr-data-into-aggregate-tables-{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
+@serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
 
     if force_citus:
