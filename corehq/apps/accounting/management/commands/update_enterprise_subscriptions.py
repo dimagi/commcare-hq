@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 from django.core.management import BaseCommand
 
+from six.moves import input
+
 from corehq.apps.accounting.models import BillingAccount, SoftwarePlan, SoftwarePlanVersion
 
 
@@ -22,3 +24,10 @@ class Command(BaseCommand):
         print('account = %s' % account.name)
         print('plan = %s' % plan.name)
         print('new_plan_version = %s' % new_plan_version)
+
+        confirm = input('Proceed? Y/N')
+        if confirm != 'Y':
+            print('Aborting!')
+            return
+
+        print('Proceeding...')
