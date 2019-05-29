@@ -29,8 +29,8 @@ class Command(BaseCommand):
 
         # ordered with latest form's id on top
         form_ids = form_accessor.get_form_ids_for_user(user_id)
-        forms = form_accessor.get_forms(form_ids)
-        print("Found %s forms for user" % len(form_ids))
+        forms = [f for f in form_accessor.get_forms(form_ids) if f.is_normal]
+        print("Found %s normal forms for user" % len(form_ids))
 
         case_ids_to_rebuild = set()
         for form in forms:
