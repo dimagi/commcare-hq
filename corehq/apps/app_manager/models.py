@@ -5580,6 +5580,7 @@ class LinkedApplication(Application):
             raise ActionNotPermitted
 
     def reapply_overrides(self):
+        # Used by app_manager.views.utils.update_linked_app()
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
         for attribute, value in self.linked_app_attrs.items():
