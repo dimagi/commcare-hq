@@ -346,7 +346,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
     def xml_md5(self):
         return hashlib.md5(self.get_xml()).hexdigest()
 
-    def archive(self, user_id=None, rebuild_cases=True):
+    def archive(self, user_id=None, skip_rebuild_cases=False):
         if self.is_archived:
             return
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
@@ -363,7 +363,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
             ))
             self.save()
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="couchforms", xform=self, rebuild_cases=rebuild_cases)
+            xform_archived.send(sender="couchforms", xform=self, skip_rebuild_cases=skip_rebuild_cases)
 
     def unarchive(self, user_id=None):
         if not self.is_archived:

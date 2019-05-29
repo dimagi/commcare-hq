@@ -6,7 +6,7 @@ from couchforms.signals import xform_archived, xform_unarchived
 
 
 def rebuild_form_cases(sender, xform, *args, **kwargs):
-    if not kwargs.get('rebuild_cases'):
+    if kwargs.get('skip_rebuild_cases'):
         return
     from casexml.apps.case.cleanup import rebuild_case_from_forms
 

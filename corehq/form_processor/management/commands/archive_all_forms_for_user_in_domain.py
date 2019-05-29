@@ -42,7 +42,7 @@ class Command(BaseCommand):
         with open("forms_archived.txt", "w+b") as forms_log:
             for form in with_progress_bar(forms):
                 forms_log.write("%s\n" % form.form_id)
-                form.archive(rebuild_cases=False)
+                form.archive(skip_rebuild_cases=True)
 
         # archive cases
         print("Starting with case archival")
