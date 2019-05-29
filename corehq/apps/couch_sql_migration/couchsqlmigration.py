@@ -1,11 +1,15 @@
+# coding: utf-8
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import csv
+import io
 import logging
 import os
 import sys
+import uuid
 from collections import defaultdict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -13,9 +17,11 @@ from time import time
 
 import gevent
 import six
+import xmltodict
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import (
     CaseProcessingResult,
+    extract_case_blocks,
     get_all_extensions_to_close,
     get_case_ids_from_form,
     get_case_updates,
@@ -36,7 +42,9 @@ from corehq.apps.couch_sql_migration.diff import (
 )
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
+from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
@@ -48,6 +56,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import (
+    Attachment,
     CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseIndexSQL,
@@ -85,6 +94,10 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
+UNDO_CSV = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'couch_sql_migration', 'undo.csv')
+UNDO_SET_DOMAIN = 'set_domain'
+UNDO_CREATE = 'create'
+
 
 def setup_logging(log_dir):
     if not log_dir:
@@ -98,25 +111,153 @@ def setup_logging(log_dir):
     log.info("command: %s", " ".join(sys.argv))
 
 
-def do_couch_to_sql_migration(domain, with_progress=True, debug=False, run_timestamp=None):
-    set_local_domain_sql_backend_override(domain)
+def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
+                              debug=False, run_timestamp=None, dry_run=False):
+    if dst_domain is None:
+        dst_domain = src_domain
+
+    if src_domain == dst_domain:
+        # When src_domain is being migrated to a different dst_domain,
+        # src_domain stays on Couch and dst_domain is always on SQL;
+        # nothing changes.
+        set_local_domain_sql_backend_override(src_domain)
     CouchSqlDomainMigrator(
-        domain,
+        src_domain,
+        dst_domain,
         with_progress=with_progress,
         debug=debug,
-        run_timestamp=run_timestamp
+        run_timestamp=run_timestamp,
+        dry_run=False,
     ).migrate()
 
 
+def update_xml(xml, path, old_value, new_value):
+    """
+    Change a value in an XML document at path, where path is a list of
+    node names.
+
+    xml can be given as a string or a dictionary. A dictionary will be
+    updated in-place. A string will be returned.
+
+    >>> decl = '<?xml version="1.0" encoding="utf-8"?>\\n'
+    >>> xml = '<foo><bar>BAZ</bar></foo>'
+    >>> xml = update_xml(xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+    >>> xml == decl + '<foo><bar>QUUX</bar></foo>'
+    True
+
+    """
+    found = []
+
+    def find_tag_with_ns(elem, step):
+        """
+        Return the first tag with namespace that matches step, or None
+        """
+        for ns_tag in six.iterkeys(elem):
+            ns, tag = ns_tag.split(':') if ':' in ns_tag else (None, ns_tag)
+            if tag == step:
+                return ns_tag
+        return None
+
+    def update_elem(elem, step):
+        """
+        Update the value of element identified by step from old_value
+        to new_value. key could be a sub-element or an attribute.
+
+        nonlocal old_value
+        nonlocal new_value
+        nonlocal found: Append True if elem[key] is changed
+        """
+        # TODO: When we have dropped Python 2, make `found` boolean and use nonlocal
+        # nonlocal found
+
+        key = find_tag_with_ns(elem, step)
+        if key is not None:
+            if isinstance(elem[key], list):
+                # e.g. <foo><bar>one</bar><bar>two</bar><bar>three</bar></foo>
+                #      key == 'bar'
+                #      elem == {'bar': ['one', 'two', 'three']}
+                for i, value in enumerate(elem[key]):
+                    if value == old_value:
+                        elem[key][i] = new_value
+                        found.append(True)
+                    elif (
+                            isinstance(value, dict) and
+                            '#text' in value and
+                            value['#text'] == old_value
+                    ):
+                        value['#text'] = new_value
+                        found.append(True)
+            else:
+                # e.g. <foo><bar>one</bar></foo>
+                #      key == 'bar'
+                #      elem == {'bar': 'one'}
+                if elem[key] == old_value:
+                    elem[key] = new_value
+                    found.append(True)
+                elif (
+                        isinstance(elem[key], dict) and
+                        '#text' in elem[key] and
+                        elem[key]['#text'] == old_value
+                ):
+                    # elem[key] has both text nodes and sub-nodes,
+                    # e.g. <foo><bar>one<qux>two</qux></bar></foo>
+                    #      elem = {'bar': {'#text': 'one', 'qux': 'two')}}
+                    elem[key]['#text'] = new_value
+                    found.append(True)
+
+    def recurse_elements(elem, next_steps):
+        if not next_steps:
+            raise ValueError('path is empty')
+        step = next_steps[0]
+        if len(next_steps) > 1:
+            if isinstance(elem, list):
+                return [recurse_elements(e[find_tag_with_ns(e, step)], next_steps[1:]) for e in elem]
+            elif isinstance(elem, dict):
+                # namespaces cause KeyError: 'case' vs 'n0:case', 'meta' vs 'n1:meta'
+                # search keys of elem for the first one that ends with step
+                key = find_tag_with_ns(elem, step)
+                if key is None:
+                    raise KeyError('Unable to find node "{}" in element keys {}'.format(step, elem.keys()))
+                return recurse_elements(elem[key], next_steps[1:])
+            else:
+                raise ValueError('unable to traverse element')
+        # elem[step] is a leaf node
+        # Pass by reference so that update_elem updates nonlocal dict_
+        if isinstance(elem, list):
+            for e in elem:
+                update_elem(e, step)
+        else:
+            update_elem(elem, step)
+
+    if isinstance(xml, dict):
+        dict_ = xml
+        return_as_string = False
+    else:
+        dict_ = xmltodict.parse(xml)
+        return_as_string = True
+    recurse_elements(dict_, path)
+    if not any(found):
+        raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
+    if return_as_string:
+        xml = xmltodict.unparse(dict_)
+        return xml
+
+
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True, debug=False, run_timestamp=None):
+    def __init__(self, src_domain, dst_domain, with_progress=True, debug=False, run_timestamp=None, dry_run=False):
         from corehq.apps.tzmigration.planning import DiffDB
-        self._check_for_migration_restrictions(domain)
+
+        domain = dst_domain if src_domain == dst_domain else None
+        if domain:
+            self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
         self.debug = debug
+        self.src_domain = src_domain
+        self.dst_domain = dst_domain
         self.domain = domain
         self.run_timestamp = run_timestamp or int(time())
-        db_filepath = get_diff_db_filepath(domain)
+        self.dry_run = dry_run
+        db_filepath = get_diff_db_filepath(src_domain)
         self.diff_db = DiffDB.init(db_filepath)
         if debug:
             assert log.level <= logging.DEBUG, log.level
@@ -127,10 +268,18 @@ class CouchSqlDomainMigrator(object):
 
         self.errors_with_normal_doc_type = []
         self.forms_that_touch_cases_without_actions = set()
+        self._id_map = {}
+        self._ignore_paths = defaultdict(list)
 
     def migrate(self):
-        log.info('migrating domain {}'.format(self.domain))
+        if self.domain:
+            log.info('migrating domain {}'.format(self.domain))
+        else:
+            log.info('migrating domain {} to {}'.format(self.src_domain, self.dst_domain))
         log.info('run timestamp is {}'.format(self.run_timestamp))
+
+        if self.src_domain != self.dst_domain:
+            self._build_id_map()
 
         self.processed_docs = 0
         with TimingContext("couch_sql_migration") as timing_context:
@@ -145,7 +294,7 @@ class CouchSqlDomainMigrator(object):
                 self._calculate_case_diffs()
 
         self._send_timings(timing_context)
-        log.info('migrated domain {}'.format(self.domain))
+        log.info('migrated domain {}'.format(self.domain or self.src_domain))
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -183,9 +332,9 @@ class CouchSqlDomainMigrator(object):
         update_interval = timedelta(seconds=10)
         next_check = datetime.now()
         while self.queues.has_next():
-            wrapped_form = self.queues.get_next()
-            if wrapped_form:
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+            couch_form = self.queues.get_next()
+            if couch_form:
+                pool.spawn(self._migrate_form_and_associated_models_async, couch_form)
             else:
                 gevent.sleep()  # swap greenlets
 
@@ -226,7 +375,8 @@ class CouchSqlDomainMigrator(object):
         self._try_to_process_queues(pool)
 
     def _migrate_form_and_associated_models_async(self, wrapped_form):
-        set_local_domain_sql_backend_override(self.domain)
+        if self.src_domain == self.dst_domain:
+            set_local_domain_sql_backend_override(self.src_domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
@@ -237,15 +387,20 @@ class CouchSqlDomainMigrator(object):
             self._log_main_forms_processed_count(throttled=True)
 
     def _migrate_form_and_associated_models(self, couch_form):
-        sql_form = _migrate_form(self.domain, couch_form)
-        _migrate_form_attachments(sql_form, couch_form)
+        couch_form, form_xml = self._map_form_ids(couch_form)
+        sql_form = _migrate_form(couch_form, self.dst_domain)
+        _migrate_form_attachments(self.src_domain, sql_form, couch_form,
+                                  incl_form_xml=form_xml is None, dry_run=self.dry_run)
+        if form_xml is not None:
+            attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+            sql_form.attachments_list.append(attachment)
         _migrate_form_operations(sql_form, couch_form)
 
         self._save_diffs(couch_form, sql_form)
 
         case_stock_result = None
         if sql_form.initial_processing_complete:
-            case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+            case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
             if len(case_stock_result.case_models):
                 touch_updates = [
                     update for update in get_case_updates(couch_form)
@@ -257,11 +412,111 @@ class CouchSqlDomainMigrator(object):
 
         _save_migrated_models(sql_form, case_stock_result)
 
+    def _build_id_map(self):
+        """
+        Iterate locations and mobile workers to map IDs in the source
+        domain to IDs in the destination domain.
+
+        These will be used to update forms as they are migrated.
+
+        Apps and app builds are not mapped because they are not all in
+        the destination domain.
+        """
+        self._id_map = {}
+        for location in SQLLocation.objects.filter(domain=self.dst_domain):
+            if 'orig_id' in location.metadata:
+                self._id_map[location.metadata['orig_id']] = location.location_id
+
+        for user in CommCareUser.by_domain(self.dst_domain):
+            if 'orig_id' in user.user_data:
+                self._id_map[user.user_data['orig_id']] = user.get_id
+
+    def _map_form_ids(self, couch_form):
+        """
+        The destination domain will have new IDs for locations, mobile
+        workers, apps and app builds. Return the given form with source
+        domain IDs mapped to the corresponding IDs in the destination
+        domain.
+
+        Leaves app IDs and build IDs unchanged.
+        """
+        if self.src_domain == self.dst_domain:
+            return couch_form, None
+
+        id_properties = (
+            'activista_responsavel',
+            'activista_responsavel_casa',
+            'activista_responsavel_paciente',
+            'location_id',
+            'owner_id',
+            'user_location_id',
+        )
+
+        def update_id(dict_, key, base_path):
+            if key in dict_ and dict_[key] in self._id_map:
+                item_path = base_path + [key]
+                form_xml_path = ['data'] + item_path[1:]  # Form XML root node is "data" instead of "form"
+                old_id = dict_[key]
+                new_id = self._id_map[old_id]
+                dict_[key] = new_id
+                update_xml(form_xml_dict, form_xml_path, old_id, new_id)
+                self._ignore_paths[couch_form.get_id].append(tuple(item_path))
+
+        form_xml = couch_form.get_xml()
+        form_xml_dict = xmltodict.parse(form_xml)
+
+        caseblocks_with_path = extract_case_blocks(couch_form.form, include_path=True)
+        for caseblock, path in caseblocks_with_path:
+            # Example caseblock:
+            #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
+            #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
+            #      u'@user_id': u'7ea59f550f35758447400937f800f78c',
+            #      u'@xmlns': u'http://commcarehq.org/case/transaction/v2',
+            #      u'create': {u'case_name': u'Abigail',
+            #                  u'case_type': u'case',
+            #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
+            case_path = ['form'] + path + ['case']
+            update_id(caseblock, '@userid', case_path + ['@userid'])
+
+            if 'create' in caseblock:
+                create_path = case_path + ['create']
+                for prop in id_properties:
+                    update_id(caseblock['create'], prop, create_path)
+
+            if 'update' in caseblock:
+                update_path = case_path + ['update']
+                for prop in id_properties:
+                    update_id(caseblock['update'], prop, update_path)
+
+        update_id(couch_form.form['meta'], 'userID', ['form', 'meta'])
+        form_xml = xmltodict.unparse(form_xml_dict)
+        return couch_form, form_xml
+
+    def _map_case_ids(self, couch_case):
+        if self.src_domain == self.dst_domain:
+            return couch_case
+
+        couch_case.owner_id = self._id_map.get(couch_case.owner_id, couch_case.owner_id)
+        couch_case.user_id = self._id_map.get(couch_case.user_id, couch_case.user_id)
+        couch_case.opened_by = self._id_map.get(couch_case.opened_by, couch_case.opened_by)
+        couch_case.modified_by = self._id_map.get(couch_case.modified_by, couch_case.modified_by)
+        couch_case.closed_by = self._id_map.get(couch_case.closed_by, couch_case.closed_by)
+        return couch_case
+
     def _save_diffs(self, couch_form, sql_form):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         couch_form_json = couch_form.to_json()
         sql_form_json = sql_form.to_json()
-        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
+
+        if self.src_domain == self.dst_domain:
+            ignore_paths = None
+        else:
+            ignore_paths = self._ignore_paths[couch_form.get_id] + [('domain',), ('_id',)]
+        diffs = json_diff(
+            couch_form_json, sql_form_json,
+            track_list_indices=False,
+            ignore_paths=ignore_paths,
+        )
         self.diff_db.add_diffs(
             couch_form.doc_type, couch_form.form_id,
             filter_form_diffs(couch_form_json, sql_form_json, diffs)
@@ -288,13 +543,19 @@ class CouchSqlDomainMigrator(object):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         try:
             couch_form = _wrap_form(couch_form_json)
+            couch_form, form_xml = self._map_form_ids(couch_form)
+            form_id = couch_form.form_id if self.src_domain == self.dst_domain else six.text_type(uuid.uuid4())
             sql_form = XFormInstanceSQL(
-                form_id=couch_form.form_id,
+                form_id=form_id,
                 xmlns=couch_form.xmlns,
                 user_id=couch_form.user_id,
             )
-            _copy_form_properties(self.domain, sql_form, couch_form)
-            _migrate_form_attachments(sql_form, couch_form)
+            _copy_form_properties(self.dst_domain, sql_form, couch_form)
+            _migrate_form_attachments(self.src_domain, sql_form, couch_form,
+                                      incl_form_xml=form_xml is None, dry_run=self.dry_run)
+            if form_xml is not None:
+                attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+                sql_form.attachments_list.append(attachment)
             _migrate_form_operations(sql_form, couch_form)
 
             if couch_form.doc_type != 'SubmissionErrorLog':
@@ -327,35 +588,36 @@ class CouchSqlDomainMigrator(object):
         except IndexError:
             first_action = CommCareCaseAction()
 
+        dst_couch_case = self._map_case_ids(couch_case)
         sql_case = CommCareCaseSQL(
-            case_id=couch_case.case_id,
-            domain=self.domain,
-            type=couch_case.type or '',
-            name=couch_case.name,
-            owner_id=couch_case.owner_id or couch_case.user_id or '',
-            opened_on=couch_case.opened_on or first_action.date,
-            opened_by=couch_case.opened_by or first_action.user_id,
-            modified_on=couch_case.modified_on,
-            modified_by=couch_case.modified_by or couch_case.user_id or '',
-            server_modified_on=couch_case.server_modified_on,
-            closed=couch_case.closed,
-            closed_on=couch_case.closed_on,
-            closed_by=couch_case.closed_by,
+            case_id=dst_couch_case.case_id,
+            domain=self.src_domain,
+            type=dst_couch_case.type or '',
+            name=dst_couch_case.name,
+            owner_id=dst_couch_case.owner_id or dst_couch_case.user_id or '',
+            opened_on=dst_couch_case.opened_on or first_action.date,
+            opened_by=dst_couch_case.opened_by or first_action.user_id,
+            modified_on=dst_couch_case.modified_on,
+            modified_by=dst_couch_case.modified_by or dst_couch_case.user_id or '',
+            server_modified_on=dst_couch_case.server_modified_on,
+            closed=dst_couch_case.closed,
+            closed_on=dst_couch_case.closed_on,
+            closed_by=dst_couch_case.closed_by,
             deleted=True,
-            deletion_id=couch_case.deletion_id,
-            deleted_on=couch_case.deletion_date,
-            external_id=couch_case.external_id,
-            case_json=couch_case.dynamic_case_properties()
+            deletion_id=dst_couch_case.deletion_id,
+            deleted_on=dst_couch_case.deletion_date,
+            external_id=dst_couch_case.external_id,
+            case_json=dst_couch_case.dynamic_case_properties()
         )
-        _migrate_case_actions(couch_case, sql_case)
-        _migrate_case_indices(couch_case, sql_case)
-        _migrate_case_attachments(couch_case, sql_case)
+        _migrate_case_actions(dst_couch_case, sql_case)
+        _migrate_case_indices(dst_couch_case, sql_case)
+        _migrate_case_attachments(dst_couch_case, sql_case)
         try:
             CaseAccessorSQL.save_case(sql_case)
         except IntegrityError:
             # case re-created by form processing so just mark the case as deleted
             CaseAccessorSQL.soft_delete_cases(
-                self.domain,
+                self.src_domain,
                 [sql_case.case_id],
                 sql_case.deleted_on,
                 sql_case.deletion_id
@@ -391,7 +653,11 @@ class CouchSqlDomainMigrator(object):
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
             sql_case_json = sql_case.to_json()
-            diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
+            diffs = json_diff(
+                couch_case, sql_case_json,
+                track_list_indices=False,
+                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',), ('xform_ids', '[*]')],
+            )
             diffs = filter_case_diffs(
                 couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
             )
@@ -415,10 +681,18 @@ class CouchSqlDomainMigrator(object):
         from corehq.apps.tzmigration.timezonemigration import json_diff
 
         rebuilt_case = FormProcessorCouch.hard_rebuild_case(
-            self.domain, couch_case['_id'], None, save=False, lock=False
+            self.src_domain, couch_case['_id'], None, save=False, lock=False
         )
         rebuilt_case_json = rebuilt_case.to_json()
-        diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
+        if self.src_domain == self.dst_domain:
+            ignore_paths = None
+        else:
+            ignore_paths = [('domain',), ('owner_id',), ('xform_ids', '[*]')]
+        diffs = json_diff(
+            rebuilt_case_json, sql_case_json,
+            track_list_indices=False,
+            ignore_paths=ignore_paths,
+        )
         diffs = filter_case_diffs(
             rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
         )
@@ -436,7 +710,11 @@ class CouchSqlDomainMigrator(object):
 
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
-            diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
+            diffs = json_diff(
+                couch_state.to_json(), ledger_value.to_json(),
+                track_list_indices=False,
+                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+            )
             self.diff_db.add_diffs(
                 'stock state', ledger_value.ledger_reference.as_id(),
                 filter_ledger_diffs(diffs)
@@ -455,7 +733,7 @@ class CouchSqlDomainMigrator(object):
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([
-            get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
+            get_doc_count_in_domain_by_type(self.src_domain, doc_type, XFormInstance.get_db())
             for doc_type in doc_types
         ])
         if self.timing_context:
@@ -493,8 +771,8 @@ class CouchSqlDomainMigrator(object):
         self._log_processed_docs_count(['type:case_diffs'], throttled)
 
     def _get_resumable_iterator(self, doc_types, slug):
-        key = "%s.%s.%s" % (self.domain, slug, self.run_timestamp)
-        return _iter_changes(self.domain, doc_types, resumable_key=key)
+        key = "%s.%s.%s" % (self.src_domain, slug, self.run_timestamp)
+        return _iter_changes(self.src_domain, doc_types, resumable_key=key)
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
@@ -522,23 +800,27 @@ def _wrap_form(doc):
         return XFormInstance.wrap(doc)
 
 
-def _migrate_form(domain, couch_form):
+def _migrate_form(couch_form, dst_domain):
     """
     This copies the couch form into a new sql form but does not save it.
 
     See form_processor.parsers.form._create_new_xform
     and SubmissionPost._set_submission_properties for what this should do.
     """
-    interface = FormProcessorInterface(domain)
+    interface = FormProcessorInterface(dst_domain)
 
     form_data = couch_form.form
     with force_phone_timezones_should_be_processed():
         adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
-    sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
+    if couch_form.domain == dst_domain:
+        sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
+    else:
+        # always assign a new ID if moving domains, so that new form.xml attachment keys don't clash
+        sql_form.form_id = six.text_type(uuid.uuid4())
     if sql_form.xmlns is None:
         sql_form.xmlns = ''
-    return _copy_form_properties(domain, sql_form, couch_form)
+    return _copy_form_properties(dst_domain, sql_form, couch_form)
 
 
 def _copy_form_properties(domain, sql_form, couch_form):
@@ -592,8 +874,15 @@ def _copy_form_properties(domain, sql_form, couch_form):
     return sql_form
 
 
-def _migrate_form_attachments(sql_form, couch_form):
-    """Copy over attachment meta - includes form.xml"""
+def append_undo(meta, operation):
+    with io.open(UNDO_CSV, 'ab') as undo_csv:
+        writer = csv.writer(undo_csv)
+        row = (meta.parent_id, meta.type_code, meta.name, operation)
+        writer.writerow(row)
+
+
+def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=True, dry_run=False):
+    """Copy over attachment meta"""
     attachments = []
     metadb = get_blob_db().metadb
 
@@ -604,7 +893,7 @@ def _migrate_form_attachments(sql_form, couch_form):
                 type_code=type_code,
                 name=name
             )
-            assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
+            assert meta.domain == src_domain, (meta.domain, src_domain)
             return meta
         except BlobMeta.DoesNotExist:
             return None
@@ -615,8 +904,16 @@ def _migrate_form_attachments(sql_form, couch_form):
         _migrate_couch_attachments_to_blob_db(couch_form)
 
     for name, blob in six.iteritems(couch_form.blobs):
+        if name == "form.xml" and not incl_form_xml:
+            continue
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
-        meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
+        meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
+
+        if meta and meta.domain != sql_form.domain and not dry_run:
+            # meta domain is src_domain; form is being migrated to dst_domain
+            append_undo(meta, UNDO_SET_DOMAIN)
+            meta.domain = sql_form.domain
+            meta.save()
 
         # there was a bug in a migration causing the type code for many form attachments to be set as form_xml
         # this checks the db for a meta resembling this and fixes it for postgres
@@ -624,6 +921,9 @@ def _migrate_form_attachments(sql_form, couch_form):
         if not meta and name != "form.xml":
             meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, name)
             if meta:
+                if meta.domain != couch_form.domain and not dry_run:
+                    append_undo(meta, UNDO_SET_DOMAIN)
+                    meta.domain = couch_form.domain
                 meta.type_code = CODES.form_attachment
                 meta.save()
 
@@ -638,9 +938,40 @@ def _migrate_form_attachments(sql_form, couch_form):
                 key=blob.key,
             )
             meta.save()
+            append_undo(meta, UNDO_CREATE)
 
         attachments.append(meta)
-    sql_form.attachments_list = attachments
+    sql_form.attachments_list.extend(attachments)
+
+
+def revert_form_attachment_meta_domain(src_domain):
+    """
+    Change form attachment meta.domain from dst_domain back to src_domain
+    """
+    try:
+        csv_file = io.open(UNDO_CSV, 'rb')
+    except IOError as err:
+        if 'No such file or directory' in str(err):
+            # Nothing to undo
+            return
+        raise
+    metadb = get_blob_db().metadb
+    with csv_file as undo_csv:
+        reader = csv.reader(undo_csv)
+        for row in reader:
+            parent_id, type_code, name, operation = row
+            meta = metadb.get(
+                parent_id=parent_id,
+                type_code=type_code,
+                name=name
+            )
+            if operation == UNDO_SET_DOMAIN:
+                meta.domain = src_domain
+                meta.save()
+            elif operation == UNDO_CREATE:
+                meta.delete()
+
+    os.unlink(UNDO_CSV)
 
 
 def _migrate_form_operations(sql_form, couch_form):
@@ -793,7 +1124,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
         domain=domain, lock=False, deleted_ok=True, xforms=xforms,
         load_src="couchsqlmigration",
     ) as case_db:
-        touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
+        touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)  # broken
         extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
         case_result = CaseProcessingResult(
             domain,

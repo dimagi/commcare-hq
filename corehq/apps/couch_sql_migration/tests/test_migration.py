@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import doctest
 import os
+import re
 import uuid
 from datetime import datetime, timedelta
 from io import open
@@ -10,9 +12,13 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
+import xmltodict
+from attr import attrib, attrs
 from couchdbkit.exceptions import ResourceNotFound
+from six.moves import zip
+from testil import assert_raises, eq
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -23,10 +29,12 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     FIXED_FORM_PROBLEM_TEMPLATE,
 )
 from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.couch_sql_migration import couchsqlmigration
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     MigrationRestricted,
     PartiallyLockingQueue,
     get_diff_db,
+    update_xml,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -63,7 +71,8 @@ from corehq.util.test_utils import (
     softer_assert,
     trap_extra_setup,
 )
-from six.moves import zip
+
+DECL = '<?xml version="1.0" encoding="utf-8"?>\n'
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -769,7 +778,12 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         return LedgerAccessors(self.domain_name).get_case_ledger_state(case_id)
 
 
-class TestLockingQueues(TestCase):
+@attrs
+class DummyObject(object):
+    id = attrib()
+
+
+class TestLockingQueues(SimpleTestCase):
     def setUp(self):
         self.queues = PartiallyLockingQueue()
 
@@ -887,12 +901,177 @@ class TestLockingQueues(TestCase):
         self.assertTrue(self.queues.full)  # full when over full
 
 
-class DummyObject(object):
-    def __init__(self, id=None):
-        self.id = id or uuid.uuid4().hex
+class UpdateXmlTests(SimpleTestCase):
 
-    def __repr__(self):
-        return "DummyObject<id={}>".format(self.id)
+    def test_simple_xml(self):
+        orig_xml = '<foo><bar>BAZ</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(updated_xml, DECL + '<foo><bar>QUUX</bar></foo>')
+
+    def test_xml_attr(self):
+        orig_xml = '<foo><bar baz="13"></bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar', '@baz'], '13', '42')
+        eq(updated_xml, DECL + '<foo><bar baz="42"></bar></foo>')
+
+    def test_empty_elem(self):
+        # NOTE: update_xml expands empty elements
+        orig_xml = '<foo><bar baz="13"/></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar', '@baz'], '13', '42')
+        eq(updated_xml, DECL + '<foo><bar baz="42"></bar></foo>')
+
+    def test_parsing_xml_entities(self):
+        # NOTE: update_xml parses XML entities
+        orig_xml = '<foo><bar>admin&#64;example.com</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'admin@example.com', 'prince@example.com')
+        eq(updated_xml, DECL + '<foo><bar>prince@example.com</bar></foo>')
+
+    def test_not_found(self):
+        orig_xml = '<foo><bar>admin&#64;example.com</bar></foo>'
+        pattern = re.compile(r'^Unable to find "admin&#64;example.com"')
+        with assert_raises(ValueError, msg=pattern):
+            update_xml(orig_xml, ['foo', 'bar'], 'admin&#64;example.com', '')
+
+    def test_bad_path(self):
+        orig_xml = '<foo><bar>BAZ</bar></foo>'
+        pattern = re.compile(r'^Unable to find "BAZ"')
+        with assert_raises(ValueError, msg=pattern):
+            update_xml(orig_xml, ['foo', 'qux'], 'BAZ', 'BAR')
+
+    def test_text_with_subelems(self):
+        # NOTE: updated_xml places text after sub-elements
+        orig_xml = '<foo><bar>HAM<baz>eggs</baz></bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
+        eq(updated_xml, DECL + '<foo><bar><baz>eggs</baz>SPAM</bar></foo>')
+
+    def test_unparsing_xml_entities(self):
+        # NOTE: update_xml unparses XML entities
+        orig_xml = '<foo><bar>prince</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'prince', 'hall & oates')
+        eq(updated_xml, DECL + '<foo><bar>hall &amp; oates</bar></foo>')
+
+    def test_namespaces(self):
+        form_xml = """<?xml version='1.0' ?>
+<data uiVersion="1"
+      version="7"
+      name="Registration Form"
+      xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+      xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A">
+    <name>Prince</name>
+    <n0:case case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca"
+             date_modified="2019-02-07T11:15:48.575+02"
+             user_id="7ea59f550f35758447400937f800f78c"
+             xmlns:n0="http://commcarehq.org/case/transaction/v2">
+        <n0:create>
+            <n0:case_name>Prince</n0:case_name>
+            <n0:owner_id>7ea59f550f35758447400937f800f78c</n0:owner_id>
+            <n0:case_type>case</n0:case_type>
+        </n0:create>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>Formplayer</n1:deviceID>
+        <n1:timeStart>2019-02-07T11:15:35.853+02</n1:timeStart>
+        <n1:timeEnd>2019-02-07T11:15:48.575+02</n1:timeEnd>
+        <n1:username>admin&#64;example.com</n1:username>
+        <n1:userID>7ea59f550f35758447400937f800f78c</n1:userID>
+        <n1:instanceID>4378faa0-58b1-4c51-9310-fef1cda29707</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Formplayer Version: 2.43</n2:appVersion>
+        <n1:drift />
+    </n1:meta>
+</data>"""
+        form_xml = update_xml(form_xml, ['data', 'name'], 'Prince', 'Christopher')
+        # NOTE: Path is not given as ['data', 'n0:case', 'n0:create', 'n0:case_name']
+        form_xml = update_xml(form_xml, ['data', 'case', 'create', 'case_name'], 'Prince', 'Christopher')
+        eq(form_xml, DECL + (  # noqa: E1
+'<data uiVersion="1" '
+      'version="7" '
+      'name="Registration Form" '
+      'xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '
+      'xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A">'
+    '<name>Christopher</name>'
+    '<n0:case case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca" '
+             'date_modified="2019-02-07T11:15:48.575+02" '
+             'user_id="7ea59f550f35758447400937f800f78c" '
+             'xmlns:n0="http://commcarehq.org/case/transaction/v2">'
+        '<n0:create>'
+            '<n0:case_name>Christopher</n0:case_name>'
+            '<n0:owner_id>7ea59f550f35758447400937f800f78c</n0:owner_id>'
+            '<n0:case_type>case</n0:case_type>'
+        '</n0:create>'
+    '</n0:case>'
+    '<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">'
+        '<n1:deviceID>Formplayer</n1:deviceID>'
+        '<n1:timeStart>2019-02-07T11:15:35.853+02</n1:timeStart>'
+        '<n1:timeEnd>2019-02-07T11:15:48.575+02</n1:timeEnd>'
+        '<n1:username>admin@example.com</n1:username>'  # NOTE: "&#64;" has been replaced with "@"
+        '<n1:userID>7ea59f550f35758447400937f800f78c</n1:userID>'
+        '<n1:instanceID>4378faa0-58b1-4c51-9310-fef1cda29707</n1:instanceID>'
+        '<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Formplayer Version: 2.43</n2:appVersion>'
+        '<n1:drift></n1:drift>'  # NOTE: Empty element has been expanded
+    '</n1:meta>'
+'</data>'
+        ))
+
+    def test_as_dict(self):
+        xml = '<foo><bar>BAZ</bar></foo>'
+        dict_ = xmltodict.parse(xml)
+        update_xml(dict_, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(dict_, {'foo': {'bar': 'QUUX'}})
+
+    def test_node_list(self):
+        orig_xml = (
+            '<foo>'
+            '<bar><baz>13</baz></bar>'
+            '<bar><qux>13</qux></bar>'
+            '<bar><coj>13</coj></bar>'
+            '</foo>'
+        )
+        updated_xml = update_xml(orig_xml, ['foo', 'bar', 'baz'], '13', '42')
+        eq(updated_xml, DECL + (
+            '<foo>'
+            '<bar><baz>42</baz></bar>'
+            '<bar><qux>13</qux></bar>'
+            '<bar><coj>13</coj></bar>'
+            '</foo>'
+        ))
+
+    def test_list_item(self):
+        orig_xml = (
+            '<foo>'
+            '<bar>eggs</bar>'
+            '<bar>HAM</bar>'
+            '<bar>HAM</bar>'
+            '</foo>'
+        )
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
+        eq(updated_xml, DECL + (
+            '<foo>'
+            '<bar>eggs</bar>'
+            '<bar>SPAM</bar>'
+            '<bar>SPAM</bar>'
+            '</foo>'
+        ))
+
+    def test_list_item_text(self):
+        orig_xml = (
+            '<foo>'
+            '<bar><q/>eggs</bar>'
+            '<bar><q/>HAM</bar>'
+            '<bar><q/>HAM</bar>'
+            '</foo>'
+        )
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
+        eq(updated_xml, DECL + (
+            '<foo>'
+            '<bar><q></q>eggs</bar>'
+            '<bar><q></q>SPAM</bar>'
+            '<bar><q></q>SPAM</bar>'
+            '</foo>'
+        ))
+
+
+def test_doctests():
+    results = doctest.testmod(couchsqlmigration)
+    assert results.failed == 0
 
 
 TEST_FORM = """
