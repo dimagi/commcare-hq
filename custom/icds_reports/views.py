@@ -37,8 +37,8 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT
@@ -1759,7 +1759,7 @@ class DishaAPIView(View):
         return dump.get_export_as_http_response(request)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
@@ -1867,7 +1867,7 @@ class CasDataExportAPIView(View):
             return JsonResponse(self.message('not_available'), status=400)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
