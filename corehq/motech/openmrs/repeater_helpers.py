@@ -646,20 +646,10 @@ def create_patient(requests, info, case_config):
             return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
-@quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
-def get_identifier_source_id(requests, identifier_type):
+def authenticate_session(requests, session):
     """
-    Returns the ID of the identifier source to be used for generating
-    values for identifiers of the given type.
+    Log in using a requests Session
     """
-    # The idgen module doesn't offer an API to list identifier sources.
-    # Log in using a requests Session, and scrape /module/idgen/manageIdentifierSources.list
-    # (Urgh.)
-
-    response = requests.get('/ws/rest/v1/patientidentifiertype/{}'.format(identifier_type))
-    identifier_type_name = response.json()['name']
-
-    session = Session()
     login_data = {
         'uname': requests.username,
         'pw': requests.password,
@@ -676,6 +666,19 @@ def get_identifier_source_id(requests, identifier_type):
         raise OpenmrsHtmlUiChanged(
             'Domain "{}": Unexpected OpenMRS login page at "{}".'.format(requests.domain_name, response.url)
         )
+
+
+@quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
+def get_identifier_source_id(requests, identifier_type, session):
+    """
+    Returns the ID of the identifier source to be used for generating
+    values for identifiers of the given type.
+
+    The idgen module doesn't offer an API to list identifier sources.
+    This function scrapes /module/idgen/manageIdentifierSources.list
+    """
+    response = requests.get('/ws/rest/v1/patientidentifiertype/{}'.format(identifier_type))
+    identifier_type_name = response.json()['name']
 
     response = session.get(
         requests.get_url('/module/idgen/manageIdentifierSources.list'),
@@ -714,35 +717,46 @@ def generate_identifier(requests, identifier_type):
     `identifier_type` doesn't have an identifier source, return None.
     If the identifier source doesn't return an identifier, return None.
     If anything goes wrong ... return None.
+
+    The idgen module is not a REST API. It does not use API
+    authentication. The user has to be logged in using the HTML login
+    page, and the resulting authenticated session used for sending
+    requests.
     """
-    try:
-        source_id = get_identifier_source_id(requests, identifier_type)
-    except OpenmrsHtmlUiChanged as err:
-        notify_exception(
-            request=None,
-            message='Unexpected OpenMRS HTML UI',
-            details=str(err),
-        )
-        return None
-    if source_id:
-        # Example request: http://www.example.com/openmrs/module/idgen/generateIdentifier.form?source=1
-        response = requests.get('/module/idgen/generateIdentifier.form', {'source': source_id})
+    with Session() as session:
+        authenticate_session(requests, session)
         try:
-            if not (200 <= response.status_code < 300 and response.content):
-                raise OpenmrsException()
-            try:
-                # Example response: {"identifiers": ["CHR203007"]}
-                return response.json()['identifiers'][0]
-            except (ValueError, IndexError, KeyError):
-                raise OpenmrsException()
-        except OpenmrsException:
+            source_id = get_identifier_source_id(requests, identifier_type, session)
+        except OpenmrsHtmlUiChanged as err:
             notify_exception(
                 request=None,
-                message='OpenMRS idgen module returned an unexpected response',
-                details='OpenMRS idgen module at "{}" returned an unexpected response {}: "{}"'.format(
-                    response.url, response.status_code, response.content)
+                message='Unexpected OpenMRS HTML UI',
+                details=str(err),
             )
-    return None
+            return None
+        if source_id:
+            # Example request: http://www.example.com/openmrs/module/idgen/generateIdentifier.form?source=1
+            response = session.get(
+                requests.get_url('/module/idgen/generateIdentifier.form'),
+                params={'source': source_id},
+                verify=requests.verify,
+            )
+            try:
+                if not (200 <= response.status_code < 300 and response.content):
+                    raise OpenmrsException()
+                try:
+                    # Example response: {"identifiers": ["CHR203007"]}
+                    return response.json()['identifiers'][0]
+                except (ValueError, IndexError, KeyError):
+                    raise OpenmrsException()
+            except OpenmrsException:
+                notify_exception(
+                    request=None,
+                    message='OpenMRS idgen module returned an unexpected response',
+                    details='OpenMRS idgen module at "{}" returned an unexpected response {}: "{}"'.format(
+                        response.url, response.status_code, response.content)
+                )
+        return None
 
 
 def find_or_create_patient(requests, domain, info, openmrs_config):
