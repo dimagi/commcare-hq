@@ -14,8 +14,8 @@
     <table class="table table-striped table-condensed table-multimedia">
       <thead>
       <tr>
-        <th class="col-sm-1">{% trans 'Type' %}</th>
-        <th class="col-sm-1">{% trans 'Status' %}</th>
+        <th class="col-sm-1 text-center">{% trans 'Type' %}</th>
+        <th class="col-sm-1 text-center">{% trans 'Status' %}</th>
         <th class="col-sm-2">{% trans 'Action' %}</th>
         <th class="col-sm-2">{% trans 'Preview' %}</th>
         <th class="col-sm-1">{% trans 'Size'  %}</th>
@@ -24,15 +24,20 @@
       </thead>
       <tbody data-bind="foreach: {{ ref_type }}">
       <tr data-bind="attr: { 'data-hqmediapath': path }, event: { mediaUploadComplete: uploadComplete }">
-        <td class="media-type-icon"><i data-bind="attr: { class: type_icon }"></i></td>
-        <td class="media-status-icon"><i data-bind="attr: { class: status_icon }"></i></td>
-        <td><a data-toggle="modal"
-               data-bind="text: upload_button_text,
-                                       attr: { class: upload_button_class, href: upload_controller.container },
-                                       click: triggerUpload"></a></td>
+        <td class="media-type-icon text-center"><i data-bind="attr: { class: type_icon }"></i></td>
+        <td class="media-status-icon text-center"><i data-bind="attr: { class: status_icon }"></i></td>
+        <td>
+          <a data-toggle="modal"
+             data-bind="attr: { class: upload_button_class, href: upload_controller.container },
+                        click: triggerUpload">
+            <i class="fa" data-bind="css: {'fa-recycle': is_matched(), 'fa-cloud-upload': !is_matched()}"></i>
+            <span data-bind="visible: !is_matched()">{% trans "Upload" %}</span>
+            <span data-bind="visible: is_matched()">{% trans "Replace" %}</span>
+          </a>
+        </td>
         <td><div data-bind="visible: is_matched, template: preview_template"></div></td>
         <td>
-          <code data-bind="text: humanized_content_length"></code>
+          <code data-bind="visible: humanized_content_length, text: humanized_content_length"></code>
           <!-- ko if: image_size -->
           <span data-bind="text: image_size"></span>
           <!-- /ko -->

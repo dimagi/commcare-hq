@@ -2018,12 +2018,15 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
 
 
 def _is_location_safe_report_class(view_fn, request, domain, export_hash, format):
-    cache = get_redis_client()
+    db = get_blob_db()
 
-    content = cache.get(export_hash)
-    if content is not None:
-        report_class, report_file = content
-        return report_class_is_location_safe(report_class)
+    try:
+        meta = db.metadb.get(parent_id=export_hash, key=export_hash)
+    except models.BlobMeta.DoesNotExist:
+        # The report doesn't exist, so let the export code handle the response
+        return True
+
+    return report_class_is_location_safe(meta.properties["report_class"])
 
 
 @conditionally_location_safe(_is_location_safe_report_class)

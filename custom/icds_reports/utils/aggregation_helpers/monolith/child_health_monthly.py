@@ -36,8 +36,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        cursor.execute(*self.create_table_query())
         cursor.execute(self.drop_table_query())
+        cursor.execute(*self.create_table_query())
         cursor.execute(self.aggregation_query())
         for query in self.indexes():
             cursor.execute(query)
@@ -81,7 +81,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return "tmp_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
 
     def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")

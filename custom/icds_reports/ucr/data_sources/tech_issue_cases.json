@@ -21,6 +21,12 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-tech_issue_cases",
     "display_name": "Cases - Tech Issue (Static)",

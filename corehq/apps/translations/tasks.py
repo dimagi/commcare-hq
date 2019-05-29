@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
@@ -12,6 +11,8 @@ from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
 from django.core.mail.message import EmailMessage
 
+from corehq.apps.translations.generators import AppTranslationsGenerator
+from corehq.apps.translations.integrations.transifex.parser import TranslationsParser
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 
@@ -152,3 +153,31 @@ def backup_project_from_transifex(domain, data, email):
         filename = "%s-TransifexBackup.zip" % project_details.get('name')
         email.attach(filename=filename, content=tmp.read())
         email.send()
+
+
+@task
+def download_project_from_hq(domain, data, email):
+    """Emails the requester with an excel file translations to be sent to Transifex.
+
+    Used to verify translations before sending to Transifex
+    """
+    lang = data.get('source_lang')
+    project_slug = data.get('transifex_project_slug')
+    gen = AppTranslationsGenerator(domain, data.get('app_id'), data.get('version'), lang, lang, 'default_')
+    parser = TranslationsParser(gen)
+    try:
+        translation_file, __ = parser.generate_excel_file()
+        with open(translation_file.name, 'rb') as file_obj:
+            email = EmailMessage(
+                subject='[{}] - HQ translation download'.format(settings.SERVER_ENVIRONMENT),
+                body="Translations from HQ",
+                to=[email],
+                from_email=settings.DEFAULT_FROM_EMAIL)
+            filename = "{project}-{lang}-translations.xls".format(project=project_slug, lang=lang)
+            email.attach(filename=filename, content=file_obj.read())
+            email.send()
+    finally:
+        try:
+            os.remove(translation_file.name)
+        except (NameError, OSError):
+            pass

@@ -11,5 +11,5 @@ else
 fi
 
 for i in ${ENVS[@]}; do
-    git tag | grep deploy | grep ${i} | tail -n 1
+    git tag | grep deploy | grep ${i} | grep -v hot_fix | tail -n 1
 done

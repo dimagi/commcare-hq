@@ -779,7 +779,7 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
                 group_by_columns + [sqlalchemy.func.sum(key_column).label('sum_col')] + [sqlalchemy.column('month')],
                 group_by=self.group_by + [sqlalchemy.column('month')],
                 whereclause=self.filter.build_expression(),
-            ).select_from(self.table_name),
+            ).select_from(sqlalchemy.table(self.table_name)),
             name='s')
 
         return select(

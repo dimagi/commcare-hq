@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from django.conf.urls import include, url
+
+from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
-from corehq.apps.hqadmin.views.data import (
-    doc_in_es,
-    raw_couch,
-    raw_doc,
-)
+from corehq.apps.hqadmin.views.data import doc_in_es, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
-    mass_email,
     ReprocessMessagingCaseUpdatesView,
+    mass_email,
 )
 from corehq.apps.hqadmin.views.reports import (
     DimagisphereView,
@@ -30,7 +28,6 @@ from corehq.apps.hqadmin.views.system import (
     pillow_operation_api,
     system_ajax,
 )
-from corehq.apps.hqadmin.views.utils import default
 from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
     AppBuildTimingsView,
@@ -41,10 +38,8 @@ from corehq.apps.hqadmin.views.users import (
     WebUserDataView,
     web_user_lookup,
 )
-
+from corehq.apps.hqadmin.views.utils import default
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
-
-from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
 urlpatterns = [
     url(r'^$', default, name="default_admin_report"),
@@ -73,7 +68,7 @@ urlpatterns = [
     url(r'^disable_two_factor/$', DisableTwoFactorView.as_view(), name=DisableTwoFactorView.urlname),
     url(r'^disable_account/$', DisableUserView.as_view(), name=DisableUserView.urlname),
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
-    url(r'^raw_couch/$', raw_couch, name='raw_couch'),
+    url(r'^raw_couch/$', raw_doc, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
     url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),

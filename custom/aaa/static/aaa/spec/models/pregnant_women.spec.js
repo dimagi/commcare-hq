@@ -277,6 +277,22 @@ describe('Pregnant women models', function () {
             });
             assert.equal('N/A', pregnantModel.personBloodGroup());
         });
+
+        it('test abortionWeeks should return N/A', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                abortionDays: 'N/A',
+            });
+            assert.equal('N/A', pregnantModel.abortionWeeks());
+        });
+
+        it('test abortionWeeks should return number of weeks', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                abortionDays: 85,
+            });
+            assert.equal(12, pregnantModel.abortionWeeks());
+        });
     });
 
 });

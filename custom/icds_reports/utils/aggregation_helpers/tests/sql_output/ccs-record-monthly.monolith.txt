@@ -1,11 +1,11 @@
+DROP TABLE IF EXISTS "ccs_record_monthly_2019-01-01"
+{}
 
         CREATE TABLE IF NOT EXISTS "ccs_record_monthly_2019-01-01" (
             CHECK (month = DATE %(date)s)
         ) INHERITS ("ccs_record_monthly")
         
 {"date": "2019-01-01"}
-DELETE FROM "ccs_record_monthly_2019-01-01"
-{}
 
         INSERT INTO "ccs_record_monthly_2019-01-01" (
             awc_id, case_id, supervisor_id, month, age_in_months, ccs_status, open_in_month, alive_in_month, trimester, num_rations_distributed, thr_eligible, tetanus_complete, delivered_in_month, anc1_received_at_delivery, anc2_received_at_delivery, anc3_received_at_delivery, anc4_received_at_delivery, registration_trimester_at_delivery, using_ifa, ifa_consumed_last_seven_days, anemic_severe, anemic_moderate, anemic_normal, anemic_unknown, extra_meal, resting_during_pregnancy, bp_visited_in_month, pnc_visited_in_month, trimester_2, trimester_3, counsel_immediate_bf, counsel_bp_vid, counsel_preparation, counsel_fp_vid, counsel_immediate_conception, counsel_accessible_postpartum_fp, bp1_complete, bp2_complete, bp3_complete, pnc_complete, postnatal, has_aadhar_id, counsel_fp_methods, pregnant, pregnant_all, lactating, lactating_all, institutional_delivery_in_month, add, caste, disabled, minority, resident, valid_in_month, institutional_delivery, anc_in_month, anc_1, anc_2, anc_3, anc_4, tt_1, tt_2, immediate_breastfeeding, anemia, eating_extra, resting, anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, bleeding, swelling, blurred_vision, convulsions, rupture, bp_date, is_ebf, breastfed_at_birth, person_name, edd, delivery_nature, mobile_number, preg_order, num_pnc_visits, last_date_thr, num_anc_complete, valid_visits, opened_on, dob, closed, anc_abnormalities, home_visit_date, date_death, person_case_id, child_name

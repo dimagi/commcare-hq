@@ -6,7 +6,7 @@ from django.forms import model_to_dict
 from django.test import TestCase
 import mock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from corehq.apps.case_importer.tasks import do_import
+from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tests.test_importer import make_worksheet_wrapper
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records, \

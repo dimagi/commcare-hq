@@ -10,8 +10,8 @@ from django.db.models import F
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
@@ -33,7 +33,7 @@ import six
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, loc_level, show_test=False):
 
     def get_data_for(filters, date):
@@ -130,7 +130,7 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
     }
 
 
-@quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
 def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
@@ -332,7 +332,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'month', 'prev_month', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'month', 'prev_month', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False, icds_feature_flag=False):
 
     def get_data_for(date):
@@ -682,7 +682,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
-@quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
 def get_awc_report_demographics(domain, config, now_date, month, show_test=False, beta=False):
     selected_month = datetime(*month)
     now_date = datetime(*now_date)
@@ -881,7 +881,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'month', 'show_test', 'beta'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'month', 'show_test', 'beta'], timeout=30 * 60)
 def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=False):
     selected_month = datetime(*month)
 
@@ -974,7 +974,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
     }
 
 
-@quickcache([
+@icds_quickcache([
     'start', 'length', 'draw', 'order', 'filters', 'month', 'two_before', 'icds_features_flag'
 ], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_before,
@@ -1044,7 +1044,7 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
     return config
 
 
-@quickcache(['case_id', 'awc_id', 'selected_month'], timeout=30 * 60)
+@icds_quickcache(['case_id', 'awc_id', 'selected_month'], timeout=30 * 60)
 def get_beneficiary_details(case_id, awc_id, selected_month):
     selected_month = datetime(*selected_month)
     six_month_before = selected_month - relativedelta(months=6)
@@ -1093,7 +1093,7 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     return beneficiary
 
 
-@quickcache([
+@icds_quickcache([
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
@@ -1150,7 +1150,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     return config
 
 
-@quickcache(['case_id', 'awc_id'], timeout=30 * 60)
+@icds_quickcache(['case_id', 'awc_id'], timeout=30 * 60)
 def get_pregnant_details(case_id, awc_id):
     ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
     data = CcsRecordMonthlyView.objects.filter(
@@ -1234,7 +1234,7 @@ def get_pregnant_details(case_id, awc_id):
     return config
 
 
-@quickcache([
+@icds_quickcache([
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
