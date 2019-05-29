@@ -641,8 +641,9 @@ RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TA
 
 
 class DateRangeParams(object):
-    def __init__(self, field):
+    def __init__(self, field, term=None):
         self.field = field
+        self.term = term
         self.start_param = '{}_start'.format(field)
         self.end_param = '{}_end'.format(field)
 
@@ -656,7 +657,7 @@ class DateRangeParams(object):
 
         if start or end:
             # Note that dates are already in a string format when they arrive as query params
-            return filters.date_range(self.field, gte=start, lte=end)
+            return filters.date_range(self.term or self.field, gte=start, lte=end)
 
 
 class TermParam(object):
@@ -672,10 +673,12 @@ class TermParam(object):
 
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
+    TermParam('case_name', 'name'),
+    TermParam('case_type', 'type'),
     DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
-    DateRangeParams('date_modified'),
-    DateRangeParams('server_date_modified'),
+    DateRangeParams('date_modified', 'modified_on'),
+    DateRangeParams('server_date_modified', 'server_modified_on'),
     DateRangeParams('indexed_on'),
 ]
 
