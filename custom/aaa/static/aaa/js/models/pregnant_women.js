@@ -188,7 +188,7 @@ hqDefine("aaa/js/models/pregnant_women", [
 
         self.abortionWeeks = ko.computed(function () {
             if (self.abortionDays() !== undefined) {
-                return Number.isInteger(self.abortionDays()) ? self.abortionDays / 7 : self.abortionDays();
+                return self.abortionDays() === parseInt(self.abortionDays()) ? parseInt(self.abortionDays() / 7) : self.abortionDays();
             } else {
                 return 'N/A';
             }
