@@ -156,7 +156,7 @@ def backup_project_from_transifex(domain, data, email):
 
 
 @task
-def download_project_from_hq(domain, data, email):
+def email_project_from_hq(domain, data, email):
     """Emails the requester with an excel file translations to be sent to Transifex.
 
     Used to verify translations before sending to Transifex
