@@ -8,10 +8,11 @@ from couchforms.signals import xform_archived, xform_unarchived
 def rebuild_form_cases(sender, xform, *args, **kwargs):
     if kwargs.get('skip_rebuild_cases'):
         return
+    from casexml.apps.case.xform import get_case_ids_from_form
     from casexml.apps.case.cleanup import rebuild_case_from_forms
 
     domain = xform.domain
-    case_ids = xform.case_ids()
+    case_ids = get_case_ids_from_form(xform)
     detail = FormArchiveRebuild(form_id=xform.form_id, archived=xform.is_archived)
     for case_id in case_ids:
         rebuild_case_from_forms(domain, case_id, detail)
