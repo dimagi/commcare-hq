@@ -108,8 +108,7 @@ class ICDSData(object):
     def _override_agg(self, static_report_configuration, override_agg_column):
         level_order = ['owner_id', 'awc_id', 'supervisor_id', 'block_id', 'district_id', 'state_id']
         # override aggregation level
-        static_report_configuration.aggregation_columns.remove("owner_id")
-        static_report_configuration.aggregation_columns.append(override_agg_column)
+        static_report_configuration.aggregation_columns = [override_agg_column]
         # remove columns below agg level
         columns_to_remove = level_order[0:level_order.index(override_agg_column)]
         for column in static_report_configuration.columns:
