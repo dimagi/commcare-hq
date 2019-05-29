@@ -661,20 +661,22 @@ class DateRangeParams(object):
 
 
 class TermParam(object):
-    def __init__(self, param, term=None):
+    def __init__(self, param, term=None, analyzed=False):
         self.param = param
         self.term = term or param
+        self.analyzed = analyzed
 
     def consume_params(self, raw_params):
         value = raw_params.pop(self.param, None)
         if value:
+            value = value.lower() if self.analyzed else value
             return filters.term(self.term, value)
 
 
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
-    TermParam('case_name', 'name'),
-    TermParam('case_type', 'type'),
+    TermParam('case_name', 'name', analyzed=True),
+    TermParam('case_type', 'type', analyzed=True),
     DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
     DateRangeParams('date_modified', 'modified_on'),
@@ -731,6 +733,6 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
 
     # add unconsumed filters
     for param, value in query_params.items():
-        payload["filter"]["and"].append(filters.term(param, value))
+        payload["filter"]["and"].append(filters.term(param, value.lower()))
 
     return payload
