@@ -210,44 +210,32 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                        )
         return user_query
 
-    def get_bulk_locations(self, users):
-        location_ids = {user['location_id'] for user in users if user['location_id']}
-        p = SQLLocation.get_bulk_ancestors(self.domain, location_ids)
-        location_map = {location.location_id: location for location in p}
-        location_map_id = {location.id: location for location in p}
-        return location_map, location_map_id
-
-    def get_location_types(self, location_map_id):
+    def get_location_columns(self, grouped_ancestor_locs):
         from corehq.apps.locations.models import LocationType
-        locationtype = LocationType.objects.by_domain('icds-cas')
-        actual_types = {loc.location_type_id for loc in location_map_id.values()}
-        locationtype = [loc_type for loc_type in locationtype if loc_type.id in actual_types]
-        location_type_map = dict()
-        for i, loc_type in enumerate(locationtype):
-            location_type_map[loc_type.id] = {'position': i, 'name': loc_type.name}
+        location_types = LocationType.objects.by_domain('icds-cas')
+        all_user_locations = grouped_ancestor_locs.values()
+        all_user_loc_types = {loc.location_type_id for user_locs in all_user_locations for loc in user_locs}
+        required_loc_columns = [loc_type for loc_type in location_types if loc_type.id in all_user_loc_types]
+        return required_loc_columns
 
-        return location_type_map
-
-    def user_locations(self, location_map_id, current_location_id, location_type_map):
-        location_list = ['---'] * len(location_type_map)
-
-        while current_location_id is not None:
-            current_location = location_map_id[current_location_id]
-            location_type_id = current_location.location_type_id
-            location_list[location_type_map[location_type_id]['position']] = current_location.name
-            current_location_id = current_location.parent_id
-
+    def user_locations(self, ancestors, location_type):
+        location_list = ['---'] * len(location_type)
+        types_id = [type.id for type in location_type]
+        for loc in ancestors:
+            position = types_id.index(loc.location_type_id)
+            location_list[position] = loc.name
         return location_list
 
     def process_rows(self, users, fmt_for_export=False):
         rows = []
         users = list(users)
-
         if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
                 toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and \
                 self.rendered_as in ['export']:
-            location_map, location_map_id = self.get_bulk_locations(users)
-            self.location_type_map = self.get_location_types(location_map_id)
+
+            location_ids = {user['location_id'] for user in users if user['location_id']}
+            grouped_ancestor_locs = SQLLocation.get_bulk_ancestors(self.domain, location_ids)
+            self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
@@ -296,9 +284,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
                     toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['export']:
-                current_location = location_map[user['location_id']].id \
-                    if user['location_id'] in location_map else None
-                location_data = self.user_locations(location_map_id, current_location, self.location_type_map)
+
+                location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
+                                                    self.required_loc_columns)
 
                 row_data = location_data + row_data
 
@@ -393,22 +381,19 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         result = super(ApplicationStatusReport, self).export_table
         table = list(result[0][1])
-        location_names = []
+        location_colums = []
 
         if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
                 toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['export']:
-            location_names = [''] * len(self.location_type_map)
+            location_colums = ['{} Name'.format(loc_col.name.title()) for loc_col in self.required_loc_columns]
 
-            for key, value in self.location_type_map.iteritems():
-                location_names[value['position']] = value['name']
-
-            table[0] = location_names + table[0]
+        table[0] = location_colums + table[0]
 
         for row in table[1:]:
             # Last submission
-            row[len(location_names) + 1] = _fmt_timestamp(row[len(location_names) + 1])
+            row[len(location_colums) + 1] = _fmt_timestamp(row[len(location_colums) + 1])
             # Last sync
-            row[len(location_names) + 2] = _fmt_timestamp(row[len(location_names) + 2])
+            row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
         result[0][1] = table
         return result
 
