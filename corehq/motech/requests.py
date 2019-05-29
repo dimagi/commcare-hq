@@ -49,6 +49,7 @@ class Requests(object):
         self.username = username
         self.password = password
         self.verify = verify
+        self.session = None
 
     @log_request
     def send_request(self, method_func, *args, **kwargs):
@@ -71,21 +72,24 @@ class Requests(object):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def delete(self, uri, **kwargs):
+        method_func = requests.delete if self.session is None else self.session.delete
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request(requests.delete, self.get_url(uri),
+        return self.send_request(method_func, self.get_url(uri),
                                  auth=(self.username, self.password), **kwargs)
 
     def get(self, uri, *args, **kwargs):
+        method_func = requests.get if self.session is None else self.session.get
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request(requests.get, self.get_url(uri), *args,
+        return self.send_request(method_func, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
+        method_func = requests.post if self.session is None else self.session.post
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request(requests.post, self.get_url(uri), *args,
+        return self.send_request(method_func, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
 
