@@ -666,7 +666,6 @@ def authenticate_session(requests, session):
         raise OpenmrsHtmlUiChanged(
             'Domain "{}": Unexpected OpenMRS login page at "{}".'.format(requests.domain_name, response.url)
         )
-    return session
 
 
 @quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
