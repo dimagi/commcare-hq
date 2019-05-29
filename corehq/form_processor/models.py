@@ -558,7 +558,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').content_md5()
 
-    def archive(self, user_id=None):
+    def archive(self, user_id=None, rebuild_cases=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if self.is_archived:
@@ -570,7 +570,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
             FormAccessorSQL.archive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="form_processor", xform=self)
+            xform_archived.send(sender="form_processor", xform=self, rebuild_cases=rebuild_cases)
 
     def unarchive(self, user_id=None):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
