@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import inspect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -22,7 +21,6 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
     IntegerProperty,
@@ -61,7 +59,6 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
-    format_username,
     filter_by_app
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
@@ -73,7 +70,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.dates import force_to_datetime
 from xml.etree import cElementTree as ElementTree
 
-from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
+from couchdbkit.exceptions import ResourceConflict, BadValueError
 
 from dimagi.utils.web import get_site_domain
 import six
@@ -478,6 +475,7 @@ class DomainMembership(Membership):
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     program_id = StringProperty()
+    last_accessed = DateProperty()
 
     @property
     def permissions(self):
