@@ -77,7 +77,7 @@ class ConvertTranslationsForm(forms.Form):
 
 
 class PullResourceForm(forms.Form):
-    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=())
+    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Transifex project"), choices=())
     target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
@@ -129,7 +129,7 @@ class AppTranslationsForm(forms.Form):
                                 "versions of the application. Leave it unchecked for continuous update to the same"
                                 " set of resources")
     )
-    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
+    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Transifex project"), choices=(),
                                                required=True)
     target_lang = forms.ChoiceField(label=ugettext_lazy("Translated Language"),
                                     choices=([(None, ugettext_lazy('Select Translated Language'))] +
@@ -265,6 +265,12 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
         form_fields = super(DeleteAppTranslationsForm, self).form_fields()
         form_fields.append(hqcrispy.Field('perform_translated_check'))
         return form_fields
+
+
+class DownloadAppTranslationsForm(CreateAppTranslationsForm):
+    """Used to download the files that are being uploaded to Transifex."""
+
+    form_action = 'download'
 
 
 class BackUpAppTranslationsForm(AppTranslationsForm):
