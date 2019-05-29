@@ -244,6 +244,7 @@ class TestBulkConditionalAlerts(TestCase):
                 (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Just Like This Train'),
                 (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Free Man in Paris'),
                 (self._get_rule(self.LOCKED_RULE).id, 'test locked', 'nope', 'nope', 'nope'),
+                (None, 'missing id', 'is', 'bad', 'news'),
             )),
         )
 
@@ -254,7 +255,7 @@ class TestBulkConditionalAlerts(TestCase):
 
         msgs = self._upload(headers, data)
 
-        self.assertEqual(len(msgs), 8)
+        self.assertEqual(len(msgs), 9)
         self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'translated' sheet.", msgs)
         self._assertPatternIn(r"Row 4 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
         self._assertPatternIn(r"Could not find rule for row 5 in 'translated' sheet, with id \d+", msgs)
@@ -262,6 +263,7 @@ class TestBulkConditionalAlerts(TestCase):
         self._assertPatternIn(r"Row 4 in 'not translated' sheet.* rule id \d+, uses a custom schedule", msgs)
         self._assertPatternIn(r"Row 5 in 'not translated' sheet.* rule id \d+, uses a custom schedule", msgs)
         self._assertPatternIn(r"Row 6 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
+        self.assertIn(r"Row 7 in 'not translated' sheet is missing an id.", msgs)
         self.assertIn("Updated 2 rule(s) in 'not translated' sheet", msgs)
 
         untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)

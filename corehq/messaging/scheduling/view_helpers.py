@@ -87,6 +87,11 @@ class ConditionalAlertUploader(object):
             return errors
 
         for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
+            if not row.get('id', None):
+                self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet is missing "
+                                  "an id.").format(index=index, sheet_name=self.sheet_name)))
+                continue
+
             rule = None
             try:
                 rule = AutomaticUpdateRule.objects.get(
