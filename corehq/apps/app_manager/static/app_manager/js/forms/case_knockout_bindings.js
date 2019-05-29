@@ -62,49 +62,35 @@
             }
 
             // Initialize select2
-            var options = {
-                    placeholder: gettext('Select a Question'),
-                    dropdownCssClass: 'bigdrop',
-                },
-                data = _(optionObjects).map(function (o) {
+            var data = _(optionObjects).map(function (o) {
                     return _.extend(o, {
                         id: o.value,
                         text: utils.getDisplay(o),
                     });
-                }),
-                templateSelection = function (o) {
+            });
+            data = [{id: '', text: ''}].concat(data);    // prepend option for placeholder
+
+            $(element).select2({
+                placeholder: gettext('Select a Question'),
+                dropdownCssClass: 'bigdrop',
+                escapeMarkup: function (m) { return m; },
+                data: data,
+                width: '100%',
+                templateSelection: function (o) {
                     if (!o.id) {
                         // This is the placeholder
                         return o.text;
                     }
                     return utils.getTruncatedDisplay(o);
                 },
-                templateResult = function (o) {
+                templateResult: function (o) {
                     if (!o.value) {
                         // This is some select2 system option, like 'Searching...' text
                         return o.text;
                     }
                     return utils.getTruncatedDisplay(o, 90);
-                };
-            // Imperfect way to determine whether we're looking at select2 v3 or v4
-            // v4 must use a <select>; v3 can but usually uses an <input>
-            // Right now userreports are the only v3 usage of this binding, and they're all <input>
-            if (element.nodeName.toLowerCase() === 'select') {
-                options = _.extend(options, {
-                    escapeMarkup: function (m) { return m; },
-                    width: '100%',
-                    data: [{id: '', text: ''}].concat(data),    // prepend option for placeholder
-                    templateSelection: templateSelection,
-                    templateResult: templateResult,
-                });
-            } else {
-                options = _.extend(options, {
-                    data: { results: data },
-                    formatSelection: templateSelection,
-                    formatResult: templateResult,
-                });
-            }
-            $(element).select2(options);
+                },
+            });
             $(element).val(value).trigger('change.select2');
         },
         update: function (element, valueAccessor, allBindingsAccessor) {
