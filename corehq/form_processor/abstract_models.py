@@ -130,6 +130,11 @@ class AbstractXFormInstance(object):
                 pass
         return None
 
+    def case_ids(self):
+        from casexml.apps.case.xform import get_case_ids_from_form
+        from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
+        return get_case_ids_from_form(self) | get_case_ids_from_stock_transactions(self)
+
 
 def get_index_map(indices):
     return dict([
