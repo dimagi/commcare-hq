@@ -45,6 +45,8 @@ from corehq.util.files import safe_filename_header
 
 
 class BaseTranslationsView(BaseDomainView):
+    section_name = ugettext_noop("Translations")
+
     @property
     def page_context(self):
         context = {
@@ -68,7 +70,6 @@ class ConvertTranslations(BaseTranslationsView):
     page_title = _('Convert Translations')
     urlname = 'convert_translations'
     template_name = 'convert_translations.html'
-    section_name = ugettext_noop("Translations")
 
     @property
     @memoized
@@ -209,7 +210,6 @@ class PullResource(BaseTranslationsView):
     page_title = _('Pull Resource')
     urlname = 'pull_resource'
     template_name = 'pull_resource.html'
-    section_name = ugettext_noop("Translations")
 
     def dispatch(self, request, *args, **kwargs):
         return super(PullResource, self).dispatch(request, *args, **kwargs)
@@ -308,7 +308,6 @@ class BlacklistTranslations(BaseTranslationsView):
     page_title = _('Blacklist Translations')
     urlname = 'blacklist_translations'
     template_name = 'blacklist_translations.html'
-    section_name = ugettext_noop("Translations")
 
     def section_url(self):
         return self.page_url
@@ -339,7 +338,6 @@ class AppTranslations(BaseTranslationsView):
     page_title = ugettext_lazy('App Translations')
     urlname = 'app_translations'
     template_name = 'app_translations.html'
-    section_name = ugettext_lazy("Translations")
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppTranslations, self).dispatch(request, *args, **kwargs)
