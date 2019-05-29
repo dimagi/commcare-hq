@@ -590,9 +590,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
-        from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
-        case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
+        case_ids = list(get_case_ids_from_form(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',

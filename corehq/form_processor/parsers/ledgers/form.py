@@ -54,20 +54,17 @@ LedgerInstruction = namedtuple(
 
 
 def get_case_ids_from_stock_transactions(xform):
-    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
-    case_ids = {
+    return {
         transaction_helper.case_id
-        for stock_report_helper in stock_report_helpers
+        for stock_report_helper in get_all_stock_report_helpers_from_form(xform)
         for transaction_helper in stock_report_helper.transactions
     }
-    return case_ids
 
 
 def get_ledger_references_from_stock_transactions(xform):
-    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     return {
         UniqueLedgerReference(tx_helper.case_id, tx_helper.section_id, tx_helper.product_id)
-        for stock_report_helper in stock_report_helpers
+        for stock_report_helper in get_all_stock_report_helpers_from_form(xform)
         for tx_helper in stock_report_helper.transactions
     }
 
@@ -130,7 +127,13 @@ def get_all_stock_report_helpers_from_form(xform):
     Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
     them to StockReportHelper objects.
     """
+    if xform.get_xml_element is None:
+        # ESXFormInstance (has a weird API)
+        raise MissingFormXml(xform.form_id)
     form_xml = xform.get_xml_element()
+    if form_xml is None:
+        # HACK should be raised by xform.get_xml_element()
+        raise MissingFormXml(xform.form_id)
     commtrack_node_names = ('{%s}balance' % COMMTRACK_REPORT_XMLNS,
                             '{%s}transfer' % COMMTRACK_REPORT_XMLNS)
 
@@ -316,3 +319,7 @@ def _coerce_to_list(obj_or_list):
         return obj_or_list
     else:
         return [obj_or_list]
+
+
+class MissingFormXml(Exception):
+    pass
