@@ -211,8 +211,6 @@ class AppTranslationsForm(forms.Form):
             return BackUpAppTranslationsForm
         elif form_action == 'delete':
             return DeleteAppTranslationsForm
-        elif form_action == 'download':
-            return DownloadAppTranslationsForm
 
 
 class CreateAppTranslationsForm(AppTranslationsForm):

@@ -1,0 +1,26 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "translations/js/app_translations" %}
+{# TODO: Check that #}
+
+{% block page_content %}
+  {% registerurl "paginate_releases" domain '---' %}
+  {# TODO: Check that #}
+  {% if not transifex_details_available %}
+    <p class="text-error">
+      <span class="label label-danger">
+        {% trans 'Transifex integration not set for this domain' %}
+      </span>
+    </p>
+  {% else %}
+    <div id="download-trans-form">
+      <form class="form form-horizontal" name="product" method="post">
+        <legend>{% trans "Download Translations" %}</legend>
+        {% crispy download_form %}
+      </form>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1453,6 +1453,10 @@ class TranslationsTab(UITab):
                         'url': reverse('blacklist_translations', args=[self.domain]),
                         'title': _('Blacklist Translations')
                     },
+                    {
+                        'url': reverse('download_translations', args=[self.domain]),
+                        'title': _('Download Translations')
+                    },
                 ]))
         return items
 

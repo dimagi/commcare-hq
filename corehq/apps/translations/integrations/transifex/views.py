@@ -22,6 +22,7 @@ from corehq.apps.translations.forms import (
     AddTransifexBlacklistForm,
     AppTranslationsForm,
     ConvertTranslationsForm,
+    DownloadAppTranslationsForm,
     PullResourceForm,
 )
 from corehq.apps.translations.generators import PoFileGenerator, Translation
@@ -358,7 +359,6 @@ class AppTranslations(BaseTranslationsView):
             context['push_form'] = AppTranslationsForm.form_for('push')(self.domain)
             context['pull_form'] = AppTranslationsForm.form_for('pull')(self.domain)
             context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
-            context['download_form'] = AppTranslationsForm.form_for('download')(self.domain)
             if self.request.user.is_staff:
                 context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
         form_action = self.request.POST.get('action')
@@ -437,17 +437,7 @@ class AppTranslations(BaseTranslationsView):
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
 
-    def perform_download_request(self, request, form_data):
-        download_project_from_hq.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Submitted request to download translations. '
-                                    'You should receive an email shortly.'))
-        return True
-
     def perform_request(self, request, form_data):
-        if form_data['action'] == 'download':
-            # The download functionality does not depend on Transifex resources
-            return self.perform_download_request(request, form_data)
-
         self._transifex = self.transifex(request.domain, form_data)
         if form_data.get('source_lang') and not self._transifex.source_lang_is(form_data.get('source_lang')):
             messages.error(request, _('Source lang selected not available for the project'))
@@ -472,4 +462,31 @@ class AppTranslations(BaseTranslationsView):
                         return redirect(self.urlname, domain=self.domain)
                 except ResourceMissing as e:
                     messages.error(request, e)
+        return self.get(request, *args, **kwargs)
+
+
+class DownloadTranslations(BaseTranslationsView):
+    page_title = ugettext_lazy('Download Translations')
+    urlname = 'download_translations'
+    template_name = 'download_translations.html'
+
+    @property
+    def page_context(self):
+        context = super(DownloadTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['download_form'] = DownloadAppTranslationsForm(self.domain)
+        return context
+
+    def section_url(self):
+        return reverse(DownloadTranslations.urlname, args=self.args, kwargs=self.kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.transifex_integration_enabled(request):
+            form = DownloadAppTranslationsForm(self.domain, self.request.POST)
+            if form.is_valid():
+                form_data = form.cleaned_data
+                download_project_from_hq.delay(request.domain, form_data, request.user.email)
+                messages.success(request, _('Submitted request to download translations. '
+                                            'You should receive an email shortly.'))
+                return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
