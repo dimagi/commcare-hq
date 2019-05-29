@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.dispatch.dispatcher import Signal
-from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.models import FormArchiveRebuild
 from couchforms.signals import xform_archived, xform_unarchived
 
