@@ -647,6 +647,9 @@ def create_patient(requests, info, case_config):
 
 
 def authenticate_session(requests, session):
+    """
+    Log in using a requests Session
+    """
     login_data = {
         'uname': requests.username,
         'pw': requests.password,
@@ -671,11 +674,10 @@ def get_identifier_source_id(requests, identifier_type, session):
     """
     Returns the ID of the identifier source to be used for generating
     values for identifiers of the given type.
-    """
-    # The idgen module doesn't offer an API to list identifier sources.
-    # Log in using a requests Session, and scrape /module/idgen/manageIdentifierSources.list
-    # (Urgh.)
 
+    The idgen module doesn't offer an API to list identifier sources.
+    This function scrapes /module/idgen/manageIdentifierSources.list
+    """
     response = requests.get('/ws/rest/v1/patientidentifiertype/{}'.format(identifier_type))
     identifier_type_name = response.json()['name']
 
