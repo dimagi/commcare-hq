@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from collections import namedtuple, defaultdict
 import re
+from contextlib import contextmanager
 
 from lxml import html
 from requests import RequestException, Session
@@ -646,30 +647,33 @@ def create_patient(requests, info, case_config):
             return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
-def authenticate_session(requests, session):
-    """
-    Log in using a requests Session
-    """
-    login_data = {
-        'uname': requests.username,
-        'pw': requests.password,
-        'submit': 'Log In',
-        'redirect': '',
-        'refererURL': '',
-    }
-    response = session.post(
-        requests.get_url('/ms/legacyui/loginServlet'),
-        login_data,
-        verify=requests.verify
-    )
-    if not 200 <= response.status_code < 300:
-        raise OpenmrsHtmlUiChanged(
-            'Domain "{}": Unexpected OpenMRS login page at "{}".'.format(requests.domain_name, response.url)
-        )
+@contextmanager
+def authenticate_session(requests):
+    try:
+        requests.session = Session()
+        login_data = {
+            'uname': requests.username,
+            'pw': requests.password,
+            'submit': 'Log In',
+            'redirect': '',
+            'refererURL': '',
+        }
+        response = requests.post('/ms/legacyui/loginServlet', login_data, headers={'Accept': 'text/html'})
+        if not 200 <= response.status_code < 300:
+            notify_exception(
+                request=None,
+                message='Unexpected OpenMRS HTML UI',
+                details='Domain "{}": Unexpected OpenMRS login page at "{}".'.format(
+                    requests.domain_name, response.url
+                ),
+            )
+        yield
+    finally:
+        requests.session = None
 
 
 @quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
-def get_identifier_source_id(requests, identifier_type, session):
+def get_identifier_source_id(requests, identifier_type):
     """
     Returns the ID of the identifier source to be used for generating
     values for identifiers of the given type.
@@ -677,13 +681,11 @@ def get_identifier_source_id(requests, identifier_type, session):
     The idgen module doesn't offer an API to list identifier sources.
     This function scrapes /module/idgen/manageIdentifierSources.list
     """
+    assert requests.session is not None, 'Session not set'
     response = requests.get('/ws/rest/v1/patientidentifiertype/{}'.format(identifier_type))
     identifier_type_name = response.json()['name']
 
-    response = session.get(
-        requests.get_url('/module/idgen/manageIdentifierSources.list'),
-        verify=requests.verify
-    )
+    response = requests.get('/module/idgen/manageIdentifierSources.list', headers={'Accept': 'text/html'})
     if not 200 <= response.status_code < 300:
         raise OpenmrsHtmlUiChanged(
             'Domain "{}": Unexpected response from OpenMRS idgen module at "{}". '
@@ -723,30 +725,26 @@ def generate_identifier(requests, identifier_type):
     page, and the resulting authenticated session used for sending
     requests.
     """
-    with Session() as session:
-        authenticate_session(requests, session)
+    identifier = None
+    source_id = None
+    with authenticate_session(requests):
         try:
-            source_id = get_identifier_source_id(requests, identifier_type, session)
+            source_id = get_identifier_source_id(requests, identifier_type)
         except OpenmrsHtmlUiChanged as err:
             notify_exception(
                 request=None,
                 message='Unexpected OpenMRS HTML UI',
                 details=str(err),
             )
-            return None
         if source_id:
             # Example request: http://www.example.com/openmrs/module/idgen/generateIdentifier.form?source=1
-            response = session.get(
-                requests.get_url('/module/idgen/generateIdentifier.form'),
-                params={'source': source_id},
-                verify=requests.verify,
-            )
+            response = requests.get('/module/idgen/generateIdentifier.form', params={'source': source_id})
             try:
                 if not (200 <= response.status_code < 300 and response.content):
                     raise OpenmrsException()
                 try:
                     # Example response: {"identifiers": ["CHR203007"]}
-                    return response.json()['identifiers'][0]
+                    identifier = response.json()['identifiers'][0]
                 except (ValueError, IndexError, KeyError):
                     raise OpenmrsException()
             except OpenmrsException:
@@ -756,7 +754,7 @@ def generate_identifier(requests, identifier_type):
                     details='OpenMRS idgen module at "{}" returned an unexpected response {}: "{}"'.format(
                         response.url, response.status_code, response.content)
                 )
-        return None
+    return identifier
 
 
 def find_or_create_patient(requests, domain, info, openmrs_config):
