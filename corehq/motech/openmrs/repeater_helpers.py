@@ -3,10 +3,9 @@ from __future__ import unicode_literals
 
 from collections import namedtuple, defaultdict
 import re
-from contextlib import contextmanager
 
 from lxml import html
-from requests import RequestException, Session
+from requests import RequestException
 from six.moves import zip
 from urllib3.exceptions import HTTPError
 
@@ -32,6 +31,7 @@ from corehq.motech.openmrs.exceptions import (
 )
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.workflow import WorkflowTask
+from corehq.motech.requests import session_context
 from corehq.motech.value_source import CaseTriggerInfo
 from corehq.util.quickcache import quickcache
 from dimagi.utils.logging import notify_exception
@@ -647,29 +647,19 @@ def create_patient(requests, info, case_config):
             return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
-@contextmanager
 def authenticate_session(requests):
-    try:
-        requests.session = Session()
-        login_data = {
-            'uname': requests.username,
-            'pw': requests.password,
-            'submit': 'Log In',
-            'redirect': '',
-            'refererURL': '',
-        }
-        response = requests.post('/ms/legacyui/loginServlet', login_data, headers={'Accept': 'text/html'})
-        if not 200 <= response.status_code < 300:
-            notify_exception(
-                request=None,
-                message='Unexpected OpenMRS HTML UI',
-                details='Domain "{}": Unexpected OpenMRS login page at "{}".'.format(
-                    requests.domain_name, response.url
-                ),
-            )
-        yield
-    finally:
-        requests.session = None
+    login_data = {
+        'uname': requests.username,
+        'pw': requests.password,
+        'submit': 'Log In',
+        'redirect': '',
+        'refererURL': '',
+    }
+    response = requests.post('/ms/legacyui/loginServlet', login_data, headers={'Accept': 'text/html'})
+    if not 200 <= response.status_code < 300:
+        raise OpenmrsHtmlUiChanged('Domain "{}": Unexpected OpenMRS login page at "{}".'.format(
+            requests.domain_name, response.url
+        ))
 
 
 @quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
@@ -681,7 +671,6 @@ def get_identifier_source_id(requests, identifier_type):
     The idgen module doesn't offer an API to list identifier sources.
     This function scrapes /module/idgen/manageIdentifierSources.list
     """
-    assert requests.session is not None, 'Session not set'
     response = requests.get('/ws/rest/v1/patientidentifiertype/{}'.format(identifier_type))
     identifier_type_name = response.json()['name']
 
@@ -727,7 +716,8 @@ def generate_identifier(requests, identifier_type):
     """
     identifier = None
     source_id = None
-    with authenticate_session(requests):
+    with session_context(requests):
+        authenticate_session(requests)
         try:
             source_id = get_identifier_source_id(requests, identifier_type)
         except OpenmrsHtmlUiChanged as err:

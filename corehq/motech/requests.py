@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
+from contextlib import contextmanager
 
 import requests
 
@@ -91,6 +92,15 @@ class Requests(object):
         })
         return self.send_request(method_func, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
+
+
+@contextmanager
+def session_context(req):
+    try:
+        req.session = requests.Session()
+        yield
+    finally:
+        req.session = None
 
 
 def parse_request_exception(err):
