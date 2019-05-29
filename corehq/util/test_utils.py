@@ -113,7 +113,7 @@ class TestFileMixin(object):
         return cls.get_file(name, '.xml', override_path).encode('utf-8')
 
 
-class flag_enabled(ContextDecorator):
+class flag_enabled(object):
     """
     Decorate test methods with this to mock the lookup
 
@@ -129,6 +129,11 @@ class flag_enabled(ContextDecorator):
                        new=lambda *args, **kwargs: self.enabled)
             for method_name in ['enabled', 'enabled_for_request']
         ]
+
+    def __call__(self, fn):
+        for patch in self.patches:
+            fn = patch(fn)
+        return fn
 
     def __enter__(self):
         for patch in self.patches:
