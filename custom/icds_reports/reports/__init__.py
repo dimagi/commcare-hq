@@ -37,7 +37,10 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     @memoized
     def data_providers(self):
         config = self.report_config
-        return [provider_cls(config, allow_conditional_agg=self.allow_conditional_agg) for provider_cls in self.data_provider_classes]
+        return [
+            provider_cls(config, allow_conditional_agg=self.allow_conditional_agg)
+            for provider_cls in self.data_provider_classes
+        ]
 
     @property
     def template_context(self):
