@@ -27,8 +27,6 @@ class IcdsFile(models.Model):
     data_type = models.CharField(max_length=255)
     file_added = models.DateField(auto_now=True)
 
-    objects = CitusComparisonManager()
-
     def store_file_in_blobdb(self, file, expired=EXPIRED):
         db = get_blob_db()
         try:

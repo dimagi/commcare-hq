@@ -356,16 +356,16 @@ class MessageLogReport(BaseCommConnectLogReport):
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
-            DataTablesColumn(_("Status")) if self.testing_changes else Ellipsis,
-            DataTablesColumn(_("Event"), sortable=False) if self.testing_changes else Ellipsis,
+            DataTablesColumn(_("Status")) if self.show_v2 else Ellipsis,
+            DataTablesColumn(_("Event"), sortable=False) if self.show_v2 else Ellipsis,
             DataTablesColumn(_("Type"), sortable=False),
         ] if header != Ellipsis])
         headers.custom_sort = [[0, 'desc']]
         return headers
 
     @cached_property
-    def testing_changes(self):
-        return toggles.SMS_LOG_CHANGES.enabled(self.request.couch_user.username)
+    def show_v2(self):
+        return toggles.SMS_LOG_CHANGES.enabled_for_request(self.request)
 
     @property
     @memoized
@@ -425,7 +425,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
         )
-        if self.testing_changes:
+        if self.show_v2:
             queryset = queryset.exclude(
                 direction=OUTGOING,
                 processed=False,
@@ -441,7 +441,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
-        if self.testing_changes:
+        if self.show_v2:
             return queryset.annotate(
                 event_source=F("messaging_subevent__parent__source"),
                 event_source_id=F("messaging_subevent__parent__source_id"),
@@ -489,7 +489,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 
         content_cache = {}
         messages = self._get_data(paginate)
-        events = self._get_events_by_xforms_session(messages) if self.testing_changes else {}
+        events = self._get_events_by_xforms_session(messages) if self.show_v2 else {}
         for message in messages:
             yield [val for val in [
                 get_timestamp(message.date),
@@ -497,8 +497,8 @@ class MessageLogReport(BaseCommConnectLogReport):
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
-                get_sms_status_display(message) if self.testing_changes else Ellipsis,
-                self._get_event_display(message, events, content_cache) if self.testing_changes else Ellipsis,
+                get_sms_status_display(message) if self.show_v2 else Ellipsis,
+                self._get_event_display(message, events, content_cache) if self.show_v2 else Ellipsis,
                 ', '.join(self._get_message_types(message)),
                 message.couch_id if include_log_id and self.include_metadata else Ellipsis,
             ] if val != Ellipsis]

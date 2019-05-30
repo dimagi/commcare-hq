@@ -391,6 +391,9 @@
 
     {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
     {% registerurl 'send_mobile_reminder' %}  {# used by mobile reminder popup below #}
+    {% if domain %}
+      {% registerurl 'submit_feedback' domain %}   {# used by feedback knockout widget #}
+    {% endif %}
 
     <div class="commcarehq-urls hide">
       {% block registered_urls %}
@@ -561,6 +564,7 @@
     {% include 'hqwebapp/partials/ko_inline_edit.html' %}
     {% include 'hqwebapp/partials/ko_search_box.html' %}
     {% include 'hqwebapp/partials/ko_select_toggle.html' %}
+    {% include 'hqwebapp/partials/ko_feedback.html' %}
 
     {% if show_overdue_invoice_modal and not requirejs_main %}
       <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>

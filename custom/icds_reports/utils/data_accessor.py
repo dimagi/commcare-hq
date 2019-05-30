@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from time import sleep
 
+from custom.icds_reports.cache import icds_quickcache
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data, \
     get_awc_infrastructure_data_with_cache
@@ -16,7 +17,6 @@ from custom.icds_reports.reports.maternal_child import get_maternal_child_data, 
 def _all_zeros(data):
     values = [(kpi['value'] == 0 and kpi['all'] == 0) for row in data['records'] for kpi in row]
     return all(values)
-
 
 def get_program_summary_data(step, domain, config, now, include_test, pre_release_features):
     data = {}
@@ -43,7 +43,7 @@ def get_program_summary_data(step, domain, config, now, include_test, pre_releas
     return data
 
 
-@quickcache(['step', 'domain', 'config', 'now', 'include_test', 'pre_release_features'], timeout=30 * 60)
+@icds_quickcache(['step', 'domain', 'config', 'now', 'include_test', 'pre_release_features'], timeout=30 * 60)
 def get_program_summary_data_with_retrying(step, domain, config, now, include_test, pre_release_features):
     retry = 0
     while True:

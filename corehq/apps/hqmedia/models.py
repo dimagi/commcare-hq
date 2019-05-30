@@ -768,11 +768,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
         return media
 
     def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
-        if self.multimedia_map:
-            if remove_unused:
-                self.remove_unused_mappings()
-        else:
+        if self.multimedia_map is None:
             self.multimedia_map = {}
+
+        if self.multimedia_map and remove_unused:
+            self.remove_unused_mappings()
 
         if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             return self.multimedia_map

@@ -1,16 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import datetime
 import os
 import re
 import tempfile
-from collections import namedtuple, OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, namedtuple
+
+from django.utils.functional import cached_property
 
 import polib
-from django.utils.functional import cached_property
+import six
 from memoized import memoized
 
+from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.models import TransifexBlacklist
 
@@ -57,6 +59,13 @@ class AppTranslationsGenerator(object):
         self.slug_to_name = defaultdict(dict)
         self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
         self._build_translations()
+
+    @cached_property
+    def build_id(self):
+        if self.version:
+            return get_version_build_id(self.domain, self.app_id, self.version)
+        else:
+            return self.app_id
 
     @cached_property
     def _get_labels_to_skip(self):
@@ -304,6 +313,12 @@ class AppTranslationsGenerator(object):
                 occurrence_row)
         return list(translations.values())
 
+    def get_translations(self):
+        return OrderedDict(
+            (filename, _translations_to_po_entries(translations))
+            for filename, translations in six.iteritems(self.translations)
+        )
+
     @property
     @memoized
     def app(self):
@@ -362,23 +377,28 @@ class PoFileGenerator(object):
             po = polib.POFile()
             po.check_for_duplicates = False
             po.metadata = self.metadata
-            for translation in sheet_translations:
-                source = translation.key
-                if source:
-                    entry = polib.POEntry(
-                        msgid=translation.key,
-                        msgstr=translation.translation or '',
-                        occurrences=translation.occurrences,
-                        msgctxt=translation.msgctxt
-                    )
-                    po.append(entry)
+            po.extend(_translations_to_po_entries(sheet_translations))
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
             self._generated_files.append(POFileInfo(file_name, temp_file.name))
+
         return self._generated_files
 
     def _cleanup(self):
         for resource_name, filepath in self._generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
-        self.generated_files = []
+        self._generated_files = []
+
+
+def _translations_to_po_entries(translations):
+    return [
+        polib.POEntry(
+            msgid=translation.key,
+            msgstr=translation.translation or '',
+            occurrences=translation.occurrences,
+            msgctxt=translation.msgctxt,
+        )
+        for translation in translations
+        if translation.key
+    ]
