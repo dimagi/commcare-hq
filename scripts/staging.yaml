@@ -50,12 +50,17 @@ trunk: master
 name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
-  #- jls/reports-select2-v4  # Jenny April 9
   - nh/cdc/one_domain  # Norman March 26
   - sr-ucr-mirror # Sravan May 1
   - mk/ccz-hosting-revamp # MK May 6
   - fr/case-templates      # FR May 15
-  - mk/media-version-on-revert   # MK May 16
-#  - web-user-reports-project-access  # Gabriella May 13
-  - upgrade-gevent-may-16  # Nick P May 16
+  #- mk/media-version-on-revert   # MK May 16
+  - form-odata  # Nick P May 21
+  - web-user-reports-project-access  # Gabriella May 13
+  - jls/linked-app-incremental-versioning # Jenny May 20
+  - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
+  - es/case-import  # Ethan May 23
+  
+  # This is being passively QAed. You can comment it out, just tell me afterwards.
+  - jls/final-select2-v4 # Jenny May 25
 submodules: {}

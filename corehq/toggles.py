@@ -952,28 +952,6 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
-NINETYNINE_DOTS = StaticToggle(
-    '99dots_integration',
-    'Enikshay: Enable access to 99DOTS',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-NIKSHAY_INTEGRATION = StaticToggle(
-    'nikshay_integration',
-    'Enikshay: Enable patient registration in Nikshay',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-BETS_INTEGRATION = StaticToggle(
-    'bets_repeaters',
-    'Enikshay: Enable BETS data forwarders',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_enabled={"enikshay"},
-)
-
 RETRY_SMS_INDEFINITELY = StaticToggle(
     'retry_sms_indefinitely',
     'Enikshay: Retry SMS indefinitely',
@@ -1080,11 +1058,11 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
-    "Message Log Report: Test new additions",
-    TAG_CUSTOM,
+    'Message Log Report v2',
+    TAG_SOLUTIONS,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
-    description=("Include failed messages, show message status, show event. "
-                 "This feature flag exists to QA on real prod data."),
+    description=("This flag makes failed messages appear in the Message Log "
+                 "Report, and adds Status and Event columns"),
 )
 
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
@@ -1092,13 +1070,6 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-BROADCAST_TO_LOCATIONS = StaticToggle(
-    'broadcast_to_locations',
-    'Send broadcasts to locations',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
 )
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
@@ -1286,6 +1257,7 @@ LOCALE_ID_INTEGRITY = StaticToggle(
     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    notification_emails=['jschweers']
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
@@ -1328,7 +1300,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'icds-new', 'india', 'staging'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1385,13 +1357,6 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'include_metadata_in_ucr_excel_exports',
     'Include metadata in UCR excel exports',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
-)
-
-UATBC_ADHERENCE_TASK = StaticToggle(
-    'uatbc_adherence_calculations',
-    'Enikshay: This runs backend adherence calculations for enikshay domains',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1542,6 +1507,15 @@ ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
     'ICDS: Compare quereies against citus',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
+)
+
+COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
+    'compare_ucr_reports',
+    'Compare UCR reports against other reports or against other databases. '
+    'Reports for comparison must be listed in settings.UCR_COMPARISONS.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0.001  # 1 in 1000
 )
 
 MOBILE_LOGIN_LOCKOUT = StaticToggle(
@@ -1773,6 +1747,13 @@ IMPROVED_ASR_REPORT = StaticToggle(
     [NAMESPACE_USER]
 )
 
+MANAGE_CCZ_HOSTING = StaticToggle(
+    'manage_ccz_hosting',
+    'Allow project to configure ccz hosting',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
     'load_dashboard_from_citus',
     'Use CitusDB for loading ICDS Dashboard',
@@ -1781,7 +1762,7 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
 )
 
 PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg'
+    'parallel_agg',
     'This makes the icds dashboard aggregation run on both distributed and monolith backends',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
@@ -1790,6 +1771,13 @@ PARALLEL_AGGREGATION = StaticToggle(
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
     'Exposes an option in fixture api upload to skip saving through couchdbkit',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_UCR_MIRRORS = StaticToggle(
+    'enable_ucr_mirrors',
+    'Enable the mirrored engines for UCRs in this domain',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

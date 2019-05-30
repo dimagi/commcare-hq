@@ -100,6 +100,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
             response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder),
                 "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
+                "domain": doc.get('domain', 'Unknown'),
                 "dbname": db.dbname,
             })
 
@@ -139,12 +140,6 @@ def doc_in_es(request):
 
 
 @require_superuser
-def raw_couch(request):
-    get_params = dict(six.iteritems(request.GET))
-    return HttpResponseRedirect(reverse("raw_doc", params=get_params))
-
-
-@require_superuser
 def raw_doc(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
@@ -161,4 +156,4 @@ def raw_doc(request):
 
     other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
     context['all_databases'] = ['commcarehq'] + other_couch_dbs + list(_SQL_DBS)
-    return render(request, "hqadmin/raw_couch.html", context)
+    return render(request, "hqadmin/raw_doc.html", context)

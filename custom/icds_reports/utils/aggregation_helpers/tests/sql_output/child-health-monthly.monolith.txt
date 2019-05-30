@@ -1,11 +1,11 @@
+DROP TABLE IF EXISTS "child_health_monthly_2019-01-01"
+{}
 
         CREATE TABLE IF NOT EXISTS "child_health_monthly_2019-01-01" (
             CHECK (month = DATE %(date)s)
         ) INHERITS ("child_health_monthly")
         
 {"date": "2019-01-01"}
-DELETE FROM "child_health_monthly_2019-01-01"
-{}
 INSERT INTO "child_health_monthly_2019-01-01" (SELECT * FROM "tmp_child_health_monthly_2019-01-01")
 {}
 CREATE INDEX ON "child_health_monthly_2019-01-01" (case_id)

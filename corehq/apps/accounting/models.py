@@ -3690,12 +3690,7 @@ class DomainUserHistory(models.Model):
     """
     domain = models.CharField(max_length=256)
     record_date = models.DateField()
-    num_users = models.IntegerField(default=0, null=True)
+    num_users = models.IntegerField(default=0)
 
-    @classmethod
-    def create(cls, domain, num_users, record_date):
-        return cls(
-            domain=domain,
-            num_users=num_users,
-            record_date=record_date
-        )
+    class Meta:
+        unique_together = ('domain', 'record_date')

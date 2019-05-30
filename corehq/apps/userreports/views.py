@@ -58,7 +58,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
+    use_select2_legacy,
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
@@ -279,7 +279,7 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_select2
+    @use_select2_legacy
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):

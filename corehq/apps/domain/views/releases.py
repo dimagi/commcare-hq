@@ -18,7 +18,6 @@ from corehq.apps.app_manager.models import AppReleaseByLocation
 from corehq.apps.domain.forms import ManageAppReleasesForm
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -27,10 +26,6 @@ class ManageReleases(BaseProjectSettingsView):
     template_name = 'domain/manage_releases.html'
     urlname = 'manage_releases'
     page_title = ugettext_lazy("Manage Releases")
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManageReleases, self).dispatch(request, *args, **kwargs)
 
     @cached_property
     def manage_releases_form(self):

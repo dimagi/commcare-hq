@@ -26,6 +26,9 @@ from django.db.utils import IntegrityError
 from django_redis import get_redis_connection
 from gevent.pool import Pool
 
+from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
+    PROBLEM_TEMPLATE_START,
+)
 from corehq.apps.couch_sql_migration.diff import (
     filter_case_diffs,
     filter_form_diffs,
@@ -70,7 +73,7 @@ from corehq.util.log import with_progress_bar
 from corehq.util.pagination import PaginationEventHandler
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
-from couchforms.models import doc_types as form_doc_types
+from couchforms.models import XFormOperation, doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -160,9 +163,12 @@ class CouchSqlDomainMigrator(object):
         for change in self._with_progress(['XFormInstance'], changes):
             log.debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
-            if form.get('problem', None):
-                self.errors_with_normal_doc_type.append(change.id)
-                continue
+            if form.get('problem'):
+                if six.text_type(form['problem']).startswith(PROBLEM_TEMPLATE_START):
+                    form = _fix_replacement_form_problem_in_couch(form)
+                else:
+                    self.errors_with_normal_doc_type.append(change.id)
+                    continue
             try:
                 wrapped_form = XFormInstance.wrap(form)
                 form_received = wrapped_form.received_on
@@ -181,7 +187,7 @@ class CouchSqlDomainMigrator(object):
             if wrapped_form:
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
             else:
-                gevent.sleep(0.01)  # swap greenlets
+                gevent.sleep()  # swap greenlets
 
             remaining_items = self.queues.remaining_items + len(pool)
             now = datetime.now()
@@ -199,7 +205,7 @@ class CouchSqlDomainMigrator(object):
         if self.queues.try_obj(case_ids, wrapped_form):
             pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
         elif self.queues.full:
-            gevent.sleep(0.01)  # swap greenlets
+            gevent.sleep()  # swap greenlets
 
     def _try_to_process_queues(self, pool):
         # regularly check if we can empty the queues
@@ -702,6 +708,40 @@ def _migrate_couch_attachments_to_blob_db(couch_form):
                     content_type=meta.get("content_type"),
                 )
         assert not set(couch_form._attachments) - set(couch_form.blobs), couch_form
+
+
+def _fix_replacement_form_problem_in_couch(doc):
+    """Fix replacement form created by swap_duplicate_xforms
+
+    The replacement form was incorrectly created with "problem" text,
+    which causes it to be counted as an error form, and that messes up
+    the diff counts at the end of this migration.
+
+    NOTE the replacement form's _id does not match instanceID in its
+    form.xml. That issue is not resolved here.
+
+    See:
+    - corehq/apps/cleanup/management/commands/swap_duplicate_xforms.py
+    - couchforms/_design/views/all_submissions_by_domain/map.js
+    """
+    problem = doc["problem"]
+    assert problem.startswith(PROBLEM_TEMPLATE_START), doc
+    assert doc["doc_type"] == "XFormInstance", doc
+    deprecated_id = problem[len(PROBLEM_TEMPLATE_START):].split(" on ", 1)[0]
+    form = XFormInstance.wrap(doc)
+    form.deprecated_form_id = deprecated_id
+    form.history.append(XFormOperation(
+        user="system",
+        date=datetime.utcnow(),
+        operation="Resolved bad duplicate form during couch-to-sql "
+        "migration. Original problem: %s" % problem,
+    ))
+    form.problem = None
+    old_form = XFormInstance.get(deprecated_id)
+    if old_form.initial_processing_complete and not form.initial_processing_complete:
+        form.initial_processing_complete = True
+    form.save()
+    return form.to_json()
 
 
 def _migrate_case_attachments(couch_case, sql_case):

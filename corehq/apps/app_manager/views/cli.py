@@ -10,7 +10,7 @@ from dimagi.utils.web import json_response
 from soil import FileDownload
 
 from corehq import toggles
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import build_application_zip_v2
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.util.view_utils import absolute_reverse, json_error
 from corehq.util.datadog.gauges import datadog_bucket_timer
@@ -128,10 +128,11 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
 
     app.set_media_versions()
     download = FileDownload('application-{}-{}'.format(app.get_id, version))
-    errors = build_application_zip(
+    errors = build_application_zip_v2(
         include_multimedia_files=include_multimedia,
         include_index_files=True,
-        app=app,
+        domain=app.domain,
+        app_id=app.id,
         download_id=download.download_id,
         compress_zip=True,
         filename='{}.ccz'.format(slugify(app.name)),

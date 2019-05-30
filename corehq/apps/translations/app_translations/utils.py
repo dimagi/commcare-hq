@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, FormNotFoundException
 from corehq.apps.translations.const import (
-    LEGACY_MODULES_AND_FORMS_SHEET_NAME,
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
@@ -122,15 +121,15 @@ def get_form_sheet_name(form):
 
 
 def is_form_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' in identifier
+    return 'menu' in identifier and 'form' in identifier
 
 
 def is_module_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
+    return 'menu' in identifier and 'form' not in identifier
 
 
 def is_modules_and_forms_sheet(identifier):
-    return identifier == MODULES_AND_FORMS_SHEET_NAME or identifier == LEGACY_MODULES_AND_FORMS_SHEET_NAME
+    return identifier == MODULES_AND_FORMS_SHEET_NAME
 
 
 def is_single_sheet(identifier):
@@ -160,7 +159,7 @@ def get_menu_or_form_by_unique_id(app, unique_id, sheet_name):
 
 
 def get_module_from_sheet_name(app, identifier):
-    module_index = int(identifier.replace("module", "").replace("menu", "")) - 1
+    module_index = int(identifier.replace("menu", "")) - 1
     try:
         return app.get_module(module_index)
     except ModuleNotFoundException:
@@ -202,7 +201,7 @@ def get_unicode_dicts(iterable):
 
 class BulkAppTranslationUpdater(object):
     '''
-        Class to help translatea particular model (app, module, or form).
+        Class to help translate a particular model (app, module, or form).
     '''
 
     def __init__(self, app, lang=None):

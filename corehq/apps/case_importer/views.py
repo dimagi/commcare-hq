@@ -140,7 +140,6 @@ def excel_config(request, domain):
         'slug': base.ImportCases.slug,
     }
     context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
-    request.use_select2_v4 = True
     return render(request, "case_importer/excel_config.html", context)
 
 

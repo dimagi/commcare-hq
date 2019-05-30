@@ -26,7 +26,6 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
@@ -116,7 +115,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = ugettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 

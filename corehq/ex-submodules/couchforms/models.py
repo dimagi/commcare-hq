@@ -165,7 +165,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
                     )
             return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
         except ResourceNotFound:
-            raise XFormNotFound
+            raise XFormNotFound(docid)
 
     @property
     def form_id(self):

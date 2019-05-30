@@ -18,6 +18,10 @@ from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
+from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
+    BAD_FORM_PROBLEM_TEMPLATE,
+    FIXED_FORM_PROBLEM_TEMPLATE,
+)
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     MigrationRestricted,
@@ -677,6 +681,38 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(set(case.xform_ids), {"f1-9017", "f2-b1ce", "f3-7c38", "f4-3226"})
         self._compare_diffs([])
 
+    def test_normal_form_with_problem_and_case_updates(self):
+        bad_form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        assert bad_form._id == "test-form", bad_form
+
+        form = XFormInstance.wrap(bad_form.to_json())
+        form._id = "new-form"
+        form._rev = None
+        form.problem = FIXED_FORM_PROBLEM_TEMPLATE.format(
+            id_="test-form", datetime_="a day long ago")
+        assert len(form.external_blobs) == 1, form.external_blobs
+        form.external_blobs.pop("form.xml")
+        form.initial_processing_complete = False
+        with bad_form.fetch_attachment("form.xml", stream=True) as xml:
+            form.put_attachment(xml, "form.xml", content_type="text/xml")
+        form.save()
+
+        bad_form.doc_type = "XFormDuplicate"
+        bad_form.problem = BAD_FORM_PROBLEM_TEMPLATE.format("new-form", "a day long ago")
+        bad_form.save()
+
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["new-form"])
+        self._compare_diffs([])
+        form = FormAccessors(self.domain_name).get_form('new-form')
+        self.assertEqual(form.deprecated_form_id, "test-form")
+        self.assertIsNone(form.problem)
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
@@ -857,6 +893,45 @@ class DummyObject(object):
 
     def __repr__(self):
         return "DummyObject<id={}>".format(self.id)
+
+
+TEST_FORM = """
+<?xml version="1.0" ?>
+<data
+    name="Registration"
+    uiVersion="1"
+    version="11"
+    xmlns="http://openrosa.org/formdesigner/test-form"
+    xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+>
+    <first_name>Xeenax</first_name>
+    <age>27</age>
+    <n0:case
+        case_id="test-case"
+        date_modified="2015-08-04T18:25:56.656Z"
+        user_id="3fae4ea4af440efaa53441b5"
+        xmlns:n0="http://commcarehq.org/case/transaction/v2"
+    >
+        <n0:create>
+            <n0:case_name>Xeenax</n0:case_name>
+            <n0:owner_id>3fae4ea4af440efaa53441b5</n0:owner_id>
+            <n0:case_type>testing</n0:case_type>
+        </n0:create>
+        <n0:update>
+            <n0:age>27</n0:age>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>cloudcare</n1:deviceID>
+        <n1:timeStart>2015-07-13T11:20:11.381Z</n1:timeStart>
+        <n1:timeEnd>2015-08-04T18:25:56.656Z</n1:timeEnd>
+        <n1:username>jeremy</n1:username>
+        <n1:userID>3fae4ea4af440efaa53441b5</n1:userID>
+        <n1:instanceID>test-form</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    </n1:meta>
+</data>
+""".strip()
 
 
 LIST_ORDER_FORMS = ["""
