@@ -25,6 +25,7 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
         initialValue = options.getInitialValue();
 
         if (options.multiple) {
+            // initializing multi select2s
             if (!_.isObject(initialValue) && !_.isArray(initialValue)) {
                 initialValue = [{text: initialValue, id: initialValue}];
             }
@@ -44,8 +45,9 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
             $select.trigger({type: 'select2:select', params: {data: initialValue}});
 
         } else if (!_.isArray(initialValue)) {
+            // initializing single select2s
             if (_.isObject(initialValue)) {
-                if (options.createNodes) {
+                if (options.createNodes) { // createNodes needed to get around the ajax load of static options
                     var option = new Option(initialValue.text, initialValue.id, true, true);
                     $select.append(option);
                 }
@@ -130,7 +132,7 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
                 if (_.isFunction(options.getInitialValue)) {
                     data.currentValue = JSON.stringify(options.getInitialValue());
                 }
-                if (options.dataObservable) {
+                if (options.dataObservable) { // this is related to the ajax call below
                     // this is necessary for "pre-loading" the select2 so that
                     // there isn't a blip of a non-select element on the screen
                     // as the static options are fetched from the url specified
