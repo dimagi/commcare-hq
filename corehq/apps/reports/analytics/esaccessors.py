@@ -669,3 +669,7 @@ def get_case_types_for_domain_es(domain, use_case_search=False):
         .terms_aggregation("type.exact", "case_types")
     )
     return set(query.run().aggregations.case_types.keys)
+
+
+def get_case_search_types_for_domain_es(domain):
+    return get_case_types_for_domain_es(domain, True)
