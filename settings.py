@@ -246,6 +246,7 @@ HQ_APPS = (
     'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
+    'corehq.limits',
     'corehq.sql_db',
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',

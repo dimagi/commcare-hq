@@ -1,0 +1,2 @@
+class LimitTypeDoesNotExist(Exception):
+    pass
