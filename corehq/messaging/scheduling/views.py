@@ -24,7 +24,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
 from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
-from corehq.apps.sms.util import get_language_list
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
@@ -53,6 +52,7 @@ from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, 
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.messaging.scheduling.view_helpers import (
+    get_conditional_alert_headers,
     get_conditional_alert_rows,
     get_conditional_alerts_queryset_by_domain,
     TranslatedConditionalAlertUploader,
@@ -1020,15 +1020,8 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
 
     def get(self, request, domain):
-        common_headers = ['id', 'name']
-
-        langs = get_language_list(self.domain)
-        headers = ((TranslatedConditionalAlertUploader.sheet_name,
-                    common_headers + ['message_' + lang for lang in langs]),
-                   (UntranslatedConditionalAlertUploader.sheet_name,
-                    common_headers + ['message']))
-
-        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, langs)
+        headers = get_conditional_alert_headers(self.domain)
+        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain)
 
         temp = io.BytesIO()
         export_raw(
@@ -1080,8 +1073,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             messages.error(request, six.text_type(e))
             return self.get(request, *args, **kwargs)
 
-        langs = get_language_list(self.domain)
-        msgs = upload_conditional_alert_workbook(self.domain, langs, workbook)
+        msgs = upload_conditional_alert_workbook(self.domain, workbook)
         for msg in msgs:
             msg[0](request, msg[1])
 

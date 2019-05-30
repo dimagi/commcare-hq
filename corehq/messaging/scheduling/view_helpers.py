@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.sms.util import get_language_list
 from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
@@ -25,10 +26,19 @@ def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
     return query
 
 
-def get_conditional_alert_rows(domain, langs):
+def get_conditional_alert_headers(domain):
+    common_headers = ['id', 'name']
+    langs = get_language_list(domain)
+    return ((TranslatedConditionalAlertUploader.sheet_name,
+             common_headers + ['message_' + lang for lang in langs]),
+            (UntranslatedConditionalAlertUploader.sheet_name,
+             common_headers + ['message']))
+
+def get_conditional_alert_rows(domain):
     translated_rows = []
     untranslated_rows = []
 
+    langs = get_language_list(domain)
     for rule in get_conditional_alerts_queryset_by_domain(domain):
         if not isinstance(_get_rule_content(rule), SMSContent):
             continue
@@ -46,19 +56,19 @@ def get_conditional_alert_rows(domain, langs):
     return (translated_rows, untranslated_rows)
 
 
-def upload_conditional_alert_workbook(domain, langs, workbook):
-    translated_uploader = TranslatedConditionalAlertUploader(domain, langs)
-    untranslated_uploader = UntranslatedConditionalAlertUploader(domain, langs)
+def upload_conditional_alert_workbook(domain, workbook):
+    translated_uploader = TranslatedConditionalAlertUploader(domain)
+    untranslated_uploader = UntranslatedConditionalAlertUploader(domain)
     return translated_uploader.upload(workbook) + untranslated_uploader.upload(workbook)
 
 
 class ConditionalAlertUploader(object):
     sheet_name = None
 
-    def __init__(self, domain, langs):
+    def __init__(self, domain):
         super(ConditionalAlertUploader, self).__init__()
         self.domain = domain
-        self.langs = langs
+        self.langs = get_language_list(domain)
         self.msgs = []
 
     def applies_to_rule(self, rule):
