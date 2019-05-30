@@ -163,8 +163,9 @@ def email_project_from_hq(domain, data, email):
     """
     lang = data.get('source_lang')
     project_slug = data.get('transifex_project_slug')
-    gen = AppTranslationsGenerator(domain, data.get('app_id'), data.get('version'), lang, lang, 'default_')
-    parser = TranslationsParser(gen)
+    quacks_like_a_transifex = AppTranslationsGenerator(domain, data.get('app_id'), data.get('version'),
+                                                       key_lang=lang, source_lang=lang, lang_prefix='default_')
+    parser = TranslationsParser(quacks_like_a_transifex)
     try:
         translation_file, __ = parser.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
