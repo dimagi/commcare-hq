@@ -38,7 +38,7 @@ hqDefine("export/js/export_list", [
     var exportModel = function (options, pageOptions) {
         assertProperties.assert(pageOptions, ['is_deid', 'model_type', 'urls']);
 
-        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'showLink'], function (key) {
+        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData', 'showLink'], function (key) {
             options[key] = options[key] || false;
         });
         options.formname = options.formname || '';
@@ -69,6 +69,10 @@ hqDefine("export/js/export_list", [
             }
             return self.emailedExport.taskStatus.justFinished() && self.emailedExport.taskStatus.success();
         });
+
+        if (options.isOData) {
+            self.odataFeedUrl = 'https://placekitten.com';
+        }
 
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();

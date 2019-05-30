@@ -875,6 +875,7 @@ class ODataFeedListHelper(ExportListHelper):
         data = super(ODataFeedListHelper, self).fmt_export_data(export)
         data.update({
             'case_type': export.case_type,
+            'isOData': True,
         })
         return data
 

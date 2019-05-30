@@ -79,6 +79,19 @@
         {% endblocktrans %}
       </div>
 
+      <!-- ko if: isOData -->
+      <div class="input-group">
+          <span data-bind="css: {'input-group-btn': showLink}, click: copyLinkRequested">
+              <a class="btn btn-default btn-sm">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Copy OData Feed Link" %}
+              </a>
+          </span>
+          <input data-bind="visible: showLink, value: odataFeedUrl"
+                 type="text" class="form-control input-sm" readonly />
+      </div>
+      <!-- /ko -->
+
       <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
       <p class="text-warning">
         <i class="fa fa-exclamation-triangle"></i>
