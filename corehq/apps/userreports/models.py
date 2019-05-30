@@ -1288,6 +1288,7 @@ class ReportComparisonException(models.Model):
     candidate_report_config_id = models.TextField()
     filter_values = JSONField()
     exception = models.TextField()
+    notes = models.TextField(blank=True)
 
 
 class ReportComparisonDiff(models.Model):
@@ -1299,6 +1300,7 @@ class ReportComparisonDiff(models.Model):
     control = JSONField()
     candidate = JSONField()
     diff = JSONField()
+    notes = models.TextField(blank=True)
 
 
 class ReportComparisonTiming(models.Model):
