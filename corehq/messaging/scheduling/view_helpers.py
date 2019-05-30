@@ -72,9 +72,6 @@ class ConditionalAlertUploader(object):
         self.langs = get_language_list(domain)
         self.msgs = []
 
-    def applies_to_rule(self, rule):
-        return True
-
     def rule_message(self, rule):
         content = _get_rule_content(rule)
         if not isinstance(content, SMSContent):
@@ -137,11 +134,6 @@ class ConditionalAlertUploader(object):
                 self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
                                   "does not use SMS content.").format(index=index, id=row['id'],
                                                                       sheet_name=self.sheet_name)))
-                continue
-
-            if not self.applies_to_rule(rule):
-                self.msgs.append((messages.error, _("Rule in row {index} with id {id} does not belong in "
-                    "'{sheet_name}' sheet.".format(index=index, id=row['id'], sheet_name=self.sheet_name))))
                 continue
 
             with transaction.atomic():
@@ -219,10 +211,6 @@ class ConditionalAlertUploader(object):
 class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
     sheet_name = 'translated'
 
-    def applies_to_rule(self, rule):
-        message = self.rule_message(rule)
-        return message and '*' not in message
-
     def update_rule(self, rule, row):
         dirty = super(TranslatedConditionalAlertUploader, self).update_rule(rule, row)
         message = self.rule_message(rule)
@@ -232,6 +220,7 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
             if key in row and message.get(lang, '') != row[key]:
                 message.update({lang: row[key]})
                 message_dirty = True
+        message.pop('*', None)
         if message_dirty:
             self.update_rule_message(rule, message)
         return dirty or message_dirty
@@ -240,10 +229,6 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
 class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
     sheet_name = 'not translated'
 
-    def applies_to_rule(self, rule):
-        message = self.rule_message(rule)
-        return not message or '*' in message
-
     def update_rule(self, rule, row):
         dirty = super(UntranslatedConditionalAlertUploader, self).update_rule(rule, row)
         if 'message' not in row:
@@ -251,7 +236,7 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
         message = self.rule_message(rule)
         if message.get('*', '') != row['message']:
-            message.update({'*': row['message']})
+            message = {'*': row['message']}
             self.update_rule_message(rule, message)
             dirty = True
         return dirty
