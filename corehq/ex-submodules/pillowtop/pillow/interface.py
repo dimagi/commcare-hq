@@ -312,11 +312,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         datadog_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
 
         # processing_time per change
-        datadog_histogram(
-            'commcare.change_feed.processing_time',
-            processing_time / change_count,
-            tags=tags + ["chunk_size:".format(str(change_count))]
-        )
+        datadog_histogram('commcare.change_feed.processing_time', processing_time / change_count, tags=tags)
 
         if change_count == self.processor_chunk_size:
             # don't report offset chunks to ease up datadog calculations
