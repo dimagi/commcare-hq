@@ -311,6 +311,14 @@ class RestoreParams(object):
     def app_id(self):
         return self.app.get_id if self.app else None
 
+    def __repr__(self):
+        return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}'".format(
+            self.sync_log_id,
+            self.version,
+            self.app,
+            self.device_id,
+        )
+
 
 class RestoreCacheSettings(object):
     """
