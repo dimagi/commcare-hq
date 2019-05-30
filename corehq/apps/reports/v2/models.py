@@ -22,9 +22,9 @@ ColumnMeta = namedtuple('ColumnMeta', 'title name width sort')
 ReportFilterData = namedtuple('ReportFilterData', 'name value')
 
 
-class ReportFilterWidget(object):
-    SELECT2_MULTI_ASYNC = 'select2-multi-async'
-    SELECT2_SINGLE = 'select2-single'
+class ReportFilterKoTemplate(object):
+    SELECT2_MULTI_ASYNC = 'ko-select2-multi-async'
+    SELECT2_SINGLE = 'ko-select2-single'
 
 
 class BaseReport(object):
@@ -199,7 +199,7 @@ class BaseReportFilter(BaseFilter):
     name = None
     title = None
     endpoint_slug = None
-    widget = None
+    ko_template_name = None
 
     def __init__(self, request, domain, context):
         self.request = request
@@ -232,7 +232,7 @@ class BaseReportFilter(BaseFilter):
             'title': cls.title,
             'name': cls.name,
             'endpointSlug': cls.endpoint_slug,
-            'widget': cls.widget,
+            'koTemplateName': cls.ko_template_name,
         }
 
     @abstractmethod

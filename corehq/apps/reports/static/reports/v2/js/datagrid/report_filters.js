@@ -12,9 +12,9 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
 
         self.title = ko.observable(data.title);
         self.name = ko.observable(data.name);
-        self.widget = ko.observable(data.widget);
+        self.koTemplateName = ko.observable(data.koTemplateName);
 
-        if (data.widget.indexOf('multi') > 0) {
+        if (data.koTemplateName.indexOf('multi') > 0) {
             self.value = ko.observableArray(data.value);
         } else {
             self.value = ko.observable(data.value);
@@ -42,10 +42,6 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
                 name: self.name(),
                 value: self.value(),
             };
-        });
-
-        self.templateName = ko.computed(function () {
-            return 'ko-' + self.widget();
         });
 
         self.getInitialValue = function () {

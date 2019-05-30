@@ -11,7 +11,7 @@ from corehq.apps.reports.standard.cases.utils import (
 )
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
 from corehq.apps.reports.v2.endpoints.case_type import CaseTypeEndpoint
-from corehq.apps.reports.v2.models import BaseReportFilter, ReportFilterWidget
+from corehq.apps.reports.v2.models import BaseReportFilter, ReportFilterKoTemplate
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 
 
@@ -19,7 +19,7 @@ class CaseOwnerReportFilter(BaseReportFilter):
     title = ugettext_lazy("Case Owner(s)")
     name = 'report_case_owner'
     endpoint_slug = CaseOwnerEndpoint.slug
-    widget = ReportFilterWidget.SELECT2_MULTI_ASYNC
+    ko_template_name = ReportFilterKoTemplate.SELECT2_MULTI_ASYNC
 
     def get_filtered_query(self, query):
         if self.request.can_access_all_locations and (
@@ -43,7 +43,7 @@ class CaseTypeReportFilter(BaseReportFilter):
     title = ugettext_lazy("Case Type")
     name = 'report_case_type'
     endpoint_slug = CaseTypeEndpoint.slug
-    widget = ReportFilterWidget.SELECT2_SINGLE
+    ko_template_name = ReportFilterKoTemplate.SELECT2_SINGLE
 
     @classmethod
     def initial_value(cls, request, domain):
