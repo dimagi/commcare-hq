@@ -84,6 +84,8 @@
        class="ko-template">
 
     <div class="datagrid-save">
+      <feedback data-apply-bindings="false"
+                params="featureName: '{% trans_html_attr 'Explore Case Data' %}'"></feedback>
       <button type="button"
               data-bind="click: exportData"
               class="btn btn-default">
