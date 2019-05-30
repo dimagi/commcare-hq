@@ -2025,7 +2025,7 @@ class TestExportData(TestCase):
                         'Lady Supervisor User ID',
                         'Total No. of AWCs visited',
                         'Total No. of Beneficiaries Visited',
-                        'Total No. of VHNDs observed'
+                        'Total No. of VHSNDs observed'
                     ],
                     [
                         'st1',
