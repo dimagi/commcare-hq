@@ -4,6 +4,9 @@ from __future__ import unicode_literals
 
 import uuid
 from collections import defaultdict
+
+from django.db import OperationalError
+
 try:
     from random import choices
 except ImportError:
@@ -230,19 +233,22 @@ def get_replication_delay_for_standby(db_alias):
         return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
-    sql = """
-    SELECT
-    CASE
-        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN {delay}
-        WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
-        ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
-    END
-    AS replication_lag;
-    """.format(delay=VERY_LARGE_DELAY)
-    with db.connections[db_alias].cursor() as cursor:
-        cursor.execute(sql)
-        [(delay, )] = cursor.fetchall()
-        return delay
+    try:
+        sql = """
+        SELECT
+        CASE
+            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN {delay}
+            WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
+            ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
+        END
+        AS replication_lag;
+        """.format(delay=VERY_LARGE_DELAY)
+        with db.connections[db_alias].cursor() as cursor:
+            cursor.execute(sql)
+            [(delay, )] = cursor.fetchall()
+            return delay
+    except OperationalError:
+        return VERY_LARGE_DELAY
 
 
 @memoized
