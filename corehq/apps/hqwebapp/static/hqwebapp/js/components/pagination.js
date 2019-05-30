@@ -15,6 +15,8 @@
  *          in the success and error callbacks).
  *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
  *          in a cookie.
+ *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
+ *          which shows up next to the left of the limit dropdown.
  *
  *  See releases_table.html for an example.
  */
