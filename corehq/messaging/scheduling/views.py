@@ -1020,7 +1020,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
 
     def get(self, request, domain):
-        common_headers = ['id', 'name', 'case_type']
+        common_headers = ['id', 'name']
 
         langs = get_language_list(self.domain)
         headers = ((TranslatedConditionalAlertUploader.sheet_name,

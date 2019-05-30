@@ -201,17 +201,17 @@ class TestBulkConditionalAlerts(TestCase):
 
         rows_by_id = {row[0]: row[1:] for row in translated_rows + untranslated_rows}
         self.assertListEqual(rows_by_id[self._get_rule(self.UNTRANSLATED_RULE).id],
-                                       ['test', 'person', 'Joan'])
+                                       ['test', 'Joan'])
         self.assertListEqual(rows_by_id[self._get_rule(self.IMMEDIATE_RULE).id],
-                                       ['test', 'person', 'Car on a Hill'])
+                                       ['test', 'Car on a Hill'])
         self.assertListEqual(rows_by_id[self._get_rule(self.DAILY_RULE).id],
-                                       ['test', 'person', 'Diamonds and Rust', 'Diamantes y Óxido'])
+                                       ['test', 'Diamonds and Rust', 'Diamantes y Óxido'])
         self.assertListEqual(rows_by_id[self._get_rule(self.WEEKLY_RULE).id],
-                                       ['test', 'person', 'It\'s Too Late', 'Es Demasiado Tarde'])
+                                       ['test', 'It\'s Too Late', 'Es Demasiado Tarde'])
         self.assertListEqual(rows_by_id[self._get_rule(self.MONTHLY_RULE).id],
-                                       ['test', 'person', 'Both Sides Now', 'Ahora Ambos Lados'])
+                                       ['test', 'Both Sides Now', 'Ahora Ambos Lados'])
         self.assertListEqual(rows_by_id[self._get_rule(self.LOCKED_RULE).id],
-                                       ['test', 'person', 'Fool That I Am'])
+                                       ['test', 'Fool That I Am'])
 
     def _upload(self, headers, data):
         file = BytesIO()
@@ -226,25 +226,25 @@ class TestBulkConditionalAlerts(TestCase):
 
     def test_upload(self):
         headers = (
-            ("translated", ("id", "name", "case_type", "message_en", "message_es")),
-            ("not translated", ("id", "name", "case_type", "message")),
+            ("translated", ("id", "name", "message_en", "message_es")),
+            ("not translated", ("id", "name", "message")),
         )
         data = (
             ("translated", (
-                (self._get_rule(self.DAILY_RULE).id, 'test daily', 'song', 'Rustier', 'Más Oxidado'),
-                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test wrong sheet', 'wrong', 'wrong'),
-                (self._get_rule(self.EMAIL_RULE).id, 'test email', 'song', 'Email content', 'does not fit'),
-                (1000, 'Not a rule', 'person'),
-                (self._get_rule(self.WEEKLY_RULE).id, 'test weekly', 'song', 'It\'s On Time', 'Está a Tiempo'),
-                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', 'song', 'One Side Now', 'Un Lado Ahora'),
+                (self._get_rule(self.DAILY_RULE).id, 'test daily', 'Rustier', 'Más Oxidado'),
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test wrong sheet', 'wrong'),
+                (self._get_rule(self.EMAIL_RULE).id, 'test email', 'Email content', 'does not fit'),
+                (1000, 'Not a rule'),
+                (self._get_rule(self.WEEKLY_RULE).id, 'test weekly', 'It\'s On Time', 'Está a Tiempo'),
+                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', 'One Side Now', 'Un Lado Ahora'),
             )),
             ("not translated", (
-                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
-                (self._get_rule(self.IMMEDIATE_RULE).id, 'test immediate', 'song', 'Bicycle on a Hill'),
-                (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Just Like This Train'),
-                (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'nope', 'Free Man in Paris'),
-                (self._get_rule(self.LOCKED_RULE).id, 'test locked', 'nope', 'nope', 'nope'),
-                (None, 'missing id', 'is', 'bad', 'news'),
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'Joanie'),
+                (self._get_rule(self.IMMEDIATE_RULE).id, 'test immediate', 'Bicycle on a Hill'),
+                (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'Just Like This Train'),
+                (self._get_rule(self.CUSTOM_DAILY_RULE).id, 'test', 'unsupported', 'Free Man in Paris'),
+                (self._get_rule(self.LOCKED_RULE).id, 'test locked', 'nope', 'nope'),
+                (None, 'missing id', 'is', 'bad'),
             )),
         )
 
@@ -268,7 +268,7 @@ class TestBulkConditionalAlerts(TestCase):
 
         untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
         self.assertEqual(untranslated_rule.name, 'test untranslated')
-        self.assertEqual(untranslated_rule.case_type, 'song')
+        self.assertEqual(untranslated_rule.case_type, 'person')
         untranslated_schedule = untranslated_rule.get_messaging_rule_schedule()
         self._assertTimedScheduleEventsEqual(untranslated_schedule, old_schedules[self.UNTRANSLATED_RULE])
         untranslated_content = untranslated_schedule.memoized_events[0].content
@@ -287,7 +287,6 @@ class TestBulkConditionalAlerts(TestCase):
 
         daily_rule = self._get_rule(self.DAILY_RULE)
         self.assertEqual(daily_rule.name, 'test daily')
-        self.assertEqual(daily_rule.case_type, 'song')
         daily_schedule = daily_rule.get_messaging_rule_schedule()
         self._assertTimedScheduleEventsEqual(daily_schedule, old_schedules[self.DAILY_RULE])
         daily_content = daily_schedule.memoized_events[0].content
@@ -317,14 +316,14 @@ class TestBulkConditionalAlerts(TestCase):
     def test_partial_upload(self):
         headers = (
             ("translated", ("id", "name", "message_es")),
-            ("not translated", ("id", "name", "case_type")),
+            ("not translated", ("id", "name")),
         )
         data = (
             ("translated", (
                 (self._get_rule(self.DAILY_RULE).id, 'test daily', 'Más Oxidado'),
             )),
             ("not translated", (
-                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song'),
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated'),
             )),
         )
 
@@ -336,7 +335,7 @@ class TestBulkConditionalAlerts(TestCase):
 
         untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
         self.assertEqual(untranslated_rule.name, 'test untranslated')
-        self.assertEqual(untranslated_rule.case_type, 'song')
+        self.assertEqual(untranslated_rule.case_type, 'person')
         untranslated_content = untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
         self.assertEqual(untranslated_content.message, {
             '*': 'Joan',
@@ -353,15 +352,15 @@ class TestBulkConditionalAlerts(TestCase):
 
     def test_upload_missing_id_column(self):
         headers = (
-            ("translated", ("name", "case_type", "message_en", "message_es")),
-            ("not translated", ("id", "name", "case_type", "message")),
+            ("translated", ("name", "message_en", "message_es")),
+            ("not translated", ("id", "name", "message")),
         )
         data = (
             ("translated", (
-                ('test daily', 'song', 'Rustier', 'Más Oxidado'),
+                ('test daily', 'Rustier', 'Más Oxidado'),
             )),
             ("not translated", (
-                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'song', 'Joanie'),
+                (self._get_rule(self.UNTRANSLATED_RULE).id, 'test untranslated', 'Joanie'),
             )),
         )
 
@@ -373,7 +372,6 @@ class TestBulkConditionalAlerts(TestCase):
 
         untranslated_rule = self._get_rule(self.UNTRANSLATED_RULE)
         self.assertEqual(untranslated_rule.name, 'test untranslated')
-        self.assertEqual(untranslated_rule.case_type, 'song')
         untranslated_content = untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
         self.assertEqual(untranslated_content.message, {
             '*': 'Joanie',

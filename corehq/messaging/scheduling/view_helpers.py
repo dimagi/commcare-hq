@@ -37,7 +37,7 @@ def get_conditional_alert_rows(domain, langs):
         if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
             continue
         message = schedule.memoized_events[0].content.message
-        common_columns = [rule.pk, rule.name, rule.case_type]
+        common_columns = [rule.pk, rule.name]
         if '*' in message or len(message) == 0:
             untranslated_rows.append(common_columns + [message.get('*', '')])
         else:
@@ -150,9 +150,6 @@ class ConditionalAlertUploader(object):
         if 'name' in row and rule.name != row['name']:
             dirty = True
             rule.name = row['name']
-        if 'case_type' in row and rule.case_type != row['case_type']:
-            dirty = True
-            rule.case_type = row['case_type']
         return dirty
 
     def update_rule_message(self, rule, message):
