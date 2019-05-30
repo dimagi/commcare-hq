@@ -487,6 +487,15 @@ class RestoreState(object):
     def loadtest_factor(self):
         return self.restore_user.loadtest_factor
 
+    def __repr__(self):
+        return "RestoreState(project='{}', domain={}, restore_user='{}', start_time='{}', duration='{}'".format(
+            self.project,
+            self.domain,
+            self.restore_user,
+            self.start_time,
+            self.duration
+        )
+
 
 class RestoreConfig(object):
     """
