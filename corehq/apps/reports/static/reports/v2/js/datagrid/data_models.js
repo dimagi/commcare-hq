@@ -27,10 +27,14 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.isDataLoading.subscribe(function (isLoading) {
             if (!isLoading) return;
 
+            // vertically center the loading text within the table body rows,
+            // and make sure the width and height of the element wrapping the
+            // loading text is the same as the width and height of the rows in
+            // table body
             var $rows = $('#js-datagrid-rows'),
                 $loading = $('#js-datagrid-loading'),
                 position = $rows.position(),
-                marginTop = $rows.height() / 2 - 50;
+                marginTop = $rows.height() / 2 - 50; // 50 is half the line height of the loading text
 
             if (position.top === 0) return;
 
