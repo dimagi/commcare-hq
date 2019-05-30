@@ -1050,8 +1050,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
                 "adjective": _("conditional alert"),
                 "plural_noun": _("conditional alerts"),
-                "help_text": _("This page will only download / upload conditional alerts that use "
-                               "SMS content - not email, SMS surveys or other content."),
+                "help_link": "https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts", # noqa
             },
         }
         context.update({
