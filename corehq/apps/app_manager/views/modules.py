@@ -626,20 +626,25 @@ def delete_module(request, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
     try:
-        record = app.delete_module(module_unique_id)
+        module = app.get_module_by_unique_id(module_unique_id)
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
-    if record is not None:
-        messages.success(
-            request,
-            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
-                record.module.default_name(app=app),
-                reverse('undo_delete_module', args=[domain, record.get_id])
-            ),
-            extra_tags='html'
-        )
-        app.save()
-        clear_xmlns_app_id_cache(domain)
+    if module.get_child_modules():
+        messages.error(request, _('"{}" has child menus. You must remove these before '
+                                  'you can delete it.').format(module.default_name()))
+        return back_to_main(request, domain, app_id)
+
+    record = app.delete_module(module_unique_id)
+    messages.success(
+        request,
+        _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
+            name=record.module.default_name(app=app),
+            url=reverse('undo_delete_module', args=[domain, record.get_id])
+        ),
+        extra_tags='html'
+    )
+    app.save()
+    clear_xmlns_app_id_cache(domain)
     return back_to_main(request, domain, app_id=app_id)
 
 
