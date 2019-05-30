@@ -130,6 +130,7 @@ load_ignore_rules = memoized(lambda: {
     ],
     'CommCareCase-Deleted': [
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
         Ignore('missing', '-deletion_date', old=MISSING, new=None),
         Ignore('missing', 'deleted_on', old=MISSING),
