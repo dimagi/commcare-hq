@@ -39,9 +39,7 @@ hqDefine('reports/v2/js/datagrid', [
         var self = {};
 
         self.data = options.dataModel;
-        self.reportFilters = ko.observableArray(_.map(options.reportFilters, function (data) {
-            return reportFilters.reportFilter(data);
-        }));
+        self.reportFilters = ko.observableArray(_.map(options.reportFilters, reportFilters.reportFilter));
         self.columns = ko.observableArray();
 
         self.editColumnController = columns.editColumnController({
