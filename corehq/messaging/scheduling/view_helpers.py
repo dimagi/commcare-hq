@@ -34,6 +34,7 @@ def get_conditional_alert_headers(domain):
             (UntranslatedConditionalAlertUploader.sheet_name,
              common_headers + ['message']))
 
+
 def get_conditional_alert_rows(domain):
     translated_rows = []
     untranslated_rows = []
