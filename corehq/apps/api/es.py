@@ -668,6 +668,7 @@ class TermParam(object):
     def consume_params(self, raw_params):
         value = raw_params.pop(self.param, None)
         if value:
+            # convert non-analyzed values to lower case
             value = value.lower() if self.analyzed else value
             return filters.term(self.term, value)
 
@@ -732,6 +733,9 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
 
     # add unconsumed filters
     for param, value in query_params.items():
-        payload["filter"]["and"].append(filters.term(param, value.lower()))
+        # assume these fields are analyzed in ES so convert to lowercase
+        # Any fields that are not analyzed in ES should be in the ``query_param_consumers`` above
+        value = value.lower()
+        payload["filter"]["and"].append(filters.term(param, value))
 
     return payload
