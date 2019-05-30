@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.test import TestCase
 from datetime import time
 from io import BytesIO
+from mock import patch
 import re
 import tempfile
 
@@ -193,8 +194,10 @@ class TestBulkConditionalAlerts(TestCase):
         rule.save()
         return rule
 
-    def test_download(self):
-        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, self.langs)
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_download(self, language_list_patch):
+        language_list_patch.return_value = self.langs
+        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain)
 
         self.assertEqual(len(translated_rows), 3)
         self.assertEqual(len(untranslated_rows), 3)
@@ -221,10 +224,12 @@ class TestBulkConditionalAlerts(TestCase):
             f.write(file.getvalue())
             f.seek(0)
             workbook = get_workbook(f)
-            msgs = upload_conditional_alert_workbook(self.domain, self.langs, workbook)
+            msgs = upload_conditional_alert_workbook(self.domain, workbook)
             return [m[1] for m in msgs]     # msgs is tuples of (type, message); ignore the type
 
-    def test_upload(self):
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload(self, language_list_patch):
+        language_list_patch.return_value = self.langs
         headers = (
             ("translated", ("id", "name", "message_en", "message_es")),
             ("not translated", ("id", "name", "message")),
@@ -313,7 +318,9 @@ class TestBulkConditionalAlerts(TestCase):
             'es': 'Un Lado Ahora',
         })
 
-    def test_partial_upload(self):
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_partial_upload(self, language_list_patch):
+        language_list_patch.return_value = self.langs
         headers = (
             ("translated", ("id", "name", "message_es")),
             ("not translated", ("id", "name")),
@@ -350,7 +357,9 @@ class TestBulkConditionalAlerts(TestCase):
             'es': 'Más Oxidado',
         })
 
-    def test_upload_missing_id_column(self):
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload_missing_id_column(self, language_list_patch):
+        language_list_patch.return_value = self.langs
         headers = (
             ("translated", ("name", "message_en", "message_es")),
             ("not translated", ("id", "name", "message")),
