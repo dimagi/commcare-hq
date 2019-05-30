@@ -24,34 +24,35 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
 
         initialValue = options.getInitialValue();
 
-        if (_.isObject(initialValue) || _.isArray(initialValue)) {
-            // value is for a multi-select
-            // https://select2.org/programmatic-control/add-select-clear-items#preselecting-options-in-an-remotely-sourced-ajax-select2
+        if (options.multiple) {
+            if (!_.isObject(initialValue) && !_.isArray(initialValue)) {
+                initialValue = [{text: initialValue, id: initialValue}];
+            }
 
-            if (!_.isArray(initialValue) && options.multiple) {
+            if (!_.isArray(initialValue)) {
                 initialValue = [initialValue];
             }
 
-            if (options.url && options.multiple) {
+            if (options.url) {
                 // only hard load options when async select2 is being used
                 _.each(initialValue, function (valObj) {
                     var option = new Option(valObj.text, valObj.id, true, true);
                     $select.append(option);
                 });
-                $select.trigger('change');
-                $select.trigger({type: 'select2:select', params: {data: initialValue}});
             }
+            $select.trigger('change');
+            $select.trigger({type: 'select2:select', params: {data: initialValue}});
 
-            if (!options.multiple && _.isObject(initialValue)) {
+        } else if (!_.isArray(initialValue)) {
+            if (_.isObject(initialValue)) {
                 if (options.createNodes) {
                     var option = new Option(initialValue.text, initialValue.id, true, true);
                     $select.append(option);
                 }
                 $select.val(initialValue.id).trigger('change');
+            } else {
+                $select.val(initialValue).trigger('change');
             }
-
-        } else {
-            $select.val(initialValue).trigger('change');
         }
     };
 
@@ -130,6 +131,10 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
                     data.currentValue = JSON.stringify(options.getInitialValue());
                 }
                 if (options.dataObservable) {
+                    // this is necessary for "pre-loading" the select2 so that
+                    // there isn't a blip of a non-select element on the screen
+                    // as the static options are fetched from the url specified
+                    // in dataUrl
                     select2Params.data = options.dataObservable();
                     options.createNodes = true;
                     _select2Init($select, options, select2Params);
