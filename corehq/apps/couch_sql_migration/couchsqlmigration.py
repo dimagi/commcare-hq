@@ -386,9 +386,13 @@ class CouchSqlDomainMigrator(object):
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         log.debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
+        diff_db = self.diff_db
+        counts = defaultdict(int)
         case_ids = list(couch_cases)
         sql_cases = CaseAccessorSQL.get_cases(case_ids)
+        sql_case_ids = set()
         for sql_case in sql_cases:
+            sql_case_ids.add(sql_case.case_id)
             couch_case = couch_cases[sql_case.case_id]
             sql_case_json = sql_case.to_json()
             diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
@@ -403,10 +407,22 @@ class CouchSqlDomainMigrator(object):
                     log.warning('Case {} rebuild -> {}: {}'.format(
                         sql_case.case_id, type(err).__name__, err))
             if diffs:
-                self.diff_db.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+                diff_db.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+            counts[couch_case['doc_type']] += 1
 
         self._diff_ledgers(case_ids)
 
+        if len(case_ids) != len(sql_case_ids):
+            couch_ids = set(case_ids)
+            assert not (sql_case_ids - couch_ids), sql_case_ids - couch_ids
+            missing_cases = [couch_cases[x] for x in couch_ids - sql_case_ids]
+            log.debug("Found %s missing SQL cases", len(missing_cases))
+            for doc_type, doc_ids in self._filter_missing_cases(missing_cases):
+                diff_db.add_missing_docs(doc_type, doc_ids)
+                counts[doc_type] += len(doc_ids)
+
+        for doc_type, count in six.iteritems(counts):
+            diff_db.increment_counter(doc_type, count)
         self.processed_docs += len(case_ids)
         self._log_case_diff_count(throttled=True)
 
@@ -441,6 +457,23 @@ class CouchSqlDomainMigrator(object):
                 'stock state', ledger_value.ledger_reference.as_id(),
                 filter_ledger_diffs(diffs)
             )
+
+    def _filter_missing_cases(self, missing_cases):
+        result = defaultdict(list)
+        for couch_case in missing_cases:
+            if self._is_orphaned_case(couch_case):
+                log.info("Ignoring orphaned case: %s", couch_case["_id"])
+            else:
+                result[couch_case["doc_type"]].append(couch_case["_id"])
+        return six.iteritems(result)
+
+    def _is_orphaned_case(self, couch_case):
+        def references_case(form_id):
+            form = FormAccessorCouch.get_form(form_id)
+            return case_id in get_case_ids_from_form(form)
+
+        case_id = couch_case["_id"]
+        return not any(references_case(x) for x in couch_case["xform_ids"])
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []

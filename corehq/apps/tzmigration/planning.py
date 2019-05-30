@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import sqlite3
+from collections import namedtuple
 from sqlite3 import dbapi2 as sqlite
 
 from sqlalchemy import create_engine, Column, Integer, ForeignKey, String, \
@@ -79,6 +80,24 @@ class PlanningStockReportHelper(Base):
     stock_report_helper_json = Column(UnicodeText, nullable=False)
 
 
+class DocCount(Base):
+    __tablename__ = 'doc_count'
+
+    kind = Column(String(50), primary_key=True)
+    value = Column(Integer, nullable=False)
+
+
+class MissingDoc(Base):
+    __tablename__ = 'missing_doc'
+
+    id = Column(Integer, primary_key=True)
+    kind = Column(String(50), nullable=False)
+    doc_id = Column(String(50), nullable=False)
+
+
+Counts = namedtuple('Counts', 'total missing')
+
+
 class BaseDB(object):
 
     def __init__(self, db_filepath):
@@ -124,6 +143,30 @@ class DiffDB(BaseDB):
                 new_value=json_dumps_or_none(d.new_value)))
         session.commit()
 
+    def increment_counter(self, kind, value):
+        session = self.Session()
+        updated = (
+            session.query(DocCount)
+            .filter_by(kind=kind)
+            .update(
+                {DocCount.value: DocCount.value + value},
+                synchronize_session=False,
+            )
+        )
+        if not updated:
+            session.add(DocCount(kind=kind, value=value))
+        else:
+            assert updated == 1, (kind, updated)
+        session.commit()
+
+    def add_missing_docs(self, kind, doc_ids):
+        session = self.Session()
+        session.bulk_save_objects([
+            MissingDoc(kind=kind, doc_id=doc_id)
+            for doc_id in doc_ids
+        ])
+        session.commit()
+
     def get_diffs(self):
         session = self.Session()
         return session.query(PlanningDiff).all()
@@ -144,6 +187,33 @@ class DiffDB(BaseDB):
         return {
             res[0]: (res[1], res[2])
             for res in results
+        }
+
+    def get_doc_counts(self):
+        """Returns a dict of counts by kind
+
+        Values are `Counts` objects having `total` and `missing`
+        fields:
+
+        - total: number of items counted with `increment_counter`.
+        - missing: count of ids added with `add_missing_docs`.
+        """
+        session = self.Session()
+        totals = {dc.kind: dc.value for dc in session.query(DocCount)}
+        missing = {row[0]: row[1] for row in session.query(
+            MissingDoc.kind,
+            func.count(MissingDoc.doc_id),
+        ).group_by(MissingDoc.kind).all()}
+        return {kind: Counts(
+            total=totals.get(kind, 0),
+            missing=missing.get(kind, 0),
+        ) for kind in set(missing) | set(totals)}
+
+    def get_missing_doc_ids(self, doc_type):
+        return {
+            missing.doc_id for missing in self.Session()
+            .query(MissingDoc.doc_id)
+            .filter(MissingDoc.kind == doc_type)
         }
 
 
