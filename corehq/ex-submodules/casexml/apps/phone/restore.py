@@ -779,6 +779,24 @@ class RestoreConfig(object):
 
         datadog_counter('commcare.restores.count', tags=tags)
 
+    def __repr__(self):
+        return \
+            "RestoreConfig(project='{}', domain={}, restore_user={}, params='{}', cache_settings='{}', " \
+            "is_async='{}', restore_state='{}', force_cache='{}', cache_timeout='{}', overwrite_cache='{}', " \
+            "timing_context='{}')".format(
+                self.project,
+                self.domain,
+                self.restore_user,
+                self.params,
+                self.cache_settings,
+                self.is_async,
+                self.restore_state,
+                self.force_cache,
+                self.cache_timeout,
+                self.overwrite_cache,
+                self.timing_context.to_dict()
+            )
+
 
 RESTORE_SEGMENTS = {
     "wait_for_task_to_start": "waiting",
