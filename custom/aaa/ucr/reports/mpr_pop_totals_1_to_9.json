@@ -1,0 +1,225 @@
+{
+    "doc_type": "ReportConfiguration",
+    "domains": [
+        "icds-dashboard-qa",
+        "laurence-project-1",
+        "jessica-icds-cas",
+        "marissa-test",
+        "derek-icds-sandbox",
+        "priyanka-app",
+        "shrena-dev",
+        "aparatest",
+        "reach-sandbox",
+        "reach-dashboard-qa",
+        "reach-test",
+        "icds-test",
+        "icds-sql",
+        "icds-cas",
+        "cas-lab",
+        "icds-cas-sandbox"
+    ],
+    "server_environment": [
+        "india", 
+        "icds"
+    ],
+    "report_id": "reach-mpr_pop_totals_1_to_9",
+    "data_source_table": "reach-pop_totals_person_mobile",
+    "config":
+    {
+        "title": "REACH 1-9 - Population Demographics - Population Totals",
+        "description": "Report capturing indicators 1-9 from here: https://docs.google.com/spreadsheets/d/1fPFIVOaI0ZJkSqw8DJ-wmMyTefMbGXYGyhcB9UUxXnE/",
+        "visible": false,
+        "last_modified": "2019-05-30T08:28:13.088934Z"
+    },
+    "aggregation_columns": ["month_start"],
+    "filters": [
+    {
+        "datatype": "string",
+        "choice_provider":
+        {
+            "include_descendants": "true",
+            "type": "location",
+            "show_full_path": "true"
+        },
+        "show_all": true,
+        "display": "Village",
+        "field": "village_owner_id",
+        "ancestor_expression":
+        {},
+        "type": "dynamic_choice_list",
+        "slug": "village"
+    },
+    {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Month Start",
+        "field": "month_start",
+        "type": "date",
+        "slug": "month_start"
+    }],
+    "columns": [
+    {
+        "field": "month_start",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "month_start",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Month Start"
+    },
+    {
+        "field": "doc_id",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "count",
+        "column_id": "person_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total Population"
+    },
+    {
+        "field": "household_case_id",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "count_unique",
+        "column_id": "household_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of households registered"
+    },
+    {
+        "field": "beneficiary_sum",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "beneficiary_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of EC + PW + Child (0-5 yr)"
+    },
+    {
+        "field": "beneficiary_with_aadhar_sum",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "beneficiary_with_aadhar_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of EC + PW + Child (0-5 yr) with Aadhaar"
+    },
+    {
+        "field": "pregnant_woman_sum",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "pregnant_woman_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of Pregnant Women (PW)"
+    },
+    {
+        "field": "eligible_couple_sum",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "eligible_couple_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of Eligible Couples (EC)"
+    },
+    {
+        "field": "child_0_to_5_sum",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "child_0_to_5_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of children (aged 0-5 years)"
+    },
+    {
+        "field": "child_0_to_2_sum",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "child_0_to_2_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of children (aged 0-2 years)"
+    },
+    {
+        "field": "child_2_to_5_sum",
+        "sortable": false,
+        "description": null,
+        "width": null,
+        "css_class": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "child_2_to_5_count",
+        "visible": true,
+        "transform":
+        {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "Total no. of children (aged 2-5 years)"
+    }],
+    "configured_charts": [],
+    "sort_expression": [],
+}
+}

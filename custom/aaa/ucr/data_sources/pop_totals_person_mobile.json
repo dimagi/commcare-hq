@@ -1,0 +1,677 @@
+{
+    "domains": [
+        "icds-dashboard-qa",
+        "laurence-project-1",
+        "jessica-icds-cas",
+        "marissa-test",
+        "derek-icds-sandbox",
+        "priyanka-app",
+        "shrena-dev",
+        "aparatest",
+        "reach-sandbox",
+        "reach-dashboard-qa",
+        "reach-test",
+        "icds-sql",
+        "icds-test",
+        "icds-cas",
+        "cas-lab",
+        "icds-cas-sandbox"
+    ],
+    "server_environment": [
+        "india", "icds"
+    ],
+    "config":
+    {
+
+        "configured_indicators": [
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "string",
+            "type": "expression",
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "expression":
+            {
+                "type": "icds_village_owner_id",
+                "index_identifier": "owner_village",
+                "case_id_expression":
+                {
+                    "type": "named",
+                    "name": "parent_id"
+                }
+            },
+            "column_id": "village_owner_id"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "string",
+            "type": "expression",
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "expression":
+            {
+                "type": "named",
+                "name": "parent_id"
+            },
+            "column_id": "household_case_id"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "date",
+            "expression":
+            {
+                "type": "named",
+                "name": "month_start"
+            },
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "month_start"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "integer",
+            "expression":
+            {
+                "test":
+                {
+                    "comment": null,
+                    "type": "named",
+                    "name": "is_pregnant"
+                },
+                "expression_if_true": 1,
+                "type": "conditional",
+                "expression_if_false": 0
+            },
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "pregnant_woman_sum"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "integer",
+            "expression":
+            {
+                "test":
+                {
+                    "comment": null,
+                    "type": "named",
+                    "name": "is_eligible_couple"
+                },
+                "expression_if_true": 1,
+                "type": "conditional",
+                "expression_if_false": 0
+            },
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "eligible_couple_sum"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "integer",
+            "expression":
+            {
+                "test":
+                {
+                    "comment": null,
+                    "type": "named",
+                    "name": "is_child_0_to_2"
+                },
+                "expression_if_true": 1,
+                "type": "conditional",
+                "expression_if_false": 0
+            },
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "child_0_to_2_sum"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "integer",
+            "expression":
+            {
+                "test":
+                {
+                    "comment": null,
+                    "type": "named",
+                    "name": "is_child_2_to_5"
+                },
+                "expression_if_true": 1,
+                "type": "conditional",
+                "expression_if_false": 0
+            },
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "child_2_to_5_sum"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "integer",
+            "type": "expression",
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "expression":
+            {
+                "test":
+                {
+                    "type": "or",
+                    "filters": [
+                    {
+                        "comment": null,
+                        "type": "named",
+                        "name": "is_child_0_to_2"
+                    },
+                    {
+                        "comment": null,
+                        "type": "named",
+                        "name": "is_child_2_to_5"
+                    }]
+                },
+                "expression_if_true": 1,
+                "type": "conditional",
+                "expression_if_false": 0
+            },
+            "column_id": "child_0_to_5_sum"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "integer",
+            "expression":
+            {
+                "test":
+                {
+                    "type": "or",
+                    "filters": [
+                    {
+                        "comment": null,
+                        "type": "named",
+                        "name": "is_child_0_to_2"
+                    },
+                    {
+                        "comment": null,
+                        "type": "named",
+                        "name": "is_child_2_to_5"
+                    },
+                    {
+                        "comment": null,
+                        "type": "named",
+                        "name": "is_pregnant"
+                    },
+                    {
+                        "comment": null,
+                        "type": "named",
+                        "name": "is_eligible_couple"
+                    }]
+                },
+                "expression_if_true": 1,
+                "type": "conditional",
+                "expression_if_false": 0
+            },
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "beneficiary_sum"
+        },
+        {
+            "comment": null,
+            "create_index": false,
+            "display_name": null,
+            "datatype": "integer",
+            "expression":
+            {
+                "test":
+                {
+                    "type": "and",
+                    "filters": [
+                    {
+                        "comment": null,
+                        "type": "named",
+                        "name": "has_aadhar"
+                    },
+                    {
+                        "type": "or",
+                        "filters": [
+                        {
+                            "comment": null,
+                            "type": "named",
+                            "name": "is_child_0_to_2"
+                        },
+                        {
+                            "comment": null,
+                            "type": "named",
+                            "name": "is_child_2_to_5"
+                        },
+                        {
+                            "comment": null,
+                            "type": "named",
+                            "name": "is_pregnant"
+                        },
+                        {
+                            "comment": null,
+                            "type": "named",
+                            "name": "is_eligible_couple"
+                        }]
+                    }]
+                },
+                "expression_if_true": 1,
+                "type": "conditional",
+                "expression_if_false": 0
+            },
+            "transform":
+            {},
+            "is_primary_key": false,
+            "is_nullable": true,
+            "type": "expression",
+            "column_id": "beneficiary_with_aadhar_sum"
+        }],
+        "asynchronous": false,
+        "base_item_expression":
+        {
+            "test":
+            {},
+            "expressions": [
+            {
+                "type": "identity"
+            },
+            {
+                "type": "identity"
+            },
+            {
+                "type": "identity"
+            }],
+            "type": "iterator"
+        },
+        "is_deactivated": false,
+        "sql_settings":
+        {
+            "citus_config":
+            {
+                "distribution_type": null,
+                "distribution_column": null,
+                "doc_type": "CitusConfig"
+            },
+            "partition_config": [],
+            "primary_key": [],
+            "doc_type": "SQLSettings"
+        },
+        "configured_filter":
+        {
+            "operator": "eq",
+            "expression":
+            {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "comment": null,
+            "property_value": "person"
+        },
+        "backend_id": "SQL",
+        "disable_destructive_rebuild": false,
+        "mirrored_engine_ids": [],
+        "description": "Data source for the Population Demographics - Population Totals report (#1-9 here: https://docs.google.com/spreadsheets/d/1fPFIVOaI0ZJkSqw8DJ-wmMyTefMbGXYGyhcB9UUxXnE/)",
+        "referenced_doc_type": "CommCareCase",
+        "engine_id": "ucr",
+        "last_modified": "2019-05-30T07:00:39.696852Z",
+        "display_name": "Cases - Person (REACH Pop Demo Mobile Backend)",
+        "named_expressions":
+        {
+            "month_start":
+            {
+                "date_expression":
+                {
+                    "date_expression":
+                    {
+                        "type": "icds_datetime_now"
+                    },
+                    "type": "add_months",
+                    "months_expression":
+                    {
+                        "type": "evaluator",
+                        "context_variables":
+                        {
+                            "iteration":
+                            {
+                                "type": "base_iteration_number"
+                            }
+                        },
+                        "statement": "iteration - 1"
+                    }
+                },
+                "type": "month_start_date"
+            },
+            "parent_id":
+            {
+                "value_expression":
+                {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                },
+                "type": "nested",
+                "argument_expression":
+                {
+                    "type": "array_index",
+                    "array_expression":
+                    {
+                        "filter_expression":
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression":
+                            {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "identifier"
+                            },
+                            "property_value": "parent"
+                        },
+                        "type": "filter_items",
+                        "items_expression":
+                        {
+                            "type": "root_doc",
+                            "expression":
+                            {
+                                "datatype": "array",
+                                "type": "property_name",
+                                "property_name": "indices"
+                            }
+                        }
+                    },
+                    "index_expression":
+                    {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            "age_this_month":
+            {
+                "test":
+                {
+                    "filter":
+                    {
+                        "operator": "in",
+                        "expression":
+                        {
+                            "expression":
+                            {
+                                "type": "property_name",
+                                "property_name": "dob"
+                            },
+                            "type": "root_doc"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": ["", null]
+                    },
+                    "type": "not"
+                },
+                "expression_if_true":
+                {
+                    "comment": "Calculate the age of this person on the last of the month.",
+                    "type": "evaluator",
+                    "context_variables":
+                    {
+                        "days_since_birth":
+                        {
+                            "from_date_expression":
+                            {
+                                "expression":
+                                {
+                                    "type": "property_name",
+                                    "property_name": "dob"
+                                },
+                                "type": "root_doc"
+                            },
+                            "type": "diff_days",
+                            "to_date_expression":
+                            {
+                                "date_expression":
+                                {
+                                    "date_expression":
+                                    {
+                                        "type": "icds_datetime_now"
+                                    },
+                                    "type": "add_months",
+                                    "months_expression":
+                                    {
+                                        "type": "evaluator",
+                                        "context_variables":
+                                        {
+                                            "iteration":
+                                            {
+                                                "type": "base_iteration_number"
+                                            }
+                                        },
+                                        "statement": "iteration - 1"
+                                    }
+                                },
+                                "type": "month_end_date"
+                            }
+                        }
+                    },
+                    "statement": "days_since_birth / 365.25"
+                },
+                "type": "conditional",
+                "expression_if_false": ""
+            }
+        },
+        "doc_type": "DataSourceConfiguration",
+        "validations": [],
+        "table_id": "reach-pop_totals_person_mobile",
+        "named_filters":
+        {
+            "is_eligible_couple":
+            {
+                "type": "and",
+                "filters": [
+                {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression":
+                    {
+                        "type": "root_doc",
+                        "expression":
+                        {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "marital_status"
+                        }
+                    },
+                    "comment": null,
+                    "property_value": "married"
+                },
+                {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression":
+                    {
+                        "type": "root_doc",
+                        "expression":
+                        {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "sex"
+                        }
+                    },
+                    "comment": null,
+                    "property_value": "F"
+                },
+                {
+                    "operator": "not_eq",
+                    "type": "boolean_expression",
+                    "expression":
+                    {
+                        "type": "root_doc",
+                        "expression":
+                        {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "migration_status"
+                        }
+                    },
+                    "comment": null,
+                    "property_value": "migrated"
+                },
+                {
+                    "operator": "not_eq",
+                    "type": "boolean_expression",
+                    "expression":
+                    {
+                        "type": "root_doc",
+                        "expression":
+                        {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "is_pregnant"
+                        }
+                    },
+                    "comment": null,
+                    "property_value": "yes"
+                },
+                {
+                    "operator": "gte",
+                    "expression":
+                    {
+                        "type": "named",
+                        "name": "age_this_month"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": 15
+                },
+                {
+                    "operator": "lt",
+                    "expression":
+                    {
+                        "type": "named",
+                        "name": "age_this_month"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": 50
+                }]
+            },
+            "is_child_0_to_2":
+            {
+                "operator": "lt",
+                "expression":
+                {
+                    "type": "named",
+                    "name": "age_this_month"
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": 2
+            },
+            "is_pregnant":
+            {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression":
+                {
+                    "expression":
+                    {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "is_pregnant"
+                    },
+                    "type": "root_doc"
+                },
+                "comment": null,
+                "property_value": "yes"
+            },
+            "has_aadhar":
+            {
+                "filter":
+                {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression":
+                    {
+                        "expression":
+                        {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "aadhar_number"
+                        },
+                        "type": "root_doc"
+                    },
+                    "comment": null,
+                    "property_value": ["", null]
+                },
+                "comment": null,
+                "type": "not"
+            },
+            "is_child_2_to_5":
+            {
+                "type": "and",
+                "filters": [
+                {
+                    "operator": "gte",
+                    "expression":
+                    {
+                        "type": "named",
+                        "name": "age_this_month"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": 2
+                },
+                {
+                    "operator": "lt",
+                    "expression":
+                    {
+                        "type": "named",
+                        "name": "age_this_month"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": 5
+                }]
+            }
+        },
+        "sql_column_indexes": []
+    }
+}
