@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_search_types_for_domain_es,
 )
 from corehq.apps.reports.v2.models import BaseOptionsEndpoint
 
@@ -20,7 +20,7 @@ class CaseTypeEndpoint(BaseOptionsEndpoint):
 
     @property
     def options(self):
-        case_types = get_case_types_for_domain_es(self.domain, True)
+        case_types = get_case_search_types_for_domain_es(self.domain)
         return [self._fmt_option(case) for case in case_types
                 if case != USER_LOCATION_OWNER_MAP_TYPE]
 
