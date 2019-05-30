@@ -738,4 +738,6 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
         value = value.lower()
         payload["filter"]["and"].append(filters.term(param, value))
 
+    # print(payload)
+
     return payload
