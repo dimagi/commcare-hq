@@ -237,14 +237,14 @@ def get_replication_delay_for_standby(db_alias):
         sql = """
         SELECT
         CASE
-            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN {delay}
+            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN %(delay)s
             WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
             ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
         END
         AS replication_lag;
-        """.format(delay=VERY_LARGE_DELAY)
+        """
         with db.connections[db_alias].cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, {'delay': VERY_LARGE_DELAY})
             [(delay, )] = cursor.fetchall()
             return delay
     except OperationalError:
