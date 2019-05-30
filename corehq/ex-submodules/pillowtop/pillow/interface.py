@@ -368,8 +368,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             if add_case_type_tag and settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
                 metric_tags.append('case_type:{}'.format(change.metadata.document_subtype))
 
-            count = 1 if processor else len(self.processors)
-            datadog_counter(metric, value=count, tags=metric_tags)
+            datadog_counter(metric, tags=metric_tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
             datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
