@@ -335,6 +335,14 @@ class RestoreCacheSettings(object):
         self.cache_timeout = cache_timeout if cache_timeout is not None else INITIAL_SYNC_CACHE_TIMEOUT
         self.overwrite_cache = overwrite_cache
 
+    def __repr__(self):
+        return "RestoreCacheSettings(force_cache='{}', cache_timeout={}, overwrite_cache='{}'".format(
+            self.force_cache,
+            self.cache_timeout,
+            self.overwrite_cache
+        )
+
+
 
 class RestoreState(object):
     """
