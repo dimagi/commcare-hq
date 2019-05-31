@@ -12,6 +12,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import RebuildWithReason
 from corehq.util.log import with_progress_bar
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class Command(BaseCommand):
@@ -44,6 +45,10 @@ class Command(BaseCommand):
             for form in with_progress_bar(forms):
                 forms_log.write("%s\n" % form.form_id)
                 form.archive(skip_rebuild_cases=True)
+
+        # removing data
+        for xform in with_progress_bar(forms):
+            FormProcessorInterface(xform.domain).ledger_processor.process_form_archived(xform)
 
         # archive cases
         print("Starting with case archival")
