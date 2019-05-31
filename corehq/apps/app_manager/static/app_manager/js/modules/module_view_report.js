@@ -4,7 +4,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media').initNavMenuMedia;
         var reportModuleModel = hqImport('app_manager/js/modules/report_module').reportModuleModel;
         var staticFilterDataModel = hqImport('app_manager/js/modules/report_module').staticFilterDataModel;
-        var choiceListUtils = hqImport('reports_core/js/choice_list_utils_v4');
+        var choiceListUtils = hqImport('reports_core/js/choice_list_utils');
 
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.

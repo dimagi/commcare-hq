@@ -10,10 +10,9 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
-    'app_manager/js/widgets_v4',       // version dropdown
+    'app_manager/js/widgets',       // version dropdown
     'analytix/js/kissmetrix',
 ], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics) {
-
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['unique_id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
         var self = _.extend({
