@@ -193,8 +193,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
             if trans_type == 'default':
                 # plaintext/Markdown
-                markdown_allowed = not self.markdown_vetoes[label_id] or self.markdowns[label_id]
-                if self._looks_like_markdown(new_translation) and markdown_allowed:
+                is_markdown = self._looks_like_markdown(new_translation) and not self.markdown_vetoes[label_id]
+                if is_markdown or self.markdowns[label_id]:
                     # If it looks like Markdown, add it ... unless it
                     # looked like Markdown before but it wasn't. If we
                     # have a Markdown node, always keep it. FB 183536
