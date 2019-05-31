@@ -59,7 +59,6 @@ branches:
   - web-user-reports-project-access  # Gabriella May 13
   - jls/linked-app-incremental-versioning # Jenny May 20
   - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
-  - es/case-import  # Ethan May 23
   - test-RestoreConfig-repr-method  # Gabriella May 31
   
   # This is being actively QAed. Don't comment it out without warning the QA team.
