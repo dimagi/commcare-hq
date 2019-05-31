@@ -45,6 +45,7 @@ def get_async_restore_payload(restore_config, domain=None, username=None):
     Process an async restore
     domain and username: added for displaying restore request details on flower
     """
+    restore_config.__repr__()
     response = restore_config.generate_payload(async_task=current_task)
 
     # delete the task id from the task, since the payload can now be fetched from the cache
