@@ -393,8 +393,8 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
         )
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, date
+            "{}{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+                'Citus' if force_citus else '', func.__name__, settings.SERVER_ENVIRONMENT, date
             )
         )
         self.retry(exc=exc)
