@@ -104,7 +104,7 @@ class CasePropertiesEndpoint(BaseOptionsEndpoint):
         all_properties = []
         for name, case_types in property_to_types.items():
             if len(case_types) > 1:
-                label = _("{} cases".format(len(case_types)))
+                label = _("{num} cases".format(num=len(case_types)))
             else:
                 label = case_types[0]
             all_properties.append(self._fmt_result(name, 'label-default', label))

@@ -21,8 +21,8 @@ class CaseTypeEndpoint(BaseOptionsEndpoint):
     @property
     def options(self):
         case_types = get_case_search_types_for_domain_es(self.domain)
-        return [self._fmt_option(case) for case in case_types
-                if case != USER_LOCATION_OWNER_MAP_TYPE]
+        return [self._fmt_option(case_type) for case_type in case_types
+                if case_type != USER_LOCATION_OWNER_MAP_TYPE]
 
     def get_response(self):
         return {

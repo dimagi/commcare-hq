@@ -180,9 +180,9 @@ def query_location_restricted_cases(query, request):
 
 
 def get_most_recent_case_type(domain):
-    # gets most recent case type
+    # gets most recently submitted case type in a domain
     query = (CaseSearchES().domain(domain)
              .NOT(case_es.case_type(USER_LOCATION_OWNER_MAP_TYPE)))
-    query.es_query['sort'] = [{u'modified_on': u'desc'}]
-    result = query.size(1).start(0).run().raw['hits'].get('hits', [])
-    return result[0]['_source']['type'] if len(result) > 0 else None
+    query = query.sort('modified_on', desc=True)
+    result = query.size(1).values_list('type', flat=True)
+    return result[0] if len(result) > 0 else None

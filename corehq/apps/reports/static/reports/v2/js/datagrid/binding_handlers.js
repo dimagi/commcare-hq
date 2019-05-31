@@ -44,7 +44,7 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
             $select.trigger('change');
             $select.trigger({type: 'select2:select', params: {data: initialValue}});
 
-        } else if (!_.isArray(initialValue)) {
+        } else {
             // initializing single select2s
             if (_.isObject(initialValue)) {
                 if (options.createNodes) { // createNodes needed to get around the ajax load of static options
