@@ -1731,12 +1731,6 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-IMPROVED_ASR_REPORT = StaticToggle(
-    'improved_asr_report',
-    'This makes ASR report use the new asr_2_3 UCR report',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
