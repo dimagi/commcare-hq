@@ -47,7 +47,6 @@
     "knockout-validation": "2.0.3",
     "underscore": "1.8.3",
     "leaflet": "0.7.7",
-    "select2-3.5.2-legacy": "select2#3.5.2",
     "select2": "4.0.0",
     "less": "1.7.3",
     "xpath": "dimagi/js-xpath#f4f0c78",
