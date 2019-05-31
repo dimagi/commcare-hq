@@ -212,19 +212,18 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def get_location_columns(self, grouped_ancestor_locs):
         from corehq.apps.locations.models import LocationType
-        location_types = LocationType.objects.by_domain('icds-cas')
+        location_types = LocationType.objects.by_domain(self.domain)
         all_user_locations = grouped_ancestor_locs.values()
         all_user_loc_types = {loc.location_type_id for user_locs in all_user_locations for loc in user_locs}
         required_loc_columns = [loc_type for loc_type in location_types if loc_type.id in all_user_loc_types]
         return required_loc_columns
 
-    def user_locations(self, ancestors, location_type):
-        location_list = ['---'] * len(location_type)
-        types_id = [type.id for type in location_type]
-        for loc in ancestors:
-            position = types_id.index(loc.location_type_id)
-            location_list[position] = loc.name
-        return location_list
+    def user_locations(self, ancestors, location_types):
+        ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
+        return [
+            ancestors_by_type_id.get(location_type.id, '---')
+            for location_type in location_types
+        ]
 
     def process_rows(self, users, fmt_for_export=False):
         rows = []
