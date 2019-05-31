@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
-from contextlib import contextmanager
 
 import requests
 
@@ -44,13 +43,21 @@ def log_request(func):
 
 
 class Requests(object):
+    """
+    Wraps the requests library to simplify use with JSON REST APIs.
+
+    Sets auth headers automatically, and requests JSON responses by
+    default. To accommodate authenticating non-API requests easily, it
+    uses a single session across all requests made with the same
+    instance.
+    """
     def __init__(self, domain_name, base_url, username, password, verify=True):
         self.domain_name = domain_name
         self.base_url = base_url
         self.username = username
         self.password = password
         self.verify = verify
-        self.session = None
+        self.session = requests.Session()
 
     @log_request
     def send_request(self, method_func, *args, **kwargs):
@@ -73,34 +80,22 @@ class Requests(object):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def delete(self, uri, **kwargs):
-        method_func = requests.delete if self.session is None else self.session.delete
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request(method_func, self.get_url(uri),
+        return self.send_request(self.session.delete, self.get_url(uri),
                                  auth=(self.username, self.password), **kwargs)
 
     def get(self, uri, *args, **kwargs):
-        method_func = requests.get if self.session is None else self.session.get
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request(method_func, self.get_url(uri), *args,
+        return self.send_request(self.session.get, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        method_func = requests.post if self.session is None else self.session.post
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request(method_func, self.get_url(uri), *args,
+        return self.send_request(self.session.post, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
-
-
-@contextmanager
-def session_context(req):
-    try:
-        req.session = requests.Session()
-        yield
-    finally:
-        req.session = None
 
 
 def parse_request_exception(err):
