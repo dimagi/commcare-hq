@@ -1895,7 +1895,8 @@ class XForm(WrappedNode):
             path, subcase_node = get_action_path(action)
 
             open_case_block = CaseBlock(self, path)
-            subcase_node.insert(0, open_case_block.elem)
+            if subcase_node is not None:
+                subcase_node.insert(0, open_case_block.elem)
             open_case_block.add_create_block(
                 relevance=self.action_relevance(action.open_condition),
                 case_name=action.name_path,
