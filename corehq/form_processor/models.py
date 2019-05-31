@@ -586,7 +586,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             archive_stub.archive_history_updated()
             xform_unarchived.send(sender="form_processor", xform=self)
 
-    def publish_archive_action_to_kafka(self, user_id, archive):
+    def publish_archive_action_to_kafka(self, user_id, archive, rebuild_cases=True):
         # Don't update the history, just send to kafka
         from couchforms.models import UnfinishedArchiveStub
         from corehq.form_processor.submission_process_tracker import unfinished_archive
@@ -595,7 +595,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
             if archive:
-                xform_archived.send(sender="form_processor", xform=self)
+                xform_archived.send(sender="form_processor", xform=self, rebuild_cases=rebuild_cases)
             else:
                 xform_unarchived.send(sender="form_processor", xform=self)
             publish_form_saved(self)
