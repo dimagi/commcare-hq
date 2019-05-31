@@ -280,7 +280,8 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertEqual(untranslated_immediate_rule.name, 'test untranslated')
         self.assertEqual(untranslated_immediate_rule.case_type, 'person')
         untranslated_schedule = untranslated_immediate_rule.get_messaging_rule_schedule()
-        self._assertAlertScheduleEventsEqual(untranslated_schedule, old_schedules[self.UNTRANSLATED_IMMEDIATE_RULE])
+        self._assertAlertScheduleEventsEqual(untranslated_schedule,
+                                             old_schedules[self.UNTRANSLATED_IMMEDIATE_RULE])
         untranslated_content = untranslated_schedule.memoized_events[0].content
         self.assertEqual(untranslated_content.message, {
             '*': 'Roberta',
@@ -332,6 +333,32 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertEqual(monthly_content.message, {
             '*': 'The Other Side Now',
         })
+
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload_blank_content(self, language_list_patch):
+        language_list_patch.return_value = self.langs
+        headers = (
+            ("translated", ("id", "name", "message_en", "message_es")),
+            ("not translated", ("id", "name", "message")),
+        )
+        data = (
+            ("translated", (
+                (self._get_rule(self.DAILY_RULE).id, 'test daily', '', 'Más Oxidado'),
+                (self._get_rule(self.MONTHLY_RULE).id, 'test monthly', '', ''),
+            )),
+            ("not translated", (
+                (self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE).id, 'test untranslated', ''),
+            )),
+        )
+
+        msgs = self._upload(headers, data)
+
+        self.assertEqual(len(msgs), 5)
+        self._assertPatternIn(r"Error updating row 2 in 'translated' sheet, .*: Missing content for en", msgs)
+        self._assertPatternIn(r"Error updating row 3 in 'translated' sheet, .*: Missing content for en, es", msgs)
+        self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
+        self._assertPatternIn(r"Error updating row 2 in 'not translated' sheet, .*: Missing content", msgs)
+        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
     def test_partial_upload(self, language_list_patch):

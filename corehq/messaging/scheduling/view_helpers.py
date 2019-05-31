@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
+
 from django.contrib import messages
 from django.db import transaction
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.util import get_language_list
+from corehq.messaging.scheduling.exceptions import RuleUpdateError
 from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
@@ -137,7 +140,15 @@ class ConditionalAlertUploader(object):
                 continue
 
             with transaction.atomic():
-                dirty = self.update_rule(rule, row)
+                try:
+                    dirty = self.update_rule(rule, row)
+                except RuleUpdateError as e:
+                    self.msgs.append((messages.error, _("Error updating row {index} in '{sheet_name}' sheet, "
+                                      "with rule id {id}: {detail}").format(index=index, id=row['id'],
+                                                                            sheet_name=self.sheet_name,
+                                                                            detail=six.text_type(e))))
+                    continue
+
                 if dirty:
                     rule.save()
                     initiate_messaging_rule_run(self.domain, rule.pk)
@@ -222,6 +233,9 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
                 message_dirty = True
         message.pop('*', None)
         if message_dirty:
+            missing = [lang for lang, value in message.items() if not message[lang]]
+            if missing:
+                raise RuleUpdateError(_("Missing content for {langs}").format(langs=", ".join(missing)))
             self.update_rule_message(rule, message)
         return dirty or message_dirty
 
@@ -236,9 +250,13 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
         message = self.rule_message(rule)
         if message.get('*', '') != row['message']:
+            if not row['message']:
+                raise RuleUpdateError(_("Missing content"))
+
             message = {'*': row['message']}
             self.update_rule_message(rule, message)
             dirty = True
+
         return dirty
 
 
