@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from copy import copy
 from datetime import datetime
 import os
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from custom.intrahealth.sqldata import DispDesProducts
+from custom.intrahealth.sqldata import DispDesProducts, PPSAvecDonnees
 from custom.intrahealth.tests.test_fluffs import DATAPATH
 from custom.intrahealth.tests.test_utils import IntraHealthTestCase, TEST_DOMAIN
 from django.core import management
@@ -37,9 +38,7 @@ class TestReports(IntraHealthTestCase):
                 'ptop_reindexer_fluff',
                 'IntraHealthFormFluffPillow'
             )
-
-    def test_disp_des_products_report(self):
-        disp_des = DispDesProducts(config=dict(
+        cls.config = dict(
             domain=TEST_DOMAIN,
             startdate=datetime(2016, 2, 1),
             enddate=datetime(2016, 2, 29),
@@ -47,8 +46,12 @@ class TestReports(IntraHealthTestCase):
             strsd=json_format_date(datetime(2016, 2, 1)),
             stred=json_format_date(datetime(2016, 2, 29)),
             empty_prd_code='__none__',
-            region_id=self.region.get_id
-        ))
+        )
+
+    def test_disp_des_products_report(self):
+        config = copy(self.config)
+        config['region_id'] = self.region.get_id
+        disp_des = DispDesProducts(config=config)
 
         rows = disp_des.rows
         self.assertEqual(len(rows), 3)
@@ -60,3 +63,9 @@ class TestReports(IntraHealthTestCase):
                 ['Taux', '100%', '88%']
             ]
         )
+
+    def test_pps_report(self):
+        self.assertEqual(PPSAvecDonnees(self.config).rows, [])
+        config = copy(self.config)
+        config['region_id'] = self.region.get_id
+        self.assertEqual(PPSAvecDonnees(config).rows, [])

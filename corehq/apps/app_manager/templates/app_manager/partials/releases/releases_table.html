@@ -188,7 +188,7 @@
               "></inline-edit>
         </div>
       </div><!-- .panel-body -->
-      <div class="panel-footer">
+      <div class="panel-footer clearfix">
         {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
           <a class="btn btn-default" data-bind="attr: { href: $parent.reverse('app_form_summary_diff', $parent.previousBuildId($index()), $data.id()) }">
             <i class="fa fa-exchange"></i>

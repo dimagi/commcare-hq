@@ -76,7 +76,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
@@ -85,6 +85,16 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
         send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config)
+
+        if engine_id:
+            if getattr(adapter, 'all_adapters', None):
+                adapter = [
+                    adapter_ for adapter_ in adapter.all_adapters
+                    if adapter_.engine_id == engine_id
+                ][0]
+            elif adapter.engine_id != engine_id:
+                raise AssertionError("Engine ID does not match adapter")
+
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
@@ -187,14 +197,35 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
-    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
-
-    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
-    if new_report_config_id is None:
+    if report_config_id not in settings.UCR_COMPARISONS:
         return
 
-    def _run_report(spec):
+    control_report, unused = get_report_config(report_config_id, domain)
+    candidate_report = None
+
+    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
+    if new_report_config_id is not None:
+        # a report is configured to be compared against
+        candidate_report, unused = get_report_config(new_report_config_id, domain)
+        _compare_ucr_reports(
+            domain, control_report, candidate_report, filter_values, sort_column, sort_order, params)
+    else:
+        # no report is configured. Assume we should try mirrored engine_ids
+        # report_config.config is a DataSourceConfiguration
+        for engine_id in control_report.config.mirrored_engine_ids:
+            _compare_ucr_reports(
+                domain, control_report, control_report, filter_values, sort_column,
+                sort_order, params, candidate_engine_id=engine_id)
+
+
+def _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params,
+                         candidate_engine_id=None):
+    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
+
+    def _run_report(spec, engine_id=None):
         data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
+        if engine_id:
+            data_source.override_engine_id(engine_id)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(
@@ -218,20 +249,18 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
             json_response["total_row"] = total_row
         return json_response
 
-    old_spec, unused = get_report_config(report_config_id, domain)
-    new_spec, unused = get_report_config(new_report_config_id, domain)
     experiment_context = {
         "domain": domain,
-        "report_config_id": report_config_id,
-        "new_report_config_id": new_report_config_id,
+        "report_config_id": control_report._id,
+        "new_report_config_id": candidate_report._id,
         "filter_values": filter_values,
     }
     experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
     with experiment.control() as c:
-        c.record(_run_report(old_spec))
+        c.record(_run_report(control_report))
 
     with experiment.candidate() as c:
-        c.record(_run_report(new_spec))
+        c.record(_run_report(candidate_report, candidate_engine_id))
 
     objects = experiment.run()
     return objects

@@ -970,7 +970,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-    def all_media(self, from_apps=None):  # todo add documentation or refactor
+    def all_media(self, from_apps=None):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
 
@@ -988,7 +988,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             for app in apps:
                 if app.doc_type != 'Application':
                     continue
-                for _, m in app.get_media_objects():
+                for _, m in app.get_media_objects(remove_unused=True):
                     if m.get_id not in media_ids:
                         media.append(m)
                         media_ids.add(m.get_id)

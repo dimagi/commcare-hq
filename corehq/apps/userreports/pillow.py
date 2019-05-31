@@ -10,6 +10,7 @@ import six
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
@@ -66,6 +67,16 @@ def _filter_by_hash(configs, ucr_division):
     return filtered_configs
 
 
+def _filter_missing_domains(configs):
+    """Return a list of configs whose domain exists on this environment"""
+    domain_names = [config.domain for config in configs if config.is_static]
+    existing_domains = list(get_domain_ids_by_names(domain_names))
+    return [
+        config for config in configs
+        if not config.is_static or config.domain in existing_domains
+    ]
+
+
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
@@ -107,6 +118,8 @@ class ConfigurableReportTableManagerMixin(object):
             configs = [config for config in configs if config.table_id in self.include_ucrs]
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
+
+        configs = _filter_missing_domains(configs)
 
         return configs
 
@@ -167,36 +180,45 @@ class ConfigurableReportTableManagerMixin(object):
 
             diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
 
-            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
                 pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
+                table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
-                        self.rebuild_table(sql_adapter)
+                        self.rebuild_table(sql_adapter, table_diffs)
                     except TableRebuildError as e:
                         _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
                 else:
-                    self.rebuild_table(sql_adapter)
+                    self.rebuild_table(sql_adapter, table_diffs)
 
-            self.migrate_tables(engine, diffs.raw, tables_to_act_on.migrate, table_map)
+            self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
         pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
-        changes = migrate_tables(engine, diffs, table_names)
+        migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
+        changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
-    def rebuild_table(self, adapter):
+    def rebuild_table(self, adapter, diffs=None):
         config = adapter.config
         if not config.is_static:
             latest_rev = config.get_db().get_rev(config._id)
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-            adapter.rebuild_table(source='pillowtop')
+
+        if config.disable_destructive_rebuild and adapter.table_exists:
+            diff_dicts = [diff.to_dict() for diff in diffs]
+            adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
+            return
+
+        if config.is_static:
+            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
         else:
-            rebuild_indicators.delay(adapter.config.get_id)
+            adapter.rebuild_table(source='pillowtop')
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):

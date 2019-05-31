@@ -24,7 +24,7 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties_v2, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
+from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -58,7 +58,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
+    use_select2_legacy,
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
@@ -279,7 +279,7 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_select2
+    @use_select2_legacy
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -387,7 +387,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
-        update_hubspot_properties_v2.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 

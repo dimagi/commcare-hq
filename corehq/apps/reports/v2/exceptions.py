@@ -12,3 +12,7 @@ class EndpointNotFoundError(Exception):
 
 class ColumnFilterNotFound(Exception):
     pass
+
+
+class ReportFilterNotFound(Exception):
+    pass

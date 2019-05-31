@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'inactive-awws'
     ucr_data_source_id = 'static-usage_forms'
 
     def __init__(self, last_sync):

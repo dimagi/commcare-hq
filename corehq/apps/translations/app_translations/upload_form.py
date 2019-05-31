@@ -16,32 +16,33 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.apps.translations.app_translations.utils import BulkAppTranslationUpdater, get_unicode_dicts
+from corehq.apps.translations.app_translations.utils import (
+    BulkAppTranslationUpdater,
+    get_unicode_dicts,
+    get_form_from_sheet_name,
+)
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
-    def __init__(self, app, identifier, lang=None):
+    def __init__(self, app, sheet_name, unique_id=None, lang=None):
         '''
-        :param identifier: String like "menu1_form2"
+        :param sheet_name: String like "menu1_form2"
         '''
         super(BulkAppTranslationFormUpdater, self).__init__(app, lang)
-        self.identifier = identifier
+        self.sheet_name = sheet_name
 
         # These attributes depend on each other and therefore need to be created in this order
-        self.form = self._get_form_from_sheet_name(self.identifier)
+        if unique_id:
+            self.form = app.get_form(unique_id)
+        else:
+            self.form = get_form_from_sheet_name(self.app, sheet_name)
         self.xform = self._get_xform()
         self.itext = self._get_itext()
 
         # These attributes get populated by update
         self.markdowns = None
         self.markdown_vetoes = None
-
-    def _get_form_from_sheet_name(self, sheet_name):
-        mod_text, form_text = sheet_name.split("_")
-        module_index = int(mod_text.replace("menu", "").replace("module", "")) - 1
-        form_index = int(form_text.replace("form", "")) - 1
-        return self.app.get_module(module_index).get_form(form_index)
 
     def _get_xform(self):
         if not isinstance(self.form, ShadowForm) and self.form.source:
@@ -103,7 +104,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         save_xform(self.app, self.form, etree.tostring(self.xform.xml))
 
-        return [(t, _('Error in {identifier}: ').format(identifier=self.identifier) + m) for (t, m) in self.msgs]
+        return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
 
     def _get_template_translation_el(self):
         # Make language nodes for each language if they don't yet exist

@@ -209,6 +209,9 @@ class Permissions(DocumentSchema):
                 return False
         return True
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def max(cls):
         return Permissions(
@@ -933,6 +936,9 @@ class DeviceIdLastUsed(DocumentSchema):
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 class LastSubmission(DocumentSchema):

@@ -8,14 +8,15 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData, ICDSDatabaseColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import get_status, calculate_date_for_age, \
     current_month_stunting_column, \
-    current_month_wasting_column, ICDSDatabaseColumn, format_decimal, DATA_NOT_ENTERED, phone_number_function
+    current_month_wasting_column, format_decimal, DATA_NOT_ENTERED, phone_number_function
 
 
-class BeneficiaryExport(ExportableMixin, SqlData):
+class BeneficiaryExport(ExportableMixin, IcdsSqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
 

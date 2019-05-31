@@ -1,0 +1,148 @@
+DELETE FROM "agg_child_health_2019-01-01_5"
+{}
+
+        INSERT INTO "agg_child_health_2019-01-01_5" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, gender, age_tranche, caste, disabled, minority, resident, valid_in_month, nutrition_status_weighed, nutrition_status_unweighed, nutrition_status_normal, nutrition_status_moderately_underweight, nutrition_status_severely_underweight, wer_eligible, thr_eligible, rations_21_plus_distributed, pse_eligible, pse_attended_16_days, pse_attended_21_days, lunch_count_21_days, born_in_month, low_birth_weight_in_month, bf_at_birth, ebf_eligible, ebf_in_month, cf_eligible, cf_in_month, cf_diet_diversity, cf_diet_quantity, cf_demo, cf_handwashing, counsel_increase_food_bf, counsel_manage_breast_problems, counsel_ebf, counsel_adequate_bf, counsel_pediatric_ifa, counsel_play_cf_video, fully_immunized_eligible, fully_immunized_on_time, fully_immunized_late, has_aadhar_id, aggregation_level, pnc_eligible, height_eligible, wasting_moderate, wasting_severe, stunting_moderate, stunting_severe, cf_initiation_in_month, cf_initiation_eligible, height_measured_in_month, wasting_normal, stunting_normal, valid_all_registered_in_month, ebf_no_info_recorded, weighed_and_height_measured_in_month, weighed_and_born_in_month, zscore_grading_hfa_normal, zscore_grading_hfa_moderate, zscore_grading_hfa_severe, wasting_normal_v2, wasting_moderate_v2, wasting_severe_v2, zscore_grading_hfa_recorded_in_month, zscore_grading_wfh_recorded_in_month, days_ration_given_child
+        ) (SELECT
+            awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id, chm.month, chm.sex, chm.age_tranche, chm.caste, COALESCE(chm.disabled, 'no') as coalesce_disabled, COALESCE(chm.minority, 'no') as coalesce_minority, COALESCE(chm.resident, 'no') as coalesce_resident, SUM(chm.valid_in_month), SUM(chm.nutrition_status_weighed), SUM(chm.wer_eligible) - SUM(chm.nutrition_status_weighed), SUM(CASE WHEN chm.current_month_nutrition_status = 'normal' THEN 1 ELSE 0 END), SUM(CASE WHEN chm.current_month_nutrition_status = 'moderately_underweight' THEN 1 ELSE 0 END), SUM(CASE WHEN chm.current_month_nutrition_status = 'severely_underweight' THEN 1 ELSE 0 END), SUM(chm.wer_eligible), SUM(chm.thr_eligible), SUM(CASE WHEN chm.num_rations_distributed >= 21 THEN 1 ELSE 0 END), SUM(chm.pse_eligible), COUNT(*) FILTER (WHERE chm.pse_eligible = 1 AND chm.pse_days_attended >= 16), COUNT(*) FILTER (WHERE chm.pse_eligible = 1 AND chm.pse_days_attended >= 21), COUNT(*) FILTER (WHERE chm.lunch_count >= 21), SUM(chm.born_in_month), SUM(chm.low_birth_weight_born_in_month), SUM(chm.bf_at_birth_born_in_month), SUM(chm.ebf_eligible), SUM(chm.ebf_in_month), SUM(chm.cf_eligible), SUM(chm.cf_in_month), SUM(chm.cf_diet_diversity), SUM(chm.cf_diet_quantity), SUM(chm.cf_demo), SUM(chm.cf_handwashing), SUM(chm.counsel_increase_food_bf), SUM(chm.counsel_manage_breast_problems), SUM(chm.counsel_ebf), SUM(chm.counsel_adequate_bf), SUM(chm.counsel_pediatric_ifa), SUM(chm.counsel_comp_feeding_vid), SUM(chm.fully_immunized_eligible), SUM(chm.fully_immunized_on_time), SUM(chm.fully_immunized_late), SUM(chm.has_aadhar_id), 5, SUM(chm.pnc_eligible), SUM(CASE WHEN chm.age_in_months >= 6 AND chm.age_tranche NOT IN ('72') AND chm.valid_in_month = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN chm.current_month_wasting = 'moderate' THEN 1 ELSE 0 END), SUM(CASE WHEN chm.current_month_wasting = 'severe' THEN 1 ELSE 0 END), SUM(CASE WHEN chm.current_month_stunting = 'moderate' THEN 1 ELSE 0 END), SUM(CASE WHEN chm.current_month_stunting = 'severe' THEN 1 ELSE 0 END), SUM(chm.cf_initiation_in_month), SUM(chm.cf_initiation_eligible), SUM(chm.height_measured_in_month), SUM(CASE WHEN chm.current_month_wasting = 'normal' THEN 1 ELSE 0 END), SUM(CASE WHEN chm.current_month_stunting = 'normal' THEN 1 ELSE 0 END), SUM(chm.valid_all_registered_in_month), SUM(chm.ebf_no_info_recorded), SUM(CASE WHEN chm.nutrition_status_weighed = 1 AND chm.height_measured_in_month = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN (chm.born_in_month = 1 AND (chm.nutrition_status_weighed = 1 OR chm.low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END), SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND chm.zscore_grading_hfa = 3 THEN 1 ELSE 0 END), SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND chm.zscore_grading_hfa = 2 THEN 1 ELSE 0 END), SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND chm.zscore_grading_hfa = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 3 THEN 1 ELSE 0 END), SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 2 THEN 1 ELSE 0 END), SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 1 THEN 1 ELSE 0 END), SUM(chm.zscore_grading_hfa_recorded_in_month), SUM(chm.zscore_grading_wfh_recorded_in_month), SUM(chm.days_ration_given_child)
+            FROM "child_health_monthly" chm
+            LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
+            WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
+            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id,
+                     chm.month, chm.sex, chm.age_tranche, chm.caste,
+                     coalesce_disabled, coalesce_minority, coalesce_resident
+            ORDER BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id
+        )
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+            UPDATE "agg_child_health_2019-01-01_5" agg SET
+              state_is_test = ut.state_is_test,
+              district_is_test = ut.district_is_test,
+              block_is_test = ut.block_is_test,
+              supervisor_is_test = ut.supervisor_is_test,
+              awc_is_test = ut.awc_is_test
+            FROM (
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "awc_location"
+              GROUP BY awc_id
+            ) ut
+            WHERE ut.awc_id = agg.awc_id AND (
+                (
+                  agg.state_is_test IS NULL OR
+                  agg.district_is_test IS NULL OR
+                  agg.block_is_test IS NULL OR
+                  agg.supervisor_is_test IS NULL OR
+                  agg.awc_is_test IS NULL
+                ) OR (
+                  ut.state_is_test != agg.state_is_test OR
+                  ut.district_is_test != agg.district_is_test OR
+                  ut.block_is_test != agg.block_is_test OR
+                  ut.supervisor_is_test != agg.supervisor_is_test OR
+                  ut.awc_is_test != agg.awc_is_test
+                )
+            )
+        
+{}
+
+        INSERT INTO "agg_child_health_2019-01-01_4" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, gender, age_tranche, caste, disabled, minority, resident, valid_in_month, nutrition_status_weighed, nutrition_status_unweighed, nutrition_status_normal, nutrition_status_moderately_underweight, nutrition_status_severely_underweight, wer_eligible, thr_eligible, rations_21_plus_distributed, pse_eligible, pse_attended_16_days, pse_attended_21_days, lunch_count_21_days, born_in_month, low_birth_weight_in_month, bf_at_birth, ebf_eligible, ebf_in_month, cf_eligible, cf_in_month, cf_diet_diversity, cf_diet_quantity, cf_demo, cf_handwashing, counsel_increase_food_bf, counsel_manage_breast_problems, counsel_ebf, counsel_adequate_bf, counsel_pediatric_ifa, counsel_play_cf_video, fully_immunized_eligible, fully_immunized_on_time, fully_immunized_late, has_aadhar_id, aggregation_level, pnc_eligible, height_eligible, wasting_moderate, wasting_severe, stunting_moderate, stunting_severe, cf_initiation_in_month, cf_initiation_eligible, height_measured_in_month, wasting_normal, stunting_normal, valid_all_registered_in_month, ebf_no_info_recorded, weighed_and_height_measured_in_month, weighed_and_born_in_month, days_ration_given_child, zscore_grading_hfa_normal, zscore_grading_hfa_moderate, zscore_grading_hfa_severe, wasting_normal_v2, wasting_moderate_v2, wasting_severe_v2, zscore_grading_hfa_recorded_in_month, zscore_grading_wfh_recorded_in_month, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, block_id, supervisor_id, 'All', month, gender, age_tranche, 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(nutrition_status_weighed), SUM(nutrition_status_unweighed), SUM(nutrition_status_normal), SUM(nutrition_status_moderately_underweight), SUM(nutrition_status_severely_underweight), SUM(wer_eligible), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(pse_eligible), SUM(pse_attended_16_days), SUM(pse_attended_21_days), SUM(lunch_count_21_days), SUM(born_in_month), SUM(low_birth_weight_in_month), SUM(bf_at_birth), SUM(ebf_eligible), SUM(ebf_in_month), SUM(cf_eligible), SUM(cf_in_month), SUM(cf_diet_diversity), SUM(cf_diet_quantity), SUM(cf_demo), SUM(cf_handwashing), SUM(counsel_increase_food_bf), SUM(counsel_manage_breast_problems), SUM(counsel_ebf), SUM(counsel_adequate_bf), SUM(counsel_pediatric_ifa), SUM(counsel_play_cf_video), SUM(fully_immunized_eligible), SUM(fully_immunized_on_time), SUM(fully_immunized_late), SUM(has_aadhar_id), 4, SUM(pnc_eligible), SUM(height_eligible), SUM(wasting_moderate), SUM(wasting_severe), SUM(stunting_moderate), SUM(stunting_severe), SUM(cf_initiation_in_month), SUM(cf_initiation_eligible), SUM(height_measured_in_month), SUM(wasting_normal), SUM(stunting_normal), SUM(valid_all_registered_in_month), SUM(ebf_no_info_recorded), SUM(weighed_and_height_measured_in_month), SUM(weighed_and_born_in_month), SUM(days_ration_given_child), SUM(zscore_grading_hfa_normal), SUM(zscore_grading_hfa_moderate), SUM(zscore_grading_hfa_severe), SUM(wasting_normal_v2), SUM(wasting_moderate_v2), SUM(wasting_severe_v2), SUM(zscore_grading_hfa_recorded_in_month), SUM(zscore_grading_wfh_recorded_in_month), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), MAX(supervisor_is_test), 0
+            FROM "agg_child_health_2019-01-01_5"
+            WHERE awc_is_test = 0
+            GROUP BY state_id, district_id, block_id, supervisor_id, month, gender, age_tranche
+            ORDER BY state_id, district_id, block_id, supervisor_id, month, gender, age_tranche
+        )
+        
+{}
+
+        INSERT INTO "agg_child_health_2019-01-01_3" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, gender, age_tranche, caste, disabled, minority, resident, valid_in_month, nutrition_status_weighed, nutrition_status_unweighed, nutrition_status_normal, nutrition_status_moderately_underweight, nutrition_status_severely_underweight, wer_eligible, thr_eligible, rations_21_plus_distributed, pse_eligible, pse_attended_16_days, pse_attended_21_days, lunch_count_21_days, born_in_month, low_birth_weight_in_month, bf_at_birth, ebf_eligible, ebf_in_month, cf_eligible, cf_in_month, cf_diet_diversity, cf_diet_quantity, cf_demo, cf_handwashing, counsel_increase_food_bf, counsel_manage_breast_problems, counsel_ebf, counsel_adequate_bf, counsel_pediatric_ifa, counsel_play_cf_video, fully_immunized_eligible, fully_immunized_on_time, fully_immunized_late, has_aadhar_id, aggregation_level, pnc_eligible, height_eligible, wasting_moderate, wasting_severe, stunting_moderate, stunting_severe, cf_initiation_in_month, cf_initiation_eligible, height_measured_in_month, wasting_normal, stunting_normal, valid_all_registered_in_month, ebf_no_info_recorded, weighed_and_height_measured_in_month, weighed_and_born_in_month, days_ration_given_child, zscore_grading_hfa_normal, zscore_grading_hfa_moderate, zscore_grading_hfa_severe, wasting_normal_v2, wasting_moderate_v2, wasting_severe_v2, zscore_grading_hfa_recorded_in_month, zscore_grading_wfh_recorded_in_month, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, block_id, 'All', 'All', month, gender, age_tranche, 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(nutrition_status_weighed), SUM(nutrition_status_unweighed), SUM(nutrition_status_normal), SUM(nutrition_status_moderately_underweight), SUM(nutrition_status_severely_underweight), SUM(wer_eligible), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(pse_eligible), SUM(pse_attended_16_days), SUM(pse_attended_21_days), SUM(lunch_count_21_days), SUM(born_in_month), SUM(low_birth_weight_in_month), SUM(bf_at_birth), SUM(ebf_eligible), SUM(ebf_in_month), SUM(cf_eligible), SUM(cf_in_month), SUM(cf_diet_diversity), SUM(cf_diet_quantity), SUM(cf_demo), SUM(cf_handwashing), SUM(counsel_increase_food_bf), SUM(counsel_manage_breast_problems), SUM(counsel_ebf), SUM(counsel_adequate_bf), SUM(counsel_pediatric_ifa), SUM(counsel_play_cf_video), SUM(fully_immunized_eligible), SUM(fully_immunized_on_time), SUM(fully_immunized_late), SUM(has_aadhar_id), 3, SUM(pnc_eligible), SUM(height_eligible), SUM(wasting_moderate), SUM(wasting_severe), SUM(stunting_moderate), SUM(stunting_severe), SUM(cf_initiation_in_month), SUM(cf_initiation_eligible), SUM(height_measured_in_month), SUM(wasting_normal), SUM(stunting_normal), SUM(valid_all_registered_in_month), SUM(ebf_no_info_recorded), SUM(weighed_and_height_measured_in_month), SUM(weighed_and_born_in_month), SUM(days_ration_given_child), SUM(zscore_grading_hfa_normal), SUM(zscore_grading_hfa_moderate), SUM(zscore_grading_hfa_severe), SUM(wasting_normal_v2), SUM(wasting_moderate_v2), SUM(wasting_severe_v2), SUM(zscore_grading_hfa_recorded_in_month), SUM(zscore_grading_wfh_recorded_in_month), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), 0, 0
+            FROM "agg_child_health_2019-01-01_4"
+            WHERE supervisor_is_test = 0
+            GROUP BY state_id, district_id, block_id, month, gender, age_tranche
+            ORDER BY state_id, district_id, block_id, month, gender, age_tranche
+        )
+        
+{}
+
+        INSERT INTO "agg_child_health_2019-01-01_2" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, gender, age_tranche, caste, disabled, minority, resident, valid_in_month, nutrition_status_weighed, nutrition_status_unweighed, nutrition_status_normal, nutrition_status_moderately_underweight, nutrition_status_severely_underweight, wer_eligible, thr_eligible, rations_21_plus_distributed, pse_eligible, pse_attended_16_days, pse_attended_21_days, lunch_count_21_days, born_in_month, low_birth_weight_in_month, bf_at_birth, ebf_eligible, ebf_in_month, cf_eligible, cf_in_month, cf_diet_diversity, cf_diet_quantity, cf_demo, cf_handwashing, counsel_increase_food_bf, counsel_manage_breast_problems, counsel_ebf, counsel_adequate_bf, counsel_pediatric_ifa, counsel_play_cf_video, fully_immunized_eligible, fully_immunized_on_time, fully_immunized_late, has_aadhar_id, aggregation_level, pnc_eligible, height_eligible, wasting_moderate, wasting_severe, stunting_moderate, stunting_severe, cf_initiation_in_month, cf_initiation_eligible, height_measured_in_month, wasting_normal, stunting_normal, valid_all_registered_in_month, ebf_no_info_recorded, weighed_and_height_measured_in_month, weighed_and_born_in_month, days_ration_given_child, zscore_grading_hfa_normal, zscore_grading_hfa_moderate, zscore_grading_hfa_severe, wasting_normal_v2, wasting_moderate_v2, wasting_severe_v2, zscore_grading_hfa_recorded_in_month, zscore_grading_wfh_recorded_in_month, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, 'All', 'All', 'All', month, gender, age_tranche, 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(nutrition_status_weighed), SUM(nutrition_status_unweighed), SUM(nutrition_status_normal), SUM(nutrition_status_moderately_underweight), SUM(nutrition_status_severely_underweight), SUM(wer_eligible), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(pse_eligible), SUM(pse_attended_16_days), SUM(pse_attended_21_days), SUM(lunch_count_21_days), SUM(born_in_month), SUM(low_birth_weight_in_month), SUM(bf_at_birth), SUM(ebf_eligible), SUM(ebf_in_month), SUM(cf_eligible), SUM(cf_in_month), SUM(cf_diet_diversity), SUM(cf_diet_quantity), SUM(cf_demo), SUM(cf_handwashing), SUM(counsel_increase_food_bf), SUM(counsel_manage_breast_problems), SUM(counsel_ebf), SUM(counsel_adequate_bf), SUM(counsel_pediatric_ifa), SUM(counsel_play_cf_video), SUM(fully_immunized_eligible), SUM(fully_immunized_on_time), SUM(fully_immunized_late), SUM(has_aadhar_id), 2, SUM(pnc_eligible), SUM(height_eligible), SUM(wasting_moderate), SUM(wasting_severe), SUM(stunting_moderate), SUM(stunting_severe), SUM(cf_initiation_in_month), SUM(cf_initiation_eligible), SUM(height_measured_in_month), SUM(wasting_normal), SUM(stunting_normal), SUM(valid_all_registered_in_month), SUM(ebf_no_info_recorded), SUM(weighed_and_height_measured_in_month), SUM(weighed_and_born_in_month), SUM(days_ration_given_child), SUM(zscore_grading_hfa_normal), SUM(zscore_grading_hfa_moderate), SUM(zscore_grading_hfa_severe), SUM(wasting_normal_v2), SUM(wasting_moderate_v2), SUM(wasting_severe_v2), SUM(zscore_grading_hfa_recorded_in_month), SUM(zscore_grading_wfh_recorded_in_month), MAX(state_is_test), MAX(district_is_test), 0, 0, 0
+            FROM "agg_child_health_2019-01-01_3"
+            WHERE block_is_test = 0
+            GROUP BY state_id, district_id, month, gender, age_tranche
+            ORDER BY state_id, district_id, month, gender, age_tranche
+        )
+        
+{}
+
+        INSERT INTO "agg_child_health_2019-01-01_1" (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, gender, age_tranche, caste, disabled, minority, resident, valid_in_month, nutrition_status_weighed, nutrition_status_unweighed, nutrition_status_normal, nutrition_status_moderately_underweight, nutrition_status_severely_underweight, wer_eligible, thr_eligible, rations_21_plus_distributed, pse_eligible, pse_attended_16_days, pse_attended_21_days, lunch_count_21_days, born_in_month, low_birth_weight_in_month, bf_at_birth, ebf_eligible, ebf_in_month, cf_eligible, cf_in_month, cf_diet_diversity, cf_diet_quantity, cf_demo, cf_handwashing, counsel_increase_food_bf, counsel_manage_breast_problems, counsel_ebf, counsel_adequate_bf, counsel_pediatric_ifa, counsel_play_cf_video, fully_immunized_eligible, fully_immunized_on_time, fully_immunized_late, has_aadhar_id, aggregation_level, pnc_eligible, height_eligible, wasting_moderate, wasting_severe, stunting_moderate, stunting_severe, cf_initiation_in_month, cf_initiation_eligible, height_measured_in_month, wasting_normal, stunting_normal, valid_all_registered_in_month, ebf_no_info_recorded, weighed_and_height_measured_in_month, weighed_and_born_in_month, days_ration_given_child, zscore_grading_hfa_normal, zscore_grading_hfa_moderate, zscore_grading_hfa_severe, wasting_normal_v2, wasting_moderate_v2, wasting_severe_v2, zscore_grading_hfa_recorded_in_month, zscore_grading_wfh_recorded_in_month, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, 'All', 'All', 'All', 'All', month, gender, age_tranche, 'All', 'All', 'All', 'All', SUM(valid_in_month), SUM(nutrition_status_weighed), SUM(nutrition_status_unweighed), SUM(nutrition_status_normal), SUM(nutrition_status_moderately_underweight), SUM(nutrition_status_severely_underweight), SUM(wer_eligible), SUM(thr_eligible), SUM(rations_21_plus_distributed), SUM(pse_eligible), SUM(pse_attended_16_days), SUM(pse_attended_21_days), SUM(lunch_count_21_days), SUM(born_in_month), SUM(low_birth_weight_in_month), SUM(bf_at_birth), SUM(ebf_eligible), SUM(ebf_in_month), SUM(cf_eligible), SUM(cf_in_month), SUM(cf_diet_diversity), SUM(cf_diet_quantity), SUM(cf_demo), SUM(cf_handwashing), SUM(counsel_increase_food_bf), SUM(counsel_manage_breast_problems), SUM(counsel_ebf), SUM(counsel_adequate_bf), SUM(counsel_pediatric_ifa), SUM(counsel_play_cf_video), SUM(fully_immunized_eligible), SUM(fully_immunized_on_time), SUM(fully_immunized_late), SUM(has_aadhar_id), 1, SUM(pnc_eligible), SUM(height_eligible), SUM(wasting_moderate), SUM(wasting_severe), SUM(stunting_moderate), SUM(stunting_severe), SUM(cf_initiation_in_month), SUM(cf_initiation_eligible), SUM(height_measured_in_month), SUM(wasting_normal), SUM(stunting_normal), SUM(valid_all_registered_in_month), SUM(ebf_no_info_recorded), SUM(weighed_and_height_measured_in_month), SUM(weighed_and_born_in_month), SUM(days_ration_given_child), SUM(zscore_grading_hfa_normal), SUM(zscore_grading_hfa_moderate), SUM(zscore_grading_hfa_severe), SUM(wasting_normal_v2), SUM(wasting_moderate_v2), SUM(wasting_severe_v2), SUM(zscore_grading_hfa_recorded_in_month), SUM(zscore_grading_wfh_recorded_in_month), MAX(state_is_test), 0, 0, 0, 0
+            FROM "agg_child_health_2019-01-01_2"
+            WHERE district_is_test = 0
+            GROUP BY state_id, month, gender, age_tranche
+            ORDER BY state_id, month, gender, age_tranche
+        )
+        
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (state_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (gender)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (age_tranche)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (supervisor_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (state_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (gender)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (age_tranche)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (supervisor_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (state_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (gender)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (age_tranche)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (state_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (gender)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (age_tranche)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (state_id)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (gender)
+{}
+CREATE INDEX ON "agg_child_health_2019-01-01_5" (age_tranche)
+{}

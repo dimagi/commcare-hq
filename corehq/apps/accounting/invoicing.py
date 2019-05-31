@@ -483,12 +483,15 @@ class LineItemFactory(object):
     @property
     @memoized
     def subscribed_domains(self):
-        if self.subscription.subscriber.domain is None:
-            raise LineItemError("No domain could be obtained as the subscriber.")
         if self.subscription.account.is_customer_billing_account:
-            return [sub.subscriber.domain for sub in
-                    self.subscription.account.subscription_set
-                        .filter(plan_version=self.subscription.plan_version)]
+            return list(self.subscription.account.subscription_set.filter(
+                Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+                date_start__lte=self.invoice.date_end
+            ).filter(
+                plan_version=self.subscription.plan_version
+            ).values_list(
+                'subscriber__domain', flat=True
+            ))
         return [self.subscription.subscriber.domain]
 
     def create(self):
@@ -633,13 +636,8 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return non_prorated_unit_cost
 
     @property
+    @memoized
     def quantity(self):
-        if self.invoice.is_customer_invoice and self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
-            return self.num_excess_users_over_period
-        return self.num_excess_users
-
-    @property
-    def num_excess_users_over_period(self):
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
@@ -650,7 +648,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
                     history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
                 except DomainUserHistory.DoesNotExist:
-                    total_users += 0
+                    raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 
@@ -663,28 +661,11 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return dates
 
     @property
-    def num_excess_users(self):
-        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-            return 0
-        else:
-            return max(self.num_users - self.rate.monthly_limit, 0)
-
-    @property
-    @memoized
-    def num_users(self):
-        total_users = 0
-        for domain in self.subscribed_domains:
-            total_users += CommCareUser.total_by_domain(domain, is_active=True)
-        return total_users
-
-    @property
     def unit_description(self):
-        non_monthly_invoice = self.invoice.is_customer_invoice and \
-            self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
-        if self.num_excess_users > 0 or (non_monthly_invoice and self.num_excess_users_over_period > 0):
+        if self.quantity > 0:
             return ungettext(
-                "Per User fee exceeding monthly limit of %(monthly_limit)s user.",
-                "Per User fee exceeding monthly limit of %(monthly_limit)s users.",
+                "Per User fee exceeding limit of %(monthly_limit)s user.",
+                "Per User fee exceeding limit of %(monthly_limit)s users.",
                 self.rate.monthly_limit
             ) % {
                 'monthly_limit': self.rate.monthly_limit,

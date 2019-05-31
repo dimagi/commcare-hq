@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
+import six
 
 from couchdbkit import ResourceConflict
 from distutils.version import LooseVersion
@@ -100,7 +101,7 @@ def search(request, domain):
 
 
 def _handle_query_merge_exception(request, exception):
-    notify_exception(request, exception.message, details=dict(
+    notify_exception(request, six.text_type(exception), details=dict(
         exception_type=type(exception),
         original_query=getattr(exception, "original_query", None),
         query_addition=getattr(exception, "query_addition", None)
@@ -109,7 +110,7 @@ def _handle_query_merge_exception(request, exception):
 
 
 def _handle_es_exception(request, exception, query_addition_debug_details):
-    notify_exception(request, exception, details=dict(
+    notify_exception(request, six.text_type(exception), details=dict(
         exception_type=type(exception),
         **query_addition_debug_details
     ))

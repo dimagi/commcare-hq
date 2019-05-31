@@ -36,6 +36,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
@@ -61,9 +62,27 @@ EXPIRE_TIME = 60 * 60 * 24
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
+    success = False
+    try:
+        _update_calculated_properties()
+        success = True
+    except Exception:
+        notify_exception(
+            None,
+            message="update_calculated_properties task has errored",
+        )
+    send_mail_async.delay(
+        subject="Calculated properties report task was " + ("successful" if success else "unsuccessful"),
+        message="Sentry will have relevant exception in case of failure",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=["{}@{}.com".format("dmore", "dimagi")]
+    )
+
+
+def _update_calculated_properties():
     results = DomainES().filter(
         get_domains_to_update_es_filter()
-    ).fields(["name", "_id", "cp_last_updated"]).scroll()
+    ).fields(["name", "_id"]).run().hits
 
     all_stats = all_domain_stats()
     for r in results:

@@ -9,7 +9,8 @@ hqDefine('reports/v2/js/datagrid', [
     'hqwebapp/js/assert_properties',
     'reports/v2/js/datagrid/data_models',
     'reports/v2/js/datagrid/columns',
-    'reports/v2/js/datagrid/bindingHandlers',  // for custom ko bindingHandlers
+    'reports/v2/js/datagrid/report_filters',
+    'reports/v2/js/datagrid/binding_handlers',  // for custom ko bindingHandlers
     'hqwebapp/js/knockout_bindings.ko',  // for modal bindings
 ], function (
     $,
@@ -17,21 +18,35 @@ hqDefine('reports/v2/js/datagrid', [
     _,
     assertProperties,
     dataModels,
-    columns
+    columns,
+    reportFilters
 ) {
     'use strict';
 
     var datagridController = function (options) {
-        assertProperties.assert(options, ['dataModel', 'columnEndpoint', 'initialColumns', 'availableFilters']);
+        assertProperties.assert(options, [
+            'dataModel',
+            'columnEndpoint',
+            'initialColumns',
+            'columnFilters',
+            'reportFilters',
+        ]);
 
         var self = {};
 
         self.data = options.dataModel;
+        self.reportFilters = ko.observableArray(_.map(options.reportFilters, function (data) {
+            var newFilter = reportFilters.reportFilter(data);
+            newFilter.value.subscribe(function () {
+                self.data.refresh();
+            });
+            return newFilter;
+        }));
         self.columns = ko.observableArray();
 
         self.editColumnController = columns.editColumnController({
             endpoint: options.columnEndpoint,
-            availableFilters: options.availableFilters,
+            availableFilters: options.columnFilters,
         });
 
         self.init = function () {
@@ -47,6 +62,9 @@ hqDefine('reports/v2/js/datagrid', [
                     }),
                     columns: _.map(self.columns(), function (column) {
                         return column.context();
+                    }),
+                    reportFilters: _.map(self.reportFilters(), function (reportFilter) {
+                        return reportFilter.context();
                     }),
                 };
             });

@@ -11,6 +11,7 @@ from six.moves import range
 
 
 class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-child-health'
     base_tablename = 'agg_child_health'
 
     def __init__(self, month):

@@ -82,7 +82,7 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."usage_num_add_pregnancy", 0) AS "usage_num_add_pregnancy",
         COALESCE("agg_awc"."cases_person_has_aadhaar_v2", 0) AS "cases_person_has_aadhaar_v2",
         COALESCE("agg_awc"."cases_person_beneficiary_v2", 0) AS "cases_person_beneficiary_v2"
-    FROM "public"."awc_location_months" "awc_location_months"
+    FROM "public"."awc_location_months_local" "awc_location_months"
     LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_awc"."aggregation_level") AND

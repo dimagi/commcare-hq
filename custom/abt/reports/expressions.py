@@ -342,6 +342,38 @@ class AbtExpressionSpec(JsonObject):
         return docs
 
 
+class AbtSupervisorExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor')
+    comment_from_root = False
+
+    @cached_property
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        if self.domain == 'vectorlink-uganda':
+            file_name = 'flagspecs_uganda.yaml'
+        else:
+            file_name = 'flagspecs.yaml'
+        path = os.path.join(os.path.dirname(__file__), file_name)
+        with open(path, encoding='utf-8') as f:
+            return yaml.safe_load(f)
+
+
+class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor_v2')
+    comment_from_root = True
+
+    @cached_property
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.safe_load(f)
+
+
 class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2019')
     comment_from_root = True
@@ -354,6 +386,16 @@ class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
         path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2019.yaml')
         with open(path, encoding='utf-8') as f:
             return yaml.safe_load(f)
+
+
+def abt_supervisor_expression(spec, context):
+    wrapped = AbtSupervisorExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def abt_supervisor_v2_expression(spec, context):
+    wrapped = AbtSupervisorV2ExpressionSpec.wrap(spec)
+    return wrapped
 
 
 def abt_supervisor_v2019_expression(spec, context):

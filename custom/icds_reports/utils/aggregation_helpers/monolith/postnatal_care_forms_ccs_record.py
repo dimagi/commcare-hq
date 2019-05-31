@@ -11,6 +11,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'postnatal-care-forms-ccs-record'
     ucr_data_source_id = 'static-postnatal_care_forms'
     aggregate_parent_table = AGG_CCS_RECORD_PNC_TABLE
     aggregate_child_table_prefix = 'icds_db_ccs_pnc_form_'

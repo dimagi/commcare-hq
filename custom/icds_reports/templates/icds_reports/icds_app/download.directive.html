@@ -1,9 +1,10 @@
 <div class="download-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row fixes-filters">
+    <div class="row fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-11">
             <span class="breadcrump-element">Export Program Area Indicators: </span>
         </div>
     </div>
+    <info-message></info-message>
     <div class="report-content report-content-without-message">
         <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."

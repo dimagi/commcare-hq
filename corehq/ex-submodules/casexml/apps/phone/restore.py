@@ -769,6 +769,8 @@ class RestoreConfig(object):
                         timer.name,
                     ],
                 )
+
+        tags.append('type:%s' % 'sync' if self.params.sync_log_id else 'restore')
         tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
 
         if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:

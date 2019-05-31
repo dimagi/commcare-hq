@@ -773,16 +773,17 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
     def _build_query(self, filter_values):
         key_column = sqlalchemy.column(self.key)
+        group_by_columns = [sqlalchemy.column(c) for c in self.group_by]
         sum_query = sqlalchemy.alias(
             sqlalchemy.select(
-                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [sqlalchemy.column('month')],
+                group_by_columns + [sqlalchemy.func.sum(key_column).label('sum_col')] + [sqlalchemy.column('month')],
                 group_by=self.group_by + [sqlalchemy.column('month')],
                 whereclause=self.filter.build_expression(),
-            ).select_from(self.table_name),
+            ).select_from(sqlalchemy.table(self.table_name)),
             name='s')
 
         return select(
-            self.group_by + [sqlalchemy.func.avg(sum_query.c.sum_col).label(self.key)],
+            group_by_columns + [sqlalchemy.func.avg(sum_query.c.sum_col).label(self.key)],
             group_by=self.group_by,
             from_obj=sum_query
         ).params(filter_values)
@@ -792,16 +793,17 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
     def _build_query(self, filter_values):
         key_column = sqlalchemy.column(self.key)
+        group_by_columns = [sqlalchemy.column(c) for c in self.group_by]
         subquery = sqlalchemy.alias(
             sqlalchemy.select(
-                self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
+                group_by_columns + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
                 group_by=self.group_by + [sqlalchemy.column('month')],
                 whereclause=self.filter.build_expression(),
             ).select_from(sqlalchemy.table(self.table_name)),
             name='cq')
 
         return sqlalchemy.select(
-            self.group_by + [sqlalchemy.func.sum(subquery.c.count_unique).label(self.key)],
+            group_by_columns + [sqlalchemy.func.sum(subquery.c.count_unique).label(self.key)],
             group_by=self.group_by,
             from_obj=subquery
         ).params(filter_values)

@@ -1,91 +1,91 @@
 {% load hq_shared_tags %}
 <script>
-    function wrap(text, width) {
-        //http://bl.ocks.org/mbostock/7555321
-        text.each(function () {
-            var text = d3.select(this);
-            var dy = parseFloat(text.attr("dy"));
-            if (isNaN(dy)) {
-                return;
-            }
+  function wrap(text, width) {
+    //http://bl.ocks.org/mbostock/7555321
+    text.each(function () {
+      var text = d3.select(this);
+      var dy = parseFloat(text.attr("dy"));
+      if (isNaN(dy)) {
+        return;
+      }
 
-            var words = text.text().split(/\s+/).reverse(),
-                word,
-                line = [],
-                lineNumber = 0,
-                lineHeight = 1.1, // ems
-                y = text.attr("y"),
-                tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", text.attr("dy"));
-            while (word = words.pop()) {
-                line.push(word);
-                tspan.text(line.join(" "));
-                if (tspan.node().getComputedTextLength() > width) {
-                    line.pop();
-                    tspan.text(line.join(" "));
-                    line = [word];
-                    tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-                }
-            }
-        });
-    }
-    nv.addGraph(function () {
-        var chart_config = {{ chart.config_dict|JSON }};
-        var chart_data = {{ chart.data|JSON }};
-        var chart_id = '#{{ chart_id }}';
-
-        $(chart_id).show();
-
-        var chart = nv.models.multiBarChart();
-
-        chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
-        {% if chart.x_axis.format %}
-            chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
-        {% endif %}
-
-        chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
-        {% if chart.y_axis.format %}
-            chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
-        {% endif %}
-
-        chart.showControls(chart_config.showControls);
-        chart.showLegend(chart_config.showLegend);
-        chart.reduceXTicks(chart_config.reduceXTicks);
-        chart.rotateLabels(chart_config.rotateLabels);
-        chart.tooltips(chart_config.tooltips);
-        // Customize tooltip message
-        {% if chart.tooltipFormat %}
-            chart.tooltipContent(function (key, y, e, graph) {
-                return e + '{{ chart.tooltipFormat }}' + y
-            });
-        {% endif %}
-        chart.stacked(chart_config.stacked);
-        chart.margin(chart_config.margin);
-        chart.staggerLabels(chart_config.staggerLabels);
-        chart.multibar.groupSpacing(chart_config.groupSpacing);
-        chart.multibar.forceY(chart_config.forceY);
-
-        d3.select(chart_id + ' svg')
-                .datum(chart_data)
-                .transition().duration(500).call(chart);
-
-        function update() {
-            chart.update();
-            d3.select(chart_id + ' svg').selectAll(".nv-x text")
-                .call(wrap, chart.xAxis.rangeBand());
+      var words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", text.attr("dy"));
+      while (word = words.pop()) {
+        line.push(word);
+        tspan.text(line.join(" "));
+        if (tspan.node().getComputedTextLength() > width) {
+          line.pop();
+          tspan.text(line.join(" "));
+          line = [word];
+          tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
         }
-
-        nv.utils.windowResize(update);
-        d3.select(chart_id + ' svg').selectAll(".nv-x text")
-                .call(wrap, chart.xAxis.rangeBand());
-        var maxTextHeight = Math.max.apply(null, d3.selectAll('svg .nv-x text')[0]
-                .map(function(x) { return $(x).height() }));
-        chart.margin({'bottom': maxTextHeight + 30});
-        update();
-
-        d3.select('svg').on('click', function() {
-            update()
-        });
-
-        return chart;
+      }
     });
+  }
+  nv.addGraph(function () {
+    var chart_config = {{ chart.config_dict|JSON }};
+    var chart_data = {{ chart.data|JSON }};
+    var chart_id = '#{{ chart_id }}';
+
+    $(chart_id).show();
+
+    var chart = nv.models.multiBarChart();
+
+    chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
+    {% if chart.x_axis.format %}
+      chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
+    {% endif %}
+
+    chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
+    {% if chart.y_axis.format %}
+      chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
+    {% endif %}
+
+    chart.showControls(chart_config.showControls);
+    chart.showLegend(chart_config.showLegend);
+    chart.reduceXTicks(chart_config.reduceXTicks);
+    chart.rotateLabels(chart_config.rotateLabels);
+    chart.tooltips(chart_config.tooltips);
+    // Customize tooltip message
+    {% if chart.tooltipFormat %}
+      chart.tooltipContent(function (key, y, e, graph) {
+        return e + '{{ chart.tooltipFormat }}' + y
+      });
+    {% endif %}
+    chart.stacked(chart_config.stacked);
+    chart.margin(chart_config.margin);
+    chart.staggerLabels(chart_config.staggerLabels);
+    chart.multibar.groupSpacing(chart_config.groupSpacing);
+    chart.multibar.forceY(chart_config.forceY);
+
+    d3.select(chart_id + ' svg')
+      .datum(chart_data)
+      .transition().duration(500).call(chart);
+
+    function update() {
+      chart.update();
+      d3.select(chart_id + ' svg').selectAll(".nv-x text")
+        .call(wrap, chart.xAxis.rangeBand());
+    }
+
+    nv.utils.windowResize(update);
+    d3.select(chart_id + ' svg').selectAll(".nv-x text")
+      .call(wrap, chart.xAxis.rangeBand());
+    var maxTextHeight = Math.max.apply(null, d3.selectAll('svg .nv-x text')[0]
+      .map(function(x) { return $(x).height() }));
+    chart.margin({'bottom': maxTextHeight + 30});
+    update();
+
+    d3.select('svg').on('click', function() {
+      update()
+    });
+
+    return chart;
+  });
 </script>

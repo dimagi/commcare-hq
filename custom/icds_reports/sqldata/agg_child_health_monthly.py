@@ -6,10 +6,10 @@ from sqlagg.columns import SumWhen, SumColumn, SimpleColumn
 from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ProgressReportMixIn
 from custom.icds_reports.utils import percent_num, wasting_severe_column, \
     wasting_moderate_column, wasting_normal_column, stunting_severe_column, stunting_moderate_column, \
@@ -17,9 +17,8 @@ from custom.icds_reports.utils import percent_num, wasting_severe_column, \
 from custom.utils.utils import clean_IN_filter_value
 
 
-class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
+class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_child_health_monthly'
-    engine_id = 'icds-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)

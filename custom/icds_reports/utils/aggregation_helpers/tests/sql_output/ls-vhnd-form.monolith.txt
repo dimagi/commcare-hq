@@ -1,0 +1,25 @@
+DROP TABLE IF EXISTS "icds_db_ls_vhnd_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_ls_vhnd_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_ls_vhnd_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_ls_vhnd_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_ls_vhnd_form_7a197ee47818209780c23ed9" (
+        state_id, supervisor_id, month, vhnd_observed
+        ) (
+             SELECT
+                state_id,
+                location_id as supervisor_id,
+                %(start_date)s::DATE AS month,
+                count(*) as vhnd_observed
+                FROM "ucr_icds-cas_static-ls_vhnd_form_f2b97e26"
+                WHERE vhnd_date >= %(start_date)s AND vhnd_date < %(end_date)s
+                AND state_id=%(state_id)s
+                GROUP BY state_id,location_id
+        )
+        
+{"end_date": "2019-02-01", "start_date": "2019-01-01", "state_id": "st1"}

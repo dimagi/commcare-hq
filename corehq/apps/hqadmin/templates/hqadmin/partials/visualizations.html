@@ -39,8 +39,8 @@
     <div class="tab-pane active" id="{{ chart_name }}-bar-chart">
       <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
         <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
+          <i class='fa fa-spin fa-spinner'></i>
           <h4>{% trans "Loading Bar Chart" %}</h4>
-          <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
         </div>
       </div>
       <div class="alert alert-warning no-data hidden">
@@ -57,8 +57,8 @@
       <div class="tab-pane" id="{{ chart_name }}-cumulative-chart">
         <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
           <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
+            <i class='fa fa-spin fa-spinner'></i>
             <h4>{% trans "Loading Cumulative Chart" %}</h4>
-            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
           </div>
         </div>
         <div class="alert alert-warning no-data hidden">
@@ -74,8 +74,8 @@
       <div class="tab-pane" id="{{ chart_name }}-stacked-cumulative-chart">
         <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
           <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
+            <i class='fa fa-spin fa-spinner'></i>
             <h4>{% trans "Loading Stacked Cumulative Chart" %}</h4>
-            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
           </div>
         </div>
         <div class="alert alert-warning no-data hidden">

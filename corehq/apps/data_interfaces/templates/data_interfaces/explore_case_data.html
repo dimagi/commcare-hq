@@ -21,9 +21,8 @@
 {% block title %}{% trans "Case Search" %}{% endblock %}
 
 {% block page_breadcrumbs %}
-breadcrumbs todo
+  breadcrumbs todo
 {% endblock %}
-
 
 {% block page_content %}
   {% registerurl "endpoint_options" domain report.slug '---' %}
@@ -33,23 +32,46 @@ breadcrumbs todo
   {% initial_page_data "report.slug" report.slug %}
   {% initial_page_data "report.columns" report.columns %}
   {% initial_page_data "report.columnFilters" report.column_filters %}
+  {% initial_page_data "report.reportFilters" report.report_filters %}
+  {% initial_page_data "report.initialReportFilters" report.initial_report_filters %}
 
-<div id="case_search--model">
+  <div id="case_search--model">
 
-  <div id="case_search--filters">
-    <div class="row">
-      <div class="col-md-6">
-        <h1>{% trans "Searching the Case Lists" %}</h1>
-      </div>
+    <div id="case_search--filters">
+      <div class="row">
+        <div class="col-md-6">
+          <h1>{% trans "Searching the Case Lists" %}</h1>
+        </div>
 
-      <div class="col-md-6">
+        <div class="col-md-6">
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="report-datagrid">
-    <table class="datagrid-headers">
-      <thead>
+    <div id="report-datagrid">
+
+      <div class="form form-horizontal well"
+           data-bind="foreach: reportFilters">
+        <div class="form-group">
+          <label class="{% css_label_class %} control-label"
+                 data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
+          <div class="{% css_field_class %}">
+            <select type="text"
+                    class="form-control"
+                    data-bind="selectedOptions: value,
+                               select2: {
+                                 placeholder: placeholder(),
+                                 multiple: true,
+                                 url: endpoint.getUrl(),
+                                 getInitialValue: getInitialValue,
+                               },
+                               attr: { id: 'filter_' + name() }"></select>
+          </div>
+        </div>
+      </div>
+
+      <table class="datagrid-headers">
+        <thead>
         <tr>
           <!-- ko foreach: columns -->
           <th data-bind="style: { width: width() + 'px' }">
@@ -69,157 +91,171 @@ breadcrumbs todo
             </button>
           </th>
         </tr>
-      </thead>
-    </table>
-    <table class="datagrid-rows">
-      <tbody data-bind="foreach: { data: data.rows, as: 'row' }">
+        </thead>
+      </table>
+      <table class="datagrid-rows">
+        <tbody data-bind="foreach: { data: data.rows, as: 'row' }">
         <tr>
           <!-- ko foreach: { data: $root.columns, as: 'column' } -->
-            <td data-bind="style: { width: column.width() + 'px' }">
-              <span data-bind="text: row[column.name()]"></span>
-            </td>
+          <td data-bind="style: { width: column.width() + 'px' }">
+            <span data-bind="text: row[column.name()]"></span>
+          </td>
           <!-- /ko -->
           <td></td>
         </tr>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
 
-    <div class="modal fade"
-         data-bind="modal: editColumnController.column"
-         role="dialog">
-      <div data-bind="with: editColumnController.column"
-           class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">
+      <pagination data-apply-bindings="false"
+                  params="goToPage: $root.data.goToPage,
+                          pageSlug: 'p',
+                          limitSlug: 'l',
+                          slug: 'datagrid',
+                          perPage: $root.data.limit,
+                          totalItems: $root.data.totalRecords"></pagination>
+
+      <div class="modal fade"
+           data-bind="modal: editColumnController.column"
+           role="dialog">
+        <div data-bind="with: editColumnController.column"
+             class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
                 <span aria-hidden="true">&times;</span>
                 <span class="sr-only">{% trans "Close" %}</span>
-            </button>
-            <h4 class="modal-title" data-bind="visible: $root.editColumnController.isNew">
-              {% trans "Add Column" %}
-            </h4>
-            <h4 class="modal-title" data-bind="visible: !$root.editColumnController.isNew()">
-              {% trans "Edit Column" %}
-            </h4>
-          </div>
-          <div class="modal-body">
-            <div class="form">
-              <div class="form-group">
-                <input type="text"
-                       class="form-control"
-                       placeholder="{% trans_html_attr "Title" %}"
-                       data-bind="textInput: title" />
-              </div>
-              <div class="form-group">
-                <input type="text"
-                       class="form-control"
-                       data-bind="textInput: name,
-                                  datagridAutocomplete: $root.editColumnController.columnNameOptions" />
-              </div>
+              </button>
+              <h4 class="modal-title" data-bind="visible: $root.editColumnController.isNew">
+                {% trans "Add Column" %}
+              </h4>
+              <h4 class="modal-title" data-bind="visible: !$root.editColumnController.isNew()">
+                {% trans "Edit Column" %}
+              </h4>
+            </div>
+            <div class="modal-body">
+              <div class="form">
+                <div class="form-group">
+                  <input type="text"
+                         class="form-control"
+                         placeholder="{% trans_html_attr "Title" %}"
+                         data-bind="textInput: title" />
+                </div>
+                <div class="form-group">
+                  <select type="text"
+                          class="form-control"
+                          data-bind="value: name,
+                                     select2: {
+                                       placeholder: '{% trans_html_attr "Select Property" %}',
+                                       delay: 250,
+                                       getInitialValue: getInitialNameValue,
+                                       url: $root.editColumnController.endpoint.getUrl(),
+                                       getData: $root.editColumnController.getData,
+                                     }" ></select>
+                </div>
 
-              <div class="form-group"
-                   data-bind="visible: showClause">
-                {% trans "Match" %}
-                <select data-bind="value: clause,
+                <div class="form-group"
+                     data-bind="visible: showClause">
+                  {% trans "Match" %}
+                  <select data-bind="value: clause,
                                    event: { change: $root.editColumnController.updateFilter }"
-                        class="form-control">
-                  <option value="all">
-                    {% trans "all of the" %}
-                  </option>
-                  <option value="any">
-                    {% trans "any of the" %}
-                  </option>
-                </select>
-                {% trans "following conditions:" %}
+                          class="form-control">
+                    <option value="all">
+                      {% trans "all of the" %}
+                    </option>
+                    <option value="any">
+                      {% trans "any of the" %}
+                    </option>
+                  </select>
+                  {% trans "following conditions:" %}
+                </div>
+
+                <!-- ko foreach: appliedFilters -->
+                <div class="row">
+                  <div class="col-xs-2">
+                    <!-- ko if: $index() == 0 -->
+                    <select class="form-control"
+                            data-bind="options: $root.editColumnController.availableFilterNames,
+                                       optionsText: function (val) {
+                                         return $root.editColumnController.filterTitleByName[val];
+                                       },
+                                       value: filterName,
+                                       event: { change: $root.editColumnController.updateFilterName }"></select>
+                    <!-- /ko -->
+                  </div>
+                  <div class="col-xs-4">
+                    <select class="form-control"
+                            data-bind="options: $root.editColumnController.availableChoiceNames,
+                                       optionsText: function (val) {
+                                         return $root.editColumnController.choiceTitleByName()[val];
+                                       },
+                                       value: choiceName,
+                                       event: { change: $root.editColumnController.updateFilter }"></select>
+                  </div>
+                  <div class="col-xs-4">
+                    <input type="text"
+                           class="form-control"
+                           data-bind="textInput: value,
+                                      visible: $root.editColumnController.isFilterText,
+                                      event: { change: $root.editColumnController.updateFilter }" />
+
+                    <input type="number"
+                           class="form-control"
+                           data-bind="textInput: value,
+                                      visible: $root.editColumnController.isFilterNumeric,
+                                      event: { change: $root.editColumnController.updateFilter }" />
+
+                    <input type="text"
+                           class="form-control"
+                           data-bind="value: value,
+                                      visible: $root.editColumnController.isFilterDate,
+                                      singleDatePicker: $root.editColumnController.isFilterDate,
+                                      event: { change: $root.editColumnController.updateFilter }" />
+                  </div>
+                  <div class="col-xs-2">
+                    <button type="button"
+                            class="btn btn-danger"
+                            data-bind="click: $root.editColumnController.removeFilter">
+                      <i class="fa fa-remove"></i>
+                    </button>
+
+                  </div>
+                </div>
+                <!-- /ko -->
+                <button type="button"
+                        class="btn btn-default"
+                        data-bind="click: $root.editColumnController.addFilter,
+                                   visible: showAddFilter" >
+                  {% trans "Add Filter" %}
+                </button>
               </div>
-
-              <!-- ko foreach: appliedFilters -->
-              <div class="row">
-                <div class="col-xs-2">
-                  <!-- ko if: $index() == 0 -->
-                  <select class="form-control"
-                          data-bind="options: $root.editColumnController.availableFilterNames,
-                                     optionsText: function (val) {
-                                        return $root.editColumnController.filterTitleByName[val];
-                                     },
-                                     value: filterName,
-                                     event: { change: $root.editColumnController.updateFilterName }"></select>
-                  <!-- /ko -->
-                </div>
-                <div class="col-xs-4">
-                  <select class="form-control"
-                          data-bind="options: $root.editColumnController.availableChoiceNames,
-                                     optionsText: function (val) {
-                                        return $root.editColumnController.choiceTitleByName()[val];
-                                     },
-                                     value: choiceName,
-                                     event: { change: $root.editColumnController.updateFilter }"></select>
-                </div>
-                <div class="col-xs-4">
-                  <input type="text"
-                         class="form-control"
-                         data-bind="textInput: value,
-                                    visible: $root.editColumnController.isFilterText,
-                                    event: { change: $root.editColumnController.updateFilter }" />
-
-                  <input type="number"
-                         class="form-control"
-                         data-bind="textInput: value,
-                                    visible: $root.editColumnController.isFilterNumeric,
-                                    event: { change: $root.editColumnController.updateFilter }" />
-
-                  <input type="text"
-                         class="form-control"
-                         data-bind="value: value,
-                                    visible: $root.editColumnController.isFilterDate,
-                                    singleDatePicker: $root.editColumnController.isFilterDate,
-                                    event: { change: $root.editColumnController.updateFilter }" />
-                </div>
-                <div class="col-xs-2">
-                  <button type="button"
-                          class="btn btn-danger"
-                          data-bind="click: $root.editColumnController.removeFilter">
-                    <i class="fa fa-remove"></i>
-                  </button>
-
-                 </div>
-              </div>
-              <!-- /ko -->
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      data-bind="visible: !$root.editColumnController.isNew(),
+                                 click: $root.deleteColumn"
+                      class="btn btn-danger pull-left">
+                <i class="fa fa-trash"></i>
+                {% trans "Delete" %}
+              </button>
               <button type="button"
                       class="btn btn-default"
-                      data-bind="click: $root.editColumnController.addFilter,
-                                 visible: showAddFilter" >
-                {% trans "Add Filter" %}
-              </button>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button"
-                    data-bind="visible: !$root.editColumnController.isNew(),
-                               click: $root.deleteColumn"
-                    class="btn btn-danger pull-left">
-              <i class="fa fa-trash"></i>
-              {% trans "Delete" %}
-            </button>
-            <button type="button"
-                    class="btn btn-default"
-                    data-dismiss="modal">{% trans "Cancel" %}</button>
-            <button class="btn btn-primary"
-                    data-bind="click: $root.updateColumn,
-                               disable: $root.editColumnController.isSaveDisabled">
+                      data-dismiss="modal">{% trans "Cancel" %}</button>
+              <button class="btn btn-primary"
+                      data-bind="click: $root.updateColumn,
+                                 disable: $root.editColumnController.isSaveDisabled">
               <span data-bind="visible: $root.editColumnController.isNew">
                 {% trans "Add" %}
               </span>
-              <span data-bind="visible:!$root.editColumnController.isNew()">
+                <span data-bind="visible:!$root.editColumnController.isNew()">
                 {% trans "Update" %}
               </span>
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
 
   </div>
-
-</div>
 {% endblock %}
