@@ -14,10 +14,12 @@
 {% endif %}
 
 <p>
-  {% if bulk_upload.help_text %}
-    <div class="alert alert-info">
-      {{ bulk_upload.help_text }}
-    </div>
+  {% if bulk_upload.help_link %}
+    <p class="help-block">
+      {% blocktrans with link=bulk_upload.help_link %}
+        Read more on the <a target='_blank' href='{{ link }}'>Help Site</a>.
+      {% endblocktrans %}
+    </p>
   {% endif %}
   <ol>
     {% block prerequisites %}{% endblock %}
