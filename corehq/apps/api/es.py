@@ -675,6 +675,7 @@ class TermParam(object):
 
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
+    TermParam('xmlns.exact'),
     TermParam('case_name', 'name', analyzed=True),
     TermParam('case_type', 'type', analyzed=True),
     DateRangeParams('received_on'),
