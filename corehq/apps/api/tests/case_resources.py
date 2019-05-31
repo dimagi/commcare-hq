@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 import uuid
 from datetime import datetime
-from urllib.parse import urlencode
+from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
