@@ -438,7 +438,7 @@ def publish_stock_state_to_kafka_on_delete(sender, instance, *args, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    if kwargs.get('skip_rebuild_cases'):
+    if kwargs.get('rebuild_cases'):
         return
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
     FormProcessorInterface(xform.domain).ledger_processor.process_form_archived(xform)
