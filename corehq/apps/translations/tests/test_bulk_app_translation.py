@@ -383,6 +383,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('add_markdown-label', 'add_markdown: ~~new \\u0939\\u093f markdown~~',
              'add_markdown: ~~new \\u0939\\u093f markdown~~', '', '', '', '', '', ''),
             ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
+            ('remove_markdown-label', 'no longer markdown', 'just plain text', '', '', '', '', '', ''),
             ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*',
              '', '', '', '', '', ''),
         ))
