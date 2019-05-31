@@ -61,6 +61,6 @@ branches:
   - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
   - es/case-import  # Ethan May 23
   
-  # This is being passively QAed. You can comment it out, just tell me afterwards.
+  # This is being actively QAed. Don't comment it out without warning the QA team.
   - jls/final-select2-v4 # Jenny May 25
 submodules: {}
