@@ -259,7 +259,7 @@ hqDefine("reports/js/report_config_models", [
                 return {
                     url: options.saveUrl,
                     type: 'post',
-                    data: JSON.stringify(config_data),
+                    data: JSON.stringify(configData),
                     dataType: 'json',
                     success: function (data) {
                         var newConfig = reportConfig(data);
