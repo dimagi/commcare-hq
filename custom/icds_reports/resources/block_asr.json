@@ -2,7 +2,7 @@
   "operationalization": {
     "data_source": [
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -25,7 +25,7 @@
   "population": {
     "data_source": [
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "columns": [
           {
             "column_name": "open_count",
@@ -88,7 +88,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -133,7 +133,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -187,7 +187,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -241,7 +241,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -295,7 +295,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -349,7 +349,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -403,7 +403,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "columns": [
           {
             "column_name": "M_st_count",
@@ -453,7 +453,7 @@
   "disabled_children": {
     "data_source": [
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -494,7 +494,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",

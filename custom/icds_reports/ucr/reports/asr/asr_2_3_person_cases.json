@@ -262,18 +262,6 @@
         "whens": {
           "closed_on IS NULL AND disability_type ~ '\\y5\\y'": 1
         }
-      },
-      {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "count_unique",
-        "column_id": "awc_count",
-        "field": "awc_id",
-        "transform": {},
-        "calculate_total": true,
-        "type": "field",
-        "display": "awc_count"
       }
     ],
     "sort_expression": [],
