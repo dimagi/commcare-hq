@@ -50,12 +50,11 @@ class RequestLog(models.Model):
 
     @staticmethod
     def log(log_level, domain_name, request_error, response_status, response_body,
-            method_func, request_url, *args, **kwargs):
-        # The order of arguments is important: `method_func`,
-        # `request_url` and `*args` are the Requests method and its
-        # positional arguments. Having these at the end of this
+            request_method, request_url, *args, **kwargs):
+        # The order of arguments is important: `request_method`,
+        # `request_url` and `*args` are the positional arguments of
+        # `Requests.send_request()`. Having these at the end of this
         # method's args allows us to call `log` with `*args, **kwargs`
-        request_method = method_func.__name__.upper()
         params, data, headers = RequestLog.unpack_request_args(request_method, args, kwargs)
         RequestLog.objects.create(
             domain=domain_name,
