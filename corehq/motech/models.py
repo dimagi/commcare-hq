@@ -31,10 +31,11 @@ class RequestLog(models.Model):
     @staticmethod
     def unpack_request_args(request_method, args, kwargs):
         params = kwargs.pop('params', '')
-        json_data = kwargs.pop('json', '')
-        data = kwargs.pop('data', json_data)  # Don't bother trying to
-        # cast as a dict. `data` will be rendered as prettified JSON if
-        # possible, regardless of whether it's a dict or a string here.
+        json_data = kwargs.pop('json', None) or ''
+        data = kwargs.pop('data', None) or json_data  # Don't bother
+        # trying to cast as a dict. `data` will be rendered as
+        # prettified JSON if possible, regardless of whether it's a dict
+        # or a string here.
         if args:
             if request_method == 'GET':
                 params = args[0]
