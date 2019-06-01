@@ -89,3 +89,36 @@ class RequestsTests(SimpleTestCase):
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
                 verify=False
             )
+
+    def test_with_session(self):
+        with patch('corehq.motech.requests.RequestLog', Mock()), \
+                patch.object(requests.Session, 'request'), \
+                patch.object(requests.Session, 'close') as close_mock:
+
+            with Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD) as self.requests:
+                self.requests.get('me')
+                self.requests.get('me')
+                self.requests.get('me')
+            self.assertEqual(close_mock.call_count, 1)
+
+    def test_without_session(self):
+        with patch('corehq.motech.requests.RequestLog', Mock()), \
+                patch.object(requests.Session, 'request'), \
+                patch.object(requests.Session, 'close') as close_mock:
+
+            self.requests.get('me')
+            self.requests.get('me')
+            self.requests.get('me')
+            self.assertEqual(close_mock.call_count, 3)
+
+    def test_with_and_without_session(self):
+        with patch('corehq.motech.requests.RequestLog', Mock()), \
+                patch.object(requests.Session, 'request'), \
+                patch.object(requests.Session, 'close') as close_mock:
+
+            with Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD) as self.requests:
+                self.requests.get('me')
+                self.requests.get('me')
+                self.requests.get('me')
+            self.requests.get('me')
+            self.assertEqual(close_mock.call_count, 2)
