@@ -16,6 +16,7 @@ from corehq.apps.hqmedia.models import CommCareImage
 from corehq.apps.hqmedia.tasks import check_ccz_multimedia_integrity, find_missing_locale_ids_in_ccz
 from corehq.apps.hqmedia.views import iter_media_files
 from corehq.util.test_utils import flag_enabled
+from io import open
 
 
 class CCZTest(TestCase):
@@ -58,7 +59,7 @@ class CCZTest(TestCase):
 
         zip_path = self._create_multimedia_integrity_zip(
             self.factory.app.create_media_suite(),
-            list(self.factory.app.get_media_objects()))
+            list(self.factory.app.get_media_objects(remove_unused=True)))
         errors = check_ccz_multimedia_integrity(self.domain, zip_path)
         self.assertEqual(len(errors), 0)
 

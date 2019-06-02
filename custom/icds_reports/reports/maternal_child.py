@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
+from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, underweight_children_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text
@@ -18,6 +18,10 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
 @quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_maternal_child_data_with_cache(domain, config, show_test=False, icds_feature_flag=False):
+    return get_maternal_child_data(domain, config, show_test, icds_feature_flag)
+
+
 def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
 
     def get_data_for_child_health_monthly(date, filters):

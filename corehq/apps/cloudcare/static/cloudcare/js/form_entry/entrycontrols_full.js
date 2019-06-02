@@ -660,6 +660,10 @@ function GeoPointEntry(question, options) {
             self.map.setZoom(self.DEFAULT.anszoom);
         }
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
+        var marker = new google.maps.Marker({
+            map: self.map,
+        });
+        marker.bindTo('position', self.map, 'center');
     };
 
     self.afterRender = function () {

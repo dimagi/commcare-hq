@@ -801,7 +801,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.short.custom_variables = custom_variables['short']
 
@@ -810,7 +810,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.long.custom_variables = custom_variables['long']
 

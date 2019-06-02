@@ -163,11 +163,9 @@ class ICDSMixin(object):
         else:
             loc_type = None
         datadog_histogram(
-            "commcare.icds.block_reports.custom_data_time",
+            "commcare.icds.block_reports.custom_data_duration",
             timer.duration,
-            tags="location_type:{}, report_slug:{}".format(
-                loc_type, self.slug
-            )
+            tags=["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug)]
         )
         return to_ret
 
@@ -873,7 +871,7 @@ def custom_strftime(format_to_use, date_to_format):
     )
 
 
-def create_aww_performance_excel_file(excel_data, data_type, month, state, district=None, block=None, beta=False):
+def create_aww_performance_excel_file(excel_data, data_type, month, state, district=None, block=None):
     aggregation_level = 3 if block else (2 if district else 1)
     export_info = excel_data[1][1]
     excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
@@ -893,14 +891,9 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.title = "AWW Performance Report"
     worksheet.sheet_view.showGridLines = False
     # sheet title
-    if beta:
-        worksheet.merge_cells('B2:{0}2'.format(
-            "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
-        ))
-    else:
-        worksheet.merge_cells('B2:{0}2'.format(
-            "J" if aggregation_level == 3 else ("K" if aggregation_level == 2 else "L")
-        ))
+    worksheet.merge_cells('B2:{0}2'.format(
+        "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
+    ))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
     title_cell.value = "AWW Performance Report for the month of {}".format(month)
@@ -908,29 +901,16 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_cell.alignment = Alignment(horizontal="center")
 
     # sheet header
-    if beta:
-        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
-        if aggregation_level < 3:
-            header_cells.append("L3")
-        if aggregation_level < 2:
-            header_cells.append("M3")
-        date_description_cell_start = "I3" if aggregation_level == 3 else \
-            ("J3" if aggregation_level == 2 else "K3")
-        date_description_cell_finish = "J3" if aggregation_level == 3 else \
-            ("K3" if aggregation_level == 2 else "L3")
-        date_column = "K3" if aggregation_level == 3 else ("L3" if aggregation_level == 2 else "M3")
-
-    else:
-        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3"]
-        if aggregation_level < 3:
-            header_cells.append("K3")
-        if aggregation_level < 2:
-            header_cells.append("L3")
-        date_description_cell_start = "H3" if aggregation_level == 3 else \
-            ("I3" if aggregation_level == 2 else "J3")
-        date_description_cell_finish = "I3" if aggregation_level == 3 else \
-            ("J3" if aggregation_level == 2 else "K3")
-        date_column = "J3" if aggregation_level == 3 else ("K3" if aggregation_level == 2 else "L3")
+    header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
+    if aggregation_level < 3:
+        header_cells.append("L3")
+    if aggregation_level < 2:
+        header_cells.append("M3")
+    date_description_cell_start = "I3" if aggregation_level == 3 else \
+        ("J3" if aggregation_level == 2 else "K3")
+    date_description_cell_finish = "J3" if aggregation_level == 3 else \
+        ("K3" if aggregation_level == 2 else "L3")
+    date_column = "K3" if aggregation_level == 3 else ("L3" if aggregation_level == 2 else "M3")
 
     for cell in header_cells:
         worksheet[cell].fill = blue_fill
@@ -963,25 +943,16 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     if aggregation_level < 3:
         headers.append("Block")
 
-    if beta:
-        headers.extend([
-            'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
-            'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
-            'Number of Days AWC was Open', 'AWH Eligible for Incentive'
-        ])
-        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
-        if aggregation_level < 3:
-            columns.append('L')
-        if aggregation_level < 2:
-            columns.append('M')
-    else:
-        headers.extend(["Supervisor", "AWC", "AWW Name", "AWW Contact Number", "Home Visits Conducted",
-                        "Number of Days AWC was Open", "Weighing Efficiency", "Eligible for Incentive"])
-        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-        if aggregation_level < 3:
-            columns.append('K')
-        if aggregation_level < 2:
-            columns.append('L')
+    headers.extend([
+        'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
+        'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
+        'Number of Days AWC was Open', 'AWH Eligible for Incentive'
+    ])
+    columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+    if aggregation_level < 3:
+        columns.append('L')
+    if aggregation_level < 2:
+        columns.append('M')
 
     table_header = {}
     for col, header in zip(columns, headers):
@@ -1018,8 +989,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     standard_widths = [4, 7, 15]
     standard_widths.extend([15] * (3 - aggregation_level))
     standard_widths.extend([13, 12, 13, 15, 11, 14, 14])
-    if beta:
-        standard_widths.append(14)
+    standard_widths.append(14)
 
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width

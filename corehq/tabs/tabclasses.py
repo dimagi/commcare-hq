@@ -65,6 +65,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds.views.hosted_ccz import (
+    ManageHostedCCZLink,
+    ManageHostedCCZ,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -702,7 +706,7 @@ class ProjectDataTab(UITab):
 
             items.extend(edit_section)
 
-        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+        if toggles.EXPLORE_CASE_DATA.enabled(self.domain) and self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
             explore_data_views = [
                 {
@@ -826,6 +830,11 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
+            ))
+        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                ManageHostedCCZ.page_title,
+                url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
             ))
         if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
@@ -1392,6 +1401,27 @@ class EnterpriseSettingsTab(UITab):
         return items
 
 
+class HostedCCZTab(UITab):
+    title = ugettext_noop('CCZ Hostings')
+    url_prefix_formats = (
+        '/a/{domain}/ccz/hostings/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(HostedCCZTab, self).sidebar_items
+        items.append((_('Manage CCZ Hostings'), [
+            {'url': reverse(ManageHostedCCZLink.urlname, args=[self.domain]),
+             'title': ManageHostedCCZLink.page_title
+             },
+            {'url': reverse(ManageHostedCCZ.urlname, args=[self.domain]),
+             'title': ManageHostedCCZ.page_title
+             },
+        ]))
+        return items
+
+
 class TranslationsTab(UITab):
     title = ugettext_noop('Translations')
 
@@ -1422,6 +1452,10 @@ class TranslationsTab(UITab):
                     {
                         'url': reverse('blacklist_translations', args=[self.domain]),
                         'title': _('Blacklist Translations')
+                    },
+                    {
+                        'url': reverse('download_translations', args=[self.domain]),
+                        'title': _('Download Translations')
                     },
                 ]))
         return items
@@ -1908,8 +1942,8 @@ class AdminTab(UITab):
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
-                {'title': _('View raw couch documents'),
-                 'url': reverse('raw_couch')},
+                {'title': _('View raw documents'),
+                 'url': reverse('raw_doc')},
                 {'title': _('View documents in ES'),
                  'url': reverse('doc_in_es')},
             ]

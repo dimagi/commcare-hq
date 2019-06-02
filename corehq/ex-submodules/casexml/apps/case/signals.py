@@ -9,10 +9,9 @@ from couchforms.signals import xform_archived, xform_unarchived
 def rebuild_form_cases(sender, xform, *args, **kwargs):
     from casexml.apps.case.xform import get_case_ids_from_form
     from casexml.apps.case.cleanup import rebuild_case_from_forms
-    from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
 
     domain = xform.domain
-    case_ids = get_case_ids_from_form(xform) | get_case_ids_from_stock_transactions(xform)
+    case_ids = get_case_ids_from_form(xform)
     detail = FormArchiveRebuild(form_id=xform.form_id, archived=xform.is_archived)
     for case_id in case_ids:
         rebuild_case_from_forms(domain, case_id, detail)

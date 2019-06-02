@@ -311,6 +311,14 @@ class RestoreParams(object):
     def app_id(self):
         return self.app.get_id if self.app else None
 
+    def __repr__(self):
+        return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}'".format(
+            self.sync_log_id,
+            self.version,
+            self.app,
+            self.device_id,
+        )
+
 
 class RestoreCacheSettings(object):
     """
@@ -326,6 +334,14 @@ class RestoreCacheSettings(object):
         self.force_cache = force_cache
         self.cache_timeout = cache_timeout if cache_timeout is not None else INITIAL_SYNC_CACHE_TIMEOUT
         self.overwrite_cache = overwrite_cache
+
+    def __repr__(self):
+        return "RestoreCacheSettings(force_cache='{}', cache_timeout={}, overwrite_cache='{}'".format(
+            self.force_cache,
+            self.cache_timeout,
+            self.overwrite_cache
+        )
+
 
 
 class RestoreState(object):
@@ -470,6 +486,15 @@ class RestoreState(object):
     @memoized
     def loadtest_factor(self):
         return self.restore_user.loadtest_factor
+
+    def __repr__(self):
+        return "RestoreState(project='{}', domain={}, restore_user='{}', start_time='{}', duration='{}'".format(
+            self.project,
+            self.domain,
+            self.restore_user,
+            self.start_time,
+            self.duration
+        )
 
 
 class RestoreConfig(object):
@@ -778,6 +803,24 @@ class RestoreConfig(object):
             tags.append('app:{}-{}'.format(app_name, self.params.app.version))
 
         datadog_counter('commcare.restores.count', tags=tags)
+
+    def __repr__(self):
+        return \
+            "RestoreConfig(project='{}', domain={}, restore_user={}, params='{}', cache_settings='{}', " \
+            "is_async='{}', restore_state='{}', force_cache='{}', cache_timeout='{}', overwrite_cache='{}', " \
+            "timing_context='{}')".format(
+                self.project,
+                self.domain,
+                self.restore_user,
+                self.params,
+                self.cache_settings,
+                self.is_async,
+                self.restore_state,
+                self.force_cache,
+                self.cache_timeout,
+                self.overwrite_cache,
+                self.timing_context.to_dict()
+            )
 
 
 RESTORE_SEGMENTS = {

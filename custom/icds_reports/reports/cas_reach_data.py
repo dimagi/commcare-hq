@@ -13,6 +13,10 @@ from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 
 
 @quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
+def get_cas_reach_data_with_cache(domain, now_date, config, show_test=False):
+    return get_cas_reach_data(domain, now_date, config, show_test)
+
+
 def get_cas_reach_data(domain, now_date, config, show_test=False):
     now_date = datetime(*now_date)
 

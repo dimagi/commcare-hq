@@ -180,11 +180,11 @@ class ConfigurableReportTableManagerMixin(object):
 
             diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
 
-            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
                 pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
-                table_diffs = [diff for diff in diffs.formatted if diff.table_name == table_name]
+                table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
                         self.rebuild_table(sql_adapter, table_diffs)
@@ -193,11 +193,12 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter, table_diffs)
 
-            self.migrate_tables(engine, diffs.raw, tables_to_act_on.migrate, table_map)
+            self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
         pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
-        changes = migrate_tables(engine, diffs, table_names)
+        migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
+        changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)

@@ -12,6 +12,7 @@ from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from six.moves import range
 
 
 class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -685,8 +686,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             awc_id,
             month,
             sum(add_household) AS usage_num_hh_reg,
-            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched
-            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs
+            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
+            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
             CASE WHEN (
                 sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp)
                 + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)

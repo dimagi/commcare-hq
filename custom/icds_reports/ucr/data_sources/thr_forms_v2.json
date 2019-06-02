@@ -19,6 +19,12 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-thr_forms_v2",
     "display_name": "Forms - Take Home Ration (Partitioned by month) (Static)",

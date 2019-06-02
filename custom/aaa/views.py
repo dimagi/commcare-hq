@@ -343,7 +343,8 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 values.extend([
                     'migration_status',
                     'age_marriage',
-                    'husband_name'
+                    'husband_name',
+                    'marital_status'
                 ])
             else:
                 values.append('mother_case_id')

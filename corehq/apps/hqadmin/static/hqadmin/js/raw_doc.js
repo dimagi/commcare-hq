@@ -1,4 +1,4 @@
-hqDefine('hqadmin/js/raw_couch_main', [
+hqDefine('hqadmin/js/raw_doc', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/base_ace",
@@ -11,11 +11,9 @@ hqDefine('hqadmin/js/raw_couch_main', [
 
         var viewModel = {'allDatabases': allDatabase};
         $("#doc-form").koApplyBindings(viewModel);
-        var $element = $("#couch-document");
 
-
-        baseAce.initAceEditor($element.get(0), 'ace/mode/json', {}, ($element.length ? JSON.stringify($element.data('doc'), null, 4) : null));
-
-
+        var $element = $("#doc-element"),
+            doc = ($element.length ? JSON.stringify($element.data('doc'), null, 4) : null);
+        baseAce.initAceEditor($element.get(0), 'ace/mode/json', {}, doc);
     });
 });
