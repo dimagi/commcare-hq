@@ -111,7 +111,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     if six.PY3:
         exc_message = six.text_type(exc)
     else:
-        exc_message = exc.message  # TODO
+        exc_message = exc.message
         if isinstance(exc_message, bytes):
             exc_message = exc_message.decode('utf-8')
 
