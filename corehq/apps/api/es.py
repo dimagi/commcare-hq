@@ -678,6 +678,13 @@ query_param_consumers = [
     TermParam('xmlns.exact'),
     TermParam('case_name', 'name', analyzed=True),
     TermParam('case_type', 'type', analyzed=True),
+    # terms listed here to prevent conversion of their values to lower case since
+    # since they are indexed as `not_analyzed` in ES
+    TermParam('type.exact'),
+    TermParam('name.exact'),
+    TermParam('external_id.exact'),
+    TermParam('contact_phone_number'),
+
     DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
     DateRangeParams('date_modified', 'modified_on'),
