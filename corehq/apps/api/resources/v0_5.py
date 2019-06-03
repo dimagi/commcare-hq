@@ -968,7 +968,7 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
     def obj_get_list(self, bundle, domain, **kwargs):
         elastic_query_set = super(ODataXFormInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
         xmlns = kwargs['xmlns']
-        elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': xmlns}})
+        elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': 'http://openrosa.org/formdesigner/' + xmlns}})
         return elastic_query_set
 
     class Meta(v0_4.XFormInstanceResource.Meta):
