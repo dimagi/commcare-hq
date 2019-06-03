@@ -4,7 +4,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from tastypie.serializers import Serializer
 
-from corehq.apps.api.odata.utils import get_case_type_to_properties
+from corehq.apps.api.odata.utils import get_case_type_to_properties, get_odata_property_from_export_item
 from corehq.apps.api.odata.views import ODataCaseMetadataView, ODataFormMetadataView
 from corehq.apps.export.dbaccessors import get_latest_form_export_schema
 from corehq.apps.export.models import ExportItem
@@ -137,7 +137,7 @@ class ODataXFormInstanceSerializer(Serializer):
 
             for i, xform_json in enumerate(data['value']):
                 data['value'][i] = {
-                    item.label.split('.')[-1].replace('#', '').replace('@', ''): _lookup(item, xform_json)
+                    get_odata_property_from_export_item(item): _lookup(item, xform_json)
                     for item in export_items
                 }
                 data['value'][i]['xform_id'] = xform_json['id']

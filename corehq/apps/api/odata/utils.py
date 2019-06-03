@@ -47,8 +47,12 @@ def get_properties_by_xmlns(domain, app_id, xmlns):
         item for item in form_export_schema.group_schemas[0].items
         if isinstance(item, ExportItem)
     ]
+    return set([get_odata_property_from_export_item(item) for item in export_items]) - {''}
 
-    def _cleanup(item):
-        return item.label.split('.')[-1].replace('#', '').replace('@', '').strip()
 
-    return set([_cleanup(item) for item in export_items]) - {''}
+def get_odata_property_from_export_item(export_item):
+    return format_odata_property_for_power_bi(export_item.label.split('.')[-1])
+
+
+def format_odata_property_for_power_bi(odata_property):
+    return odata_property.replace('#', '').replace('@', '').strip()
