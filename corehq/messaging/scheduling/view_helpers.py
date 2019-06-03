@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import six
 
+from collections import defaultdict
 from django.contrib import messages
 from django.db import transaction
 from django.utils.translation import ugettext as _
@@ -104,13 +105,23 @@ class ConditionalAlertUploader(object):
         if errors:
             return errors
 
+        # Most rules are represented by a single row, but rules with custom schedules have one row per event.
+        # Read through the worksheet, grouping rows by rule id and caching rule definitions.
+        condensed_rows = defaultdict(list)
+        rules_by_id = {}
+
         for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
             if not row.get('id', None):
                 self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet is missing "
                                   "an id.").format(index=index, sheet_name=self.sheet_name)))
                 continue
 
-            rule = None
+            if row['id'] in condensed_rows:
+                # This is the 2nd (or 3rd, 4th, ...) row for a rule we've already seen
+                condensed_rows[row['id']].append(row)
+                continue
+
+            rule = getattr(rules_by_id, six.text_type(row['id']), None)
             try:
                 rule = AutomaticUpdateRule.objects.get(
                     pk=row['id'],
@@ -146,12 +157,41 @@ class ConditionalAlertUploader(object):
                                                                       sheet_name=self.sheet_name)))
                 continue
 
+            rules_by_id[row['id']] = rule
+            row.update({'index': index})
+            condensed_rows[row['id']].append(row)
+
+        # Update the condensed set of rules
+        for rule_id, rows in condensed_rows.items():
+            rule = rules_by_id[rule_id]
+            schedule = rule.get_messaging_rule_schedule()
+            send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
+            if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
+                # Check that user provided one row for each event in the custom schedule
+                expected = len(rule.get_messaging_rule_schedule().memoized_events)
+                actual = len(rows)
+                if expected != actual:
+                    self.msgs.append((messages.error, _("Could not update rule with id {id} in '{sheet_name}' "
+                                                        "sheet: expected {expected} row(s) but found "
+                                                        "{actual}.").format(id=rule.id, sheet_name=self.sheet_name,
+                                                                            expected=expected, actual=actual)))
+                    continue
+
+                # Check that names match for all rows
+                name = rows[0]['name']
+                if any([row['name'] != name for row in rows]):
+                    self.msgs.append((messages.error, _("Could not update rule with id {id} in '{sheet_name}' "
+                                                        "sheet: rule name must be the same in all "
+                                                        "rows.").format(id=rule.id, sheet_name=self.sheet_name)))
+                    continue
+
             with transaction.atomic():
                 try:
-                    dirty = self.update_rule(rule, row)
+                    dirty = self.update_rule(rule, rows[0])
                 except RuleUpdateError as e:
+                    index = min([r['index'] for r in rows])
                     self.msgs.append((messages.error, _("Error updating row {index} in '{sheet_name}' sheet, "
-                                      "with rule id {id}: {detail}").format(index=index, id=row['id'],
+                                      "with rule id {id}: {detail}").format(index=index, id=rule.id,
                                                                             sheet_name=self.sheet_name,
                                                                             detail=six.text_type(e))))
                     continue
