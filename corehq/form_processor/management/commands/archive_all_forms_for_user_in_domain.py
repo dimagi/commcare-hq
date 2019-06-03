@@ -51,6 +51,7 @@ class Command(BaseCommand):
                 form.archive(rebuild_models=False)
 
         # removing ledger transactions
+        print("Starting with removing ledger transactions")
         for xform in with_progress_bar(forms):
             ledger_case_ids = get_case_ids_from_stock_transactions(xform)
             LedgerAccessorSQL.delete_ledger_transactions_for_form(ledger_case_ids, xform.form_id)
