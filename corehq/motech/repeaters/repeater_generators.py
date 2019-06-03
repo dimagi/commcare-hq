@@ -9,7 +9,7 @@ import warnings
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
-from casexml.apps.case.xform import cases_referenced_by_xform
+from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
 from casexml.apps.case.xml import V2
@@ -279,10 +279,10 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     deprecated_format_names = ('short_form_json',)
 
     def get_payload(self, repeat_record, form):
-        cases = cases_referenced_by_xform(form)
+        case_ids = list(get_case_ids_from_form(form))
         return json.dumps({'form_id': form.form_id,
                            'received_on': json_format_datetime(form.received_on),
-                           'case_ids': [case.case_id for case in cases]})
+                           'case_ids': case_ids})
 
     @property
     def content_type(self):

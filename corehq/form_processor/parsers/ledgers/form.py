@@ -127,9 +127,6 @@ def get_all_stock_report_helpers_from_form(xform):
     Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
     them to StockReportHelper objects.
     """
-    if xform.get_xml_element is None:
-        # ESXFormInstance (has a weird API)
-        raise MissingFormXml(xform.form_id)
     form_xml = xform.get_xml_element()
     if form_xml is None:
         # HACK should be raised by xform.get_xml_element()
