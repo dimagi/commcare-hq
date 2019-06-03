@@ -44,6 +44,6 @@ def get_properties_by_xmlns(domain, app_id, xmlns):
     ]
 
     def _cleanup(item):
-        return item.label.split('.')[-1].strip()
+        return item.label.split('.')[-1].replace('#', '').strip()
 
     return set([_cleanup(item) for item in export_items]) - {''}
