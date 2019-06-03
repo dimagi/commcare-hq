@@ -23,6 +23,7 @@ hqDefine("export/js/export_list", [
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
     'hqwebapp/js/components.ko',        // pagination widget
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -369,10 +370,23 @@ hqDefine("export/js/export_list", [
             self.startDate(newSelectedExport.emailedExport.filters.start_date());
             self.endDate(newSelectedExport.emailedExport.filters.end_date());
             self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
+
             // select2s require programmatic update
-            self.$emwfCaseFilter.select2("data", self.emwfCaseFilter());
-            self.$emwfFormFilter.select2("data", self.emwfFormFilter());
+            self._initSelect2Value(self.$emwfCaseFilter, self.emwfCaseFilter());
+            self._initSelect2Value(self.$emwfFormFilter, self.emwfFormFilter());
         });
+
+        // $el is a select element backing a select2.
+        // value is an array of objects, each with properties 'text' and 'id'
+        self._initSelect2Value = function ($el, value) {
+            $el.empty();
+            _.each(value, function (item) {
+                $el.append(new Option(item.text, item.id));
+            });
+            $el.val(_.pluck(value, 'id'));
+            $el.trigger('change.select2');
+        };
+
         self.showEmwfCaseFilter = ko.computed(function () {
             return self.selectedExportModelType() === 'case';
         });
@@ -404,10 +418,10 @@ hqDefine("export/js/export_list", [
 
             var exportType = export_.exportType();
             if (exportType === 'form') {
-                self.emwfFormFilter(self.$emwfFormFilter.select2("data"));
+                self.emwfFormFilter(self.$emwfFormFilter.val());
                 self.emwfCaseFilter(null);
             } else if (exportType === 'case') {
-                self.emwfCaseFilter(self.$emwfCaseFilter.select2("data"));
+                self.emwfCaseFilter(self.$emwfCaseFilter.val());
                 self.emwfFormFilter(null);
             }
 
