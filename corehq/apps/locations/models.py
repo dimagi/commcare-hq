@@ -468,7 +468,6 @@ class SQLLocation(AdjListModel):
             where, **kwargs
         )
 
-
     def get_ancestors(self, include_self=False, **kwargs):
         where = Q(domain=self.domain, id=self.id if include_self else self.parent_id)
         return SQLLocation.objects.get_ancestors(
