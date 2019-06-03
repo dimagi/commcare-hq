@@ -115,6 +115,7 @@ class RequestLogTests(SimpleTestCase):
                 json={'name': 'Alice'},
             )
 
+
 class UnpackRequestArgsTests(SimpleTestCase):
 
     def setUp(self):
