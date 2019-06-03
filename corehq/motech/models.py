@@ -30,22 +30,20 @@ class RequestLog(models.Model):
 
     @staticmethod
     def unpack_request_args(request_method, args, kwargs):
-        params = kwargs.pop('params', '')
-        json_data = kwargs.pop('json', None) or ''
-        data = kwargs.pop('data', None) or json_data  # Don't bother
-        # trying to cast as a dict. `data` will be rendered as
-        # prettified JSON if possible, regardless of whether it's a dict
-        # or a string here.
+        params = kwargs.pop('params', None)
+        json_data = kwargs.pop('json', None)  # dict
+        data = kwargs.pop('data', None)  # string
+        if data is None:
+            data = json_data
+        # Don't bother trying to cast `data` as a dict.
+        # RequestLog.request_body will store it, and it will be rendered
+        # as prettified JSON if possible, regardless of whether it's a
+        # dict or a string.
         if args:
             if request_method == 'GET':
                 params = args[0]
             elif request_method == 'PUT':
                 data = args[0]
-            elif request_method == 'POST':
-                # requests.post() allows `data` and `json` to be given
-                # as positional arguments, but ignores `json` if `data`
-                # has a value.
-                data = args[1] if len(args) == 2 and not args[0] else args[0]
         headers = kwargs.pop('headers', {})
         return params, data, headers
 
