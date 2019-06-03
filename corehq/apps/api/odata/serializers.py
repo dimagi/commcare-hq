@@ -145,6 +145,6 @@ class ODataXFormInstanceSerializer(Serializer):
                 }
                 data['value'][i]['xform_id'] = xform_json['id']
 
-        data['value'] = []
+        # data['value'] = []
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
