@@ -138,13 +138,10 @@ class ODataXFormInstanceSerializer(Serializer):
                 return xform_json
 
             for i, xform_json in enumerate(data['value']):
-                # print(json.dumps(xform_json, indent=2))
                 data['value'][i] = {
                     item.label.split('.')[-1].replace('#', '').replace('@', ''): _lookup(item, xform_json)
                     for item in export_items
                 }
                 data['value'][i]['xform_id'] = xform_json['id']
-
-        # data['value'] = []
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
