@@ -212,7 +212,6 @@ class TestFormOdataFeed(TestCase, FormOdataTestMixin):
 
     @property
     def view_url(self):
-        print(self._odata_feed_url_by_domain(self.domain.name))
         return self._odata_feed_url_by_domain(self.domain.name)
 
     @staticmethod

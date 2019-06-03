@@ -936,6 +936,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
                 self.wrap_view('dispatch_list'))
         ]
 
+
 ODATA_XFORM_INSTANCE_RESOURCE_NAME = 'Forms'
 
 

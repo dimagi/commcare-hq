@@ -31,7 +31,6 @@ class CaseOdataTestMixin(OdataTestMixin):
 
 class FormOdataTestMixin(OdataTestMixin):
 
-
     @property
     def view_url(self):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'app_id': 'my_app_id'})

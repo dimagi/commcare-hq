@@ -193,7 +193,10 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
-            {"@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Forms/my_app_id/$metadata", "value": []}
+            {
+                "@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Forms/my_app_id/$metadata",
+                "value": [],
+            }
         )
 
     @flag_enabled('ODATA')
@@ -240,7 +243,10 @@ class TestFormServiceDocumentWithTwoFactorUsingApiKey(TestFormServiceDocumentUsi
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
-            {"@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Forms/my_app_id/$metadata", "value": []}
+            {
+                "@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Forms/my_app_id/$metadata",
+                "value": [],
+            }
         )
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
