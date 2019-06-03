@@ -6,13 +6,9 @@ import base64
 from django.urls import reverse
 
 
-class CaseOdataTestMixin(object):
+class OdataTestMixin(object):
 
     view_urlname = None
-
-    @property
-    def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name})
 
     def _execute_query(self, credentials):
         return self.client.get(self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)
@@ -24,3 +20,18 @@ class CaseOdataTestMixin(object):
     @staticmethod
     def _get_basic_credentials(username, password):
         return base64.b64encode("{}:{}".format(username, password).encode('utf-8')).decode('utf-8')
+
+
+class CaseOdataTestMixin(OdataTestMixin):
+
+    @property
+    def view_url(self):
+        return reverse(self.view_urlname, kwargs={'domain': self.domain.name})
+
+
+class FormOdataTestMixin(OdataTestMixin):
+
+
+    @property
+    def view_url(self):
+        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'app_id': 'my_app_id'})

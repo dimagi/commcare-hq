@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from corehq import toggles
-from corehq.apps.api.odata.utils import get_case_type_to_properties, get_xmlns_by_app, get_properties_by_xmlns
+from corehq.apps.api.odata.utils import get_case_type_to_properties, get_xmlns_by_app, get_xmlns_to_properties
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
@@ -79,11 +79,7 @@ class ODataFormMetadataView(View):
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain, app_id):
-        xmlnss = get_xmlns_by_app(domain, app_id)
-        xmlns_to_properties = {
-            xmlns: get_properties_by_xmlns(domain, app_id, xmlns)
-            for xmlns in xmlnss
-        }
+        xmlns_to_properties = get_xmlns_to_properties(domain, app_id)
         metadata = render_to_string('api/odata_form_metadata.xml', {
             'xmlns_to_properties': xmlns_to_properties,
         })

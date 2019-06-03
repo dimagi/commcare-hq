@@ -26,6 +26,13 @@ def get_case_type_to_properties(domain):
     return dict(case_type_to_properties)
 
 
+def get_xmlns_to_properties(domain, app_id):
+    return {
+        xmlns: get_properties_by_xmlns(domain, app_id, xmlns)
+        for xmlns in get_xmlns_by_app(domain, app_id)
+    }
+
+
 def get_xmlns_by_app(domain, app_id):
     app = get_current_app(domain, app_id)
     return [form.xmlns.split('/')[-1] for form in app.get_forms()]
