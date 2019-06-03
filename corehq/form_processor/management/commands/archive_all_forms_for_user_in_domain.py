@@ -7,14 +7,14 @@ from io import open
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.cleanup import rebuild_case_from_forms
-from casexml.apps.case.xform import get_case_ids_from_form
+from casexml.apps.case.xform import get_case_updates
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import RebuildWithReason
 from corehq.util.log import with_progress_bar
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.ledgers.form import get_ledger_references_from_stock_transactions
+from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
 
 
 class Command(BaseCommand):
@@ -38,7 +38,9 @@ class Command(BaseCommand):
 
         case_ids_to_rebuild = set()
         for form in forms:
-            case_ids_to_rebuild.update(get_case_ids_from_form(form))
+            form_case_ids = set(cu.id for cu in get_case_updates(form))
+            if form_case_ids:
+                case_ids_to_rebuild.update(form_case_ids)
         print("Found %s cases that would need to be rebuilt" % len(case_ids_to_rebuild))
 
         # archive forms
@@ -48,11 +50,10 @@ class Command(BaseCommand):
                 forms_log.write("%s\n" % form.form_id)
                 form.archive(rebuild_models=False)
 
-        # removing data
+        # removing ledger transactions
         for xform in with_progress_bar(forms):
-            refs_to_rebuild = get_ledger_references_from_stock_transactions(xform)
-            case_ids = list({ref.case_id for ref in refs_to_rebuild})
-            LedgerAccessorSQL.delete_ledger_transactions_for_form(case_ids, xform.form_id)
+            ledger_case_ids = get_case_ids_from_stock_transactions(xform)
+            LedgerAccessorSQL.delete_ledger_transactions_for_form(ledger_case_ids, xform.form_id)
 
         # rebuild cases
         print("Starting with case archival")
