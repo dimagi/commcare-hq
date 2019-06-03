@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.utils.translation import (ugettext as _, ugettext_lazy,
     ugettext_noop)
@@ -225,15 +226,58 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             for location_type in location_types
         ]
 
+    def get_bulk_ancestors(self, location_ids):
+        """
+        Returns the grouped ancestors for the location ids passed in the
+        dictionary of following pattern
+        {location_id_1: [self, parent, parent_of_parent,.,.,.,],
+        location_id_2: [self, parent, parent_of_parent,.,.,.,],
+
+        }
+        :param domain: domain for which locations is to be pulled out
+        :param location_ids: locations ids whose ancestors needs to be find
+        :param kwargs: extra parameters
+        :return: dict
+        """
+        where = Q(domain=self.domain, location_id__in=location_ids)
+        location_ancestors = SQLLocation.objects.get_ancestors(where)
+        location_by_id = {location.location_id: location for location in location_ancestors}
+        location_by_pk = {location.id: location for location in location_ancestors}
+
+        grouped_location = {}
+        for location_id in location_ids:
+
+            location_parents = []
+            current_location = location_by_id[location_id].id if location_id in location_by_id else None
+
+            while current_location is not None:
+                location_parents.append(location_by_pk[current_location])
+                current_location = location_by_pk[current_location].parent_id
+
+            grouped_location[location_id] = location_parents
+
+        return grouped_location
+
+    def include_location_data(self):
+
+        return (
+            toggles.LOCATION_COLUMNS_APP_STATUS_REPORT.enabled(self.request.couch_user.username,
+                                                               toggles.NAMESPACE_USER)
+            and
+            toggles.LOCATION_COLUMNS_APP_STATUS_REPORT.enabled(self.domain,
+                                                               toggles.NAMESPACE_DOMAIN)
+            and
+            self.rendered_as in ['export']
+        )
+
+
     def process_rows(self, users, fmt_for_export=False):
         rows = []
         users = list(users)
-        if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
-                toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and \
-                self.rendered_as in ['export']:
 
+        if self.include_location_data():
             location_ids = {user['location_id'] for user in users if user['location_id']}
-            grouped_ancestor_locs = SQLLocation.get_bulk_ancestors(self.domain, location_ids)
+            grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
             self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
         for user in users:
@@ -281,12 +325,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 app_name or "---", build_version, commcare_version or '---'
             ]
 
-            if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
-                    toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['export']:
-
+            if self.include_location_data():
                 location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
                                                     self.required_loc_columns)
-
                 row_data = location_data + row_data
 
             rows.append(row_data)
@@ -382,8 +423,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         table = list(result[0][1])
         location_colums = []
 
-        if (toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username) and
-                toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain)) and self.rendered_as in ['export']:
+        if self.include_location_data():
             location_colums = ['{} Name'.format(loc_col.name.title()) for loc_col in self.required_loc_columns]
 
         table[0] = location_colums + table[0]

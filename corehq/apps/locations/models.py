@@ -468,38 +468,6 @@ class SQLLocation(AdjListModel):
             where, **kwargs
         )
 
-    @staticmethod
-    def get_bulk_ancestors(domain, location_ids, **kwargs):
-        """
-        Returns the grouped ancestors for the location ids passed in the
-        dictionary of following pattern
-        {location_id_1: [self, parent, parent_of_parent,.,.,.,],
-        location_id_2: [self, parent, parent_of_parent,.,.,.,],
-
-        }
-        :param domain: domain for which locations is to be pulled out
-        :param location_ids: locations ids whose ancestors needs to be find
-        :param kwargs: extra parameters
-        :return: dict
-        """
-        where = Q(domain=domain, location_id__in=location_ids)
-        location_ancestors = SQLLocation.objects.get_ancestors(where, **kwargs)
-        location_by_id = {location.location_id: location for location in location_ancestors}
-        location_by_pk = {location.id: location for location in location_ancestors}
-
-        grouped_location = {}
-        for location_id in location_ids:
-
-            location_parents = []
-            current_location = location_by_id[location_id].id if location_id in location_by_id else None
-
-            while current_location is not None:
-                location_parents.append(location_by_pk[current_location])
-                current_location = location_by_pk[current_location].parent_id
-
-            grouped_location[location_id] = location_parents
-
-        return grouped_location
 
     def get_ancestors(self, include_self=False, **kwargs):
         where = Q(domain=self.domain, id=self.id if include_self else self.parent_id)

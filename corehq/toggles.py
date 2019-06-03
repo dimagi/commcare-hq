@@ -1775,3 +1775,10 @@ IMPROVED_ASR_REPORT = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
+    'location_columns_app_status_report',
+    'Enables location columns to app status report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
