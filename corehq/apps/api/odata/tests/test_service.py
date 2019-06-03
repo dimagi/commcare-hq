@@ -9,20 +9,20 @@ from django.urls import reverse
 from mock import patch
 from tastypie.models import ApiKey
 
-from corehq.apps.api.odata.tests.utils import OdataTestMixin
+from corehq.apps.api.odata.tests.utils import CaseOdataTestMixin
 from corehq.apps.api.odata.views import ODataCaseServiceView
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 
-class TestServiceDocument(TestCase, OdataTestMixin):
+class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
 
     view_urlname = ODataCaseServiceView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestServiceDocument, cls).setUpClass()
+        super(TestCaseServiceDocumentCase, cls).setUpClass()
         cls.client = Client()
         cls.domain = Domain(name='test_domain')
         cls.domain.save()
@@ -32,7 +32,7 @@ class TestServiceDocument(TestCase, OdataTestMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.web_user.delete()
-        super(TestServiceDocument, cls).tearDownClass()
+        super(TestCaseServiceDocumentCase, cls).tearDownClass()
 
     def test_no_credentials(self):
         response = self.client.get(self.view_url)
@@ -91,22 +91,22 @@ class TestServiceDocument(TestCase, OdataTestMixin):
         )
 
 
-class TestServiceDocumentUsingApiKey(TestServiceDocument):
+class TestCaseServiceDocumentUsingApiKey(TestCaseServiceDocumentCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestServiceDocumentUsingApiKey, cls).setUpClass()
+        super(TestCaseServiceDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
         cls.api_key.key = cls.api_key.generate_key()
         cls.api_key.save()
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestServiceDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
+        return TestCaseServiceDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestServiceDocumentWithTwoFactorUsingApiKey(TestServiceDocumentUsingApiKey):
+class TestCaseServiceDocumentWithTwoFactorUsingApiKey(TestCaseServiceDocumentUsingApiKey):
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
     @flag_enabled('ODATA')

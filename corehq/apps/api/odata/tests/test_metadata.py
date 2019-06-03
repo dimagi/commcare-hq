@@ -9,7 +9,7 @@ from django.urls import reverse
 from mock import patch
 from tastypie.models import ApiKey
 
-from corehq.apps.api.odata.tests.utils import OdataTestMixin
+from corehq.apps.api.odata.tests.utils import CaseOdataTestMixin
 from corehq.apps.api.odata.views import ODataCaseMetadataView
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
@@ -19,13 +19,13 @@ from corehq.util.test_utils import flag_enabled
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
 
-class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
+class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
     view_urlname = ODataCaseMetadataView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestMetadataDocument, cls).setUpClass()
+        super(TestCaseMetadataDocumentCase, cls).setUpClass()
         cls.client = Client()
         cls.domain = Domain(name='test_domain')
         cls.domain.save()
@@ -35,7 +35,7 @@ class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.web_user.delete()
-        super(TestMetadataDocument, cls).tearDownClass()
+        super(TestCaseMetadataDocumentCase, cls).tearDownClass()
 
     def test_no_credentials(self):
         response = self.client.get(self.view_url)
@@ -87,26 +87,26 @@ class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
         self.assertEqual(response.status_code, 200)
         self.assertXmlEqual(
             response.content,
-            self.get_xml('populated_metadata_document', override_path=PATH_TO_TEST_DATA)
+            self.get_xml('populated_case_metadata_document', override_path=PATH_TO_TEST_DATA)
         )
 
 
-class TestMetadataDocumentUsingApiKey(TestMetadataDocument):
+class TestCaseMetadataDocumentUsingApiKey(TestCaseMetadataDocumentCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestMetadataDocumentUsingApiKey, cls).setUpClass()
+        super(TestCaseMetadataDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
         cls.api_key.key = cls.api_key.generate_key()
         cls.api_key.save()
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestMetadataDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
+        return TestCaseMetadataDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestMetadataDocumentWithTwoFactorUsingApiKey(TestMetadataDocumentUsingApiKey):
+class TestCaseMetadataDocumentWithTwoFactorUsingApiKey(TestCaseMetadataDocumentUsingApiKey):
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
     @flag_enabled('ODATA')
@@ -134,5 +134,5 @@ class TestMetadataDocumentWithTwoFactorUsingApiKey(TestMetadataDocumentUsingApiK
         self.assertEqual(response.status_code, 200)
         self.assertXmlEqual(
             response.content,
-            self.get_xml('populated_metadata_document', override_path=PATH_TO_TEST_DATA)
+            self.get_xml('populated_case_metadata_document', override_path=PATH_TO_TEST_DATA)
         )

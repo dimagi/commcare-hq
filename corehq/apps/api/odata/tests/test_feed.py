@@ -14,7 +14,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
-from corehq.apps.api.odata.tests.utils import OdataTestMixin
+from corehq.apps.api.odata.tests.utils import CaseOdataTestMixin
 from corehq.apps.api.resources.v0_5 import ODataCommCareCaseResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -25,11 +25,11 @@ from corehq.util.test_utils import flag_enabled, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-class TestOdataFeed(TestCase, OdataTestMixin):
+class TestCaseOdataFeed(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestOdataFeed, cls).setUpClass()
+        super(TestCaseOdataFeed, cls).setUpClass()
 
         cls.client = Client()
         cls.domain = Domain(name='test_domain')
@@ -48,7 +48,7 @@ class TestOdataFeed(TestCase, OdataTestMixin):
         SubscriptionAdjustment.objects.all().delete()
         cls.subscription.delete()
         cls.account.delete()
-        super(TestOdataFeed, cls).tearDownClass()
+        super(TestCaseOdataFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
         response = self.client.get(self.view_url)
@@ -111,22 +111,22 @@ class TestOdataFeed(TestCase, OdataTestMixin):
         ensure_index_deleted(CASE_INDEX_INFO.index)
 
 
-class TestOdataFeedUsingApiKey(TestOdataFeed):
+class TestCaseOdataFeedUsingApiKey(TestCaseOdataFeed):
 
     @classmethod
     def setUpClass(cls):
-        super(TestOdataFeedUsingApiKey, cls).setUpClass()
+        super(TestCaseOdataFeedUsingApiKey, cls).setUpClass()
         cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
         cls.api_key.key = cls.api_key.generate_key()
         cls.api_key.save()
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestOdataFeedUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
+        return TestCaseOdataFeedUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestOdataFeedWithTwoFactorUsingApiKey(TestOdataFeedUsingApiKey):
+class TestCaseOdataFeedWithTwoFactorUsingApiKey(TestCaseOdataFeedUsingApiKey):
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
     @flag_enabled('ODATA')

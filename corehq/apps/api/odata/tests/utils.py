@@ -6,7 +6,7 @@ import base64
 from django.urls import reverse
 
 
-class OdataTestMixin(object):
+class CaseOdataTestMixin(object):
 
     view_urlname = None
 
@@ -19,7 +19,7 @@ class OdataTestMixin(object):
 
     @staticmethod
     def _get_correct_credentials():
-        return OdataTestMixin._get_basic_credentials('test_user', 'my_password')
+        return CaseOdataTestMixin._get_basic_credentials('test_user', 'my_password')
 
     @staticmethod
     def _get_basic_credentials(username, password):
