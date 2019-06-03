@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from corehq import toggles
-from corehq.apps.api.odata.utils import get_case_type_to_properties
+from corehq.apps.api.odata.utils import get_case_type_to_properties, get_xmlns_by_app, get_properties_by_xmlns
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
@@ -47,6 +47,45 @@ class ODataCaseMetadataView(View):
             )
         metadata = render_to_string('api/odata_metadata.xml', {
             'case_type_to_properties': case_type_to_properties,
+        })
+        return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
+
+
+class ODataFormServiceView(View):
+
+    urlname = 'odata_form_service'
+
+    @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(toggles.ODATA.required_decorator())
+    def get(self, request, domain, app_id):
+        data = {
+            '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain, app_id]),
+            'value': [
+                {
+                    'name': xmlns,
+                    'kind': 'EntitySet',
+                    'url': xmlns,
+                }
+                for xmlns in get_xmlns_by_app(domain, app_id)
+            ]
+        }
+        return add_odata_headers(JsonResponse(data))
+
+
+class ODataFormMetadataView(View):
+
+    urlname = 'odata_form_meta'
+
+    @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(toggles.ODATA.required_decorator())
+    def get(self, request, domain, app_id):
+        xmlnss = get_xmlns_by_app(domain, app_id)
+        xmlns_to_properties = {
+            xmlns: get_properties_by_xmlns(domain, app_id, xmlns)
+            for xmlns in xmlnss
+        }
+        metadata = render_to_string('api/odata_form_metadata.xml', {
+            'xmlns_to_properties': xmlns_to_properties,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
