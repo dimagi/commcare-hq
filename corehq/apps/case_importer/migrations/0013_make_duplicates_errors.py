@@ -8,6 +8,7 @@ from corehq.apps.case_importer.exceptions import TooManyMatches
 from corehq.apps.case_importer.tracking.task_status import (
     TaskStatusResultError,
 )
+from six.moves import range
 
 
 def iterator(queryset):
