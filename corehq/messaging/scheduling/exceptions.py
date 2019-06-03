@@ -4,6 +4,10 @@ class NoAvailableContent(Exception):
     pass
 
 
+class RuleUpdateError(Exception):
+    pass
+
+
 class UnknownContentType(Exception):
     pass
 
