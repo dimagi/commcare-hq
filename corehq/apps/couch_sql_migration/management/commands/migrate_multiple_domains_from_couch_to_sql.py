@@ -82,8 +82,8 @@ class Command(BaseCommand):
 
         stats = get_diff_stats(domain, self.strict)
         if stats:
-            preamble = "Migration has diffs: {}".format(domain)
-            log.error(format_diff_stats(stats, preamble))
+            header = "Migration has diffs: {}".format(domain)
+            log.error(format_diff_stats(stats, header))
             self.abort(domain)
             return False, "has diffs"
 
@@ -139,11 +139,11 @@ def get_diff_stats(domain, strict=True):
     return stats
 
 
-def format_diff_stats(stats, preamble=None):
+def format_diff_stats(stats, header=None):
     lines = []
     if stats:
-        if preamble:
-            lines.append(preamble)
+        if header:
+            lines.append(header)
 
         class stream:
             write = lines.append

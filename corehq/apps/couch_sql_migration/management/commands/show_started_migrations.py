@@ -24,17 +24,15 @@ class Command(BaseCommand):
         migrations = get_uncompleted_migrations(COUCH_TO_SQL_SLUG)
         for status, items in sorted(six.iteritems(migrations)):
             print(status)
-            print("=" * len(status))
-            print("")
             for item in sorted(items, key=attrgetter("domain")):
                 started = item.started_on
-                print("{}{}".format(
+                print("  {}{}".format(
                     item.domain,
                     started.strftime(" (%Y-%m-%d)") if started else "",
                 ))
                 try:
                     stats = get_diff_stats(item.domain)
-                    print(format_diff_stats(stats))
+                    stats = format_diff_stats(stats)
+                    print("    " + stats.replace("\n", "\n    "))
                 except Exception as err:
-                    print("Cannot get diff stats: {}".format(err))
-                print("")
+                    print("    Cannot get diff stats: {}".format(err))
