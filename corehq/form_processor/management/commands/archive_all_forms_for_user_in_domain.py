@@ -52,9 +52,18 @@ class Command(BaseCommand):
 
         # removing ledger transactions
         print("Starting with removing ledger transactions")
-        for xform in with_progress_bar(forms):
-            ledger_case_ids = get_case_ids_from_stock_transactions(xform)
-            LedgerAccessorSQL.delete_ledger_transactions_for_form(ledger_case_ids, xform.form_id)
+        with open("ledger_transactions_removed_case_ids.txt", "w+b") as case_ids_log:
+            forms_iterated = 0
+            for xform in with_progress_bar(forms):
+                forms_iterated += 1
+                if forms_iterated % 100 == 0:
+                    print("traversed %s forms" % forms_iterated)
+                ledger_case_ids = get_case_ids_from_stock_transactions(xform)
+                if ledger_case_ids:
+                    ledger_case_ids = list(ledger_case_ids)
+                    for ledger_case_id in ledger_case_ids:
+                        case_ids_log.write("%s\n" % ledger_case_id)
+                    LedgerAccessorSQL.delete_ledger_transactions_for_form(ledger_case_ids, xform.form_id)
 
         # rebuild cases
         print("Starting with cases rebuild")
