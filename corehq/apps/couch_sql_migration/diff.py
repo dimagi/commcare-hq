@@ -88,7 +88,7 @@ load_ignore_rules = memoized(lambda: {
         # field was not updated as part of the subsequent rebuild.
         # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
         # opened_by or opened_on (the latter is ignored by has_date_values).
-        Ignore('diff', 'opened_by', check=is_case_without_create_action),
+        Ignore(path='opened_by', check=is_case_without_create_action),
         # form has case block with no actions
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
