@@ -58,7 +58,7 @@ from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 from no_exceptions.exceptions import Http403
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from six.moves import map
@@ -105,7 +105,7 @@ class BulkUploadCasesException(Exception):
 
 
 class DataInterfaceSection(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = ugettext_lazy("Data")
     urlname = 'data_interfaces_default'
 
     @method_decorator(require_can_edit_data)
@@ -249,13 +249,13 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'
     urlname = 'manage_case_groups'
-    page_title = ugettext_noop("Manage Case Group")
+    page_title = ugettext_lazy("Manage Case Group")
 
-    limit_text = ugettext_noop("cases per page")
-    empty_notification = ugettext_noop("You have no cases in your group.")
-    loading_message = ugettext_noop("Loading cases...")
-    deleted_items_header = ugettext_noop("Removed Cases:")
-    new_items_header = ugettext_noop("Added Cases:")
+    limit_text = ugettext_lazy("cases per page")
+    empty_notification = ugettext_lazy("You have no cases in your group.")
+    loading_message = ugettext_lazy("Loading cases...")
+    deleted_items_header = ugettext_lazy("Removed Cases:")
+    new_items_header = ugettext_lazy("Added Cases:")
 
     @property
     def group_id(self):
@@ -454,7 +454,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 @location_safe
 class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
-    page_title = ugettext_noop('Form Management')
+    page_title = ugettext_lazy('Form Management')
 
     def post(self, request, *args, **kwargs):
         form_ids = self.get_xform_ids(request)
@@ -531,7 +531,7 @@ class XFormManagementView(DataInterfaceSection):
 class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
-    page_title = ugettext_noop('Form Status')
+    page_title = ugettext_lazy('Form Status')
 
     def get(self, request, *args, **kwargs):
         context = super(XFormManagementStatusView, self).main_context
