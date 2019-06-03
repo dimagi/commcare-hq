@@ -127,7 +127,7 @@ class ODataXFormInstanceSerializer(Serializer):
                 if isinstance(item, ExportItem)
             ]
 
-            def _lookup(item, xform_json):
+            def _get_odata_value_by_export_item(item, xform_json):
                 for path_node in item.path:
                     try:
                         xform_json = xform_json[path_node.name]
@@ -137,7 +137,7 @@ class ODataXFormInstanceSerializer(Serializer):
 
             for i, xform_json in enumerate(data['value']):
                 data['value'][i] = {
-                    get_odata_property_from_export_item(item): _lookup(item, xform_json)
+                    get_odata_property_from_export_item(item): _get_odata_value_by_export_item(item, xform_json)
                     for item in export_items
                 }
                 data['value'][i]['xform_id'] = xform_json['id']
