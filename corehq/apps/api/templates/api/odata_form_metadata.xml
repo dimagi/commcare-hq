@@ -7,6 +7,7 @@
                 <Key>
                     <PropertyRef Name="xform_id" />
                 </Key>
+                <Property Name="xform_id" Type="Edm.String" Nullable="false"/>
                 {% for property in properties %}
                     <Property Name="{{ property }}" Type="Edm.String" />
                 {% endfor %}
