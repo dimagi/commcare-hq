@@ -26,7 +26,7 @@ from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
-from corehq.util.log import send_HTML_email
+from corehq.util.log import send_HTML_email, with_progress_bar
 
 from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.exceptions import (
@@ -1035,7 +1035,7 @@ def email_enterprise_report(domain, slug, couch_user):
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains(today=None):
     today = today or datetime.date.today()
-    for domain in sorted(set(Domain.get_all_names())):
+    for domain in with_progress_bar(sorted(set(Domain.get_all_names()))):
         num_users = CommCareUser.total_by_domain(domain)
         record_date = today - relativedelta(days=1)
         try:
