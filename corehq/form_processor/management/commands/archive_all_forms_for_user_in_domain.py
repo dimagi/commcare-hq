@@ -9,10 +9,12 @@ from django.core.management.base import BaseCommand
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import RebuildWithReason
 from corehq.util.log import with_progress_bar
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.parsers.ledgers.form import get_ledger_references_from_stock_transactions
 
 
 class Command(BaseCommand):
@@ -48,12 +50,19 @@ class Command(BaseCommand):
 
         # removing data
         for xform in with_progress_bar(forms):
-            FormProcessorInterface(xform.domain).ledger_processor.process_form_archived(xform)
+            refs_to_rebuild = get_ledger_references_from_stock_transactions(xform)
+            case_ids = list({ref.case_id for ref in refs_to_rebuild})
+            LedgerAccessorSQL.delete_ledger_transactions_for_form(case_ids, xform.form_id)
 
-        # archive cases
+        # rebuild cases
         print("Starting with case archival")
         reason = "User %s forms archived for domain %s by system" % (user.raw_username, domain)
+        form_processor_interface = FormProcessorInterface(domain)
         with open("cases_rebuilt.txt", "w+b") as case_log:
             for case_id in with_progress_bar(case_ids_to_rebuild):
                 case_log.write("%s\n" % case_id)
                 rebuild_case_from_forms(domain, case_id, RebuildWithReason(reason=reason))
+                ledgers = form_processor_interface.ledger_db.get_ledgers_for_case(case_id)
+                for ledger in ledgers:
+                    form_processor_interface.ledger_processor.rebuild_ledger_state(
+                        case_id, ledger.section_id, ledger.entry_id)
