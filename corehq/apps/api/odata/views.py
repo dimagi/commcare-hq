@@ -11,13 +11,15 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_
 from corehq.util.view_utils import absolute_reverse
 
 
-class ODataServiceView(View):
+class ODataCaseServiceView(View):
+
+    urlname = 'odata_case_service'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         data = {
-            '@odata.context': absolute_reverse('odata_meta', args=[domain]),
+            '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
             'value': [
                 {
                     'name': case_type,
@@ -30,7 +32,9 @@ class ODataServiceView(View):
         return add_odata_headers(JsonResponse(data))
 
 
-class ODataMetadataView(View):
+class ODataCaseMetadataView(View):
+
+    urlname = 'odata_case_meta'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(toggles.ODATA.required_decorator())

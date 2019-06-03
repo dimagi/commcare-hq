@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from tastypie.serializers import Serializer
 
 from corehq.apps.api.odata.utils import get_case_type_to_properties
+from corehq.apps.api.odata.views import ODataCaseMetadataView
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
@@ -31,7 +32,10 @@ class ODataCommCareCaseSerializer(Serializer):
                 'API requires api_path to be set! Did you add it in a custom create_response function?'
             )
         data = self.to_simple(data, options)
-        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), case_type)
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
+            case_type
+        )
 
         next_url = data.pop('meta', {}).get('next')
         if next_url:

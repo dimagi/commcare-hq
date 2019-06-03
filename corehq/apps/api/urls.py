@@ -16,7 +16,7 @@ from corehq.apps.api.object_fetch_api import (
     CaseAttachmentAPI,
     FormAttachmentAPI,
 )
-from corehq.apps.api.odata.views import ODataMetadataView, ODataServiceView
+from corehq.apps.api.odata.views import ODataCaseMetadataView, ODataCaseServiceView
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.v0_5 import (
     DomainCases,
@@ -93,8 +93,8 @@ class CommCareHqApi(Api):
 
 def api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
-    yield url(r'v0.5/odata/Cases/$', ODataServiceView.as_view(), name='odata_service')
-    yield url(r'v0.5/odata/Cases/\$metadata$', ODataMetadataView.as_view(), name='odata_meta')
+    yield url(r'v0.5/odata/Cases/$', ODataCaseServiceView.as_view(), name=ODataCaseServiceView.urlname)
+    yield url(r'v0.5/odata/Cases/\$metadata$', ODataCaseMetadataView.as_view(), name=ODataCaseMetadataView.urlname)
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
