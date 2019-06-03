@@ -114,3 +114,159 @@ class RequestLogTests(SimpleTestCase):
                 },
                 json={'name': 'Alice'},
             )
+
+class UnpackRequestArgsTests(SimpleTestCase):
+
+    def setUp(self):
+        self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+
+        content = {'status': 'Created'}
+        self.content_json = json.dumps(content)
+        self.status_code = 201
+        self.error_message = ''
+        self.uri = 'person/'
+        self.json_data = {'name': 'Alice'}
+        self.data = json.dumps(self.json_data)
+
+        self.response_mock = Mock()
+        self.response_mock.status_code = self.status_code
+        self.response_mock.content = self.content_json
+        self.response_mock.json.return_value = content
+
+    def test_post_with_no_args(self):
+        with patch.object(requests.Session, 'request') as request_mock, \
+                patch.object(RequestLog.objects, 'create') as create_mock:
+            request_mock.return_value = self.response_mock
+
+            self.requests.post(self.uri)
+
+            create_mock.assert_called_with(
+                domain=TEST_DOMAIN,
+                log_level=logging.INFO,
+                request_body=None,
+                request_error=self.error_message,
+                request_headers={
+                    'Content-type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                request_method='POST',
+                request_params=None,
+                request_url='http://localhost:9080/api/person/',
+                response_body=self.content_json,
+                response_status=self.status_code,
+            )
+
+    def test_post_with_data_kwarg(self):
+        with patch.object(requests.Session, 'request') as request_mock, \
+                patch.object(RequestLog.objects, 'create') as create_mock:
+            request_mock.return_value = self.response_mock
+
+            self.requests.post(self.uri, data=self.data)
+
+            create_mock.assert_called_with(
+                domain=TEST_DOMAIN,
+                log_level=logging.INFO,
+                request_body=self.data,
+                request_error=self.error_message,
+                request_headers={
+                    'Content-type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                request_method='POST',
+                request_params=None,
+                request_url='http://localhost:9080/api/person/',
+                response_body=self.content_json,
+                response_status=self.status_code,
+            )
+
+    def test_post_with_json_kwarg(self):
+        with patch.object(requests.Session, 'request') as request_mock, \
+                patch.object(RequestLog.objects, 'create') as create_mock:
+            request_mock.return_value = self.response_mock
+
+            self.requests.post(self.uri, json=self.json_data)
+
+            create_mock.assert_called_with(
+                domain=TEST_DOMAIN,
+                log_level=logging.INFO,
+                request_body=self.json_data,
+                request_error=self.error_message,
+                request_headers={
+                    'Content-type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                request_method='POST',
+                request_params=None,
+                request_url='http://localhost:9080/api/person/',
+                response_body=self.content_json,
+                response_status=self.status_code,
+            )
+
+    def test_post_with_data_arg(self):
+        with patch.object(requests.Session, 'request') as request_mock, \
+                patch.object(RequestLog.objects, 'create') as create_mock:
+            request_mock.return_value = self.response_mock
+
+            self.requests.post(self.uri, self.data)
+
+            create_mock.assert_called_with(
+                domain=TEST_DOMAIN,
+                log_level=logging.INFO,
+                request_body=self.data,
+                request_error=self.error_message,
+                request_headers={
+                    'Content-type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                request_method='POST',
+                request_params=None,
+                request_url='http://localhost:9080/api/person/',
+                response_body=self.content_json,
+                response_status=self.status_code,
+            )
+
+    def test_post_with_json_arg(self):
+        with patch.object(requests.Session, 'request') as request_mock, \
+                patch.object(RequestLog.objects, 'create') as create_mock:
+            request_mock.return_value = self.response_mock
+
+            self.requests.post(self.uri, None, self.json_data)
+
+            create_mock.assert_called_with(
+                domain=TEST_DOMAIN,
+                log_level=logging.INFO,
+                request_body=self.json_data,
+                request_error=self.error_message,
+                request_headers={
+                    'Content-type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                request_method='POST',
+                request_params=None,
+                request_url='http://localhost:9080/api/person/',
+                response_body=self.content_json,
+                response_status=self.status_code,
+            )
+
+    def test_post_with_data_and_json(self):
+        with patch.object(requests.Session, 'request') as request_mock, \
+                patch.object(RequestLog.objects, 'create') as create_mock:
+            request_mock.return_value = self.response_mock
+
+            self.requests.post(self.uri, self.data, self.json_data)
+
+            create_mock.assert_called_with(
+                domain=TEST_DOMAIN,
+                log_level=logging.INFO,
+                request_body=self.data,
+                request_error=self.error_message,
+                request_headers={
+                    'Content-type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                request_method='POST',
+                request_params=None,
+                request_url='http://localhost:9080/api/person/',
+                response_body=self.content_json,
+                response_status=self.status_code,
+            )
