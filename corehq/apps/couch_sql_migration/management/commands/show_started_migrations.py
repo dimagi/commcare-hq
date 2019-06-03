@@ -32,7 +32,8 @@ class Command(BaseCommand):
                 ))
                 try:
                     stats = get_diff_stats(item.domain)
-                    stats = format_diff_stats(stats)
-                    print("    " + stats.replace("\n", "\n    "))
+                    if stats:
+                        stats = format_diff_stats(stats)
+                        print("    " + stats.replace("\n", "\n    "))
                 except Exception as err:
                     print("    Cannot get diff stats: {}".format(err))
