@@ -189,13 +189,13 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>' +
             '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
-            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>10</strong></div>' +
-            '<div>Number of Children (0 - 5 years) unmeasured: <strong>20</strong></div>' +
+            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>20</strong></div>' +
+            '<div>Number of Children (0 - 5 years) unmeasured: <strong>10</strong></div>' +
             '<div>% children (0 - 5 years)  with Normal Acute Malnutrition: <strong>10.00%</strong></div>' +
             '<div>% children (0 - 5 years)  with Moderate Acute Malnutrition (MAM): <strong>15.00%</strong></div>' +
             '<div>% children (0 - 5 years)  with Severe Acute Malnutrition (SAM): <strong>20.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10, 30);
+        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10, 30, 10, 30);
         assert.equal(expected, result);
     });
 
@@ -346,9 +346,9 @@ describe('Prevalence Of Severe Directive feature flag enable', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total_height_eligible: 30, total_weighed: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
-            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>15</strong></div>' +
-            '<div>Number of Children (0 - 5 years) unmeasured: <strong>15</strong></div>' +
+            '<div>Total number of children (0 - 5 years) eligible for weight and height measurement: <strong>0</strong></div>' +
+            '<div>Total number of children (0 - 5 years) with weight and height measured: <strong>15</strong></div>' +
+            '<div>Total number of children (0 - 5 years) unmeasured: <strong>0</strong></div>' +
             '<div>% Severely Acute Malnutrition (0 - 5 years): <strong>33.33%</strong></div>' +
             '<div>% Moderately Acute Malnutrition (0 - 5 years): <strong>33.33%</strong></div>' +
             '<div>% Normal (0 - 5 years): <strong>33.33%</strong></div></div>');
@@ -431,23 +431,23 @@ describe('Prevalence Of Severe Directive feature flag enable', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>' +
-            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
-            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>10</strong></div>' +
-            '<div>Number of Children (0 - 5 years) unmeasured: <strong>20</strong></div>' +
+            '<div>Total number of children (0 - 5 years) eligible for weight and height measurement: <strong>10</strong></div>' +
+            '<div>Total number of children (0 - 5 years) with weight and height measured: <strong>20</strong></div>' +
+            '<div>Total number of children (0 - 5 years) unmeasured: <strong>-10</strong></div>' +
             '<div>% children (0 - 5 years)  with Normal Acute Malnutrition: <strong>10.00%</strong></div>' +
             '<div>% children (0 - 5 years)  with Moderate Acute Malnutrition (MAM): <strong>15.00%</strong></div>' +
             '<div>% children (0 - 5 years)  with Severe Acute Malnutrition (SAM): <strong>20.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10, 30);
+        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10, 30, 10, 30);
         assert.equal(expected, result);
     });
 
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Total Children (0 - 5 years) weighed in given month: <strong>0</strong></div>' +
-            '<div>Total Children (0 - 5 years) with height measured in given month: <strong>0</strong></div>' +
-            '<div>Number of Children (0 - 5 years) unmeasured: <strong>0</strong></div>' +
+            '<div>Total number of children (0 - 5 years) eligible for weight and height measurement: <strong>0</strong></div>' +
+            '<div>Total number of children (0 - 5 years) with weight and height measured: <strong>0</strong></div>' +
+            '<div>Total number of children (0 - 5 years) unmeasured: <strong>0</strong></div>' +
             '<div>% Severely Acute Malnutrition (0 - 5 years): <strong>NaN%</strong></div>' +
             '<div>% Moderately Acute Malnutrition (0 - 5 years): <strong>NaN%</strong></div>' +
             '<div>% Normal (0 - 5 years): <strong>NaN%</strong></div></div>';
