@@ -32,6 +32,9 @@ class Command(BaseCommand):
                     item.domain,
                     started.strftime(" (%Y-%m-%d)") if started else "",
                 ))
-                stats = get_diff_stats(item.domain)
-                print(format_diff_stats(stats))
+                try:
+                    stats = get_diff_stats(item.domain)
+                    print(format_diff_stats(stats))
+                except Exception as err:
+                    print("Cannot get diff stats: {}".format(err))
                 print("")
