@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from collections import defaultdict
 from django.db.models import Q
 from django.test import TestCase
 from datetime import time
@@ -47,6 +48,7 @@ class TestBulkConditionalAlerts(TestCase):
     DAILY_RULE = 'daily_rule'
     WEEKLY_RULE = 'weekly_rule'
     MONTHLY_RULE = 'monthly_rule'
+    CUSTOM_IMMEDIATE_RULE = 'custom_immediate_rule'
     CUSTOM_DAILY_RULE = 'custom_daily_rule'
 
     @classmethod
@@ -94,6 +96,16 @@ class TestBulkConditionalAlerts(TestCase):
                 SMSContent(message={'*': 'Just Like This Train'}),
                 SMSContent(message={'*': 'Free Man in Paris'}),
             ]),
+            self.CUSTOM_IMMEDIATE_RULE: self._add_custom_immediate_rule([
+                SMSContent(message={
+                    'en': 'Paper Bag',
+                    'es': 'Bolsa de Papel',
+                }),
+                SMSContent(message={
+                    'en': 'A Mistake',
+                    'es': 'Un Error',
+                }),
+            ])
         }
         locked_rule = self._get_rule(self.LOCKED_RULE)
         locked_rule.locked_for_editing = True
@@ -173,6 +185,14 @@ class TestBulkConditionalAlerts(TestCase):
         )
         return self._add_rule(timed_schedule_id=schedule.schedule_id)
 
+    def _add_custom_immediate_rule(self, content_list):
+        event_and_content_objects = [
+            (AlertEvent(minutes_to_wait=i * 10), content)
+            for i, content in enumerate(content_list)
+        ]
+        schedule = AlertSchedule.create_custom_alert(self.domain, event_and_content_objects)
+        return self._add_rule(alert_schedule_id=schedule.schedule_id)
+
     def _add_custom_daily_rule(self, content_list):
         event_and_content_objects = [
             (TimedEvent(day=i % 7, time=time(i * 2 % 24, 30 + i % 60)), content)
@@ -203,24 +223,34 @@ class TestBulkConditionalAlerts(TestCase):
         language_list_patch.return_value = self.langs
         (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain)
 
-        self.assertEqual(len(translated_rows), 3)
-        self.assertEqual(len(untranslated_rows), 4)
+        self.assertEqual(len(translated_rows), 5)
+        self.assertEqual(len(untranslated_rows), 6)
 
-        rows_by_id = {row[0]: row[1:] for row in translated_rows + untranslated_rows}
+        rows_by_id = defaultdict(list)
+        for row in translated_rows + untranslated_rows:
+            rows_by_id[row[0]].append(row[1:])
+
         self.assertListEqual(rows_by_id[self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE).id],
-                                       ['test', 'Joni'])
+                                       [['test', 'Joni']])
         self.assertListEqual(rows_by_id[self._get_rule(self.UNTRANSLATED_DAILY_RULE).id],
-                                       ['test', 'Joan'])
+                                       [['test', 'Joan']])
         self.assertListEqual(rows_by_id[self._get_rule(self.IMMEDIATE_RULE).id],
-                                       ['test', 'Car on a Hill'])
+                                       [['test', 'Car on a Hill']])
+        self.assertListEqual(rows_by_id[self._get_rule(self.CUSTOM_IMMEDIATE_RULE).id],
+                                       [['test', 'Paper Bag', 'Bolsa de Papel'],
+                                        ['test', 'A Mistake', 'Un Error']])
+
         self.assertListEqual(rows_by_id[self._get_rule(self.DAILY_RULE).id],
-                                       ['test', 'Diamonds and Rust', 'Diamantes y Óxido'])
+                                       [['test', 'Diamonds and Rust', 'Diamantes y Óxido']])
         self.assertListEqual(rows_by_id[self._get_rule(self.WEEKLY_RULE).id],
-                                       ['test', 'It\'s Too Late', 'Es Demasiado Tarde'])
+                                       [['test', 'It\'s Too Late', 'Es Demasiado Tarde']])
         self.assertListEqual(rows_by_id[self._get_rule(self.MONTHLY_RULE).id],
-                                       ['test', 'Both Sides Now', 'Ahora Ambos Lados'])
+                                       [['test', 'Both Sides Now', 'Ahora Ambos Lados']])
         self.assertListEqual(rows_by_id[self._get_rule(self.LOCKED_RULE).id],
-                                       ['test', 'Fool That I Am'])
+                                       [['test', 'Fool That I Am']])
+        self.assertListEqual(rows_by_id[self._get_rule(self.CUSTOM_DAILY_RULE).id],
+                                       [['test', 'Just Like This Train'],
+                                        ['test', 'Free Man in Paris']])
 
     def _upload(self, headers, data):
         file = BytesIO()

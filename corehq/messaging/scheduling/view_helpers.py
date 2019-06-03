@@ -44,18 +44,25 @@ def get_conditional_alert_rows(domain):
 
     langs = get_language_list(domain)
     for rule in get_conditional_alerts_queryset_by_domain(domain):
-        if not isinstance(_get_rule_content(rule), SMSContent):
-            continue
         schedule = rule.get_messaging_rule_schedule()
+        events = schedule.memoized_events
         send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
-        if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
-            continue
-        message = schedule.memoized_events[0].content.message
-        common_columns = [rule.pk, rule.name]
-        if '*' in message or len(message) == 0:
-            untranslated_rows.append(common_columns + [message.get('*', '')])
-        else:
-            translated_rows.append(common_columns + [message.get(lang, '') for lang in langs])
+
+        # Custom schedules may have multiple events each with different content
+        # Non-custom schedules may have multiple events (e.g., daily schedule sent MWF) but each
+        # event will have identical content, so only include the first one
+        if send_frequency not in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
+            events = [events[0]]
+
+        for event in events:
+            if not isinstance(event.content, SMSContent):
+                continue
+            message = event.content.message
+            common_columns = [rule.pk, rule.name]
+            if '*' in message or len(message) == 0:
+                untranslated_rows.append(common_columns + [message.get('*', '')])
+            else:
+                translated_rows.append(common_columns + [message.get(lang, '') for lang in langs])
 
     return (translated_rows, untranslated_rows)
 
