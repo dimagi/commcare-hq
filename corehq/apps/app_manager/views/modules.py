@@ -571,8 +571,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
-    handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
-
+    if module.case_list:
+        handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
