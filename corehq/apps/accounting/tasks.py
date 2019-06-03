@@ -12,7 +12,7 @@ from six.moves.urllib.parse import urlencode
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
@@ -1035,11 +1035,14 @@ def email_enterprise_report(domain, slug, couch_user):
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains(today=None):
     today = today or datetime.date.today()
-    for domain in Domain.get_all_names():
+    for domain in sorted(set(Domain.get_all_names())):
         num_users = CommCareUser.total_by_domain(domain)
         record_date = today - relativedelta(days=1)
-        DomainUserHistory.objects.create(
-            domain=domain,
-            num_users=num_users,
-            record_date=record_date
-        )
+        try:
+            DomainUserHistory.objects.create(
+                domain=domain,
+                num_users=num_users,
+                record_date=record_date
+            )
+        except IntegrityError:
+            pass
