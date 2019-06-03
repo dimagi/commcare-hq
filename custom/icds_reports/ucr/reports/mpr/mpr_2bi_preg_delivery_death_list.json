@@ -92,7 +92,7 @@
         "type": "dynamic_choice_list",
         "required": false,
         "slug": "owner_id",
-        "field": "owner_id",
+        "field": "awc_id",
         "choice_provider": {
           "type": "owner"
         },

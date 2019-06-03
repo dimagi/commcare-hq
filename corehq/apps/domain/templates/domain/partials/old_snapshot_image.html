@@ -1,27 +1,27 @@
 {% load i18n %}
 {% if request.project.published_snapshot.image_path %}
-    <div class="control-group">
-        <div class="control-label">
-            <label for="id_old_image">
-                {% trans "Use current image" %}
-            </label>
-        </div>
-        <div class="controls">
-            <input
-                type="checkbox"
-                checked="checked"
-                id="id_old_image"
-                name="old_image"
-                value="true" />
-            <br />
-            <img
-                src="{% url "appstore_project_image" request.project.published_snapshot.name %}"
-                style="max-width: 400px; max-height:500px;" />
-            <p class="help-block">
-                {% blocktrans %}
-                If you upload an image, it will automatically erase the current image and use that instead.
-                {% endblocktrans %}
-            </p>
-        </div>
+  <div class="control-group">
+    <div class="control-label">
+      <label for="id_old_image">
+        {% trans "Use current image" %}
+      </label>
     </div>
+    <div class="controls">
+      <input
+        type="checkbox"
+        checked="checked"
+        id="id_old_image"
+        name="old_image"
+        value="true" />
+      <br />
+      <img
+        src="{% url "appstore_project_image" request.project.published_snapshot.name %}"
+        style="max-width: 400px; max-height:500px;" />
+      <p class="help-block">
+        {% blocktrans %}
+          If you upload an image, it will automatically erase the current image and use that instead.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
 {% endif %}

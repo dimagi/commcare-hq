@@ -3,20 +3,20 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    {% compress js %}
+  {% compress js %}
     <script src="{% static 'reports/js/report_config_models.js' %}"></script>
     <script src="{% static "reports/js/base.js" %}"></script>
     <script src="{% static "reports/js/base_maps.js" %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 {% endblock %}
 
 {% block filter_panel %}
-    {% include "reports/partials/filter_panel.html" %}
+  {% include "reports/partials/filter_panel.html" %}
 {% endblock %}
 
 {% block additional_initial_page_data %}
-    {% initial_page_data 'default_config' default_config %}
-    {% initial_page_data 'has_datespan' report.has_datespan %}
-    {% initial_page_data 'report_configs' report_configs %}
-    {% registerurl 'add_report_config' domain %}
+  {% initial_page_data 'default_config' default_config %}
+  {% initial_page_data 'has_datespan' report.has_datespan %}
+  {% initial_page_data 'report_configs' report_configs %}
+  {% registerurl 'add_report_config' domain %}
 {% endblock %}

@@ -6,14 +6,14 @@ from django.views import View
 
 from corehq import toggles
 from corehq.apps.api.odata.utils import get_case_type_to_properties
-from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
 
 
 class ODataServiceView(View):
 
-    @method_decorator(api_auth)
+    @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         data = {
@@ -32,7 +32,7 @@ class ODataServiceView(View):
 
 class ODataMetadataView(View):
 
-    @method_decorator(api_auth)
+    @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         # template .items is evaluated as a dict lookup instead of a function, which messes with defaultdict

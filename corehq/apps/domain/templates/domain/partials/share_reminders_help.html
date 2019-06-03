@@ -1,28 +1,28 @@
 {% load i18n %}
 
 {% blocktrans %}
-If selected, all conditional alerts in this project that are able to be published
-will be published.
+  If selected, all conditional alerts in this project that are able to be published
+  will be published.
 {% endblocktrans %}
 
 {% if alerts_that_cannot_be_copied %}
-<p>
+  <p>
     <i class="fa fa-info-circle"></i>
     {% blocktrans %}
-    The following conditional alerts reference project-specific recipients or custom
-    features that cannot be published:
+      The following conditional alerts reference project-specific recipients or custom
+      features that cannot be published:
     {% endblocktrans %}
-    <ul>
+  <ul>
     {% for name in alerts_that_cannot_be_copied %}
-        <li>{{ name }}</li>
+      <li>{{ name }}</li>
     {% endfor %}
-    </ul>
-</p>
+  </ul>
+  </p>
 {% else %}
-<p>
+  <p>
     <i class="fa fa-info-circle"></i>
     {% blocktrans %}
-    All conditional alerts in this project can be published.
+      All conditional alerts in this project can be published.
     {% endblocktrans %}
-</p>
+  </p>
 {% endif %}

@@ -5,43 +5,43 @@
 {% requirejs_main 'sms/js/manage_registration_invitations' %}
 
 {% block pagination_templates %}
-<script type="text/html" id="invitations-template">
+  <script type="text/html" id="invitations-template">
     <td data-bind="text: created_date"></td>
     <td data-bind="text: phone_number"></td>
     <td data-bind="text: status"></td>
     <td data-bind="text: expiration_date"></td>
     <td><a data-bind="text: app_name, attr: {href: app_link, target: '_blank'}"></a></td>
     <td data-bind="text: phone_type"></td>
-</script>
+  </script>
 {% endblock %}
 
 {% block page_content %}
-{% if sms_mobile_worker_registration_enabled %}
-<a href="#invitation-form"
-   class="btn btn-primary"
-   data-toggle="modal">
-    <i class="fa fa-plus"></i>
-    {% trans "Create Registration Invitation" %}
-</a>
-<div class="modal fade" id="invitation-form" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
+  {% if sms_mobile_worker_registration_enabled %}
+    <a href="#invitation-form"
+       class="btn btn-primary"
+       data-toggle="modal">
+      <i class="fa fa-plus"></i>
+      {% trans "Create Registration Invitation" %}
+    </a>
+    <div class="modal fade" id="invitation-form" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
         <div id="registration-modal" class="modal-content" style="padding: 10px;">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">{% trans 'Send Registration Invitation' %}</h4>
-                </div>
-                {% crispy form %}
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">{% trans 'Send Registration Invitation' %}</h4>
+          </div>
+          {% crispy form %}
         </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div>
-{{ block.super }}
-{% else %}
-<div>
-    <p>
+      </div><!-- /.modal-dialog -->
+    </div>
+    {{ block.super }}
+  {% else %}
+    <div>
+      <p>
         <i class="fa fa-info-circle"></i>
         {% trans "In order to use this feature, you must first enable SMS Mobile Worker Registration. To do so, please" %}
         <a href="{% url 'sms_settings' domain %}">{% trans "click here" %}</a>.
-    </p>
-</div>
-{% endif %}
+      </p>
+    </div>
+  {% endif %}
 {% endblock %}

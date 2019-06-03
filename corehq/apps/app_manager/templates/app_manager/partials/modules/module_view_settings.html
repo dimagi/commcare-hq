@@ -5,125 +5,125 @@
 <form class="form-horizontal save-button-form"
       action="{% url 'edit_module_attr' domain app.id module.unique_id 'all' %}"
       id="module-settings-form">
-    {% csrf_token %}
-    <div class="save-button-holder clearfix"></div>
-    <div class="section-changer btn-group" data-collapse-key="module-view-settings">
-        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-            <i class="fa fa-reorder"></i>
-            <span class="caret"></span>
+  {% csrf_token %}
+  <div class="save-button-holder clearfix"></div>
+  <div class="section-changer btn-group" data-collapse-key="module-view-settings">
+    <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+      <i class="fa fa-reorder"></i>
+      <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-right checklist">
+      <li class="dropdown-header">{% trans "Show" %}</li>
+      {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
+        <li>
+          <a href="#" data-slug="menu">
+            <i class="fa fa-check"></i>{% trans "Menu" %}
+          </a>
+        </li>
+      {% endif %}
+      <li>
+        <a href="#" data-slug="multimedia" data-collapse="1">
+          <i class="fa fa-check"></i>{% trans "Multimedia" %}
         </a>
-        <ul class="dropdown-menu dropdown-menu-right checklist">
-            <li class="dropdown-header">{% trans "Show" %}</li>
-            {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
-                <li>
-                    <a href="#" data-slug="menu">
-                        <i class="fa fa-check"></i>{% trans "Menu" %}
-                    </a>
-                </li>
-            {% endif %}
-            <li>
-                <a href="#" data-slug="multimedia" data-collapse="1">
-                    <i class="fa fa-check"></i>{% trans "Multimedia" %}
-                </a>
-            </li>
-            {% if not module.is_surveys %}
-               {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
-                    <li>
-                        <a href="#" data-slug="advanced" data-collapse="1">
-                            <i class="fa fa-check"></i>{% trans "Advanced" %}
-                        </a>
-                    </li>
-                {% endif %}
-            {% endif %}
-        </ul>
-    </div>
-    <fieldset>
-        {% block settings_fields %}
+      </li>
+      {% if not module.is_surveys %}
+        {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
+          <li>
+            <a href="#" data-slug="advanced" data-collapse="1">
+              <i class="fa fa-check"></i>{% trans "Advanced" %}
+            </a>
+          </li>
+        {% endif %}
+      {% endif %}
+    </ul>
+  </div>
+  <fieldset>
+    {% block settings_fields %}
 
-          {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
-          <div class="panel panel-appmanager" data-slug="menu">
-            <div class="panel-heading">
-              <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
-            </div>
-            <div class="panel-body">
-              {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
-                  <div class="form-group">
-                      <label class="{% css_label_class %} control-label">
-                          {% trans "Name Mapping" %}
-                      </label>
-                      <div class="{% css_field_class %}" id="name-enum-mapping">
-                          <input name="name_enum" type="hidden" value="{% html_attr module_brief.name_enum %}" />
-                      </div>
-                  </div>
-              {% endif %}
-
-              {% if not module.is_surveys and module.module_type != 'shadow' %}
-                {% include "app_manager/partials/modules/module_view_case_type.html" %}
-              {% endif %}
-
-              {% if child_module_enabled and not module.is_training_module%}
-                <div class="form-group">
-                    <label class="{% css_label_class %} control-label">
-                        {% trans "Parent Menu" %}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Parent Menu" %}"
-                              data-content="{% blocktrans %}Parent menus may not be nested, so menus that already have a parent will not appear in this list, and this list will be empty if the current menu itself is already another menu's parent.{% endblocktrans %}"></span>
-                    </label>
-                    <div class="{% css_field_class %}">
-                        <select type="text" name="root_module_id" class="form-control">
-                            <option value="">{% trans "No Parent" %}</option>
-                            {% for mod in valid_parents_for_child_module %}
-                                <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
-                                    {{ mod.name|trans:langs }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+      {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
+        <div class="panel panel-appmanager" data-slug="menu">
+          <div class="panel-heading">
+            <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
+          </div>
+          <div class="panel-body">
+            {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
+              <div class="form-group">
+                <label class="{% css_label_class %} control-label">
+                  {% trans "Name Mapping" %}
+                </label>
+                <div class="{% css_field_class %}" id="name-enum-mapping">
+                  <input name="name_enum" type="hidden" value="{% html_attr module_brief.name_enum %}" />
                 </div>
-              {% endif %}
+              </div>
+            {% endif %}
 
-              {% if module.module_type == 'shadow' %}
+            {% if not module.is_surveys and module.module_type != 'shadow' %}
+              {% include "app_manager/partials/modules/module_view_case_type.html" %}
+            {% endif %}
+
+            {% if child_module_enabled and not module.is_training_module%}
+              <div class="form-group">
+                <label class="{% css_label_class %} control-label">
+                  {% trans "Parent Menu" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Parent Menu" %}"
+                        data-content="{% blocktrans %}Parent menus may not be nested, so menus that already have a parent will not appear in this list, and this list will be empty if the current menu itself is already another menu's parent.{% endblocktrans %}"></span>
+                </label>
+                <div class="{% css_field_class %}">
+                  <select type="text" name="root_module_id" class="form-control">
+                    <option value="">{% trans "No Parent" %}</option>
+                    {% for mod in valid_parents_for_child_module %}
+                      <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
+                        {{ mod.name|trans:langs }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            {% endif %}
+
+            {% if module.module_type == 'shadow' %}
               <div id="sourceModuleForms">
-                  <div class="form-group">
-                      <label class="{% css_label_class %} control-label">
-                          {% trans "Source Menu" %}
-                      </label>
-                      <div class="{% css_field_class %}">
-                          <select name="source_module_id" class="form-control"
-                                  data-bind="options: modules,
+                <div class="form-group">
+                  <label class="{% css_label_class %} control-label">
+                    {% trans "Source Menu" %}
+                  </label>
+                  <div class="{% css_field_class %}">
+                    <select name="source_module_id" class="form-control"
+                            data-bind="options: modules,
                                              optionsText: 'name',
                                              optionsValue: 'uniqueId',
                                              value: selectedModuleId"></select>
-                      </div>
                   </div>
-                  <div class="form-group" data-bind="visible: selectedModule().forms().length">
-                      <label class="{% css_label_class %} control-label">
-                          {% trans "Include Forms" %}
-                      </label>
-                      <div class="{% css_field_class %}"
-                           data-bind="template: {name: 'module-forms-template',
+                </div>
+                <div class="form-group" data-bind="visible: selectedModule().forms().length">
+                  <label class="{% css_label_class %} control-label">
+                    {% trans "Include Forms" %}
+                  </label>
+                  <div class="{% css_field_class %}"
+                       data-bind="template: {name: 'module-forms-template',
                                                  foreach: sourceForms()}"></div>
-                      <div class="hidden">
-                          <select name="excl_form_ids"
-                                  multiple="multiple"
-                                  data-bind="options: sourceForms,
+                  <div class="hidden">
+                    <select name="excl_form_ids"
+                            multiple="multiple"
+                            data-bind="options: sourceForms,
                                              optionsText: 'name',
                                              optionsValue: 'uniqueId',
                                              selectedOptions: excludedFormIds"></select>
-                          {# POST a value, even if no forms are excluded #}
-                          <input name="excl_form_ids" type="checkbox" value="0" checked="">
-                      </div>
+                    {# POST a value, even if no forms are excluded #}
+                    <input name="excl_form_ids" type="checkbox" value="0" checked="">
                   </div>
+                </div>
               </div>
-              {% endif %}
+            {% endif %}
 
-              {% if add_ons.menu_mode %}
-                  <div class="form-group">
-                      <label class="{% css_label_class %} control-label">
-                          {% trans "Menu Mode" %}
-                      </label>
-                      <div class="{% css_field_class %}">
-                          <select-toggle params="name: 'put_in_root',
+            {% if add_ons.menu_mode %}
+              <div class="form-group">
+                <label class="{% css_label_class %} control-label">
+                  {% trans "Menu Mode" %}
+                </label>
+                <div class="{% css_field_class %}">
+                  <select-toggle params="name: 'put_in_root',
                                                  id: 'put_in_root',
                                                  options: [{
                                                     id: 'false',
@@ -133,86 +133,86 @@
                                                     text: '{% trans_html_attr 'Display only forms' %}',
                                                  }],
                                                  value: '{% if module.put_in_root %}true{% else %}false{% endif %}'"></select-toggle>
-                      </div>
-                  </div>
-              {% else %}
-                    {# grid display input depends on the value of put_in_root #}
-                    <input id="put_in_root" type="hidden" value="{% if module.put_in_root %}true{% else %}false{% endif %}" />
-              {% endif %}
-
-              {% if app.grid_display_for_some_modules %}
-              <div class="form-group" id="display_style_container">
-                  <label class="{% css_label_class %} control-label">
-                      {% trans "Display Style" %}
-                      <span class="hq-help-template"
-                            data-title="{% trans "Display Style" %}"
-                            data-content="{% blocktrans %}Display this module's forms as a list or a grid. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Grid+View+for+Form+and+Module+Screens'>Help Site</a>.{% endblocktrans %}"></span>
-                  </label>
-                  <div class="{% css_field_class %}">
-                      <select type="text" name="display_style" class="form-control">
-                          <option value="list">{% trans "List" %}</option>
-                          <option value="grid"{% if module.grid_display_style %} selected{% endif %}>
-                              {% trans "Grid" %}
-                          </option>
-                      </select>
-                  </div>
+                </div>
               </div>
-              {% endif %}
+            {% else %}
+              {# grid display input depends on the value of put_in_root #}
+              <input id="put_in_root" type="hidden" value="{% if module.put_in_root %}true{% else %}false{% endif %}" />
+            {% endif %}
 
-              {% include "app_manager/partials/modules/module_filter.html" %}
+            {% if app.grid_display_for_some_modules %}
+              <div class="form-group" id="display_style_container">
+                <label class="{% css_label_class %} control-label">
+                  {% trans "Display Style" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Display Style" %}"
+                        data-content="{% blocktrans %}Display this module's forms as a list or a grid. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Grid+View+for+Form+and+Module+Screens'>Help Site</a>.{% endblocktrans %}"></span>
+                </label>
+                <div class="{% css_field_class %}">
+                  <select type="text" name="display_style" class="form-control">
+                    <option value="list">{% trans "List" %}</option>
+                    <option value="grid"{% if module.grid_display_style %} selected{% endif %}>
+                      {% trans "Grid" %}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            {% endif %}
 
-            </div>
+            {% include "app_manager/partials/modules/module_filter.html" %}
+
           </div>
-          {% endif %}
+        </div>
+      {% endif %}
 
-          <div class="panel panel-appmanager" data-slug="multimedia">
+      <div class="panel panel-appmanager" data-slug="multimedia">
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">{% trans "Multimedia" %}</h4>
+        </div>
+        <div class="panel-body">
+          {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" custom_icon=module_icon %}
+        </div>
+      </div>
+
+      {% if not module.is_surveys %}
+        {% if add_ons.register_from_case_list or add_ons.case_list_menu_item and module.module_type != 'shadow' or module.doc_type == "AdvancedModule" %}
+          <div class="panel panel-appmanager" data-slug="advanced">
             <div class="panel-heading">
-              <h4 class="panel-title panel-title-nolink">{% trans "Multimedia" %}</h4>
+              <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
             </div>
             <div class="panel-body">
-              {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" custom_icon=module_icon %}
-            </div>
-          </div>
+              {% if add_ons.register_from_case_list %}
+                {% include 'app_manager/partials/modules/case_list_form_setting.html' %}
+              {% endif %}
 
-        {% if not module.is_surveys %}
-             {% if add_ons.register_from_case_list or add_ons.case_list_menu_item and module.module_type != 'shadow' or module.doc_type == "AdvancedModule" %}
-                 <div class="panel panel-appmanager" data-slug="advanced">
-                    <div class="panel-heading">
-                        <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
-                    </div>
-                    <div class="panel-body">
-                        {% if add_ons.register_from_case_list %}
-                            {% include 'app_manager/partials/modules/case_list_form_setting.html' %}
-                        {% endif %}
+              {% if add_ons.case_list_menu_item and module.module_type != 'shadow' %}
+                {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
 
-                        {% if add_ons.case_list_menu_item and module.module_type != 'shadow' %}
-                            {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
+                  {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
+                {% endif %}
+              {% endif %}
 
-                            {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
-                                {% include 'app_manager/partials/modules/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
-                            {% endif %}
-                        {% endif %}
-
-                        {% if module.doc_type == "AdvancedModule" %}
-                            <div class="form-group">
-                                <label class="control-label {% css_label_class %}">
-                                    {% trans "Auto Select Case" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Auto Select Case" %}"
-                                          data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
-                                    ></span>
-                                </label>
-                                <div id="auto-select-case" class="{% css_field_class %} checkbox commcare-feature" data-since-version="2.24">
-                                    <input type="checkbox" data-bind="checked: auto_select_case" />
-                                    <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div><!-- end .panel-body -->
-                </div><!-- end .panel -->
-            {% endif %}
+              {% if module.doc_type == "AdvancedModule" %}
+                <div class="form-group">
+                  <label class="control-label {% css_label_class %}">
+                    {% trans "Auto Select Case" %}
+                    <span class="hq-help-template"
+                          data-title="{% trans "Auto Select Case" %}"
+                          data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
+                    ></span>
+                  </label>
+                  <div id="auto-select-case" class="{% css_field_class %} checkbox commcare-feature" data-since-version="2.24">
+                    <input type="checkbox" data-bind="checked: auto_select_case" />
+                    <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
+                  </div>
+                </div>
+              {% endif %}
+            </div><!-- end .panel-body -->
+          </div><!-- end .panel -->
         {% endif %}
+      {% endif %}
 
-        {% endblock %}
-    </fieldset>
+    {% endblock %}
+  </fieldset>
 </form>

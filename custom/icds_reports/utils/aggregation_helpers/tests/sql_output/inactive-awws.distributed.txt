@@ -1,0 +1,55 @@
+
+        DROP TABLE IF EXISTS "tmp_awc_location";
+        CREATE TEMPORARY TABLE "tmp_awc_location" AS SELECT
+            loc.doc_id as awc_id,
+            loc.awc_name as awc_name,
+            'awc' || loc.awc_site_code as awc_site_code,
+            loc.supervisor_id as supervisor_id,
+            loc.supervisor_name as supervisor_name,
+            loc.block_id as block_id,
+            loc.block_name as block_name,
+            loc.district_id as district_id,
+            loc.district_name as district_name,
+            loc.state_id as state_id,
+            loc.state_name as state_name
+        FROM "awc_location" loc
+        WHERE loc.doc_id not in (
+            SELECT aww.awc_id FROM "icds_reports_aggregateinactiveaww" aww
+        ) and loc.doc_id != 'All';
+        INSERT INTO "icds_reports_aggregateinactiveaww" (
+            awc_id, awc_name, awc_site_code, supervisor_id, supervisor_name,
+            block_id, block_name, district_id, district_name, state_id, state_name
+        ) (
+            SELECT * FROM "tmp_awc_location"
+        );
+        
+{}
+
+            CREATE TEMPORARY TABLE "tmp_usage" AS (
+            SELECT DISTINCT awc_id as awc_id,
+                FIRST_VALUE(form_date) OVER forms as first_submission,
+                LAST_VALUE(form_date) OVER forms as last_submission
+            FROM "ucr_icds-cas_static-usage_forms_92fbe2aa"
+            WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
+            WINDOW forms AS (
+              PARTITION BY supervisor_id, awc_id
+              ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+        );
+            UPDATE "icds_reports_aggregateinactiveaww" AS agg_table SET
+                first_submission = LEAST(agg_table.first_submission, ut.first_submission),
+                last_submission = GREATEST(agg_table.last_submission, ut.last_submission)
+            FROM (
+              SELECT
+                loc.awc_id as awc_id,
+                ucr.first_submission as first_submission,
+                ucr.last_submission as last_submission
+              FROM "tmp_usage" ucr
+              JOIN "tmp_awc_location" loc
+              ON ucr.awc_id = loc.awc_id
+            ) ut
+            WHERE agg_table.awc_id = ut.awc_id;
+            DROP TABLE "tmp_awc_location";
+            DROP TABLE "tmp_usage";
+        
+{"last_sync": "2019-01-05T00:00:00", "now": "2019-01-11T00:00:00"}

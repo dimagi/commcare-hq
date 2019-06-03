@@ -6,59 +6,59 @@
 {% block title %}{% trans "Report Builder" %}{% endblock %}
 
 {% block page_content %}
-    {% block main_column_content %}
-        {% if at_report_limit %}
-        <div class="helpbubble helpbubble-primary helpbubble-no-arrow">
-            <h2>
-                {% blocktrans %}
-                    You have reached your report limit of {{ max_allowed_reports }} reports.
-                {% endblocktrans %}
-            </h2>
-            <p class="lead">
-                {% blocktrans %}
-                If you would like to create more, delete one of your existing reports.
-                {% endblocktrans %}
-            </p>
-            <p class="alert alert-info">
-                <i class="fa fa-info-circle"></i>
-                {% blocktrans %}
-                For even more reports please contact our team at <strong>{{ support_email }}</strong>.
-                {% endblocktrans %}
-            </p>
-        </div>
+  {% block main_column_content %}
+    {% if at_report_limit %}
+      <div class="helpbubble helpbubble-primary helpbubble-no-arrow">
+        <h2>
+          {% blocktrans %}
+            You have reached your report limit of {{ max_allowed_reports }} reports.
+          {% endblocktrans %}
+        </h2>
+        <p class="lead">
+          {% blocktrans %}
+            If you would like to create more, delete one of your existing reports.
+          {% endblocktrans %}
+        </p>
+        <p class="alert alert-info">
+          <i class="fa fa-info-circle"></i>
+          {% blocktrans %}
+            For even more reports please contact our team at <strong>{{ support_email }}</strong>.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
+    <div class="helpbubble helpbubble-bottom-center helpbubble-purple">
+      <h2>
+        {% trans "Build Your Own Reports In CommCare!" %}
+      </h2>
+      <p class="lead">
+        {% blocktrans %}
+          Build map reports, pie and bar charts, and form and case lists right in CommCare!
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}
+          Report Builder is part of the <strong>Pro</strong> or higher software plans.
+        {% endblocktrans %}
+        {% if pricing_page_url %}
+          {% blocktrans %}
+            See the <a href="{{ pricing_page_url }}">pricing plan options</a> for details.
+          {% endblocktrans %}
         {% endif %}
-        <div class="helpbubble helpbubble-bottom-center helpbubble-purple">
-            <h2>
-                {% trans "Build Your Own Reports In CommCare!" %}
-            </h2>
-            <p class="lead">
-                {% blocktrans %}
-                Build map reports, pie and bar charts, and form and case lists right in CommCare!
-                {% endblocktrans %}
-            </p>
-            <p>
-                {% blocktrans %}
-                Report Builder is part of the <strong>Pro</strong> or higher software plans.
-                {% endblocktrans %}
-                {% if pricing_page_url %}
-                    {% blocktrans %}
-                    See the <a href="{{ pricing_page_url }}">pricing plan options</a> for details.
-                    {% endblocktrans %}
-                {% endif %}
-            </p>
-        </div>
+      </p>
+    </div>
 
-        <div class="row" style="margin-top: 32px">
-            <div class="col-md-2"></div>
-            <div class="col-md-8">
-                <img
-                    src="{% static 'userreports/images/report_builder_screenshot.png' %}"
-                    alt="{% trans "Screenshot of report builder" %}"
-                    class="img-responsive"
-                >
-            </div>
-            <div class="col-md-2"></div>
-        </div>
+    <div class="row" style="margin-top: 32px">
+      <div class="col-md-2"></div>
+      <div class="col-md-8">
+        <img
+          src="{% static 'userreports/images/report_builder_screenshot.png' %}"
+          alt="{% trans "Screenshot of report builder" %}"
+          class="img-responsive"
+        >
+      </div>
+      <div class="col-md-2"></div>
+    </div>
 
-    {% endblock main_column_content %}
+  {% endblock main_column_content %}
 {% endblock %}

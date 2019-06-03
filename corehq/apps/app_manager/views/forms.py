@@ -397,7 +397,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 )
         except etree.XMLSyntaxError as error:
             return json_response(
-                {'message': _("There was an issue with your custom instances: {}").format(error.message)},
+                {'message': _("There was an issue with your custom instances: {}").format(error)},
                 status_code=400
             )
 
@@ -419,7 +419,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 )
         except etree.XMLSyntaxError as error:
             return json_response(
-                {'message': _("There was an issue with your custom assertions: {}").format(error.message)},
+                {'message': _("There was an issue with your custom assertions: {}").format(error)},
                 status_code=400
             )
 

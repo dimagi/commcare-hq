@@ -4,25 +4,25 @@
 
 <a href="{{invoice_report_url}}"> {% trans "Go to All Invoices page for this Project Space" %}</a>
 <a href="{{invoice_export_url}}" class="btn btn-default" style="float:right">
-    <i class="fa fa-share"></i> {% trans "Export to Excel" %}
+  <i class="fa fa-share"></i> {% trans "Export to Excel" %}
 </a>
 <br><br>
 
 <div style="overflow: auto">
-    <table class="table table-striped datatable">
-        <thead>
-            {{ headers.render_html|safe }}
-        </thead>
-        <tbody>
-        {% block tabular-body %}
-        {% for row in rows %}
-            <tr>
-                {% for col in row %}
-                    {% include 'reports/async/partials/tabular_cell.html' %}
-                {% endfor %}
-            </tr>
-        {% endfor %}
-        {% endblock %}
-        </tbody>
-    </table>
+  <table class="table table-striped datatable">
+    <thead>
+    {{ headers.render_html|safe }}
+    </thead>
+    <tbody>
+    {% block tabular-body %}
+      {% for row in rows %}
+        <tr>
+          {% for col in row %}
+            {% include 'reports/async/partials/tabular_cell.html' %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    {% endblock %}
+    </tbody>
+  </table>
 </div>

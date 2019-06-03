@@ -4,8 +4,12 @@ from __future__ import unicode_literals
 from django.db import transaction
 from memoized import memoized
 
-from dimagi.utils.logging import notify_exception
+from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
+from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.logging import notify_exception
+
+skipped_destructive_rebuild_assert = soft_assert(exponential_backoff=False)
 
 
 class IndicatorAdapter(object):
@@ -16,10 +20,10 @@ class IndicatorAdapter(object):
     def get_table(self):
         raise NotImplementedError
 
-    def rebuild_table(self, initiated_by=None, source=None):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
-    def drop_table(self, initiated_by=None, source=None):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
     @unit_testing_only
@@ -111,6 +115,10 @@ class IndicatorAdapter(object):
         from corehq.apps.userreports.models import DataSourceActionLog
         self._log_action(initiated_by, source, DataSourceActionLog.REBUILD, skip=skip)
 
+    def log_table_rebuild_skipped(self, source, diffs):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(None, source, DataSourceActionLog.REBUILD, diffs=diffs, skip_destructive=True)
+
     def log_table_drop(self, initiated_by, source, skip=False):
         from corehq.apps.userreports.models import DataSourceActionLog
         self._log_action(initiated_by, source, DataSourceActionLog.DROP, skip=skip)
@@ -119,7 +127,16 @@ class IndicatorAdapter(object):
         from corehq.apps.userreports.models import DataSourceActionLog
         self._log_action(None, source, DataSourceActionLog.MIGRATE, diffs=diffs)
 
-    def _log_action(self, initiated_by, source, action, diffs=None, skip=False):
+    def _log_action(self, initiated_by, source, action, diffs=None, skip_destructive=False, skip=False):
+        """
+        :param initiated_by: Username of initiating user
+        :param source: Source of action
+        :param action: Action being performed. See ``DataSourceActionLog.action`` for options.
+        :param diffs: Migration diff dict
+        :param skip_destructive: True if this action was not actually performed because the data source
+                                 is marked with ``disable_destructive_rebuild``
+        :param skip: If True the action will not be logged.
+        """
         from corehq.apps.userreports.models import DataSourceActionLog
         if skip or not self.config.data_source_id:
             return
@@ -130,16 +147,25 @@ class IndicatorAdapter(object):
             'action': action,
             'initiated_by': initiated_by,
             'action_source': source,
-            'migration_diffs': diffs
+            'migration_diffs': diffs,
+            'skip_destructive': skip_destructive,
         }
 
         try:
             # make this atomic so that errors don't affect outer transactions
             with transaction.atomic():
-                DataSourceActionLog.objects.create(**kwargs)
+                log = DataSourceActionLog.objects.create(**kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except:  # noqa
-            # blanket catchall to make sure errors here don't interfere with real workflows
+            # catchall to make sure errors here don't interfere with real workflows
             notify_exception(None, "Error saving UCR action log", details=kwargs)
+        else:
+            skipped_destructive_rebuild_assert(not skip_destructive, "Destructive UCR action skipped", {
+                'indicator_config_id': self.config.data_source_id,
+                'action': action,
+                'action_log_url': absolute_reverse('admin:userreports_datasourceactionlog_change', args=(log.id,))
+            })
 
 
 class IndicatorAdapterLoadTracker(object):

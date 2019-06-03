@@ -4,52 +4,52 @@
 {% load compress %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
-        <script src="{% static 'app_manager/js/import_app.js' %}"></script>
-    {% endcompress %}
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
+    <script src="{% static 'app_manager/js/import_app.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block breadcrumbs %}
-    <li>{% trans 'Import Application' %}</li>
+  <li>{% trans 'Import Application' %}</li>
 {% endblock %}
 
 {% block content %}
-    {% registerurl 'import_app' domain %}
-    <div class="appmanager-content-single-page">
-        <h1>Import Application</h1>
-        {% initial_page_data 'export_json' app.export_json %}
-        <form action="{% url "import_app" domain %}" id="app-import-form" method="post" data-bind="submit: save">
-            {% csrf_token %}
-            {% if app %}
-              <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
-            {% endif %}
-            <div class="form-horizontal">
-                <div class="form-group">
-                    <label class="{% css_label_class %} control-label">Name</label>
-                    <div class="{% css_field_class %}">
-                        <input class="form-control" type="text" name="name" data-bind="value: name"/>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="{% css_label_class %} control-label">Source</label>
-                    <div class="{% css_field_class %}">
+  {% registerurl 'import_app' domain %}
+  <div class="appmanager-content-single-page">
+    <h1>Import Application</h1>
+    {% initial_page_data 'export_json' app.export_json %}
+    <form action="{% url "import_app" domain %}" id="app-import-form" method="post" data-bind="submit: save">
+      {% csrf_token %}
+      {% if app %}
+        <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
+      {% endif %}
+      <div class="form-horizontal">
+        <div class="form-group">
+          <label class="{% css_label_class %} control-label">Name</label>
+          <div class="{% css_field_class %}">
+            <input class="form-control" type="text" name="name" data-bind="value: name"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="{% css_label_class %} control-label">Source</label>
+          <div class="{% css_field_class %}">
                         <textarea
-                            name="source"
-                            class="form-control"
-                            placeholder="Paste application definition here"
-                            data-bind="value: source"
-                            rows="5"
+                          name="source"
+                          class="form-control"
+                          placeholder="Paste application definition here"
+                          data-bind="value: source"
+                          rows="5"
                         ></textarea>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <div class="{% css_action_class %}">
-                        <a href="#" class="btn btn-default historyBack">No, take me back.</a>
-                        <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <div class="{% css_action_class %}">
+            <a href="#" class="btn btn-default historyBack">No, take me back.</a>
+            <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
 {% endblock %}

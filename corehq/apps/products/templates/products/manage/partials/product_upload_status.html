@@ -1,19 +1,19 @@
 {% extends "hqwebapp/partials/download_status.html" %}
 {% load i18n %}
 {% block results %}
-    <div class="alert alert-success">
-        <h3>{{ on_complete_long }}</h3>
-        {% for r in result.messages %}
-        <p>{{ r }}</p>
-        {% endfor %}
-    </div>
+  <div class="alert alert-success">
+    <h3>{{ on_complete_long }}</h3>
+    {% for r in result.messages %}
+      <p>{{ r }}</p>
+    {% endfor %}
+  </div>
 
-    {% if result.errors %}
+  {% if result.errors %}
     <div class="alert alert-danger">
-        <h3>{% trans "The following errors were encountered" %}</h3>
-        {% for r in result.errors %}
+      <h3>{% trans "The following errors were encountered" %}</h3>
+      {% for r in result.errors %}
         <p>{{ r }}</p>
-        {% endfor %}
+      {% endfor %}
     </div>
-    {% endif %}
+  {% endif %}
 {% endblock results %}

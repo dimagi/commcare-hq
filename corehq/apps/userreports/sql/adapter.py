@@ -38,9 +38,9 @@ def get_metadata(engine_id):
 
 class IndicatorSqlAdapter(IndicatorAdapter):
 
-    def __init__(self, config, override_table_name=None):
+    def __init__(self, config, override_table_name=None, engine_id=None):
         super(IndicatorSqlAdapter, self).__init__(config)
-        self.engine_id = get_engine_id(config)
+        self.engine_id = engine_id or get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.session_context = self.session_helper.session_context
         self.engine = self.session_helper.engine
@@ -59,6 +59,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return get_indicator_table(
             self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
         )
+
+    @property
+    def table_exists(self):
+        return self.engine.has_table(self.get_table().name)
 
     @memoized
     def get_sqlalchemy_orm_table(self):
@@ -90,17 +94,16 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             # only do this if the database contains the citus extension
             return
 
+        from custom.icds_reports.utils.migrations import (
+            create_citus_distributed_table, create_citus_reference_table
+        )
         with self.engine.begin() as connection:
             if config.distribution_type == 'hash':
                 if config.distribution_column not in self.get_table().columns:
                     raise ColumnNotFoundError("Column '{}' not found.".format(config.distribution_column))
-                connection.execute("select create_distributed_table('{}', '{}')".format(
-                    self.get_table().name, config.distribution_column
-                ))
+                create_citus_distributed_table(connection, self.get_table().name, config.distribution_column)
             elif config.distribution_type == 'reference':
-                connection.execute("select create_reference_table('{}')".format(
-                    self.get_table().name
-                ))
+                create_citus_reference_table(connection, self.get_table().name)
             else:
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
             return True
@@ -121,7 +124,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return orm_table
 
     def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_table_rebuild(initiated_by, source, skip_log)
+        self.log_table_rebuild(initiated_by, source, skip=skip_log)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
@@ -247,6 +250,84 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             return session.query(query.exists()).scalar()
 
 
+class MultiDBSqlAdapter(object):
+
+    mirror_adapter_cls = IndicatorSqlAdapter
+
+    def __init__(self, config, override_table_name=None):
+        config.validate_db_config()
+        self.config = config
+        self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
+        self.all_adapters = [self.main_adapter]
+        engine_ids = self.config.mirrored_engine_ids
+        for engine_id in engine_ids:
+            self.all_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
+
+    def __getattr__(self, attr):
+        return getattr(self.main_adapter, attr)
+
+    @property
+    def table_id(self):
+        return self.config.table_id
+
+    @property
+    def display_name(self):
+        return self.config.display_name
+
+    def best_effort_save(self, doc, eval_context=None):
+        for adapter in self.all_adapters:
+            adapter.best_effort_save(doc, eval_context)
+
+    def save(self, doc, eval_context=None):
+        for adapter in self.all_adapters:
+            adapter.save(doc, eval_context)
+
+    def get_all_values(self, doc, eval_context=None):
+        return self.config.get_all_values(doc, eval_context)
+
+    @property
+    def run_asynchronous(self):
+        return self.config.asynchronous
+
+    def get_distinct_values(self, column, limit):
+        return self.main_adapter.get_distinct_values(column, limit)
+
+    def build_table(self, initiated_by=None, source=None):
+        for adapter in self.all_adapters:
+            adapter.build_table(initiated_by=initiated_by, source=source)
+
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+        for adapter in self.all_adapters:
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
+
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
+        for adapter in self.all_adapters:
+            adapter.drop_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
+
+    @unit_testing_only
+    def clear_table(self):
+        for adapter in self.all_adapters:
+            adapter.clear_table()
+
+    def save_rows(self, rows):
+        for adapter in self.all_adapters:
+            adapter.save_rows(rows)
+
+    def bulk_save(self, docs):
+        for adapter in self.all_adapters:
+            adapter.bulk_save(docs)
+
+    def bulk_delete(self, doc_ids):
+        for adapter in self.all_adapters:
+            adapter.bulk_delete(doc_ids)
+
+    def doc_exists(self, doc):
+        return any([
+            adapter.doc_exists(doc)
+            for adapter in self.all_adapters
+        ])
+
+
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
     def handle_exception(self, doc, exception):
@@ -254,7 +335,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         if ex is not None:
             raise ex
 
-        orig_exception = getattr(exception, 'orig')
+        orig_exception = getattr(exception, 'orig', None)
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
                 from corehq.apps.userreports.models import InvalidUCRData
@@ -269,6 +350,10 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
                 return
 
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
+
+
+class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter):
+    mirror_adapter_cls = ErrorRaisingIndicatorSqlAdapter
 
 
 def get_indicator_table(indicator_config, metadata, override_table_name=None):

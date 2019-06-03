@@ -2,8 +2,8 @@
 {% load hq_shared_tags %}
 {% include "app_manager/partials/nav_menu_media_single_type.html" with type="image" slug=multimedia.upload_managers.icon.slug label=ICON_LABEL %}
 {% if not EXCLUDE_AUDIO %}
-    {% include "app_manager/partials/nav_menu_media_single_type.html" with type="audio" slug=multimedia.upload_managers.audio.slug label=AUDIO_LABEL %}
+  {% include "app_manager/partials/nav_menu_media_single_type.html" with type="audio" slug=multimedia.upload_managers.audio.slug label=AUDIO_LABEL %}
 {% endif %}
 {% if custom_icon %}
-    {% include "app_manager/partials/custom_icon.html" with type="image" custom_icon=custom_icon%}
+  {% include "app_manager/partials/custom_icon.html" with type="image" custom_icon=custom_icon%}
 {% endif %}

@@ -10,7 +10,7 @@
 {% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
+  {% compress js %}
     <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v3.ko.js' %}"></script>
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'reports/js/datepicker.js' %}"></script>
@@ -33,186 +33,186 @@
     <script src="{% static 'reports/js/submit_history.js' %}"></script>
     <script src="{% static 'reports/js/project_health_dashboard.js' %}"></script>
     <script src="{% static 'reports/js/aggregate_user_status.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 {% endblock %}
 
 {% block stylesheets %}
-    {{ block.super }}
+  {{ block.super }}
 
-    {% if less_debug %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'reports/less/reports.debug.less' %}" />
-        {% include 'reports/partials/filters_css.html' %}
-    {% else %}
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'reports/less/reports.debug.less' %}" />
+    {% include 'reports/partials/filters_css.html' %}
+  {% else %}
     {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'reports/less/reports.less' %}" />
-        {% include 'reports/partials/filters_css.html' %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'reports/less/reports.less' %}" />
+      {% include 'reports/partials/filters_css.html' %}
     {% endcompress %}
   {% endif %}
 
-    {% block reports-css %}{% endblock %}
+  {% block reports-css %}{% endblock %}
 {% endblock %}
 
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
 {% block page_breadcrumbs %}
-    <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+  <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li>
+      <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+    </li>
+    {% if report.breadcrumbs %}
+      {% for crumb in report.breadcrumbs %}
         <li>
-            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
         </li>
-        {% if report.breadcrumbs %}
-            {% for crumb in report.breadcrumbs %}
-                <li>
-                    <a href="{{ crumb.link }}">{{ crumb.title }}</a>
-                </li>
-            {% endfor %}
-        {% endif %}
-        <li class="active">
-            {% trans report.title|default:"Untitled Report"|safe %}
-        </li>
-    </ol>
+      {% endfor %}
+    {% endif %}
+    <li class="active">
+      {% trans report.title|default:"Untitled Report"|safe %}
+    </li>
+  </ol>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
   {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
-      <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-           style="margin-left: 12px"
-           data-target="#create-new-report-left-nav"
-           data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
-           role="alert">
-          {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
-        </div>
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="margin-left: 12px"
+         data-target="#create-new-report-left-nav"
+         data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
+         role="alert">
+      {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
+    </div>
   {% endif %}
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'js_options' report.js_options %}
-    {% initial_page_data 'report_table_js_options' report_table_js_options %}
+  {% initial_page_data 'js_options' report.js_options %}
+  {% initial_page_data 'report_table_js_options' report_table_js_options %}
 
-    {# Needed for case reassignment interface #}
-    {% initial_page_data "reassign_cases_enddate" datespan.enddate_param_utc %}
-    {% initial_page_data "web_user_id" request.couch_user.userID %}
-    {% initial_page_data "web_username" request.couch_user.username %}
-    {% initial_page_data 'user_types' user_types %}
-    {% registerurl "reassign_case_options" domain %}
-    {% registerurl "receiver_secure_post" domain %}
+  {# Needed for case reassignment interface #}
+  {% initial_page_data "reassign_cases_enddate" datespan.enddate_param_utc %}
+  {% initial_page_data "web_user_id" request.couch_user.userID %}
+  {% initial_page_data "web_username" request.couch_user.username %}
+  {% initial_page_data 'user_types' user_types %}
+  {% registerurl "reassign_case_options" domain %}
+  {% registerurl "receiver_secure_post" domain %}
 
-    {% if request.datespan %}
-        {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
-        {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
-    {% endif %}
-    {% initial_page_data 'slug' report.slug %}
+  {% if request.datespan %}
+    {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+    {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+  {% endif %}
+  {% initial_page_data 'slug' report.slug %}
 
-    {% block filter_panel %}
-        {% include "reports/standard/partials/filter_panel.html" %}
-    {% endblock %}
+  {% block filter_panel %}
+    {% include "reports/standard/partials/filter_panel.html" %}
+  {% endblock %}
 
-    {% if report.is_emailable %}
+  {% if report.is_emailable %}
     <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button"
-                            class="close"
-                            data-dismiss="modal"
-                            aria-label="Close"
-                            data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">
-                        {% trans "Email report:" %}
-                        {{ datespan.startdate|date:"Y-m-d" }}
-                        {% if datespan.startdate %}
-                            {% trans "to" %}
-                        {% endif %}
-                        {{ datespan.enddate|date:"Y-m-d" }}
-                    </h4>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button"
+                    class="close"
+                    data-dismiss="modal"
+                    aria-label="Close"
+                    data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">
+              {% trans "Email report:" %}
+              {{ datespan.startdate|date:"Y-m-d" }}
+              {% if datespan.startdate %}
+                {% trans "to" %}
+              {% endif %}
+              {{ datespan.enddate|date:"Y-m-d" }}
+            </h4>
+          </div>
+          <form class="form form-horizontal">
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="control-label col-xs-2" for="email-report-subject">{% trans "Subject" %}</label>
+                <div class="col-xs-10">
+                  <input type="text"
+                         id="email-report-subject"
+                         name="subject"
+                         data-bind="value: subject"
+                         class="form-control" />
                 </div>
-                <form class="form form-horizontal">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label class="control-label col-xs-2" for="email-report-subject">{% trans "Subject" %}</label>
-                            <div class="col-xs-10">
-                                <input type="text"
-                                       id="email-report-subject"
-                                       name="subject"
-                                       data-bind="value: subject"
-                                       class="form-control" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-xs-2">{% trans "Sending Options" %}</label>
-                            <div class="col-xs-10">
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" data-bind="checked: send_to_owner" /> {% trans "Send to me" %}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-xs-2"
-                                   for="email-report-recipient_emails">{% trans "Additional Recipients" %}</label>
-                            <div class="col-xs-10">
-                                <textarea rows="3"
-                                          id="email-report-recipient_emails"
-                                          name="recipient_emails"
-                                          data-bind="value: recipient_emails"
-                                          aria-describedby="email-report-recipient_emails-help-block"
-                                          class="form-control"></textarea>
-                                <span id="email-report-recipient_emails-help-block"
-                                      class="help-block">
-                                    Separate email addresses with commas
-                                </span>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-xs-2" for="email-report-notes">{% trans "Report notes" %}</label>
-                            <div class="col-xs-10">
-                                <textarea rows="3"
-                                          id="email-report-notes"
-                                          name="notes"
-                                          data-bind="value: notes"
-                                          class="form-control"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="pull-left">
-                        <div class="email-status label label-success hide">{% trans 'Email successfully sent!' %}</div>
-                        <div class="email-status label label-danger hide">{% trans 'Error sending email.' %}</div></div>
-                        <div class="btn-toolbar pull-right">
-                            <a href="#"
-                               class="btn btn-default cancel-button"
-                               data-dismiss="modal"
-                               data-bind="click: resetModal">{% trans "Close" %}</a>
-                            <button class="btn btn-primary send-button" type="button"
-                                   data-loading-text="{% trans 'Sending...' %}"
-                                   data-bind="click: sendEmail">{% trans 'Send Email' %}</button>
-                        </div>
-                    </div>
-                </form>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-xs-2">{% trans "Sending Options" %}</label>
+                <div class="col-xs-10">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" data-bind="checked: send_to_owner" /> {% trans "Send to me" %}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-xs-2"
+                       for="email-report-recipient_emails">{% trans "Additional Recipients" %}</label>
+                <div class="col-xs-10">
+                  <textarea rows="3"
+                            id="email-report-recipient_emails"
+                            name="recipient_emails"
+                            data-bind="value: recipient_emails"
+                            aria-describedby="email-report-recipient_emails-help-block"
+                            class="form-control"></textarea>
+                  <span id="email-report-recipient_emails-help-block"
+                        class="help-block">
+                    Separate email addresses with commas
+                  </span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-xs-2" for="email-report-notes">{% trans "Report notes" %}</label>
+                <div class="col-xs-10">
+                  <textarea rows="3"
+                            id="email-report-notes"
+                            name="notes"
+                            data-bind="value: notes"
+                            class="form-control"></textarea>
+                </div>
+              </div>
             </div>
+            <div class="modal-footer">
+              <div class="pull-left">
+                <div class="email-status label label-success hide">{% trans 'Email successfully sent!' %}</div>
+                <div class="email-status label label-danger hide">{% trans 'Error sending email.' %}</div></div>
+              <div class="btn-toolbar pull-right">
+                <a href="#"
+                   class="btn btn-default cancel-button"
+                   data-dismiss="modal"
+                   data-bind="click: resetModal">{% trans "Close" %}</a>
+                <button class="btn btn-primary send-button" type="button"
+                        data-loading-text="{% trans 'Sending...' %}"
+                        data-bind="click: sendEmail">{% trans 'Send Email' %}</button>
+              </div>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
-    {% endif %}
+  {% endif %}
 
-    {% if report.special_notice %}
+  {% if report.special_notice %}
     <div class="alert alert-info" style="margin-bottom: 2px">
-        <h4>{% trans 'Notice' %}</h4>
-        <p>{{ report.special_notice }}</p>
+      <h4>{% trans 'Notice' %}</h4>
+      <p>{{ report.special_notice }}</p>
     </div>
+  {% endif %}
+  <div id="report-content">
+    {% if not report.is_async and report.slug %}
+      {% block reportcontent %}
+      {% endblock %}
+    {% else %}
+      {% include "reports/async/default.html" %}
     {% endif %}
-    <div id="report-content">
-        {% if not report.is_async and report.slug %}
-            {% block reportcontent %}
-            {% endblock %}
-        {% else %}
-            {% include "reports/async/default.html" %}
-        {% endif %}
-    </div>
+  </div>
 {% endblock %}

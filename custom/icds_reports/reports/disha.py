@@ -102,7 +102,7 @@ class DishaDump(object):
                 file_obj.write(",")
             logger.info("Processed {count}/{batches} batches. Total records:{total}".format(
                 count=count, total=total, batches=num_batches))
-        file_obj.write("]}")
+        file_obj.write("]}".encode('utf-8'))
 
     def build_export_json(self):
         with TransientTempfile() as temp_path:

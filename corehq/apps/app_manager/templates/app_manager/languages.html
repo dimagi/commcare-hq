@@ -10,7 +10,7 @@
 {% registerurl "get_app_ui_translations" domain %}
 
 <div class="panel-group" id="language-settings-options">
-    {% if app.doc_type != "LinkedApplication" %}
+  {% if app.doc_type != "LinkedApplication" %}
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">
@@ -29,71 +29,71 @@
         </div>
       </div>
     </div>
-    {% endif %}
+  {% endif %}
 
-    {% if not app.is_remote_app and app.get_doc_type == "Application" %}
-      <div class="panel panel-appmanager">
-        <div class="panel-heading">
-          <h4 class="panel-title">
-            <a data-toggle="collapse"
-               data-parent="#language-settings-options"
-               href="#commcare-translations"
-               class="collapsed">
-              <i class="fa fa-angle-double-down"></i>
-              {% trans "CommCare Translations" %}
-            </a>
-          </h4>
-        </div>
-        <div class="panel-collapse collapse" id="commcare-translations">
-          <div class="panel-body">
-            <section id="translations_ui">
-            </section>
-          </div>
+  {% if not app.is_remote_app and app.get_doc_type == "Application" %}
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse"
+             data-parent="#language-settings-options"
+             href="#commcare-translations"
+             class="collapsed">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans "CommCare Translations" %}
+          </a>
+        </h4>
+      </div>
+      <div class="panel-collapse collapse" id="commcare-translations">
+        <div class="panel-body">
+          <section id="translations_ui">
+          </section>
         </div>
       </div>
-    {% endif %}
+    </div>
+  {% endif %}
 
-    {% if not app.is_remote_app %}
-      <div class="panel panel-appmanager">
-        <div class="panel-heading">
-          <h4 class="panel-title">
-            <a data-toggle="collapse"
-               data-parent="#language-settings-options"
-               href="#bulk-commcare-translations"
-               class="collapsed">
-              <i class="fa fa-angle-double-down"></i>
-              {% trans "Bulk CommCare Translations" %}
-            </a>
-          </h4>
-        </div>
-        <div class="panel-collapse collapse" id="bulk-commcare-translations">
-          <div class="panel-body">
-              {% include "hqwebapp/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form no_header=True %}
-          </div>
+  {% if not app.is_remote_app %}
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse"
+             data-parent="#language-settings-options"
+             href="#bulk-commcare-translations"
+             class="collapsed">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans "Bulk CommCare Translations" %}
+          </a>
+        </h4>
+      </div>
+      <div class="panel-collapse collapse" id="bulk-commcare-translations">
+        <div class="panel-body">
+          {% include "hqwebapp/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form no_header=True %}
         </div>
       </div>
-    {% endif %}
+    </div>
+  {% endif %}
 
-    {% if app.doc_type != "LinkedApplication" %}
-      <div class="panel panel-appmanager">
-        <div class="panel-heading">
-          <h4 class="panel-title">
-            <a data-toggle="collapse"
-               data-parent="#language-settings-options"
-               href="#bulk-application-translations"
-               class="collapsed">
-              <i class="fa fa-angle-double-down"></i>
-              {% trans "Bulk Application Translations" %}
-            </a>
-          </h4>
-        </div>
-        <div class="panel-collapse collapse" id="bulk-application-translations">
-          <div class="panel-body">
-            {% include "app_manager/partials/bulk_upload_app_translations.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form no_header=True langs=app.langs %}
-          </div>
+  {% if app.doc_type != "LinkedApplication" %}
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse"
+             data-parent="#language-settings-options"
+             href="#bulk-application-translations"
+             class="collapsed">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans "Bulk Application Translations" %}
+          </a>
+        </h4>
+      </div>
+      <div class="panel-collapse collapse" id="bulk-application-translations">
+        <div class="panel-body">
+          {% include "app_manager/partials/bulk_upload_app_translations.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form no_header=True langs=app.langs %}
         </div>
       </div>
+    </div>
 
-    {% endif %}
+  {% endif %}
 
 </div>

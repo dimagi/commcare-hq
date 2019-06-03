@@ -6,27 +6,27 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    {% include 'reports/partials/filters_js.html' %}
-    <script src="{% static 'reports/js/reports.async.js' %}"></script>
+  <script src="{% static 'reports/js/hq_report.js' %}"></script>
+  <script src="{% static 'reports/js/reports.util.js' %}"></script>
+  {% include 'reports/partials/filters_js.html' %}
+  <script src="{% static 'reports/js/reports.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
-    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+  <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
+  <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
 {% endblock %}
 
 {% block page_navigation %}
-    {{ block.super }}
-    <hr />
-    {% url "admin_report_dispatcher" facet_report.slug as search_url %}
-    <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
-    {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+  {{ block.super }}
+  <hr />
+  {% url "admin_report_dispatcher" facet_report.slug as search_url %}
+  <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
+  {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'js_options' report.js_options %}
-    {% initial_page_data 'report_table_js_options' report_table_js_options %}
-    {{ block.super }}
+  {% initial_page_data 'js_options' report.js_options %}
+  {% initial_page_data 'report_table_js_options' report_table_js_options %}
+  {{ block.super }}
 {% endblock %}

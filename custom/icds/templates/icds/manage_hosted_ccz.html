@@ -1,0 +1,85 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "icds/js/manage_hosted_ccz" %}
+
+{% block page_content %}
+{% initial_page_data 'hosted_cczs' hosted_cczs %}
+{% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
+{% initial_page_data 'appProfileInitialValues' initial_app_profile_details %}
+{% initial_page_data 'appVersionOnlyShowReleased' True %}
+{% registerurl "paginate_releases" domain '---' %}
+{% registerurl "remove_hosted_ccz" domain '---' %}
+{% registerurl "hosted_ccz" domain '---' %}
+<div class="container" id="manage-ccz-hostings">
+  <div class="row">
+    <div class="page-header">
+      <h1>
+        {% trans "Manage CCZ Hosting" %}
+      </h1>
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      <div class="panel panel-modern-gray panel-form-only">
+        <div class="panel-body">
+          {% crispy form %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      {% if hosted_cczs %}
+        <table id="ccz-hostings" class="table">
+          <thead>
+            <tr>
+              <th class="col-sm-2">
+                {% trans 'Link' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Application' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Profile' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Version' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'CCZ Name' %}
+              </th>
+              <th class="col-sm-2">
+                {% trans 'Action' %}
+              </th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: hostings">
+            <tr>
+              <td>
+                <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
+                </a>
+              </td>
+              <td data-bind="text: appName">
+              </td>
+              <td data-bind="text: profileName">
+              </td>
+              <td data-bind="text: version">
+              </td>
+              <td data-bind="text: fileName">
+              </td>
+              <td>
+                <a data-bind="attr: { href: url}">
+                  {% trans 'Remove' %}
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

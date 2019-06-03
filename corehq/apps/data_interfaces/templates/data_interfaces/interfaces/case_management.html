@@ -4,47 +4,47 @@
 {% load i18n %}
 
 {% block reportcontent %}
-    <div id="data-interfaces-reassign-cases">
-        <div class="row">
-            <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selectedCases">
-                <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
-                <span data-bind="visible: shouldShowOwners">
-                    <input type="hidden" name="reassign_owner"
-                        id="reassign_owner_select"
-                        style="width: 300px;"
-                        data-bind="optionsText: 'name',
-                                   optionsValue: 'ownerid',
-                                   optionsCaption: '{% trans 'Select New Owner...' %}',
-                                   event: {change: changeNewOwner}" />
-                </span>
-                <button type="submit"
-                        data-bind="hqbSubmitReady: isSubmitEnabled, visible: isSubmitEnabled"
-                        class="btn btn-default disabled">{% trans 'Reassign' %}</button>
-                <button type="button"
-                        disabled="disabled"
-                        data-bind="visible: !isSubmitEnabled()"
-                        class="btn btn-default">{% trans 'Reassign' %}</button>
-            </form>
-        </div>
-        {{ block.super }}
+  <div id="data-interfaces-reassign-cases">
+    <div class="row">
+      <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selectedCases">
+        <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
+        <span data-bind="visible: shouldShowOwners">
+            <input type="hidden" name="reassign_owner"
+                   id="reassign_owner_select"
+                   style="width: 300px;"
+                   data-bind="optionsText: 'name',
+                           optionsValue: 'ownerid',
+                           optionsCaption: '{% trans 'Select New Owner...' %}',
+                           event: {change: changeNewOwner}" />
+        </span>
+        <button type="submit"
+                data-bind="hqbSubmitReady: isSubmitEnabled, visible: isSubmitEnabled"
+                class="btn btn-default disabled">{% trans 'Reassign' %}</button>
+        <button type="button"
+                disabled="disabled"
+                data-bind="visible: !isSubmitEnabled()"
+                class="btn btn-default">{% trans 'Reassign' %}</button>
+      </form>
     </div>
+    {{ block.super }}
+  </div>
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-    <div class="modal hide fade" id="caseManagementStatusModal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>{% trans 'Case Reassignment' %}</h3>
-                </div>
-                <div class="modal-body">
-                    --
-                </div>
-                <div class="modal-footer">
-                    <button id="bug-report-cancel" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
-                </div>
-            </div>
+  <div class="modal hide fade" id="caseManagementStatusModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">&times;</a>
+          <h3>{% trans 'Case Reassignment' %}</h3>
         </div>
+        <div class="modal-body">
+          --
+        </div>
+        <div class="modal-footer">
+          <button id="bug-report-cancel" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+        </div>
+      </div>
     </div>
+  </div>
 {% endblock %}

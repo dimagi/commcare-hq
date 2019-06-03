@@ -36,7 +36,7 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered',
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
-                    'valid_visits': 4,
+                    'valid_visits': 3,
                     'expected_visits': 304,
                     'thr': '28.67 %',
                     'num_launched_awcs': 9,
@@ -44,7 +44,7 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '1.32 %'
+                    'home_visits': '0.99 %'
                 },
                 {
                     'state_name': 'st2',
@@ -118,7 +118,7 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered',
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
-                    'valid_visits': 4,
+                    'valid_visits': 3,
                     'expected_visits': 304,
                     'thr': '28.67 %',
                     'num_launched_awcs': 9,
@@ -126,7 +126,7 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'd1',
-                    'home_visits': '1.32 %'
+                    'home_visits': '0.99 %'
                 }
             ],
             'ageSDD': '0_3',
@@ -165,7 +165,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '70.48 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 9
                 },
                 {
                     'gm_3_5': 240,
@@ -180,7 +181,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '69.97 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 60,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 11
                 },
                 {
                     'gm_3_5': 0,
@@ -195,7 +197,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '0.00 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 0,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 1,
                 }
             ],
             'ageSDD': '3_6',
@@ -235,7 +238,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '70.48 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 9
                 }
             ],
             'ageSDD': '3_6',

@@ -7,78 +7,78 @@
 {% requirejs_main 'accounting/js/subscriptions_main' %}
 
 {% block page_content %}
-    {% initial_page_data 'current_version' subscription.plan_version.id %}
-    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
-        <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
-        <li><a href="#invoices" data-toggle="tab">{% trans "Invoices" %}</a></li>
-        {% if can_change_subscription %}
-        <li><a href="#change-subscription-plan"
-               data-toggle="tab">{% trans "Upgrade / Downgrade" %}</a>
-        </li>
-        {% endif %}
-        <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
-        <li><a href="#cancel" data-toggle="tab">{% trans "Cancel" %}</a></li>
-        <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
-    </ul>
+  {% initial_page_data 'current_version' subscription.plan_version.id %}
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
+    <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
+    <li><a href="#invoices" data-toggle="tab">{% trans "Invoices" %}</a></li>
+    {% if can_change_subscription %}
+      <li><a href="#change-subscription-plan"
+             data-toggle="tab">{% trans "Upgrade / Downgrade" %}</a>
+      </li>
+    {% endif %}
+    <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
+    <li><a href="#cancel" data-toggle="tab">{% trans "Cancel" %}</a></li>
+    <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
+  </ul>
 
-    <div class="tab-content tab-padded">
-        <div class="tab-pane" id="subscription">
-            {{ block.super }}
-        </div>
-
-        <div class="tab-pane" id="invoices">
-            {% include 'accounting/partials/invoice_table.html' with headers=invoice_headers rows=invoice_rows invoice_export_url=invoice_export_url invoice_report_url=invoice_report_url%}
-        </div>
-        <!-- Modal Forms for (Subscription -> Invoices ->) Adjust Balance -->
-        {% for adjust_balance_form in adjust_balance_forms %}
-            {% include 'accounting/partials/adjust_balance.html' %}
-        {% endfor %}
-
-        {% if can_change_subscription %}
-        <div class="tab-pane" id="change-subscription-plan">
-            <div class="alert alert-info">
-                Note that changing the software plan will cancel the current
-                subscription and create a new one with the new plan information.
-                It will also apply upgrades / downgrades of features
-                between the currently subscribed plan and the plan selected.
-            </div>
-            {% crispy change_subscription_form %}
-        </div>
-        {% endif %}
-
-        <div class="tab-pane" id="credits">
-            {% if subscription_has_ended %}
-            <div class="alert alert-warning">
-                This subscription has ended.
-            </div>
-            {% endif %}
-            {% include 'accounting/partials/credits_tab.html' %}
-        </div>
-
-        <div class="tab-pane" id="cancel">
-            <div class="alert alert-danger">
-                Do this ONLY if absolutely necessary.
-                Do not cancel subscriptions just to change start dates.
-                Canceling will have real time effects to the domain like
-                shutting off reminders.
-            </div>
-            <form class="form form-horizontal" method="post" id="cancel_form">
-                {% crispy cancel_form %}
-            </form>
-            {% if subscription_canceled %}
-                <div class="alert alert-danger">
-                    Subscription has been canceled.
-                </div>
-            {% elif disable_cancel %}
-                <div class="alert alert-info">
-                    Subscription has already ended.
-                </div>
-            {% endif %}
-        </div>
-        <div class="tab-pane" id="suppress">
-            <form class="form form-horizontal" method="post" id="suppress_form">
-                {% crispy suppress_form %}
-            </form>
-        </div>
+  <div class="tab-content tab-padded">
+    <div class="tab-pane" id="subscription">
+      {{ block.super }}
     </div>
+
+    <div class="tab-pane" id="invoices">
+      {% include 'accounting/partials/invoice_table.html' with headers=invoice_headers rows=invoice_rows invoice_export_url=invoice_export_url invoice_report_url=invoice_report_url%}
+    </div>
+    <!-- Modal Forms for (Subscription -> Invoices ->) Adjust Balance -->
+    {% for adjust_balance_form in adjust_balance_forms %}
+      {% include 'accounting/partials/adjust_balance.html' %}
+    {% endfor %}
+
+    {% if can_change_subscription %}
+      <div class="tab-pane" id="change-subscription-plan">
+        <div class="alert alert-info">
+          Note that changing the software plan will cancel the current
+          subscription and create a new one with the new plan information.
+          It will also apply upgrades / downgrades of features
+          between the currently subscribed plan and the plan selected.
+        </div>
+        {% crispy change_subscription_form %}
+      </div>
+    {% endif %}
+
+    <div class="tab-pane" id="credits">
+      {% if subscription_has_ended %}
+        <div class="alert alert-warning">
+          This subscription has ended.
+        </div>
+      {% endif %}
+      {% include 'accounting/partials/credits_tab.html' %}
+    </div>
+
+    <div class="tab-pane" id="cancel">
+      <div class="alert alert-danger">
+        Do this ONLY if absolutely necessary.
+        Do not cancel subscriptions just to change start dates.
+        Canceling will have real time effects to the domain like
+        shutting off reminders.
+      </div>
+      <form class="form form-horizontal" method="post" id="cancel_form">
+        {% crispy cancel_form %}
+      </form>
+      {% if subscription_canceled %}
+        <div class="alert alert-danger">
+          Subscription has been canceled.
+        </div>
+      {% elif disable_cancel %}
+        <div class="alert alert-info">
+          Subscription has already ended.
+        </div>
+      {% endif %}
+    </div>
+    <div class="tab-pane" id="suppress">
+      <form class="form form-horizontal" method="post" id="suppress_form">
+        {% crispy suppress_form %}
+      </form>
+    </div>
+  </div>
 {% endblock %}

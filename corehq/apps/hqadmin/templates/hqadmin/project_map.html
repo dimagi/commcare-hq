@@ -9,86 +9,86 @@
   {% include 'hqwebapp/includes/less.html' with debug=False %}
 
   {% compress css %}
-  <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
-  <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqadmin/css/project_map.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqadmin/css/project_map.css' %}" />
   {% endcompress %}
 
   {% javascript_libraries ko=True hq=True helpers=True %}
   {% compress js %}
-  <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-  <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-  <script src="{% static 'hqadmin/js/project_map.js' %}"></script>
-  <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
+    <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
+    <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+    <script src="{% static 'hqadmin/js/project_map.js' %}"></script>
+    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
   {% endcompress %}
 </head>
 <body>
-  <!-- Modal -->
-  <div class="modal fade" id="modal">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header row">
-            <div class="col-md-2"></div>
-            <div class="col-md-8 center">
-                <h4 class="modal-title table center" id="modal-title">
-                    <span>Projects in <span class="country-name" data-bind="text: selectedCountry"></span> with the Most Users</span>
-                </h4>
-            </div>
-            <div class="col-md-2">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            </div>
+<!-- Modal -->
+<div class="modal fade" id="modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8 center">
+          <h4 class="modal-title table center" id="modal-title">
+            <span>Projects in <span class="country-name" data-bind="text: selectedCountry"></span> with the Most Users</span>
+          </h4>
         </div>
-        <div class="modal-body">
-          <div class="table">
-            <table class="table table-hover table-condensed">
-              <thead>
+        <div class="col-md-2">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="table">
+          <table class="table table-hover table-condensed">
+            <thead>
+            {% if request.user.is_superuser and is_internal_view %}
+              <tr data-bind="foreach: internalTableProperties">
+                <th data-bind="text: $data"></th>
+              </tr>
+            {% else %}
+              <tr data-bind="foreach: externalTableProperties">
+                <th data-bind="text: $data"></th>
+              </tr>
+            {% endif %}
+            </thead>
+            <tbody data-bind="foreach: {data: topFiveProjects}">
+            <tr class="project-row">
               {% if request.user.is_superuser and is_internal_view %}
-                <tr data-bind="foreach: internalTableProperties">
-                  <th data-bind="text: $data"></th>
-                </tr>
-              {% else %}
-                <tr data-bind="foreach: externalTableProperties">
-                  <th data-bind="text: $data"></th>
-                </tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: organization"></td>
+                <td data-bind="text: description"></td>
               {% endif %}
-              </thead>
-              <tbody data-bind="foreach: {data: topFiveProjects}">
-                <tr class="project-row">
-                  {% if request.user.is_superuser and is_internal_view %}
-                      <td data-bind="text: name"></td>
-                      <td data-bind="text: organization"></td>
-                      <td data-bind="text: description"></td>
-                  {% endif %}
-                  <td data-bind="text: sector"></td>
-                  <td data-bind="text: sub_sector"></td>
-                  <td data-bind="text: active_users"></td>
-                  <td data-bind="text: countries"></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              <td data-bind="text: sector"></td>
+              <td data-bind="text: sub_sector"></td>
+              <td data-bind="text: active_users"></td>
+              <td data-bind="text: countries"></td>
+            </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
-  <!-- Main Page Content -->
-  <div class="main-content">
-    <div class="map-wrapper wrapper">
-      <div id="map" data-token="{{ MAPBOX_ACCESS_TOKEN }}"></div>
-    </div>
-    <div class="filter-wrapper wrapper">
-      {% if request.user.is_superuser and is_internal_view %}
-          <div id="internal-only">
-              <p>This is the Dimagi-only view of the Active Project Map - please do not share this outside of Dimagi.</p>
-              <p>For external view, <a href="/hq/admin/project_map">click here</a></p>
-          </div>
-      {% endif %}
-      <h4 class="text-hq-nav-header">Active Project Map</h4>
-        <div class="btn-group btn-toggle text-hq-nav-header">
-            <button class="btn btn-primary active" id="projects">Projects</button>
-            <button class="btn btn-default" id="users">Users</button>
-        </div>
-      {% include 'appstore/partials/sidebar.html' with not_searchable="true" search_name="es_search" search_for=facet_report.search_for %}
-    </div>
+</div>
+<!-- Main Page Content -->
+<div class="main-content">
+  <div class="map-wrapper wrapper">
+    <div id="map" data-token="{{ MAPBOX_ACCESS_TOKEN }}"></div>
   </div>
+  <div class="filter-wrapper wrapper">
+    {% if request.user.is_superuser and is_internal_view %}
+      <div id="internal-only">
+        <p>This is the Dimagi-only view of the Active Project Map - please do not share this outside of Dimagi.</p>
+        <p>For external view, <a href="/hq/admin/project_map">click here</a></p>
+      </div>
+    {% endif %}
+    <h4 class="text-hq-nav-header">Active Project Map</h4>
+    <div class="btn-group btn-toggle text-hq-nav-header">
+      <button class="btn btn-primary active" id="projects">Projects</button>
+      <button class="btn btn-default" id="users">Users</button>
+    </div>
+    {% include 'appstore/partials/sidebar.html' with not_searchable="true" search_name="es_search" search_for=facet_report.search_for %}
+  </div>
+</div>
 </body>
 </html>

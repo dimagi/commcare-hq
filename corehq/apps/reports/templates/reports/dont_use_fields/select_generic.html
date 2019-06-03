@@ -1,33 +1,33 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% if not hide_field %}
-<label for="{{ select.cssId }}" class="{{ css_label_class }}">{% trans select.label %}</label>
-<div class="{{ css_field_class }}">
+  <label for="{{ select.cssId }}" class="{{ css_label_class }}">{% trans select.label %}</label>
+  <div class="{{ css_field_class }}">
     <select id="{{ select.cssId }}"
             class="form-control"
             {% if not select.use_combo_box %}class="{{ select.cssClasses }}"{% endif %}
             data-bind="{% if not select.use_combo_box %}options: select_params, optionsText: 'text', optionsValue: 'val', optionsCaption: '{% trans select.default %}',{% endif %} value: current_selection"
             name="{{ slug }}">
-    {% if select.use_combo_box %}
+      {% if select.use_combo_box %}
         <option></option>
         {% for option in select.options %}
-        <option value="{{ option.val }}">{{ option.text }}</option>
+          <option value="{{ option.val }}">{{ option.text }}</option>
         {% endfor %}
-    {% endif %}
+      {% endif %}
     </select>
-</div>
-{# This is fine as an inline script; this file is only used by custom reports which we're not currently externalizing #}
-<script>
+  </div>
+  {# This is fine as an inline script; this file is only used by custom reports which we're not currently externalizing #}
+  <script>
     $(function () {
-        $('#{{ select.cssId }}').parent().koApplyBindings({
-            select_params: {{ select.options|JSON }},
-            current_selection: ko.observable('{{ select.selected|default:'' }}'),
+      $('#{{ select.cssId }}').parent().koApplyBindings({
+        select_params: {{ select.options|JSON }},
+        current_selection: ko.observable('{{ select.selected|default:'' }}'),
+      });
+      {% if select.use_combo_box %}
+        $('#{{ select.cssId }}').combobox({
+          placeholder: '{{ select.default|safe }}'
         });
-        {% if select.use_combo_box %}
-            $('#{{ select.cssId }}').combobox({
-                placeholder: '{{ select.default|safe }}'
-            });
-        {% endif %}
+      {% endif %}
     });
-</script>
+  </script>
 {% endif %}

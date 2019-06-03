@@ -278,7 +278,7 @@ class Woman(LocationDenormalizedModel):
                            LEAD(fp_current_method) OVER w AS next_fp_current_method,
                            LEAD(timeend) OVER w AS next_timeend
                     FROM "{eligible_couple_ucr_tablename}"
-                    WINDOW w AS (PARTITION BY person_case_id ORDER BY timeend DESC)
+                    WINDOW w AS (PARTITION BY person_case_id ORDER BY timeend ASC)
                 ) AS _tmp_table
             ) eligible_couple
             WHERE fp_current_method != 'none'

@@ -17,7 +17,6 @@ from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -768,11 +767,12 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     self.media_form_errors = True
         return media
 
-    def multimedia_map_for_build(self, build_profile=None):
-        if self.multimedia_map:
-            self.remove_unused_mappings()
-        else:
+    def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
+        if self.multimedia_map is None:
             self.multimedia_map = {}
+
+        if self.multimedia_map and remove_unused:
+            self.remove_unused_mappings()
 
         if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             return self.multimedia_map
@@ -880,15 +880,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths() | self.logo_paths
-        deleted_media = []
-        allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
         for path in paths:
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
-                deleted_media.append((path, map_item, None))
-                if allow_deletion:
-                    map_changed = True
-                    del self.multimedia_map[path]
+                map_changed = True
+                del self.multimedia_map[path]
 
         if map_changed:
             self.save()
@@ -912,7 +908,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self, build_profile_id=None):
+    def get_media_objects(self, build_profile_id=None, remove_unused=False):
         """
             Gets all the media objects stored in the multimedia map.
             If passed a profile, will only get those that are used
@@ -925,11 +921,10 @@ class ApplicationMediaMixin(Document, MediaMixin):
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
-        multimedia_map_for_build = self.multimedia_map_for_build(build_profile=build_profile)
+        multimedia_map_for_build = self.multimedia_map_for_build(build_profile=build_profile,
+                                                                 remove_unused=remove_unused)
         expected_ids = [map_item.multimedia_id for map_item in multimedia_map_for_build.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
-        retry_successes = []
-        retry_failures = []
         for path, map_item in multimedia_map_for_build.items():
             media_item = raw_docs.get(map_item.multimedia_id)
             if media_item:
@@ -940,10 +935,8 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 media = CommCareMultimedia.get_doc_class(map_item.media_type)
                 try:
                     media = media.get(map_item.multimedia_id)
-                    retry_successes.append(map_item)
                     yield path, media
                 except ResourceNotFound as e:
-                    retry_failures.append(map_item)
                     if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
                         raise e
 
@@ -955,7 +948,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
 
     def get_object_map(self):
         object_map = {}
-        for path, media_obj in self.get_media_objects():
+        for path, media_obj in self.get_media_objects(remove_unused=False):
             object_map[path] = media_obj.get_media_info(path)
         return object_map
 
@@ -982,7 +975,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
             Prepares the multimedia in the application for exchanging across domains.
         """
         self.remove_unused_mappings()
-        for path, media in self.get_media_objects():
+        for path, media in self.get_media_objects(remove_unused=True):
             if not media or (not media.is_shared and self.domain not in media.owners):
                 del self.multimedia_map[path]
 

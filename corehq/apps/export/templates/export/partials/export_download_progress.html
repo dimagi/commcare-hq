@@ -3,76 +3,76 @@
 {% load hq_shared_tags %}
 
 <div id="download-progress" class="ko-template">
-    <div class="form-actions form-actions-exports" data-bind="visible: showDownloadStatus">
-        <div class="col-sm-9 col-sm-offset-3">
-            <div class="row" data-bind="visible: showError">
-                <div class="col-sm-12">
-                    <div data-bind="css: {'alert-warning': celeryError(), 'alert-danger': downloadError()}" class="alert">
-                        <i class="fa fa-spin"></i>
-                        <strong data-bind="visible: celeryError, text: celeryError"></strong>
-                        <strong data-bind="visible: downloadError, text: downloadError"></strong>
-                        <p>
-                            {% blocktrans %}
-                                If the problem persists, please
-                                <a href="#modalReportIssue" data-toggle="modal"> Report an Issue</a>.
-                            {% endblocktrans %}
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="row" data-bind="visible: !showError()">
-                <div class="col-xs-6 col-sm-4 col-md-3">
-                    <form class="form-inline download-form" method="POST" data-bind="attr: {action: dropboxUrl}">
-                        {% csrf_token %}
-                        <a data-bind="attr: {href: downloadUrl}, visible: isDownloadReady(), click: clickDownload"
-                           class="btn btn-primary btn-full-width">
-                                <i class="fa fa-cloud-download"></i>
-                                <span data-bind="visible: !isMultimediaDownload()">{% trans "Download" %}</span>
-                                <span data-bind="visible: isMultimediaDownload()">{% trans "Download Multimedia" %}</span>
-                        </a>
-                        <button type="button" class="btn btn-default btn-disabled btn-full-width"
-                                data-bind="visible: !isDownloadReady()" disabled="disabled">
-                                <i class="fa-spin fa fa-spinner"></i>
-                                <span data-bind="visible: !isMultimediaDownload()">{% trans "Collecting Data" %}</span>
-                                <span data-bind="visible: isMultimediaDownload()">{% trans "Collecting Multimedia" %}</span>
-                        </button>
-                        <button type="button" style="margin-top: 5px;" class="btn btn-full-width"
-                                title="{% trans 'For exports that may take a while to prepare, email a link when download is ready' %}"
-                                data-bind="
+  <div class="form-actions form-actions-exports" data-bind="visible: showDownloadStatus">
+    <div class="col-sm-9 col-sm-offset-3">
+      <div class="row" data-bind="visible: showError">
+        <div class="col-sm-12">
+          <div data-bind="css: {'alert-warning': celeryError(), 'alert-danger': downloadError()}" class="alert">
+            <i class="fa fa-spin"></i>
+            <strong data-bind="visible: celeryError, text: celeryError"></strong>
+            <strong data-bind="visible: downloadError, text: downloadError"></strong>
+            <p>
+              {% blocktrans %}
+                If the problem persists, please
+                <a href="#modalReportIssue" data-toggle="modal"> Report an Issue</a>.
+              {% endblocktrans %}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="row" data-bind="visible: !showError()">
+        <div class="col-xs-6 col-sm-4 col-md-3">
+          <form class="form-inline download-form" method="POST" data-bind="attr: {action: dropboxUrl}">
+            {% csrf_token %}
+            <a data-bind="attr: {href: downloadUrl}, visible: isDownloadReady(), click: clickDownload"
+               class="btn btn-primary btn-full-width">
+              <i class="fa fa-cloud-download"></i>
+              <span data-bind="visible: !isMultimediaDownload()">{% trans "Download" %}</span>
+              <span data-bind="visible: isMultimediaDownload()">{% trans "Download Multimedia" %}</span>
+            </a>
+            <button type="button" class="btn btn-default btn-disabled btn-full-width"
+                    data-bind="visible: !isDownloadReady()" disabled="disabled">
+              <i class="fa-spin fa fa-spinner"></i>
+              <span data-bind="visible: !isMultimediaDownload()">{% trans "Collecting Data" %}</span>
+              <span data-bind="visible: isMultimediaDownload()">{% trans "Collecting Multimedia" %}</span>
+            </button>
+            <button type="button" style="margin-top: 5px;" class="btn btn-full-width"
+                    title="{% trans 'For exports that may take a while to prepare, email a link when download is ready' %}"
+                    data-bind="
                                     visible: downloadId() && !isDownloadReady(),
                                     disable: sendEmailFlag,
                                     click: sendEmailUponCompletion,
                                     css: {'btn-default': sendEmailFlag(), 'btn-primary': !sendEmailFlag()},
                                 ">
-                                <i class="fa fa-envelope"></i>
-                                {% trans "Email me when ready" %}
-                                <i class="fa fa-check" data-bind="visible: sendEmailFlag"></i>
-                        </button>
-                    </form>
-                </div>
-                <div class="col-xs-6 col-md-4" data-bind="visible: !isDownloaded() && !showError()">
-                    <div class="progress progress-exports">
-                        <div id="download-progress-bar" class="progress-bar"
-                             role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
-                             data-bind="css: {'progress-bar-success': isDownloadReady}, style: {width: progress() + '%'}">
+              <i class="fa fa-envelope"></i>
+              {% trans "Email me when ready" %}
+              <i class="fa fa-check" data-bind="visible: sendEmailFlag"></i>
+            </button>
+          </form>
+        </div>
+        <div class="col-xs-6 col-md-4" data-bind="visible: !isDownloaded() && !showError()">
+          <div class="progress progress-exports">
+            <div id="download-progress-bar" class="progress-bar"
+                 role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                 data-bind="css: {'progress-bar-success': isDownloadReady}, style: {width: progress() + '%'}">
                             <span class="sr-only">
                                 <span data-bind="text: progress"></span>%
                                 {% trans 'Complete' %}
                             </span>
-                        </div>
-                    </div>
-                    <div class="label label-danger label-lg" data-bind="visible: progressError">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        <strong>{% trans "Something went wrong!" %}</strong>
-                        <span data-bind="text: progressError"></span>
-                    </div>
-                </div>
-                <div class="col-sm-9 col-md-8" data-bind="visible: isDownloaded">
-                    <button type="button" class="btn btn-default" data-bind="click: resetDownload">
-                        {% trans "Update Filters" %}
-                    </button>
-                </div>
             </div>
+          </div>
+          <div class="label label-danger label-lg" data-bind="visible: progressError">
+            <i class="fa fa-exclamation-triangle"></i>
+            <strong>{% trans "Something went wrong!" %}</strong>
+            <span data-bind="text: progressError"></span>
+          </div>
         </div>
+        <div class="col-sm-9 col-md-8" data-bind="visible: isDownloaded">
+          <button type="button" class="btn btn-default" data-bind="click: resetDownload">
+            {% trans "Update Filters" %}
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 </div>

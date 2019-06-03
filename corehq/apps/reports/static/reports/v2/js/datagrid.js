@@ -9,7 +9,8 @@ hqDefine('reports/v2/js/datagrid', [
     'hqwebapp/js/assert_properties',
     'reports/v2/js/datagrid/data_models',
     'reports/v2/js/datagrid/columns',
-    'reports/v2/js/datagrid/bindingHandlers',  // for custom ko bindingHandlers
+    'reports/v2/js/datagrid/report_filters',
+    'reports/v2/js/datagrid/binding_handlers',  // for custom ko bindingHandlers
     'hqwebapp/js/knockout_bindings.ko',  // for modal bindings
 ], function (
     $,
@@ -17,21 +18,35 @@ hqDefine('reports/v2/js/datagrid', [
     _,
     assertProperties,
     dataModels,
-    columns
+    columns,
+    reportFilters
 ) {
     'use strict';
 
     var datagridController = function (options) {
-        assertProperties.assert(options, ['dataModel', 'columnEndpoint', 'initialColumns', 'availableFilters']);
+        assertProperties.assert(options, [
+            'dataModel',
+            'columnEndpoint',
+            'initialColumns',
+            'columnFilters',
+            'reportFilters',
+        ], [
+            'hideColumnFilterCondition',
+            'noDeleteColumnCondition',
+            'unsortableColumnNames',
+        ]);
 
         var self = {};
 
         self.data = options.dataModel;
+        self.reportFilters = ko.observableArray(_.map(options.reportFilters, reportFilters.reportFilter));
         self.columns = ko.observableArray();
 
         self.editColumnController = columns.editColumnController({
             endpoint: options.columnEndpoint,
-            availableFilters: options.availableFilters,
+            availableFilters: options.columnFilters,
+            hideColumnFilterCondition: options.hideColumnFilterCondition,
+            noDeleteColumnCondition: options.noDeleteColumnCondition,
         });
 
         self.init = function () {
@@ -48,10 +63,13 @@ hqDefine('reports/v2/js/datagrid', [
                     columns: _.map(self.columns(), function (column) {
                         return column.context();
                     }),
+                    reportFilters: _.map(self.reportFilters(), function (reportFilter) {
+                        return reportFilter.context();
+                    }),
                 };
             });
 
-            self.data.init(self.reportContext);
+            self.data.init(self.reportContext, self.reportFilters);
             self.editColumnController.init(self.reportContext);
         };
 
@@ -87,6 +105,39 @@ hqDefine('reports/v2/js/datagrid', [
             }
             self.editColumnController.unset();
         };
+
+        self.isSortableColumn = function (columnName) {
+            if (!options.unsortableColumnNames) return true;
+            return (options.unsortableColumnNames.indexOf(columnName) === -1);
+        };
+
+        self.toggleSortColumn = function (column) {
+            if (column.sort() === 'asc') {
+                column.sort('desc');
+            } else if (column.sort() === 'desc') {
+                column.sort('asc');
+            } else {
+                _.each(self.columns(), function (col) {
+                    col.sort(undefined);
+                });
+                column.sort('asc');
+            }
+            self.data.refresh();
+        };
+
+        self.unsupportedTaskName = ko.observable();
+
+        self.saveFilters = function () {
+            self.unsupportedTaskName(gettext("Save Filters"));
+        };
+
+        self.exportData = function () {
+            self.unsupportedTaskName(gettext("Export Data"));
+        };
+
+        $('#js-modal-unsupported-task').on('hide.bs.modal', function () {
+            self.unsupportedTaskName(undefined);
+        });
 
         return self;
     };

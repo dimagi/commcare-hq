@@ -3,21 +3,21 @@
 {% load compress %}
 {% requirejs_main 'app_manager/js/source_files' %}
 {% block stylesheets %}{{ block.super }}
-    {% compress css %}
-        <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
-    {% endcompress %}
+  {% compress css %}
+    <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
+  {% endcompress %}
 {% endblock stylesheets %}
 
 {% block page_title %}
-    {{ app.name }}: Build #{{ app.version }} vs #{{ other_app.version }}
+  {{ app.name }}: Build #{{ app.version }} vs #{{ other_app.version }}
 {% endblock page_title %}
 
 {% block file_description %}
-<span class="diff"><span class="insert">+{{ file.add_count }}</span></span>
-/
-<span class="diff"><span class="delete">-{{ file.del_count }}</span></span>
+  <span class="diff"><span class="insert">+{{ file.add_count }}</span></span>
+  /
+  <span class="diff"><span class="delete">-{{ file.del_count }}</span></span>
 {% endblock file_description %}
 
 {% block file_source %}
-    {{ file.source|safe }}
+  {{ file.source|safe }}
 {% endblock file_source %}

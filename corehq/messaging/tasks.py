@@ -10,7 +10,6 @@ from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_case
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
 from corehq.sql_db.util import run_query_across_partitioned_databases
-from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.utils import case_load_counter
 from dimagi.utils.couch import CriticalSection
@@ -26,10 +25,6 @@ def get_sync_key(case_id):
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging(self, domain, case_id):
-    if REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
-        sync_case_for_messaging.apply_async([domain, case_id], countdown=60)
-        return
-
     try:
         with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
             _sync_case_for_messaging(domain, case_id)

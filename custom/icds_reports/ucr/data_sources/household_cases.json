@@ -22,6 +22,12 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-household_cases",
     "display_name": "Cases - Household (Static)",
@@ -69,6 +75,26 @@
       },
       {
         "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "opened_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "closed_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "display_name": null,
         "datatype": "string",
         "type": "expression",
         "transform": {},
@@ -102,8 +128,8 @@
           "type": "ancestor_location"
         },
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "supervisor_id",
         "create_index": false,
         "type": "expression"
@@ -199,13 +225,11 @@
     },
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {

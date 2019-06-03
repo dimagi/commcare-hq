@@ -47,13 +47,4 @@ quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=10,
                                    assert_function=quickcache_soft_assert,
                                    session_function=get_session_key)
 
-
-def skippable_quickcache(*args, **kwargs):
-    warnings.warn(
-        "skippable_quickcache is deprecated. Use quickcache with skip_arg instead.",
-        DeprecationWarning
-    )
-    return quickcache(*args, **kwargs)
-
-
-__all__ = ['quickcache', 'skippable_quickcache']
+__all__ = ['quickcache']

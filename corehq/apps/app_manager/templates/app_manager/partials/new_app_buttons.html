@@ -1,27 +1,27 @@
 {% load i18n %}
 
 <div class="row">
-    <form action="{% url "new_app" domain %}" method="post">
+  <form action="{% url "new_app" domain %}" method="post">
     {% csrf_token %}
-        <input type="hidden" name="type" value="Application">
-        <input type="hidden" name="application_version" value="2.0" />
-        {% if request.couch_user.can_edit_apps %}
-        <div class="col-sm-4 col-sm-offset-1">
-            <a href="#" class="submit">
-                <button type="submit" class="btn btn-primary btn-new-app">
-                    {% trans 'Create a Blank Application' %}
-                </button>
-            </a>
-        </div>
-        {% else %}
-        {% trans 'There are no applications at this time' %}
-        {% endif %}
-        <div class="col-sm-4 col-sm-offset-2">
-            <a href="{% url "appstore" %}">
-                <button type="button" class="btn btn-primary btn-new-app">
-                    {% trans 'Copy an existing app from the CommCare Exchange' %}
-                </button>
-            </a>
-        </div>
-    </form>
+    <input type="hidden" name="type" value="Application">
+    <input type="hidden" name="application_version" value="2.0" />
+    {% if request.couch_user.can_edit_apps %}
+      <div class="col-sm-4 col-sm-offset-1">
+        <a href="#" class="submit">
+          <button type="submit" class="btn btn-primary btn-new-app">
+            {% trans 'Create a Blank Application' %}
+          </button>
+        </a>
+      </div>
+    {% else %}
+      {% trans 'There are no applications at this time' %}
+    {% endif %}
+    <div class="col-sm-4 col-sm-offset-2">
+      <a href="{% url "appstore" %}">
+        <button type="button" class="btn btn-primary btn-new-app">
+          {% trans 'Copy an existing app from the CommCare Exchange' %}
+        </button>
+      </a>
+    </div>
+  </form>
 </div>

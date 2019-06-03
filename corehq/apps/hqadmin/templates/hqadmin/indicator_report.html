@@ -4,51 +4,51 @@
 {% load compress %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
-        <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}'></script>
-        <script src='{% static 'hqadmin/js/visualizations.js' %}'></script>
-    {% endcompress %}
-    <script src="{% static 'hqadmin/js/indicator_report.js' %}"></script>
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
+    <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}'></script>
+    <script src='{% static 'hqadmin/js/visualizations.js' %}'></script>
+  {% endcompress %}
+  <script src="{% static 'hqadmin/js/indicator_report.js' %}"></script>
 {% endblock %}
 
 
 {% block page_content %}{{ block.super }}
-    {% initial_page_data "indicator_data" indicator_data %}
-    {% initial_page_data "indicators" indicators %}
+  {% initial_page_data "indicator_data" indicator_data %}
+  {% initial_page_data "indicators" indicators %}
 
-    <div class="well">
-        <form id="all-charts-filter" style="margin: 0;" class="form-inline">
-            <span>
-                <h3>{% trans "Filters for All Charts Below" %}</h3>
-                <label for="all-charts-interval" class="sub-label">{% trans 'Interval' %}</label>
-                <select id="all-charts-interval" name="interval" class="form-control">
-                    <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
-                    <option {% if interval == 'week' %}selected {% endif %}value="week">{% trans 'Week' %}</option>
-                    <option {% if interval == 'month' %}selected {% endif %}value="month">{% trans 'Month' %}</option>
-                    <option {% if interval == 'year' %}selected {% endif %}value="year">{% trans 'Year' %}</option>
-                </select>
-                <label for="all-charts-startdate" class="sub-label">{% trans 'From' %}</label>
-                <input type="text" id="all-charts-startdate" name="startdate" value="{{ startdate }}" class="date-picker form-control">
-                <label for="all-charts-enddate" class="sub-label">{% trans 'To' %}</label>
-                <input type="text" id="all-charts-enddate" name="enddate" value="{{ enddate }}" class="date-picker form-control">
-                <button type="submit" class="btn btn-primary">{% trans "Apply to All Charts" %}</button>
-            </span>
-        </form>
-    </div>
+  <div class="well">
+    <form id="all-charts-filter" style="margin: 0;" class="form-inline">
+      <span>
+        <h3>{% trans "Filters for All Charts Below" %}</h3>
+        <label for="all-charts-interval" class="sub-label">{% trans 'Interval' %}</label>
+        <select id="all-charts-interval" name="interval" class="form-control">
+            <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
+            <option {% if interval == 'week' %}selected {% endif %}value="week">{% trans 'Week' %}</option>
+            <option {% if interval == 'month' %}selected {% endif %}value="month">{% trans 'Month' %}</option>
+            <option {% if interval == 'year' %}selected {% endif %}value="year">{% trans 'Year' %}</option>
+        </select>
+        <label for="all-charts-startdate" class="sub-label">{% trans 'From' %}</label>
+        <input type="text" id="all-charts-startdate" name="startdate" value="{{ startdate }}" class="date-picker form-control">
+        <label for="all-charts-enddate" class="sub-label">{% trans 'To' %}</label>
+        <input type="text" id="all-charts-enddate" name="enddate" value="{{ enddate }}" class="date-picker form-control">
+        <button type="submit" class="btn btn-primary">{% trans "Apply to All Charts" %}</button>
+      </span>
+    </form>
+  </div>
 
-    {% for indicator in indicators %}
-        {% if indicator in indicator_data.keys %}
-            {% with data=indicator_data|dict_lookup:indicator %}
-                <div class="panel panel-default">
-                    <div class="panel-heading panel-chart-heading">
-                        <h2 class="panel-title">{{ data.chart_title }}</h2>
-                    </div>
-                    <div class="panel-body">
-                    {% include "hqadmin/partials/visualizations.html" with chart_name=data.chart_name date_field_opts=data.date_field_opts hide_cumulative_charts=data.hide_cumulative_charts interval=data.interval %}
-                    </div>
-                </div>
-            {% endwith %}
-        {% endif %}
-    {% endfor %}
+  {% for indicator in indicators %}
+    {% if indicator in indicator_data.keys %}
+      {% with data=indicator_data|dict_lookup:indicator %}
+        <div class="panel panel-default">
+          <div class="panel-heading panel-chart-heading">
+            <h2 class="panel-title">{{ data.chart_title }}</h2>
+          </div>
+          <div class="panel-body">
+            {% include "hqadmin/partials/visualizations.html" with chart_name=data.chart_name date_field_opts=data.date_field_opts hide_cumulative_charts=data.hide_cumulative_charts interval=data.interval %}
+          </div>
+        </div>
+      {% endwith %}
+    {% endif %}
+  {% endfor %}
 {% endblock %}

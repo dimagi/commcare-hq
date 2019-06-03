@@ -1,40 +1,40 @@
 <div class="property-table-row">
-    {% for table in tables %}
+  {% for table in tables %}
     <div class="property-table-container">
-        {% if table.name %}
+      {% if table.name %}
         <div class="table-tab">
-            {{ table.name }}
+          {{ table.name }}
         </div>
-        {% endif %}
+      {% endif %}
 
-        <table class="table table-bordered case-property-table">
-            <tbody>
-                {% for row in table.rows %}
-                <tr>
-                    {% for cell in row %}
-                    {% if not cell.colspan %}
-                    <th title="{{ cell.expr }}">
-                        {% if cell.has_history %}
-                            <a href="#" data-property-name="{{ cell.expr }}" class="case-property-name">
-                                <i class="fa fa-history"></i> {{ cell.name }}
-                            </a>
-                        {% else %}
-                            {{ cell.name }}
-                        {% endif %}
-                    </th>
-                    <td>
-                        {{ cell.value }}
-                    </td>
-                    {% else %}
-                    <th colspan="{{ cell.colspan }}">
-                    </th>
-                    {% endif %}
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+      <table class="table table-bordered case-property-table">
+        <tbody>
+        {% for row in table.rows %}
+          <tr>
+            {% for cell in row %}
+              {% if not cell.colspan %}
+                <th title="{{ cell.expr }}">
+                  {% if cell.has_history %}
+                    <a href="#" data-property-name="{{ cell.expr }}" class="case-property-name">
+                      <i class="fa fa-history"></i> {{ cell.name }}
+                    </a>
+                  {% else %}
+                    {{ cell.name }}
+                  {% endif %}
+                </th>
+                <td>
+                  {{ cell.value }}
+                </td>
+              {% else %}
+                <th colspan="{{ cell.colspan }}">
+                </th>
+              {% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
 
     </div>
-    {% endfor %}
+  {% endfor %}
 </div>

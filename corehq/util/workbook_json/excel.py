@@ -154,10 +154,8 @@ class IteratorJSONReader(object):
 
 
 def get_workbook(file_or_filename):
-    workbook = None
-
     try:
-        workbook = WorkbookJSONReader(file_or_filename)
+        return WorkbookJSONReader(file_or_filename)
     except (HeaderValueError, InvalidExcelFileException) as e:
         raise WorkbookJSONError(_(
             "Upload failed! "
@@ -172,12 +170,10 @@ def get_workbook(file_or_filename):
         raise WorkbookJSONError(_(
             "Upload encountered a data type error: {}."
         ).format(e))
-    except AttributeError:
+    except AttributeError as e:
         raise WorkbookJSONError(_(
             "Error processing Excel file: {}."
         ).format(e))
-
-    return workbook
 
 
 def get_single_worksheet(file_or_filename, title=None):

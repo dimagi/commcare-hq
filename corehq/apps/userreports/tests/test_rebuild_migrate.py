@@ -5,9 +5,19 @@ import mock
 from django.test import TestCase
 from sqlalchemy.engine import reflection
 
-from corehq.apps.userreports.tests.utils import get_sample_data_source
+from corehq.apps.userreports.models import DataSourceActionLog, DataSourceConfiguration
+from corehq.apps.userreports.tests.utils import get_sample_data_source, skip_domain_filter_patch
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.pillows.case import get_case_pillow
+from corehq.util.test_utils import softer_assert
+
+
+def setup_module():
+    skip_domain_filter_patch.start()
+
+
+def teardown_module():
+    skip_domain_filter_patch.stop()
 
 
 class RebuildTableTest(TestCase):
@@ -132,6 +142,47 @@ class RebuildTableTest(TestCase):
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
         )
+
+    @softer_assert()
+    def test_skip_destructive_rebuild(self):
+        self.config = self._get_config('add_non_nullable_col')
+        self.config.disable_destructive_rebuild = True
+        self.config.save()
+
+        get_case_pillow(ucr_configs=[self.config])
+        self.adapter = get_indicator_adapter(self.config)
+        self.engine = self.adapter.engine
+
+        # assert new date isn't in the config
+        insp = reflection.Inspector.from_engine(self.engine)
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        self.assertEqual(
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
+        )
+
+        # add the column to the config
+        self.config.configured_indicators.append({
+            "column_id": "new_date",
+            "type": "raw",
+            "display_name": "new_date opened",
+            "datatype": "datetime",
+            "property_name": "other_opened_on",
+            "is_nullable": False
+        })
+        self.config.save()
+
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
+        # bootstrap to trigger rebuild
+        get_case_pillow(ucr_configs=[self.config])
+
+        logs = DataSourceActionLog.objects.filter(
+            indicator_config_id=self.config.data_source_id,
+            skip_destructive=True
+        )
+        self.assertEqual(1, len(logs))
+        self.assertEqual(logs[0].migration_diffs, [{'type': 'add_column', 'item_name': 'new_date'}])
 
     def test_implicit_pk(self):
         self._setup_data_source('implicit_pk')

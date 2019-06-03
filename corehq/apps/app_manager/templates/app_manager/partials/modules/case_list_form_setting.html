@@ -5,70 +5,70 @@
 {% if add_ons.register_from_case_list %}
 
   <div id="case-list-form">
-      <div class="form-group">
-          <label class="{% css_label_class %} control-label">
-              {% trans "Registration Form Accessible from Case List" %}
-              <span class="hq-help-template"
-                    data-title="{% trans "Registration Form Accessible from Case List" %}"
-                    data-content="{% blocktrans %}Minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>.{% endblocktrans %}"
-              ></span>
-          </label>
-          {% if not case_list_form_not_allowed_reasons %}
-              <div class="{% css_field_class %}" data-bind="css: {'has-error': formMissing()}">
-                  <select class="form-control" data-bind="value: caseListForm">
-                    {% if case_list_form_options.form.form_id and case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
-                        <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
-                    {% endif %}
-                    <option value="">{% trans "Don't Show" %}</option>
-                    {% for id, name in case_list_form_options.options.items %}
-                        <option value="{{ id }}">{{ name }}</option>
-                    {% endfor %}
-                  </select>
-                  <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
-                  <div data-bind="visible: formMissing()" class="help-block">
-                      {% trans "Error! The selected form does not exist." %}
-                  </div>
-              </div>
-          {% else %}
-              <div class="{% css_field_class %} help-block">
-                      {% trans "Registration from the case list is not available because" %}
-                      {% if case_list_form_not_allowed_reasons|length == 1 %}
-                        {% for reason in case_list_form_not_allowed_reasons %}
-                            {{ reason }}
-                        {% endfor %}
-                      {% else %}
-                        <ul>
-                            {% for reason in case_list_form_not_allowed_reasons %}
-                                <li>{{ reason }}</li>
-                            {% endfor %}
-                        </ul>
-                      {% endif %}
-              </div>
-          {% endif %}
-      </div>
-      <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
-          <label class="{% css_label_class %} control-label">
-              {% trans "Label for Case List Registration" %}
-          </label>
-          <div class="{% css_field_class %}">
-              {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
+    <div class="form-group">
+      <label class="{% css_label_class %} control-label">
+        {% trans "Registration Form Accessible from Case List" %}
+        <span class="hq-help-template"
+              data-title="{% trans "Registration Form Accessible from Case List" %}"
+              data-content="{% blocktrans %}Minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>.{% endblocktrans %}"
+        ></span>
+      </label>
+      {% if not case_list_form_not_allowed_reasons %}
+        <div class="{% css_field_class %}" data-bind="css: {'has-error': formMissing()}">
+          <select class="form-control" data-bind="value: caseListForm">
+            {% if case_list_form_options.form.form_id and case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
+              <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
+            {% endif %}
+            <option value="">{% trans "Don't Show" %}</option>
+            {% for id, name in case_list_form_options.options.items %}
+              <option value="{{ id }}">{{ name }}</option>
+            {% endfor %}
+          </select>
+          <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
+          <div data-bind="visible: formMissing()" class="help-block">
+            {% trans "Error! The selected form does not exist." %}
           </div>
+        </div>
+      {% else %}
+        <div class="{% css_field_class %} help-block">
+          {% trans "Registration from the case list is not available because" %}
+          {% if case_list_form_not_allowed_reasons|length == 1 %}
+            {% for reason in case_list_form_not_allowed_reasons %}
+              {{ reason }}
+            {% endfor %}
+          {% else %}
+            <ul>
+              {% for reason in case_list_form_not_allowed_reasons %}
+                <li>{{ reason }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
+      <label class="{% css_label_class %} control-label">
+        {% trans "Label for Case List Registration" %}
+      </label>
+      <div class="{% css_field_class %}">
+        {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
       </div>
-      <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
-          <label class="{% css_label_class %} control-label">
-              {% trans "End of Registration action" %}
-          </label>
-          <div class="{% css_field_class %}">
-              <select-toggle data-apply-bindings="false"
-                             params="name: 'case_list_post_form_workflow',
+    </div>
+    <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
+      <label class="{% css_label_class %} control-label">
+        {% trans "End of Registration action" %}
+      </label>
+      <div class="{% css_field_class %}">
+        <select-toggle data-apply-bindings="false"
+                       params="name: 'case_list_post_form_workflow',
                                      options: endOfRegistrationOptions,
                                      value: postFormWorkflow"></select-toggle>
-          </div>
-
       </div>
+
+    </div>
   </div>
   <div id="case_list_media">
-      {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
+    {% include "app_manager/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
   </div>
 
 {% endif %}

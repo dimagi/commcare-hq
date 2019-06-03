@@ -83,7 +83,8 @@ class MenuContributor(SuiteContributorByModule):
 
         menus = []
         if hasattr(module, 'get_menus'):
-            for menu in module.get_menus(supports_module_filter=supports_module_filter):
+            for menu in module.get_menus(supports_module_filter=supports_module_filter,
+                                         build_profile_id=self.build_profile_id):
                 menus.append(menu)
         else:
             from corehq.apps.app_manager.models import ShadowModule
@@ -123,8 +124,8 @@ class MenuContributor(SuiteContributorByModule):
                         menu_kwargs.update({
                             'menu_locale_id': get_module_locale_id(module),
                             'menu_enum_text': get_module_enum_text(module),
-                            'media_image': bool(len(module.all_image_paths())),
-                            'media_audio': bool(len(module.all_audio_paths())),
+                            'media_image': module.uses_image(build_profile_id=self.build_profile_id),
+                            'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
                             'image_locale_id': id_strings.module_icon_locale(module),
                             'audio_locale_id': id_strings.module_audio_locale(module),
                             'custom_icon_locale_id': (

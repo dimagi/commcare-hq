@@ -4,37 +4,37 @@
 
 
 {% block store-header %}
-    Deployments
+  Deployments
 {% endblock %}
 
 {% block view-tabs %}
 {% endblock %}
 
 {% block results-display %}
-    {% for dom in deployments %}
-        {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
-            </div><div class="row">
-        {% endif %}
-        <div class="col-sm-3">
-            <div class="well well-sm">
-                <h2>
-                    {{ dom.name }}
-                    <br/>
-                    <small>{% trans 'In' %}
-                        {{ dom.deployment.region }}
-                    </small>
-                </h2>
-                <p>{{ dom.deployment.description }}</p>
-                <a class="btn btn-default" href="{% url "deployment_info" dom.name %}">{% trans 'View' %} &raquo;</a>
-            </div>
-        </div>
-    {% empty %}
-        <div class="col-sm-12">
-            <div class="alert alert-info">
-                {% blocktrans %}
-                No results were found for your query.
-                {% endblocktrans %}
-            </div>
-        </div>
-    {% endfor %}
+  {% for dom in deployments %}
+    {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
+      </div><div class="row">
+    {% endif %}
+    <div class="col-sm-3">
+      <div class="well well-sm">
+        <h2>
+          {{ dom.name }}
+          <br/>
+          <small>{% trans 'In' %}
+            {{ dom.deployment.region }}
+          </small>
+        </h2>
+        <p>{{ dom.deployment.description }}</p>
+        <a class="btn btn-default" href="{% url "deployment_info" dom.name %}">{% trans 'View' %} &raquo;</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-sm-12">
+      <div class="alert alert-info">
+        {% blocktrans %}
+          No results were found for your query.
+        {% endblocktrans %}
+      </div>
+    </div>
+  {% endfor %}
 {% endblock %}

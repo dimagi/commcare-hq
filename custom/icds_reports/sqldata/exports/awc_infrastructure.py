@@ -5,12 +5,13 @@ from __future__ import unicode_literals
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils import phone_number_function, percent_or_not_entered
 from custom.icds_reports.utils.mixins import ExportableMixin
 
 
-class AWCInfrastructureExport(ExportableMixin, SqlData):
+class AWCInfrastructureExport(ExportableMixin, IcdsSqlData):
     title = 'AWC Infrastructure'
     table_name = 'agg_awc_monthly'
 

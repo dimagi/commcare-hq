@@ -1,63 +1,63 @@
 <p>
-    Dear Accounting Team,
+  Dear Accounting Team,
 </p>
 
 <p>
-The project space <a href="{{ domain_url }}">{{ domain }}</a> has changed its subscription.
+  The project space <a href="{{ domain_url }}">{{ domain }}</a> has changed its subscription.
 </p>
 
 <p>
-{% if username %}
-Initiated by: {{ username }}<br/>
-From the following web page</b>: {{ referer }}<br/>
-{% endif %}
+  {% if username %}
+    Initiated by: {{ username }}<br/>
+    From the following web page</b>: {{ referer }}<br/>
+  {% endif %}
 </p>
 
 <b>Billing Account Information</b><br/>
 <p>
-{% if billing_account %}
-Account name: {{ billing_account.name }}<br/>
-Contracted vs. Self-service: {{ billing_account.entry_point }}<br/>
-Dimagi Contact: {{ billing_account.dimagi_contact }}<br/>
-Billing Contacts: {{ billing_account.billingcontactinfo.email_list }}
-{% else %}
-Not available
-{% endif %}
+  {% if billing_account %}
+    Account name: {{ billing_account.name }}<br/>
+    Contracted vs. Self-service: {{ billing_account.entry_point }}<br/>
+    Dimagi Contact: {{ billing_account.dimagi_contact }}<br/>
+    Billing Contacts: {{ billing_account.billingcontactinfo.email_list }}
+  {% else %}
+    Not available
+  {% endif %}
 </p>
 
 <b>Previous Subscription</b>
 <p>
-    {% if old_subscription %}
+  {% if old_subscription %}
     Software Plan: {{ old_subscription.plan_version }}<br/>
     Subscription Type: {{ old_subscription.service_type }}<br/>
     Start Date: {{ old_subscription.date_start }}<br/>
     End Date:{{ old_subscription.date_end }}<br/>
     Do not invoice: {{ old_subscription.do_not_invoice }}<br/>
     Auto generate credits: {{ old_subscription.auto_generate_credits }}<br/>
-    {% else %}
+  {% else %}
     No previous subscription
-    {% endif %}
+  {% endif %}
 </p>
 
 <b>New Subscription</b>
 <p>
-    {% if new_subscription %}
+  {% if new_subscription %}
     Software Plan: {{ new_subscription.plan_version }}<br/>
     Subscription Type: {{ new_subscription.service_type }}<br/>
     Start Date: {{ new_subscription.date_start }}<br/>
     End Date: {{ new_subscription.date_end }}<br/>
     Do not invoice: {{ new_subscription.do_not_invoice }}<br/>
     Auto generate credits: {{ new_subscription.auto_generate_credits }}<br/>
-    {% else %}
+  {% else %}
     No new subscription
-    {% endif %}
+  {% endif %}
 </p>
 
 <p>
-    You can view the project space here: {{ domain_url }}
+  You can view the project space here: {{ domain_url }}
 </p>
 
 <p>
-    Cheers,<br />
-    --The CommCareHQ Team
+  Cheers,<br />
+  --The CommCareHQ Team
 </p>

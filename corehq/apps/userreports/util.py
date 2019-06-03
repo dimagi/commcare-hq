@@ -10,6 +10,7 @@ from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util.couch import DocumentNotFound
 from corehq.util.datadog.utils import ucr_load_counter
 
@@ -130,12 +131,14 @@ def number_of_ucr_reports(domain):
 
 
 def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
-    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
-    if raise_errors:
-        adapter = ErrorRaisingIndicatorSqlAdapter(config)
+    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter, \
+        MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
+    requires_mirroring = config.mirrored_engine_ids
+    if requires_mirroring and ENABLE_UCR_MIRRORS.enabled(config.domain):
+        adapter_cls = ErrorRaisingMultiDBAdapter if raise_errors else MultiDBSqlAdapter
     else:
-        adapter = IndicatorSqlAdapter(config)
-
+        adapter_cls = ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
+    adapter = adapter_cls(config)
     track_load = ucr_load_counter(config.engine_id, load_source, config.domain)
     return IndicatorAdapterLoadTracker(adapter, track_load)
 

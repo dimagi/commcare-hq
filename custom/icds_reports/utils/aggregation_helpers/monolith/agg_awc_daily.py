@@ -11,6 +11,7 @@ from six.moves import range
 
 
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-awc-daily'
     aggregate_parent_table = 'agg_awc_daily'
 
     def __init__(self, date):

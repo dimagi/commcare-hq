@@ -38,8 +38,7 @@ hqDefine("aaa/js/models/child", [
             if (self.dob() === 'N/A') {
                 return self.dob();
             }
-            var selectedDate = new Date(postData.selectedYear(), postData.selectedMonth(), 1);
-            var age = Math.floor(moment(selectedDate).diff(
+            var age = Math.floor(moment(postData.selectedDate()).diff(
                 moment(self.dob(), "YYYY-MM-DD"),'months',true)
             );
             if (age < 12) {
@@ -66,7 +65,7 @@ hqDefine("aaa/js/models/child", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'gender()', name: 'gender', title: 'Gender'},
             {data: 'lastImmunizationType()', name: 'lastImmunizationType', title: 'Last Immunization Type'},
             {data: 'lastImmunizationDate()', name: 'lastImmunizationDate', title: 'Last Immunization Date'},

@@ -3,15 +3,14 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-from django.contrib import messages
 from django.utils.translation import ugettext as _
 
-from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.apps.app_manager.exceptions import ModuleNotFoundException, FormNotFoundException
 from corehq.apps.translations.const import (
-    LEGACY_MODULES_AND_FORMS_SHEET_NAME,
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form=None):
@@ -44,7 +43,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
             'case_property',        # modules only
             'list_or_detail',       # modules only
             'label',                # forms only
-        ) + tuple(lang_list)),)
+        ) + tuple(lang_list) + ('unique_id',)),)
 
     headers = []
 
@@ -61,14 +60,14 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         )
     ])
 
-    for mod_index, module in enumerate(app.get_modules()):
+    for module in app.get_modules():
         if exclude_module is not None and exclude_module(module):
             continue
 
         sheet_name = get_module_sheet_name(module)
         headers.append([sheet_name, ['case_property', 'list_or_detail'] + default_lang_list])
 
-        for form_index, form in enumerate(module.get_forms()):
+        for form in module.get_forms():
             if form.form_type == 'shadow_form':
                 continue
             if exclude_form is not None and exclude_form(form):
@@ -122,19 +121,62 @@ def get_form_sheet_name(form):
 
 
 def is_form_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' in identifier
+    return 'menu' in identifier and 'form' in identifier
 
 
 def is_module_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
+    return 'menu' in identifier and 'form' not in identifier
 
 
 def is_modules_and_forms_sheet(identifier):
-    return identifier == MODULES_AND_FORMS_SHEET_NAME or identifier == LEGACY_MODULES_AND_FORMS_SHEET_NAME
+    return identifier == MODULES_AND_FORMS_SHEET_NAME
 
 
 def is_single_sheet(identifier):
     return identifier == SINGLE_SHEET_NAME
+
+
+def get_menu_or_form_by_sheet_name(app, sheet_name):
+    if '_' in sheet_name:
+        return get_form_from_sheet_name(app, sheet_name)
+    else:
+        return get_module_from_sheet_name(app, sheet_name)
+
+
+def get_menu_or_form_by_unique_id(app, unique_id, sheet_name):
+    if is_form_sheet(sheet_name):
+        try:
+            return app.get_form(unique_id)
+        except FormNotFoundException:
+            raise FormNotFoundException(_('Invalid form in row "%s", skipping row.') % sheet_name)
+    elif is_module_sheet(sheet_name):
+        try:
+            return app.get_module_by_unique_id(unique_id)
+        except ModuleNotFoundException:
+            raise ModuleNotFoundException(_('Invalid menu in row "%s", skipping row.') % sheet_name)
+    else:
+        raise ValueError(_('Did not recognize "%s", skipping row.') % sheet_name)
+
+
+def get_module_from_sheet_name(app, identifier):
+    module_index = int(identifier.replace("menu", "")) - 1
+    try:
+        return app.get_module(module_index)
+    except ModuleNotFoundException:
+        raise ModuleNotFoundException(_('Invalid menu in row "%s", skipping row.') % identifier)
+
+
+def get_form_from_sheet_name(app, identifier):
+    try:
+        mod_text, form_text = identifier.split("_")
+    except ValueError:
+        raise ValueError(_('Did not recognize "%s", skipping row.') % identifier)
+    module = get_module_from_sheet_name(app, mod_text)
+    form_index = int(form_text.replace("form", "")) - 1
+    try:
+        return module.get_form(form_index)
+    except FormNotFoundException:
+        raise FormNotFoundException(_('Invalid form in row "%s", skipping row.') % identifier)
 
 
 def get_unicode_dicts(iterable):
@@ -159,7 +201,7 @@ def get_unicode_dicts(iterable):
 
 class BulkAppTranslationUpdater(object):
     '''
-        Class to help translatea particular model (app, module, or form).
+        Class to help translate a particular model (app, module, or form).
     '''
 
     def __init__(self, app, lang=None):

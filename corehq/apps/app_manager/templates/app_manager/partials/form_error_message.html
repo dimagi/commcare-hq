@@ -1,6 +1,6 @@
 {# Poor spacing in this file because this template is used in the middle of sentences #}{% load xforms_extras %}{% load i18n %}{% if not not_actual_build %}
-"<a href="{% url "form_source" domain app.id error.form.unique_id %}">{{ error.form.name|trans:langs }}</a>"
+  "<a href="{% url "form_source" domain app.id error.form.unique_id %}">{{ error.form.name|trans:langs }}</a>"
   Form
-in the "{{ error.module.name|trans:langs }}" Menu.<br />
+  in the "{{ error.module.name|trans:langs }}" Menu.<br />
   <a class="btn btn-primary btn-xs" href="{% url "form_source" domain app.id error.form.unique_id %}">{% trans 'Go to' %} {{ error.form.name|trans:langs }} {% trans 'Form' %}</a>
 {% else %}{{ no_form }}{% endif %}

@@ -2,11 +2,11 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-    <div class="xpath-instructions">
-        <p>{% trans "Filter your cases by entering a search query in the box below." %}</p>
-    </div>
-    <div class="report-filter-xpath-textarea" data-suggestions="{{ suggestions }}">
-        <pre data-bind="xPathAutocomplete: suggestedProperties">{{ default }}</pre>
-        <input type="hidden" data-bind="value: query" name="{{ slug }}" />
-    </div>
+  <div class="xpath-instructions">
+    <p>{% trans "Filter your cases by entering a search query in the box below." %}</p>
+  </div>
+  <div class="report-filter-xpath-textarea" data-suggestions="{{ suggestions }}">
+    <pre data-bind="xPathAutocomplete: suggestedProperties">{{ default }}</pre>
+    <input type="hidden" data-bind="value: query" name="{{ slug }}" />
+  </div>
 {% endblock %}

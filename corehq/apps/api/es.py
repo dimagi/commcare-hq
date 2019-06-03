@@ -228,8 +228,8 @@ class ESView(View):
         try:
             raw_post = request.body
             raw_query = json.loads(raw_post)
-        except Exception as ex:
-            content_response = dict(message="Error parsing query request", exception=ex.message)
+        except Exception as e:
+            content_response = dict(message="Error parsing query request", exception=six.text_type(e))
             response = HttpResponse(status=406, content=json.dumps(content_response))
             return response
 
@@ -641,10 +641,10 @@ RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TA
 
 
 class DateRangeParams(object):
-    def __init__(self, field):
-        self.field = field
-        self.start_param = '{}_start'.format(field)
-        self.end_param = '{}_end'.format(field)
+    def __init__(self, param, term=None):
+        self.term = term or param
+        self.start_param = '{}_start'.format(param)
+        self.end_param = '{}_end'.format(param)
 
     def consume_params(self, raw_params):
         start = raw_params.pop(self.start_param, None)
@@ -656,24 +656,39 @@ class DateRangeParams(object):
 
         if start or end:
             # Note that dates are already in a string format when they arrive as query params
-            return filters.date_range(self.field, gte=start, lte=end)
+            return filters.date_range(self.term, gte=start, lte=end)
 
 
 class TermParam(object):
-    def __init__(self, param, term=None):
+    def __init__(self, param, term=None, analyzed=False):
         self.param = param
         self.term = term or param
+        self.analyzed = analyzed
 
     def consume_params(self, raw_params):
         value = raw_params.pop(self.param, None)
         if value:
+            # convert non-analyzed values to lower case
+            value = value.lower() if self.analyzed else value
             return filters.term(self.term, value)
 
 
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
+    TermParam('xmlns.exact'),
+    TermParam('case_name', 'name', analyzed=True),
+    TermParam('case_type', 'type', analyzed=True),
+    # terms listed here to prevent conversion of their values to lower case since
+    # since they are indexed as `not_analyzed` in ES
+    TermParam('type.exact'),
+    TermParam('name.exact'),
+    TermParam('external_id.exact'),
+    TermParam('contact_phone_number'),
+
     DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
+    DateRangeParams('date_modified', 'modified_on'),
+    DateRangeParams('server_date_modified', 'server_modified_on'),
     DateRangeParams('indexed_on'),
 ]
 
@@ -726,6 +741,9 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
 
     # add unconsumed filters
     for param, value in query_params.items():
+        # assume these fields are analyzed in ES so convert to lowercase
+        # Any fields that are not analyzed in ES should be in the ``query_param_consumers`` above
+        value = value.lower()
         payload["filter"]["and"].append(filters.term(param, value))
 
     return payload

@@ -18,6 +18,12 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-complementary_feeding_forms",
     "display_name": "Forms - Complementary Feeding (Static) (Dashboard)",
@@ -94,6 +100,8 @@
         "display_name": "Supervisor ID",
         "datatype": "string",
         "column_id": "supervisor_id",
+        "is_primary_key": true,
+        "is_nullable": false,
         "type": "expression",
         "expression": {
           "type": "ancestor_location",
@@ -363,13 +371,11 @@
     "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "timeend",
-          "subtype": "date",
-          "constraint": "month"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "disable_destructive_rebuild": true
   }

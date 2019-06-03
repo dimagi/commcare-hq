@@ -2,12 +2,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.views import ServiceDeliveryMonthly
 from custom.icds_reports.utils import DATA_NOT_ENTERED, percent_or_not_entered, apply_exclude
 
 
-@quickcache([
+@icds_quickcache([
     'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'age_sdd'
 ], timeout=30 * 60)
 def get_service_delivery_data(domain, start, length, order, reversed_order, location_filters, year, month, age_sdd, include_test=False):
@@ -67,6 +67,7 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
             )
         else:
             return dict(
+                num_launched_awcs=get_value_or_data_not_entered(row_data, 'num_launched_awcs'),
                 state_name=get_value_or_data_not_entered(row_data, 'state_name'),
                 district_name=get_value_or_data_not_entered(row_data, 'district_name'),
                 block_name=get_value_or_data_not_entered(row_data, 'block_name'),

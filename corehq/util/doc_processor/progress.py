@@ -66,7 +66,7 @@ class ProgressManager(object):
             # Estimate already visited based on difference of old/new
             # totals. The theory is that new or deleted records will be
             # evenly distributed across the entire set.
-            self.visited = int(float(self.total) / old_total * info["visited"] + 0.5)
+            self.visited = int(float(self.total) / old_total * info["visited"] + 0.5) if old_total else 0
             self.previously_visited = self.visited
         self.logger.progress_starting(self.total, self.previously_visited)
 

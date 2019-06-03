@@ -1,53 +1,53 @@
 {% load i18n %}
 <li id="js-settingsmenu-notifications" class="dropdown">
-    <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown" id="notification-icon">
-        <i class="icon-bell-alt fa fa-bell nav-main-icon"
-           data-bind="css: {'notifications-active-icon': !seen()}"></i>
-        <span class="responsive-label">{% trans "Notifications" %}</span>
-    </a>
-    <ul class="dropdown-menu notifications-dropdown dropdown-menu-right"
-        role="menu">
-        <li class="notifications-title dropdown-header nav-header">
-            {% trans "Notifications" %}
-        </li>
-        <!-- ko foreach: notifications -->
-        <li data-bind="css: {
+  <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown" id="notification-icon">
+    <i class="icon-bell-alt fa fa-bell nav-main-icon"
+       data-bind="css: {'notifications-active-icon': !seen()}"></i>
+    <span class="responsive-label">{% trans "Notifications" %}</span>
+  </a>
+  <ul class="dropdown-menu notifications-dropdown dropdown-menu-right"
+      role="menu">
+    <li class="notifications-title dropdown-header nav-header">
+      {% trans "Notifications" %}
+    </li>
+    <!-- ko foreach: notifications -->
+    <li data-bind="css: {
                 'notifications-alert': isAlert(),
                 'notifications-info': isInfo(),
                 'notifications-unread': !isRead()
             }">
-            <a data-bind="attr: {href: url}, click: markAsRead" class="clearfix notification-link" target="_blank">
-                <span class="notifications-icon">
-                    <i class="notifications-type fa"
-                       data-bind="css: {
-                            'fa-exclamation-triangle icon-warning-sign': isAlert(),
-                            'fa-info-circle icon-info-sign': isInfo()
-                        }"></i>
-                </span>
-                <span class="notifications-text" data-bind="text: content"></span>
-                <span class="notifications-date" data-bind="text: date"></span>
-            </a>
-        </li>
-        <!-- /ko -->
-        <li class="notifications-error" data-bind="visible: hasError()">
-            <a href="http://www.dimagi.com/blog/category/commcare-updates/"
-               class="clearfix"
-               target="_blank">
-                <span class="notifications-icon">
-                    <i class="fa fa-exclamation-circle icon-alert"></i>
-                </span>
-                <span class="notifications-text">
-                    {% trans "Notifications could not be fetched at this time." %}
-                    {% trans "Please see our blog for service updates." %}
-                </span>
-            </a>
-        </li>
-        <li class="nav-divider divider"></li>
-        <li class="notifications-more">
-            <a href="http://www.dimagi.com/blog/category/commcare-updates/"
-               target="_blank">
-                <i class="fa fa-list icon-list dropdown-icon"></i> {% trans "See More" %}
-            </a>
-        </li>
-    </ul>
+      <a data-bind="attr: {href: url}, click: markAsRead" class="clearfix notification-link" target="_blank">
+        <span class="notifications-icon">
+          <i class="notifications-type fa"
+             data-bind="css: {
+                  'fa-exclamation-triangle icon-warning-sign': isAlert(),
+                  'fa-info-circle icon-info-sign': isInfo()
+              }"></i>
+        </span>
+        <span class="notifications-text" data-bind="text: content"></span>
+        <span class="notifications-date" data-bind="text: date"></span>
+      </a>
+    </li>
+    <!-- /ko -->
+    <li class="notifications-error" data-bind="visible: hasError()">
+      <a href="http://www.dimagi.com/blog/category/commcare-updates/"
+         class="clearfix"
+         target="_blank">
+        <span class="notifications-icon">
+          <i class="fa fa-exclamation-circle icon-alert"></i>
+        </span>
+        <span class="notifications-text">
+          {% trans "Notifications could not be fetched at this time." %}
+          {% trans "Please see our blog for service updates." %}
+        </span>
+      </a>
+    </li>
+    <li class="nav-divider divider"></li>
+    <li class="notifications-more">
+      <a href="http://www.dimagi.com/blog/category/commcare-updates/"
+         target="_blank">
+        <i class="fa fa-list icon-list dropdown-icon"></i> {% trans "See More" %}
+      </a>
+    </li>
+  </ul>
 </li>

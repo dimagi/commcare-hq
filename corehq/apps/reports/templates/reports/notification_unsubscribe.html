@@ -2,28 +2,28 @@
 {% load i18n %}
 
 {% block content %}
-    <div style="margin-left: 20px">
-        {% if error or success %}
-            <a href="{% url 'homepage' %}" class="btn btn-default">{% trans 'Return to homepage' %}</a>
-        {% else %}
-            <form method="POST">
-                {% csrf_token %}
-                <h2>
-                    {% blocktrans %}Unsubscribe from {% endblocktrans %}
-                    {% for config in report.configs %}
-                        {{ config.full_name }}{% if forloop.last %}?{% else %},{% endif %}
-                    {% endfor %}
-                </h2>
+  <div style="margin-left: 20px">
+    {% if error or success %}
+      <a href="{% url 'homepage' %}" class="btn btn-default">{% trans 'Return to homepage' %}</a>
+    {% else %}
+      <form method="POST">
+        {% csrf_token %}
+        <h2>
+          {% blocktrans %}Unsubscribe from {% endblocktrans %}
+          {% for config in report.configs %}
+            {{ config.full_name }}{% if forloop.last %}?{% else %},{% endif %}
+          {% endfor %}
+        </h2>
 
-                <h3>
-                    {% blocktrans %}
-                        You will no longer receive this scheduled report.
-                        To add yourself, you will need to contact the person who initially added you.
-                    {% endblocktrans %}
-                </h3>
-                <input type="submit" value="{% trans 'Confirm' %}" class="btn btn-primary" />
-                <a href="{% url 'homepage' %}" class="btn btn-default">{% trans 'Cancel' %}</a>
-            </form>
-        {% endif %}
-    </div>
+        <h3>
+          {% blocktrans %}
+            You will no longer receive this scheduled report.
+            To add yourself, you will need to contact the person who initially added you.
+          {% endblocktrans %}
+        </h3>
+        <input type="submit" value="{% trans 'Confirm' %}" class="btn btn-primary" />
+        <a href="{% url 'homepage' %}" class="btn btn-default">{% trans 'Cancel' %}</a>
+      </form>
+    {% endif %}
+  </div>
 {% endblock %}

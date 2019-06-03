@@ -6,48 +6,48 @@
 {% requirejs_main "case_importer/js/main" %}
 
 {% block page_content %}
-    {% registerurl 'case_importer_uploads' domain %}
-    {% registerurl 'case_importer_upload_file_download' domain '---' %}
-    {% registerurl 'case_importer_upload_form_ids' domain '---' %}
-    {% registerurl 'case_importer_upload_case_ids' domain '---' %}
-    {% registerurl 'case_importer_update_upload_comment' domain '---' %}
-    {% initial_page_data 'record_count' record_count %}
+  {% registerurl 'case_importer_uploads' domain %}
+  {% registerurl 'case_importer_upload_file_download' domain '---' %}
+  {% registerurl 'case_importer_upload_form_ids' domain '---' %}
+  {% registerurl 'case_importer_upload_case_ids' domain '---' %}
+  {% registerurl 'case_importer_update_upload_comment' domain '---' %}
+  {% initial_page_data 'record_count' record_count %}
 
-    {% include 'case_importer/partials/help_message.html' %}
+  {% include 'case_importer/partials/help_message.html' %}
 
-    <form class="form-horizontal form-report"
-          action="{% url "excel_config" domain %}"
-          method="post"
-          enctype="multipart/form-data">
-        {% csrf_token %}
-        <fieldset>
-            <legend>
-                {% trans "Upload an Excel File From Your Computer to Import From" %}
-            </legend>
+  <form class="form-horizontal form-report"
+        action="{% url "excel_config" domain %}"
+        method="post"
+        enctype="multipart/form-data">
+    {% csrf_token %}
+    <fieldset>
+      <legend>
+        {% trans "Upload an Excel File From Your Computer to Import From" %}
+      </legend>
 
-            <div class="form-group">
-                <label class="control-label col-sm-3" for="file">
-                    {% trans "Select a file to upload" %}
-                </label>
-                <!-- unorthodox use of .control-label to vertically align the file input with the actual label -->
-                <div class="col-sm-6 control-label">
-                    <input name="file" id="file" type="file" />
-                </div>
-            </div>
-        </fieldset>
-
-        <div class="form-actions">
-            <div class="col-sm-offset-3">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa fa-forward"></i> {% trans "Next step" %}
-                </button>
-            </div>
+      <div class="form-group">
+        <label class="control-label col-sm-3" for="file">
+          {% trans "Select a file to upload" %}
+        </label>
+        <!-- unorthodox use of .control-label to vertically align the file input with the actual label -->
+        <div class="col-sm-6 control-label">
+          <input name="file" id="file" type="file" />
         </div>
-    </form>
+      </div>
+    </fieldset>
 
-
-    <h2>Recent Uploads</h2>
-    <div id="recent-uploads" class="ko-template">
-        {% include 'case_importer/partials/ko_import_history.html' %}
+    <div class="form-actions">
+      <div class="col-sm-offset-3">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa fa-forward"></i> {% trans "Next step" %}
+        </button>
+      </div>
     </div>
+  </form>
+
+
+  <h2>Recent Uploads</h2>
+  <div id="recent-uploads" class="ko-template">
+    {% include 'case_importer/partials/ko_import_history.html' %}
+  </div>
 {% endblock %}

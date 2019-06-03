@@ -77,6 +77,7 @@ hqDefine('app_manager/js/summary/models',[
     var contentItemModel = function (options) {
         var self = _.extend({}, options);
 
+        self.children = _.map(options.children, function (child) { return contentItemModel(child); });
         self.isSelected = ko.observable(true);  // based on what's selected in menu
         self.matchesQuery = ko.observable(true);   // based on what's entered in search box
         self.isVisible = ko.computed(function () {

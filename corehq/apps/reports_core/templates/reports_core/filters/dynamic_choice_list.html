@@ -2,10 +2,10 @@
 {% load hq_shared_tags %}
 {% load reports_core_tags %}
 {% block filter-controls %}
-    <input type="hidden"
-           class="form-control report-filter-dynamic-choice-list"
-           name="{{ context_.css_id }}"
-           id="{{ context_.css_id }}-input"
-           data-initial-values='{{ context_.value|JSON }}'
-           data-ajax-filter-url="{% ajax_filter_url domain report filter %}" />
+  <input type="hidden"
+         class="form-control report-filter-dynamic-choice-list"
+         name="{{ context_.css_id }}"
+         id="{{ context_.css_id }}-input"
+         data-initial-values='{{ context_.value|JSON }}'
+         data-ajax-filter-url="{% ajax_filter_url domain report filter %}" />
 {% endblock %}

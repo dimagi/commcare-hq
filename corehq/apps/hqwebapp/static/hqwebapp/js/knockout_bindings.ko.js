@@ -340,7 +340,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             $(element).addClass('modal fade').modal({
                 show: false,
-                backdrop: false,
             });
             //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },

@@ -3,34 +3,34 @@
 
 {% block download_file %}
 
-    {% if manage_consumption %}
+  {% if manage_consumption %}
     <div class="controls">
-        <label for="include_consumption" class="checkbox">
-            <input class="checkboxinput"
-                   id="include_consumption"
-                   type="checkbox"
-                   data-bind="checked: include_consumption">
-            {% trans "Include consumption data (this can cause the download to take several minutes)." %}
-        </label>
+      <label for="include_consumption" class="checkbox">
+        <input class="checkboxinput"
+               id="include_consumption"
+               type="checkbox"
+               data-bind="checked: include_consumption">
+        {% trans "Include consumption data (this can cause the download to take several minutes)." %}
+      </label>
     </div>
-    {% endif %}
+  {% endif %}
 
-    <p>
-        {% if request.can_access_all_locations %}
-        <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
-            <button class="btn btn-primary">
-                <i class="fa fa-cloud-download"></i>
-                {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
-                Download {{ plural_noun }}
-                {% endblocktrans %}
-            </button>
-        </a>
-        {% endif %}
-        <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=empty">
-            <button class="btn btn-default">
-                {% trans "Download Empty Template" %}
-            </button>
-        </a>
-    </p>
+  <p>
+    {% if request.can_access_all_locations %}
+      <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
+        <button class="btn btn-primary">
+          <i class="fa fa-cloud-download"></i>
+          {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+            Download {{ plural_noun }}
+          {% endblocktrans %}
+        </button>
+      </a>
+    {% endif %}
+    <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=empty">
+      <button class="btn btn-default">
+        {% trans "Download Empty Template" %}
+      </button>
+    </a>
+  </p>
 
 {% endblock %}

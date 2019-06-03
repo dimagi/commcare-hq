@@ -2,61 +2,61 @@
 {% load i18n %}
 
 <div>
-    <table class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                {% if account %}
-                <th>{% trans "Subscription" %}</th>
+  <table class="table table-striped table-bordered">
+    <thead>
+    <tr>
+      {% if account %}
+        <th>{% trans "Subscription" %}</th>
+      {% endif %}
+      <th>{% trans "Product Rate" %}</th>
+      <th>{% trans "Feature Rate" %}</th>
+      <th>{% trans "Balance" %}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for credit in credit_list %}
+      <tr>
+        {% if account %}
+          <td>
+            {% if credit.subscription %}
+              <a href="{% url 'edit_subscription' credit.subscription.id %}">
+                Subscription to {{ credit.subscription.subscriber.domain }}
+                {% if credit.subscription.date_end %}
+                  ({{ credit.subscription.date_start }} - {{ credit.subscription.date_end }})
+                {% else %}
+                  (start date: {{ credit.subscription.date_start }})
                 {% endif %}
-                <th>{% trans "Product Rate" %}</th>
-                <th>{% trans "Feature Rate" %}</th>
-                <th>{% trans "Balance" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for credit in credit_list %}
-                <tr>
-                    {% if account %}
-                    <td>
-                        {% if credit.subscription %}
-                        <a href="{% url 'edit_subscription' credit.subscription.id %}">
-                            Subscription to {{ credit.subscription.subscriber.domain }}
-                            {% if credit.subscription.date_end %}
-                            ({{ credit.subscription.date_start }} - {{ credit.subscription.date_end }})
-                            {% else %}
-                            (start date: {{ credit.subscription.date_start }})
-                            {% endif %}
-                        </a>
-                        {% else %}
-                        {% trans "Any" %}
-                        {% endif %}
-                    </td>
-                    {% endif %}
-                    <td>
-                        {% if credit.is_product or credit.feature_type == None %}
-                        {% trans "Any" %}
-                        {% else %}
-                        --
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if credit.feature_type %}
-                        {{ credit.feature_type }}
-                        {% elif not credit.is_product or credit.feature_type == '' %}
-                        {% trans "Any" %}
-                        {% else %}
-                        --
-                        {% endif %}
-                    </td>
-                    <td>{{ credit.balance }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+              </a>
+            {% else %}
+              {% trans "Any" %}
+            {% endif %}
+          </td>
+        {% endif %}
+        <td>
+          {% if credit.is_product or credit.feature_type == None %}
+            {% trans "Any" %}
+          {% else %}
+            --
+          {% endif %}
+        </td>
+        <td>
+          {% if credit.feature_type %}
+            {{ credit.feature_type }}
+          {% elif not credit.is_product or credit.feature_type == '' %}
+            {% trans "Any" %}
+          {% else %}
+            --
+          {% endif %}
+        </td>
+        <td>{{ credit.balance }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 <div>
-    <form class="form form-horizontal" method="post" id="credit-form">
-        {% crispy credit_form %}
-    </form>
+  <form class="form form-horizontal" method="post" id="credit-form">
+    {% crispy credit_form %}
+  </form>
 </div>

@@ -36,11 +36,12 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
         Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
-        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('missing', 'location_', new=MISSING),
         Ignore('type', 'xmlns', old=None, new=''),
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
         Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
+        Ignore('missing', '_attachments', new=MISSING),
 
         Ignore('diff', check=has_date_values),
         Ignore(check=is_text_xmlns),
@@ -83,6 +84,11 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'user_id', old=None),
         Ignore('type', 'opened_on', old=None),
         Ignore('type', 'opened_by', old=MISSING),
+        # The form that created the case was archived, but the opened_by
+        # field was not updated as part of the subsequent rebuild.
+        # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
+        # opened_by or opened_on (the latter is ignored by has_date_values).
+        Ignore('diff', 'opened_by', check=is_case_without_create_action),
         # form has case block with no actions
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
@@ -93,7 +99,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'closed_by', old='', new=None),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
-        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('missing', 'location_', new=MISSING),
         Ignore('type', 'type', old=None, new=''),
         # this happens for cases where the creation form has been archived but the case still has other forms
         Ignore('type', 'owner_id', old=None, new=''),
@@ -126,6 +132,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
         Ignore('missing', '-deletion_date', old=MISSING, new=None),
+        Ignore('missing', 'deleted_on', old=MISSING),
         ignore_renamed('-deletion_id', 'deletion_id'),
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],
@@ -298,7 +305,17 @@ def _both_dates(old, new):
 
 
 def xform_ids_order(old_obj, new_obj, rule, diff):
-    """Some couch docs have the xform ID's out of order"""
+    """Some couch docs have the xform ID's out of order
+
+    `sql_case.xform_ids` is derived from transactions, which are sorted
+    by `server_date`. `couch_case.xform_ids` is based on couch actions,
+    which are not necessarily sorted by `server_date`. Therefore it is
+    likely that they will not match, even after rebuilding either side.
+
+    `reconcile_transactions` does not update `transaction.server_date`
+    and therefore SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL is not useful
+    to eliminate `sql_case.xform_ids` list order diffs.
+    """
     old_ids = set(old_obj['xform_ids'])
     new_ids = set(new_obj['xform_ids'])
     if old_ids ^ new_ids:
@@ -308,7 +325,7 @@ def xform_ids_order(old_obj, new_obj, rule, diff):
             old_value=','.join(list(old_ids - new_ids)),
             new_value=','.join(list(new_ids - old_ids)),
         )
-    raise ReplaceDiff(diff_type="list_order", path=('xform_ids', '[*]'))
+    return True
 
 
 def case_attachments(old_obj, new_obj, rule, original_diff):
@@ -368,3 +385,8 @@ def case_index_order(old_obj, new_obj, rule, diff):
 def is_supply_point(old_obj, new_obj, rule, diff):
     from corehq.apps.commtrack.const import COMMTRACK_SUPPLY_POINT_XMLNS
     return old_obj["xmlns"] == COMMTRACK_SUPPLY_POINT_XMLNS
+
+
+def is_case_without_create_action(old_obj, new_obj, rule, diff):
+    from casexml.apps.case.const import CASE_ACTION_CREATE as CREATE
+    return all(a.get("action_type") != CREATE for a in old_obj.get("actions", []))

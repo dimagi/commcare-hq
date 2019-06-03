@@ -37,8 +37,8 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT
@@ -53,18 +53,15 @@ from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scal
     get_adult_weight_scale_data_map, get_adult_weight_scale_sector_data
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
     get_awc_daily_status_data_map, get_awc_daily_status_sector_data
-from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics, \
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
     get_awc_report_infrastructure, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
     get_awcs_covered_data_chart
-from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_chart, \
     get_children_initiated_data_map, get_children_initiated_sector_data
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
-from custom.icds_reports.reports.demographics_data import get_demographics_data
 from custom.icds_reports.reports.disha import DishaDump
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
@@ -86,7 +83,6 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from custom.icds_reports.reports.lady_supervisor import get_lady_supervisor_data
-from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
 from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_with_low_birth_weight_chart, \
@@ -106,6 +102,8 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
     get_datatables_ordering_info
+from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
+    get_program_summary_data_with_retrying
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -293,29 +291,14 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
-
-        data = {}
-        if step == 'maternal_child':
-            data = get_maternal_child_data(
-                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
+        now = tuple(now.date().timetuple())[:3]
+        pre_release_features = icds_pre_release_features(self.request.couch_user)
+        if pre_release_features:
+            data = get_program_summary_data_with_retrying(
+                step, domain, config, now, include_test, pre_release_features
             )
-        elif step == 'icds_cas_reach':
-            data = get_cas_reach_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-            )
-        elif step == 'demographics':
-            data = get_demographics_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-                beta=icds_pre_release_features(request.couch_user)
-            )
-        elif step == 'awc_infrastructure':
-            data = get_awc_infrastructure_data(domain, config, include_test)
+        else:
+            data = get_program_summary_data(step, domain, config, now, include_test, pre_release_features)
         return JsonResponse(data=data)
 
 
@@ -1776,7 +1759,7 @@ class DishaAPIView(View):
         return dump.get_export_as_http_response(request)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
@@ -1884,7 +1867,7 @@ class CasDataExportAPIView(View):
             return JsonResponse(self.message('not_available'), status=400)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 

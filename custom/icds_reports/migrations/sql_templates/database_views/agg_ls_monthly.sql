@@ -31,7 +31,7 @@ inner join agg_awc on (
         ("agg_awc"."supervisor_id" = "agg_ls"."supervisor_id") AND
         ("agg_awc"."aggregation_level" = "agg_ls"."aggregation_level")
 )
-inner join "public"."awc_location_months" "awc_location_months"  on (
+inner join "public"."awc_location_months_local" "awc_location_months"  on (
         ("awc_location_months"."month" = "agg_ls"."month") AND
         ("awc_location_months"."state_id" = "agg_ls"."state_id") AND
         ("awc_location_months"."district_id" = "agg_ls"."district_id") AND

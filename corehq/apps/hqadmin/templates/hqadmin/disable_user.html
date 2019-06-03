@@ -6,5 +6,5 @@
   <h1>{% block title %}{{ verb|title }} {% trans "User Account" %}{% endblock %}</h1>
   <p>{% blocktrans %}You are about to {{ verb }} the user account for "{{ username }}".{% endblocktrans %}</p>
   <p>This will prevent them from using CommCare HQ at all and will be enforced immediately.</p>
-    {% crispy form %}
+  {% crispy form %}
 {% endblock %}

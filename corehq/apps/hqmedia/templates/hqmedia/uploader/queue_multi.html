@@ -1,37 +1,37 @@
 {% load i18n %}
 <tr id="<%= unique_id %>">
-    <td><%= file_name %></td>
-    <td><%= file_size %> MB</td>
-    <td class="hqm-progress">
-        <div class="progress" style="margin-bottom: 5px;">
-            <div class="progress-bar progress-bar-striped active" style="width: 0%;"></div>
-        </div>
-        <p class="text-success hqm-begin">
-            {% blocktrans %}Added to queue. Click <strong>Begin Upload</strong> above to start.{% endblocktrans %}
-        </p>
-        <p class="text-info hqm-processing-queued hide">
-            {% trans 'Queued for processing. Please wait.' %}
-        </p>
-        <p class="text-info hqm-processing hide">
+  <td><%= file_name %></td>
+  <td><%= file_size %> MB</td>
+  <td class="hqm-progress">
+    <div class="progress" style="margin-bottom: 5px;">
+      <div class="progress-bar progress-bar-striped active" style="width: 0%;"></div>
+    </div>
+    <p class="text-success hqm-begin">
+      {% blocktrans %}Added to queue. Click <strong>Begin Upload</strong> above to start.{% endblocktrans %}
+    </p>
+    <p class="text-info hqm-processing-queued hide">
+      {% trans 'Queued for processing. Please wait.' %}
+    </p>
+    <p class="text-info hqm-processing hide">
             <span class="label label-info hide">
                 <span class="numerator">0</span>/<span class="denominator">0</span>
                 {% trans 'Files' %}
             </span>
-            {% trans 'Processing upload, please wait.' %}
-        </p>
-        <p class="text-success hqm-upload-completed hide">
-            <span class="label label-success">{% trans 'Upload Finished' %}</span>
-        </p>
-        <p class="text-error hqm-error hide">
-            <span class="label label-danger">{% trans 'There were errors' %}</span>
-        </p>
-        <a href="#" class="btn btn-default btn-xs pull-right hqm-remove">
-            <i class="fa fa-remove"></i> {% trans 'Remove from queue' %}
-        </a>
-        <a href="#" class="btn btn-danger btn-xs pull-right hqm-cancel hide">
-            <i class="fa fa-remove"></i> {% trans 'Cancel Upload' %}
-        </a>
-    </td>
-    <td class="hqm-status"></td>
-    <td class="hqm-details"></td>
+      {% trans 'Processing upload, please wait.' %}
+    </p>
+    <p class="text-success hqm-upload-completed hide">
+      <span class="label label-success">{% trans 'Upload Finished' %}</span>
+    </p>
+    <p class="text-error hqm-error hide">
+      <span class="label label-danger">{% trans 'There were errors' %}</span>
+    </p>
+    <a href="#" class="btn btn-default btn-xs pull-right hqm-remove">
+      <i class="fa fa-remove"></i> {% trans 'Remove from queue' %}
+    </a>
+    <a href="#" class="btn btn-danger btn-xs pull-right hqm-cancel hide">
+      <i class="fa fa-remove"></i> {% trans 'Cancel Upload' %}
+    </a>
+  </td>
+  <td class="hqm-status"></td>
+  <td class="hqm-details"></td>
 </tr>

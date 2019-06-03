@@ -3,55 +3,55 @@
 {% load i18n %}
 
 {% block breadcrumb %}
-    <li>{{ project.title }}'s {% trans "Multimedia Files" %}</li>
+  <li>{{ project.title }}'s {% trans "Multimedia Files" %}</li>
 {% endblock %}
 
 {% block content %}
-{% block page_breadcrumbs %}
+  {% block page_breadcrumbs %}
     {{ block.super }}
-{% endblock %}
-<div class="container">
+  {% endblock %}
+  <div class="container">
     <div class="row">
-        <div class="col-sm-12">
-            {% if project.multimedia_included %}
-                {% for media in project.all_media %}
-                    <dl class="dl-horizontal">
-                        <dd>
-                            {% ifequal media.doc_type "CommCareImage" %}
-                                <img class="app-pic" src="{{ media.url }}" />
-                            {% else %}
-                                <a class="btn btn-default" style="margin-top: .4em;" target="_blank" href="{{ media.url }}">{% trans "Preview" %}</a>
-                            {% endifequal %}
-                        </dd>
-                        {% if media.license.type %}
-                            <dt>{% trans "License" %}</dt>
-                            <dd><a href="{{ media.license.deed_link }}">{{ media.license.display_name }}</a></dd>
-                        {% endif %}
-                        {% if media.license.author %}
-                            <dt>{% trans "Author" %}</dt>
-                            <dd>{{ media.license.author }}</dd>
-                        {% endif %}
-                        {% if media.license.organization %}
-                            <dt>{% trans "Organization" %}</dt>
-                            <dd>{{ media.license.organization }}</dd>
-                        {% endif %}
-                        {% if media.license.attribution_notes %}
-                            <dt>{% trans "Attribution Notes" %}</dt>
-                            <dd>{{ media.license.attribution_notes }}</dd>
-                        {% endif %}
-                    </dl>
-                    <hr />
-                {% empty %}
-                    <div class="alert alert-info">
-                        {% trans "This app contains no multimedia files" %}
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="alert alert-info">
-                    {% trans "This app doesn't share it's multimedia files" %}
-                </div>
-            {% endif %}
-        </div>
+      <div class="col-sm-12">
+        {% if project.multimedia_included %}
+          {% for media in project.all_media %}
+            <dl class="dl-horizontal">
+              <dd>
+                {% ifequal media.doc_type "CommCareImage" %}
+                  <img class="app-pic" src="{{ media.url }}" />
+                {% else %}
+                  <a class="btn btn-default" style="margin-top: .4em;" target="_blank" href="{{ media.url }}">{% trans "Preview" %}</a>
+                {% endifequal %}
+              </dd>
+              {% if media.license.type %}
+                <dt>{% trans "License" %}</dt>
+                <dd><a href="{{ media.license.deed_link }}">{{ media.license.display_name }}</a></dd>
+              {% endif %}
+              {% if media.license.author %}
+                <dt>{% trans "Author" %}</dt>
+                <dd>{{ media.license.author }}</dd>
+              {% endif %}
+              {% if media.license.organization %}
+                <dt>{% trans "Organization" %}</dt>
+                <dd>{{ media.license.organization }}</dd>
+              {% endif %}
+              {% if media.license.attribution_notes %}
+                <dt>{% trans "Attribution Notes" %}</dt>
+                <dd>{{ media.license.attribution_notes }}</dd>
+              {% endif %}
+            </dl>
+            <hr />
+          {% empty %}
+            <div class="alert alert-info">
+              {% trans "This app contains no multimedia files" %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="alert alert-info">
+            {% trans "This app doesn't share it's multimedia files" %}
+          </div>
+        {% endif %}
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}

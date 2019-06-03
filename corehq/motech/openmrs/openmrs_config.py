@@ -27,11 +27,6 @@ from dimagi.ext.couchdbkit import (
 )
 
 
-class IdMatcher(DocumentSchema):
-    case_property = StringProperty()
-    identifier_type_id = StringProperty()
-
-
 class OpenmrsCaseConfig(DocumentSchema):
 
     # "patient_identifiers": {
@@ -144,7 +139,7 @@ class OpenmrsCaseConfig(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if 'id_matchers' in data:
-            # Convert id_matchers to patient_identifiers. e.g.
+            # Convert legacy id_matchers to patient_identifiers. e.g.
             #     [{'doc_type': 'IdMatcher'
             #       'identifier_type_id': 'e2b966d0-1d5f-11e0-b929-000c29ad1d07',
             #       'case_property': 'nid'}]

@@ -3,7 +3,7 @@
 {% load i18n %}
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
@@ -16,42 +16,53 @@
 
     {% javascript_libraries %}
     {% compress js %}
-        <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
     {% endcompress %}
 
     <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />
     {% block head %}{% endblock %}
-</head>
-<body>
-{% block header %}
-<nav class="navbar navbar-default navbar-mobile navbar-hq-main-menu">
-    <div class="container-fluid">
-        <div class="navbar-header">
+  </head>
+  <body>
+
+    {% block header %}
+      <nav class="navbar navbar-default navbar-mobile navbar-hq-main-menu">
+        <div class="container-fluid">
+          <div class="navbar-header">
             <div class="navbar-brand">
-                <img src="{% static 'hqstyle/images/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
+              <img src="{% static 'hqstyle/images/commcare-logo-mobile.png' %}"
+                   alt="CommCare HQ Mobile" />
             </div>
             <div class="pull-right mobile-nav">
-                {% block mobile-nav %}
-                {% endblock %}
+              {% block mobile-nav %}
+              {% endblock %}
             </div>
+          </div>
         </div>
-    </div>
-</nav>
-{% endblock %}
-<div class="container-fluid">
-    {% block breadcrumbs %}{% endblock %}
-    {% block content %}{% endblock %}
-</div>
-<footer class="footer-mobile">
+      </nav>
+    {% endblock %}
+
     <div class="container-fluid">
-        {% block mobile-footer %}
-        <p>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></p>
-        {% block mobile-logout %}
-        <p><a href="{% url "logout" %}">{% trans "Logout" %}</a></p>
-        {% endblock %}
-        {% endblock %}
+      {% block breadcrumbs %}{% endblock %}
+      {% block content %}{% endblock %}
     </div>
-</footer>
-{% block js %}{% endblock %}
-</body>
+
+    <footer class="footer-mobile">
+      <div class="container-fluid">
+        {% block mobile-footer %}
+          <p>
+            {% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %}
+            <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+          </p>
+          {% block mobile-logout %}
+            <p>
+              <a href="{% url "logout" %}">{% trans "Logout" %}</a>
+            </p>
+          {% endblock %}
+        {% endblock %}
+      </div>
+    </footer>
+
+    {% block js %}{% endblock %}
+
+  </body>
 </html>

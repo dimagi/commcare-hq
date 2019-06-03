@@ -50,10 +50,17 @@ trunk: master
 name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
-  #- jls/log-media-map-app-id # Jenny March 7
-  #- jls/reports-select2-v4  # Jenny April 9
-  - nh/cdc/one_domain+sk/lazy-case-json  # Norman April 25
-  - nh/cdc/one_domain  # Norman March 26
-  - odata-apikey  # Nick April 29
+  #- nh/cdc/one_domain  # Norman March 26
   - sr-ucr-mirror # Sravan May 1
+  - mk/ccz-hosting-revamp # MK May 6
+  - fr/case-templates      # FR May 15
+  #- mk/media-version-on-revert   # MK May 16
+  - form-odata  # Nick P May 21
+  - web-user-reports-project-access  # Gabriella May 13
+  - jls/linked-app-incremental-versioning # Jenny May 20
+  - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
+  - test-RestoreConfig-repr-method  # Gabriella May 31
+  
+  # This is being actively QAed. Don't comment it out without warning the QA team.
+  - jls/final-select2-v4 # Jenny May 25
 submodules: {}

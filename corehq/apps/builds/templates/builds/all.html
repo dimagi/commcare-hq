@@ -1,24 +1,24 @@
 {% load i18n %}
 
 {% if builds %}
-    <table>
-        <thead>
-            <tr>
-                <th>{% trans "Build Number" %}</th>
-                <th>{% trans "Version" %}</th>
-                <th>{% trans "Time" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for build in builds %}
-            <tr>
-                <td>{{ build.build_number }}</td>
-                <td>{{ build.version }}</td>
-                <td>{{ build.time }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+  <table>
+    <thead>
+    <tr>
+      <th>{% trans "Build Number" %}</th>
+      <th>{% trans "Version" %}</th>
+      <th>{% trans "Time" %}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for build in builds %}
+      <tr>
+        <td>{{ build.build_number }}</td>
+        <td>{{ build.version }}</td>
+        <td>{{ build.time }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
 {% else %}
-    <p>No builds</p>
+  <p>No builds</p>
 {% endif %}

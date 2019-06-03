@@ -2,106 +2,101 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block title %}
-    {% trans "500 Error" %}
+  {% trans "500 Error" %}
 {% endblock %}
 
 {% requirejs_main 'hqwebapp/js/500' %}
 
 {% block page_name %}<h2>{% trans "Oh no, something unexpected just happened!" %}</h2>{% endblock %}
 {% block page_content %}
-    <div class="row">
-        {% if not enterprise_mode %}
-        <div class="col-sm-4">
-            <p><img id="sad-danny" src="{% static 'hqwebapp/images/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
-        </div>
-        {% endif %}
-
-        {% if not enterprise_mode %}
-        <div class="col-sm-8">
-        {% else %}
-        <div class="col-sm-12">
-        {% endif %}
-            <div class="well">
-                <form>
-                    <fieldset>
-                        <legend>
-                            {% trans "First time here?" %}
-                        </legend>
-                        {% blocktrans %}
-                        Try refreshing. Often the problem is temporary and the page will succeed if you try again.<br><br>
-                        {% endblocktrans %}
-                        <button id="refresh" class="btn btn-primary">{% trans "Refresh Page" %}</button>
-                    </fieldset>
-                </form>
-            </div>
-
-            {% if not enterprise_mode %}
-            <div class="well">
-                <div class="form">
-                    <fieldset>
-                        <legend>
-                            {% trans "Check the status of our services." %}
-                        </legend>
-                        {% blocktrans %}
-                        If there is a problem with our systems, we'll post an update to our Status Page.
-                        {% endblocktrans %}<br/><br/>
-                        <a href="https://status.commcarehq.org/" class="btn btn-primary">{% trans "View Status Page" %}</a>
-                    </fieldset>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if allow_report_an_issue %}
-            <div class="panel panel-modern-gray">
-                <div class="panel-heading">
-                    <h4 class="panel-title panel-title-nolink">
-                        {% blocktrans %}
-                            Been here before? Report an issue to help us get this problem fixed faster.
-                        {% endblocktrans %}
-                    </h4>
-                </div>
-                <div class="panel-body">
-                    <form class="form form-horizontal" action="{% url "bug_report" %}" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
-                        <input type="hidden" id="bug-report-500-username" name="username" value="{{ user.username }}"/>
-                        <input type="hidden" id="bug-report-500-domain" name="domain" value="{{ domain }}"/>
-                        <input type="hidden" id="bug-report-500-app_id" name="app_id" value="{{ app.id }}"/>
-                        <input type="hidden" id="bug-report-500-now" name="now" value="true" />
-                        <input type="hidden" id="bug-report-500-when" name="when" value="right now" />
-                        <input type="hidden" name="five-hundred-report" value="true" />
-                        <input type="hidden" id="bug-report-500t-traceback" name="500traceback" value="{{ 500traceback }}"/>
-                        {% if request.sentry.id %}
-                        <input type="hidden" id="bug-report-500-sentry_id" name="sentry_id" value="{{ request.sentry.id }}"/>
-                        {% endif %}
-
-                        {{ now }}
-                        <fieldset>
-                            {% trans "We would appreciate any additional information about what happened before you encountered this problem." %}<br><br>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
-                                <div class="col-sm-6">
-                                    <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
-                                <div class="col-sm-6">
-                                    <textarea class="form-control" name="message" id="bug-report-500-message" rows="5"></textarea>
-                                </div>
-                            </div>
-                        </fieldset>
-
-                        <div class="form-actions">
-                            <div class="col-sm-offset-3">
-                                <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            {% endif %}
-            <br />
-        </div>
+  <div class="row">
+  {% if not enterprise_mode %}
+    <div class="col-sm-4">
+      <p><img id="sad-danny" src="{% static 'hqwebapp/images/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
     </div>
+  {% endif %}
+    <div class="{% if not enterprise_mode %}col-sm-8{% else %}col-sm-12{% endif %}">
+      <div class="well">
+        <form>
+          <fieldset>
+            <legend>
+              {% trans "First time here?" %}
+            </legend>
+            {% blocktrans %}
+              Try refreshing. Often the problem is temporary and the page will succeed if you try again.<br><br>
+            {% endblocktrans %}
+            <button id="refresh" class="btn btn-primary">{% trans "Refresh Page" %}</button>
+          </fieldset>
+        </form>
+      </div>
+
+      {% if not enterprise_mode %}
+        <div class="well">
+          <div class="form">
+            <fieldset>
+              <legend>
+                {% trans "Check the status of our services." %}
+              </legend>
+              {% blocktrans %}
+                If there is a problem with our systems, we'll post an update to our Status Page.
+              {% endblocktrans %}<br/><br/>
+              <a href="https://status.commcarehq.org/" class="btn btn-primary">{% trans "View Status Page" %}</a>
+            </fieldset>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if allow_report_an_issue %}
+        <div class="panel panel-modern-gray">
+          <div class="panel-heading">
+            <h4 class="panel-title panel-title-nolink">
+              {% blocktrans %}
+                Been here before? Report an issue to help us get this problem fixed faster.
+              {% endblocktrans %}
+            </h4>
+          </div>
+          <div class="panel-body">
+            <form class="form form-horizontal" action="{% url "bug_report" %}" method="post">
+              {% csrf_token %}
+              <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
+              <input type="hidden" id="bug-report-500-username" name="username" value="{{ user.username }}"/>
+              <input type="hidden" id="bug-report-500-domain" name="domain" value="{{ domain }}"/>
+              <input type="hidden" id="bug-report-500-app_id" name="app_id" value="{{ app.id }}"/>
+              <input type="hidden" id="bug-report-500-now" name="now" value="true" />
+              <input type="hidden" id="bug-report-500-when" name="when" value="right now" />
+              <input type="hidden" name="five-hundred-report" value="true" />
+              <input type="hidden" id="bug-report-500t-traceback" name="500traceback" value="{{ 500traceback }}"/>
+              {% if request.sentry.id %}
+                <input type="hidden" id="bug-report-500-sentry_id" name="sentry_id" value="{{ request.sentry.id }}"/>
+              {% endif %}
+
+              {{ now }}
+              <fieldset>
+                {% trans "We would appreciate any additional information about what happened before you encountered this problem." %}<br><br>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
+                  <div class="col-sm-6">
+                    <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
+                  <div class="col-sm-6">
+                    <textarea class="form-control" name="message" id="bug-report-500-message" rows="5"></textarea>
+                  </div>
+                </div>
+              </fieldset>
+
+              <div class="form-actions">
+                <div class="col-sm-offset-3">
+                  <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+      <br />
+    </div>
+  </div>
 {% endblock %}

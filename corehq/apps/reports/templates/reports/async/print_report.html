@@ -5,21 +5,21 @@
 {% if show_time_notice %}{% endif %}
 
 {% block js-inline %}
-    {{ block.super }}
-    <script>
-        // This is fine as an inline script; it's independent of all HQ code and all third-party libraries
-        $(function() {
-            setTimeout(function() {
-                document.querySelector('.hq-loading').style.display = 'none';
-                window.print();
-            }, 2000);
-        })
-    </script>
+  {{ block.super }}
+  <script>
+    // This is fine as an inline script; it's independent of all HQ code and all third-party libraries
+    $(function() {
+      setTimeout(function() {
+        document.querySelector('.hq-loading').style.display = 'none';
+        window.print();
+      }, 2000);
+    })
+  </script>
 {% endblock %}
 
 {% block modals %}
-    <div class="hq-loading">
-        <img src="/static/hqwebapp/images/ajax-loader.gif" alt="loading indicator">
-        <h6>{% trans "Loading ..." %}</h6>
-    </div>
+  <div class="hq-loading">
+    <i class="fa fa-spin fa-spinner"></i>
+    <h6>{% trans "Loading ..." %}</h6>
+  </div>
 {% endblock %}

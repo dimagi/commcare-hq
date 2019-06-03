@@ -21,9 +21,36 @@
 {% block title %}{% trans "Case Search" %}{% endblock %}
 
 {% block page_breadcrumbs %}
-breadcrumbs todo
+  {% breadcrumbs page section %}
 {% endblock %}
 
+{% block js %}{{ block.super }}
+  <script type="text/html" id="ko-select2-multi-async">
+    <select type="text"
+            class="form-control"
+            data-bind="selectedOptions: value,
+                       select2: {
+                         placeholder: placeholder(),
+                         multiple: true,
+                         allowClear: true,
+                         url: endpoint.getUrl(),
+                         getInitialValue: getInitialValue,
+                       },
+                       attr: { id: 'filter_' + name() }"></select>
+  </script>
+  <script type="text/html" id="ko-select2-single">
+    <select type="text"
+            class="form-control"
+            data-bind="value: value,
+                       select2: {
+                         placeholder: placeholder(),
+                         getInitialValue: getInitialValue,
+                         dataUrl: endpoint.getUrl(),
+                         allowClear: false,
+                       },
+                       attr: { id: 'filter_' + name() }"></select>
+  </script>
+{% endblock %}
 
 {% block page_content %}
   {% registerurl "endpoint_options" domain report.slug '---' %}
@@ -33,56 +60,160 @@ breadcrumbs todo
   {% initial_page_data "report.slug" report.slug %}
   {% initial_page_data "report.columns" report.columns %}
   {% initial_page_data "report.columnFilters" report.column_filters %}
+  {% initial_page_data "report.unsortableColumnNames" report.unsortable_column_names %}
+  {% initial_page_data "report.reportFilters" report.report_filters %}
+  {% initial_page_data "report.initialReportFilters" report.initial_report_filters %}
 
-<div id="case_search--model">
 
-  <div id="case_search--filters">
-    <div class="row">
-      <div class="col-md-6">
-        <h1>{% trans "Searching the Case Lists" %}</h1>
-      </div>
-
-      <div class="col-md-6">
-      </div>
-    </div>
+  <p class="lead">
+    {% trans "Explore Case Data" %}
+  </p>
+  <p class="help-block">
+    {% blocktrans %}
+      Create a custom report or look for data inconsistencies.
+    {% endblocktrans %}
+  </p>
+  <div class="ko-loading">
+    <i class="fa fa-spinner fa-spin"></i>
+    {% blocktrans %}
+      Loading...
+    {% endblocktrans %}
   </div>
 
-  <div id="report-datagrid">
-    <table class="datagrid-headers">
+  <div id="report-datagrid"
+       class="ko-template">
+
+    <div class="datagrid-save">
+      <feedback data-apply-bindings="false"
+                params="featureName: '{% trans_html_attr 'Explore Case Data' %}'"></feedback>
+      <button type="button"
+              data-bind="click: exportData"
+              class="btn btn-default">
+        <i class="fa fa-download"></i>
+        {% trans "Export Data" %}
+      </button>
+      <button type="button"
+              data-bind="click: saveFilters"
+              class="btn btn-default">
+        <i class="fa fa-save"></i>
+        {% trans "Save Filters" %}
+      </button>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading"
+           role="tab"
+           id="datagridFilterHeading">
+        <h3 class="panel-title">
+          <a data-toggle="collapse"
+             href="#reportFilters"
+             aria-expanded="true"
+             aria-controls="reportFilters">
+            {% trans "Report Filters" %}
+          </a>
+        </h3>
+      </div>
+      <div id="reportFilters"
+           class="panel-collapse collapse in"
+           role="tabpanel"
+           aria-labelledby="datagridFilterHeading">
+        <div class="panel-body">
+          <div class="form form-horizontal"
+               data-bind="foreach: reportFilters">
+
+            <div class="form-group">
+              <label class="{% css_label_class %} control-label"
+                     data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
+              <div class="{% css_field_class %}">
+                <div data-bind="template: {
+                                  name: koTemplateName,
+                                  data: $data,
+                                }"></div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <table class="table table-striped table-hover table-datagrid">
       <thead>
         <tr>
           <!-- ko foreach: columns -->
-          <th data-bind="style: { width: width() + 'px' }">
-            <span data-bind="text: title"></span>
-            <button type="button"
-                    class="btn btn-default"
-                    data-bind="click: $root.editColumnController.set">
-              {% trans "Edit" %}
-            </button>
+          <th data-bind="style: { width: width() + 'px' },
+                         columnResize: width">
+            <a class="datagrid-sort"
+               data-bind="click: $root.toggleSortColumn,
+                          visible: $root.isSortableColumn(name())">
+              <i data-bind="attr: { class: sortIconClass }"></i>
+            </a>
+            <a class="datagrid-edit-link"
+               data-bind="click: $root.editColumnController.set">
+              <span data-bind="text: title"></span>
+              <i class="fa fa-filter"
+                 data-bind="visible: hasFilters"></i>
+              <i class="fa fa-pencil edit-icon"></i>
+            </a>
           </th>
           <!-- /ko -->
           <th>
-            <button class="btn btn-default"
-                    type="button"
-                    data-bind="click: $root.editColumnController.setNew">
+            <a class="datagrid-add-link"
+               href="#"
+               type="button"
+               data-bind="click: $root.editColumnController.setNew">
+              <i class="fa fa-plus-circle"></i>
               {% trans "Add Column" %}
-            </button>
+            </a>
           </th>
         </tr>
       </thead>
-    </table>
-    <table class="datagrid-rows">
-      <tbody data-bind="foreach: { data: data.rows, as: 'row' }">
+      <tbody id="js-datagrid-rows"
+             data-bind="foreach: { data: data.rows, as: 'row' }">
         <tr>
           <!-- ko foreach: { data: $root.columns, as: 'column' } -->
-            <td data-bind="style: { width: column.width() + 'px' }">
-              <span data-bind="text: row[column.name()]"></span>
-            </td>
+          <td>
+            <!-- ko if: $index() === 0 && row._link -->
+              <a class="datagrid-external-link"
+                 target="_blank"
+                 data-bind="attr: { href: row._link }">
+                <i class="fa fa-external-link"></i>
+              </a>
+            <!-- /ko -->
+            <span data-bind="text: row[column.name()]"></span>
+          </td>
           <!-- /ko -->
           <td></td>
         </tr>
       </tbody>
     </table>
+    <div id="js-datagrid-loading"
+         class="datagrid-loading"
+         data-bind="visible: data.isDataLoading">
+      <div class="loading-text">
+        <i class="fa fa-spinner fa-spin"></i>
+        {% blocktrans %}
+          Loading...
+        {% endblocktrans %}
+      </div>
+    </div>
+    <div class="datagrid-no-records"
+         data-bind="visible: $root.data.hasNoData">
+      <div class="alert alert-info">
+        {% blocktrans %}
+          No cases found.
+        {% endblocktrans %}
+      </div>
+    </div>
+
+    <pagination data-apply-bindings="false"
+                params="goToPage: $root.data.goToPage,
+                        slug: 'datagrid',
+                        perPage: $root.data.limit,
+                        itemsTextTemplate: '{% trans_html_attr 'Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> cases' %}',
+                        totalItems: $root.data.totalRecords"></pagination>
 
     <div class="modal fade"
          data-bind="modal: editColumnController.column"
@@ -92,8 +223,8 @@ breadcrumbs todo
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal">
-                <span aria-hidden="true">&times;</span>
-                <span class="sr-only">{% trans "Close" %}</span>
+              <span aria-hidden="true">&times;</span>
+              <span class="sr-only">{% trans "Close" %}</span>
             </button>
             <h4 class="modal-title" data-bind="visible: $root.editColumnController.isNew">
               {% trans "Add Column" %}
@@ -103,99 +234,125 @@ breadcrumbs todo
             </h4>
           </div>
           <div class="modal-body">
-            <div class="form">
+            <div class="form form-horizontal">
               <div class="form-group">
-                <input type="text"
-                       class="form-control"
-                       placeholder="{% trans_html_attr "Title" %}"
-                       data-bind="textInput: title" />
+                <label class="col-xs-3 control-label">
+                  {% trans "Title" %}:
+                </label>
+                <div class="col-xs-9">
+                  <input type="text"
+                         class="form-control"
+                         placeholder="{% trans_html_attr "Title" %}"
+                         data-bind="textInput: title" />
+                </div>
               </div>
-              <div class="form-group">
-                <input type="text"
-                       class="form-control"
-                       data-bind="textInput: name,
-                                  datagridAutocomplete: $root.editColumnController.columnNameOptions" />
-              </div>
-
               <div class="form-group"
-                   data-bind="visible: showClause">
-                {% trans "Match" %}
-                <select data-bind="value: clause,
-                                   event: { change: $root.editColumnController.updateFilter }"
-                        class="form-control">
-                  <option value="all">
-                    {% trans "all of the" %}
-                  </option>
-                  <option value="any">
-                    {% trans "any of the" %}
-                  </option>
-                </select>
-                {% trans "following conditions:" %}
-              </div>
+                   data-bind="visible: $root.editColumnController.showDelete">
 
-              <!-- ko foreach: appliedFilters -->
-              <div class="row">
-                <div class="col-xs-2">
-                  <!-- ko if: $index() == 0 -->
-                  <select class="form-control"
+                <label class="col-xs-3 control-label">
+                  {% trans "Case Property" %}:
+                </label>
+                <div class="col-xs-9">
+                  <select type="text"
+                          class="form-control"
+                          data-bind="value: name,
+                                     select2: {
+                                       placeholder: '{% trans_html_attr "Enter Case Property" %}',
+                                       delay: 250,
+                                       allowClear: true,
+                                       tags: true,
+                                       getInitialValue: getInitialNameValue,
+                                       dataUrl: $root.editColumnController.endpoint.getUrl(),
+                                       getData: $root.editColumnController.getData,
+                                       dataObservable: $root.editColumnController.columnNameOptions,
+                                     }" ></select>
+                </div>
+              </div>
+              <!-- ko if: $root.editColumnController.showColumnFilters -->
+                <hr />
+                <div class="form-group"
+                     data-bind="visible: hasFilters">
+                  <div class="datagrid-column-filter-clause">
+                    {% trans "Match" %}
+                    <select data-bind="value: clause,
+                                     event: { change: $root.editColumnController.updateFilter }"
+                            class="form-control">
+                      <option value="all">
+                        {% trans "all of the" %}
+                      </option>
+                      <option value="any">
+                        {% trans "any of the" %}
+                      </option>
+                    </select>
+                    {% trans "following conditions:" %}
+                  </div>
+                </div>
+
+                <!-- ko foreach: appliedFilters -->
+                <div class="datagrid-filter">
+                  <!-- ko if: $index() === 0 -->
+                  <select class="form-control datagrid-filter-type"
                           data-bind="options: $root.editColumnController.availableFilterNames,
                                      optionsText: function (val) {
-                                        return $root.editColumnController.filterTitleByName[val];
+                                       return $root.editColumnController.filterTitleByName[val];
                                      },
                                      value: filterName,
                                      event: { change: $root.editColumnController.updateFilterName }"></select>
                   <!-- /ko -->
-                </div>
-                <div class="col-xs-4">
-                  <select class="form-control"
+                  <!-- ko if: $index() !== 0 -->
+                  <div class="datagrid-filter-type-spacer"></div>
+                  <!-- /ko -->
+                  <select class="form-control datagrid-filter-choice"
                           data-bind="options: $root.editColumnController.availableChoiceNames,
                                      optionsText: function (val) {
-                                        return $root.editColumnController.choiceTitleByName()[val];
+                                       return $root.editColumnController.choiceTitleByName()[val];
                                      },
                                      value: choiceName,
                                      event: { change: $root.editColumnController.updateFilter }"></select>
-                </div>
-                <div class="col-xs-4">
+
                   <input type="text"
-                         class="form-control"
+                         class="form-control datagrid-filter-value"
                          data-bind="textInput: value,
                                     visible: $root.editColumnController.isFilterText,
                                     event: { change: $root.editColumnController.updateFilter }" />
 
                   <input type="number"
-                         class="form-control"
+                         class="form-control datagrid-filter-value"
                          data-bind="textInput: value,
                                     visible: $root.editColumnController.isFilterNumeric,
                                     event: { change: $root.editColumnController.updateFilter }" />
 
                   <input type="text"
-                         class="form-control"
+                         class="form-control datagrid-filter-value"
                          data-bind="value: value,
                                     visible: $root.editColumnController.isFilterDate,
                                     singleDatePicker: $root.editColumnController.isFilterDate,
                                     event: { change: $root.editColumnController.updateFilter }" />
-                </div>
-                <div class="col-xs-2">
-                  <button type="button"
-                          class="btn btn-danger"
-                          data-bind="click: $root.editColumnController.removeFilter">
+                  <a href="#"
+                     data-bind="click: $root.editColumnController.removeFilter">
                     <i class="fa fa-remove"></i>
-                  </button>
-
-                 </div>
-              </div>
+                  </a>
+                </div>
+                <!-- /ko -->
+                <button type="button"
+                        class="btn btn-default"
+                        data-bind="click: $root.editColumnController.addFilter,
+                                   visible: showAddFilter" >
+                  {% trans "Filter Data in Column" %}
+                </button>
+                <button type="button"
+                        class="btn btn-default datagrid-add-expression"
+                        data-bind="click: $root.editColumnController.addFilter,
+                                   visible: showAddExpression">
+                  <i class="fa fa-plus-circle"></i>
+                  {% trans "Add Expression" %}
+                </button>
               <!-- /ko -->
-              <button type="button"
-                      class="btn btn-default"
-                      data-bind="click: $root.editColumnController.addFilter,
-                                 visible: showAddFilter" >
-                {% trans "Add Filter" %}
-              </button>
             </div>
           </div>
           <div class="modal-footer">
             <button type="button"
-                    data-bind="visible: !$root.editColumnController.isNew(),
+                    data-bind="visible: !$root.editColumnController.isNew() && $root.editColumnController.showDelete(),
                                click: $root.deleteColumn"
                     class="btn btn-danger pull-left">
               <i class="fa fa-trash"></i>
@@ -207,19 +364,47 @@ breadcrumbs todo
             <button class="btn btn-primary"
                     data-bind="click: $root.updateColumn,
                                disable: $root.editColumnController.isSaveDisabled">
-              <span data-bind="visible: $root.editColumnController.isNew">
-                {% trans "Add" %}
-              </span>
+            <span data-bind="visible: $root.editColumnController.isNew">
+              {% trans "Add" %}
+            </span>
               <span data-bind="visible:!$root.editColumnController.isNew()">
-                {% trans "Update" %}
-              </span>
+              {% trans "Update" %}
+            </span>
             </button>
           </div>
         </div>
       </div>
     </div>
 
-  </div>
+    <div class="modal fade"
+         id="js-modal-unsupported-task"
+         data-bind="modal: unsupportedTaskName"
+         role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span>
+              <span class="sr-only">{% trans "Close" %}</span>
+            </button>
+            <h4 class="modal-title"
+                data-bind="text: unsupportedTaskName">
+            </h4>
+          </div>
+          <div class="modal-body">
+            {% blocktrans %}
+              This task is currently not supported, but we are happy to see
+              your interest.
+            {% endblocktrans %}
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-default"
+                    data-dismiss="modal">{% trans "Ok" %}</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-</div>
+  </div>
 {% endblock %}

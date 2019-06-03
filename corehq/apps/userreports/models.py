@@ -66,7 +66,7 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
 )
 from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -115,6 +115,10 @@ class DataSourceActionLog(models.Model):
         (DROP, _('Drop')),
     ), db_index=True, null=False)
     migration_diffs = JSONField(null=True, blank=True)
+
+    # True for actions that were skipped because the data source
+    # was marked with ``disable_destructive_rebuild``
+    skip_destructive = models.BooleanField(default=False)
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -206,6 +210,11 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
 
+class MirroredEngineIds(DocumentSchema):
+    server_environment = StringProperty()
+    engine_ids = StringListProperty()
+
+
 @six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
@@ -231,6 +240,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
+    mirrored_engine_ids = ListProperty(default=[])
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -484,6 +494,22 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
+    def validate_db_config(self):
+        mirrored_engine_ids = self.mirrored_engine_ids
+        if not mirrored_engine_ids:
+            return
+        if self.engine_id in mirrored_engine_ids:
+            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
+
+        for engine_id in mirrored_engine_ids:
+            if not connection_manager.engine_id_is_available(engine_id):
+                raise BadSpecError(
+                    "DB for engine_id {} is not availble".format(engine_id)
+                )
+
+        if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
+            raise BadSpecError("No two engine_ids should point to the same database")
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -578,7 +604,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 columns.append(column_name)
         if self.sql_settings.primary_key:
             if set(columns) != set(self.sql_settings.primary_key):
-                raise BadSpecError("Primary key columns must have is_primary_key set to true")
+                raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
             columns = self.sql_settings.primary_key
         return columns
 
@@ -773,6 +799,7 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
+    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
@@ -840,6 +867,13 @@ class StaticDataSourceConfiguration(JsonObject):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
+
+        def _get_mirrored_engine_ids():
+            for env in static_config.mirrored_engine_ids:
+                if env.server_environment == settings.SERVER_ENVIRONMENT:
+                    return env.engine_ids
+            return []
+        doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
         return DataSourceConfiguration.wrap(doc)
 
 
@@ -1245,3 +1279,35 @@ def _filter_by_server_env(configs):
 
 
 _Validation = namedtuple('_Validation', 'name error_message validation_function')
+
+
+class ReportComparisonException(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField()
+    exception = models.TextField()
+    notes = models.TextField(blank=True)
+
+
+class ReportComparisonDiff(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField()
+    control = JSONField()
+    candidate = JSONField()
+    diff = JSONField()
+    notes = models.TextField(blank=True)
+
+
+class ReportComparisonTiming(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    domain = models.TextField()
+    control_report_config_id = models.TextField()
+    candidate_report_config_id = models.TextField()
+    filter_values = JSONField()
+    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
+    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

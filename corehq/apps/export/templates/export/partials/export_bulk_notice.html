@@ -1,28 +1,28 @@
 {% load i18n %}
 <div class="alert alert-info"
      data-bind="visible: bulkExportDownloadCount()">
-    <form class="form form-inline" method="post"
-          data-bind="submit: submitBulkExportDownload"
-          action="{{ bulk_download_url }}">
-          {% csrf_token %}
-        <div class="row">
-            <div class="col-sm-3 col-lg-2">
-                <input name="export_list" type="hidden" data-bind="value: bulkExportList" />
-                <button type="submit"
-                        class="btn btn-primary btn-lg"
-                        style="width: 100%;">
-                    {% trans 'Bulk Export' %}
-                    (<span data-bind="text: bulkExportDownloadCount()"></span>)
-                </button>
-            </div>
-            <div class="col-sm-9 col-lg-10">
-                <p style="margin-top: 13px;">
-                    {% blocktrans %}
-                        All of the selected exports will be collected for download
-                        to a single Excel file, with each export as a separate sheet.
-                    {% endblocktrans %}
-                </p>
-            </div>
-        </div>
-    </form>
+  <form class="form form-inline" method="post"
+        data-bind="submit: submitBulkExportDownload"
+        action="{{ bulk_download_url }}">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-sm-3 col-lg-2">
+        <input name="export_list" type="hidden" data-bind="value: bulkExportList" />
+        <button type="submit"
+                class="btn btn-primary btn-lg"
+                style="width: 100%;">
+          {% trans 'Bulk Export' %}
+          (<span data-bind="text: bulkExportDownloadCount()"></span>)
+        </button>
+      </div>
+      <div class="col-sm-9 col-lg-10">
+        <p style="margin-top: 13px;">
+          {% blocktrans %}
+            All of the selected exports will be collected for download
+            to a single Excel file, with each export as a separate sheet.
+          {% endblocktrans %}
+        </p>
+      </div>
+    </div>
+  </form>
 </div>

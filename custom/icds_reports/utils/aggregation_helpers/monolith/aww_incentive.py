@@ -12,6 +12,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'awc-incentive'
     aggregate_parent_table = AWW_INCENTIVE_TABLE
     aggregate_child_table_prefix = 'icds_db_aww_incentive_'
 
@@ -28,7 +29,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
-    
+
     def aggregation_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
@@ -40,7 +41,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-            state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name, 
+            state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name,
             supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
             wer_eligible, awc_num_open, valid_visits, expected_visits
         ) (

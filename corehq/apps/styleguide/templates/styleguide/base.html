@@ -1,104 +1,105 @@
 {% load compress %}{% load hq_shared_tags %}{% load statici18n %}<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>CommCare HQ Style Guide</title>
+  <head>
+    <title>CommCare HQ Style Guide</title>
 
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
-        {% if less_debug %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/docs-style.debug.less' %}" />
-        {% else %}
-        {% compress css %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/docs-style.less' %}" />
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'select2/dist/css/select2.min.css' %}" />
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "multiselect/css/multi-select.css" %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
-        {% endcompress %}
-        {% endif %}
+    {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
+    {% if less_debug %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'hqwebapp/less/docs-style.debug.less' %}" />
+    {% else %}
+      {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'hqwebapp/less/docs-style.less' %}" />
+        <link type="text/css"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'select2/dist/css/select2.min.css' %}" />
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "multiselect/css/multi-select.css" %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
+      {% endcompress %}
+    {% endif %}
 
-        <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-        {% javascript_libraries hq=True %}
-        <script src="{% statici18n LANGUAGE_CODE %}"></script>
-        {% compress js %}
-            <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v3.ko.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
-            <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-            <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
-        {% endcompress %}
+    {% javascript_libraries hq=True %}
+    <script src="{% statici18n LANGUAGE_CODE %}"></script>
+    {% compress js %}
+      <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v4.ko.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
+      <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
+      <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
+    {% endcompress %}
 
-        {% if less_debug %}
-            <script>
-                less = {
-                    env: "development",
-                    useFileCache: true,
-                    logLevel: 2,
-                    errorReporting: 'console',
-                    async: false,
-                    fileAsync: false,
-                    poll: 1000,
-                    functions: {},
-                    dumpLineNumbers: "comments",
-                    relativeUrls: false
-                };
-            </script>
-            <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-        {% endif %}
-    </head>
-    <body data-spy="scroll" data-target=".docs-nav">
-        <div class="navbar navbar-inverse navbar-static-top navbar-docs">
-            <div class="container">
-                <div class="navbar-header">
-                    <a href="{% url "styleguide_home" %}"
-                       class="navbar-brand">
-                        HQ Style Guide
-                    </a>
-                </div>
-                <nav class="collapse navbar-collapse" role="navigation">
-                    <ul class="nav navbar-nav">
-                        <li><a href="{% url 'styleguide_atoms' %}">Atoms</a></li>
-                        <li><a href="{% url 'styleguide_molecules' %}">Molecules</a></li>
-                        <li><a href="{% url 'styleguide_organisms' %}">Organisms</a></li>
-                        <li><a href="{% url 'styleguide_pages' %}">Pages</a></li>
-                    </ul>
-                </nav>
-            </div>
+    {% if less_debug %}
+      <script>
+        less = {
+          env: "development",
+          useFileCache: true,
+          logLevel: 2,
+          errorReporting: 'console',
+          async: false,
+          fileAsync: false,
+          poll: 1000,
+          functions: {},
+          dumpLineNumbers: "comments",
+          relativeUrls: false
+        };
+      </script>
+      <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
+    {% endif %}
+  </head>
+  <body data-spy="scroll" data-target=".docs-nav">
+    <div class="navbar navbar-inverse navbar-static-top navbar-docs">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url "styleguide_home" %}"
+             class="navbar-brand">
+            HQ Style Guide
+          </a>
         </div>
-        <div class="docs-content" data-spy="scroll" data-target=".docs-subnav">
-        {% block content %}
-        {% endblock content %}
-        </div>
+        <nav class="collapse navbar-collapse" role="navigation">
+          <ul class="nav navbar-nav">
+            <li><a href="{% url 'styleguide_atoms' %}">Atoms</a></li>
+            <li><a href="{% url 'styleguide_molecules' %}">Molecules</a></li>
+            <li><a href="{% url 'styleguide_organisms' %}">Organisms</a></li>
+            <li><a href="{% url 'styleguide_pages' %}">Pages</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <div class="docs-content" data-spy="scroll" data-target=".docs-subnav">
+      {% block content %}
+      {% endblock content %}
+    </div>
 
-        {# Knockout component templates #}
-        {% include 'hqwebapp/ko_pagination.html' %}
-        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
-        {% include 'hqwebapp/partials/ko_search_box.html' %}
-        {% include 'hqwebapp/partials/ko_select_toggle.html' %}
+    {# Knockout component templates #}
+    {% include 'hqwebapp/ko_pagination.html' %}
+    {% include 'hqwebapp/partials/ko_inline_edit.html' %}
+    {% include 'hqwebapp/partials/ko_search_box.html' %}
+    {% include 'hqwebapp/partials/ko_select_toggle.html' %}
+    {% include 'hqwebapp/partials/ko_feedback.html' %}
 
-        <footer class="docs-footer">
-            <div class="container">
-                <p class="lead">Thanks for reading the style guide! <3</p>
-            </div>
-        </footer>
-    </body>
+    <footer class="docs-footer">
+      <div class="container">
+        <p class="lead">Thanks for reading the style guide! <3</p>
+      </div>
+    </footer>
+  </body>
 </html>

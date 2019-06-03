@@ -7,41 +7,41 @@
 {% requirejs_main 'export/js/export_list_main' %}
 
 {% block page_content %}
-    {% initial_page_data 'bulk_download_url' bulk_download_url %}
-    {% initial_page_data 'exports' exports %}
-    {% initial_page_data 'export_type_caps_plural' export_type_caps_plural %}
-    {% initial_page_data 'is_daily_saved_export' is_daily_saved_export|default:False %}
-    {% initial_page_data 'is_deid' is_deid %}
-    {% initial_page_data 'is_feed' is_feed|default:False %}
-    {% initial_page_data 'model_type' model_type %}
-    {% initial_page_data 'my_export_type' my_export_type %}
-    {% initial_page_data 'shared_export_type' shared_export_type %}
-    {% initial_page_data 'static_model_type' static_model_type %}
-    {% registerurl 'commit_filters' domain %}
-    {% registerurl 'get_app_data_drilldown_values' domain %}
-    {% registerurl 'get_exports_page' domain %}
-    {% registerurl 'get_saved_export_progress' domain %}
-    {% registerurl 'submit_app_data_drilldown_form' domain %}
-    {% registerurl 'toggle_saved_export_enabled' domain %}
-    {% registerurl 'update_emailed_export_data' domain %}
+  {% initial_page_data 'bulk_download_url' bulk_download_url %}
+  {% initial_page_data 'exports' exports %}
+  {% initial_page_data 'export_type_caps_plural' export_type_caps_plural %}
+  {% initial_page_data 'is_daily_saved_export' is_daily_saved_export|default:False %}
+  {% initial_page_data 'is_deid' is_deid %}
+  {% initial_page_data 'is_feed' is_feed|default:False %}
+  {% initial_page_data 'model_type' model_type %}
+  {% initial_page_data 'my_export_type' my_export_type %}
+  {% initial_page_data 'shared_export_type' shared_export_type %}
+  {% initial_page_data 'static_model_type' static_model_type %}
+  {% registerurl 'commit_filters' domain %}
+  {% registerurl 'get_app_data_drilldown_values' domain %}
+  {% registerurl 'get_exports_page' domain %}
+  {% registerurl 'get_saved_export_progress' domain %}
+  {% registerurl 'submit_app_data_drilldown_form' domain %}
+  {% registerurl 'toggle_saved_export_enabled' domain %}
+  {% registerurl 'update_emailed_export_data' domain %}
 
-    <p>{{ lead_text }}</p>
+  <p>{{ lead_text }}</p>
 
-    {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
+  {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% if request|ui_notify_enabled:"FORMS_CASES_URL_IN_EXPORTS" %}
-        <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-             style="position: absolute; width: 200px;"
-             data-target="#create-export"
-             data-slug="{{ "FORMS_CASES_URL_IN_EXPORTS"|ui_notify_slug }}" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close" id="alert-export-deep-links">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            <p class="lead">
-                {% trans 'Now access forms and cases directly from your exports. Check out the new "form_link" and "case_link" fields in your export settings!' %}
-            </p>
-        </div>
-    {% endif %}
+  {% if request|ui_notify_enabled:"FORMS_CASES_URL_IN_EXPORTS" %}
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="position: absolute; width: 200px;"
+         data-target="#create-export"
+         data-slug="{{ "FORMS_CASES_URL_IN_EXPORTS"|ui_notify_slug }}" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close" id="alert-export-deep-links">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">
+        {% trans 'Now access forms and cases directly from your exports. Check out the new "form_link" and "case_link" fields in your export settings!' %}
+      </p>
+    </div>
+  {% endif %}
 {% endblock %}

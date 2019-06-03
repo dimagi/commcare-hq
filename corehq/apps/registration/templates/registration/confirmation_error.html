@@ -3,7 +3,7 @@
 {% block title %}Error Confirming Account{% endblock title %}
 
 {% block registration-content %}
-    {% if message_body %}<p>{{ message_body }}</p>{% endif %}
-    <p>You may try <a href="{% url "registration_resend_domain_confirmation" %}">resending the confirmation email</a>.</p>
-    <p>In the meantime, you may explore the <a href={% url "appstore" %}>CommCare Exchange</a> to see examples of projects being used today.</p>
+  {% if message_body %}<p>{{ message_body }}</p>{% endif %}
+  <p>You may try <a href="{% url "registration_resend_domain_confirmation" %}">resending the confirmation email</a>.</p>
+  <p>In the meantime, you may explore the <a href={% url "appstore" %}>CommCare Exchange</a> to see examples of projects being used today.</p>
 {% endblock %}

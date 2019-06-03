@@ -13,70 +13,70 @@ TODO:
 {% endcomment%}
 
 <table class="table table-editprops table-properties">
-    <colgroup>
-        <col width="32px">
-        <!--ko if: $data.hasDisplayCol -->
-        <col>
-        <!--/ko-->
-        <!--ko if: $data.hasFormatCol -->
-        <col>
-        <!--/ko-->
-        <!--ko if: $data.hasCalculationCol -->
-        <col>
-        <!--/ko-->
-        <!--ko if: $data.hasFilterValueCol -->
-        <col>
-        <!--/ko-->
-        <col>
-        <col width="50px">
-    </colgroup>
+  <colgroup>
+    <col width="32px">
+    <!--ko if: $data.hasDisplayCol -->
+    <col>
+    <!--/ko-->
+    <!--ko if: $data.hasFormatCol -->
+    <col>
+    <!--/ko-->
+    <!--ko if: $data.hasCalculationCol -->
+    <col>
+    <!--/ko-->
+    <!--ko if: $data.hasFilterValueCol -->
+    <col>
+    <!--/ko-->
+    <col>
+    <col width="50px">
+  </colgroup>
 
-    <thead data-bind="visible: columns().length > 0">
-        <tr>
-            <th></th>
-            <th>
-                <!--ko if: $data.propertyHelpText -->
-                <span data-bind="makeHqHelp: {description: propertyHelpText}"></span>
-                <!--/ko-->
-                {% trans "Property" %}
-            </th>
-            <!--ko if: $data.hasDisplayCol -->
-            <th>
-                <!--ko if: $data.displayHelpText -->
-                <span data-bind="makeHqHelp: {description: displayHelpText}"></span>
-                <!--/ko-->
-                {% trans "Label" %}
-            </th>
-            <!--/ko-->
-            <!--ko if: $data.hasFormatCol -->
-            <th class="table-editprops-format">
-                <!--ko if: $data.formatHelpText -->
-                <span data-bind="makeHqHelp: {description: formatHelpText}"></span>
-                <!--/ko-->
-                {% trans "Format" %}
-            </th>
-            <!--/ko-->
-            <!--ko if: $data.hasCalculationCol -->
-            <th class="table-editprops-format">
-                {% trans "Format" %}
-                <!--ko if: $data.calcHelpText -->
-                <span data-bind="makeHqHelp: {description: calcHelpText}"></span>
-                <!--/ko-->
-            </th>
-            <!--/ko-->
-            <!--ko if: $data.hasFilterValueCol -->
-            <th class="table-editprops-filterval">
-                {% trans "Filter Value" %}
-                <!--ko if: $data.filterValueHelpText -->
-                <span data-bind="makeHqHelp: {description: filterValueHelpText}"></span>
-                <!--/ko-->
-            </th>
-            <!--/ko-->
-            <th></th>
-        </tr>
-    </thead>
+  <thead data-bind="visible: columns().length > 0">
+  <tr>
+    <th></th>
+    <th>
+      <!--ko if: $data.propertyHelpText -->
+      <span data-bind="makeHqHelp: {description: propertyHelpText}"></span>
+      <!--/ko-->
+      {% trans "Property" %}
+    </th>
+    <!--ko if: $data.hasDisplayCol -->
+    <th>
+      <!--ko if: $data.displayHelpText -->
+      <span data-bind="makeHqHelp: {description: displayHelpText}"></span>
+      <!--/ko-->
+      {% trans "Label" %}
+    </th>
+    <!--/ko-->
+    <!--ko if: $data.hasFormatCol -->
+    <th class="table-editprops-format">
+      <!--ko if: $data.formatHelpText -->
+      <span data-bind="makeHqHelp: {description: formatHelpText}"></span>
+      <!--/ko-->
+      {% trans "Format" %}
+    </th>
+    <!--/ko-->
+    <!--ko if: $data.hasCalculationCol -->
+    <th class="table-editprops-format">
+      {% trans "Format" %}
+      <!--ko if: $data.calcHelpText -->
+      <span data-bind="makeHqHelp: {description: calcHelpText}"></span>
+      <!--/ko-->
+    </th>
+    <!--/ko-->
+    <!--ko if: $data.hasFilterValueCol -->
+    <th class="table-editprops-filterval">
+      {% trans "Filter Value" %}
+      <!--ko if: $data.filterValueHelpText -->
+      <span data-bind="makeHqHelp: {description: filterValueHelpText}"></span>
+      <!--/ko-->
+    </th>
+    <!--/ko-->
+    <th></th>
+  </tr>
+  </thead>
 
-    <tbody data-bind="sortable: {
+  <tbody data-bind="sortable: {
         data: columns,
         afterAdd: function (elem) { $(elem).hide().fadeIn() },
         beforeRemove: function (elem) { $(elem).fadeOut() },
@@ -85,132 +85,132 @@ TODO:
     }"
     {# there must be no whitespace between <tbody> and <tr> #}
     {# the .hide().fadeIn() will fail badly on FireFox #}
-    ><tr data-bind="attr: {'data-order': _sortableOrder}">
-        <td>
-            <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
-        </td>
+  ><tr data-bind="attr: {'data-order': _sortableOrder}">
+    <td>
+      <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
+    </td>
 
-        <td data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
+    <td data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
 
-            <div class="property-name">{% block property_name_display %}</div>
-            <!-- ko ifnot: $root.optionsContainQuestions -->
-            <input type="text"
-                   class="form-control input-sm"
-                   data-bind="select2: $parent.selectablePropertyOptions, value: property">
-            <!-- /ko -->
-            <!-- ko if: $root.optionsContainQuestions -->
-            <input class="form-control input-sm" type="hidden" data-bind="
+      <div class="property-name">{% block property_name_display %}</div>
+        <!-- ko ifnot: $root.optionsContainQuestions -->
+        <input type="text"
+               class="form-control input-sm"
+               data-bind="select2: $parent.selectablePropertyOptions, value: property">
+        <!-- /ko -->
+        <!-- ko if: $root.optionsContainQuestions -->
+        <input class="form-control input-sm" type="hidden" data-bind="
                 questionsSelect: $parent.selectablePropertyOptions.concat(
                     existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                 ),
                 value: existsInCurrentVersion() ? property : dataSourceField,
                 attr: {disabled: !existsInCurrentVersion()}
             "/>
-            <!-- /ko -->
-            {% endblock %}
-            <strong class="help-block" data-bind="if: $parent.showWarnings() && !property()">
-                {% trans "Please select a property." %}</strong>
-            <strong class="help-block" data-bind="if: !existsInCurrentVersion()">
-                {% blocktrans %}
-                This property or question no longer exists in your app. <br>
-                You must delete this property to update this report.
-                {% endblocktrans %}
-            </strong>
-        </td>
+        <!-- /ko -->
+      {% endblock %}
+      <strong class="help-block" data-bind="if: $parent.showWarnings() && !property()">
+        {% trans "Please select a property." %}</strong>
+      <strong class="help-block" data-bind="if: !existsInCurrentVersion()">
+        {% blocktrans %}
+          This property or question no longer exists in your app. <br>
+          You must delete this property to update this report.
+        {% endblocktrans %}
+      </strong>
+    </td>
 
-        <!--ko if: $parent.hasDisplayCol -->
-        <td>
-            <div data-bind="css: {'has-error': showDisplayTextError}">
-                <input type="text" class="form-control input-sm" data-bind="
+    <!--ko if: $parent.hasDisplayCol -->
+    <td>
+      <div data-bind="css: {'has-error': showDisplayTextError}">
+        <input type="text" class="form-control input-sm" data-bind="
                     textInput: inputBoundDisplayText,
                     attr: {disabled: !isEditable},
                 ">
-                <strong data-bind="if: showDisplayTextError" class="help-block">
-                    {% trans "Display text should not be blank." %}
-                </strong>
-            </div>
-        </td>
-        <!--/ko-->
+        <strong data-bind="if: showDisplayTextError" class="help-block">
+          {% trans "Display text should not be blank." %}
+        </strong>
+      </div>
+    </td>
+    <!--/ko-->
 
-        <!--ko if: $parent.hasFormatCol -->
-        <td>
-            <!--ko if: !$parent.hasFilterValueCol -->
-            <select class="form-control input-sm" data-bind="
+    <!--ko if: $parent.hasFormatCol -->
+    <td>
+      <!--ko if: !$parent.hasFilterValueCol -->
+      <select class="form-control input-sm" data-bind="
                 options: hqImport('userreports/js/constants').FORMAT_OPTIONS,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
-            <!--/ko-->
-            <!--ko if: $parent.hasFilterValueCol -->
-            <select class="form-control input-sm" data-bind="
+      <!--/ko-->
+      <!--ko if: $parent.hasFilterValueCol -->
+      <select class="form-control input-sm" data-bind="
                 options: hqImport('userreports/js/constants').DEFAULT_FILTER_FORMAT_OPTIONS,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
-            <!--/ko-->
-        </td>
-        <!--/ko-->
+      <!--/ko-->
+    </td>
+    <!--/ko-->
 
-        <!--ko if: $parent.hasCalculationCol -->
-        <td>
-            <select class="form-control input-sm" data-bind="
+    <!--ko if: $parent.hasCalculationCol -->
+    <td>
+      <select class="form-control input-sm" data-bind="
                 options: calculationOptions,
                 value: inputBoundCalculation,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
-        </td>
-        <!--/ko-->
+    </td>
+    <!--/ko-->
 
-        <!--ko if: $parent.hasFilterValueCol -->
-        <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !(filterValue() || filterOperator())}">
-            <!--ko if: $data.format() === 'Date'-->
-            <select class="form-control input-sm" data-bind="
+    <!--ko if: $parent.hasFilterValueCol -->
+    <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !(filterValue() || filterOperator())}">
+      <!--ko if: $data.format() === 'Date'-->
+      <select class="form-control input-sm" data-bind="
                 options: $root.dateRangeOptions,
                 optionsText: function (o) { return o.description; },
                 optionsValue: function (o) { return o.slug; },
                 value: filterOperator,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
-            <!--/ko-->
-            <!--ko if: $data.format() !== 'Date'-->
-            <input type="text" class="form-control input-sm" data-bind="
+      <!--/ko-->
+      <!--ko if: $data.format() !== 'Date'-->
+      <input type="text" class="form-control input-sm" data-bind="
                 textInput: filterValue,
                 attr: {disabled: !existsInCurrentVersion()}
             "/>
-            <!--/ko-->
-            <label class="help-block" data-bind="if: $parent.showWarnings() && !(filterValue() || filterOperator())">
-                {% trans "Filter Value should not be blank." %}</label>
-        </td>
-        <!--/ko-->
+      <!--/ko-->
+      <label class="help-block" data-bind="if: $parent.showWarnings() && !(filterValue() || filterOperator())">
+        {% trans "Filter Value should not be blank." %}</label>
+    </td>
+    <!--/ko-->
 
-        <td>
-          <button
-              class="btn btn-danger btn-sm"
-              data-bind="click: function(){$parent.removeColumn($data)}"
-          >
-            <i class="fa fa-remove"></i>
-          </button>
-        </td>
+    <td>
+      <button
+        class="btn btn-danger btn-sm"
+        data-bind="click: function(){$parent.removeColumn($data)}"
+      >
+        <i class="fa fa-remove"></i>
+      </button>
+    </td>
     {# there must be no whitespace between <tbody> and <tr> #}
     {# the .hide().fadeIn() will fail badly on FireFox #}
-    </tr></tbody>
-    <tbody data-bind="visible: columns().length < 40" class="add-prop">
-        <tr>
-            {% block add_property_row %}
-              <td></td>
-              <td>
-                  <button class="btn btn-default" data-bind="
+  </tr></tbody>
+  <tbody data-bind="visible: columns().length < 40" class="add-prop">
+  <tr>
+    {% block add_property_row %}
+      <td></td>
+      <td>
+        <button class="btn btn-default" data-bind="
                       click: buttonHandler
                   ">
-                      <i class="fa fa-plus"></i>&nbsp;
-                      <span data-bind="text: buttonText"></span>
-                  </button>
-              </td>
-            {% endblock %}
-        </tr>
-    </tbody>
+          <i class="fa fa-plus"></i>&nbsp;
+          <span data-bind="text: buttonText"></span>
+        </button>
+      </td>
+    {% endblock %}
+  </tr>
+  </tbody>
 </table>
 <div data-bind="visible: requireColumns && columns().length < 1" class="has-error">
-    <label class="help-block" data-bind="text: requireColumnsText">
-    </label>
+  <label class="help-block" data-bind="text: requireColumnsText">
+  </label>
 </div>

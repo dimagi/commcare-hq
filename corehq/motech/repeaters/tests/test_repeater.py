@@ -6,39 +6,40 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-from django.test import override_settings, TestCase
+from django.test import TestCase, override_settings
+
 from mock import patch
+from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
-from casexml.apps.case.xform import cases_referenced_by_xform
+from casexml.apps.case.xform import get_case_ids_from_form
+from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.motech.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT, RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     FormRepeater,
-    UserRepeater,
     LocationRepeater,
     RepeatRecord,
     ShortFormRepeater,
+    UserRepeater,
 )
 from corehq.motech.repeaters.repeater_generators import (
+    BasePayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     RegisterGenerator,
-    BasePayloadGenerator,
 )
 from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
-from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.utils.parsing import json_format_datetime
-from six.moves import range
-
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -122,7 +123,8 @@ class RepeaterTest(BaseRepeaterTest):
         self.form_repeater.save()
         self.log = []
 
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
+        with patch('corehq.motech.repeaters.models.simple_post',
+                   return_value=MockResponse(status_code=500, reason="Borked")) as mock_fire:
             self.post_xml(self.xform_xml, self.domain)
             self.initial_fire_call_count = mock_fire.call_count
 
@@ -403,11 +405,10 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         form = self.post_xml(self.xform_xml, self.domain_name).xform
         repeat_records = self.repeat_records(self.domain_name).all()
         payload = repeat_records[0].get_payload()
-        cases = cases_referenced_by_xform(form)
         self.assertEqual(json.loads(payload), {
             'received_on': json_format_datetime(form.received_on),
             'form_id': form.form_id,
-            'case_ids': [case.case_id for case in cases]
+            'case_ids': list(get_case_ids_from_form(form))
         })
 
 

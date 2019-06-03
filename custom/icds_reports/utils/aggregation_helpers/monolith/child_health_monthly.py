@@ -28,7 +28,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     * Partition the child_health_monthly table (may be done in citus work).
       This would make it much easier to make it like other helpers
     """
-
+    helper_key = 'child-health-monthly'
     base_tablename = 'child_health_monthly'
 
     def __init__(self, state_ids, month):
@@ -37,9 +37,22 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregate(self, cursor):
         cursor.execute(self.drop_table_query())
+        cursor.execute(*self.create_table_query())
         cursor.execute(self.aggregation_query())
         for query in self.indexes():
             cursor.execute(query)
+
+    def create_table_query(self):
+        return """
+        CREATE TABLE IF NOT EXISTS "{tablename}" (
+            CHECK (month = DATE %(date)s)
+        ) INHERITS ("{parent_tablename}")
+        """.format(
+            parent_tablename=self.base_tablename,
+            tablename=self.tablename,
+        ), {
+            "date": self.month.strftime("%Y-%m-%d"),
+        }
 
     @property
     def child_health_case_ucr_tablename(self):
@@ -68,7 +81,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return "tmp_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
 
     def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")

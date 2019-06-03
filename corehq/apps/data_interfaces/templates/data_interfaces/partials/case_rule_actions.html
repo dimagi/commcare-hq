@@ -5,100 +5,100 @@
 {# Container template for adding/removing actions #}
 
 <script type="text/html" id="case-actions">
-    {% if form.errors %}
-        <div class="alert alert-block alert-danger">
-            <span class="help-block"><strong>{% trans "Error:" %}</strong></span>
-            {% for field, errors in form.errors.items %}
-                {% for error in errors %}
-                    <span class="help-block">{{ error }}</span>
-                {% endfor %}
-            {% endfor %}
-        </div>
-    {% endif %}
-    <div data-bind="template: {name: getKoTemplateId, foreach: actions}"></div>
-    <div class="form-group">
-        <div class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
-            <div class="btn-group">
-                <button class="btn btn-default" type="button" data-toggle="dropdown">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Add Action" %}
-                </button>
-                <button class="btn btn-default" type="button" data-toggle="dropdown">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Select an action" %}
-                </button>
-                <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                    <li data-bind="click: function() { addAction('close-case-action'); }"><a>{% trans "Close the case" %}</a></li>
-                    <li data-bind="click: function() { addAction('update-case-property-action'); }"><a>{% trans "Update case property" %}</a></li>
-                    {% if form.is_system_admin %}
-                    <li data-bind="click: function() { addAction('custom-action'); }"><a>{% trans "Custom action" %}</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-
-        </div>
+  {% if form.errors %}
+    <div class="alert alert-block alert-danger">
+      <span class="help-block"><strong>{% trans "Error:" %}</strong></span>
+      {% for field, errors in form.errors.items %}
+        {% for error in errors %}
+          <span class="help-block">{{ error }}</span>
+        {% endfor %}
+      {% endfor %}
     </div>
+  {% endif %}
+  <div data-bind="template: {name: getKoTemplateId, foreach: actions}"></div>
+  <div class="form-group">
+    <div class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
+      <div class="btn-group">
+        <button class="btn btn-default" type="button" data-toggle="dropdown">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Action" %}
+        </button>
+        <button class="btn btn-default" type="button" data-toggle="dropdown">
+          <i class="fa fa-plus"></i>
+          {% trans "Select an action" %}
+        </button>
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li data-bind="click: function() { addAction('close-case-action'); }"><a>{% trans "Close the case" %}</a></li>
+          <li data-bind="click: function() { addAction('update-case-property-action'); }"><a>{% trans "Update case property" %}</a></li>
+          {% if form.is_system_admin %}
+            <li data-bind="click: function() { addAction('custom-action'); }"><a>{% trans "Custom action" %}</a></li>
+          {% endif %}
+        </ul>
+      </div>
+
+    </div>
+  </div>
 </script>
 
 {# Template for the button that removes an action #}
 
 <script type="text/html" id="remove-action">
-    <div class="col-xs-1">
-        <button type="button" class="btn btn-danger" data-bind="click: $parent.removeAction"><i class="fa fa-close"></i></button>
-    </div>
+  <div class="col-xs-1">
+    <button type="button" class="btn btn-danger" data-bind="click: $parent.removeAction"><i class="fa fa-close"></i></button>
+  </div>
 </script>
 
 {# Template for close case action #}
 {# An instance of this template is bound to an instance of the js object CloseCaseDefinition #}
 
 <script type="text/html" id="close-case-action">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-action'}"></div>
-        <label class="control-label col-xs-2">{% trans "Close the case" %}</label>
-        <span class="help-block col-xs-8">
+  <div class="form-group">
+    <div data-bind="template: {name: 'remove-action'}"></div>
+    <label class="control-label col-xs-2">{% trans "Close the case" %}</label>
+    <span class="help-block col-xs-8">
             <i class="fa fa-exclamation-circle"></i>
             {% trans "All cases matching the above criteria will be closed" %}
         </span>
-    </div>
+  </div>
 </script>
 
 {# Template for update case property action #}
 {# An instance of this template is bound to an instance of the js object UpdatePropertyDefinition #}
 
 <script type="text/html" id="update-case-property-action">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-action'}"></div>
-        <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
-        <div class="controls col-xs-2">
-            <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
-        </div>
-        <div class="controls col-xs-2">
-            <select class="select form-control" data-bind="value: value_type" required>
-                <option value="{{ form.constants.VALUE_TYPE_EXACT }}">{% trans 'to the exact value' %}</option>
-                <option value="{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}">{% trans 'to the value from other case property' %}</option>
-            </select>
-        </div>
-        <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control" data-bind="value: value" required />
-        </div>
+  <div class="form-group">
+    <div data-bind="template: {name: 'remove-action'}"></div>
+    <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
+    <div class="controls col-xs-2">
+      <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
     </div>
+    <div class="controls col-xs-2">
+      <select class="select form-control" data-bind="value: value_type" required>
+        <option value="{{ form.constants.VALUE_TYPE_EXACT }}">{% trans 'to the exact value' %}</option>
+        <option value="{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}">{% trans 'to the value from other case property' %}</option>
+      </select>
+    </div>
+    <div class="controls col-xs-2">
+      <input type="text" class="textinput form-control" data-bind="value: value" required />
+    </div>
+  </div>
 </script>
 
 {# Template for update case property action #}
 {# An instance of this template is bound to an instance of the js object CustomActionDefinition #}
 
 <script type="text/html" id="custom-action">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-action'}"></div>
-        <label class="control-label col-xs-2">{% trans "Custom action ID" %}</label>
-        <div class="controls col-xs-4">
-            <input type="text" class="textinput form-control" data-bind="value: name" required placeholder="{% trans 'custom action id' %}" />
-        </div>
-        <label class="col-xs-1 control-label">
-            <span class="label label-primary">Requires System Admin</span>
-        </label>
+  <div class="form-group">
+    <div data-bind="template: {name: 'remove-action'}"></div>
+    <label class="control-label col-xs-2">{% trans "Custom action ID" %}</label>
+    <div class="controls col-xs-4">
+      <input type="text" class="textinput form-control" data-bind="value: name" required placeholder="{% trans 'custom action id' %}" />
     </div>
+    <label class="col-xs-1 control-label">
+      <span class="label label-primary">Requires System Admin</span>
+    </label>
+  </div>
 </script>

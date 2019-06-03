@@ -1,5 +1,5 @@
 <ul>
-    {% for app in apps %}
-        <a href="{% url "view_app" domain app.get_id %}"><li>{{ app.name }}</li></a>
-    {% empty %}No apps{% endfor %}
+  {% for app in apps %}
+    <a href="{% url "view_app" domain app.get_id %}"><li>{{ app.name }}</li></a>
+  {% empty %}No apps{% endfor %}
 </ul>

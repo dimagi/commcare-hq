@@ -3,21 +3,21 @@
 {% load hq_shared_tags %}
 
 {% block head %}{{ block.super }}
-    <style>
-        .map-preview {
-            height: 350px;
-        }
-    </style>
-    {% include 'analytics/fullstory.html' %}
+  <style>
+    .map-preview {
+      height: 350px;
+    }
+  </style>
+  {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
-    <script src="{% static 'userreports/js/constants.js' %}"></script>
-    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
-    <script src="{% static 'userreports/js/report_config.js' %}"></script>
-    <script src="{% static 'userreports/js/utils.js' %}"></script>
-    <script src="{% static 'userreports/js/configure_report.js' %}"></script>
+  <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
+  <script src="{% static 'userreports/js/constants.js' %}"></script>
+  <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+  <script src="{% static 'userreports/js/report_config.js' %}"></script>
+  <script src="{% static 'userreports/js/utils.js' %}"></script>
+  <script src="{% static 'userreports/js/configure_report.js' %}"></script>
 {% endblock %}
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
@@ -33,26 +33,26 @@
 {% endblock %}
 
 {% block additional_initial_page_data %}{{ block.super }}
-    {% initial_page_data 'column_options' column_options %}
-    {% initial_page_data 'initial_columns' initial_columns %}
-    {% initial_page_data 'application' application %}
-    {% initial_page_data 'source_id' source_id %}
-    {% initial_page_data 'source_type' source_type %}
-    {% initial_page_data 'report_preview_url' report_preview_url %}
-    {% initial_page_data 'preview_datasource_id' preview_datasource_id %}
-    {% initial_page_data 'existing_report_type' existing_report_type %}
-    {% initial_page_data 'report_title' report_title %}
-    {% initial_page_data 'report_description' report_description %}
-    {% initial_page_data 'data_source_properties' data_source_properties %}
-    {% initial_page_data 'initial_default_filters' initial_default_filters %}
-    {% initial_page_data 'initial_user_filters' initial_user_filters %}
-    {% initial_page_data 'initial_location' initial_location %}
-    {% initial_page_data 'initial_chart_type' initial_chart_type %}
-    {% initial_page_data 'MAPBOX_ACCESS_TOKEN' MAPBOX_ACCESS_TOKEN %}
-    {% initial_page_data 'date_range_options' date_range_options %}
-    {% initial_page_data 'has_report_builder_access' has_report_builder_access %}
-    {% initial_page_data 'at_report_limit' at_report_limit %}
-    {% initial_page_data 'existing_report' existing_report %}
+  {% initial_page_data 'column_options' column_options %}
+  {% initial_page_data 'initial_columns' initial_columns %}
+  {% initial_page_data 'application' application %}
+  {% initial_page_data 'source_id' source_id %}
+  {% initial_page_data 'source_type' source_type %}
+  {% initial_page_data 'report_preview_url' report_preview_url %}
+  {% initial_page_data 'preview_datasource_id' preview_datasource_id %}
+  {% initial_page_data 'existing_report_type' existing_report_type %}
+  {% initial_page_data 'report_title' report_title %}
+  {% initial_page_data 'report_description' report_description %}
+  {% initial_page_data 'data_source_properties' data_source_properties %}
+  {% initial_page_data 'initial_default_filters' initial_default_filters %}
+  {% initial_page_data 'initial_user_filters' initial_user_filters %}
+  {% initial_page_data 'initial_location' initial_location %}
+  {% initial_page_data 'initial_chart_type' initial_chart_type %}
+  {% initial_page_data 'MAPBOX_ACCESS_TOKEN' MAPBOX_ACCESS_TOKEN %}
+  {% initial_page_data 'date_range_options' date_range_options %}
+  {% initial_page_data 'has_report_builder_access' has_report_builder_access %}
+  {% initial_page_data 'at_report_limit' at_report_limit %}
+  {% initial_page_data 'existing_report' existing_report %}
 {% endblock %}
 
 {% block page_content %}
@@ -61,9 +61,9 @@
     <div class="pull-right page-actions-toolbar">
       {% if existing_report %}
         <a
-            id="deleteReport"
-            class="btn btn-danger"
-            href="{% url 'delete_configurable_report' domain  existing_report.get_id %}?redirect={% url 'reports_home' domain %}"
+          id="deleteReport"
+          class="btn btn-danger"
+          href="{% url 'delete_configurable_report' domain  existing_report.get_id %}?redirect={% url 'reports_home' domain %}"
         >
           Delete Report
         </a>&nbsp;
@@ -222,9 +222,9 @@
               <div>
                 <small>
                   {% if source_type == "case" %}
-                      {% trans "Preview includes at most 100 cases" %}
+                    {% trans "Preview includes at most 100 cases" %}
                   {% else %}
-                      {% trans "Preview includes at most 100 forms" %}
+                    {% trans "Preview includes at most 100 forms" %}
                   {% endif %}
                 </small>
               </div>
@@ -234,8 +234,8 @@
 
             <!-- ko if: selectedChart() === 'none' -->
             <div data-bind="fadeVisible: isAggregationEnabled">
-                <div class="btn btn-primary" data-bind="click: addChart">{% trans 'Add Chart' %}</div>
-                <div class="spacer"></div>
+              <div class="btn btn-primary" data-bind="click: addChart">{% trans 'Add Chart' %}</div>
+              <div class="spacer"></div>
             </div>
             <!-- /ko -->
 
@@ -258,7 +258,7 @@
               <br/>
               <div id="map-preview-container" class="fs-hide" data-bind="css: {'map-preview': displayMapPreview}"></div>
               <div id="zoomtofit" class="leaflet-control-layers fs-hide" style="display: none;">
-                  <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+                <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
               </div>
             </div>
 
@@ -269,8 +269,8 @@
                 <div class="btn btn-danger" data-bind="click: removeChart"><i class="fa fa-remove"></i></div>
               </div>
               <div data-bind="if: selectedChart() !== 'none'">
-                  <select-toggle data-apply-bindings="false"
-                                 params="options: [{
+                <select-toggle data-apply-bindings="false"
+                               params="options: [{
                                                       id: 'bar',
                                                       text: '{% trans_html_attr "Bar" %}',
                                                   }, {

@@ -505,7 +505,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
     attach_excel = BooleanProperty()
-    # language is only used if some of the config_ids refer to UCRs.
+    # language is only used if some of the config_ids refer to UCRs or custom reports
     language = StringProperty()
     email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
@@ -636,7 +636,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for user in get_user_docs_by_username(self.all_recipient_emails)
             if 'username' in user and 'language' in user
         }
-        fallback_language = user_languages.get(self.owner_email, 'en')
+        if self.language:
+            fallback_language = self.language
+        else:
+            fallback_language = user_languages.get(self.owner_email, 'en')
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:

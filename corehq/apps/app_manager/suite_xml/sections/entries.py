@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import six
 from collections import namedtuple, defaultdict
 from six.moves import zip_longest
 
@@ -49,17 +50,17 @@ class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_select
 
 
 class EntriesContributor(SuiteContributorByModule):
-
     def get_module_contributions(self, module):
         return self.entries_helper.entry_for_module(module)
 
 
 class EntriesHelper(object):
 
-    def __init__(self, app, modules=None):
+    def __init__(self, app, modules=None, build_profile_id=None):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
         self.app = app
         self.modules = modules or list(app.get_modules())
+        self.build_profile_id = build_profile_id
         self.details_helper = DetailsHelper(self.app, self.modules)
 
     def get_datums_meta_for_form_generic(self, form, module=None):
@@ -140,8 +141,8 @@ class EntriesHelper(object):
                     id=id_strings.form_command(form, module),
                     menu_locale_id=get_form_locale_id(form),
                     menu_enum_text=get_form_enum_text(form),
-                    media_image=bool(len(form.all_image_paths())),
-                    media_audio=bool(len(form.all_audio_paths())),
+                    media_image=form.uses_image(build_profile_id=self.build_profile_id),
+                    media_audio=form.uses_audio(build_profile_id=self.build_profile_id),
                     image_locale_id=id_strings.form_icon_locale(form),
                     audio_locale_id=id_strings.form_audio_locale(form),
                     custom_icon_locale_id=(id_strings.form_custom_icon_locale(form, form_custom_icon.form)
@@ -191,8 +192,8 @@ class EntriesHelper(object):
                 e.command = LocalizedCommand(
                     id=id_strings.case_list_command(module),
                     menu_locale_id=id_strings.case_list_locale(module),
-                    media_image=bool(len(module.case_list.all_image_paths())),
-                    media_audio=bool(len(module.case_list.all_audio_paths())),
+                    media_image=module.case_list.uses_image(build_profile_id=self.build_profile_id),
+                    media_audio=module.case_list.uses_audio(build_profile_id=self.build_profile_id),
                     image_locale_id=id_strings.case_list_icon_locale(module),
                     audio_locale_id=id_strings.case_list_audio_locale(module),
                 )
@@ -616,8 +617,8 @@ class EntriesHelper(object):
                             "Module with ID %s has no product details configuration" % module_id
                         )
                     return target
-                except ModuleNotFoundException as ex:
-                    raise ParentModuleReferenceError(ex.message)
+                except ModuleNotFoundException as e:
+                    raise ParentModuleReferenceError(six.text_type(e))
             else:
                 if case_type == module.case_type:
                     return module

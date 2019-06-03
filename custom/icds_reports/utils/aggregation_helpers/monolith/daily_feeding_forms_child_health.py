@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'daily-feeding-forms-child-health'
     ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
     aggregate_parent_table = AGG_DAILY_FEEDING_TABLE
     aggregate_child_table_prefix = 'icds_db_child_daily_feed_form_'

@@ -1,24 +1,24 @@
 <script type="text/html" id="month-year-template">
-    <div>
-        <h2 class="filter-title"><strong><i class="fa fa-calendar icon-bar"></i> Date</strong></h2>
-        <div class="form-group">
-            <label for="year">Year <span class="required">*</span></label>
-            <select class="form-control" data-bind="options: availableYears,
+  <div>
+    <h2 class="filter-title"><strong><i class="fa fa-calendar icon-bar"></i> Date</strong></h2>
+    <div class="form-group">
+      <label for="year">Year <span class="required">*</span></label>
+      <select class="form-control" data-bind="options: availableYears,
                 optionsText: 'name',
                 optionsValue: 'id',
                 value: selectedYear,
                 select2: {}">
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="month">Month <span class="required">*</span></label>
-            <select class="form-control" data-bind="options: availableMonths,
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="month">Month <span class="required">*</span></label>
+      <select class="form-control" data-bind="options: availableMonths,
                 optionsText: 'name',
                 optionsValue: 'id',
                 value: selectedMonth,
                 select2: { placeholder:'test 1234' }">
-            </select>
-        </div>
+      </select>
     </div>
-    <hr/>
+  </div>
+  <hr/>
 </script>
