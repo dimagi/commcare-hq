@@ -558,7 +558,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').content_md5()
 
-    def archive(self, user_id=None, rebuild_cases=True):
+    def archive(self, user_id=None, rebuild_models=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if self.is_archived:
@@ -570,7 +570,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
             FormAccessorSQL.archive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="form_processor", xform=self, rebuild_cases=rebuild_cases)
+            xform_archived.send(sender="form_processor", xform=self, rebuild_models=rebuild_models)
 
     def unarchive(self, user_id=None):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
@@ -586,7 +586,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             archive_stub.archive_history_updated()
             xform_unarchived.send(sender="form_processor", xform=self)
 
-    def publish_archive_action_to_kafka(self, user_id, archive, rebuild_cases=True):
+    def publish_archive_action_to_kafka(self, user_id, archive, rebuild_models=True):
         # Don't update the history, just send to kafka
         from couchforms.models import UnfinishedArchiveStub
         from corehq.form_processor.submission_process_tracker import unfinished_archive
@@ -595,7 +595,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
             if archive:
-                xform_archived.send(sender="form_processor", xform=self, rebuild_cases=rebuild_cases)
+                xform_archived.send(sender="form_processor", xform=self, rebuild_models=rebuild_models)
             else:
                 xform_unarchived.send(sender="form_processor", xform=self)
             publish_form_saved(self)

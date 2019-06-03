@@ -80,7 +80,7 @@ class AbstractXFormInstance(object):
     def get_attachment(self, attachment_name):
         raise NotImplementedError()
 
-    def archive(self, user_id=None, rebuild_cases=True):
+    def archive(self, user_id=None, rebuild_models=True):
         raise NotImplementedError()
 
     def unarchive(self, user_id=None):

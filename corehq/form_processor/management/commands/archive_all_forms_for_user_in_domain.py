@@ -46,7 +46,7 @@ class Command(BaseCommand):
         with open("forms_archived.txt", "w+b") as forms_log:
             for form in with_progress_bar(forms):
                 forms_log.write("%s\n" % form.form_id)
-                form.archive(rebuild_cases=False)
+                form.archive(rebuild_models=False)
 
         # removing data
         for xform in with_progress_bar(forms):
