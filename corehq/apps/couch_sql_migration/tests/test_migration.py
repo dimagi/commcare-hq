@@ -512,6 +512,20 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(child_transactions[0].is_case_create)
         self.assertTrue(child_transactions[1].is_case_index)
 
+    def test_deleted_case_with_actions_migration(self):
+        case_id = "d74369d640ea42528f6a6f7aff0efd93"
+        couch = XFormInstance.get_db()
+        doc = DELETED_CASE_JSON.copy()
+        doc["domain"] = self.domain_name
+        couch.save_doc(doc)
+        #self.addCleanup(couch.delete_doc, case_id)
+        self.assertIsNotNone(self._get_case(case_id))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        case = self._get_case(case_id)
+        self.assertEqual(case.xform_ids, DELETED_CASE_JSON["xform_ids"])
+        self.assertEqual(case.get_case_property("count"), '5')
+
     def test_form_touches_case_without_updates(self):
         case_id = uuid.uuid4().hex
         create_and_save_a_case(self.domain_name, case_id=case_id, case_name='touched by a form', user_id='user1')
@@ -1087,3 +1101,182 @@ LIST_ORDER_FORMS = ["""
     </case>
 </system>
 """]
+
+DELETED_CASE_JSON = {
+    "#export_tag": [
+        "domain",
+        "type"
+    ],
+    "-deletion_date": "2016-07-26T09:25:06.168468Z",
+    "-deletion_id": "2118fd8d83d99a53d510ef56a3a9c2549d93a91f",
+    "_id": "d74369d640ea42528f6a6f7aff0efd93",
+    "actions": [
+        {
+            "action_type": "create",
+            "attachments": {},
+            "date": "2016-05-13T06:51:27.778431Z",
+            "deprecated": False,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2016-05-13T06:51:27.784873Z",
+            "sync_log_id": None,
+            "updated_known_properties": {
+                "name": "Kriti Mehrotra",
+                "owner_id": "46ad60f2dfda82386138289492d1d755",
+                "type": "commcare-user"
+            },
+            "updated_unknown_properties": {},
+            "user_id": "46ad60f2dfda82386138289492d1d755",
+            "xform_id": "465aadcf97d7495c85d453c12ef27c8b",
+            "xform_name": "",
+            "xform_xmlns": "http://commcarehq.org/case"
+        },
+        {
+            "action_type": "update",
+            "attachments": {},
+            "date": "2016-05-13T06:51:27.778431Z",
+            "deprecated": False,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2016-05-13T06:51:27.784873Z",
+            "sync_log_id": None,
+            "updated_known_properties": {},
+            "updated_unknown_properties": {
+                "email": "",
+                "hq_user_id": "46ad60f2dfda82386138289492d1d755",
+                "language": "",
+                "phone_number": "",
+                "username": "testkm"
+            },
+            "user_id": "46ad60f2dfda82386138289492d1d755",
+            "xform_id": "465aadcf97d7495c85d453c12ef27c8b",
+            "xform_name": "",
+            "xform_xmlns": "http://commcarehq.org/case"
+        },
+        {
+            "action_type": "update",
+            "attachments": {},
+            "date": "2016-05-13T06:53:20.513000Z",
+            "deprecated": False,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2016-05-13T06:53:19.633718Z",
+            "sync_log_id": "68b3b9d263523b2eea5c2a5e8f631913",
+            "updated_known_properties": {},
+            "updated_unknown_properties": {
+                "count": "1"
+            },
+            "user_id": "46ad60f2dfda82386138289492d1d755",
+            "xform_id": "8f472221-bda9-460a-9ca7-1237322428ea",
+            "xform_name": "Registration",
+            "xform_xmlns": "http://openrosa.org/formdesigner/9108EB10-F164-4CA5-969D-F8852570E515"
+        },
+        {
+            "action_type": "update",
+            "attachments": {},
+            "date": "2016-05-13T06:54:08.266000Z",
+            "deprecated": False,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2016-05-13T06:54:07.298043Z",
+            "sync_log_id": "68b3b9d263523b2eea5c2a5e8f631913",
+            "updated_known_properties": {},
+            "updated_unknown_properties": {
+                "count": "2"
+            },
+            "user_id": "46ad60f2dfda82386138289492d1d755",
+            "xform_id": "955e20d1-9cc5-4eee-87d8-e7c1e3edaf00",
+            "xform_name": "Registration",
+            "xform_xmlns": "http://openrosa.org/formdesigner/9108EB10-F164-4CA5-969D-F8852570E515"
+        },
+        {
+            "action_type": "update",
+            "attachments": {},
+            "date": "2016-05-13T06:54:35.609000Z",
+            "deprecated": False,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2016-05-13T06:54:34.876564Z",
+            "sync_log_id": "68b3b9d263523b2eea5c2a5e8f631913",
+            "updated_known_properties": {},
+            "updated_unknown_properties": {
+                "count": "3"
+            },
+            "user_id": "46ad60f2dfda82386138289492d1d755",
+            "xform_id": "0b66817a-4b46-4e7a-91ca-9640df2ea45a",
+            "xform_name": "Registration",
+            "xform_xmlns": "http://openrosa.org/formdesigner/9108EB10-F164-4CA5-969D-F8852570E515"
+        },
+        {
+            "action_type": "update",
+            "attachments": {},
+            "date": "2016-05-13T06:55:03.152000Z",
+            "deprecated": False,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2016-05-13T06:55:03.140513Z",
+            "sync_log_id": "68b3b9d263523b2eea5c2a5e8f631913",
+            "updated_known_properties": {},
+            "updated_unknown_properties": {
+                "count": "4"
+            },
+            "user_id": "46ad60f2dfda82386138289492d1d755",
+            "xform_id": "51269cf0-1712-4bf6-9852-cfdda4d5e79e",
+            "xform_name": "Registration",
+            "xform_xmlns": "http://openrosa.org/formdesigner/9108EB10-F164-4CA5-969D-F8852570E515"
+        },
+        {
+            "action_type": "update",
+            "attachments": {},
+            "date": "2016-05-13T06:55:35.180000Z",
+            "deprecated": False,
+            "doc_type": "CommCareCaseAction",
+            "indices": [],
+            "server_date": "2016-05-13T06:55:34.195384Z",
+            "sync_log_id": "68b3b9d263523b2eea5c2a5e8f631913",
+            "updated_known_properties": {},
+            "updated_unknown_properties": {
+                "count": "5"
+            },
+            "user_id": "46ad60f2dfda82386138289492d1d755",
+            "xform_id": "61a717ea-6cbe-42f4-ab6a-dfa840f74e3f",
+            "xform_name": "Registration",
+            "xform_xmlns": "http://openrosa.org/formdesigner/9108EB10-F164-4CA5-969D-F8852570E515"
+        }
+    ],
+    "case_attachments": {},
+    "closed": False,
+    "closed_by": "",
+    "closed_on": None,
+    "computed_": {},
+    "computed_modified_on_": None,
+    "count": "5",
+    "doc_type": "CommCareCase-Deleted",
+    "domain": "{domain}",
+    "email": "",
+    "export_tag": [],
+    "external_id": "",
+    "hq_user_id": "46ad60f2dfda82386138289492d1d755",
+    "indices": [],
+    "initial_processing_complete": True,
+    "language": "",
+    "modified_on": "2016-05-13T06:55:35.180000Z",
+    "name": "Kriti Mehrotra",
+    "opened_by": "46ad60f2dfda82386138289492d1d755",
+    "opened_on": "2016-05-13T06:51:27.778431Z",
+    "owner_id": "46ad60f2dfda82386138289492d1d755",
+    "phone_number": "",
+    "server_modified_on": "2016-05-13T06:55:34.195384Z",
+    "type": "commcare-user",
+    "user_id": "46ad60f2dfda82386138289492d1d755",
+    "username": "testkm",
+    "version": "2.0",
+    "xform_ids": [
+        "465aadcf97d7495c85d453c12ef27c8b",
+        "8f472221-bda9-460a-9ca7-1237322428ea",
+        "955e20d1-9cc5-4eee-87d8-e7c1e3edaf00",
+        "0b66817a-4b46-4e7a-91ca-9640df2ea45a",
+        "51269cf0-1712-4bf6-9852-cfdda4d5e79e",
+        "61a717ea-6cbe-42f4-ab6a-dfa840f74e3f"
+    ]
+}

@@ -704,6 +704,10 @@ def _migrate_case_actions(couch_case, sql_case):
                 transactions[action.xform_id] = transaction
             else:
                 sql_case.track_create(transaction)
+            for key, value in six.iteritems(action.updated_known_properties):
+                setattr(sql_case, key, value)
+            for key, value in six.iteritems(action.updated_unknown_properties):
+                sql_case.case_json[key] = value
         if action.action_type == const.CASE_ACTION_CREATE:
             transaction.type |= CaseTransaction.TYPE_CASE_CREATE
         if action.action_type == const.CASE_ACTION_CLOSE:
