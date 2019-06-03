@@ -140,7 +140,7 @@ class ODataXFormInstanceSerializer(Serializer):
             for i, xform_json in enumerate(data['value']):
                 # print(json.dumps(xform_json, indent=2))
                 data['value'][i] = {
-                    item.label.split('.')[-1]: _lookup(item, xform_json)
+                    item.label.split('.')[-1].replace('#', ''): _lookup(item, xform_json)
                     for item in export_items
                 }
                 data['value'][i]['xform_id'] = xform_json['id']
