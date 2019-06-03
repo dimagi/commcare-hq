@@ -182,6 +182,12 @@ class TimingContext(object):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""
         return self.root.to_list(exclude_root)
 
+    def __repr__(self):
+        return "TimingContext(root='{}', root_dict='{}')".format(
+            self.root,
+            self.root.to_dict()
+        )
+
 
 class TimerError(Exception):
     pass
