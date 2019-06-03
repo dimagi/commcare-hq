@@ -7,10 +7,10 @@ from io import open
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.cleanup import rebuild_case_from_forms
+from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import RebuildWithReason
-from casexml.apps.case.xform import get_case_updates
 from corehq.util.log import with_progress_bar
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
@@ -36,8 +36,7 @@ class Command(BaseCommand):
 
         case_ids_to_rebuild = set()
         for form in forms:
-            form_case_ids = set(cu.id for cu in get_case_updates(form))
-            case_ids_to_rebuild.update(form_case_ids)
+            case_ids_to_rebuild.update(get_case_ids_from_form(form))
         print("Found %s cases that would need to be rebuilt" % len(case_ids_to_rebuild))
 
         # archive forms
