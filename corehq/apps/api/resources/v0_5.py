@@ -965,6 +965,12 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
         # adds required odata headers to the returned response
         return add_odata_headers(response)
 
+    def obj_get_list(self, bundle, domain, **kwargs):
+        elastic_query_set = super(ODataXFormInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
+        xmlns = kwargs['xmlns']
+        elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': xmlns}})
+        return elastic_query_set
+
     class Meta(v0_4.XFormInstanceResource.Meta):
         authentication = ODataAuthentication(Permissions.edit_data)
         resource_name = 'odata/{}'.format(ODATA_XFORM_INSTANCE_RESOURCE_NAME)
