@@ -34,10 +34,10 @@ class Command(BaseCommand):
         # ordered with latest form's id on top
         form_ids = form_accessor.get_form_ids_for_user(user_id)
         forms = [f for f in form_accessor.get_forms(form_ids) if f.is_normal]
-        print("Found %s normal forms for user" % len(form_ids))
+        print("Found %s normal forms for user" % len(forms))
 
         case_ids_to_rebuild = set()
-        for form in forms:
+        for form in with_progress_bar(forms):
             form_case_ids = set(cu.id for cu in get_case_updates(form))
             if form_case_ids:
                 case_ids_to_rebuild.update(form_case_ids)
@@ -57,7 +57,7 @@ class Command(BaseCommand):
             LedgerAccessorSQL.delete_ledger_transactions_for_form(ledger_case_ids, xform.form_id)
 
         # rebuild cases
-        print("Starting with case archival")
+        print("Starting with cases rebuild")
         reason = "User %s forms archived for domain %s by system" % (user.raw_username, domain)
         form_processor_interface = FormProcessorInterface(domain)
         with open("cases_rebuilt.txt", "w+b") as case_log:
