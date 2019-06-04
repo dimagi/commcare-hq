@@ -634,8 +634,7 @@ SUPPORTED_DATE_FORMATS = [
 def validate_date(date):
     for pattern in SUPPORTED_DATE_FORMATS:
         try:
-            datetime.datetime.strptime(date, pattern)
-            return
+            return datetime.datetime.strptime(date, pattern)
         except ValueError:
             pass
 
@@ -656,9 +655,9 @@ class DateRangeParams(object):
         start = raw_params.pop(self.start_param, None)
         end = raw_params.pop(self.end_param, None)
         if start:
-            validate_date(start)
+            start = validate_date(start)
         if end:
-            validate_date(end)
+            end = validate_date(end)
 
         if start or end:
             # Note that dates are already in a string format when they arrive as query params
