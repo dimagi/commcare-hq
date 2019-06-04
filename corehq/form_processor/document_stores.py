@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 from collections import defaultdict
 
 from corehq.blobs import Error as BlobError
-from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, CaseAccessorSQL, \
+    iter_all_ids, CaseReindexAccessor
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
@@ -55,8 +56,8 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
-        # todo: support last_id
-        return iter(self.case_accessors.iter_case_ids_by_domain_and_type(self.case_type))
+        accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
+        return iter(iter_all_ids(accessor))
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):

@@ -978,16 +978,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
-    def iter_case_ids_by_domain_and_type(domain, type_=None):
-        from corehq.sql_db.util import run_query_across_partitioned_databases
-        q_expr = Q(domain=domain) & Q(deleted=False)
-        if type_:
-            q_expr &= Q(type=type_)
-        for case_id in run_query_across_partitioned_databases(
-                CommCareCaseSQL, q_expr, values=['case_id']):
-            yield case_id
-
-    @staticmethod
     def save_case(case):
         transactions_to_save = case.get_live_tracked_models(CaseTransaction)
 
