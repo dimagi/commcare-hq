@@ -134,17 +134,11 @@ class UnpackRequestArgsTests(SimpleTestCase):
         self.response_mock.content = self.content_json
         self.response_mock.json.return_value = content
 
-    def test_post_with_no_args(self):
-        with patch.object(requests.Session, 'request') as request_mock, \
-                patch.object(RequestLog.objects, 'create') as create_mock:
-            request_mock.return_value = self.response_mock
-
-            self.requests.post(self.uri)
-
+    def assert_create_called_with_request_body(self, create_mock, request_body):
             create_mock.assert_called_with(
                 domain=TEST_DOMAIN,
                 log_level=logging.INFO,
-                request_body=None,
+                request_body=request_body,
                 request_error=self.error_message,
                 request_headers={
                     'Content-type': 'application/json',
@@ -156,6 +150,14 @@ class UnpackRequestArgsTests(SimpleTestCase):
                 response_body=self.content_json,
                 response_status=self.status_code,
             )
+
+    def test_post_with_no_args(self):
+        with patch.object(requests.Session, 'request') as request_mock, \
+                patch.object(RequestLog.objects, 'create') as create_mock:
+            request_mock.return_value = self.response_mock
+
+            self.requests.post(self.uri)
+            self.assert_create_called_with_request_body(create_mock, None)
 
     def test_post_with_data_kwarg(self):
         with patch.object(requests.Session, 'request') as request_mock, \
@@ -163,22 +165,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             request_mock.return_value = self.response_mock
 
             self.requests.post(self.uri, data=self.data)
-
-            create_mock.assert_called_with(
-                domain=TEST_DOMAIN,
-                log_level=logging.INFO,
-                request_body=self.data,
-                request_error=self.error_message,
-                request_headers={
-                    'Content-type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                request_method='POST',
-                request_params=None,
-                request_url='http://localhost:9080/api/person/',
-                response_body=self.content_json,
-                response_status=self.status_code,
-            )
+            self.assert_create_called_with_request_body(create_mock, self.data)
 
     def test_post_with_json_kwarg(self):
         with patch.object(requests.Session, 'request') as request_mock, \
@@ -186,22 +173,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             request_mock.return_value = self.response_mock
 
             self.requests.post(self.uri, json=self.json_data)
-
-            create_mock.assert_called_with(
-                domain=TEST_DOMAIN,
-                log_level=logging.INFO,
-                request_body=self.json_data,
-                request_error=self.error_message,
-                request_headers={
-                    'Content-type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                request_method='POST',
-                request_params=None,
-                request_url='http://localhost:9080/api/person/',
-                response_body=self.content_json,
-                response_status=self.status_code,
-            )
+            self.assert_create_called_with_request_body(create_mock, self.json_data)
 
     def test_post_with_data_arg(self):
         with patch.object(requests.Session, 'request') as request_mock, \
@@ -209,22 +181,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             request_mock.return_value = self.response_mock
 
             self.requests.post(self.uri, self.data)
-
-            create_mock.assert_called_with(
-                domain=TEST_DOMAIN,
-                log_level=logging.INFO,
-                request_body=self.data,
-                request_error=self.error_message,
-                request_headers={
-                    'Content-type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                request_method='POST',
-                request_params=None,
-                request_url='http://localhost:9080/api/person/',
-                response_body=self.content_json,
-                response_status=self.status_code,
-            )
+            self.assert_create_called_with_request_body(create_mock, self.data)
 
     def test_post_with_json_arg(self):
         with patch.object(requests.Session, 'request') as request_mock, \
@@ -232,22 +189,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             request_mock.return_value = self.response_mock
 
             self.requests.post(self.uri, None, self.json_data)
-
-            create_mock.assert_called_with(
-                domain=TEST_DOMAIN,
-                log_level=logging.INFO,
-                request_body=self.json_data,
-                request_error=self.error_message,
-                request_headers={
-                    'Content-type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                request_method='POST',
-                request_params=None,
-                request_url='http://localhost:9080/api/person/',
-                response_body=self.content_json,
-                response_status=self.status_code,
-            )
+            self.assert_create_called_with_request_body(create_mock, self.json_data)
 
     def test_post_with_data_and_json(self):
         with patch.object(requests.Session, 'request') as request_mock, \
@@ -255,19 +197,4 @@ class UnpackRequestArgsTests(SimpleTestCase):
             request_mock.return_value = self.response_mock
 
             self.requests.post(self.uri, self.data, self.json_data)
-
-            create_mock.assert_called_with(
-                domain=TEST_DOMAIN,
-                log_level=logging.INFO,
-                request_body=self.data,
-                request_error=self.error_message,
-                request_headers={
-                    'Content-type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                request_method='POST',
-                request_params=None,
-                request_url='http://localhost:9080/api/person/',
-                response_body=self.content_json,
-                response_status=self.status_code,
-            )
+            self.assert_create_called_with_request_body(create_mock, self.data)
