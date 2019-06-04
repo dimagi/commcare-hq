@@ -118,11 +118,9 @@ class ItemListsProvider(FixtureProvider):
 
     def _get_global_items(self, global_types, domain, bypass_cache):
         def get_items_by_type(data_type):
-            items = []
             for item in FixtureDataItem.by_data_type(domain, data_type, bypass_cache):
                 self._set_cached_type(item, data_type)
-                items.append(item)
-            return sorted(items, key=attrgetter('sort_key'))
+                yield item
 
         return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
 
