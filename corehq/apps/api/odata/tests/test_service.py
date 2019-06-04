@@ -59,8 +59,11 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('ODATA')
     def test_no_case_types(self):
+        self._test_no_case_types()
+
+    @flag_enabled('ODATA')
+    def _test_no_case_types(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_case_types_for_domain_es', return_value=set()):
             response = self._execute_query(correct_credentials)
@@ -70,8 +73,11 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
             {"@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Cases/$metadata", "value": []}
         )
 
-    @flag_enabled('ODATA')
     def test_with_case_types(self):
+        self._test_with_case_types()
+
+    @flag_enabled('ODATA')
+    def _test_with_case_types(self):
         correct_credentials = self._get_correct_credentials()
         with patch(
             'corehq.apps.api.odata.views.get_case_types_for_domain_es',
@@ -107,39 +113,7 @@ class TestCaseServiceDocumentUsingApiKey(TestCaseServiceDocumentCase):
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
 class TestCaseServiceDocumentWithTwoFactorUsingApiKey(TestCaseServiceDocumentUsingApiKey):
-
-    # Duplicated because flag on inherited method doesn't work when outer flag is used
-    @flag_enabled('ODATA')
-    def test_no_case_types(self):
-        correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_case_types_for_domain_es', return_value=set()):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            json.loads(response.content.decode('utf-8')),
-            {"@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Cases/$metadata", "value": []}
-        )
-
-    # Duplicated because flag on inherited method doesn't work when outer flag is used
-    @flag_enabled('ODATA')
-    def test_with_case_types(self):
-        correct_credentials = self._get_correct_credentials()
-        with patch(
-            'corehq.apps.api.odata.views.get_case_types_for_domain_es',
-            return_value=['case_type_1', 'case_type_2'],  # return ordered iterable for deterministic test
-        ):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            json.loads(response.content.decode('utf-8')),
-            {
-                "@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Cases/$metadata",
-                "value": [
-                    {'kind': 'EntitySet', 'name': 'case_type_1', 'url': 'case_type_1'},
-                    {'kind': 'EntitySet', 'name': 'case_type_2', 'url': 'case_type_2'},
-                ],
-            }
-        )
+    pass
 
 
 class TestFormServiceDocument(TestCase, FormOdataTestMixin):
@@ -185,8 +159,11 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('ODATA')
     def test_no_xmlnss(self):
+        self._test_no_xmlnss()
+
+    @flag_enabled('ODATA')
+    def _test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=[]):
             response = self._execute_query(correct_credentials)
@@ -199,8 +176,11 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
             }
         )
 
-    @flag_enabled('ODATA')
     def test_with_xmlnss(self):
+        self._test_with_xmlnss()
+
+    @flag_enabled('ODATA')
+    def _test_with_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=['xmlns_1', 'xmlns_2']):
             response = self._execute_query(correct_credentials)
@@ -233,36 +213,4 @@ class TestFormServiceDocumentUsingApiKey(TestFormServiceDocument):
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
 class TestFormServiceDocumentWithTwoFactorUsingApiKey(TestFormServiceDocumentUsingApiKey):
-
-    # Duplicated because flag on inherited method doesn't work when outer flag is used
-    @flag_enabled('ODATA')
-    def test_no_xmlnss(self):
-        correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=[]):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            json.loads(response.content.decode('utf-8')),
-            {
-                "@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Forms/my_app_id/$metadata",
-                "value": [],
-            }
-        )
-
-    # Duplicated because flag on inherited method doesn't work when outer flag is used
-    @flag_enabled('ODATA')
-    def test_with_xmlnss(self):
-        correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=['xmlns_1', 'xmlns_2']):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            json.loads(response.content.decode('utf-8')),
-            {
-                "@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Forms/my_app_id/$metadata",
-                "value": [
-                    {'kind': 'EntitySet', 'name': 'xmlns_1', 'url': 'xmlns_1'},
-                    {'kind': 'EntitySet', 'name': 'xmlns_2', 'url': 'xmlns_2'},
-                ],
-            }
-        )
+    pass
