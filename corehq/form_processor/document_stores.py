@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 from collections import defaultdict
 
 from corehq.blobs import Error as BlobError
-from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, CaseAccessorSQL, \
-    iter_all_ids, CaseReindexAccessor
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, \
+    iter_all_ids, CaseReindexAccessor, LedgerReindexAccessor
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
@@ -70,7 +70,6 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)
         self.domain = domain
         self.ledger_accessors = LedgerAccessorSQL
-        self.case_accessors = CaseAccessorSQL
 
     def get_document(self, doc_id):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
@@ -87,12 +86,8 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         return Product.ids_by_domain(self.domain)
 
     def iter_document_ids(self, last_id=None):
-        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-        # todo: support last_id
-        # assuming we're only interested in the 'stock' section for now
-        for case_id in self.case_accessors.get_case_ids_in_domain(self.domain):
-            for product_id in self.product_ids:
-                yield UniqueLedgerReference(case_id, 'stock', product_id).to_id()
+        accessor = LedgerReindexAccessor(self.domain)
+        return iter(iter_all_ids(accessor))
 
     def iter_documents(self, ids):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
