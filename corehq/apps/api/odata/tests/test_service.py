@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 
-from django.test import Client, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from mock import patch
@@ -15,7 +15,6 @@ from corehq.apps.api.odata.tests.utils import (
 )
 from corehq.apps.api.odata.views import ODataCaseServiceView, ODataFormServiceView
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 
@@ -26,15 +25,11 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestCaseServiceDocumentCase, cls).setUpClass()
-        cls.client = Client()
-        cls.domain = Domain(name='test_domain')
-        cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls._setupclass()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-        cls.web_user.delete()
+        cls._teardownclass()
         super(TestCaseServiceDocumentCase, cls).tearDownClass()
 
     def test_no_credentials(self):
@@ -124,15 +119,11 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFormServiceDocument, cls).setUpClass()
-        cls.client = Client()
-        cls.domain = Domain(name='test_domain')
-        cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls._setupclass()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-        cls.web_user.delete()
+        cls._teardownclass()
         super(TestFormServiceDocument, cls).tearDownClass()
 
     def test_no_credentials(self):

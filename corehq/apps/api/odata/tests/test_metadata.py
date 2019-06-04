@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from collections import OrderedDict
 
-from django.test import Client, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from mock import patch
@@ -16,7 +16,6 @@ from corehq.apps.api.odata.tests.utils import (
 from corehq.apps.api.odata.views import ODataCaseMetadataView, ODataFormMetadataView
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
@@ -29,15 +28,11 @@ class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(TestCaseMetadataDocumentCase, cls).setUpClass()
-        cls.client = Client()
-        cls.domain = Domain(name='test_domain')
-        cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls._setupclass()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-        cls.web_user.delete()
+        cls._teardownclass()
         super(TestCaseMetadataDocumentCase, cls).tearDownClass()
 
     def test_no_credentials(self):
@@ -124,15 +119,11 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFormMetadataDocumentCase, cls).setUpClass()
-        cls.client = Client()
-        cls.domain = Domain(name='test_domain')
-        cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls._setupclass()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-        cls.web_user.delete()
+        cls._teardownclass()
         super(TestFormMetadataDocumentCase, cls).tearDownClass()
 
     def test_no_credentials(self):

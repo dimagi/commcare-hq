@@ -3,14 +3,30 @@ from __future__ import unicode_literals
 
 import base64
 
+from django.test import Client
 from django.urls import reverse
 
 from tastypie.models import ApiKey
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
 
 
 class OdataTestMixin(object):
 
     view_urlname = None
+
+    @classmethod
+    def _setupclass(cls):
+        cls.client = Client()
+        cls.domain = Domain(name='test_domain')
+        cls.domain.save()
+        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+
+    @classmethod
+    def _teardownclass(cls):
+        cls.domain.delete()
+        cls.web_user.delete()
 
     def _execute_query(self, credentials):
         return self.client.get(self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)

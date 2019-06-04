@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.test import Client, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from elasticsearch.exceptions import ConnectionError
@@ -20,7 +20,6 @@ from corehq.apps.api.odata.tests.utils import (
 )
 from corehq.apps.api.resources.v0_5 import ODataCommCareCaseResource, ODataXFormInstanceResource
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -35,10 +34,7 @@ class TestCaseOdataFeed(TestCase, CaseOdataTestMixin):
     def setUpClass(cls):
         super(TestCaseOdataFeed, cls).setUpClass()
 
-        cls.client = Client()
-        cls.domain = Domain(name='test_domain')
-        cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls._setupclass()
 
         cls.account, _ = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by='')
         plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
@@ -46,8 +42,7 @@ class TestCaseOdataFeed(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-        cls.web_user.delete()
+        cls._teardownclass()
 
         SubscriptionAdjustment.objects.all().delete()
         cls.subscription.delete()
@@ -141,10 +136,7 @@ class TestFormOdataFeed(TestCase, FormOdataTestMixin):
     def setUpClass(cls):
         super(TestFormOdataFeed, cls).setUpClass()
 
-        cls.client = Client()
-        cls.domain = Domain(name='test_domain')
-        cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls._setupclass()
 
         cls.account, _ = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by='')
         plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
@@ -152,8 +144,7 @@ class TestFormOdataFeed(TestCase, FormOdataTestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-        cls.web_user.delete()
+        cls._teardownclass()
 
         SubscriptionAdjustment.objects.all().delete()
         cls.subscription.delete()
