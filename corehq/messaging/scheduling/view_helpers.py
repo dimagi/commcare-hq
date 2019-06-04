@@ -264,14 +264,14 @@ class ConditionalAlertUploader(object):
         AlertSchedule.assert_is(schedule)
         assert(len(messages) == len(schedule.memoized_events))
 
-        event_and_content_objects = zip(schedule.memoized_events, [SMSContent(message=m) for m in messages])
+        event_and_content_objects = list(zip(schedule.memoized_events, [SMSContent(message=m) for m in messages]))
         schedule.set_custom_alert(event_and_content_objects, extra_options=schedule.get_extra_scheduling_options())
 
     def save_custom_daily_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
         assert(len(messages) == len(schedule.memoized_events))
 
-        event_and_content_objects = zip(schedule.memoized_events, [SMSContent(message=m) for m in messages])
+        event_and_content_objects = list(zip(schedule.memoized_events, [SMSContent(message=m) for m in messages]))
         schedule.set_custom_daily_schedule(
             event_and_content_objects,
             total_iterations=schedule.total_iterations,
@@ -288,7 +288,7 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
         dirty = super(TranslatedConditionalAlertUploader, self).update_rule(rule, rows)
 
         if is_custom:
-            events_and_rows = zip(rule.get_messaging_rule_schedule().memoized_events, rows)
+            events_and_rows = list(zip(rule.get_messaging_rule_schedule().memoized_events, rows))
         else:
             events_and_rows = [(rule.get_messaging_rule_schedule().memoized_events[0], rows[0])]
 
@@ -322,8 +322,8 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
             return dirty
 
         if is_custom:
-            events_and_messages = zip(rule.get_messaging_rule_schedule().memoized_events,
-                                      [row['message'] for row in rows])
+            events_and_messages = list(zip(rule.get_messaging_rule_schedule().memoized_events,
+                                           [row['message'] for row in rows]))
         else:
             events_and_messages = [(rule.get_messaging_rule_schedule().memoized_events[0],
                                     rows[0]['message'])]
