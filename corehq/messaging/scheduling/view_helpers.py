@@ -263,7 +263,7 @@ class ConditionalAlertUploader(object):
     def save_custom_immediate_schedule(self, schedule, messages):
         AlertSchedule.assert_is(schedule)
         assert len(messages) == len(schedule.memoized_events), \
-               "Custom schedule expected {} messages, got {}".format(len(messages), len(schedule.memoized_events))
+            "Custom schedule expected {} messages, got {}".format(len(messages), len(schedule.memoized_events))
 
         event_and_content_objects = list(zip(schedule.memoized_events, [SMSContent(message=m) for m in messages]))
         schedule.set_custom_alert(event_and_content_objects, extra_options=schedule.get_extra_scheduling_options())
@@ -271,7 +271,7 @@ class ConditionalAlertUploader(object):
     def save_custom_daily_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
         assert len(messages) == len(schedule.memoized_events), \
-               "Custom schedule expected {} messages, got {}".format(len(messages), len(schedule.memoized_events))
+            "Custom schedule expected {} messages, got {}".format(len(messages), len(schedule.memoized_events))
 
         event_and_content_objects = list(zip(schedule.memoized_events, [SMSContent(message=m) for m in messages]))
         schedule.set_custom_daily_schedule(
