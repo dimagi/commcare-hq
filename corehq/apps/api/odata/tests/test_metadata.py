@@ -182,7 +182,7 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('ODATA')
-    def test_no_case_types(self):
+    def test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_to_properties', return_value={}):
             response = self._execute_query(correct_credentials)
@@ -229,7 +229,7 @@ class TestFormMetadataDocumentWithTwoFactorUsingApiKey(TestFormMetadataDocumentU
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
     @flag_enabled('ODATA')
-    def test_no_case_types(self):
+    def test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_to_properties', return_value={}):
             response = self._execute_query(correct_credentials)

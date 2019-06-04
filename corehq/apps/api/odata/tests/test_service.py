@@ -186,7 +186,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('ODATA')
-    def test_no_case_types(self):
+    def test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=[]):
             response = self._execute_query(correct_credentials)
@@ -200,7 +200,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         )
 
     @flag_enabled('ODATA')
-    def test_with_case_types(self):
+    def test_with_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=['xmlns_1', 'xmlns_2']):
             response = self._execute_query(correct_credentials)
@@ -236,7 +236,7 @@ class TestFormServiceDocumentWithTwoFactorUsingApiKey(TestFormServiceDocumentUsi
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
     @flag_enabled('ODATA')
-    def test_no_case_types(self):
+    def test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=[]):
             response = self._execute_query(correct_credentials)
@@ -251,7 +251,7 @@ class TestFormServiceDocumentWithTwoFactorUsingApiKey(TestFormServiceDocumentUsi
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
     @flag_enabled('ODATA')
-    def test_with_case_types(self):
+    def test_with_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=['xmlns_1', 'xmlns_2']):
             response = self._execute_query(correct_credentials)
