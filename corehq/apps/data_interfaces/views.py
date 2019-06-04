@@ -124,9 +124,8 @@ class ExploreCaseDataView(BaseDomainView):
     page_title = ugettext_lazy("Explore Case Data")
 
     @use_daterangepicker
-    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
-        if not self.report_config.has_permission:
+        if hasattr(request, 'couch_user') and not self.report_config.has_permission:
             raise Http404()
         return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
 
