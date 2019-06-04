@@ -738,8 +738,8 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
     for consumer in query_param_consumers:
         try:
             payload_filter = consumer.consume_params(query_params)
-        except DateTimeError:
-            raise Http400("Bad query parameter")
+        except DateTimeError as e:
+            raise Http400("Bad query parameter: {}".format(six.text_type(e)))
 
         if payload_filter:
             payload["filter"]["and"].append(payload_filter)
