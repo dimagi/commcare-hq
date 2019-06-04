@@ -432,9 +432,9 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
         self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
         self._assertPatternIn(r"Could not update rule with id \d+ in 'translated' sheet: "
-                              "expected 2 .* but found 3.", msgs)
+                              r"expected 2 .* but found 3.", msgs)
         self._assertPatternIn(r"Could not update rule with id \d+ in 'not translated' sheet: "
-                              "expected 2 .* but found 1.", msgs)
+                              r"expected 2 .* but found 1.", msgs)
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
     def test_upload_custom_schedule_name_mismatch(self, language_list_patch):
@@ -454,7 +454,7 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
         self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
         self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: "
-                              "Rule name must be the same", msgs)
+                              r"Rule name must be the same", msgs)
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
     def test_upload_blank_content(self, language_list_patch):
@@ -477,9 +477,9 @@ class TestBulkConditionalAlerts(TestCase):
 
         self.assertEqual(len(msgs), 5)
         self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
-                              "Missing content for en", msgs)
+                              r"Missing content for en", msgs)
         self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
-                              "Missing content for en, es", msgs)
+                              r"Missing content for en, es", msgs)
         self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
         self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: Missing content", msgs)
         self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
