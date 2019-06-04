@@ -163,7 +163,7 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         with trap_extra_setup(ConnectionError):
             elasticsearch_instance = get_es_new()
             initialize_index_and_mapping(elasticsearch_instance, XFORM_INDEX_INFO)
-        self.addCleanup(self._ensure_case_index_deleted)
+        self.addCleanup(self._ensure_xform_index_deleted)
 
         self.web_user.set_role(self.domain.name, 'admin')
         self.web_user.save()
@@ -189,8 +189,8 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         )
 
     @staticmethod
-    def _ensure_case_index_deleted():
-        ensure_index_deleted(CASE_INDEX_INFO.index)
+    def _ensure_xform_index_deleted():
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
 
 
 class TestFormOdataFeedUsingApiKey(TestFormOdataFeed):
