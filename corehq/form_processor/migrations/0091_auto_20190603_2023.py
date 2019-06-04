@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 
 TABLE_NAME = 'form_processor_ledgertransaction'
-INDEX_NAME = 'fp_ledgtrans_formid_0fe795_idx'
+INDEX_NAME = 'form_proces_form_id_86572d_idx'
 COLUMNS = ['form_id']
 
 CREATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
