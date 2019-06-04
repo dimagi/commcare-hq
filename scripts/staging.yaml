@@ -53,7 +53,7 @@ branches:
   #- nh/cdc/one_domain  # Norman March 26
   - sr-ucr-mirror # Sravan May 1
   - fr/case-templates      # FR May 15
-  - form-odata  # Nick P May 21
+  - form-odata-escaped  # Nick P May 21
   - web-user-reports-project-access  # Gabriella May 13
   - jls/final-select2-v4 # Jenny May 25
   - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
