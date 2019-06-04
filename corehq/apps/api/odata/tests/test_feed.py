@@ -6,13 +6,6 @@ from django.urls import reverse
 
 from elasticsearch.exceptions import ConnectionError
 
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
-)
 from corehq.apps.api.odata.tests.utils import (
     CaseOdataTestMixin,
     FormOdataTestMixin,
