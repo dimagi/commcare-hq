@@ -30,6 +30,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.const import ONE_DAY
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
@@ -654,20 +655,20 @@ def zip_folder(pdf_files):
     # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
     # we read this to save file in blobdb
     in_memory.seek(0)
-    icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(in_memory, expired=ONE_DAY)
     icds_file.save()
     return zip_hash
 
 
-def create_excel_file(excel_data, data_type, file_format):
-    file_hash = uuid.uuid4().hex
+def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout=60*60*24):
+    key = blob_key or uuid.uuid4().hex
     export_file = BytesIO()
-    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    icds_file = IcdsFile(blob_id=key, data_type=data_type)
     export_from_tables(excel_data, export_file, file_format)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=timeout)
     icds_file.save()
-    return file_hash
+    return key
 
 
 def create_pdf_file(pdf_context):
@@ -689,7 +690,7 @@ def create_pdf_file(pdf_context):
     # we read this to save file in blobdb
     resultFile.seek(0)
 
-    icds_file.store_file_in_blobdb(resultFile, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(resultFile, expired=ONE_DAY)
     icds_file.save()
     return pdf_hash
 
@@ -1026,14 +1027,17 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         worksheet2['B{0}'.format(n)].value = export_info_item[1]
 
     # saving file
-    file_hash = uuid.uuid4().hex
+    key = get_performance_report_blob_key(state, district, block, month, 'xlsx')
     export_file = BytesIO()
-    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    icds_file = IcdsFile(blob_id=key, data_type=data_type)
     workbook.save(export_file)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=None)
     icds_file.save()
-    return file_hash
+
+
+def get_performance_report_blob_key(state, district, block, month, file_format):
+    return 'performance_report-{}-{}-{}-{}-{}'.format(state, district, block, month, file_format)
 
 
 def create_excel_file_in_openpyxl(excel_data, data_type):
@@ -1056,7 +1060,7 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
     workbook.save(export_file)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
     icds_file.save()
     return file_hash
 
@@ -1191,7 +1195,7 @@ def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_
     icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
     workbook.save(export_file)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
     icds_file.save()
     return file_hash
 
