@@ -1,20 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from collections import defaultdict
+from io import BytesIO
 from operator import attrgetter
 from xml.etree import cElementTree as ElementTree
-from io import BytesIO
 
 import six
+
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
+
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FIXTURE_BUCKET
+from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
+from corehq.blobs.models import BlobMeta
 
 from .utils import get_index_schema_node
 
