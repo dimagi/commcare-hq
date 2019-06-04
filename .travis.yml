@@ -12,6 +12,10 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded-and-javascript JS_SETUP=yes TEST_MAKE_REQUIREMENTS=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes PYTHON3=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes PYTHON3=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes PYTHON3=yes
+    - TEST=python-sharded-and-javascript JS_SETUP=yes TEST_MAKE_REQUIREMENTS=yes PYTHON3=yes
   global:
     - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
     # TRAVIS_HQ_USERNAME
@@ -40,7 +44,12 @@ script:
     then
       bash scripts/test-make-requirements.sh
     fi
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
+  - |
+    if [[ "$PYTHON3" == "yes" ]] then
+      scripts/docker py3test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10
+    else
+      scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10
+    fi
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
