@@ -218,11 +218,15 @@ class ConditionalAlertUploader(object):
 
     def save_immediate_schedule(self, schedule, messages):
         AlertSchedule.assert_is(schedule)
+        assert(len(messages) == 1)
+
         schedule.set_simple_alert(SMSContent(message=messages[0]),
                                   extra_options=schedule.get_extra_scheduling_options())
 
     def save_daily_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
+        assert(len(messages) == 1)
+
         schedule.set_simple_daily_schedule(
             schedule.memoized_events[0],
             SMSContent(message=messages[0]),
@@ -234,6 +238,8 @@ class ConditionalAlertUploader(object):
 
     def save_weekly_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
+        assert(len(messages) == 1)
+
         schedule.set_simple_weekly_schedule(
             schedule.memoized_events[0],
             SMSContent(message=messages[0]),
@@ -245,11 +251,13 @@ class ConditionalAlertUploader(object):
         )
 
     def save_monthly_schedule(self, schedule, messages):
+        TimedSchedule.assert_is(schedule)
+        assert(len(messages) == 1)
+
         # Negative numbers are used for monthly schedules.
         # See comment on TimedSchedule.repeat_every
         repeat_every = schedule.repeat_every * -1
 
-        TimedSchedule.assert_is(schedule)
         schedule.set_simple_monthly_schedule(
             schedule.memoized_events[0],
             [e.day for e in schedule.memoized_events],
@@ -260,13 +268,17 @@ class ConditionalAlertUploader(object):
         )
 
     def save_custom_immediate_schedule(self, schedule, messages):
-        event_and_content_objects = zip(schedule.memoized_events, [SMSContent(message=m) for m in messages])
         AlertSchedule.assert_is(schedule)
+        assert(len(messages) == len(schedule.memoized_events))
+
+        event_and_content_objects = zip(schedule.memoized_events, [SMSContent(message=m) for m in messages])
         schedule.set_custom_alert(event_and_content_objects, extra_options=schedule.get_extra_scheduling_options())
 
     def save_custom_daily_schedule(self, schedule, messages):
-        event_and_content_objects = zip(schedule.memoized_events, [SMSContent(message=m) for m in messages])
         TimedSchedule.assert_is(schedule)
+        assert(len(messages) == len(schedule.memoized_events))
+
+        event_and_content_objects = zip(schedule.memoized_events, [SMSContent(message=m) for m in messages])
         schedule.set_custom_daily_schedule(
             event_and_content_objects,
             total_iterations=schedule.total_iterations,
