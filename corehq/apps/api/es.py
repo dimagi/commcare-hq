@@ -627,6 +627,7 @@ SUPPORTED_DATE_FORMATS = [
     ISO_DATE_FORMAT,
     '%Y-%m-%dT%H:%M:%S',
     '%Y-%m-%dT%H:%M:%S.%f',
+    '%Y-%m-%dT%H:%MZ',  # legacy Case API date format
 ]
 
 
