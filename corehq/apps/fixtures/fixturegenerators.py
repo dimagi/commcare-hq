@@ -80,44 +80,21 @@ class ItemListsProvider(FixtureProvider):
         return items
 
     def get_global_items(self, global_types, restore_state):
-        restore_user = restore_state.restore_user
-        user_id = restore_user.user_id
-        domain = restore_user.domain
-        db = get_blob_db()
+        domain = restore_state.restore_user.domain
+
+        data = None
         if not restore_state.overwrite_cache:
-            global_id = GLOBAL_USER_ID.encode('utf-8')
-            b_user_id = user_id.encode('utf-8')
-            try:
-                data = db.get(key=FIXTURE_BUCKET + '/' + domain).read()
-                return [data.replace(global_id, b_user_id)] if data else []
-            except NotFound:
-                pass
-        global_items = self._get_global_items(global_types, domain)
-        io = BytesIO()
-        io.write(ITEMS_COMMENT_PREFIX)
-        io.write(six.text_type(len(global_items)).encode('utf-8'))
-        io.write(b'-->')
-        for element in global_items:
-            io.write(ElementTree.tostring(element, encoding='utf-8'))
-            # change user_id AFTER writing to string for the cache
-            element.attrib["user_id"] = user_id
-        io.seek(0)
-        try:
-            kw = {"meta": db.metadb.get(
-                parent_id=domain,
-                type_code=CODES.fixture,
-                name="",
-            )}
-        except BlobMeta.DoesNotExist:
-            kw = {
-                "domain": domain,
-                "parent_id": domain,
-                "type_code": CODES.fixture,
-                "name": "",
-                "key": FIXTURE_BUCKET + '/' + domain,
-            }
-        db.put(io, **kw)
-        return global_items
+            data = _get_cached_global_items(domain)
+
+        if data is None:
+            global_items = self._get_global_items(global_types, domain)
+            io_data = _write_items_to_io(global_items)
+            _cache_global_items(io_data, domain)
+            data = io_data.read()
+
+        global_id = GLOBAL_USER_ID.encode('utf-8')
+        b_user_id = restore_state.restore_user.user_id.encode('utf-8')
+        return [data.replace(global_id, b_user_id)] if data else []
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
@@ -173,6 +150,44 @@ class ItemListsProvider(FixtureProvider):
         attrs_to_index = [field.field_name for field in data_type.fields if field.is_indexed]
         fixture_id = ':'.join((self.id, data_type.tag))
         return get_index_schema_node(fixture_id, attrs_to_index)
+
+
+def _get_cached_global_items(domain):
+    try:
+        return get_blob_db().get(key=FIXTURE_BUCKET + '/' + domain).read()
+    except NotFound:
+        return None
+
+
+def _write_items_to_io(items):
+    io = BytesIO()
+    io.write(ITEMS_COMMENT_PREFIX)
+    io.write(six.text_type(len(items)).encode('utf-8'))
+    io.write(b'-->')
+    for element in items:
+        io.write(ElementTree.tostring(element, encoding='utf-8'))
+    io.seek(0)
+    return io
+
+
+def _cache_global_items(io_data, domain):
+    db = get_blob_db()
+    try:
+        kw = {"meta": db.metadb.get(
+            parent_id=domain,
+            type_code=CODES.fixture,
+            name="",
+        )}
+    except BlobMeta.DoesNotExist:
+        kw = {
+            "domain": domain,
+            "parent_id": domain,
+            "type_code": CODES.fixture,
+            "name": "",
+            "key": FIXTURE_BUCKET + '/' + domain,
+        }
+    db.put(io_data, **kw)
+    io_data.seek(0)
 
 
 item_lists = ItemListsProvider()
