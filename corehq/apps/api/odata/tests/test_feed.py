@@ -5,7 +5,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from elasticsearch.exceptions import ConnectionError
-from tastypie.models import ApiKey
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -14,7 +13,11 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
-from corehq.apps.api.odata.tests.utils import CaseOdataTestMixin, FormOdataTestMixin
+from corehq.apps.api.odata.tests.utils import (
+    CaseOdataTestMixin,
+    FormOdataTestMixin,
+    generate_api_key_from_web_user,
+)
 from corehq.apps.api.resources.v0_5 import ODataCommCareCaseResource, ODataXFormInstanceResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -120,9 +123,7 @@ class TestCaseOdataFeedUsingApiKey(TestCaseOdataFeed):
     @classmethod
     def setUpClass(cls):
         super(TestCaseOdataFeedUsingApiKey, cls).setUpClass()
-        cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
-        cls.api_key.key = cls.api_key.generate_key()
-        cls.api_key.save()
+        cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
@@ -228,9 +229,7 @@ class TestFormOdataFeedUsingApiKey(TestFormOdataFeed):
     @classmethod
     def setUpClass(cls):
         super(TestFormOdataFeedUsingApiKey, cls).setUpClass()
-        cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
-        cls.api_key.key = cls.api_key.generate_key()
-        cls.api_key.save()
+        cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):

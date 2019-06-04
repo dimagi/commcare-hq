@@ -7,9 +7,12 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from mock import patch
-from tastypie.models import ApiKey
 
-from corehq.apps.api.odata.tests.utils import CaseOdataTestMixin, FormOdataTestMixin
+from corehq.apps.api.odata.tests.utils import (
+    CaseOdataTestMixin,
+    FormOdataTestMixin,
+    generate_api_key_from_web_user,
+)
 from corehq.apps.api.odata.views import ODataCaseServiceView, ODataFormServiceView
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -102,9 +105,7 @@ class TestCaseServiceDocumentUsingApiKey(TestCaseServiceDocumentCase):
     @classmethod
     def setUpClass(cls):
         super(TestCaseServiceDocumentUsingApiKey, cls).setUpClass()
-        cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
-        cls.api_key.key = cls.api_key.generate_key()
-        cls.api_key.save()
+        cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
@@ -202,9 +203,7 @@ class TestFormServiceDocumentUsingApiKey(TestFormServiceDocument):
     @classmethod
     def setUpClass(cls):
         super(TestFormServiceDocumentUsingApiKey, cls).setUpClass()
-        cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
-        cls.api_key.key = cls.api_key.generate_key()
-        cls.api_key.save()
+        cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):

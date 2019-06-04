@@ -5,6 +5,8 @@ import base64
 
 from django.urls import reverse
 
+from tastypie.models import ApiKey
+
 
 class OdataTestMixin(object):
 
@@ -34,3 +36,10 @@ class FormOdataTestMixin(OdataTestMixin):
     @property
     def view_url(self):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'app_id': 'my_app_id'})
+
+
+def generate_api_key_from_web_user(web_user):
+    api_key = ApiKey.objects.get_or_create(user=web_user.get_django_user())[0]
+    api_key.key = api_key.generate_key()
+    api_key.save()
+    return api_key
