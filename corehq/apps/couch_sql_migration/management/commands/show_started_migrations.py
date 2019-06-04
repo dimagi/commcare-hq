@@ -31,9 +31,11 @@ class Command(BaseCommand):
             print(status)
             for item in sorted(items, key=attrgetter("domain")):
                 started = item.started_on
-                print("  {}{}".format(
+                migrated = should_use_sql_backend(item.domain)
+                print("  {}{}{}".format(
                     item.domain,
                     started.strftime(" (%Y-%m-%d)") if started else "",
+                    " - already migrated? (bad state)" if migrated else "",
                 ))
                 if show_stats:
                     try:
