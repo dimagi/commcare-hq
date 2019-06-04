@@ -660,7 +660,7 @@ def zip_folder(pdf_files):
     return zip_hash
 
 
-def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout=60*60*24):
+def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout=ONE_DAY):
     key = blob_key or uuid.uuid4().hex
     export_file = BytesIO()
     icds_file = IcdsFile(blob_id=key, data_type=data_type)

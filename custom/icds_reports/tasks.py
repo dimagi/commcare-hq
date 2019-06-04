@@ -1172,10 +1172,7 @@ def build_incentive_report(agg_date=None):
             elif location.location_type.name == 'district':
                 build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
             else:
-                try:
-                    build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent, location)
-                except:
-                    import ipdb; ipdb.set_trace()
+                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent, location)
 
 
 @task(queue='icds_dashboard_reports_queue')
