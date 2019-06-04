@@ -14,7 +14,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
-from corehq.apps.hqwebapp.widgets import Select2AjaxV4
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 
@@ -540,7 +540,7 @@ class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Workers at Location"),
         required=False,
-        widget=Select2AjaxV4(multiple=True),
+        widget=Select2Ajax(multiple=True),
     )
 
     def __init__(self, domain_object, location, *args, **kwargs):
