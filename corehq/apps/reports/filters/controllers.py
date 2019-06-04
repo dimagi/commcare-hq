@@ -209,7 +209,7 @@ class EmwfOptionsController(object):
         """
         If `show_more` = True, then the result returns a tuple where the first
         value is a boolean of whether more additional pages are still available
-        (used by Select 2 V4). Otherwise the first value in the tuple returned
+        (used by Select 2). Otherwise the first value in the tuple returned
         is the total.
         :param show_more: (optional)
         :return: (int) count or (bool) has_more, (list) results

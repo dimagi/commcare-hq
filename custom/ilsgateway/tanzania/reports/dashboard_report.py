@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_datatables,
-    use_select2_legacy,
     use_jquery_ui,
     use_nvd3,
 )
@@ -31,7 +30,6 @@ class DashboardReport(MultiReport):
     @use_datatables
     @use_daterangepicker
     @use_jquery_ui
-    @use_select2_legacy
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         pass
