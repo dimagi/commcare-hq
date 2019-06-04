@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 from django.db.models import Min
+import logging
 
 from celery import current_task, current_app
 from celery.schedules import crontab
@@ -45,6 +46,13 @@ def get_async_restore_payload(restore_config, domain=None, username=None):
     Process an async restore
     domain and username: added for displaying restore request details on flower
     """
+    try:
+        repr(restore_config)
+    except Exception as e:
+        logging.error('Something went wrong with RestoreConfig.__repr__() : {msg}'.format(
+            msg=str(e)
+        ))
+
     response = restore_config.generate_payload(async_task=current_task)
 
     # delete the task id from the task, since the payload can now be fetched from the cache

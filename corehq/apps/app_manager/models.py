@@ -3076,7 +3076,7 @@ class AdvancedModule(ModuleBase):
         if self.case_list.show:
             return True
 
-        for form in self.forms:
+        for form in self.get_forms():
             if any(action.case_type == self.case_type for action in form.actions.load_update_cases):
                 return True
 
@@ -5580,6 +5580,7 @@ class LinkedApplication(Application):
             raise ActionNotPermitted
 
     def reapply_overrides(self):
+        # Used by app_manager.views.utils.update_linked_app()
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
         for attribute, value in self.linked_app_attrs.items():
@@ -5635,7 +5636,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
 
     try:
         if not app.is_remote_app():
-            for path, media in app.get_media_objects():
+            for path, media in app.get_media_objects(remove_unused=True):
                 if domain not in media.valid_domains:
                     media.valid_domains.append(domain)
                     media.save()

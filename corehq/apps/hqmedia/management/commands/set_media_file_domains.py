@@ -43,7 +43,7 @@ class Command(BaseCommand):
                     try:
                         if app.is_remote_app():
                             continue
-                        for _, m in app.get_media_objects():
+                        for _, m in app.get_media_objects(remove_unused=True):
                             if app.domain not in m.valid_domains:
                                 m.valid_domains.append(app.domain)
                                 self.stdout.write("adding domain %s to media file %s" % (app.domain, m._id))

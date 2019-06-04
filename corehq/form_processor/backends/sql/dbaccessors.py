@@ -590,9 +590,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
-        from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
-        case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
+        case_ids = list(get_case_ids_from_form(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
@@ -724,11 +723,12 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None):
+    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None, case_type=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
         self.start_date = start_date
         self.end_date = end_date
+        self.case_type = case_type
 
     @property
     def model_class(self):
@@ -752,6 +752,8 @@ class CaseReindexAccessor(ReindexAccessor):
             filters.append(Q(server_modified_on__gte=self.start_date))
         if self.end_date is not None:
             filters.append(Q(server_modified_on__lt=self.end_date))
+        if self.case_type is not None:
+            filters.append(Q(type=self.case_type))
         return filters
 
 

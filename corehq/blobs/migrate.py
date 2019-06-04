@@ -414,7 +414,6 @@ class BackendMigrator(Migrator):
         self.reindexer = reindexer
 
     def get_doc_migrator(self, filename, date_range=None, **kw):
-        self.reindexer.date_range = date_range
         migrator = super(BackendMigrator, self).get_doc_migrator(filename)
         return _migrator_with_worker_pool(migrator, self.reindexer, **kw)
 

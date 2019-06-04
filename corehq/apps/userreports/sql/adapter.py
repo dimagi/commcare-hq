@@ -94,17 +94,16 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             # only do this if the database contains the citus extension
             return
 
+        from custom.icds_reports.utils.migrations import (
+            create_citus_distributed_table, create_citus_reference_table
+        )
         with self.engine.begin() as connection:
             if config.distribution_type == 'hash':
                 if config.distribution_column not in self.get_table().columns:
                     raise ColumnNotFoundError("Column '{}' not found.".format(config.distribution_column))
-                connection.execute("select create_distributed_table('{}', '{}')".format(
-                    self.get_table().name, config.distribution_column
-                ))
+                create_citus_distributed_table(connection, self.get_table().name, config.distribution_column)
             elif config.distribution_type == 'reference':
-                connection.execute("select create_reference_table('{}')".format(
-                    self.get_table().name
-                ))
+                create_citus_reference_table(connection, self.get_table().name)
             else:
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
             return True
@@ -336,7 +335,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         if ex is not None:
             raise ex
 
-        orig_exception = getattr(exception, 'orig')
+        orig_exception = getattr(exception, 'orig', None)
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
                 from corehq.apps.userreports.models import InvalidUCRData

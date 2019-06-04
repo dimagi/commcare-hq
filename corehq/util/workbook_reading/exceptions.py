@@ -16,3 +16,7 @@ class SpreadsheetFileNotFound(SpreadsheetFileError, IOError):
 
 class SpreadsheetFileEncrypted(SpreadsheetFileError):
     pass
+
+
+class CellValueError(Exception):
+    pass

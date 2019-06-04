@@ -16,16 +16,21 @@ from pprint import pformat
 
 import six
 
+from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
 from corehq.motech.openmrs.finders_utils import (
     le_days_diff,
     le_levenshtein_percent,
 )
-from corehq.motech.value_source import recurse_subclasses
+from corehq.motech.value_source import (
+    ConstantString,
+    ValueSource,
+    recurse_subclasses,
+)
 from dimagi.ext.couchdbkit import (
-    BooleanProperty,
     DecimalProperty,
     DocumentSchema,
     ListProperty,
+    SchemaProperty,
     StringProperty,
 )
 
@@ -42,6 +47,19 @@ MATCH_TYPES = tuple(MATCH_FUNCTIONS)
 MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
 
 
+constant_false = ConstantString(
+    doc_type='ConstantString',
+    value='False',
+    # We are fetching from a case property or a form question value, and
+    # we want `get_value()` to return False (bool). `get_value()`
+    # serialises case properties and form question values as external
+    # data types. OPENMRS_DATA_TYPE_BOOLEAN is useful because it is a
+    # bool, not a string, so `constant_false.get_value()` will return
+    # False (not 'False')
+    external_data_type=OPENMRS_DATA_TYPE_BOOLEAN,
+)
+
+
 class PatientFinder(DocumentSchema):
     """
     Subclasses of the PatientFinder class implement particular
@@ -54,10 +72,17 @@ class PatientFinder(DocumentSchema):
     """
 
     # Whether to create a new patient if no patients are found
-    create_missing = BooleanProperty(default=False)
+    create_missing = SchemaProperty(ValueSource, default=constant_false)
 
     @classmethod
     def wrap(cls, data):
+
+        if 'create_missing' in data and data['create_missing'] in (True, False):
+            data['create_missing'] = {
+                'doc_type': 'ConstantString',
+                'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
+                'value': six.text_type(data['create_missing'])
+            }
 
         if cls is PatientFinder:
             return {

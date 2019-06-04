@@ -1058,11 +1058,11 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
-    "Message Log Report: Test new additions",
-    TAG_CUSTOM,
+    'Message Log Report v2',
+    TAG_SOLUTIONS,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
-    description=("Include failed messages, show message status, show event. "
-                 "This feature flag exists to QA on real prod data."),
+    description=("This flag makes failed messages appear in the Message Log "
+                 "Report, and adds Status and Event columns"),
 )
 
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
@@ -1070,13 +1070,6 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'Enable include SMS gateway charging',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-BROADCAST_TO_LOCATIONS = StaticToggle(
-    'broadcast_to_locations',
-    'Send broadcasts to locations',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
 )
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
@@ -1264,6 +1257,7 @@ LOCALE_ID_INTEGRITY = StaticToggle(
     'Verify all locale ids in suite are present in app strings before allowing CCZ download',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    notification_emails=['jschweers']
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
@@ -1515,6 +1509,15 @@ ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
+COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
+    'compare_ucr_reports',
+    'Compare UCR reports against other reports or against other databases. '
+    'Reports for comparison must be listed in settings.UCR_COMPARISONS.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+    default_randomness=0.001  # 1 in 1000
+)
+
 MOBILE_LOGIN_LOCKOUT = StaticToggle(
     'mobile_user_login_lockout',
     "On too many wrong password attempts, lock out mobile users",
@@ -1744,6 +1747,13 @@ IMPROVED_ASR_REPORT = StaticToggle(
     [NAMESPACE_USER]
 )
 
+MANAGE_CCZ_HOSTING = StaticToggle(
+    'manage_ccz_hosting',
+    'Allow project to configure ccz hosting',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
     'load_dashboard_from_citus',
     'Use CitusDB for loading ICDS Dashboard',
@@ -1761,6 +1771,13 @@ PARALLEL_AGGREGATION = StaticToggle(
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
     'Exposes an option in fixture api upload to skip saving through couchdbkit',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_UCR_MIRRORS = StaticToggle(
+    'enable_ucr_mirrors',
+    'Enable the mirrored engines for UCRs in this domain',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

@@ -183,7 +183,7 @@ def run_move_ucr_data_into_aggregation_tables_task():
         move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
 
-@serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
+@serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
 
     if force_citus:
@@ -393,8 +393,8 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
         )
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, date
+            "{}{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+                'Citus' if force_citus else '', func.__name__, settings.SERVER_ENVIRONMENT, date
             )
         )
         self.retry(exc=exc)
@@ -496,8 +496,11 @@ def _aggregate_awc_infra_forms(state_id, day):
     AggregateAwcInfrastructureForms.aggregate(state_id, day)
 
 
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _aggregate_inactive_aww(day):
+def _aggregate_inactive_aww(day, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     AggregateInactiveAWW.aggregate(day)
 
 
@@ -786,8 +789,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 ).name if aggregation_level >= 2 else None,
                 block=SQLLocation.objects.get(
                     location_id=config['block_id'], domain=config['domain']
-                ).name if aggregation_level == 3 else None,
-                beta=beta
+                ).name if aggregation_level == 3 else None
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -996,6 +998,8 @@ def collect_inactive_awws():
         last_sync_date = last_sync.file_added
 
     _aggregate_inactive_aww(last_sync_date)
+    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
+        _aggregate_inactive_aww.delay(last_sync_date, force_citus=True)
 
     celery_task_logger.info("Collecting inactive AWW to generate zip file")
     excel_data = AggregateInactiveAWW.objects.all()
@@ -1181,7 +1185,8 @@ def create_mbt_for_month(state_id, month):
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
         helper = get_helper(helper_class.helper_key)(state_id, month)
-        with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
+        # run on primary DB to avoid "conflict with recovery" errors
+        with get_cursor(helper.base_class, write=True) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)
             icds_file, _ = IcdsFile.objects.get_or_create(

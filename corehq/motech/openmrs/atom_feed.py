@@ -25,6 +25,7 @@ from corehq.motech.openmrs.const import (
     OPENMRS_ATOM_FEED_DEVICE_ID,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import OpenmrsFeedDoesNotExist
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus
@@ -43,6 +44,12 @@ def get_feed_xml(requests, feed_name, page):
     assert feed_name in ATOM_FEED_NAMES
     feed_url = '/'.join(('/ws/atomfeed', feed_name, page))
     resp = requests.get(feed_url)
+    if resp.status_code == 500 and 'AtomFeedRuntimeException: feed does not exist' in resp.content:
+        # This can happen if a Repeater IP address is changed to point
+        # to a different server, or if a server has been rebuilt.
+        _assert(False, 'Domain "{}": Page does not exist in Atom feed "{}". '
+                       'Resetting Atom feed status.'.format(requests.domain_name, resp.url))
+        raise OpenmrsFeedDoesNotExist()
     root = etree.fromstring(resp.content)
     return root
 
@@ -162,6 +169,9 @@ def get_feed_updates(repeater, feed_name):
     except (RequestException, HTTPError):
         # Don't update repeater if OpenMRS is offline
         return
+    except OpenmrsFeedDoesNotExist:
+        repeater.atom_feed_status[feed_name] = AtomFeedStatus()
+        repeater.save()
     else:
         repeater.atom_feed_status[feed_name] = AtomFeedStatus(
             last_polled_at=datetime.utcnow(),

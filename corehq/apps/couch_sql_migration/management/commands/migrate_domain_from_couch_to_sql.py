@@ -14,6 +14,8 @@ from sqlalchemy.exc import OperationalError
 
 from corehq import toggles
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
+    CASE_DOC_TYPES,
+    delete_diff_db,
     do_couch_to_sql_migration,
     delete_diff_db,
     get_diff_db,
@@ -29,6 +31,7 @@ from corehq.apps.couch_sql_migration.progress import (
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.tzmigration.planning import Counts
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -203,22 +206,22 @@ class Command(BaseCommand):
             diff_count, num_docs_with_diffs, short, diffs_only
         )
 
-        case_ids_in_couch = set(get_case_ids_in_domain(src_domain))
-        case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(dst_domain))
-        diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase", (0, 0))
-        has_diffs |= self._print_status(
-            'CommCareCase', case_ids_in_couch, case_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
-        )
-
-        case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-            src_domain, "CommCareCase-Deleted", XFormInstance.get_db())
-        )
-        case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain))
-        diff_count, num_docs_with_diffs = diff_stats.pop("CommCareCase-Deleted", (0, 0))
-        has_diffs |= self._print_status(
-            'CommCareCase-Deleted', case_ids_in_couch, case_ids_in_sql,
-            diff_count, num_docs_with_diffs, short, diffs_only
-        )
+        ZERO = Counts(0, 0)
+        doc_counts = db.get_doc_counts()
+        for doc_type in CASE_DOC_TYPES:
+            counts = doc_counts.get(doc_type, ZERO)
+            case_ids_in_couch = db.get_missing_doc_ids(doc_type) if counts.missing else set()
+            case_ids_in_sql = counts
+            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
+            has_diffs |= self._print_status(
+                doc_type,
+                case_ids_in_couch,
+                case_ids_in_sql,
+                diff_count,
+                num_docs_with_diffs,
+                short,
+                diffs_only,
+            )
 
         if diff_stats:
             for key, counts in diff_stats.items():
@@ -232,8 +235,14 @@ class Command(BaseCommand):
         return has_diffs
 
     def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
-        n_couch = len(ids_in_couch)
-        n_sql = len(ids_in_sql)
+        if isinstance(ids_in_sql, Counts):
+            counts, ids_in_sql = ids_in_sql, set()
+            assert len(ids_in_couch) == counts.missing, (len(ids_in_couch), counts.missing)
+            n_couch = counts.total
+            n_sql = counts.total - counts.missing
+        else:
+            n_couch = len(ids_in_couch)
+            n_sql = len(ids_in_sql)
         has_diff = ids_in_couch != ids_in_sql or diff_count
 
         if diffs_only and not has_diff:

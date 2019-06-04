@@ -14,6 +14,10 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value
 
 
 @quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
+def get_awc_infrastructure_data_with_cache(domain, config, show_test=False):
+    return get_awc_infrastructure_data(domain, config, show_test)
+
+
 def get_awc_infrastructure_data(domain, config, show_test=False):
     def get_data_for(month, filters):
         queryset = AggAwcMonthly.objects.filter(

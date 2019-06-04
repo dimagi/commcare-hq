@@ -66,7 +66,7 @@ django==1.11.20
 djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14
-dropbox==7.3.1
+dropbox==9.3.0
 elasticsearch==1.9.0
 email_validator==1.0.3
 enum34==1.1.6
@@ -78,9 +78,9 @@ faker==0.8.15
 freezegun==0.3.11
 funcsigs==1.0.2
 futures==3.2.0
-gevent==1.2.2
+gevent==1.4.0
 ghdiff==0.4
-greenlet==0.4.12
+greenlet==0.4.15
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1
@@ -94,7 +94,7 @@ jmespath==0.9.4
 json-delta==2.0
 jsonfield==1.0.3
 jsonobject-couchdbkit==0.9.16
-jsonobject==0.9.8
+jsonobject==0.9.9
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==4.2.2.post1

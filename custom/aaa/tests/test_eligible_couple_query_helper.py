@@ -299,7 +299,7 @@ class TestEligibleCoupleBeneficiaryList(TestCase):
         self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 0)
 
     def test_migrated_49_year_old(self):
-        self._create_woman('1970-12-01', migration_status='yes')
+        self._create_woman('1970-12-01', migration_status='migrated')
         self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 0)
 
     def test_unmarried_49_year_old(self):

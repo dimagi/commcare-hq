@@ -7,6 +7,7 @@ from corehq.apps.translations.integrations.transifex.views import (
     AppTranslations,
     BlacklistTranslations,
     ConvertTranslations,
+    DownloadTranslations,
     PullResource,
 )
 
@@ -19,4 +20,6 @@ urlpatterns = [
         name=BlacklistTranslations.urlname),
     url(r'^translations/apps/', AppTranslations.as_view(),
         name='app_translations'),
+    url(r'^dl/', DownloadTranslations.as_view(),
+        name='download_translations'),
 ]

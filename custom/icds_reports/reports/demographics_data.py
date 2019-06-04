@@ -19,6 +19,10 @@ from custom.icds_reports.utils import (
 
 
 @quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
+def get_demographics_data_with_cache(domain, now_date, config, show_test=False, beta=False):
+    return get_demographics_data(domain, now_date, config, show_test, beta)
+
+
 def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)
     current_month = datetime(*config['month'])

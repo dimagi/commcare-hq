@@ -383,6 +383,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('add_markdown-label', 'add_markdown: ~~new \\u0939\\u093f markdown~~',
              'add_markdown: ~~new \\u0939\\u093f markdown~~', '', '', '', '', '', ''),
             ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
+            ('remove_markdown-label', 'no longer markdown', 'just plain text', '', '', '', '', '', ''),
             ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*',
              '', '', '', '', '', ''),
         ))
@@ -429,6 +430,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
               'add_markdown: ~~new \\u0939\\u093f markdown~~', "", "", "", ""),
           ("menu1_form1", "", "", 'update_markdown-label',
               '## smaller_markdown', "", "", "", ""),
+          ("menu1_form1", "", "", 'remove_markdown-label',
+              'no longer markdown', "", "", "", ""),
           ("menu1_form1", "", "", 'vetoed_markdown-label',
               '*i just happen to like stars a lot*', "", "", "", ""),
         )),
@@ -472,6 +475,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
           ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
           ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
+          ('remove_markdown-label', '# remove_markdown', '# remove_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '',
            '', '', ''),
         ))
@@ -510,6 +514,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('menu1_form1', '', '', 'question7-label', 'question7', '', '', '', ''),
             ('menu1_form1', '', '', 'add_markdown-label', 'add_markdown', '', '', '', ''),
             ('menu1_form1', '', '', 'update_markdown-label', '# update_markdown', '', '', '', ''),
+            ('menu1_form1', '', '', 'remove_markdown-label', '# remove_markdown', '', '', '', ''),
             ('menu1_form1', '', '', 'vetoed_markdown-label', '*i just happen to like stars*', '', '', '', ''),
         )),
     )
@@ -551,6 +556,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
           ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
           ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
+          ('remove_markdown-label', '# remove_markdown', '# remove_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '',
            '', '', '', '', ''),
           ))
@@ -642,6 +648,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                                        "en", "/data/add_markdown")
             self.assert_question_label("## smaller_markdown", 0, 0,
                                        "en", "/data/update_markdown")
+            self.assert_question_label("no longer markdown", 0, 0,
+                                       "en", "/data/remove_markdown")
             self.assert_question_label("*i just happen to like stars a lot*", 0, 0,
                                        "en", "/data/vetoed_markdown")
 

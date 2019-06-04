@@ -130,6 +130,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         for month_num in range(2, 5):
             invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
+            tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 
@@ -230,6 +231,7 @@ class TestCreditLines(BaseInvoiceTestCase):
     def _test_final_invoice_balance(self):
         for month_num in range(2, 5):
             invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
+            tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 

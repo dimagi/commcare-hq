@@ -54,7 +54,7 @@ from corehq.apps.hqmedia.controller import (
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
-    build_application_zip,
+    build_application_zip_v2,
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
@@ -716,7 +716,6 @@ def iter_media_files(media_objects):
     errors will not include all error messages until the iterator is exhausted
 
     """
-    from dimagi.utils.logging import notify_exception
     errors = []
 
     def _media_files():
@@ -741,7 +740,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
     index_file_count = 0
     multimedia_file_count = 0
     if include_multimedia_files:
-        media_objects = list(app.get_media_objects(build_profile_id=build_profile_id))
+        media_objects = list(app.get_media_objects(build_profile_id=build_profile_id, remove_unused=True))
         multimedia_file_count = len(media_objects)
         file_iterator, errors = iter_media_files(media_objects)
     if include_index_files:
@@ -787,10 +786,11 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
             build_profile_id = request.GET.get('profile')
         download_targeted_version = request.GET.get('download_targeted_version') == 'true'
-        download.set_task(build_application_zip.delay(
+        download.set_task(build_application_zip_v2.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
-            app=self.app,
+            domain=self.app.domain,
+            app_id=self.app.id,
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,
@@ -886,7 +886,6 @@ class ViewMultimediaFile(View):
 
 def iter_index_files(app, build_profile_id=None, download_targeted_version=False):
     from corehq.apps.app_manager.views.download import download_index_files
-    from dimagi.utils.logging import notify_exception
     skip_files = [
         text_format.format(suffix)
         for text_format in ['profile{}.xml', 'profile{}.ccpr', 'media_profile{}.xml']

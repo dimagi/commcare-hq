@@ -25,9 +25,7 @@ class IcdsMonths(models.Model):
 class IcdsFile(models.Model):
     blob_id = models.CharField(max_length=255)
     data_type = models.CharField(max_length=255)
-    file_added = models.DateField(auto_now=True)
-
-    objects = CitusComparisonManager()
+    file_added = models.DateField(auto_now=True, help_text="Date that field was modified")
 
     def store_file_in_blobdb(self, file, expired=EXPIRED):
         db = get_blob_db()

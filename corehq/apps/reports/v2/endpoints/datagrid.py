@@ -8,10 +8,6 @@ class DatagridEndpoint(BaseDataEndpoint):
     slug = 'datagrid'
 
     @property
-    def draw(self):
-        return int(self.data.get('draw', 1))
-
-    @property
     def page(self):
         return int(self.data.get('page', 1))
 
@@ -19,9 +15,18 @@ class DatagridEndpoint(BaseDataEndpoint):
     def limit(self):
         return int(self.data.get('limit', 10))
 
+    @property
+    def current_total(self):
+        return int(self.data.get('totalRecords', 0))
+
     def get_response(self, query, formatter):
+        reset_pagination = False
         total = query.count()
-        start = min((self.page - 1) * self.limit, total)
+        start = (self.page - 1) * self.limit
+
+        if start > total or self.current_total != total:
+            start = 0
+            reset_pagination = True
 
         query = query.size(self.limit).start(start)
         results = [formatter(self.request, self.domain, r).get_context()
@@ -29,4 +34,5 @@ class DatagridEndpoint(BaseDataEndpoint):
         return {
             "rows": results,
             "totalRecords": total,
+            'resetPagination': reset_pagination,
         }

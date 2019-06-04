@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import doctest
 import os
@@ -14,6 +13,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase, override_settings
 
+import six
 import xmltodict
 from attr import attrib, attrs
 from couchdbkit.exceptions import ResourceNotFound
@@ -50,6 +50,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL,
     LedgerAccessorSQL,
 )
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -115,9 +116,15 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
-        diffs = get_diff_db(self.domain_name).get_diffs()
+        diff_db = get_diff_db(self.domain_name)
+        diffs = diff_db.get_diffs()
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
         self.assertEqual(expected, json_diffs)
+        self.assertEqual({
+            kind: counts.missing
+            for kind, counts in six.iteritems(diff_db.get_doc_counts())
+            if counts.missing
+        }, {})
 
     def _get_form_ids(self, doc_type='XFormInstance'):
         return FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain(doc_type=doc_type)
@@ -701,6 +708,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             id_="test-form", datetime_="a day long ago")
         assert len(form.external_blobs) == 1, form.external_blobs
         form.external_blobs.pop("form.xml")
+        form.initial_processing_complete = False
         with bad_form.fetch_attachment("form.xml", stream=True) as xml:
             form.put_attachment(xml, "form.xml", content_type="text/xml")
         form.save()
@@ -720,6 +728,26 @@ class MigrationTestCase(BaseMigrationTestCase):
         form = FormAccessors(self.domain_name).get_form('new-form')
         self.assertEqual(form.deprecated_form_id, "test-form")
         self.assertIsNone(form.problem)
+
+    def test_missing_case(self):
+        # This can happen when a form is edited, removing the last
+        # remaining reference to a case. The case effectively becomes
+        # orphaned, and will be ignored by the migration.
+        from corehq.apps.cloudcare.const import DEVICE_ID
+        # replace device id to avoid edit form soft assert
+        test_form = TEST_FORM.replace("cloudcare", DEVICE_ID)
+        submit_form_locally(test_form, self.domain_name)
+        edited_form = test_form.replace("test-case", "other-case")
+        submit_form_locally(edited_form, self.domain_name)
+        self.assertEqual(self._get_case("test-case").xform_ids, ["test-form"])
+        self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
+        with self.assertRaises(CaseNotFound):
+            self._get_case("test-case")
+        self._compare_diffs([])
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
