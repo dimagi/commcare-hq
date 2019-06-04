@@ -63,6 +63,8 @@ from corehq.blobs.exceptions import NotFound
 
 
 logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
+
 
 DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
@@ -572,7 +574,7 @@ class RestoreConfig(object):
                 payload = self.get_payload()
             response = payload.get_http_response()
         except RestoreException as e:
-            logging.exception("%s error during restore submitted by %s: %s" %
+            log.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.restore_user.username, str(e)))
             is_async = False
             response = get_simple_response_xml(
@@ -761,7 +763,6 @@ class RestoreConfig(object):
             else:
                 sync_log = self.restore_state.current_sync_log
                 sync_log_id = sync_log._id if sync_log else 'N/A'
-            log = logging.getLogger(__name__)
             log.info(
                 "restore %s: user=%s device=%s domain=%s status=%s duration=%.3f",
                 sync_log_id,
