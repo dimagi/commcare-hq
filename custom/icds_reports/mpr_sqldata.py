@@ -1647,7 +1647,7 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
 
 class MPRVhnd(ICDSMixin, MPRData):
 
-    title = '10. Village Health and Nutrition Day (VHSND) activity summary'
+    title = '10. Village Health Sanitation and Nutrition Day (VHSND) activity summary'
     slug = 'vhnd'
 
     @property
@@ -1714,7 +1714,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'e) ANM / MPW present during VHDN?',
+                'e) ANM / MPW present during VHSND?',
                 'anm_mpw',
                 {
                     'column': 'anm_mpw',
