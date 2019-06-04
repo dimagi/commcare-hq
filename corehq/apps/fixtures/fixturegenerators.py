@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
+from operator import attrgetter
 from xml.etree import cElementTree as ElementTree
 from io import BytesIO
 
@@ -116,46 +117,40 @@ class ItemListsProvider(FixtureProvider):
         return global_items
 
     def _get_global_items(self, global_types, domain, bypass_cache):
-        items_by_type = defaultdict(list)
-        for item in FixtureDataItem.by_data_types(domain, global_types, bypass_cache):
-            data_type = global_types[item.data_type_id]
-            self._set_cached_type(item, data_type)
-            items_by_type[data_type].append(item)
-        return self._get_fixtures(global_types, items_by_type, GLOBAL_USER_ID)
+        def get_items_by_type(data_type):
+            items = []
+            for item in FixtureDataItem.by_data_type(domain, data_type, bypass_cache):
+                self._set_cached_type(item, data_type)
+                items.append(item)
+            return sorted(items, key=attrgetter('sort_key'))
+
+        return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
 
     def get_user_items(self, user_types, restore_user):
         items_by_type = defaultdict(list)
         for item in restore_user.get_fixture_data_items():
-            try:
-                data_type = user_types[item.data_type_id]
-            except KeyError:
-                continue
-            self._set_cached_type(item, data_type)
-            items_by_type[data_type].append(item)
-        return self._get_fixtures(user_types, items_by_type, restore_user.user_id)
+            data_type = user_types.get(item.data_type_id)
+            if data_type:
+                self._set_cached_type(item, data_type)
+                items_by_type[data_type].append(item)
+
+        def get_items_by_type(data_type):
+            return sorted(items_by_type.get(data_type, []),
+                          key=attrgetter('sort_key'))
+
+        return self._get_fixtures(user_types, get_items_by_type, restore_user.user_id)
 
     def _set_cached_type(self, item, data_type):
         # set the cached version used by the object so that it doesn't
         # have to do another db trip later
         item._data_type = data_type
 
-    def _get_fixtures(self, data_types, items_by_type, user_id):
-        def tag(item):
-            data_type, items = item
-            return data_type.tag
-
-        def sort_key(item):
-            return item.sort_key
-
-        items_by_type = dict(items_by_type)
-        for data_type in data_types.values():
-            if data_type not in items_by_type:
-                items_by_type[data_type] = []
+    def _get_fixtures(self, data_types, get_items_by_type, user_id):
         fixtures = []
-        for data_type, items in sorted(list(items_by_type.items()), key=tag):
+        for data_type in sorted(data_types.values(), key=lambda data_type: data_type.tag):
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
-            items = sorted(items, key=sort_key)
+            items = get_items_by_type(data_type)
             fixtures.append(self._get_fixture_element(data_type, user_id, items))
         return fixtures
 
