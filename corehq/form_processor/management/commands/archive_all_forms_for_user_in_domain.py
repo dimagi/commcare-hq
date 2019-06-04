@@ -41,6 +41,7 @@ class Command(BaseCommand):
             form_case_ids = set(cu.id for cu in get_case_updates(form))
             if form_case_ids:
                 case_ids_to_rebuild.update(form_case_ids)
+        case_ids_to_rebuild = list(case_ids_to_rebuild)
         print("Found %s cases that would need to be rebuilt" % len(case_ids_to_rebuild))
 
         # archive forms
