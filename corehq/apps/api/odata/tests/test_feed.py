@@ -77,8 +77,11 @@ class TestCaseOdataFeed(TestCase, CaseOdataTestMixin):
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('ODATA')
     def test_request_succeeded(self):
+        self._test_request_succeeded()
+
+    @flag_enabled('ODATA')
+    def _test_request_succeeded(self):
         with trap_extra_setup(ConnectionError):
             elasticsearch_instance = get_es_new()
             initialize_index_and_mapping(elasticsearch_instance, CASE_INDEX_INFO)
@@ -128,21 +131,7 @@ class TestCaseOdataFeedUsingApiKey(TestCaseOdataFeed):
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
 class TestCaseOdataFeedWithTwoFactorUsingApiKey(TestCaseOdataFeedUsingApiKey):
-
-    # Duplicated because flag on inherited method doesn't work when outer flag is used
-    @flag_enabled('ODATA')
-    def test_request_succeeded(self):
-        with trap_extra_setup(ConnectionError):
-            elasticsearch_instance = get_es_new()
-            initialize_index_and_mapping(elasticsearch_instance, CASE_INDEX_INFO)
-        self.addCleanup(self._ensure_case_index_deleted)
-
-        self.web_user.set_role(self.domain.name, 'admin')
-        self.web_user.save()
-
-        correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
+    pass
 
 
 class TestFormOdataFeed(TestCase, FormOdataTestMixin):
@@ -196,8 +185,11 @@ class TestFormOdataFeed(TestCase, FormOdataTestMixin):
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('ODATA')
     def test_request_succeeded(self):
+        self._test_request_succeeded()
+
+    @flag_enabled('ODATA')
+    def _test_request_succeeded(self):
         with trap_extra_setup(ConnectionError):
             elasticsearch_instance = get_es_new()
             initialize_index_and_mapping(elasticsearch_instance, XFORM_INDEX_INFO)
@@ -247,18 +239,4 @@ class TestFormOdataFeedUsingApiKey(TestFormOdataFeed):
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
 class TestFormOdataFeedWithTwoFactorUsingApiKey(TestFormOdataFeedUsingApiKey):
-
-    # Duplicated because flag on inherited method doesn't work when outer flag is used
-    @flag_enabled('ODATA')
-    def test_request_succeeded(self):
-        with trap_extra_setup(ConnectionError):
-            elasticsearch_instance = get_es_new()
-            initialize_index_and_mapping(elasticsearch_instance, XFORM_INDEX_INFO)
-        self.addCleanup(self._ensure_case_index_deleted)
-
-        self.web_user.set_role(self.domain.name, 'admin')
-        self.web_user.save()
-
-        correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
+    pass
