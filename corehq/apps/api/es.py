@@ -623,18 +623,23 @@ class ElasticAPIQuerySet(object):
             raise TypeError('Unsupported type: %s', type(idx))
 
 
+SUPPORTED_DATE_FORMATS = [
+    ISO_DATE_FORMAT,
+    '%Y-%m-%dT%H:%M:%S',
+    '%Y-%m-%dT%H:%M:%S.%f',
+]
+
+
 def validate_date(date):
-    try:
-        datetime.datetime.strptime(date, ISO_DATE_FORMAT)
-    except ValueError:
+    for pattern in SUPPORTED_DATE_FORMATS:
         try:
-            datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            datetime.datetime.strptime(date, pattern)
+            return
         except ValueError:
-            try:
-                datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
-            except ValueError:
-                raise DateTimeError("Date not in the correct format")
-    return date
+            pass
+
+    # No match
+    raise DateTimeError("Unknown date format: {}".format(date))
 
 
 RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
