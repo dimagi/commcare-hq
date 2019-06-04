@@ -94,18 +94,17 @@ TODO:
 
       <div class="property-name">{% block property_name_display %}</div>
         <!-- ko ifnot: $root.optionsContainQuestions -->
-        <input type="text"
-               class="form-control input-sm"
-               data-bind="select2: $parent.selectablePropertyOptions, value: property">
+        <select class="form-control"
+                data-bind="select2: $parent.selectablePropertyOptions, value: property"></select>
         <!-- /ko -->
         <!-- ko if: $root.optionsContainQuestions -->
-        <input class="form-control input-sm" type="hidden" data-bind="
+        <select class="form-control" data-bind="
                 questionsSelect: $parent.selectablePropertyOptions.concat(
                     existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                 ),
                 value: existsInCurrentVersion() ? property : dataSourceField,
                 attr: {disabled: !existsInCurrentVersion()}
-            "/>
+            "></select>
         <!-- /ko -->
       {% endblock %}
       <strong class="help-block" data-bind="if: $parent.showWarnings() && !property()">
