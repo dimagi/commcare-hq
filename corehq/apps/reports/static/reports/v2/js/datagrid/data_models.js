@@ -90,6 +90,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             if (self.currentPage() === undefined) return;
             if (self.limit() === undefined) return;
 
+            self.isLoadingError(false);
             self.isDataLoading(true);
             $.ajax({
                 url: self.endpoint.getUrl(),
@@ -118,6 +119,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                     }
                 })
                 .fail(function () {
+                    self.rows([]);
                     self.isLoadingError(true);
                 })
                 .always(function () {
