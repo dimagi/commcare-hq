@@ -2138,7 +2138,6 @@ class TestExportData(TestCase):
                'No', 13, 'No']]],
             ['Export Info',
                 [
-                    ['Generated at', india_now()],
                     ['Grouped By', 'AWC'],
                     ['Month', 5],
                     ['Year', 2017],
