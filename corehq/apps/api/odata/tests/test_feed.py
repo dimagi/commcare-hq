@@ -7,8 +7,7 @@ from django.urls import reverse
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.api.odata.tests.utils import (
-    CaseOdataTestMixin,
-    FormOdataTestMixin,
+    OdataTestMixin,
     generate_api_key_from_web_user,
 )
 from corehq.apps.api.resources.v0_5 import ODataCommCareCaseResource, ODataXFormInstanceResource
@@ -21,7 +20,7 @@ from corehq.util.test_utils import flag_enabled, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-class TestCaseOdataFeed(TestCase, CaseOdataTestMixin):
+class TestCaseOdataFeed(TestCase, OdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -116,7 +115,7 @@ class TestCaseOdataFeedWithTwoFactorUsingApiKey(TestCaseOdataFeedUsingApiKey):
     pass
 
 
-class TestFormOdataFeed(TestCase, FormOdataTestMixin):
+class TestFormOdataFeed(TestCase, OdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
