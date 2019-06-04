@@ -1,19 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from collections import defaultdict
+from io import BytesIO
 from operator import attrgetter
 from xml.etree import cElementTree as ElementTree
-from io import BytesIO
 
 import six
+
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FIXTURE_BUCKET
+
+from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
+from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
+from corehq.blobs.models import BlobMeta
 
 from .utils import get_index_schema_node
 
@@ -89,7 +92,7 @@ class ItemListsProvider(FixtureProvider):
                 return [data.replace(global_id, b_user_id)] if data else []
             except NotFound:
                 pass
-        global_items = self._get_global_items(global_types, domain, bypass_cache=restore_state.overwrite_cache)
+        global_items = self._get_global_items(global_types, domain)
         io = BytesIO()
         io.write(ITEMS_COMMENT_PREFIX)
         io.write(six.text_type(len(global_items)).encode('utf-8'))
@@ -116,13 +119,11 @@ class ItemListsProvider(FixtureProvider):
         db.put(io, **kw)
         return global_items
 
-    def _get_global_items(self, global_types, domain, bypass_cache):
+    def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
-            items = []
-            for item in FixtureDataItem.by_data_type(domain, data_type, bypass_cache):
+            for item in iter_fixture_items_for_data_type(domain, data_type._id):
                 self._set_cached_type(item, data_type)
-                items.append(item)
-            return sorted(items, key=attrgetter('sort_key'))
+                yield item
 
         return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
 
@@ -147,7 +148,7 @@ class ItemListsProvider(FixtureProvider):
 
     def _get_fixtures(self, data_types, get_items_by_type, user_id):
         fixtures = []
-        for data_type in sorted(data_types.values(), key=lambda data_type: data_type.tag):
+        for data_type in sorted(data_types.values(), key=attrgetter('tag')):
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
             items = get_items_by_type(data_type)
