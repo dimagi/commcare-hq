@@ -33,20 +33,13 @@ class TestCaseOdataFeed(TestCase, CaseOdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestCaseOdataFeed, cls).setUpClass()
-
         cls._setupclass()
-
-        cls.account, _ = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by='')
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
-        cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan_version)
+        cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-
-        SubscriptionAdjustment.objects.all().delete()
-        cls.subscription.delete()
-        cls.account.delete()
+        cls._teardown_accounting()
         super(TestCaseOdataFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
@@ -135,20 +128,13 @@ class TestFormOdataFeed(TestCase, FormOdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFormOdataFeed, cls).setUpClass()
-
         cls._setupclass()
-
-        cls.account, _ = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by='')
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
-        cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan_version)
+        cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-
-        SubscriptionAdjustment.objects.all().delete()
-        cls.subscription.delete()
-        cls.account.delete()
+        cls._teardown_accounting()
         super(TestFormOdataFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
