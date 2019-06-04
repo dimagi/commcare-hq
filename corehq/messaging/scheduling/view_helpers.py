@@ -144,7 +144,6 @@ class ConditionalAlertUploader(object):
                 continue
 
             rules_by_id[row['id']] = rule
-            row.update({'index': index})
             condensed_rows[row['id']].append(row)
 
         # Update the condensed set of rules
@@ -167,23 +166,13 @@ class ConditionalAlertUploader(object):
                                                                             expected=expected, actual=actual)))
                     continue
 
-                # Check that names match for all rows
-                name = rows[0]['name']
-                if any([row['name'] != name for row in rows]):
-                    self.msgs.append((messages.error, _("Could not update rule with id {id} in '{sheet_name}' "
-                                                        "sheet: rule name must be the same in all "
-                                                        "rows.").format(id=rule.id, sheet_name=self.sheet_name)))
-                    continue
-
             with transaction.atomic():
                 try:
                     dirty = self.update_rule(rule, rows, is_custom=is_custom)
                 except RuleUpdateError as e:
-                    index = min([r['index'] for r in rows])
-                    self.msgs.append((messages.error, _("Error updating row {index} in '{sheet_name}' sheet, "
-                                      "with rule id {id}: {detail}").format(index=index, id=rule.id,
-                                                                            sheet_name=self.sheet_name,
-                                                                            detail=six.text_type(e))))
+                    self.msgs.append((messages.error, _("Error updating rule with id {id} in '{sheet_name}' "
+                                      "sheet: {detail}").format(id=rule.id, sheet_name=self.sheet_name,
+                                                                detail=six.text_type(e))))
                     continue
 
                 if dirty:
@@ -197,11 +186,15 @@ class ConditionalAlertUploader(object):
         return self.msgs
 
     def update_rule(self, rule, rows):
-        dirty = False
+        if len(set([r['name'] for r in rows])) != 1:
+            raise RuleUpdateError(_("Rule name must be the same in all rows"))
+
         row = rows[0]
+        dirty = False
         if 'name' in row and rule.name != row['name']:
             dirty = True
             rule.name = row['name']
+
         return dirty
 
     def update_rule_messages(self, rule, messages):

@@ -453,8 +453,8 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertEqual(len(msgs), 3)
         self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
         self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
-        self._assertPatternIn(r"Could not update rule with id \d+ in 'not translated' sheet: "
-                               "rule name must be the same in all rows.", msgs)
+        self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: "
+                               "Rule name must be the same", msgs)
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
     def test_upload_blank_content(self, language_list_patch):
@@ -476,10 +476,12 @@ class TestBulkConditionalAlerts(TestCase):
         msgs = self._upload(data, headers)
 
         self.assertEqual(len(msgs), 5)
-        self._assertPatternIn(r"Error updating row 2 in 'translated' sheet, .*: Missing content for en", msgs)
-        self._assertPatternIn(r"Error updating row 3 in 'translated' sheet, .*: Missing content for en, es", msgs)
+        self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
+                               "Missing content for en", msgs)
+        self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
+                               "Missing content for en, es", msgs)
         self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
-        self._assertPatternIn(r"Error updating row 2 in 'not translated' sheet, .*: Missing content", msgs)
+        self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: Missing content", msgs)
         self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
