@@ -328,10 +328,11 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None):
+    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None, include_deleted=False):
         super(FormReindexAccessor, self).__init__(limit_db_aliases)
         self.domain = domain
         self.include_attachments = include_attachments
+        self.include_deleted = include_deleted
 
     @property
     def model_class(self):
@@ -352,7 +353,7 @@ class FormReindexAccessor(ReindexAccessor):
 
     def extra_filters(self, for_count=False):
         filters = []
-        if not for_count:
+        if not (for_count or self.include_deleted):
             # don't inlucde in count query since the query planner can't account for it
             # hack for django: 'state & DELETED = 0' so 'state = state + state & DELETED'
             filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
@@ -723,12 +724,14 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None, case_type=None):
+    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None, case_type=None,
+                 include_deleted=False):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
         self.start_date = start_date
         self.end_date = end_date
         self.case_type = case_type
+        self.include_deleted = include_deleted
 
     @property
     def model_class(self):
@@ -745,7 +748,9 @@ class CaseReindexAccessor(ReindexAccessor):
             pass
 
     def extra_filters(self, for_count=False):
-        filters = [Q(deleted=False)]
+        filters = []
+        if not self.include_deleted:
+            filters.append(Q(deleted=False))
         if self.domain:
             filters.append(Q(domain=self.domain))
         if self.start_date is not None:
