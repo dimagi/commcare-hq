@@ -57,7 +57,7 @@ class IncentiveReport(object):
             ]
 
             # AWC not launched
-            is_launched = row_data['is_launched'] if self.beta else row_data['is_launched'] == 'yes'
+            is_launched = row['is_launched'] if self.beta else row['is_launched'] == 'yes'
             if not is_launched:
                 AWC_NOT_LAUNCHED = 'AWC not launched'
                 row_data.extend([
@@ -128,7 +128,6 @@ class IncentiveReport(object):
             [
                 'Export Info',
                 [
-                    ['Generated at', india_now()],
                     ['Grouped By', 'AWC'],
                     ['Month', self.month.month],
                     ['Year', self.month.year],
