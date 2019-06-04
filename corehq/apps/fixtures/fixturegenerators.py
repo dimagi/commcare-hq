@@ -148,7 +148,7 @@ class ItemListsProvider(FixtureProvider):
 
     def _get_fixtures(self, data_types, get_items_by_type, user_id):
         fixtures = []
-        for data_type in sorted(data_types.values(), key=lambda data_type: data_type.tag):
+        for data_type in sorted(data_types.values(), key=attrgetter('tag')):
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
             items = get_items_by_type(data_type)
