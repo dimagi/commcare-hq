@@ -211,14 +211,14 @@ class ConditionalAlertUploader(object):
 
     def save_immediate_schedule(self, schedule, messages):
         AlertSchedule.assert_is(schedule)
-        assert len(messages) == 1, "Immediate schedule expected 1 message, got " + six.text_type(len(messages))
+        assert len(messages) == 1, "Immediate schedule expected 1 message, got %s" % len(messages)
 
         schedule.set_simple_alert(SMSContent(message=messages[0]),
                                   extra_options=schedule.get_extra_scheduling_options())
 
     def save_daily_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
-        assert len(messages) == 1, "Daily schedule expected 1 message, got " + six.text_type(len(messages))
+        assert len(messages) == 1, "Daily schedule expected 1 message, got %s" % len(messages)
 
         schedule.set_simple_daily_schedule(
             schedule.memoized_events[0],
@@ -231,7 +231,7 @@ class ConditionalAlertUploader(object):
 
     def save_weekly_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
-        assert len(messages) == 1, "Weekly schedule expected 1 message, got " + six.text_type(len(messages))
+        assert len(messages) == 1, "Weekly schedule expected 1 message, got %s" % len(messages)
 
         schedule.set_simple_weekly_schedule(
             schedule.memoized_events[0],
@@ -245,7 +245,7 @@ class ConditionalAlertUploader(object):
 
     def save_monthly_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
-        assert len(messages) == 1, "Monthly schedule expected 1 message, got " + six.text_type(len(messages))
+        assert len(messages) == 1, "Monthly schedule expected 1 message, got %s" % len(messages)
 
         # Negative numbers are used for monthly schedules.
         # See comment on TimedSchedule.repeat_every
