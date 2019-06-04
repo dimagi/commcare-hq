@@ -8,6 +8,7 @@ from io import BytesIO
 import six
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
+from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FIXTURE_BUCKET
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
@@ -89,7 +90,7 @@ class ItemListsProvider(FixtureProvider):
                 return [data.replace(global_id, b_user_id)] if data else []
             except NotFound:
                 pass
-        global_items = self._get_global_items(global_types, domain, bypass_cache=restore_state.overwrite_cache)
+        global_items = self._get_global_items(global_types, domain)
         io = BytesIO()
         io.write(ITEMS_COMMENT_PREFIX)
         io.write(six.text_type(len(global_items)).encode('utf-8'))
@@ -116,9 +117,9 @@ class ItemListsProvider(FixtureProvider):
         db.put(io, **kw)
         return global_items
 
-    def _get_global_items(self, global_types, domain, bypass_cache):
+    def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
-            for item in FixtureDataItem.by_data_type(domain, data_type, bypass_cache):
+            for item in iter_fixture_items_for_data_type(domain, data_type._id):
                 self._set_cached_type(item, data_type)
                 yield item
 
