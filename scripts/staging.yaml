@@ -58,4 +58,5 @@ branches:
   - test-RestoreConfig-repr-method  # Gabriella May 31
   - jls/final-select2-v4 # Jenny May 25
   - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
+  - es/fixtures-part-1  # Ethan June 4
 submodules: {}
