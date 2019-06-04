@@ -37,7 +37,7 @@ class RequestLogTests(SimpleTestCase):
             response_mock.json.return_value = content
             request_mock.return_value = response_mock
 
-            self.requests.get(uri)
+            self.requests.get(uri, {'code': TEST_API_USERNAME})
 
             log_mock.assert_called_with(
                 logging.INFO,
@@ -47,6 +47,7 @@ class RequestLogTests(SimpleTestCase):
                 content_json,
                 'GET',
                 TEST_API_URL + uri,
+                {'code': TEST_API_USERNAME},
                 allow_redirects=True,
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
                 headers={'Accept': 'application/json'},
