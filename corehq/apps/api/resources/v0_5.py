@@ -5,6 +5,7 @@ from collections import namedtuple
 from itertools import chain
 
 import six
+from six.moves.urllib.parse import unquote
 from django.conf.urls import url
 from django.contrib.auth.models import User
 from django.forms import ValidationError
@@ -958,7 +959,7 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
     def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
         data['domain'] = request.domain
         data['app_id'] = self.app_id
-        data['xmlns'] = self.xmlns
+        data['xmlns'] = unquote(self.xmlns)
         data['api_path'] = request.path
         response = super(ODataXFormInstanceResource, self).create_response(
             request, data, response_class, **response_kwargs)
@@ -966,8 +967,8 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         elastic_query_set = super(ODataXFormInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
-        full_xmlns = 'http://openrosa.org/formdesigner/' + kwargs['xmlns']
-        elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': full_xmlns}})
+        xmlns = kwargs['xmlns']
+        elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': xmlns}})
         return elastic_query_set
 
     class Meta(v0_4.XFormInstanceResource.Meta):
