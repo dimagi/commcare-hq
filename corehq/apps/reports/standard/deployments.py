@@ -268,11 +268,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return grouped_location
 
     def include_location_data(self):
-        self.request.user = self.request.couch_user
+        toggle = toggles.LOCATION_COLUMNS_APP_STATUS_REPORT
         return (
-            toggles.LOCATION_COLUMNS_APP_STATUS_REPORT.enabled_for_request(self.request)
-            and
-            self.rendered_as in ['export']
+            (
+                toggle.enabled(self.request.couch_user.username, toggles.NAMESPACE_USER)
+                or toggle.enabled(self.request.domain, toggles.NAMESPACE_DOMAIN)
+            ) and self.rendered_as in ['export']
         )
 
     def process_rows(self, users, fmt_for_export=False):
