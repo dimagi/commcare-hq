@@ -1,42 +1,46 @@
 (function () {
     var utils = {
-        getIcon: function (question) {
+        _getIcon: function (question) {
             if (question.tag === 'upload') {
                 return '<i class="fa fa-paperclip"></i> ';
             }
             return '';
         },
         getDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
+            return utils._getIcon(question) + utils._getLabel(question, MAXLEN)
                     + " (" + (question.hashtagValue || question.value) + ")";
         },
         getTruncatedDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
-                    + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
+            return utils._getIcon(question) + utils._getLabel(question, MAXLEN)
+                    + " (" + utils._truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
-        getLabel: function (question, MAXLEN) {
-            return utils.truncateLabel((question.repeat ? '- ' : '')
+        _getLabel: function (question, MAXLEN) {
+            return utils._truncateLabel((question.repeat ? '- ' : '')
                     + question.label, question.tag === 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
-        truncateLabel: function (label, suffix, MAXLEN) {
+        _truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";
             var MAXLEN = MAXLEN || 40,
                 maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
-        truncateValue: function (value, MAXLEN) {
+        _truncateValue: function (value, MAXLEN) {
             MAXLEN = MAXLEN || 40;
             return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN / 2) + "..." + value.slice(value.length - MAXLEN / 2));
         },
     };
 
+    var questionsById = {};
+
     // Transforms contents of this binding's value into a list of objects to feed to select2
     var _valueToSelect2Data = function (optionObjects) {
         var data = _(optionObjects).map(function (o) {
-            return _.extend(o, {
+            o = _.extend(o, {
                 id: o.value,
                 text: utils.getDisplay(o),
             });
+            questionsById[o.id] = o;
+            return o;
         });
         data = [{id: '', text: ''}].concat(data);    // prepend option for placeholder
         return data;
@@ -85,14 +89,14 @@
                         // This is the placeholder
                         return o.text;
                     }
-                    return utils.getTruncatedDisplay(o);
+                    return utils.getTruncatedDisplay(questionsById[o.id]);
                 },
                 templateResult: function (o) {
                     if (!o.value) {
                         // This is some select2 system option, like 'Searching...' text
                         return o.text;
                     }
-                    return utils.getTruncatedDisplay(o, 90);
+                    return utils.getTruncatedDisplay(questionsById[o.id], 90);
                 },
             });
             $(element).val(value).trigger('change.select2');
