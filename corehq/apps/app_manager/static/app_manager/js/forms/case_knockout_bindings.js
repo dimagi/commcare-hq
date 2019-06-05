@@ -113,7 +113,7 @@
                 if (!_.contains(oldValues, option.id)) {
                     $element.append(new Option(option.text, option.id));
                 }
-            })
+            });
 
             // Remove any options that are no longer relevant
             _.each(oldOptionElements, function (option) {
