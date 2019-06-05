@@ -1018,6 +1018,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     export_file.seek(0)
     icds_file.store_file_in_blobdb(export_file, expired=None)
     icds_file.save()
+    return key
 
 
 def get_performance_report_blob_key(state, district, block, month, file_format):
