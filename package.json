@@ -8,7 +8,7 @@
     "grunt": "^0.4.5",
     "grunt-cli": "^0.1.13",
     "grunt-contrib-watch": "^0.6.1",
-    "grunt-mocha": "^0.4.13",
+    "grunt-mocha": "^1.2.0",
     "js-xpath": "dimagi/js-xpath#v0.0.2-rc1",
     "mocha": "^2.3.3",
     "uglifyjs": "^2.4.10"
