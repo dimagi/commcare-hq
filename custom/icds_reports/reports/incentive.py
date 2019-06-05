@@ -93,7 +93,7 @@ class IncentiveReport(object):
 
                 weighing_efficiency = '{:.2%}'.format(weighing_efficiency_percent)
                 if self.beta:
-                    awh_eligibile_for_incentive = 'Yes' if row['awh_eligible'] else 'No'
+                    awh_eligible_for_incentive = 'Yes' if row['awh_eligible'] else 'No'
                     eligible_for_incentive = 'Yes' if row['incentive_eligible'] else 'No'
                 else:
                     awh_eligible_for_incentive = 'Yes' if int(num_open) >= 21 else 'No'

@@ -663,7 +663,7 @@ def zip_folder(pdf_files):
 def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout=ONE_DAY):
     key = blob_key or uuid.uuid4().hex
     export_file = BytesIO()
-    icds_file = IcdsFile(blob_id=key, data_type=data_type)
+    icds_file = IcdsFile.get_or_create(blob_id=key, data_type=data_type)
     export_from_tables(excel_data, export_file, file_format)
     export_file.seek(0)
     icds_file.store_file_in_blobdb(export_file, expired=timeout)
@@ -1029,7 +1029,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     # saving file
     key = get_performance_report_blob_key(state, district, block, month, 'xlsx')
     export_file = BytesIO()
-    icds_file = IcdsFile(blob_id=key, data_type=data_type)
+    icds_file = IcdsFile.get_or_create(blob_id=key, data_type=data_type)
     workbook.save(export_file)
     export_file.seek(0)
     icds_file.store_file_in_blobdb(export_file, expired=None)
