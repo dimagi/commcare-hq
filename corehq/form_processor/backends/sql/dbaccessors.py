@@ -748,9 +748,7 @@ class CaseReindexAccessor(ReindexAccessor):
             pass
 
     def extra_filters(self, for_count=False):
-        filters = []
-        if not self.include_deleted:
-            filters.append(Q(deleted=False))
+        filters = [] if self.include_deleted else [Q(deleted=False)]
         if self.domain:
             filters.append(Q(domain=self.domain))
         if self.start_date is not None:
