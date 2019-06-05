@@ -43,6 +43,32 @@ hqDefine("export/js/export_list", [
         });
         options.formname = options.formname || '';
 
+        assertProperties.assert(options, [
+            'addedToBulk',
+            'can_edit',
+            'deleteUrl',
+            'description',
+            'downloadUrl',
+            'editUrl',
+            'emailedExport',
+            'exportType',
+            'formname',
+            'id',
+            'isDeid',
+            'lastBuildDuration',
+            'name',
+            'owner_username',
+            'sharing',
+        ], [
+            'case_type',
+            'isAutoRebuildEnabled',
+            'isDailySaved',
+            'isFeed',
+            'isOData',
+            'showLink',
+        ]);
+
+
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
         var self = ko.mapping.fromJS(options);
