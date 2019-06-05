@@ -1204,7 +1204,6 @@ def build_incentive_report(agg_date=None):
 
 @task(queue='icds_dashboard_reports_queue')
 def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
-    import ipdb; ipdb.set_trace()
     data_type = 'AWW_Performance'
     excel_data = IncentiveReport(
         location=location.location_id,
