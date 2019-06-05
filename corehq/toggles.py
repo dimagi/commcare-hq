@@ -993,6 +993,13 @@ MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     description='This flag allows multiple choice fields in custom user data, location data and product data',
 )
 
+CASE_TEMPLATES = StaticToggle(
+    'case_templates',
+    'Enable the case templates feature',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
+
 SUPPORT = StaticToggle(
     'support',
     'General toggle for support features',

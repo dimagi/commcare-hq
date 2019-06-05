@@ -1,0 +1,79 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block page_content %}
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      {% trans "Case Templates" %}
+    </div>
+    <div class="panel-body">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>
+              {% trans "Name" %}
+            </th>
+            <th>
+              {% trans "Case Count" %}
+            </th>
+            <th>
+              {% trans "Create Cases" %}
+            </th>
+            <th>
+              {% trans "View Generated Cases" %}
+            </th>
+            <th>
+              {% trans "Delete" %}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for case_template in case_templates %}
+            <tr>
+              <td>
+                <strong>
+                  {{ case_template.name }}
+                </strong>
+                {% if case_template.comment %}
+                  <br/>
+                  {{ case_template.comment }}
+                {% endif %}
+              </td>
+              <td>
+                {{ case_template.num_cases }}
+              </td>
+              <td>
+                <form method="POST" action="{% url 'create_template_instance' domain %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="template_id" value="{{ case_template.template_id }}" />
+                  <button class='btn btn-primary' type="submit">
+                    {% trans "Create Cases" %}
+                  </button>
+                </form>
+              </td>
+              <td>
+                <a class='btn btn-default'
+                   href="{% url 'project_report_dispatcher' domain 'case_list' %}?search_query={% for case in case_template.instance_cases.all %}_id:{{ case.case_id }} {% endfor %}">
+                  {% trans "View Generated Cases" %}
+                </a>
+              </td>
+              <td>
+                <form method="POST" action="{% url 'delete_template' domain %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="template_id" value="{{ case_template.template_id }}" />
+                  <button class="btn btn-danger" type="submit">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete" %}
+                  </button>
+                </form>
+
+              </td>
+            </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
