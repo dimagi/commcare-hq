@@ -153,6 +153,11 @@ hqDefine("export/js/export_list", [
             return self.taskStatus.justFinished() && self.taskStatus.success();
         });
 
+        self.canUpdateData = ko.computed(function () {
+            return (self.prepareExportError() ||
+                    !(self.updatingData() || self.taskStatus && self.taskStatus.started()));
+        });
+
         self.pollProgressBar = function () {
             self.updatingData(false);
             self.taskStatus.percentComplete();

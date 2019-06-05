@@ -129,10 +129,8 @@
           <div data-bind="if: isLocationSafeForUser()">
             <button type="button"
                     class="btn btn-default btn-xs"
-                    data-bind="
-                                            visible: emailedExport.prepareExportError() || !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
-                                            attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
-                                        "
+                    data-bind="visible: emailedExport.canUpdateData,
+                               attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}"
                     data-toggle="modal">
               <i class="fa fa-refresh"></i>
               {% trans "Update Data" %}
