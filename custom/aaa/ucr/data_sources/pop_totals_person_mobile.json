@@ -10,15 +10,11 @@
         "aparatest",
         "reach-sandbox",
         "reach-dashboard-qa",
-        "reach-test",
-        "icds-sql",
-        "icds-test",
         "icds-cas",
-        "cas-lab",
-        "icds-cas-sandbox"
+        "reach-test"
     ],
     "server_environment": [
-        "india", "icds"
+        "india"
     ],
     "config":
     {

@@ -11,16 +11,11 @@
         "aparatest",
         "reach-sandbox",
         "reach-dashboard-qa",
-        "reach-test",
-        "icds-test",
-        "icds-sql",
         "icds-cas",
-        "cas-lab",
-        "icds-cas-sandbox"
+        "reach-test"
     ],
     "server_environment": [
-        "india", 
-        "icds"
+        "india"
     ],
     "report_id": "reach-mpr_pop_totals_1_to_9",
     "data_source_table": "reach-pop_totals_person_mobile",
