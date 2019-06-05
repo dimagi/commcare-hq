@@ -907,11 +907,6 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         header_cells.append("L3")
     if aggregation_level < 2:
         header_cells.append("M3")
-    date_description_cell_start = "I3" if aggregation_level == 3 else \
-        ("J3" if aggregation_level == 2 else "K3")
-    date_description_cell_finish = "J3" if aggregation_level == 3 else \
-        ("K3" if aggregation_level == 2 else "L3")
-    date_column = "K3" if aggregation_level == 3 else ("L3" if aggregation_level == 2 else "M3")
 
     for cell in header_cells:
         worksheet[cell].fill = blue_fill
@@ -924,17 +919,6 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.merge_cells('E3:F3')
     if block:
         worksheet['E3'].value = "Block: {}".format(block)
-
-    worksheet.merge_cells('{0}:{1}'.format(
-        date_description_cell_start,
-        date_description_cell_finish,
-    ))
-    worksheet[date_description_cell_start].value = "Date when downloaded:"
-    worksheet[date_description_cell_start].alignment = Alignment(horizontal="right")
-    utc_now = datetime.now(pytz.utc)
-    now_in_india = utc_now.astimezone(india_timezone)
-    worksheet[date_column].value = custom_strftime('{S} %b %Y', now_in_india)
-    worksheet[date_column].alignment = Alignment(horizontal="right")
 
     # table header
     table_header_position_row = 5
