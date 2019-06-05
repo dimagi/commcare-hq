@@ -56,6 +56,5 @@ branches:
   - form-odata-escaped  # Nick P May 21
   - web-user-reports-project-access  # Gabriella May 13
   - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
-  - es/fixture-generation  # Ethan June 4
   - avoid_auto_update_group_filter # Rohit June 5
 submodules: {}
