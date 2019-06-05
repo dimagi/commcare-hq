@@ -1195,7 +1195,7 @@ def build_incentive_report(agg_date=None):
     for file_format in ['xlsx', 'csv']:
         for location in locations:
             if location.location_type.name == 'state':
-                build_incentive_files.delay(location.location_id, agg_date, file_format, 1, location)
+                build_incentive_files.delay(location, agg_date, file_format, 1, location)
             elif location.location_type.name == 'district':
                 build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
             else:
@@ -1204,6 +1204,7 @@ def build_incentive_report(agg_date=None):
 
 @task(queue='icds_dashboard_reports_queue')
 def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
+    import ipdb; ipdb.set_trace()
     data_type = 'AWW_Performance'
     excel_data = IncentiveReport(
         location=location.location_id,
@@ -1214,7 +1215,7 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
     state_name = state.name
     district_name = district.name if aggregation_level >= 2 else None
     block_name = location.name if aggregation_level == 3 else None
-    month_string = month.strftime("%B %Y"),
+    month_string = month.strftime("%B %Y")
     if file_format == 'xlsx':
         create_aww_performance_excel_file(
             excel_data,
