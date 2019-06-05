@@ -56,8 +56,11 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
-        accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
-        return iter(iter_all_ids(accessor))
+        if should_use_sql_backend(self.domain):
+            accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
+            return iter_all_ids(accessor)
+        else:
+            return iter(self.case_accessors.get_case_ids_in_domain(self.case_type))
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):
@@ -86,8 +89,19 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         return Product.ids_by_domain(self.domain)
 
     def iter_document_ids(self, last_id=None):
-        accessor = LedgerReindexAccessor(self.domain)
-        return iter(iter_all_ids(accessor))
+        if should_use_sql_backend(self.domain):
+            accessor = LedgerReindexAccessor(self.domain)
+            return iter(iter_all_ids(accessor))
+        else:
+            return iter(self._couch_iterator())
+
+    def _couch_iterator(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        case_accessors = CaseAccessors(domain=self.domain)
+        # assuming we're only interested in the 'stock' section for now
+        for case_id in case_accessors.get_case_ids_in_domain():
+            for product_id in self.product_ids:
+                yield UniqueLedgerReference(case_id, 'stock', product_id).to_id()
 
     def iter_documents(self, ids):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
@@ -133,3 +147,6 @@ class DocStoreLoadTracker(object):
 
     def __getattr__(self, name):
         return getattr(self.store, name)
+
+    def __repr__(self):
+        return 'DocStoreLoadTracker({})'.format(repr(self.store))
