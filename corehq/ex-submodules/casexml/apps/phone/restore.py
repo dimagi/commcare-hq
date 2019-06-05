@@ -806,13 +806,12 @@ class RestoreConfig(object):
 
     def __repr__(self):
         return \
-            "RestoreConfig(project='{}', domain={}, restore_user={}, params='{}', cache_settings='{}', " \
+            "RestoreConfig(project='{}', domain={}, restore_user={}, cache_settings='{}', " \
             "is_async='{}', restore_state='{}', force_cache='{}', cache_timeout='{}', overwrite_cache='{}', " \
             "timing_context='{}')".format(
                 self.project,
                 self.domain,
                 self.restore_user,
-                self.params,
                 self.cache_settings,
                 self.is_async,
                 self.restore_state,
