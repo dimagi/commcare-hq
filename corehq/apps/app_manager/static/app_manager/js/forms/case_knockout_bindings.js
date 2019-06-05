@@ -30,6 +30,17 @@
         },
     };
 
+    var _getData = function (optionObjects) {
+        var data = _(optionObjects).map(function (o) {
+            return _.extend(o, {
+                id: o.value,
+                text: utils.getDisplay(o),
+            });
+        });
+        data = [{id: '', text: ''}].concat(data);    // prepend option for placeholder
+        return data;
+    };
+
     ko.bindingHandlers.questionsSelect = {
         /*
             The value used with this binding should be in the form:
@@ -62,19 +73,12 @@
             }
 
             // Initialize select2
-            var data = _(optionObjects).map(function (o) {
-                    return _.extend(o, {
-                        id: o.value,
-                        text: utils.getDisplay(o),
-                    });
-            });
-            data = [{id: '', text: ''}].concat(data);    // prepend option for placeholder
 
             $(element).select2({
                 placeholder: gettext('Select a Question'),
                 dropdownCssClass: 'bigdrop',
                 escapeMarkup: function (m) { return m; },
-                data: data,
+                data: _getData(optionObjects),
                 width: '100%',
                 templateSelection: function (o) {
                     if (!o.id) {
@@ -105,13 +109,29 @@
                 // There was an error but it's fixed now, so remove the error and the bad option
                 $container.removeClass("has-error");
                 $container.find(".help-block").remove();
-                _.each($element.find("option"), function (option) {
-                    if (option.value && !_.contains(allowedValues, option.value)) {
-                        $(option).remove();
-                    }
-                });
-                $element.trigger('change.select2');
             }
+
+            // Update options available in select
+
+            // Add any new options
+            var data = _getData(optionObjects);
+            _.each(data, function (newOption) {
+                var isNew = !_.find($element.find("option"), function (oldOption) {
+                    return oldOption.value === newOption.id;
+                });
+                if (isNew) {
+                    $element.append(new Option(newOption.text, newOption.id));
+                }
+            })
+
+            // Remove any outdated options
+            _.each($element.find("option"), function (option) {
+                if (option.value && !_.contains(allowedValues, option.value)) {
+                    $(option).remove();
+                }
+            });
+
+            $element.trigger('change.select2');
         },
     };
 }());
