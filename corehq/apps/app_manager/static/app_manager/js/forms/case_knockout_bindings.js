@@ -30,7 +30,8 @@
         },
     };
 
-    var _getData = function (optionObjects) {
+    // Transforms contents of this binding's value into a list of objects to feed to select2
+    var _valueToSelect2Data = function (optionObjects) {
         var data = _(optionObjects).map(function (o) {
             return _.extend(o, {
                 id: o.value,
@@ -73,12 +74,11 @@
             }
 
             // Initialize select2
-
             $(element).select2({
                 placeholder: gettext('Select a Question'),
                 dropdownCssClass: 'bigdrop',
                 escapeMarkup: function (m) { return m; },
-                data: _getData(optionObjects),
+                data: _valueToSelect2Data(optionObjects),
                 width: '100%',
                 templateSelection: function (o) {
                     if (!o.id) {
@@ -98,38 +98,34 @@
             $(element).val(value).trigger('change.select2');
         },
         update: function (element, valueAccessor, allBindingsAccessor) {
-            var optionObjects = ko.utils.unwrapObservable(valueAccessor()),
-                allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
-                value = ko.utils.unwrapObservable(allBindings.value),
-                allowedValues = _.pluck(optionObjects, 'value'),
-                $element = $(element),
-                $container = $element.parent();
-
-            if ($container.hasClass("has-error") && _.contains(allowedValues, value)) {
-                // There was an error but it's fixed now, so remove the error and the bad option
-                $container.removeClass("has-error");
-                $container.find(".help-block").remove();
-            }
-
-            // Update options available in select
+            var $element = $(element),
+                newSelect2Data = _valueToSelect2Data(ko.utils.unwrapObservable(valueAccessor())),
+                oldOptionElements = $element.find("option");
+                oldValues = _.map(oldOptionElements, function (o) { return o.value; }),
+                newValues = _.pluck(newSelect2Data, 'id');
 
             // Add any new options
-            var data = _getData(optionObjects);
-            _.each(data, function (newOption) {
-                var isNew = !_.find($element.find("option"), function (oldOption) {
-                    return oldOption.value === newOption.id;
-                });
-                if (isNew) {
-                    $element.append(new Option(newOption.text, newOption.id));
+            _.each(newSelect2Data, function (option) {
+                if (!_.contains(oldValues, option.id)) {
+                    $element.append(new Option(option.text, option.id));
                 }
             })
 
-            // Remove any outdated options
-            _.each($element.find("option"), function (option) {
-                if (option.value && !_.contains(allowedValues, option.value)) {
+            // Remove any options that are no longer relevant
+            _.each(oldOptionElements, function (option) {
+                if (option.value && !_.contains(newValues, option.value)) {
                     $(option).remove();
                 }
             });
+
+            // If there was an error but it's fixed now, remove it
+            var $container = $element.parent(),
+                allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
+                value = ko.utils.unwrapObservable(allBindings.value);
+            if ($container.hasClass("has-error") && _.contains(newValues, value)) {
+                $container.removeClass("has-error");
+                $container.find(".help-block").remove();
+            }
 
             $element.trigger('change.select2');
         },
