@@ -1037,7 +1037,8 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
 
 
 def get_performance_report_blob_key(state, district, block, month, file_format):
-    return 'performance_report-{}-{}-{}-{}-{}'.format(state, district, block, month, file_format)
+    key_safe_date = datetime.strptime(month, '%B %Y').strftime('%Y_%m')
+    return 'performance_report-{}-{}-{}-{}-{}'.format(state, district, block, key_safe_date, file_format)
 
 
 def create_excel_file_in_openpyxl(excel_data, data_type):
