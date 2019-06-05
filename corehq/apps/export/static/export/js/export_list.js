@@ -72,29 +72,10 @@ hqDefine("export/js/export_list", [
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
         var self = ko.mapping.fromJS(options);
-        self.prepareExportError = ko.observable('');
         self.hasEmailedExport = !!options.emailedExport;
-
-        // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
         if (self.hasEmailedExport) {
-            self.emailedExport.filters.emwf_case_filter(_.map(self.emailedExport.filters.emwf_case_filter(), function (mw) {
-                return _.mapObject(mw, function (observable) {
-                    return observable();
-                });
-            }));
-            self.emailedExport.filters.emwf_form_filter(_.map(self.emailedExport.filters.emwf_form_filter(), function (mw) {
-                return _.mapObject(mw, function (observable) {
-                    return observable();
-                });
-            }));
+            self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
         }
-
-        self.justUpdated = ko.computed(function () {
-            if (self.emailedExport.taskStatus === undefined) {
-                return false;
-            }
-            return self.emailedExport.taskStatus.justFinished() && self.emailedExport.taskStatus.success();
-        });
 
         if (options.isOData) {
             self.odataFeedUrl = 'https://placekitten.com';
@@ -111,7 +92,7 @@ hqDefine("export/js/export_list", [
             return true;    // allow default click action to process so file is downloaded
         };
         self.copyLinkRequested = function (model, e) {
-            model.showLink(true);
+            self.showLink(true);
             var clipboard = new Clipboard(e.target, {
                 target: function (trigger) {
                     return trigger.nextElementSibling;
@@ -121,68 +102,6 @@ hqDefine("export/js/export_list", [
             clipboard.destroy();
         };
 
-        // Polling
-        self.pollProgressBar = function () {
-            self.emailedExport.updatingData(false);
-            self.emailedExport.taskStatus.percentComplete();
-            self.emailedExport.taskStatus.started(true);
-            self.emailedExport.taskStatus.success(false);
-            self.emailedExport.taskStatus.failed(false);
-            var tick = function () {
-                $.ajax({
-                    method: 'GET',
-                    url: pageOptions.urls.poll,
-                    data: {
-                        export_instance_id: self.id(),
-                        is_deid: self.isDeid,
-                        model_type: self.modelType,
-                    },
-                    success: function (data) {
-                        self.emailedExport.taskStatus.percentComplete(data.taskStatus.percentComplete);
-                        self.emailedExport.taskStatus.started(data.taskStatus.started);
-                        self.emailedExport.taskStatus.success(data.taskStatus.success);
-                        self.emailedExport.taskStatus.failed(data.taskStatus.failed);
-                        self.emailedExport.taskStatus.justFinished(data.taskStatus.justFinished);
-                        if (!data.taskStatus.success && !data.taskStatus.failed) {
-                            // The first few ticks don't yet register the task
-                            self.emailedExport.taskStatus.started(true);
-                            setTimeout(tick, 1500);
-                        } else {
-                            self.emailedExport.taskStatus.justFinished(true);
-                        }
-                    },
-                });
-            };
-            tick();
-        };
-
-        self.updateEmailedExportData = function (model) {
-            $('#modalRefreshExportConfirm-' + model.id() + '-' + model.emailedExport.groupId()).modal('hide');
-            model.emailedExport.updatingData(true);
-            $.ajax({
-                method: 'POST',
-                url: pageOptions.urls.update,
-                data: {
-                    export_id: model.id(),
-                    is_deid: pageOptions.is_deid,
-                    model_type: pageOptions.model_type,
-                },
-                success: function (data) {
-                    if (data.success) {
-                        var exportType = utils.capitalize(model.exportType());
-                        googleAnalytics.track.event(exportType + " Exports", "Update Saved Export", "Saved");
-                        model.pollProgressBar();
-                    } else {
-                        self.handleExportError(data);
-                    }
-                },
-            });
-        };
-
-        self.handleExportError = function (data) {
-            self.prepareExportError(data.error);
-        };
-
         self.updateDisabledState = function (model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
@@ -190,22 +109,110 @@ hqDefine("export/js/export_list", [
                 method: 'POST',
                 url: pageOptions.urls.toggleEnabled,
                 data: {
-                    export_id: model.id(),
-                    is_auto_rebuild_enabled: model.isAutoRebuildEnabled(),
+                    export_id: self.id(),
+                    is_auto_rebuild_enabled: self.isAutoRebuildEnabled(),
                     is_deid: pageOptions.is_deid,
                     model_type: pageOptions.model_type,
                 },
                 success: function (data) {
                     if (data.success) {
-                        var exportType = utils.capitalize(model.exportType());
-                        var event = (model.isAutoRebuildEnabled() ? "Disable" : "Enable") + " Saved Export";
+                        var exportType = utils.capitalize(self.exportType());
+                        var event = (self.isAutoRebuildEnabled() ? "Disable" : "Enable") + " Saved Export";
                         googleAnalytics.track.event(exportType + " Exports", event, "Saved");
-                        model.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
+                        self.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                     }
                     $button.enableButton();
-                    $('#modalEnableDisableAutoRefresh-' + model.id() + '-' + model.emailedExport.groupId()).modal('hide');
+                    $('#modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId()).modal('hide');
                 },
             });
+        };
+
+        return self;
+    };
+
+    var emailedExportModel = function (emailedExportOptions, pageOptions, exportId, exportType) {
+        var self = ko.mapping.fromJS(emailedExportOptions);
+        self.prepareExportError = ko.observable('');
+
+        // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
+        self.filters.emwf_case_filter(_.map(self.filters.emwf_case_filter(), function (mw) {
+            return _.mapObject(mw, function (observable) {
+                return observable();
+            });
+        }));
+        self.filters.emwf_form_filter(_.map(self.filters.emwf_form_filter(), function (mw) {
+            return _.mapObject(mw, function (observable) {
+                return observable();
+            });
+        }));
+
+        self.justUpdated = ko.computed(function () {
+            if (self.taskStatus === undefined) {
+                return false;
+            }
+            return self.taskStatus.justFinished() && self.taskStatus.success();
+        });
+
+        self.pollProgressBar = function () {
+            self.updatingData(false);
+            self.taskStatus.percentComplete();
+            self.taskStatus.started(true);
+            self.taskStatus.success(false);
+            self.taskStatus.failed(false);
+            var tick = function () {
+                $.ajax({
+                    method: 'GET',
+                    url: pageOptions.urls.poll,
+                    data: {
+                        export_instance_id: exportId,
+                        is_deid: pageOptions.is_deid,
+                        model_type: pageOptions.model_type,
+                    },
+                    success: function (data) {
+                        self.taskStatus.percentComplete(data.taskStatus.percentComplete);
+                        self.taskStatus.started(data.taskStatus.started);
+                        self.taskStatus.success(data.taskStatus.success);
+                        self.taskStatus.failed(data.taskStatus.failed);
+                        self.taskStatus.justFinished(data.taskStatus.justFinished);
+                        if (!data.taskStatus.success && !data.taskStatus.failed) {
+                            // The first few ticks don't yet register the task
+                            self.taskStatus.started(true);
+                            setTimeout(tick, 1500);
+                        } else {
+                            self.taskStatus.justFinished(true);
+                        }
+                    },
+                });
+            };
+            tick();
+        };
+
+        self.updateData = function () {
+            $('#modalRefreshExportConfirm-' + exportId + '-' + self.groupId()).modal('hide');
+            self.updatingData(true);
+            $.ajax({
+                method: 'POST',
+                url: pageOptions.urls.update,
+                data: {
+                    export_id: exportId,
+                    is_deid: pageOptions.is_deid,
+                    model_type: pageOptions.model_type,
+                },
+                success: function (data) {
+                    if (data.success) {
+                        var exportType_ = utils.capitalize(exportType);
+                        googleAnalytics.track.event(exportType_ + " Exports", "Update Saved Export", "Saved");
+                        self.pollProgressBar();
+                    } else {
+                        self.handleExportError(data);
+                    }
+                },
+            });
+        };
+
+        // Polling
+        self.handleExportError = function (data) {
+            self.prepareExportError(data.error);
         };
 
         return self;
@@ -267,7 +274,7 @@ hqDefine("export/js/export_list", [
                     // Set up progress bar polling for any exports with email tasks running
                     _.each(self.exports(), function (exp) {
                         if (exp.hasEmailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.started()) {
-                            exp.pollProgressBar();
+                            exp.emailedExport.pollProgressBar();
                         }
                     });
                 },
@@ -483,7 +490,7 @@ hqDefine("export/js/export_list", [
                         export_.emailedExport.filters.days(self.days());
                         export_.emailedExport.filters.start_date(self.startDate());
                         export_.emailedExport.filters.end_date(self.endDate());
-                        export_.pollProgressBar();
+                        export_.emailedExport.pollProgressBar();
                         self.$filterModal.modal('hide');
                     } else {
                         self.formSubmitErrorMessage(data.error);

@@ -109,11 +109,11 @@
                                 <span data-bind="text: emailedExport.fileData.size()"></span>
                                 &nbsp;&nbsp;&nbsp;
                                 <strong>{% trans "Last Updated:" %}</strong>
-                                <span data-bind="if: !justUpdated()">
+                                <span data-bind="if: !emailedExport.justUpdated()">
                                     <span data-bind="text: emailedExport.fileData.lastUpdated()"></span>
                                     &nbsp;&nbsp;&nbsp;
                                 </span>
-                                <span data-bind="if: justUpdated()">
+                                <span data-bind="if: emailedExport.justUpdated()">
                                     {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
                                 </span>
                                 <strong>{% trans "Last Downloaded:" %}</strong>
@@ -130,7 +130,7 @@
             <button type="button"
                     class="btn btn-default btn-xs"
                     data-bind="
-                                            visible: prepareExportError() || !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
+                                            visible: emailedExport.prepareExportError() || !(emailedExport.updatingData() || emailedExport.taskStatus && emailedExport.taskStatus.started()),
                                             attr: {'data-target': '#modalRefreshExportConfirm-' + id() + '-' + emailedExport.groupId()}
                                         "
                     data-toggle="modal">
@@ -139,7 +139,7 @@
             </button>
             <button type="button"
                     class="btn btn-default btn-xs btn-disabled"
-                    data-bind="visible: emailedExport.updatingData() && !prepareExportError()"
+                    data-bind="visible: emailedExport.updatingData() && !emailedExport.prepareExportError()"
                     disabled="disabled">
               <i class="fa fa-refresh fa-spin"></i>
               {% trans "Updating Data, please wait..." %}
@@ -209,9 +209,9 @@
 
         <div data-bind="if: isLocationSafeForUser">
           <div data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
-            <div class="alert alert-warning" data-bind="visible: prepareExportError()">
+            <div class="alert alert-warning" data-bind="visible: emailedExport.prepareExportError()">
               <i class="fa fa-exclamation-triangle"></i>
-              <span data-bind="text: prepareExportError"></span>
+              <span data-bind="text: emailedExport.prepareExportError"></span>
             </div>
             {% blocktrans %}
               <strong>No data is available yet.</strong><br />
@@ -255,7 +255,7 @@
                 <div class="modal-footer">
                   <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
                   <button type="button" class="btn btn-primary"
-                          data-bind="click: updateEmailedExportData">
+                          data-bind="click: emailedExport.updateData">
                     {% trans "Update Data" %}
                   </button>
                 </div>
