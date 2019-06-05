@@ -30,18 +30,24 @@ class Command(BaseCommand):
         for status, items in sorted(six.iteritems(migrations)):
             print(status)
             for item in sorted(items, key=attrgetter("domain")):
-                started = item.started_on
-                migrated = should_use_sql_backend(item.domain)
-                print("  {}{}{}".format(
-                    item.domain,
-                    started.strftime(" (%Y-%m-%d)") if started else "",
-                    " - already migrated? (bad state)" if migrated else "",
-                ))
+                self.print_migration(item)
                 if show_stats:
-                    try:
-                        stats = get_diff_stats(item.domain)
-                        if stats:
-                            stats = format_diff_stats(stats)
-                            print("    " + stats.replace("\n", "\n    "))
-                    except Exception as err:
-                        print("    Cannot get diff stats: {}".format(err))
+                    self.print_stats(item)
+
+    def print_migration(self, item):
+        started = item.started_on
+        migrated = should_use_sql_backend(item.domain)
+        print("  {}{}{}".format(
+            item.domain,
+            started.strftime(" (%Y-%m-%d)") if started else "",
+            " - already migrated? (bad state)" if migrated else "",
+        ))
+
+    def print_stats(self, item):
+        try:
+            stats = get_diff_stats(item.domain)
+            if stats:
+                stats = format_diff_stats(stats)
+                print("    " + stats.replace("\n", "\n    "))
+        except Exception as err:
+            print("    Cannot get diff stats: {}".format(err))
