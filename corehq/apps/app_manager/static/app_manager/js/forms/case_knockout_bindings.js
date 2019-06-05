@@ -104,7 +104,7 @@
         update: function (element, valueAccessor, allBindingsAccessor) {
             var $element = $(element),
                 newSelect2Data = _valueToSelect2Data(ko.utils.unwrapObservable(valueAccessor())),
-                oldOptionElements = $element.find("option");
+                oldOptionElements = $element.find("option"),
                 oldValues = _.map(oldOptionElements, function (o) { return o.value; }),
                 newValues = _.pluck(newSelect2Data, 'id');
 
