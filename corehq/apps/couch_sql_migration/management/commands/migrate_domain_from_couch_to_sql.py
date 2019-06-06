@@ -33,6 +33,7 @@ from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_started,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.tzmigration.planning import Counts
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
@@ -207,11 +208,25 @@ class Command(BaseCommand):
         )
 
         ZERO = Counts(0, 0)
-        doc_counts = db.get_doc_counts()
+        if db.has_doc_counts():
+            doc_counts = db.get_doc_counts()
+        else:
+            doc_counts = None
         for doc_type in CASE_DOC_TYPES:
-            counts = doc_counts.get(doc_type, ZERO)
-            case_ids_in_couch = db.get_missing_doc_ids(doc_type) if counts.missing else set()
-            case_ids_in_sql = counts
+            if doc_counts is not None:
+                counts = doc_counts.get(doc_type, ZERO)
+                case_ids_in_couch = db.get_missing_doc_ids(doc_type) if counts.missing else set()
+                case_ids_in_sql = counts
+            elif doc_type == "CommCareCase":
+                case_ids_in_couch = set(get_case_ids_in_domain(domain))
+                case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
+            elif doc_type == "CommCareCase-Deleted":
+                case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
+                    domain, "CommCareCase-Deleted", XFormInstance.get_db())
+                )
+                case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
+            else:
+                raise NotImplementedError(doc_type)
             diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             has_diffs |= self._print_status(
                 doc_type,

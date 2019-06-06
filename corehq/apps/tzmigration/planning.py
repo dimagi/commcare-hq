@@ -209,6 +209,9 @@ class DiffDB(BaseDB):
             missing=missing.get(kind, 0),
         ) for kind in set(missing) | set(totals)}
 
+    def has_doc_counts(self):
+        return self.engine.dialect.has_table(self.engine, "doc_count")
+
     def get_missing_doc_ids(self, doc_type):
         return {
             missing.doc_id for missing in self.Session()

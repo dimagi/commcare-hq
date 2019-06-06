@@ -125,6 +125,7 @@ from custom.icds_reports.utils import (
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
     create_pdf_file,
+    get_performance_report_blob_key,
     icds_pre_release_features,
     track_time,
     zip_folder,
@@ -769,30 +770,45 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             beta=beta
         ).get_excel_data(location)
     elif indicator == AWW_INCENTIVE_REPORT:
-        data_type = 'AWW_Performance'
-        excel_data = IncentiveReport(
-            location=location,
-            month=config['month'],
-            aggregation_level=aggregation_level,
-            beta=beta
-        ).get_excel_data()
-        if file_format == 'xlsx':
-            cache_key = create_aww_performance_excel_file(
-                excel_data,
-                data_type,
-                config['month'].strftime("%B %Y"),
-                state=SQLLocation.objects.get(
-                    location_id=config['state_id'], domain=config['domain']
-                ).name,
-                district=SQLLocation.objects.get(
-                    location_id=config['district_id'], domain=config['domain']
-                ).name if aggregation_level >= 2 else None,
-                block=SQLLocation.objects.get(
-                    location_id=config['block_id'], domain=config['domain']
-                ).name if aggregation_level == 3 else None
-            )
+        if beta:
+            today = date.today()
+            data_type = 'AWW_Performance_{}'.format(today.strftime('%Y_%m_%d'))
+            month = config['month'].strftime("%B %Y")
+            state = SQLLocation.objects.get(
+                location_id=config['state_id'], domain=config['domain']
+            ).name
+            district = SQLLocation.objects.get(
+                location_id=config['district_id'], domain=config['domain']
+            ).name if aggregation_level >= 2 else None
+            block = SQLLocation.objects.get(
+                location_id=config['block_id'], domain=config['domain']
+            ).name if aggregation_level == 3 else None
+            cache_key = get_performance_report_blob_key(state, district, block, month, file_format)
         else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
+            data_type = 'AWW_Performance'
+            excel_data = IncentiveReport(
+                location=location,
+                month=config['month'],
+                aggregation_level=aggregation_level,
+                beta=beta
+            ).get_excel_data()
+            if file_format == 'xlsx':
+                cache_key = create_aww_performance_excel_file(
+                    excel_data,
+                    data_type,
+                    config['month'].strftime("%B %Y"),
+                    state=SQLLocation.objects.get(
+                        location_id=config['state_id'], domain=config['domain']
+                    ).name,
+                    district=SQLLocation.objects.get(
+                        location_id=config['district_id'], domain=config['domain']
+                    ).name if aggregation_level >= 2 else None,
+                    block=SQLLocation.objects.get(
+                        location_id=config['block_id'], domain=config['domain']
+                    ).name if aggregation_level == 3 else None
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
     elif indicator == LS_REPORT_EXPORT:
         data_type = 'Lady_Supervisor'
         config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
@@ -1173,11 +1189,49 @@ def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                  .values_list('location_id', flat=True))
+    locations = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name__in=['state', 'district', 'block'])
+                 .select_related('parent__parent', 'location_type'))
     if agg_date is None:
         current_month = date.today().replace(day=1)
         agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
+    for file_format in ['xlsx', 'csv']:
+        for location in locations:
+            if location.location_type.name == 'state':
+                build_incentive_files.delay(location, agg_date, file_format, 1, location)
+            elif location.location_type.name == 'district':
+                build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
+            else:
+                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+
+
+@task(queue='icds_dashboard_reports_queue')
+def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
+    data_type = 'AWW_Performance'
+    excel_data = IncentiveReport(
+        location=location.location_id,
+        month=month,
+        aggregation_level=aggregation_level,
+        beta=True
+    ).get_excel_data()
+    state_name = state.name
+    district_name = district.name if aggregation_level >= 2 else None
+    block_name = location.name if aggregation_level == 3 else None
+    month_string = month.strftime("%B %Y")
+    if file_format == 'xlsx':
+        create_aww_performance_excel_file(
+            excel_data,
+            data_type,
+            month_string,
+            state_name,
+            district_name,
+            block_name
+        )
+    else:
+        blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month_string, file_format)
+        create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
 @task(queue='icds_dashboard_reports_queue')

@@ -7,7 +7,7 @@ jsonobject-couchdbkit~=0.9
 -e git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 # required by django-digest
 decorator==4.0.11
-django~=1.11
+django>=1.11.21  # security update
 django-braces==1.13.0
 django-celery-results~=1.0
 django-crispy-forms==1.7.0

@@ -207,6 +207,14 @@
         {% endblocktrans %}
       </div>
     </div>
+    <div class="datagrid-errors"
+         data-bind="visible: $root.data.isLoadingError">
+      <div class="alert alert-danger">
+        {% blocktrans %}
+          There was an issue fetching cases with these filters.
+        {% endblocktrans %}
+      </div>
+    </div>
 
     <pagination data-apply-bindings="false"
                 params="goToPage: $root.data.goToPage,

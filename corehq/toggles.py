@@ -1089,9 +1089,10 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 BULK_CONDITIONAL_ALERTS = StaticToggle(
     'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts.',
-    TAG_PRODUCT,
+    'Allow bulk download and upload of conditional alerts',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts', # noqa
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(
@@ -1740,12 +1741,6 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-IMPROVED_ASR_REPORT = StaticToggle(
-    'improved_asr_report',
-    'This makes ASR report use the new asr_2_3 UCR report',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
@@ -1780,4 +1775,11 @@ ENABLE_UCR_MIRRORS = StaticToggle(
     'Enable the mirrored engines for UCRs in this domain',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+MPR_ASR_CONDITIONAL_AGG = StaticToggle(
+    'mpr_asr_conditional_agg',
+    'Improved MPR ASR by doing aggregation at selected level',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

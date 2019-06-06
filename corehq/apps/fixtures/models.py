@@ -25,7 +25,7 @@ from dimagi.utils.couch.bulk import CouchTransaction
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types_in_domain,
-    get_fixture_items_for_data_types,
+    get_fixture_items_for_data_type,
     get_owner_ids_by_type,
 )
 from corehq.apps.fixtures.exceptions import (
@@ -438,12 +438,7 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_data_type(cls, domain, data_type, bypass_cache=False):
-        return cls.by_data_types(domain, [data_type], bypass_cache)
-
-    @classmethod
-    def by_data_types(cls, domain, data_types, bypass_cache=False):
-        data_type_ids = set(_id_from_doc(d) for d in data_types)
-        return get_fixture_items_for_data_types(domain, data_type_ids, bypass_cache)
+        return get_fixture_items_for_data_type(domain, _id_from_doc(data_type), bypass_cache)
 
     @classmethod
     def by_domain(cls, domain):
