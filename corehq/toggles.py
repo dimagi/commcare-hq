@@ -665,6 +665,14 @@ EXPLORE_CASE_DATA = StaticToggle(
     save_fn=_enable_search_index,
 )
 
+ECD_MIGRATED_DOMAINS = StaticToggle(
+    'ecd_migrated_domains',
+    'Domains that have undergone migration for Explore Case Data, but are not '
+    'yet ready to see the full report',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
