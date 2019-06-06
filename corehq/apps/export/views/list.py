@@ -184,6 +184,7 @@ class ExportListHelper(object):
             ),
             'can_edit': export.can_edit(self.request.couch_user),
             'exportType': export.type,
+            'filters': self._get_filters(export),
             'formname': formname,
             'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
                                  args=(self.domain, export.type, export.get_id)),
@@ -191,18 +192,16 @@ class ExportListHelper(object):
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
             'lastBuildDuration': '',
             'addedToBulk': False,
-            'emailedExport': self._get_emailed_export(export),
+            'emailedExport': self._get_daily_saved_export_metadata(export),
         }
-
-    def _get_emailed_export(self, export):
-        if export.is_daily_saved_export:
-            return self._get_daily_saved_export_metadata(export)
 
     def _get_daily_saved_export_metadata(self, export):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to javascript.
         """
+        if not export.is_daily_saved_export:
+            return None
 
         has_file = export.has_file()
         file_data = {}
@@ -216,9 +215,8 @@ class ExportListHelper(object):
 
         location_restrictions = []
         locations = []
-        filters = export.filters
-        if filters.accessible_location_ids:
-            locations = SQLLocation.objects.filter(location_id__in=filters.accessible_location_ids)
+        if export.filters.accessible_location_ids:
+            locations = SQLLocation.objects.filter(location_id__in=export.filters.accessible_location_ids)
         for location in locations:
             location_restrictions.append(location.display_name)
 
@@ -227,14 +225,17 @@ class ExportListHelper(object):
             'hasFile': has_file,
             'index': None,  # This can be removed when we're off legacy exports
             'fileData': file_data,
-            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
-                filters, self.domain, type(export)
-            ),
-            'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
+            'isLocationSafeForUser': export.filters.is_location_safe_for_user(self.request),
             'locationRestrictions': location_restrictions,
             'taskStatus': _get_task_status_json(export._id),
             'updatingData': False,
         }
+
+    def _get_filters(self, export):
+        if export.is_daily_saved_export:
+            return DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
+                export.filters, self.domain, type(export)
+            )
 
     def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
                                      last_accessed, download_url):

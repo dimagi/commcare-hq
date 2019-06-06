@@ -52,6 +52,7 @@ hqDefine("export/js/export_list", [
             'editUrl',
             'emailedExport',
             'exportType',
+            'filters',
             'formname',
             'id',
             'isDeid',
@@ -79,6 +80,20 @@ hqDefine("export/js/export_list", [
 
         if (options.isOData) {
             self.odataFeedUrl = 'https://placekitten.com';
+        }
+
+        if (options.filters) {
+            // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
+            self.filters.emwf_case_filter(_.map(self.filters.emwf_case_filter(), function (mw) {
+                return _.mapObject(mw, function (observable) {
+                    return observable();
+                });
+            }));
+            self.filters.emwf_form_filter(_.map(self.filters.emwf_form_filter(), function (mw) {
+                return _.mapObject(mw, function (observable) {
+                    return observable();
+                });
+            }));
         }
 
         self.isLocationSafeForUser = function () {
@@ -133,18 +148,6 @@ hqDefine("export/js/export_list", [
     var emailedExportModel = function (emailedExportOptions, pageOptions, exportId, exportType) {
         var self = ko.mapping.fromJS(emailedExportOptions);
         self.prepareExportError = ko.observable('');
-
-        // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
-        self.filters.emwf_case_filter(_.map(self.filters.emwf_case_filter(), function (mw) {
-            return _.mapObject(mw, function (observable) {
-                return observable();
-            });
-        }));
-        self.filters.emwf_form_filter(_.map(self.filters.emwf_form_filter(), function (mw) {
-            return _.mapObject(mw, function (observable) {
-                return observable();
-            });
-        }));
 
         self.justUpdated = ko.computed(function () {
             if (self.taskStatus === undefined) {
@@ -402,12 +405,12 @@ hqDefine("export/js/export_list", [
             var newSelectedExport = _.find(self.exports(), function (e) { return e.id() === newValue; });
             self.$filterModal.find("form")[0].reset();
             self.selectedExportModelType(newSelectedExport.exportType());
-            self.emwfCaseFilter(newSelectedExport.emailedExport.filters.emwf_case_filter());
-            self.emwfFormFilter(newSelectedExport.emailedExport.filters.emwf_form_filter());
-            self.dateRange(newSelectedExport.emailedExport.filters.date_range());
-            self.days(newSelectedExport.emailedExport.filters.days());
-            self.startDate(newSelectedExport.emailedExport.filters.start_date());
-            self.endDate(newSelectedExport.emailedExport.filters.end_date());
+            self.emwfCaseFilter(newSelectedExport.filters.emwf_case_filter());
+            self.emwfFormFilter(newSelectedExport.filters.emwf_form_filter());
+            self.dateRange(newSelectedExport.filters.date_range());
+            self.days(newSelectedExport.filters.days());
+            self.startDate(newSelectedExport.filters.start_date());
+            self.endDate(newSelectedExport.filters.end_date());
             self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
 
             // select2s require programmatic update
@@ -484,12 +487,12 @@ hqDefine("export/js/export_list", [
                     self.isSubmittingForm(false);
                     if (data.success) {
                         self.formSubmitErrorMessage('');
-                        export_.emailedExport.filters.emwf_case_filter(self.emwfCaseFilter());
-                        export_.emailedExport.filters.emwf_form_filter(self.emwfFormFilter());
-                        export_.emailedExport.filters.date_range(self.dateRange());
-                        export_.emailedExport.filters.days(self.days());
-                        export_.emailedExport.filters.start_date(self.startDate());
-                        export_.emailedExport.filters.end_date(self.endDate());
+                        export_.filters.emwf_case_filter(self.emwfCaseFilter());
+                        export_.filters.emwf_form_filter(self.emwfFormFilter());
+                        export_.filters.date_range(self.dateRange());
+                        export_.filters.days(self.days());
+                        export_.filters.start_date(self.startDate());
+                        export_.filters.end_date(self.endDate());
                         export_.emailedExport.pollProgressBar();
                         self.$filterModal.modal('hide');
                     } else {
