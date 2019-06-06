@@ -455,7 +455,13 @@ class CouchSqlDomainMigrator(object):
         def update_id(dict_, key, base_path):
             if key in dict_ and dict_[key] in self._id_map:
                 item_path = base_path + [key]
-                form_xml_path = ['data'] + item_path[1:]  # Form XML root node is "data" instead of "form"
+                root = form_xml_dict.keys()[0]
+                if root in ('data', 'system'):
+                    # Form XML root node is "data" instead of "form". Case
+                    # import forms root node is "system".
+                    form_xml_path = [root] + item_path[1:]
+                else:
+                    raise KeyError('Unexpected Form XML root node "{}"'.format(root))
                 old_id = dict_[key]
                 new_id = self._id_map[old_id]
                 dict_[key] = new_id
