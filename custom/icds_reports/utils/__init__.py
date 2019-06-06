@@ -23,6 +23,7 @@ from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
 from weasyprint import HTML, CSS
+from weasyprint.fonts import FontConfiguration
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
@@ -681,8 +682,25 @@ def create_pdf_file(pdf_context):
     except Exception as ex:
         pdf_page = str(ex)
     base_url = os.path.join(settings.FILEPATH, 'custom', 'icds_reports', 'static')
+
+    font_config = FontConfiguration()
+    css_file = os.path.join(base_url, 'css', 'issnip_monthly_print_style.css')
+    main_css = CSS(filename=css_file)
+    font_url = os.path.join(base_url, 'fonts', 'HindGuntur-Regular.ttf')
+    css_font = CSS(string='''
+        @font-face {{
+            font-family: 'Hind Guntur';
+            stc: url(file://{font_url}) format('truetype');
+        }}
+
+        .aww_name {{
+            line-height: 1.5;
+            font-family: 'Hind Guntur' !important;
+        }}
+    '''.format(font_url=font_url), font_config=font_config)
+
     resultFile.write(HTML(string=pdf_page, base_url=base_url).write_pdf(
-        stylesheets=[CSS(os.path.join(base_url, 'css', 'issnip_monthly_print_style.css')), ])
+        stylesheets=[main_css, css_font], font_config=font_config)
     )
     # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
     # we read this to save file in blobdb
