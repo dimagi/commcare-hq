@@ -30,9 +30,9 @@ DROP TABLE IF EXISTS "icds_db_aww_incentive_7a197ee47818209780c23ed9"
             awcm.is_launched = 'yes' as is_launched,
             round(sum(ccsm.expected_visits)) as visit_denominator,
             awcm.awc_days_open >= 21 as awh_eligible,
-            CASE 
+            CASE
                 WHEN round(sum(ccsm.expected_visits)) = 0 AND awcm.wer_eligible = 0 THEN true
-                ELSE (awcm.wer_weighed / GREATEST(awcm.wer_eligible, 1)) >= 0.6 AND 
+                ELSE (awcm.wer_weighed / GREATEST(awcm.wer_eligible, 1)) >= 0.6 AND
                      (sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)) >= 0.6
             END as incentive_eligible
         FROM agg_awc_monthly as awcm
