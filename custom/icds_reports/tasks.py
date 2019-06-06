@@ -1230,7 +1230,7 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
             block_name
         )
     else:
-        blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month, file_format)
+        blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month_string, file_format)
         create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
