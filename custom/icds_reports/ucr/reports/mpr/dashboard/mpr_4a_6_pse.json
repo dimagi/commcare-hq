@@ -21,7 +21,7 @@
     "india",
     "icds"
   ],
-  "report_id": "static-mpr_4a_6_pse",
+  "report_id": "static-dashboard_mpr_4a_6_pse",
   "data_source_table": "static-daily_feeding_forms",
   "config": {
     "title": "MPR - 4a,6 - PSE (Static)",
