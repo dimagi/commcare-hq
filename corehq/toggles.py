@@ -640,13 +640,13 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 
 def _enable_search_index(domain, enabled):
-    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index
     domains_needing_search_index.clear()
     if enabled:
+        # action is no longer reversible due to roll out of EXPLORE_CASE_DATA
+        # and upcoming migration of CaseES to CaseSearchES
         reindex_case_search_for_domain.delay(domain)
-    else:
-        delete_case_search_cases_for_domain.delay(domain)
 
 
 CASE_LIST_EXPLORER = StaticToggle(
