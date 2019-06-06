@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import division
+
+from six.moves import input
 
 from django.core.management import BaseCommand
 from django.db.models import Q
@@ -90,7 +93,7 @@ class Command(BaseCommand):
         if domain:
             self.print_totals([domain])
             self.stdout.write('\n\n')
-            confirm = raw_input('\nActually migrate "{}"? [y/n] '.format(domain))
+            confirm = input('\nActually migrate "{}"? [y/n] '.format(domain))
             if not confirm == 'y':
                 self.stdout.write('\nAborting migration\n\n')
                 return
@@ -117,7 +120,7 @@ class Command(BaseCommand):
         self.print_totals(domains_to_migrate)
         self.stdout.write('\n\n')
 
-        confirm = raw_input('\nContinue with migration? [y/n] ')
+        confirm = input('\nContinue with migration? [y/n] ')
         if not confirm == 'y':
             self.stdout.write('\nAborting migration\n\n')
             return
@@ -146,14 +149,14 @@ class Command(BaseCommand):
         self.stdout.write('\n\n')
 
     def print_totals(self, domains):
-        max_space = '\t' * (max(map(lambda x: len(x), domains))/8 + 2)
+        max_space = '\t' * (int(max(map(lambda x: len(x), domains)) / 8) + 2)
         header = 'Domain{}CaseES\t\tCaseSearchES\n'.format(max_space)
         divider = '{}\n'.format('*' * (len(header) + len(max_space) * 8))
         self.stdout.write(divider)
         self.stdout.write(header)
         self.stdout.write(divider)
         for domain in domains:
-            spacer = max_space[len(domain)/8:]
+            spacer = max_space[int(len(domain) / 8):]
             total_case_es = CaseES().domain(domain).count()
             total_case_search = CaseSearchES().domain(domain).count()
             self.stdout.write('{domain}{spacer}{case_es}\t\t{case_search}\n'.format(
