@@ -1,212 +1,116 @@
 {
-    "doc_type": "ReportConfiguration",
-    "domains": [
-        "reach-sandbox",
-        "reach-dashboard-qa",
-        "icds-cas",
-        "reach-test"
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "icds-cas",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india"
+  ],
+  "report_id": "reach-mpr_pop_totals_1_to_9",
+  "data_source_table": "reach-pop_totals_person_mobile",
+  "config": {
+    "title": "REACH 1-9 - Population Demographics - Population Totals",
+    "description": "Report capturing indicators 1-9 from here: https://docs.google.com/spreadsheets/d/1fPFIVOaI0ZJkSqw8DJ-wmMyTefMbGXYGyhcB9UUxXnE/",
+    "visible": false,
+    "aggregation_columns": [
+      "month_start"
     ],
-    "server_environment": [
-        "india"
-    ],
-    "report_id": "reach-mpr_pop_totals_1_to_9",
-    "data_source_table": "reach-pop_totals_person_mobile",
-    "config":
-    {
-        "title": "REACH 1-9 - Population Demographics - Population Totals",
-        "description": "Report capturing indicators 1-9 from here: https://docs.google.com/spreadsheets/d/1fPFIVOaI0ZJkSqw8DJ-wmMyTefMbGXYGyhcB9UUxXnE/",
-        "visible": false,
-        "last_modified": "2019-05-30T08:28:13.088934Z"
-    },
-    "aggregation_columns": ["month_start"],
     "filters": [
-    {
-        "datatype": "string",
-        "choice_provider":
-        {
-            "include_descendants": "true",
-            "type": "location",
-            "show_full_path": "true"
-        },
-        "show_all": true,
+      {
         "display": "Village",
-        "field": "village_owner_id",
-        "ancestor_expression":
-        {},
+        "slug": "village",
         "type": "dynamic_choice_list",
-        "slug": "village"
-    },
-    {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
+        "field": "village_owner_id",
+        "choice_provider": {
+          "include_descendants": "true",
+          "type": "location",
+          "show_full_path": "true"
+        }
+      },
+      {
         "display": "Month Start",
-        "field": "month_start",
+        "slug": "month_start",
         "type": "date",
-        "slug": "month_start"
-    }],
-    "columns": [
-    {
         "field": "month_start",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "simple",
+        "datatype": "date"
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month Start",
         "column_id": "month_start",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Month Start"
-    },
-    {
-        "field": "doc_id",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "count",
+        "field": "month_start",
+        "aggregation": "simple"
+      },
+      {
+        "display": "Total Population",
         "column_id": "person_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total Population"
-    },
-    {
-        "field": "household_case_id",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "count_unique",
+        "field": "doc_id",
+        "aggregation": "count"
+      },
+      {
+        "display": "Total no. of households registered",
         "column_id": "household_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of households registered"
-    },
-    {
-        "field": "beneficiary_sum",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "sum",
+        "field": "household_case_id",
+        "aggregation": "count_unique"
+      },
+      {
+        "display": "Total no. of EC + PW + Child (0-5 yr)",
         "column_id": "beneficiary_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of EC + PW + Child (0-5 yr)"
-    },
-    {
-        "field": "beneficiary_with_aadhar_sum",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "sum",
+        "field": "beneficiary_sum",
+        "aggregation": "sum"
+      },
+      {
+        "display": "Total no. of EC + PW + Child (0-5 yr) with Aadhaar",
         "column_id": "beneficiary_with_aadhar_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of EC + PW + Child (0-5 yr) with Aadhaar"
-    },
-    {
-        "field": "pregnant_woman_sum",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "sum",
+        "field": "beneficiary_with_aadhar_sum",
+        "aggregation": "sum"
+      },
+      {
+        "display": "Total no. of Pregnant Women (PW)",
         "column_id": "pregnant_woman_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of Pregnant Women (PW)"
-    },
-    {
-        "field": "eligible_couple_sum",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "sum",
+        "field": "pregnant_woman_sum",
+        "aggregation": "sum"
+      },
+      {
+        "display": "Total no. of Eligible Couples (EC)",
         "column_id": "eligible_couple_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of Eligible Couples (EC)"
-    },
-    {
-        "field": "child_0_to_5_sum",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "sum",
+        "field": "eligible_couple_sum",
+        "aggregation": "sum"
+      },
+      {
+        "display": "Total no. of children (aged 0-5 years)",
         "column_id": "child_0_to_5_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of children (aged 0-5 years)"
-    },
-    {
-        "field": "child_0_to_2_sum",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "sum",
+        "field": "child_0_to_5_sum",
+        "aggregation": "sum"
+      },
+      {
+        "display": "Total no. of children (aged 0-2 years)",
         "column_id": "child_0_to_2_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of children (aged 0-2 years)"
-    },
-    {
-        "field": "child_2_to_5_sum",
-        "sortable": false,
-        "description": null,
-        "width": null,
-        "css_class": null,
-        "format": "default",
-        "aggregation": "sum",
+        "field": "child_0_to_2_sum",
+        "aggregation": "sum"
+      },
+      {
+        "display": "Total no. of children (aged 2-5 years)",
         "column_id": "child_2_to_5_count",
-        "visible": true,
-        "transform":
-        {},
-        "calculate_total": false,
         "type": "field",
-        "display": "Total no. of children (aged 2-5 years)"
-    }],
-    "configured_charts": [],
+        "field": "child_2_to_5_sum",
+        "aggregation": "sum"
+      }
+    ],
     "sort_expression": [],
-}
+    "configured_charts": []
+  },
+  "doc_type": "ReportConfiguration"
 }
