@@ -1058,11 +1058,11 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
-    "Message Log Report: Test new additions",
-    TAG_CUSTOM,
+    'Message Log Report v2',
+    TAG_SOLUTIONS,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
-    description=("Include failed messages, show message status, show event. "
-                 "This feature flag exists to QA on real prod data."),
+    description=("This flag makes failed messages appear in the Message Log "
+                 "Report, and adds Status and Event columns"),
 )
 
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
@@ -1089,9 +1089,10 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 BULK_CONDITIONAL_ALERTS = StaticToggle(
     'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts.',
-    TAG_PRODUCT,
+    'Allow bulk download and upload of conditional alerts',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts', # noqa
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(

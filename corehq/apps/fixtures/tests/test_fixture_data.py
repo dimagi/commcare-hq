@@ -330,3 +330,71 @@ class FixtureDataTest(TestCase):
         data_item.save()
         self.addCleanup(data_item.delete)
         return data_item
+
+
+class TestFixtureOrdering(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestFixtureOrdering, cls).setUpClass()
+        cls.domain = "TestFixtureOrdering"
+        cls.user = CommCareUser.create(cls.domain, 'george', '***')
+
+        cls.data_type = FixtureDataType(
+            domain=cls.domain,
+            tag="houses-of-westeros",
+            is_global=True,
+            name="Great Houses of Westeros",
+            fields=[
+                FixtureTypeField(field_name="name", properties=[]),
+                FixtureTypeField(field_name="seat", properties=[]),
+                FixtureTypeField(field_name="sigil", properties=[]),
+            ],
+            item_attributes=[],
+        )
+        cls.data_type.save()
+
+        cls.data_items = [
+            cls._make_data_item(4, "Tyrell", "Highgarden", "Rose"),
+            cls._make_data_item(6, "Martell", "Sunspear", "Sun and Spear"),
+            cls._make_data_item(3, "Lannister", "Casterly Rock", "Lion"),
+            cls._make_data_item(1, "Targaryen", "Dragonstone", "Dragon"),
+            cls._make_data_item(5, "Tully", "Riverrun", "Trout"),
+            cls._make_data_item(2, "Stark", "Winterfell", "Direwolf"),
+            cls._make_data_item(7, "Baratheon", "Storm's End", "Stag"),
+        ]
+
+    @classmethod
+    def _make_data_item(cls, sort_key, name, seat, sigil):
+        def field_list(value):
+            return FieldList(field_list=[FixtureItemField(field_value=value, properties={})])
+
+        data_item = FixtureDataItem(
+            domain=cls.domain,
+            data_type_id=cls.data_type._id,
+            fields={
+                "name": field_list(name),
+                "set": field_list(seat),
+                "sigil": field_list(sigil),
+            },
+            item_attributes={},
+            sort_key=sort_key,
+        )
+        data_item.save()
+        return data_item
+
+    @classmethod
+    def tearDownClass(cls):
+        for data_item in cls.data_items:
+            data_item.delete()
+        cls.data_type.delete()
+        cls.user.delete()
+        super(TestFixtureOrdering, cls).tearDownClass()
+
+    def test_fixture_order(self):
+        (fixture,) = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        rows = fixture.getchildren()[0].getchildren()
+        actual_names = [row.getchildren()[0].text for row in rows]
+        self.assertEqual(
+            ["Targaryen", "Stark", "Lannister", "Tyrell", "Tully", "Martell", "Baratheon"],
+            actual_names
+        )

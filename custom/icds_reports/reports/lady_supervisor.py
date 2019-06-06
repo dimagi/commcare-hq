@@ -57,7 +57,7 @@ def get_lady_supervisor_data(domain, config, show_test=False):
             ],
             [
                 {
-                    'label': _('Number of VHNDs observed'),
+                    'label': _('Number of VHSNDs observed'),
                     'help_text': lady_supervisor_number_of_vhnds_observed_help_text(),
                     'percent': None,
                     'value': get_value(data, 'vhnd_observed'),

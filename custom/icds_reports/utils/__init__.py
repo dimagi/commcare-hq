@@ -22,6 +22,7 @@ from django.template.loader import render_to_string, get_template
 from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
+from weasyprint import HTML, CSS
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
@@ -672,8 +673,6 @@ def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout
 
 
 def create_pdf_file(pdf_context):
-    from weasyprint import HTML, CSS
-
     pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     resultFile = BytesIO()

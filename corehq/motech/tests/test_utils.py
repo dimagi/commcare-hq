@@ -43,6 +43,17 @@ class PFormatJSONTests(SimpleTestCase):
             'ham spam eggs spam'
         )
 
+    def test_empty_string(self):
+        self.assertEqual(
+            pformat_json(''),
+            ''
+        )
+
+    def test_none(self):
+        self.assertEqual(
+            pformat_json(None),
+            ''
+        )
 
 class DocTests(SimpleTestCase):
 

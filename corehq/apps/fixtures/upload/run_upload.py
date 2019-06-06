@@ -242,15 +242,9 @@ def clear_fixture_quickcache(domain, data_types):
         type_ids.add(data_type.get_id)
         data_type.clear_caches()
 
-    from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_types
-    get_fixture_items_for_data_types.clear(domain, type_ids)
-
-    # We always call get_fixture_items_for_data_types with a list of all global
-    # type ids when doing a restore (i.e. the cache key is a set of all global
-    # type ids) So when updating just a subset of types, we still need to clear
-    # the cache key that contains all types.
-    global_type_ids = {dt.get_id for dt in FixtureDataType.by_domain(domain) if dt.is_global}
-    get_fixture_items_for_data_types.clear(domain, global_type_ids)
+    from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
+    for type_id in type_ids:
+        get_fixture_items_for_data_type.clear(domain, type_id)
 
 
 def _create_data_type(domain, table_def, replace, transaction):

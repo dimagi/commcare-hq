@@ -217,7 +217,8 @@ class HostedCCZView(DomainViewMixin, TemplateView):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
             'page_title': self._page_title,
-            'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)],
+            'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
+                            if h.utility.file_exists()],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
             'supporting_list_files': self._get_files_for(DISPLAY_CHOICE_LIST),
             'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),

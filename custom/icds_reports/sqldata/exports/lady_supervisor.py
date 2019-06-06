@@ -28,7 +28,7 @@ class LadySupervisorExport(ExportableMixin, IcdsSqlData):
                 SimpleColumn('beneficiary_vists'),
                 slug='beneficiary_vists'
             ),
-            DatabaseColumn('Total No. of VHNDs observed', SimpleColumn('vhnd_observed'), slug='vhnd_observed'),
+            DatabaseColumn('Total No. of VHSNDs observed', SimpleColumn('vhnd_observed'), slug='vhnd_observed'),
         ]
 
     @property

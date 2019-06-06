@@ -12,3 +12,4 @@ django-celery
 numpy
 ConcurrentLogHandler
 xhtml2pdf
+celery  # Remove once we are back to regular celery releases

@@ -175,5 +175,5 @@ def lady_supervisor_number_of_beneficiaries_visited_help_text():
 
 def lady_supervisor_number_of_vhnds_observed_help_text():
     return _(
-        'Number of VHND observed: Number of VHND observed by LS in the current month'
+        'Number of VHSND observed: Number of VHSND observed by LS in the current month'
     )

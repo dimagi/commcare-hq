@@ -394,8 +394,8 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
         )
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, date
+            "{}{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+                'Citus' if force_citus else '', func.__name__, settings.SERVER_ENVIRONMENT, date
             )
         )
         self.retry(exc=exc)
@@ -497,8 +497,11 @@ def _aggregate_awc_infra_forms(state_id, day):
     AggregateAwcInfrastructureForms.aggregate(state_id, day)
 
 
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _aggregate_inactive_aww(day):
+def _aggregate_inactive_aww(day, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     AggregateInactiveAWW.aggregate(day)
 
 
@@ -1011,6 +1014,8 @@ def collect_inactive_awws():
         last_sync_date = last_sync.file_added
 
     _aggregate_inactive_aww(last_sync_date)
+    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
+        _aggregate_inactive_aww.delay(last_sync_date, force_citus=True)
 
     celery_task_logger.info("Collecting inactive AWW to generate zip file")
     excel_data = AggregateInactiveAWW.objects.all()

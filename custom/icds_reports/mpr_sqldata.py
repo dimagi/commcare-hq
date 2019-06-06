@@ -1647,7 +1647,7 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
 
 class MPRVhnd(ICDSMixin, MPRData):
 
-    title = '10. Village Health and Nutrition Day (VHND) activity summary'
+    title = '10. Village Health Sanitation and Nutrition Day (VHSND) activity summary'
     slug = 'vhnd'
 
     @property
@@ -1678,7 +1678,7 @@ class MPRVhnd(ICDSMixin, MPRData):
     def row_config(self):
         return (
             (
-                'a) Was VHND conducted on planned date?',
+                'a) Was VHSND conducted on planned date?',
                 'done_when_planned',
                 {
                     'column': 'done_when_planned',
@@ -1687,7 +1687,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'b) AWW present during VHND?',
+                'b) AWW present during VHSND?',
                 'aww_present',
                 {
                     'column': 'aww_present',
@@ -1696,7 +1696,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'c) ICDS Supervisor present during VHDN?',
+                'c) ICDS Supervisor present during VHSND?',
                 'icds_sup',
                 {
                     'column': 'icds_sup',
@@ -1705,7 +1705,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'd) ASHA present during VHND?',
+                'd) ASHA present during VHSND?',
                 'asha_present',
                 {
                     'column': 'asha_present',
@@ -1714,7 +1714,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'e) ANM / MPW present during VHDN?',
+                'e) ANM / MPW present during VHSND?',
                 'anm_mpw',
                 {
                     'column': 'anm_mpw',
@@ -1786,7 +1786,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'm) Was a due list prepared before the VHND for:',
+                'm) Was a due list prepared before the VHSND for:',
                 '',
                 ''
             ),
