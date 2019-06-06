@@ -209,15 +209,10 @@ hqDefine("export/js/export_list", [
                         googleAnalytics.track.event(exportType_ + " Exports", "Update Saved Export", "Saved");
                         self.pollProgressBar();
                     } else {
-                        self.handleExportError(data);
+                        self.prepareExportError(data.error);
                     }
                 },
             });
-        };
-
-        // Polling
-        self.handleExportError = function (data) {
-            self.prepareExportError(data.error);
         };
 
         return self;
