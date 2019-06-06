@@ -68,11 +68,16 @@ hqDefine("export/js/export_list", [
             'isOData',
             'showLink',
         ]);
-
-
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
         var self = ko.mapping.fromJS(options);
+
+        if (options.filters) {
+            // un-knockoutify case and form filter objects
+            self.filters.emwf_case_filter(options.filters.emwf_case_filter);
+            self.filters.emwf_form_filter(options.filters.emwf_form_filter);
+        }
+
         self.hasEmailedExport = !!options.emailedExport;
         if (self.hasEmailedExport) {
             self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
@@ -80,20 +85,6 @@ hqDefine("export/js/export_list", [
 
         if (options.isOData) {
             self.odataFeedUrl = 'https://placekitten.com';
-        }
-
-        if (options.filters) {
-            // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
-            self.filters.emwf_case_filter(_.map(self.filters.emwf_case_filter(), function (mw) {
-                return _.mapObject(mw, function (observable) {
-                    return observable();
-                });
-            }));
-            self.filters.emwf_form_filter(_.map(self.filters.emwf_form_filter(), function (mw) {
-                return _.mapObject(mw, function (observable) {
-                    return observable();
-                });
-            }));
         }
 
         self.isLocationSafeForUser = function () {
