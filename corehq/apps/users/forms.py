@@ -609,20 +609,17 @@ class NewMobileWorkerForm(forms.Form):
                     #                  " debounce: {'default': 300, 'blur': 0} "
                     #                  "}",
                     data_bind='value: username',
-                    #ng_maxlength=max_chars_username,   # TODO: validation
                     maxlength=max_chars_username,
                 ),
                 crispy.Field(
                     'first_name',
                     #ng_required="false",   # TODO: validation
                     data_bind='value: first_name',
-                    #ng_maxlength="30",     # TODO: validation
                 ),
                 crispy.Field(
                     'last_name',
                     #ng_required="false",   # TODO: validation
                     data_bind='value: last_name',
-                    #ng_maxlength="30",     # TODO: validation
                 ),
                 location_field,
                 crispy.Field(
