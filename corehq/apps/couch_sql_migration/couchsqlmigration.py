@@ -452,9 +452,9 @@ class CouchSqlDomainMigrator(object):
             'user_location_id',
         )
 
-        def update_id(dict_, key, base_path):
-            if key in dict_ and dict_[key] in self._id_map:
-                item_path = base_path + [key]
+        def update_id(caseblock_or_meta, prop, base_path):
+            if prop in caseblock_or_meta and caseblock_or_meta[prop] in self._id_map:
+                item_path = base_path + [prop]
                 root = form_xml_dict.keys()[0]
                 if root in ('data', 'system'):
                     # Form XML root node is "data" instead of "form". Case
@@ -462,9 +462,9 @@ class CouchSqlDomainMigrator(object):
                     form_xml_path = [root] + item_path[1:]
                 else:
                     raise KeyError('Unexpected Form XML root node "{}"'.format(root))
-                old_id = dict_[key]
+                old_id = caseblock_or_meta[prop]
                 new_id = self._id_map[old_id]
-                dict_[key] = new_id
+                caseblock_or_meta[prop] = new_id
                 update_xml(form_xml_dict, form_xml_path, old_id, new_id)
                 self._ignore_paths[couch_form.get_id].append(tuple(item_path))
 
