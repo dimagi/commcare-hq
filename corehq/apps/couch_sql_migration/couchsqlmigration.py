@@ -277,6 +277,13 @@ class CouchSqlDomainMigrator(object):
         self._id_map = {}
         self._ignore_paths = defaultdict(list)
 
+    def same_domain(self):
+        """
+        Are we migrating data from Couch to SQL in the same domain, or
+        are we migrating from a Couch domain to a different SQL domain?
+        """
+        return self.src_domain == self.dst_domain
+
     def migrate(self):
         if self.domain:
             log.info('migrating domain {}'.format(self.domain))
@@ -381,7 +388,7 @@ class CouchSqlDomainMigrator(object):
         self._try_to_process_queues(pool)
 
     def _migrate_form_and_associated_models_async(self, wrapped_form):
-        if self.src_domain == self.dst_domain:
+        if self.same_domain():
             set_local_domain_sql_backend_override(self.src_domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
@@ -446,7 +453,7 @@ class CouchSqlDomainMigrator(object):
 
         Leaves app IDs and build IDs unchanged.
         """
-        if self.src_domain == self.dst_domain:
+        if self.same_domain():
             return couch_form, None
 
         id_properties = (
@@ -505,7 +512,7 @@ class CouchSqlDomainMigrator(object):
         return couch_form, form_xml
 
     def _map_case_ids(self, couch_case):
-        if self.src_domain == self.dst_domain:
+        if self.same_domain():
             return couch_case
 
         couch_case.owner_id = self._id_map.get(couch_case.owner_id, couch_case.owner_id)
@@ -520,7 +527,7 @@ class CouchSqlDomainMigrator(object):
         couch_form_json = couch_form.to_json()
         sql_form_json = sql_form.to_json()
 
-        if self.src_domain == self.dst_domain:
+        if self.same_domain():
             ignore_paths = None
         else:
             ignore_paths = self._ignore_paths[couch_form.get_id] + [('domain',), ('_id',)]
@@ -672,7 +679,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(
                 couch_case, sql_case_json,
                 track_list_indices=False,
-                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',), ('xform_ids', '[*]')],
+                ignore_paths=None if self.same_domain() else [('domain',), ('xform_ids', '[*]')],
             )
             diffs = filter_case_diffs(
                 couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
@@ -712,10 +719,7 @@ class CouchSqlDomainMigrator(object):
             self.src_domain, couch_case['_id'], None, save=False, lock=False
         )
         rebuilt_case_json = rebuilt_case.to_json()
-        if self.src_domain == self.dst_domain:
-            ignore_paths = None
-        else:
-            ignore_paths = [('domain',), ('owner_id',), ('xform_ids', '[*]')]
+        ignore_paths = None if self.same_domain() else [('domain',), ('owner_id',), ('xform_ids', '[*]')]
         diffs = json_diff(
             rebuilt_case_json, sql_case_json,
             track_list_indices=False,
@@ -741,7 +745,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(
                 couch_state.to_json(), ledger_value.to_json(),
                 track_list_indices=False,
-                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+                ignore_paths=None if self.same_domain() else [('domain',)],
             )
             self.diff_db.add_diffs(
                 'stock state', ledger_value.ledger_reference.as_id(),
