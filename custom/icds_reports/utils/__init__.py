@@ -31,6 +31,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.blobs.mixin import safe_id
 from corehq.const import ONE_DAY
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.python_compatibility import soft_assert_type_text
@@ -1046,7 +1047,9 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
 
 def get_performance_report_blob_key(state, district, block, month, file_format):
     key_safe_date = datetime.strptime(month, '%B %Y').strftime('%Y_%m')
-    return 'performance_report-{}-{}-{}-{}-{}'.format(state, district, block, key_safe_date, file_format)
+    key = 'performance_report-{}-{}-{}-{}-{}'.format(state, district, block, key_safe_date, file_format)
+    safe_key = key.replace(' ', '_')
+    return safe_id(safe_key)
 
 
 def create_excel_file_in_openpyxl(excel_data, data_type):

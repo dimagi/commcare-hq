@@ -72,7 +72,7 @@ class IncentiveReport(object):
                 ])
             else:
                 if self.beta:
-                    visit_denominator = row_data['visit_denominator']
+                    visit_denominator = row['visit_denominator']
                 else:
                     if self.month.year < 2019 or (self.month.year == 2019 and self.month.month < 3):
                         func = int
@@ -91,13 +91,14 @@ class IncentiveReport(object):
                     awh_eligible_for_incentive = 'No'
                 else:
                     num_open = row['awc_num_open']
+                    awh_eligible_for_incentive = 'Yes' if int(num_open) >= 21 else 'No'
+
 
                 weighing_efficiency = '{:.2%}'.format(weighing_efficiency_percent)
                 if self.beta:
                     awh_eligible_for_incentive = 'Yes' if row['awh_eligible'] else 'No'
                     eligible_for_incentive = 'Yes' if row['incentive_eligible'] else 'No'
                 else:
-                    awh_eligible_for_incentive = 'Yes' if int(num_open) >= 21 else 'No'
                     eligible_for_incentive = 'Yes' if weighing_efficiency_percent >= 0.6 \
                                              and home_visit_percent >= 0.6 else 'No'
                 no_visits = row['valid_visits'] == 0 and visit_denominator == 0
