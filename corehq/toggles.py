@@ -659,10 +659,11 @@ CASE_LIST_EXPLORER = StaticToggle(
 
 EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
-    'Show the Explore Case Data report (in dev)',
+    'Show the Explore Case Data report (in dev). Please make sure the project '
+    'is fully migrated to support the CaseSearch index either by enabling '
+    'the Case List Explorer toggle or doing a manual migration.',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
