@@ -391,7 +391,7 @@ class CouchSqlDomainMigrator(object):
         if self.same_domain():
             set_local_domain_sql_backend_override(self.src_domain)
         try:
-            self._migrate_form_and_associated_models(wrapped_form)
+            self._migrate_form_and_associated_models(wrapped_form, form_is_processed=True)
         except Exception:
             log.exception("Unable to migrate form: %s", wrapped_form.form_id)
         finally:
@@ -399,20 +399,34 @@ class CouchSqlDomainMigrator(object):
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
-    def _migrate_form_and_associated_models(self, couch_form):
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
+        """
+        This copies the couch form into a new sql form.
+        """
         couch_form, form_xml = self._map_form_ids(couch_form)
-        sql_form = _migrate_form(couch_form, self.dst_domain)
-        _migrate_form_attachments(self.src_domain, sql_form, couch_form,
-                                  incl_form_xml=form_xml is None, dry_run=self.dry_run)
+        if form_is_processed:
+            with force_phone_timezones_should_be_processed():
+                adjust_datetimes(couch_form.form)
+        form_id = couch_form.form_id if self.same_domain() else six.text_type(uuid.uuid4())
+        sql_form = XFormInstanceSQL(
+            form_id=form_id,
+            domain=self.dst_domain,
+            xmlns=couch_form.xmlns,
+            user_id=couch_form.user_id,
+        )
+        _copy_form_properties(sql_form, couch_form)
+        _migrate_form_attachments(sql_form, couch_form,
+                                  incl_form_xml=self.same_domain(), dry_run=self.dry_run)
         if form_xml is not None:
             attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
             sql_form.attachments_list.append(attachment)
         _migrate_form_operations(sql_form, couch_form)
 
-        self._save_diffs(couch_form, sql_form)
+        if form_is_processed or couch_form.doc_type != 'SubmissionErrorLog':
+            self._save_diffs(couch_form, sql_form)
 
         case_stock_result = None
-        if sql_form.initial_processing_complete:
+        if form_is_processed and sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
             if len(case_stock_result.case_models):
                 touch_updates = [
@@ -562,26 +576,7 @@ class CouchSqlDomainMigrator(object):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         try:
             couch_form = _wrap_form(couch_form_json)
-            couch_form, form_xml = self._map_form_ids(couch_form)
-            form_id = couch_form.form_id if self.src_domain == self.dst_domain else six.text_type(uuid.uuid4())
-            sql_form = XFormInstanceSQL(
-                form_id=form_id,
-                xmlns=couch_form.xmlns,
-                user_id=couch_form.user_id,
-            )
-            _copy_form_properties(self.dst_domain, sql_form, couch_form)
-            _migrate_form_attachments(self.src_domain, sql_form, couch_form,
-                                      incl_form_xml=form_xml is None, dry_run=self.dry_run)
-            if form_xml is not None:
-                attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
-                sql_form.attachments_list.append(attachment)
-            _migrate_form_operations(sql_form, couch_form)
-
-            if couch_form.doc_type != 'SubmissionErrorLog':
-                self._save_diffs(couch_form, sql_form)
-
-            _save_migrated_models(sql_form)
-
+            self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
             self.processed_docs += 1
             self._log_unprocessed_forms_processed_count(throttled=True)
         except Exception:
@@ -849,32 +844,8 @@ def _wrap_form(doc):
         return XFormInstance.wrap(doc)
 
 
-def _migrate_form(couch_form, dst_domain):
-    """
-    This copies the couch form into a new sql form but does not save it.
-
-    See form_processor.parsers.form._create_new_xform
-    and SubmissionPost._set_submission_properties for what this should do.
-    """
-    interface = FormProcessorInterface(dst_domain)
-
-    form_data = couch_form.form
-    with force_phone_timezones_should_be_processed():
-        adjust_datetimes(form_data)
-    sql_form = interface.new_xform(form_data)
-    if couch_form.domain == dst_domain:
-        sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
-    else:
-        # always assign a new ID if moving domains, so that new form.xml attachment keys don't clash
-        sql_form.form_id = six.text_type(uuid.uuid4())
-    if sql_form.xmlns is None:
-        sql_form.xmlns = ''
-    return _copy_form_properties(dst_domain, sql_form, couch_form)
-
-
-def _copy_form_properties(domain, sql_form, couch_form):
+def _copy_form_properties(sql_form, couch_form):
     assert isinstance(sql_form, XFormInstanceSQL)
-    sql_form.domain = domain
 
     # submission properties
     sql_form.auth_context = couch_form.auth_context
