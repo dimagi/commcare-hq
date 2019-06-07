@@ -211,7 +211,13 @@ def update_xml(xml, path, old_value, new_value):
         step = next_steps[0]
         if len(next_steps) > 1:
             if isinstance(elem, list):
-                return [recurse_elements(e[find_tag_with_ns(e, step)], next_steps[1:]) for e in elem]
+                results = []
+                for e in elem:
+                    key = find_tag_with_ns(e, step)
+                    if key is None:
+                        raise KeyError('Unable to find node "{}" in element keys {}'.format(step, e.keys()))
+                    results.append(recurse_elements(e[key], next_steps[1:]))
+                return results
             elif isinstance(elem, dict):
                 # namespaces cause KeyError: 'case' vs 'n0:case', 'meta' vs 'n1:meta'
                 # search keys of elem for the first one that ends with step
