@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import re
+import pytz
 import tempfile
 import zipfile
 from collections import namedtuple
@@ -35,6 +36,7 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
     get_primary_db_case_counts,
     get_primary_db_form_counts,
 )
+
 from corehq.apps.es.cases import CaseES, server_modified_range
 from corehq.apps.es.forms import FormES, submitted
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -66,6 +68,7 @@ from custom.icds_reports.const import (
     PREGNANT_WOMEN_EXPORT,
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
+    INDIA_TIMEZONE
 )
 from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
@@ -125,6 +128,7 @@ from custom.icds_reports.utils import (
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
     create_pdf_file,
+    get_performance_report_blob_key,
     icds_pre_release_features,
     track_time,
     zip_folder,
@@ -185,11 +189,11 @@ def run_move_ucr_data_into_aggregation_tables_task():
 
 @serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
-
     if force_citus:
         force_citus_engine()
 
-    date = date or datetime.utcnow().date()
+    start_time = datetime.now(pytz.utc)
+    date = date or start_time.date()
     monthly_dates = []
 
     # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
@@ -317,8 +321,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
         if date.weekday() == 5:
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly', force_citus=force_citus)
         chain(
-            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily', force_citus=force_citus),
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), force_citus=force_citus),
+            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
+                                     force_citus=force_citus),
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
+                                   force_citus=force_citus),
             _bust_awc_cache.si()
         ).delay()
 
@@ -650,13 +656,20 @@ def _agg_awc_table_weekly(day):
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
-def email_dashboad_team(aggregation_date, force_citus=False):
+def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=False):
+    aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
+    aggregation_finish_time = datetime.now(INDIA_TIMEZONE)
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
+
     # temporary soft assert to verify it's completing
     if not settings.UNIT_TESTING:
         citus = 'Citus ' if force_citus else ''
-        _dashboard_team_soft_assert(False, "{}Aggregation completed on {}".format(citus, settings.SERVER_ENVIRONMENT))
+        timings = "Aggregation Started At : {} IST, Completed At : {} IST".format(aggregation_start_time,
+                                                                                  aggregation_finish_time)
+        _dashboard_team_soft_assert(False, "{}Aggregation completed on {}".format(citus,
+                                                                                  settings.SERVER_ENVIRONMENT),
+                                    timings)
     celery_task_logger.info("Aggregation has completed")
     icds_data_validation.delay(aggregation_date)
 
@@ -769,30 +782,45 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             beta=beta
         ).get_excel_data(location)
     elif indicator == AWW_INCENTIVE_REPORT:
-        data_type = 'AWW_Performance'
-        excel_data = IncentiveReport(
-            location=location,
-            month=config['month'],
-            aggregation_level=aggregation_level,
-            beta=beta
-        ).get_excel_data()
-        if file_format == 'xlsx':
-            cache_key = create_aww_performance_excel_file(
-                excel_data,
-                data_type,
-                config['month'].strftime("%B %Y"),
-                state=SQLLocation.objects.get(
-                    location_id=config['state_id'], domain=config['domain']
-                ).name,
-                district=SQLLocation.objects.get(
-                    location_id=config['district_id'], domain=config['domain']
-                ).name if aggregation_level >= 2 else None,
-                block=SQLLocation.objects.get(
-                    location_id=config['block_id'], domain=config['domain']
-                ).name if aggregation_level == 3 else None
-            )
+        if beta:
+            today = date.today()
+            data_type = 'AWW_Performance_{}'.format(today.strftime('%Y_%m_%d'))
+            month = config['month'].strftime("%B %Y")
+            state = SQLLocation.objects.get(
+                location_id=config['state_id'], domain=config['domain']
+            ).name
+            district = SQLLocation.objects.get(
+                location_id=config['district_id'], domain=config['domain']
+            ).name if aggregation_level >= 2 else None
+            block = SQLLocation.objects.get(
+                location_id=config['block_id'], domain=config['domain']
+            ).name if aggregation_level == 3 else None
+            cache_key = get_performance_report_blob_key(state, district, block, month, file_format)
         else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
+            data_type = 'AWW_Performance'
+            excel_data = IncentiveReport(
+                location=location,
+                month=config['month'],
+                aggregation_level=aggregation_level,
+                beta=beta
+            ).get_excel_data()
+            if file_format == 'xlsx':
+                cache_key = create_aww_performance_excel_file(
+                    excel_data,
+                    data_type,
+                    config['month'].strftime("%B %Y"),
+                    state=SQLLocation.objects.get(
+                        location_id=config['state_id'], domain=config['domain']
+                    ).name,
+                    district=SQLLocation.objects.get(
+                        location_id=config['district_id'], domain=config['domain']
+                    ).name if aggregation_level >= 2 else None,
+                    block=SQLLocation.objects.get(
+                        location_id=config['block_id'], domain=config['domain']
+                    ).name if aggregation_level == 3 else None
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
     elif indicator == LS_REPORT_EXPORT:
         data_type = 'Lady_Supervisor'
         config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
@@ -1173,11 +1201,49 @@ def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                  .values_list('location_id', flat=True))
+    locations = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name__in=['state', 'district', 'block'])
+                 .select_related('parent__parent', 'location_type'))
     if agg_date is None:
         current_month = date.today().replace(day=1)
         agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
+    for file_format in ['xlsx', 'csv']:
+        for location in locations:
+            if location.location_type.name == 'state':
+                build_incentive_files.delay(location, agg_date, file_format, 1, location)
+            elif location.location_type.name == 'district':
+                build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
+            else:
+                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+
+
+@task(queue='icds_dashboard_reports_queue')
+def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
+    data_type = 'AWW_Performance'
+    excel_data = IncentiveReport(
+        location=location.location_id,
+        month=month,
+        aggregation_level=aggregation_level,
+        beta=True
+    ).get_excel_data()
+    state_name = state.name
+    district_name = district.name if aggregation_level >= 2 else None
+    block_name = location.name if aggregation_level == 3 else None
+    month_string = month.strftime("%B %Y")
+    if file_format == 'xlsx':
+        create_aww_performance_excel_file(
+            excel_data,
+            data_type,
+            month_string,
+            state_name,
+            district_name,
+            block_name
+        )
+    else:
+        blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month_string, file_format)
+        create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
 @task(queue='icds_dashboard_reports_queue')

@@ -2,18 +2,16 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
+from custom.icds_reports.utils import ICDSMixin
 
 
-class BaseIdentification(object):
+class BaseIdentification(ICDSMixin):
 
     title = '1.a Identification and Basic Information'
     slug = 'identification'
     has_sections = False
     subtitle = []
     posttitle = None
-
-    def __init__(self, config):
-        self.config = config
 
     @property
     def headers(self):

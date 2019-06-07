@@ -29,10 +29,17 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         raise NotImplementedError()
 
     @property
+    def allow_conditional_agg(self):
+        return toggles.MPR_ASR_CONDITIONAL_AGG.enabled_for_request(self.request)
+
+    @property
     @memoized
     def data_providers(self):
         config = self.report_config
-        return [provider_cls(config) for provider_cls in self.data_provider_classes]
+        return [
+            provider_cls(config, allow_conditional_agg=self.allow_conditional_agg)
+            for provider_cls in self.data_provider_classes
+        ]
 
     @property
     def template_context(self):
@@ -97,7 +104,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         if self.parallel_render:
             if self.should_render_subreport:
                 subreport = self.request.GET.get('provider_slug', None)
-                dp = [cls for cls in self.data_provider_classes if cls.slug == subreport][0](self.report_config)
+                dp = [_dp for _dp in self.data_providers if _dp.slug == subreport][0]
                 return {'report': self.get_report_context(dp)}
             else:
                 return {}

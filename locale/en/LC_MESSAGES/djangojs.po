@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-28 19:34+0000\n"
+"POT-Creation-Date: 2019-06-04 19:56+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -822,7 +822,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js:62
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js:69
 msgid "Search..."
 msgstr ""
 
@@ -2869,11 +2869,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:65
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:67
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:96
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:98
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3259,7 +3259,15 @@ msgstr ""
 msgid "Failed to re-process"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:18
+#: corehq/apps/reports/static/reports/v2/js/datagrid.js:131
+msgid "Save Filters"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid.js:135
+msgid "Export Data"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:35
 msgid "Select <%= title %>..."
 msgstr ""
 

@@ -82,69 +82,82 @@ def setUpModule():
     domain = create_domain('icds-cas')
     SQLLocation.objects.all().delete()
     LocationType.objects.all().delete()
-    location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='block',
-    )
-    SQLLocation.objects.create(
-        domain=domain.name,
-        name='b1',
-        location_id='b1',
-        location_type=location_type
-    )
-
     state_location_type = LocationType.objects.create(
         domain=domain.name,
         name='state',
     )
-    SQLLocation.objects.create(
+    st1 = SQLLocation.objects.create(
         domain=domain.name,
         name='st1',
         location_id='st1',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st2 = SQLLocation.objects.create(
         domain=domain.name,
         name='st2',
         location_id='st2',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st3 = SQLLocation.objects.create(
         domain=domain.name,
         name='st3',
         location_id='st3',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st4 = SQLLocation.objects.create(
         domain=domain.name,
         name='st4',
         location_id='st4',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st5 = SQLLocation.objects.create(
         domain=domain.name,
         name='st5',
         location_id='st5',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st6 = SQLLocation.objects.create(
         domain=domain.name,
         name='st6',
         location_id='st6',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st7 = SQLLocation.objects.create(
         domain=domain.name,
         name='st7',
         location_id='st7',
         location_type=state_location_type
     )
 
+    supervisor_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='supervisor',
+    )
+    s1 = SQLLocation.objects.create(
+        domain=domain.name,
+        name='s1',
+        location_id='s1',
+        location_type=supervisor_location_type,
+        parent=st1
+    )
+
+    block_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='block',
+    )
+    b1 = SQLLocation.objects.create(
+        domain=domain.name,
+        name='b1',
+        location_id='b1',
+        location_type=block_location_type,
+        parent=s1
+    )
+
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
         name='awc',
     )
-    SQLLocation.objects.create(
+    a7 = SQLLocation.objects.create(
         domain=domain.name,
         name='a7',
         location_id='a7',
