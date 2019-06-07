@@ -119,7 +119,7 @@ hqDefine("users/js/mobile_workers", function () {
 
     // TODO: rename worker / mobile worker to "user" everywhere?
     var mobileWorkerCreationModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['location_url']);
+        hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['location_url', 'require_location_id']);
 
         var self = {};
 
@@ -165,6 +165,15 @@ hqDefine("users/js/mobile_workers", function () {
                 },
             });
         };
+
+        self.allowSubmit = ko.computed(function () {
+            var isValid = self.newMobileWorker.username() && self.newMobileWorker.password();
+            if (options.require_location_id) {
+                isValid = isValid && self.newMobileWorker.location_id();
+            }
+            // TODO: also require that usernameAvailabilityStatus === 'available'
+            return isValid;
+        });
 
         self.submitNewMobileWorker = function () {
             $("#newMobileWorkerModal").modal('hide');

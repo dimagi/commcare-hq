@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block page_content %}
+  {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
   {% initial_page_data 'custom_fields' custom_fields %}
   {% initial_page_data 'custom_field_names' custom_field_names %}
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
@@ -94,10 +95,8 @@
                 <div class="modal-footer">
                   <!-- TODO: markDefault on cancel -->
                   <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                  <!-- TODO: disable properly -->
                   <!-- TODO: markDefault on submit -->
-                  <button type="submit"
-                          ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
+                  <button type="submit" data-bind="enable: allowSubmit"
                           ng-click="markDefault()"
                           class="btn btn-primary">
                     {% trans "Create" %}
