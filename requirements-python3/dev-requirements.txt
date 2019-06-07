@@ -134,7 +134,7 @@ pexpect==4.7.0            # via ipython
 phonenumberslite==8.10.10
 pickleshare==0.7.5        # via ipython
 pillow==6.0.0
-pip-tools==3.6.1
+pip-tools==3.8.0
 ply==3.11
 polib==1.1.0
 prompt-toolkit==1.0.16    # via ipython
