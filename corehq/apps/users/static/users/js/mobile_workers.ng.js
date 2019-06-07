@@ -150,13 +150,6 @@
         }
 
         var self = {};
-        self.creationStatus = STATUS.NEW;
-
-        self.username = data.username || '';
-        self.firstName = data.first_name || '';
-        self.lastName = data.last_name || '';
-        self.editUrl = data.editUrl || '';
-        self.locationId = data.location_id || '';
 
         self.password = data.generateStrongPasswords ? generateStrongPassword() : '';
 
