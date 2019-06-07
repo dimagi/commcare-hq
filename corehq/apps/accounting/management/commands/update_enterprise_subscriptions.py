@@ -51,26 +51,24 @@ class Command(BaseCommand):
         print('Proceeding...')
 
         with transaction.atomic():
-            april_subscriptions = self.get_april_subscriptions_queryset(account, plan)
+            april_subscriptions = self.get_april_subscriptions_queryset(account, plan, april_and_may_plan_version)
             for april_subscription in with_progress_bar(april_subscriptions):
                 original_end_date = april_subscription.date_end
                 new_end_date = max(APRIL_1, april_subscription.date_start)
-                if april_subscription.plan_version != april_and_may_plan_version:
-                    april_subscription.change_plan(
-                        april_and_may_plan_version, new_end_date, date_end=original_end_date,
-                        note='CRS Enterprise after April 1 2019'
-                    )
+                april_subscription.change_plan(
+                    april_and_may_plan_version, new_end_date, date_end=original_end_date,
+                    note='CRS Enterprise after April 1 2019'
+                )
 
         with transaction.atomic():
-            may_subscriptions = self.get_may_subscriptions_queryset(account, plan)
+            may_subscriptions = self.get_may_subscriptions_queryset(account, plan, april_and_may_plan_version)
             for may_subscription in with_progress_bar(may_subscriptions):
                 original_end_date = may_subscription.date_end
                 new_end_date = max(MAY_1, may_subscription.date_start)
-                if may_subscription.plan_version != april_and_may_plan_version:
-                    may_subscription.change_plan(
-                        april_and_may_plan_version, new_end_date, date_end=original_end_date,
-                        note='CRS Enterprise after May 1 2019'
-                    )
+                may_subscription.change_plan(
+                    april_and_may_plan_version, new_end_date, date_end=original_end_date,
+                    note='CRS Enterprise after May 1 2019'
+                )
 
         with transaction.atomic():
             post_may_subscriptions = self.get_post_may_subscriptions_queryset(
@@ -85,17 +83,21 @@ class Command(BaseCommand):
                 )
 
     @staticmethod
-    def get_april_subscriptions_queryset(account, plan):
+    def get_april_subscriptions_queryset(account, plan, april_plan_version):
         return Command.get_enterprise_subscriptions_queryset(account, plan).filter(
             Q(date_end__isnull=True) | Q(date_end__gt=APRIL_1),
             date_start__lt=MAY_1,
+        ).exclude(
+            plan_version=april_plan_version,
         )
 
     @staticmethod
-    def get_may_subscriptions_queryset(account, plan):
+    def get_may_subscriptions_queryset(account, plan, may_plan_version):
         return Command.get_enterprise_subscriptions_queryset(account, plan).filter(
             Q(date_end__isnull=True) | Q(date_end__gt=MAY_1),
             date_start__lt=JUNE_1,
+        ).exclude(
+            plan_version=may_plan_version,
         )
 
     @staticmethod
