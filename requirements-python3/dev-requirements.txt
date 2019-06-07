@@ -33,7 +33,7 @@ commonmark==0.9.0         # via recommonmark
 concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 coverage==4.5.1
-cryptography==2.7
+cryptography==2.6.1
 csiphash==0.0.5
 cssselect2==0.2.1
 csv342==1.0.0
