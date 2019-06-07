@@ -93,7 +93,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
                     url: (hqImport("hqwebapp/js/initial_page_data").reverse("choice_list_api").split('report_id')[0]
                           + element.data("filter-name") + "/"),
                     dataType: 'json',
-                    quietMillis: 250,
+                    delay: 250,
                     data: choiceListUtils.getApiQueryParams,
                     processResults: choiceListUtils.formatPageForSelect2,
                     cache: true,
