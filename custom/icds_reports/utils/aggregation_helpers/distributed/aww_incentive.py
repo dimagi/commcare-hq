@@ -77,10 +77,10 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
           INNER JOIN agg_ccs_record_monthly AS ccsm
           ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level
           WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
-          GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name, awcm.district_name,
-                   awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
-                   awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
-                   awcm.awc_days_open, awcm.is_launched
+          GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name,
+                awcm.district_name, awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
+                awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
+                awcm.awc_days_open, awcm.is_launched
         );
         /* update visits for cf cases (not in agg_ccs_record) */
         CREATE TEMPORARY TABLE "tmp_ccs_cf" AS SELECT
