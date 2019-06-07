@@ -1245,16 +1245,23 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'lactating', 'open_in_month', 'date_death'
     ).filter(lactating=1, date_death=None).exclude(open_in_month=False)
-    data = CcsRecordMonthlyView.objects.filter(
-        awc_id=awc_id,
-        month__gte=one_month_ago,
-        date_death=None,
-        case_id__in=[case['case_id'] for case in data],
-    ).order_by('case_id', '-month').distinct('case_id').values(
-        'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery',
-        'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed', 'month'
-    )
-    data_count = data.count()
+
+    case_ids = [case['case_id'] for case in data]
+    if case_ids:
+        data = CcsRecordMonthlyView.objects.filter(
+            awc_id=awc_id,
+            month__gte=one_month_ago,
+            date_death=None,
+            case_id__in=case_ids,
+        ).order_by('case_id', '-month').distinct('case_id').values(
+            'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery',
+            'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed', 'month'
+        )
+        data_count = data.count()
+    else:
+        data = []
+        data_count = 0
+
     config = {
         'data': [],
     }
