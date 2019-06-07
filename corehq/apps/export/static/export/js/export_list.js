@@ -72,7 +72,8 @@ hqDefine("export/js/export_list", [
 
         var self = ko.mapping.fromJS(options);
 
-        if (options.filters) {
+        self.showSavedFilters = !!options.filters;
+        if (self.showSavedFilters) {
             // un-knockoutify case and form filter objects
             self.filters.emwf_case_filter(options.filters.emwf_case_filter);
             self.filters.emwf_form_filter(options.filters.emwf_form_filter);
@@ -402,7 +403,9 @@ hqDefine("export/js/export_list", [
             self.days(newSelectedExport.filters.days());
             self.startDate(newSelectedExport.filters.start_date());
             self.endDate(newSelectedExport.filters.end_date());
-            self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
+            if (newSelectedExport.hasEmailedExport) {
+                self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
+            }
 
             // select2s require programmatic update
             self._initSelect2Value(self.$emwfCaseFilter, self.emwfCaseFilter());
@@ -484,7 +487,9 @@ hqDefine("export/js/export_list", [
                         export_.filters.days(self.days());
                         export_.filters.start_date(self.startDate());
                         export_.filters.end_date(self.endDate());
-                        export_.emailedExport.pollProgressBar();
+                        if (export_.hasEmailedExport) {
+                            export_.emailedExport.pollProgressBar();
+                        }
                         self.$filterModal.modal('hide');
                     } else {
                         self.formSubmitErrorMessage(data.error);

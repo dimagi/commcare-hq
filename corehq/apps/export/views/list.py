@@ -66,6 +66,7 @@ class ExportListHelper(object):
     form_or_case = None         # None if this handles both forms and cases
     is_deid = False
     allow_bulk_export = True
+    include_saved_filters = False
 
     @classmethod
     def get(self, request, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_odata=False, is_deid=False):
@@ -232,7 +233,7 @@ class ExportListHelper(object):
         }
 
     def _get_filters(self, export):
-        if export.is_daily_saved_export:
+        if self.include_saved_filters:
             return DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
                 export.filters, self.domain, type(export)
             )
@@ -259,6 +260,7 @@ class ExportListHelper(object):
 
 class DailySavedExportListHelper(ExportListHelper):
     allow_bulk_export = False
+    include_saved_filters = True
 
     def _priv_check(self):
         return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
@@ -452,7 +454,6 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-
     lead_text = ugettext_lazy('''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
@@ -484,6 +485,8 @@ class BaseExportListView(BaseProjectDataView):
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
             'lead_text': self.lead_text,
+            "export_filter_form": (DashboardFeedFilterForm(self.domain_object)
+                                   if self.include_saved_filters else None),
         }
 
 
@@ -589,9 +592,6 @@ class DailySavedExportListView(BaseExportListView, DailySavedExportListHelper):
             "is_daily_saved_export": True,
             "model_type": model_type,
             "static_model_type": False,
-            "export_filter_form": DashboardFeedFilterForm(
-                self.domain_object,
-            )
         })
         return context
 
@@ -608,6 +608,8 @@ def commit_filters(request, domain):
     if export.is_daily_saved_export and not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
+        raise Http404
+    if export.is_odata_config and not toggles.ODATA.enabled_for_request(request):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -627,7 +629,8 @@ def commit_filters(request, domain):
         if export.filters != filters:
             export.filters = filters
             export.save()
-            rebuild_saved_export(export_id, manual=True)
+            if export.is_daily_saved_export:
+                rebuild_saved_export(export_id, manual=True)
         return json_response({
             'success': True,
         })
@@ -709,7 +712,7 @@ def can_download_daily_saved_export(export, domain, couch_user):
     elif export.type == CASE_EXPORT and has_permission_to_view_report(
             couch_user, domain, CASE_EXPORT_PERMISSION):
         return True
-    return False 
+    return False
 
 
 @location_safe
@@ -859,6 +862,7 @@ class ODataFeedListHelper(ExportListHelper):
     allow_bulk_export = False
     form_or_case = 'case'
     is_deid = False
+    include_saved_filters = True
 
     @property
     def create_export_form_title(self):
