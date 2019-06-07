@@ -55,20 +55,22 @@ class Command(BaseCommand):
             for april_subscription in with_progress_bar(april_subscriptions):
                 original_end_date = april_subscription.date_end
                 new_end_date = max(APRIL_1, april_subscription.date_start)
-                april_subscription.change_plan(
-                    april_and_may_plan_version, new_end_date, date_end=original_end_date,
-                    note='CRS Enterprise after April 1 2019'
-                )
+                if april_subscription.plan_version != april_and_may_plan_version:
+                    april_subscription.change_plan(
+                        april_and_may_plan_version, new_end_date, date_end=original_end_date,
+                        note='CRS Enterprise after April 1 2019'
+                    )
 
         with transaction.atomic():
             may_subscriptions = self.get_may_subscriptions_queryset(account, plan)
             for may_subscription in with_progress_bar(may_subscriptions):
                 original_end_date = may_subscription.date_end
                 new_end_date = max(MAY_1, may_subscription.date_start)
-                may_subscription.change_plan(
-                    april_and_may_plan_version, new_end_date, date_end=original_end_date,
-                    note='CRS Enterprise after May 1 2019'
-                )
+                if may_subscription.plan_version != april_and_may_plan_version:
+                    may_subscription.change_plan(
+                        april_and_may_plan_version, new_end_date, date_end=original_end_date,
+                        note='CRS Enterprise after May 1 2019'
+                    )
 
         with transaction.atomic():
             post_may_subscriptions = self.get_post_may_subscriptions_queryset(
