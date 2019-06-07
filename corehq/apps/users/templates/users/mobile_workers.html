@@ -2,19 +2,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
-{% load djangular_tags %}
-
-{% block stylesheets %}
-  <link type="text/css"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'ui-select/dist/select.min.css' %}" />
-{% endblock %}
 
 {% block js %}
-  <script src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
-  <script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
-  <script src="{% static 'ui-select/dist/select.js' %}"></script>
   {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
   {% endif %}
@@ -25,7 +14,6 @@
 {% block page_content %}
   {% initial_page_data 'custom_fields' custom_fields %}
   {% initial_page_data 'custom_field_names' custom_field_names %}
-  {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data 'location_url' location_url %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
@@ -35,90 +23,58 @@
   {% registerurl 'activate_commcare_user' domain '---' %}
   {% registerurl 'deactivate_commcare_user' domain '---' %}
 
-  <div ng-app="mobileWorkerApp">
-    <div ng-controller="mobileWorkerCreationController">
-      <div class="row">
-        <div class="col-sm-12">
-          <p class="lead">
-            {% blocktrans %}
-              Mobile Workers can log into applications in this project space
-              and submit data.
-            {% endblocktrans %}
-          </p>
-          <p>
-            {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-              Their activity and form submissions can be
-              monitored in the Reports section of this {{ hq_name }} project space.
-              <br />
-              Read more about managing mobile workers on our
-              <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
-            {% endblocktrans %}
-          </p>
-          <div class="btn-toolbar" style="margin-bottom: 20px;">
-
-            {% if not request.is_view_only %}
-              <button type="button"
-                      class="btn btn-primary"
-                      data-toggle="modal"
-                      data-target="#newMobileWorkerModal"
-                      ng-click="initializeMobileWorker()">
-                <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
-              </button>
-              {% if can_bulk_edit_users and can_access_all_locations %}
-                <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-                  <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
-                </a>
-                <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
-                  {% trans "Bulk Upload" %}
-                </a>
-              {% endif %}
-              {% if can_add_extra_users and can_access_all_locations %}
-                <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
-                  {% trans "Edit User Fields" %}
-                </a>
-              {% endif %}
+  <div>
+    <div class="row">
+      <div class="col-sm-12">
+        <p class="lead">
+          {% blocktrans %}
+            Mobile Workers can log into applications in this project space and submit data.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+            Their activity and form submissions can be monitored in the Reports section of this {{ hq_name }} project space.
+            <br />
+            Read more about managing mobile workers on our
+            <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
+          {% endblocktrans %}
+        </p>
+        <div class="btn-toolbar" style="margin-bottom: 20px;">
+          {% if not request.is_view_only %}
+            <!-- TODO: button to create mobile worker -->
+            <!--button type="button"
+                    class="btn btn-primary"
+                    data-toggle="modal"
+                    data-target="#newMobileWorkerModal"
+                    ng-click="initializeMobileWorker()">
+              <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
+            </button-->
+            {% if can_bulk_edit_users and can_access_all_locations %}
+              <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+                <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
+              </a>
+              <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
+                {% trans "Bulk Upload" %}
+              </a>
             {% endif %}
-          </div>
+            {% if can_add_extra_users and can_access_all_locations %}
+              <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
+                {% trans "Edit User Fields" %}
+              </a>
+            {% endif %}
+          {% endif %}
         </div>
       </div>
-      {% if not request.is_view_only %}
-        <div class="modal fade" id="newMobileWorkerModal">
-          {% if can_add_extra_users %}
-            <div class="modal-dialog">
-              <form id="newMobileWorkerForm"
-                    name="mobileWorkerForm"
-                    novalidate
-                    ng-submit="submitNewMobileWorker()">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">
-                      <span aria-hidden="true">&times;</span>
-                      <span class="sr-only">{% trans 'Close' %}</span>
-                    </button>
-                    <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
-                  </div>
-                  <div class="modal-body">
-                    <div class="form-horizontal">
-                      {% crispy new_mobile_worker_form %}
-                      {% if custom_fields_form.fields %}
-                        {% crispy custom_fields_form %}
-                      {% endif %}
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                    <button type="submit"
-                            ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
-                            ng-click="markDefault()"
-                            class="btn btn-primary">
-                      {% trans "Create" %}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          {% else %}
-            <div class="modal-dialog">
+    </div>
+    {% if not request.is_view_only %}
+      <!-- TODO: modal to create mobile worker -->
+      <!--div class="modal fade" id="newMobileWorkerModal">
+        {% if can_add_extra_users %}
+          <div class="modal-dialog">
+            <form id="newMobileWorkerForm"
+                  name="mobileWorkerForm"
+                  novalidate
+                  ng-submit="submitNewMobileWorker()">
               <div class="modal-content">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">
@@ -128,96 +84,124 @@
                   <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
                 </div>
                 <div class="modal-body">
-                  <div class="alert alert-info">
-                    {% url 'domain_select_plan' domain as change_plan_url %}
-                    <p>
-                      {% blocktrans with request.plan.user_limit as u %}
-                        <strong>Mobile Worker Limit Reached:</strong> You have reached the limit of {{ u }}
-                        Mobile Workers included with your plan. You may no longer add new Mobile Workers until you
-                        confirm your project's billing information.
-                      {% endblocktrans %}
-                    </p>
-                    <p>
-                      {% blocktrans with request.plan.user_fee as u %}
-                        There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
-                      {% endblocktrans %}
-                    </p>
-                    <p>
-                      {% if not can_edit_billing_info %}
-                        {% blocktrans %}
-                          Note: You must be an admin web user to confirm your Billing Information.
-                        {% endblocktrans %}
-                      {% endif %}
-                    </p>
+                  <div class="form-horizontal">
+                    {% crispy new_mobile_worker_form %}
+                    {% if custom_fields_form.fields %}
+                      {% crispy custom_fields_form %}
+                    {% endif %}
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                  <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">{% trans 'Confirm Billing Information' %}</a>
+                  <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                  <button type="submit"
+                          ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
+                          ng-click="markDefault()"
+                          class="btn btn-primary">
+                    {% trans "Create" %}
+                  </button>
                 </div>
               </div>
+            </form>
+          </div>
+        {% else %}
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                  <span aria-hidden="true">&times;</span>
+                  <span class="sr-only">{% trans 'Close' %}</span>
+                </button>
+                <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-info">
+                  {% url 'domain_select_plan' domain as change_plan_url %}
+                  <p>
+                    {% blocktrans with request.plan.user_limit as u %}
+                      <strong>Mobile Worker Limit Reached:</strong> You have reached the limit of {{ u }}
+                      Mobile Workers included with your plan. You may no longer add new Mobile Workers until you
+                      confirm your project's billing information.
+                    {% endblocktrans %}
+                  </p>
+                  <p>
+                    {% blocktrans with request.plan.user_fee as u %}
+                      There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
+                    {% endblocktrans %}
+                  </p>
+                  <p>
+                    {% if not can_edit_billing_info %}
+                      {% blocktrans %}
+                        Note: You must be an admin web user to confirm your Billing Information.
+                      {% endblocktrans %}
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">{% trans 'Confirm Billing Information' %}</a>
+              </div>
             </div>
-          {% endif %}
-        </div>
-      {% endif %}
-      {% angularjs %}
-
-        <div class="panel panel-info"
-             ng-show="workers.length > 0"
-             ng-cloak>
-          <div class="panel-heading">
-            <h3 class="panel-title">
-              {% trans 'New Mobile Workers' %}
-            </h3>
           </div>
-          <div class="panel-body">
-            <table class="table table-striped">
-              <thead workertable-header></thead>
-              <tbody>
-              <tr ng-repeat="worker in workers">
-                <td class="{{ worker.creationStatus }}">
-                                    <span ng-if="!worker.editUrl">
-                                        <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
+        {% endif %}
+      </div-->
+    {% endif %}
+
+    <!-- TODO: panel to show newly-created mobile workers -->
+    <!--div class="panel panel-info"
+         ng-show="workers.length > 0"
+         ng-cloak>
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {% trans 'New Mobile Workers' %}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-striped">
+          <thead workertable-header></thead>
+          <tbody>
+          <tr ng-repeat="worker in workers">
+            <td class="{{ worker.creationStatus }}">
+                                <span ng-if="!worker.editUrl">
+                                    <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
+                                </span>
+              <a href="{{ worker.editUrl }}"
+                 ng-show="!!worker.editUrl">
+                <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
+              </a>
+            </td>
+            <td class="{{ worker.creationStatus }}">{{ worker.first_name }}</td>
+            <td class="{{ worker.creationStatus }}">{{ worker.last_name }}</td>
+            <td class="{{ worker.creationStatus }}">
+              <div ng-show="worker.creationStatus==='pending'">
+                <i class="fa fa-circle-o-notch fa-spin"></i>
+                {% trans 'Pending...' %}
+              </div>
+              <div ng-show="worker.creationStatus==='success'">
+                                    <span class="text-success">
+                                        <i class="fa fa-check"></i> {% trans 'NEW' %}
                                     </span>
-                  <a href="{{ worker.editUrl }}"
-                     ng-show="!!worker.editUrl">
-                    <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
-                  </a>
-                </td>
-                <td class="{{ worker.creationStatus }}">{{ worker.first_name }}</td>
-                <td class="{{ worker.creationStatus }}">{{ worker.last_name }}</td>
-                <td class="{{ worker.creationStatus }}">
-                  <div ng-show="worker.creationStatus==='pending'">
-                    <i class="fa fa-circle-o-notch fa-spin"></i>
-                    {% trans 'Pending...' %}
-                  </div>
-                  <div ng-show="worker.creationStatus==='success'">
-                                        <span class="text-success">
-                                            <i class="fa fa-check"></i> {% trans 'NEW' %}
-                                        </span>
-                  </div>
-                  <div ng-show="worker.creationStatus==='warning'">
-                                        <span class="text-warning">
-                                            <i class="fa fa-exclamation-triangle"></i>
-                                            {% trans "ERROR" %}
-                                        </span>
-                    <button type="button"
-                            class="btn btn-default"
-                            data-toggle="modal"
-                            data-target="#newMobileWorkerModal"
-                            ng-click="retryMobileWorker">
-                      {% trans 'Retry' %}
-                    </button>
-                  </div>
+              </div>
+              <div ng-show="worker.creationStatus==='warning'">
+                                    <span class="text-warning">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        {% trans "ERROR" %}
+                                    </span>
+                <button type="button"
+                        class="btn btn-default"
+                        data-toggle="modal"
+                        data-target="#newMobileWorkerModal"
+                        ng-click="retryMobileWorker">
+                  {% trans 'Retry' %}
+                </button>
+              </div>
 
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {% endangularjs %}
-    </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div-->
   </div>
   <div id="mobile-workers-list" class="ko-template">
   <div class="panel panel-default">
