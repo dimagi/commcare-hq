@@ -14,7 +14,7 @@ graphviz==0.7
 transifex-client==0.12.4
 modernize
 gnureadline==6.3.8
-pip-tools~=3.0
+pip-tools>=3.8
 
 # documentation
 Sphinx~=1.8

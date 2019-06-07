@@ -64,6 +64,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
+from corehq.const import ONE_DAY
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -1019,7 +1020,7 @@ def email_enterprise_report(domain, slug, couch_user):
     hash_id = uuid.uuid4().hex
     redis = get_redis_client()
     redis.set(hash_id, csv_file.getvalue())
-    redis.expire(hash_id, 60 * 60 * 24)
+    redis.expire(hash_id, ONE_DAY)
     csv_file.close()
 
     # Send email

@@ -37,7 +37,7 @@ from corehq.apps.translations.models import TransifexBlacklist
 from corehq.apps.translations.tasks import (
     backup_project_from_transifex,
     delete_resources_on_transifex,
-    download_project_from_hq,
+    email_project_from_hq,
     pull_translation_files_from_transifex,
     push_translation_files_to_transifex,
 )
@@ -485,7 +485,7 @@ class DownloadTranslations(BaseTranslationsView):
             form = DownloadAppTranslationsForm(self.domain, self.request.POST)
             if form.is_valid():
                 form_data = form.cleaned_data
-                download_project_from_hq.delay(request.domain, form_data, request.user.email)
+                email_project_from_hq.delay(request.domain, form_data, request.user.email)
                 messages.success(request, _('Submitted request to download translations. '
                                             'You should receive an email shortly.'))
                 return redirect(self.urlname, domain=self.domain)

@@ -1261,6 +1261,19 @@ if six.PY3:
     APPS_DB = NEW_APPS_DB
 
     META_DB = 'meta'
+
+    _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
+    for _name in ["default", "redis"]:
+        if _name not in CACHES:  # noqa: F405
+            continue
+        _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
+        assert _options.get('SERIALIZER', _serializer) == _serializer, (
+            "Refusing to change SERIALIZER. Remove that option from "
+            "localsettings or whereever redis caching is configured. {}"
+            .format(_options)
+        )
+        _options['SERIALIZER'] = _serializer
+    del _name, _options, _serializer
 else:
     NEW_USERS_GROUPS_DB = b'users'
     USERS_GROUPS_DB = NEW_USERS_GROUPS_DB

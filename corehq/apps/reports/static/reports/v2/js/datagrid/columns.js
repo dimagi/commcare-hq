@@ -21,6 +21,13 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.title = ko.observable(data.title);
         self.name = ko.observable(data.name);
         self.width = ko.observable(data.width || 200);
+        self.sort = ko.observable(data.sort);
+
+        self.sortIconClass = ko.computed(function () {
+            if (self.sort() === 'asc') return 'glyphicon glyphicon-sort-by-attributes';
+            if (self.sort() === 'desc') return 'glyphicon glyphicon-sort-by-attributes-alt';
+            return 'glyphicon glyphicon-sort';
+        });
 
         self.clause = ko.observable(data.clause || 'all');
 
@@ -28,12 +35,16 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return columnFilters.appliedColumnFilter(filterData);
         }));
 
-        self.showClause = ko.computed(function () {
+        self.hasFilters = ko.computed(function () {
             return self.appliedFilters().length > 0;
         });
 
         self.showAddFilter = ko.computed(function () {
-            return self.appliedFilters().length < 2;
+            return self.appliedFilters().length === 0;
+        });
+
+        self.showAddExpression = ko.computed(function () {
+            return self.appliedFilters().length === 1;
         });
 
         self.unwrap = function () {
@@ -43,6 +54,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.context = ko.computed(function () {
             return {
                 name: self.name(),
+                sort: self.sort(),
                 clause: self.clause(),
                 filters: _.map(self.appliedFilters(), function (filterData) {
                     return {
@@ -75,6 +87,22 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.column = ko.observable();
         self.isNew = ko.observable();
         self.hasFilterUpdate = ko.observable(false);
+
+        self.hideColumnFilterCondition = options.hideColumnFilterCondition;
+        self.noDeleteColumnCondition = options.noDeleteColumnCondition;
+
+        self.showColumnFilters = ko.computed(function () {
+            if (!self.column()) return false;
+            if (!self.column().name()) return false;
+            if (!_.isFunction(self.hideColumnFilterCondition)) return true;
+            return !self.hideColumnFilterCondition(self.column());
+        });
+
+        self.showDelete = ko.computed(function () {
+            if (!_.isFunction(self.noDeleteColumnCondition)) return true;
+            if (!self.column()) return true;
+            return !self.noDeleteColumnCondition(self.column());
+        });
 
         self.availableFilters = ko.observableArray(_.map(options.availableFilters, function (data) {
             return columnFilters.columnFilter(data);

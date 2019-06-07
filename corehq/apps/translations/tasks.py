@@ -156,15 +156,16 @@ def backup_project_from_transifex(domain, data, email):
 
 
 @task
-def download_project_from_hq(domain, data, email):
+def email_project_from_hq(domain, data, email):
     """Emails the requester with an excel file translations to be sent to Transifex.
 
     Used to verify translations before sending to Transifex
     """
     lang = data.get('source_lang')
     project_slug = data.get('transifex_project_slug')
-    gen = AppTranslationsGenerator(domain, data.get('app_id'), data.get('version'), lang, lang, 'default_')
-    parser = TranslationsParser(gen)
+    quacks_like_a_transifex = AppTranslationsGenerator(domain, data.get('app_id'), data.get('version'),
+                                                       key_lang=lang, source_lang=lang, lang_prefix='default_')
+    parser = TranslationsParser(quacks_like_a_transifex)
     try:
         translation_file, __ = parser.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:

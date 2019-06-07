@@ -1,23 +1,43 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, unicode_literals
 
 import hashlib
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
 import six
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
+from pillowtop.dao.exceptions import DocumentMismatchError
+from pillowtop.exceptions import PillowConfigError
+from pillowtop.logger import pillow_logging
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import BulkPillowProcessor
+from pillowtop.utils import ensure_document_exists, ensure_matched_revisions
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
 from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 from corehq.apps.userreports.const import KAFKA_TOPICS
-from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
 from corehq.apps.userreports.exceptions import (
-    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
+    BadSpecError,
+    StaleRebuildError,
+    TableRebuildError,
+    UserReportsWarning,
 )
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
+from corehq.apps.userreports.rebuild import (
+    get_table_diffs,
+    get_tables_rebuild_migrate,
+    migrate_tables,
+)
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -26,14 +46,6 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.dao.exceptions import DocumentMismatchError
-from pillowtop.exceptions import PillowConfigError
-from pillowtop.logger import pillow_logging
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import BulkPillowProcessor
-from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
@@ -80,7 +92,8 @@ def _filter_missing_domains(configs):
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
+                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL,
+                 run_migrations=True):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -90,6 +103,8 @@ class ConfigurableReportTableManagerMixin(object):
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
         bootstrap_interval -- time in seconds when the pillow checks for any data source changes
+        run_migrations -- If True, rebuild tables if the data source changes.
+                          Otherwise, do not attempt to change database
         """
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
@@ -98,6 +113,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
         self.bootstrap_interval = bootstrap_interval
+        self.run_migrations = run_migrations
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -145,7 +161,9 @@ class ConfigurableReportTableManagerMixin(object):
                 get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
             )
 
-        self.rebuild_tables_if_necessary()
+        if self.run_migrations:
+            self.rebuild_tables_if_necessary()
+
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
@@ -180,11 +198,11 @@ class ConfigurableReportTableManagerMixin(object):
 
             diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
 
-            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
                 pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
-                table_diffs = [diff for diff in diffs.formatted if diff.table_name == table_name]
+                table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
                         self.rebuild_table(sql_adapter, table_diffs)
@@ -193,12 +211,12 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter, table_diffs)
 
-            migration_diffs = diffs.filter(tables_to_act_on.migrate)
-            self.migrate_tables(engine, migration_diffs.raw, tables_to_act_on.migrate, table_map)
+            self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
         pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
-        changes = migrate_tables(engine, diffs, table_names)
+        migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
+        changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
@@ -451,6 +469,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            run_migrations=(process_num == 0)  # only first process runs migrations
         ),
         pillow_name=pillow_id,
         topics=topics,
@@ -473,7 +492,8 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            bootstrap_interval=7 * 24 * 60 * 60  # 1 week
+            bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
+            run_migrations=(process_num == 0)  # only first process runs migrations
         ),
         pillow_name=pillow_id,
         topics=topics,

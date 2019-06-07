@@ -80,6 +80,8 @@ def pformat_json(data):
 
     :return: A 2-space-indented string with sorted keys.
     """
+    if data is None:
+        return ''
     try:
         if isinstance(data, six.string_types):
             soft_assert_type_text(data)
