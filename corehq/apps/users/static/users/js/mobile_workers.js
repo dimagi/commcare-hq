@@ -133,11 +133,66 @@ hqDefine("users/js/mobile_workers", function () {
 
         var self = {};
 
+        self.usernameAvailabilityStatus = ko.observable();
+        self.usernameStatusMessage = ko.observable();
         self.newMobileWorker = ko.observable(mobileWorker());
         self.newMobileWorkers = ko.observableArray();
 
+        USERNAME_STATUS = {
+            PENDING: 'pending',
+            TAKEN: 'taken',
+            AVAILABLE: 'available',
+            AVAILABLE_WARNING: 'warning',
+            ERROR: 'error',
+        };
+        self.usernameIsPending = ko.computed(function () {
+            return self.usernameAvailabilityStatus() === USERNAME_STATUS.PENDING;
+        });
+        self.usernameIsAvailable = ko.computed(function () {
+            return self.usernameAvailabilityStatus() === USERNAME_STATUS.AVAILABLE;
+        });
+        self.usernameIsWarning = ko.computed(function () {
+            return self.usernameAvailabilityStatus() === USERNAME_STATUS.AVAILABLE_WARNING;
+        });
+        self.usernameIsError = ko.computed(function () {
+            return self.usernameAvailabilityStatus() === USERNAME_STATUS.ERROR;
+        });
+
+        self.newMobileWorker.subscribe(function (user) {
+            user.username.subscribe(_.debounce(function (newValue) {
+                if (!newValue) {
+                    self.usernameAvailabilityStatus(null);
+                    return;
+                }
+
+                self.usernameAvailabilityStatus(USERNAME_STATUS.PENDING);
+                rmi('check_username', {
+                    username: newValue,
+                })
+                .done(function (data) {
+                    if (data.success) {
+                        self.usernameAvailabilityStatus(USERNAME_STATUS.AVAILABLE);
+                        self.usernameStatusMessage(data.success);
+                    } else if (data.warning) {
+                        self.usernameAvailabilityStatus(USERNAME_STATUS.AVAILABLE_WARNING);
+                        self.usernameStatusMessage(data.warning);
+                    } else {
+                        self.usernameAvailabilityStatus(USERNAME_STATUS.ERROR);
+                        self.usernameStatusMessage(data.error);
+                    }
+                })
+                .fail(function () {
+                    self.usernameAvailabilityStatus(USERNAME_STATUS.ERROR);
+                    self.usernameStatusMessage(gettext('Issue connecting to server. Check Internet connection.'));
+                });
+            }, 300));
+        });
+
         self.initializeMobileWorker = function () {
             self.newMobileWorker(mobileWorker());
+            self.usernameAvailabilityStatus(null);
+            self.usernameStatusMessage(null);
+
             $("#id_location_id").select2({
                 minimumInputLength: 0,
                 width: '100%',
@@ -173,7 +228,7 @@ hqDefine("users/js/mobile_workers", function () {
             if (options.require_location_id) {
                 isValid = isValid && self.newMobileWorker().location_id();
             }
-            // TODO: also require that usernameAvailabilityStatus === 'available'
+            isValid = isValid && self.usernameIsAvailable();
             return isValid;
         });
 

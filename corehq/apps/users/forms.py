@@ -493,31 +493,30 @@ validate_username = EmailValidator(message=ugettext_lazy('Username contains inva
 
 
 _username_help = """
-<span ng-if="usernameAvailabilityStatus === 'pending'">
+<span data-bind="visible: $root.usernameAvailabilityStatus() === 'pending'">
     <i class="fa fa-circle-o-notch fa-spin"></i>
     %(checking)s
 </span>
-<span ng-if="usernameAvailabilityStatus === 'taken'"
+<span data-bind="visible: $root.usernameAvailabilityStatus() === 'taken'"
       style="word-wrap:break-word;">
     <i class="fa fa-remove"></i>
-    {{ usernameStatusMessage }}
+    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
 </span>
-<span ng-if="usernameAvailabilityStatus === 'available'"
+<span data-bind="visible: $root.usernameAvailabilityStatus() === 'available'"
       style="word-wrap:break-word;">
     <i class="fa fa-check"></i>
-    {{ usernameStatusMessage }}
+    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
 </span>
-<span ng-if="usernameAvailabilityStatus === 'warning'">
+<span data-bind="visible: $root.usernameAvailabilityStatus() === 'warning'">
     <i class="fa fa-exclamation-triangle"></i>
-    {{ usernameStatusMessage }}
+    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
 </span>
-<span ng-if="usernameAvailabilityStatus === 'error'">
+<span data-bind="visible: $root.usernameAvailabilityStatus() === 'error'">
     <i class="fa fa-exclamation-triangle"></i>
-    %(server_error)s
+    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
 </span>
 """ % {
     'checking': ugettext_noop('Checking Availability...'),
-    'server_error': ugettext_noop('Issue connecting to server. Check Internet connection.')
 }
 
 
@@ -525,7 +524,7 @@ class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(
         max_length=50,
         required=True,
-        #help_text=_username_help,  # TODO: username availability help
+        help_text=_username_help,
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
@@ -594,20 +593,20 @@ class NewMobileWorkerForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _('Basic Information'),
-                crispy.Field(
-                    'username',
-                    validate_username="",
-                    # What this says is, update as normal or when the element
-                    # loses focus. If the update is normal, wait 300 ms to
-                    # send the request again. If the update is on blur,
-                    # send the request.
-                    # TODO: debounce
-                    #ng_model_options="{ "
-                    #                  " updateOn: 'default blur', "
-                    #                  " debounce: {'default': 300, 'blur': 0} "
-                    #                  "}",
-                    data_bind='value: username',
-                    maxlength=max_chars_username,
+                crispy.Div(
+                    crispy.Field(
+                        'username',
+                        data_bind="value: username, valueUpdate: 'keyup'",
+                        maxlength=max_chars_username,
+                    ),
+                    data_bind='''
+                        css: {
+                            'has-pending': $root.usernameIsPending(),
+                            'has-success': $root.usernameIsAvailable(),
+                            'has-warning': $root.usernameIsWarning(),
+                            'has-error': $root.usernameIsError(),
+                        },
+                    '''
                 ),
                 crispy.Field(
                     'first_name',
