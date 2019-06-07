@@ -2,6 +2,7 @@
 hqDefine("users/js/mobile_workers", function () {
     var rmi = function () {};
 
+    // TODO: rename to mobileWorkerModel for consistency
     var mobileWorker = function (options) {
         var self = ko.mapping.fromJS(options);
 
@@ -37,6 +38,7 @@ hqDefine("users/js/mobile_workers", function () {
         return self;
     };
 
+    // TODO: rename to mobileWorkersListModel for consistency
     var mobileWorkersList = function () {
         var self = {};
         self.users = ko.observableArray([]);
@@ -106,6 +108,7 @@ hqDefine("users/js/mobile_workers", function () {
         return self;
     };
 
+    // TODO: rename to something more specific
     var STATUS = {
         NEW: 'new',
         PENDING: 'pending',
@@ -114,8 +117,8 @@ hqDefine("users/js/mobile_workers", function () {
         RETRIED: 'retried',
     };
 
-
-    var mobileWorkerCreation = function () {
+    // TODO: rename worker / mobile worker to "user" everywhere?
+    var mobileWorkerCreationModel = function () {
         var self = {};
 
         self.newMobileWorker = mobileWorker({
@@ -129,13 +132,15 @@ hqDefine("users/js/mobile_workers", function () {
             creationStatus: STATUS.NEW,
         });
 
+        self.newMobileWorkers = ko.observableArray();
+
         self.initializeMobileWorker = function () {
             console.log("do something");
         };
 
         self.submitNewMobileWorker = function () {
             $("#newMobileWorkerModal").modal('hide');
-            //$scope.workers.push($scope.mobileWorker); // TODO: panel of new workers
+            self.newMobileWorkers.push(self.newMobileWorker);
             self.newMobileWorker.creationStatus(STATUS.PENDING);
             if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
                 // TODO: draconian password requirements
@@ -151,17 +156,11 @@ hqDefine("users/js/mobile_workers", function () {
                     }, self.newMobileWorker);
                     self.newMobileWorker.creationStatus(STATUS.SUCCESS);
                 } else {
-                    // TODO
-                    /*newWorker.creationStatus = STATUS.WARNING;
-                    deferred.reject(data);*/
+                    self.newMobileWorker.creationStatus(STATUS.WARNING);
                 }
             })
             .fail(function () {
-                // TODO
-                /*newWorker.creationStatus = STATUS.WARNING;
-                deferred.reject(
-                    gettext("Sorry, there was an issue communicating with the server.")
-                );*/
+                self.newMobileWorker.creationStatus(STATUS.WARNING);
             });
         };
 
@@ -176,6 +175,9 @@ hqDefine("users/js/mobile_workers", function () {
         };
 
         $("#mobile-workers-list").koApplyBindings(mobileWorkersList());
-        $("#newMobileWorkerModal").koApplyBindings(mobileWorkerCreation());
+
+        var mobileWorkerCreation = mobileWorkerCreationModel();
+        $("#newMobileWorkerModal").koApplyBindings(mobileWorkerCreation);  // TODO: rename this id (casing)
+        $("#newMobileWorkersPanel").koApplyBindings(mobileWorkerCreation); // TODO: rename this id (casing)
     });
 });
