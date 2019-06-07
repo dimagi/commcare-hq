@@ -1,4 +1,7 @@
+/* global RMI */
 hqDefine("users/js/mobile_workers", function () {
+    var rmi = function () {};
+
     var mobileWorker = function (options) {
         var self = ko.mapping.fromJS(options);
 
@@ -103,6 +106,15 @@ hqDefine("users/js/mobile_workers", function () {
         return self;
     };
 
+    var STATUS = {
+        NEW: 'new',
+        PENDING: 'pending',
+        WARNING: 'warning',
+        SUCCESS: 'success',
+        RETRIED: 'retried',
+    };
+
+
     var mobileWorkerCreation = function () {
         var self = {};
 
@@ -113,17 +125,56 @@ hqDefine("users/js/mobile_workers", function () {
             username: 'me',
             password: '',
             is_active: true,
-            location_id: '',
+            location_id: '24b6c9c47ab046b0885fdd9e6d0dca67',
+            creationStatus: STATUS.NEW,
         });
 
         self.initializeMobileWorker = function () {
             console.log("do something");
         };
 
+        self.submitNewMobileWorker = function () {
+            $("#newMobileWorkerModal").modal('hide');
+            //$scope.workers.push($scope.mobileWorker); // TODO: panel of new workers
+            self.newMobileWorker.creationStatus(STATUS.PENDING);
+            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+                // TODO: draconian password requirements
+                //newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
+            }
+            rmi('create_mobile_worker', {
+                mobileWorker: ko.mapping.toJS(self.newMobileWorker),
+            })
+            .done(function (data) {
+                if (data.success) {
+                    ko.mapping.fromJS({
+                        user_id: data.user_id,
+                    }, self.newMobileWorker);
+                    self.newMobileWorker.creationStatus(STATUS.SUCCESS);
+                } else {
+                    // TODO
+                    /*newWorker.creationStatus = STATUS.WARNING;
+                    deferred.reject(data);*/
+                }
+            })
+            .fail(function () {
+                // TODO
+                /*newWorker.creationStatus = STATUS.WARNING;
+                deferred.reject(
+                    gettext("Sorry, there was an issue communicating with the server.")
+                );*/
+            });
+        };
+
         return self;
     };
 
     $(function () {
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+            rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
+        rmi = function (remoteMethod, data) {
+            return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
+        };
+
         $("#mobile-workers-list").koApplyBindings(mobileWorkersList());
         $("#newMobileWorkerModal").koApplyBindings(mobileWorkerCreation());
     });

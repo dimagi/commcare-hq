@@ -705,10 +705,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         return {
             'success': True,
-            'editUrl': reverse(
-                EditCommCareUserView.urlname,
-                args=[self.domain, couch_user.userID]
-            )
+            'user_id': couch_user.userID,
         }
 
     def _build_commcare_user(self):
