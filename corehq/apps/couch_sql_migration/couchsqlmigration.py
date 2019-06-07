@@ -901,7 +901,7 @@ def append_undo(meta, operation):
         writer.writerow(row)
 
 
-def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=True, dry_run=False):
+def _migrate_form_attachments(sql_form, couch_form, incl_form_xml=True, dry_run=False):
     """Copy over attachment meta"""
     attachments = []
     metadb = get_blob_db().metadb
@@ -913,7 +913,7 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=Tr
                 type_code=type_code,
                 name=name
             )
-            assert meta.domain == src_domain, (meta.domain, src_domain)
+            assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
             return meta
         except BlobMeta.DoesNotExist:
             return None
@@ -930,7 +930,7 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=Tr
         meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
 
         if meta and meta.domain != sql_form.domain and not dry_run:
-            # meta domain is src_domain; form is being migrated to dst_domain
+            # meta domain is couch_form.domain; form is being migrated to sql_form.domain
             append_undo(meta, UNDO_SET_DOMAIN)
             meta.domain = sql_form.domain
             meta.save()
@@ -939,17 +939,17 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=Tr
         # this checks the db for a meta resembling this and fixes it for postgres
         # https://github.com/dimagi/commcare-hq/blob/3788966119d1c63300279418a5bf2fc31ad37f6f/corehq/blobs/migrate.py#L371
         if not meta and name != "form.xml":
-            meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, name)
+            meta = try_to_get_blob_meta(couch_form.form_id, CODES.form_xml, name)
             if meta:
-                if meta.domain != couch_form.domain and not dry_run:
+                if meta.domain != sql_form.domain and not dry_run:
                     append_undo(meta, UNDO_SET_DOMAIN)
-                    meta.domain = couch_form.domain
+                    meta.domain = sql_form.domain
                 meta.type_code = CODES.form_attachment
                 meta.save()
 
         if not meta:
             meta = metadb.new(
-                domain=couch_form.domain,
+                domain=sql_form.domain,
                 name=name,
                 parent_id=sql_form.form_id,
                 type_code=type_code,
