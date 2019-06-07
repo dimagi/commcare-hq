@@ -23,7 +23,7 @@ cloudant==2.12.0          # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.3.5
 concurrent-log-handler==0.9.12
 contextlib2==0.5.5
-cryptography==2.6.1       # via pyopenssl, requests
+cryptography==2.7         # via pyopenssl, requests
 csiphash==0.0.5
 cssselect2==0.2.1         # via weasyprint
 csv342==1.0.0
@@ -161,3 +161,6 @@ werkzeug==0.11.15
 wrapt==1.11.1             # via ddtrace
 xlrd==1.0.0
 xlwt==1.3.0
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools==41.0.1        # via django-websocket-redis, python-levenshtein

@@ -33,7 +33,7 @@ commonmark==0.9.0         # via recommonmark
 concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 coverage==4.5.1
-cryptography==2.6.1
+cryptography==2.7
 csiphash==0.0.5
 cssselect2==0.2.1
 csv342==1.0.0
@@ -220,3 +220,6 @@ wheel==0.29.0
 wrapt==1.11.1
 xlrd==1.0.0
 xlwt==1.3.0
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools==41.0.1        # via django-websocket-redis, ipdb, ipython, python-levenshtein, python-termstyle, sphinx
