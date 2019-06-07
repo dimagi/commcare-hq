@@ -37,10 +37,13 @@ class Command(BaseCommand):
         print('plan = %s' % plan.name)
         print('april_plan_version = %s' % april_and_may_plan_version)
         print('post_april_plan_version = %s' % post_may_plan_version)
+        print(self.get_april_subscriptions_queryset(account, plan, april_and_may_plan_version))
         print('april_subscriptions.count() = %s' % self.get_april_subscriptions_queryset(
             account, plan, april_and_may_plan_version).count())
+        print(self.get_may_subscriptions_queryset(account, plan, april_and_may_plan_version))
         print('may_subscriptions.count() = %s' % self.get_may_subscriptions_queryset(
             account, plan, april_and_may_plan_version).count())
+        print(self.get_post_may_subscriptions_queryset(account, plan, post_may_plan_version))
         print('post_may_subscriptions.count() = %s' % self.get_post_may_subscriptions_queryset(
             account, plan, post_may_plan_version).count())
 
