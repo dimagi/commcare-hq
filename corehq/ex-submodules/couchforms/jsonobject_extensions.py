@@ -20,9 +20,6 @@ def _canonical_decimal(n):
         decimal = Decimal(n)
     except InvalidOperation:
         value_error = True
-    else:
-        if six.text_type(decimal) != n:
-            value_error = True
     if value_error:
         raise ValueError('{!r} is not a canonically formatted decimal'
                          .format(n))

@@ -43,8 +43,9 @@ class MPRSectors(object):
     subtitle = []
     posttitle = None
 
-    def __init__(self, config):
+    def __init__(self, config, allow_conditional_agg=False):
         self.config = config
+        self.allow_conditional_agg = allow_conditional_agg
 
     @property
     def headers(self):
@@ -289,8 +290,8 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
     title = '4. Delivery of Supplementary Nutrition and Pre-School Education (PSE)'
     slug = 'supplementary_nutrition'
 
-    def __init__(self, config):
-        super(MPRSupplementaryNutrition, self).__init__(config)
+    def __init__(self, config, allow_conditional_agg=False):
+        super(MPRSupplementaryNutrition, self).__init__(config, allow_conditional_agg)
         self.awc_open_count = 0
 
     @property

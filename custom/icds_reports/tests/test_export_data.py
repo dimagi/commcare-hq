@@ -58,6 +58,12 @@ class TestExportData(TestCase):
                         "16:21:11 15 November 2017"
                     ],
                     [
+                        'State',
+                        'st1'],
+                    [
+                        'Supervisor',
+                        's1'],
+                    [
                         "Block",
                         "b1"
                     ]
@@ -507,6 +513,8 @@ class TestExportData(TestCase):
                     'Export Info',
                     [
                         ['Generated at', '16:21:11 15 November 2017'],
+                        ['State', 'st1'],
+                        ['Supervisor', 's1'],
                         ['Block', 'b1']
                     ]
                 ]
@@ -642,6 +650,8 @@ class TestExportData(TestCase):
                 ]],
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['Supervisor', 's1'],
                     ['Block', 'b1'],
                     ['Month', 'May'],
                     ['Year', 2017]
@@ -736,6 +746,8 @@ class TestExportData(TestCase):
                 ]],
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['Supervisor', 's1'],
                     ['Block', 'b1'],
                     ['Grouped By', 'AWC'],
                     ['Month', 'May'],
@@ -1050,6 +1062,14 @@ class TestExportData(TestCase):
                         [
                             "Generated at",
                             "16:21:11 15 November 2017"
+                        ],
+                        [
+                            'State',
+                            'st1'
+                        ],
+                        [
+                            'Supervisor',
+                            's1'
                         ],
                         [
                             "Block",
@@ -2138,7 +2158,6 @@ class TestExportData(TestCase):
                'No', 13, 'No']]],
             ['Export Info',
                 [
-                    ['Generated at', india_now()],
                     ['Grouped By', 'AWC'],
                     ['Month', 5],
                     ['Year', 2017],

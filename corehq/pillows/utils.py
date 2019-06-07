@@ -7,6 +7,7 @@ from jsonobject.exceptions import WrappingAttributeError
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
+from corehq.const import ONE_DAY
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -56,9 +57,6 @@ def get_deleted_doc_types(doc_type):
     the data from a report/index.
     """
     return DELETED_DOC_TYPES.get(doc_type, [])
-
-
-ONE_DAY = 60 * 60 * 24
 
 
 @quickcache(['user_id'], timeout=ONE_DAY)

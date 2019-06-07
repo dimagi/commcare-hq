@@ -1754,6 +1754,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

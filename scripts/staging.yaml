@@ -55,7 +55,7 @@ branches:
   - fr/case-templates      # FR May 15
   - form-odata-escaped  # Nick P May 21
   - web-user-reports-project-access  # Gabriella May 13
-  - jls/final-select2-v4 # Jenny May 25
   - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
-  - es/fixture-generation  # Ethan June 4
+  - rn_fix_assign_case_regression # Rohit June 6
+  - rn_select_2_upgrade_case_reassign # Rohit June 7
 submodules: {}

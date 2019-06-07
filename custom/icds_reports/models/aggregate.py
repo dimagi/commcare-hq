@@ -1518,6 +1518,10 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
     awc_num_open = models.SmallIntegerField(null=True)
     valid_visits = models.SmallIntegerField(null=True)
     expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
+    visit_denominator = models.SmallIntegerField(null=True)
+    incentive_eligible = models.NullBooleanField(null=True)
+    awh_eligible = models.NullBooleanField(null=True)
+    is_launched = models.NullBooleanField(null=True)
 
     objects = CitusComparisonManager()
 
