@@ -118,7 +118,9 @@ hqDefine("users/js/mobile_workers", function () {
     };
 
     // TODO: rename worker / mobile worker to "user" everywhere?
-    var mobileWorkerCreationModel = function () {
+    var mobileWorkerCreationModel = function (options) {
+        hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['location_url']);
+
         var self = {};
 
         self.newMobileWorker = mobileWorker({
@@ -128,14 +130,40 @@ hqDefine("users/js/mobile_workers", function () {
             username: 'me',
             password: '',
             is_active: true,
-            location_id: '24b6c9c47ab046b0885fdd9e6d0dca67',
+            location_id: '',
             creationStatus: STATUS.NEW,
         });
 
         self.newMobileWorkers = ko.observableArray();
 
         self.initializeMobileWorker = function () {
-            console.log("do something");
+            // TODO: don't initialize select2 if this if this is a retry (the old code didn't)
+            $("#id_location_id").select2({
+                minimumInputLength: 0,
+                width: '100%',
+                placeholder: gettext("Select location"),
+                allowClear: 1,
+                ajax: {
+                    delay: 100,
+                    url: options.location_url,
+                    data: function (params) {
+                        return {
+                            name: params.term,
+                        };
+                    },
+                    dataType: 'json',
+                    processResults: function (data) {
+                        return {
+                            results: _.map(data.results, function (r) {
+                                return {
+                                    text: r.name,
+                                    id: r.id,
+                                };
+                            }),
+                        };
+                    },
+                },
+            });
         };
 
         self.submitNewMobileWorker = function () {
@@ -176,7 +204,11 @@ hqDefine("users/js/mobile_workers", function () {
 
         $("#mobile-workers-list").koApplyBindings(mobileWorkersList());
 
-        var mobileWorkerCreation = mobileWorkerCreationModel();
+        var mobileWorkerCreation = mobileWorkerCreationModel({
+            location_url: initialPageData.reverse('child_locations_for_select2'),
+            require_location_id: !initialPageData.get('can_access_all_locations'),
+        });
+        $("#newMobileWorkerModalTrigger").koApplyBindings(mobileWorkerCreation);  // TODO: rename this id (casing)
         $("#newMobileWorkerModal").koApplyBindings(mobileWorkerCreation);  // TODO: rename this id (casing)
         $("#newMobileWorkersPanel").koApplyBindings(mobileWorkerCreation); // TODO: rename this id (casing)
     });

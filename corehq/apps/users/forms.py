@@ -576,13 +576,12 @@ class NewMobileWorkerForm(forms.Form):
                 '<br />'
             ))
 
-        # TODO
-        if False and project.uses_locations:
-            self.fields['location_id'].widget = forms.Select(choices=[('', '')])    # blank option for placeholder
+        if project.uses_locations:
+            self.fields['location_id'].widget = forms.Select()
             location_field = crispy.Field(
                 'location_id',
-                ng_model='mobileWorker.location_id',
-                ng_required="true" if self.fields['location_id'].required else "false",
+                data_bind='value: location_id',
+                #ng_required="true" if self.fields['location_id'].required else "false",    # TODO: validation
             )
         else:
             location_field = crispy.Hidden(
