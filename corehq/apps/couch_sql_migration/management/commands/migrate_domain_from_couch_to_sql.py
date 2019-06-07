@@ -218,13 +218,13 @@ class Command(BaseCommand):
                 case_ids_in_couch = db.get_missing_doc_ids(doc_type) if counts.missing else set()
                 case_ids_in_sql = counts
             elif doc_type == "CommCareCase":
-                case_ids_in_couch = set(get_case_ids_in_domain(domain))
-                case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
+                case_ids_in_couch = set(get_case_ids_in_domain(src_domain))
+                case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(dst_domain))
             elif doc_type == "CommCareCase-Deleted":
                 case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-                    domain, "CommCareCase-Deleted", XFormInstance.get_db())
+                    src_domain, "CommCareCase-Deleted", XFormInstance.get_db())
                 )
-                case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
+                case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain))
             else:
                 raise NotImplementedError(doc_type)
             diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
