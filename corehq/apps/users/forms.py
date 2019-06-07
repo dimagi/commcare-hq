@@ -581,7 +581,6 @@ class NewMobileWorkerForm(forms.Form):
             location_field = crispy.Field(
                 'location_id',
                 data_bind='value: location_id',
-                #ng_required="true" if self.fields['location_id'].required else "false",    # TODO: validation
             )
         else:
             location_field = crispy.Hidden(
@@ -597,7 +596,6 @@ class NewMobileWorkerForm(forms.Form):
                 _('Basic Information'),
                 crispy.Field(
                     'username',
-                    #ng_required="true",    # TODO: validation
                     validate_username="",
                     # What this says is, update as normal or when the element
                     # loses focus. If the update is normal, wait 300 ms to
@@ -613,18 +611,15 @@ class NewMobileWorkerForm(forms.Form):
                 ),
                 crispy.Field(
                     'first_name',
-                    #ng_required="false",   # TODO: validation
                     data_bind='value: first_name',
                 ),
                 crispy.Field(
                     'last_name',
-                    #ng_required="false",   # TODO: validation
                     data_bind='value: last_name',
                 ),
                 location_field,
                 crispy.Field(
                     'password',
-                    #ng_required="true",    # TODO: validation
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
             )
