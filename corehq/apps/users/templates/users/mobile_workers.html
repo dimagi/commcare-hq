@@ -149,10 +149,7 @@
       </div>
     {% endif %}
 
-    <!-- TODO: panel to show newly-created mobile workers -->
-    <!--div class="panel panel-info"
-         ng-show="workers.length > 0"
-         ng-cloak>
+    <div class="panel panel-info" id="newMobileWorkersPanel" data-bind="visible: newMobileWorkers().length">
       <div class="panel-heading">
         <h3 class="panel-title">
           {% trans 'New Mobile Workers' %}
@@ -160,50 +157,56 @@
       </div>
       <div class="panel-body">
         <table class="table table-striped">
-          <thead workertable-header></thead>
-          <tbody>
-          <tr ng-repeat="worker in workers">
-            <td class="{{ worker.creationStatus }}">
-                                <span ng-if="!worker.editUrl">
-                                    <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
-                                </span>
-              <a href="{{ worker.editUrl }}"
-                 ng-show="!!worker.editUrl">
-                <i class="fa fa-user"></i><strong> {{ worker.username }}</strong>
-              </a>
-            </td>
-            <td class="{{ worker.creationStatus }}">{{ worker.first_name }}</td>
-            <td class="{{ worker.creationStatus }}">{{ worker.last_name }}</td>
-            <td class="{{ worker.creationStatus }}">
-              <div ng-show="worker.creationStatus==='pending'">
-                <i class="fa fa-circle-o-notch fa-spin"></i>
-                {% trans 'Pending...' %}
-              </div>
-              <div ng-show="worker.creationStatus==='success'">
-                                    <span class="text-success">
-                                        <i class="fa fa-check"></i> {% trans 'NEW' %}
-                                    </span>
-              </div>
-              <div ng-show="worker.creationStatus==='warning'">
-                                    <span class="text-warning">
-                                        <i class="fa fa-exclamation-triangle"></i>
-                                        {% trans "ERROR" %}
-                                    </span>
-                <button type="button"
-                        class="btn btn-default"
-                        data-toggle="modal"
-                        data-target="#newMobileWorkerModal"
-                        ng-click="retryMobileWorker">
-                  {% trans 'Retry' %}
-                </button>
-              </div>
-
-            </td>
-          </tr>
+          <thead>
+            <tr>
+              <th class="col-xs-3">{% trans "Username" %}</th>
+              <th class="col-xs-3">{% trans "First Name" %}</th>
+              <th class="col-xs-3">{% trans "Last Name" %}</th>
+              <th class="col-xs-3">{% trans "Status" %}</th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: newMobileWorkers">
+            <tr>
+              <td data-bind="attr: {class: creationStatus}">
+                <span data-bind="visible: !user_id()">
+                  <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
+                </span>
+                <a data-bind="attr: {href: editUrl}, visible: user_id">
+                  <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
+                </a>
+              </td-->
+              <td data-bind="attr: {class: creationStatus}, text: first_name"></td>
+              <td data-bind="attr: {class: creationStatus}, text: last_name"></td>
+              <td data-bind="attr: {class: creationStatus}">
+                <div data-bind="visible: creationStatus() === 'pending'">
+                  <i class="fa fa-circle-o-notch fa-spin"></i>
+                  {% trans 'Pending...' %}
+                </div>
+                <div data-bind="visible: creationStatus() === 'success'">
+                  <span class="text-success">
+                    <i class="fa fa-check"></i> {% trans 'NEW' %}
+                  </span>
+                </div>
+                <div data-bind="visible: creationStatus() === 'warning'">
+                  <span class="text-warning">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    {% trans "ERROR" %}
+                  </span>
+                  <!-- TODO: retry workflow -->
+                  <!--button type="button"
+                          class="btn btn-default"
+                          data-toggle="modal"
+                          data-target="#newMobileWorkerModal"
+                          ng-click="retryMobileWorker">
+                    {% trans 'Retry' %}
+                  </button-->
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
-    </div-->
+    </div>
   </div>
   <div id="mobile-workers-list" class="ko-template">
   <div class="panel panel-default">
