@@ -14,13 +14,9 @@ function setup() {
 
     scripts/uninstall-requirements.sh
     if [ "$PYTHON_VERSION" = "py3" ]; then
-        pip install \
-            -r requirements-python3/requirements.txt \
-            -r requirements-python3/test-requirements.txt
+        pip install -r requirements-python3/test-requirements.txt
     else
-        pip install \
-            -r requirements/requirements.txt \
-            -r requirements/test-requirements.txt
+        pip install -r requirements/test-requirements.txt
     fi
 
     # compile pyc files
