@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-pip install pip-tools==3.6.1
+pip install pip-tools
 make requirements
 git diff
 git update-index -q --refresh
