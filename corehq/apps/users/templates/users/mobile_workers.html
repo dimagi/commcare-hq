@@ -41,14 +41,13 @@
         </p>
         <div class="btn-toolbar" style="margin-bottom: 20px;">
           {% if not request.is_view_only %}
-            <!-- TODO: button to create mobile worker -->
-            <!--button type="button"
+            <button type="button"
                     class="btn btn-primary"
                     data-toggle="modal"
                     data-target="#newMobileWorkerModal"
-                    ng-click="initializeMobileWorker()">
+                    data-bind="click: initializeMobileWorker">
               <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
-            </button-->
+            </button>
             {% if can_bulk_edit_users and can_access_all_locations %}
               <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
                 <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
@@ -67,14 +66,13 @@
       </div>
     </div>
     {% if not request.is_view_only %}
-      <!-- TODO: modal to create mobile worker -->
-      <!--div class="modal fade" id="newMobileWorkerModal">
+      <div class="modal fade" id="newMobileWorkerModal">
         {% if can_add_extra_users %}
           <div class="modal-dialog">
             <form id="newMobileWorkerForm"
                   name="mobileWorkerForm"
                   novalidate
-                  ng-submit="submitNewMobileWorker()">
+                  ng-submit="submitNewMobileWorker()"><!-- TODO: create new mobile worker -->
               <div class="modal-content">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">
@@ -84,7 +82,7 @@
                   <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
                 </div>
                 <div class="modal-body">
-                  <div class="form-horizontal">
+                  <div class="form-horizontal" data-bind="with: newMobileWorker">
                     {% crispy new_mobile_worker_form %}
                     {% if custom_fields_form.fields %}
                       {% crispy custom_fields_form %}
@@ -92,7 +90,10 @@
                   </div>
                 </div>
                 <div class="modal-footer">
+                  <!-- TODO: markDefault on cancel -->
                   <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                  <!-- TODO: disable properly -->
+                  <!-- TODO: markDefault on submit -->
                   <button type="submit"
                           ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
                           ng-click="markDefault()"
@@ -144,7 +145,7 @@
             </div>
           </div>
         {% endif %}
-      </div-->
+      </div>
     {% endif %}
 
     <!-- TODO: panel to show newly-created mobile workers -->

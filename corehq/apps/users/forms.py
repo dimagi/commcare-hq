@@ -525,13 +525,13 @@ class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(
         max_length=50,
         required=True,
-        help_text=_username_help,
+        #help_text=_username_help,  # TODO: username availability help
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
         max_length=30,
         required=False,
-        label=ugettext_noop("First Name")
+        label=ugettext_noop("First Name"),
     )
     last_name = forms.CharField(
         max_length=30,
@@ -565,17 +565,19 @@ class NewMobileWorkerForm(forms.Form):
                 validator = "validate_password_draconian"
             else:
                 validator = "validate_password_standard"
-            self.fields['password'].widget = forms.TextInput(attrs={
-                validator: "",
-                "ng_keydown": "markNonDefault()",
-                "class": "default",
-            })
+            # TODO: add back validator
+            self.fields['password'].widget = forms.TextInput() #attrs={
+            #    validator: "",
+            #    "ng_keydown": "markNonDefault()",
+            #    "class": "default",
+            #})
             self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
                 ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
                 '<br />'
             ))
 
-        if project.uses_locations:
+        # TODO
+        if False and project.uses_locations:
             self.fields['location_id'].widget = forms.Select(choices=[('', '')])    # blank option for placeholder
             location_field = crispy.Field(
                 'location_id',
@@ -586,7 +588,7 @@ class NewMobileWorkerForm(forms.Form):
             location_field = crispy.Hidden(
                 'location_id',
                 '',
-                ng_model='mobileWorker.location_id',
+                data_bind='value: location_id',
             )
 
         self.helper = HQModalFormHelper()
@@ -596,37 +598,37 @@ class NewMobileWorkerForm(forms.Form):
                 _('Basic Information'),
                 crispy.Field(
                     'username',
-                    ng_required="true",
+                    #ng_required="true",    # TODO: validation
                     validate_username="",
                     # What this says is, update as normal or when the element
                     # loses focus. If the update is normal, wait 300 ms to
                     # send the request again. If the update is on blur,
                     # send the request.
-                    ng_model_options="{ "
-                                      " updateOn: 'default blur', "
-                                      " debounce: {'default': 300, 'blur': 0} "
-                                      "}",
-                    ng_model='mobileWorker.username',
-                    ng_maxlength=max_chars_username,
+                    # TODO: debounce
+                    #ng_model_options="{ "
+                    #                  " updateOn: 'default blur', "
+                    #                  " debounce: {'default': 300, 'blur': 0} "
+                    #                  "}",
+                    data_bind='value: username',
+                    #ng_maxlength=max_chars_username,   # TODO: validation
                     maxlength=max_chars_username,
                 ),
                 crispy.Field(
                     'first_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.first_name',
-                    ng_maxlength="30",
+                    #ng_required="false",   # TODO: validation
+                    data_bind='value: first_name',
+                    #ng_maxlength="30",     # TODO: validation
                 ),
                 crispy.Field(
                     'last_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.last_name',
-                    ng_maxlength="30",
+                    #ng_required="false",   # TODO: validation
+                    data_bind='value: last_name',
+                    #ng_maxlength="30",     # TODO: validation
                 ),
                 location_field,
                 crispy.Field(
                     'password',
-                    ng_required="true",
-                    ng_model='mobileWorker.password',
+                    #ng_required="true",    # TODO: validation
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
             )

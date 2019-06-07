@@ -103,7 +103,28 @@ hqDefine("users/js/mobile_workers", function () {
         return self;
     };
 
+    var mobileWorkerCreation = function () {
+        var self = {};
+
+        self.newMobileWorker = mobileWorker({
+            user_id: '',
+            first_name: 'my first name',
+            last_name: 'my last name',
+            username: 'me',
+            password: '',
+            is_active: true,
+            location_id: '',
+        });
+
+        self.initializeMobileWorker = function () {
+            console.log("do something");
+        };
+
+        return self;
+    };
+
     $(function () {
         $("#mobile-workers-list").koApplyBindings(mobileWorkersList());
+        $("#newMobileWorkerModal").koApplyBindings(mobileWorkerCreation());
     });
 });
