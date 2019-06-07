@@ -197,27 +197,6 @@
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
             $scope.usernameStatusMessage = null;
-
-            if (!_.isEmpty(existingMobileWorker)) {
-                mobileWorker.creationStatus = STATUS.RETRIED;
-                $scope.mobileWorker = mobileWorker({
-                    customFields: existingMobileWorker.customFields,
-                    username: existingMobileWorker.username,
-                });
-            } else {
-                $scope.mobileWorker = mobileWorker({
-                    customFields: customFields,
-                    generateStrongPasswords: generateStrongPasswords,
-                });
-            }
-            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
-        };
-
-        $scope.retryMobileWorker = function (worker) {
-            $scope.initializeMobileWorker(worker);
-            $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-            $scope.usernameStatusMessage = gettext('Username is available.');
-            $scope.markNonDefault();
         };
     };
 

@@ -6,7 +6,6 @@ hqDefine("users/js/mobile_workers", function () {
         PENDING: 'pending',
         WARNING: 'warning',
         SUCCESS: 'success',
-        RETRIED: 'retried',
     };
 
     var rmi = function () {};
@@ -138,7 +137,7 @@ hqDefine("users/js/mobile_workers", function () {
         self.newMobileWorkers = ko.observableArray();
 
         self.initializeMobileWorker = function () {
-            // TODO: don't initialize select2 if this if this is a retry (the old code didn't)
+            self.newMobileWorker(mobileWorker());
             $("#id_location_id").select2({
                 minimumInputLength: 0,
                 width: '100%',
@@ -165,6 +164,8 @@ hqDefine("users/js/mobile_workers", function () {
                     },
                 },
             });
+
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         self.allowSubmit = ko.computed(function () {
@@ -179,7 +180,6 @@ hqDefine("users/js/mobile_workers", function () {
         self.submitNewMobileWorker = function () {
             $("#newMobileWorkerModal").modal('hide');
             var submittedMobileWorker = mobileWorker(ko.mapping.toJS(self.newMobileWorker));
-            self.newMobileWorker(mobileWorker());
             self.newMobileWorkers.push(submittedMobileWorker);
             submittedMobileWorker.creationStatus(STATUS.PENDING);
             if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
