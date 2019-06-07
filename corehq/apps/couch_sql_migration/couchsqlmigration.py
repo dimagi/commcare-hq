@@ -127,7 +127,7 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
         with_progress=with_progress,
         debug=debug,
         run_timestamp=run_timestamp,
-        dry_run=False,
+        dry_run=dry_run,
     ).migrate()
 
 
