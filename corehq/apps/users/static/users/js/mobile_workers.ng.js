@@ -22,30 +22,6 @@
     };
 
     var visualFormCtrl = {
-        usernameClear: function () {
-            $formElements.username()
-                .removeClass('has-error has-pending has-success has-warning');
-        },
-        usernameSuccess: function () {
-            $formElements.username()
-                .removeClass('has-error has-pending has-warning')
-                .addClass('has-success');
-        },
-        usernameWarning: function () {
-            $formElements.username()
-                .removeClass('has-error has-pending has-success')
-                .addClass('has-warning');
-        },
-        usernamePending: function () {
-            $formElements.username()
-                .removeClass('has-error has-success has-warning')
-                .addClass('has-pending');
-        },
-        usernameError: function () {
-            $formElements.username()
-                .removeClass('has-success has-pending has-warning')
-                .addClass('has-error');
-        },
         passwordSuccess: function () {
             $formElements.password()
                 .removeClass('has-error has-pending')
@@ -88,14 +64,6 @@
                 .removeClass('default')
                 .addClass('non-default');
         },
-    };
-
-    var USERNAME_STATUS = {
-        PENDING: 'pending',
-        TAKEN: 'taken',
-        AVAILABLE: 'available',
-        AVAILABLE_WARNING: 'warning',
-        ERROR: 'error', 
     };
 
     mobileWorkers.constant('customFields', []);
@@ -178,8 +146,6 @@
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
-        $scope.usernameAvailabilityStatus = null;
-        $scope.usernameStatusMessage = null;
         $scope.workers = [];
         $scope.customFormFields = customFields;
         $scope.customFormFieldNames = customFieldNames;
@@ -191,61 +157,6 @@
 
         $scope.markDefault = function () {
             visualFormCtrl.markDefault();
-        };
-
-        $scope.initializeMobileWorker = function (existingMobileWorker) {
-            visualFormCtrl.usernameClear();
-            $scope.usernameAvailabilityStatus = null;
-            $scope.usernameStatusMessage = null;
-        };
-    };
-
-    var mobileWorkerDirectives = {};
-    mobileWorkerDirectives.validateUsername = function ($http, $q, djangoRMI) {
-        return {
-            restrict: 'AE',
-            require: 'ngModel',
-            link: function ($scope, $elem, $attr, ctrl) {
-                ctrl.$validators.validateUsername = function (username) {
-                    var deferred = $q.defer();
-                    if (_.isUndefined(username) || _.isEmpty(username)) {
-                        $scope.usernameAvailabilityStatus = null;
-                        deferred.resolve();
-                        visualFormCtrl.usernameClear();
-                    } else {
-                        $scope.usernameAvailabilityStatus = USERNAME_STATUS.PENDING;
-                        visualFormCtrl.usernamePending();
-                        djangoRMI.check_username({
-                            username: username, 
-                        })
-                            .success(function (data) {
-                                if (data.success) {
-                                    visualFormCtrl.usernameSuccess();
-                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-                                    deferred.resolve(data.success);
-                                    $scope.usernameStatusMessage = data.success;
-                                } else if (data.warning) {
-                                    visualFormCtrl.usernameWarning();
-                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE_WARNING;
-                                    deferred.resolve(data.warning);
-                                    $scope.usernameStatusMessage = data.warning;
-                                } else {
-                                    visualFormCtrl.usernameError();
-                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;
-                                    deferred.reject(data.error);
-                                    $scope.usernameStatusMessage = data.error;
-                                }
-                            })
-                            .error(function () {
-                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
-                                deferred.reject(
-                                    gettext("Sorry, there was an issue communicating with the server.")
-                                );
-                            });
-                    }
-                    return deferred.promise;
-                };
-            },
         };
     };
 
