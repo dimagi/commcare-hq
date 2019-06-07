@@ -1219,7 +1219,7 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
 
 
-@task(queue='icds_dashboard_reports_queue')
+@task(queue='icds_dashboard_reports_queue', serializer='pickle')
 def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
     data_type = 'AWW_Performance'
     excel_data = IncentiveReport(
