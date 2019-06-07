@@ -15,9 +15,9 @@
   {% initial_page_data 'custom_fields' custom_fields %}
   {% initial_page_data 'custom_field_names' custom_field_names %}
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
-  {% initial_page_data 'location_url' location_url %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+  {% registerurl 'child_locations_for_select2' domain %}
   {% registerurl 'mobile_workers' domain %}
   {% registerurl 'edit_commcare_user' domain '---' %}
   {% registerurl 'paginate_mobile_workers' domain %}
@@ -44,6 +44,7 @@
           {% if not request.is_view_only %}
             <button type="button"
                     class="btn btn-primary"
+                    id="newMobileWorkerModalTrigger"
                     data-toggle="modal"
                     data-target="#newMobileWorkerModal"
                     data-bind="click: initializeMobileWorker">

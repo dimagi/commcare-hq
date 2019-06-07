@@ -100,7 +100,6 @@
 
     mobileWorkers.constant('customFields', []);
     mobileWorkers.constant('customFieldNames', []);
-    mobileWorkers.constant('location_url', '');
 
     var mobileWorker = function (data) {
         function generateStrongPassword() {
@@ -182,7 +181,7 @@
 
     mobileWorkerControllers.mobileWorkerCreationController = function (
         $scope, djangoRMI, customFields,
-        customFieldNames, generateStrongPasswords, location_url, $http
+        customFieldNames, generateStrongPasswords, $http
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
@@ -213,31 +212,6 @@
                     username: existingMobileWorker.username,
                 });
             } else {
-                $("#id_location_id").select2({
-                    minimumInputLength: 0,
-                    width: '100%',
-                    placeholder: gettext("Select location"),
-                    ajax: {
-                        quietMillis: 100,
-                        url: location_url,
-                        data: function (params) {
-                            return {
-                                name: params.term,
-                            };
-                        },
-                        dataType: 'json',
-                        processResults: function (data, params) {
-                            return {
-                                results: _.map(data.results, function (r) {
-                                    return {
-                                        text: r.name,
-                                        id: r.id,
-                                    };
-                                }),
-                            };
-                        },
-                    },
-                });
                 $scope.mobileWorker = mobileWorker({
                     customFields: customFields,
                     generateStrongPasswords: generateStrongPasswords,
@@ -355,18 +329,6 @@
                     }
 
                     return true;
-                };
-            },
-        };
-    };
-
-    mobileWorkerDirectives.validateLocation = function () {
-        return {
-            restrict: 'AE',
-            require: 'ngModel',
-            link: function ($scope, $elem, $attr, ctrl) {
-                ctrl.$validators.validateLocation = function (location_id) {
-                    return !!location_id;
                 };
             },
         };
