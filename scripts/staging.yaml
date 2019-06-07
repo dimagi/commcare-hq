@@ -57,4 +57,5 @@ branches:
   - web-user-reports-project-access  # Gabriella May 13
   - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
   - rn_fix_assign_case_regression # Rohit June 6
+  - rn_select_2_upgrade_case_reassign # Rohit June 7
 submodules: {}
