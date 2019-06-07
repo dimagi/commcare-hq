@@ -18,6 +18,7 @@
   {% initial_page_data 'location_url' location_url %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+  {% registerurl 'mobile_workers' domain %}
   {% registerurl 'edit_commcare_user' domain '---' %}
   {% registerurl 'paginate_mobile_workers' domain %}
   {% registerurl 'activate_commcare_user' domain '---' %}
@@ -72,7 +73,7 @@
             <form id="newMobileWorkerForm"
                   name="mobileWorkerForm"
                   novalidate
-                  ng-submit="submitNewMobileWorker()"><!-- TODO: create new mobile worker -->
+                  data-bind="submit: submitNewMobileWorker">
               <div class="modal-content">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">

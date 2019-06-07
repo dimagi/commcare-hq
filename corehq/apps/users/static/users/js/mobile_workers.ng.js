@@ -90,14 +90,6 @@
         },
     };
 
-    var STATUS = {
-        NEW: 'new',
-        PENDING: 'pending',
-        WARNING: 'warning',
-        SUCCESS: 'success',
-        RETRIED: 'retried',
-    };
-
     var USERNAME_STATUS = {
         PENDING: 'pending',
         TAKEN: 'taken',
@@ -189,7 +181,7 @@
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.mobileWorkerCreationController = function (
-        $scope, workerCreationFactory, djangoRMI, customFields,
+        $scope, djangoRMI, customFields,
         customFieldNames, generateStrongPasswords, location_url, $http
     ) {
         $scope._ = _;  // make underscore available
@@ -254,53 +246,12 @@
             hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
-        $scope.submitNewMobileWorker = function () {
-            $("#newMobileWorkerModal").modal('hide');
-            $scope.workers.push($scope.mobileWorker);
-            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
-        };
-
         $scope.retryMobileWorker = function (worker) {
             $scope.initializeMobileWorker(worker);
             $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
             $scope.usernameStatusMessage = gettext('Username is available.');
             $scope.markNonDefault();
         };
-    };
-
-    var mobileWorkerFactories = {};
-    mobileWorkerFactories.workerCreationFactory = function ($q, djangoRMI) {
-        var self = {};
-
-        self.stageNewMobileWorker = function (newWorker) {
-            newWorker.creationStatus = STATUS.PENDING;
-            var deferred = $q.defer();
-            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
-                newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
-            }
-            djangoRMI.create_mobile_worker({
-                mobileWorker: newWorker,
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        newWorker.creationStatus = STATUS.SUCCESS;
-                        newWorker.editUrl = data.editUrl;
-                        deferred.resolve(data);
-                    } else {
-                        newWorker.creationStatus = STATUS.WARNING;
-                        deferred.reject(data);
-                    }
-                })
-                .error(function () {
-                    newWorker.creationStatus = STATUS.WARNING;
-                    deferred.reject(
-                        gettext("Sorry, there was an issue communicating with the server.")
-                    );
-                });
-
-            return deferred.promise;
-        };
-        return self;
     };
 
     var mobileWorkerDirectives = {};
@@ -422,7 +373,6 @@
     };
 
     mobileWorkers.directive(mobileWorkerDirectives);
-    mobileWorkers.factory(mobileWorkerFactories);
     mobileWorkers.controller(mobileWorkerControllers);
 
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
