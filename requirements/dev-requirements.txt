@@ -135,7 +135,7 @@ pexpect==4.7.0            # via ipython
 phonenumberslite==8.10.10
 pickleshare==0.7.5        # via ipython
 pillow==6.0.0
-pip-tools==3.6.1
+pip-tools==3.8.0
 ply==3.11
 polib==1.1.0
 prompt-toolkit==1.0.16    # via ipython
@@ -221,3 +221,6 @@ wheel==0.29.0
 wrapt==1.11.1
 xlrd==1.0.0
 xlwt==1.3.0
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools==41.0.1        # via django-websocket-redis, ipdb, ipython, python-levenshtein, python-termstyle, sphinx
