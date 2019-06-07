@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-pip install pip-tools>=3.8
+# This is a dirty test. It can leave some files in a different state
+# than they were when it started.
 make requirements
 git diff
 git update-index -q --refresh

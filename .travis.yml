@@ -11,7 +11,7 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
-    - TEST=python-sharded-and-javascript JS_SETUP=yes TEST_MAKE_REQUIREMENTS=yes
+    - TEST=python-sharded-and-javascript-and-requirements JS_SETUP=yes
   global:
     - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
     # TRAVIS_HQ_USERNAME
@@ -35,7 +35,7 @@ script:
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
   - export DATADOG_API_KEY=$DATADOG_API_KEY
-  - scripts/run-tests.sh
+  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro

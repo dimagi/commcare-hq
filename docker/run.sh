@@ -44,7 +44,7 @@ function setup() {
 
 function run_tests() {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" ]; then
+    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript-and-requirements" ]; then
         echo "Unknown test suite: $TEST"
         exit 1
     fi
@@ -97,7 +97,7 @@ function send_metric_to_datadog() {
 function _run_tests() {
     TEST=$1
     shift
-    if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
+    if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript-and-requirements" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
         TESTS="--attr=sql_backend"
@@ -105,7 +105,7 @@ function _run_tests() {
         TESTS=""
     fi
 
-    if [ "$TEST" == "python-sharded-and-javascript" ]; then
+    if [ "$TEST" == "python-sharded-and-javascript-and-requirements" ]; then
         ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
         /vendor/bin/coverage run manage.py test "$@" $TESTS
@@ -118,6 +118,8 @@ function _run_tests() {
         curl http://localhost:8000/mocha/app_manager/ &> /dev/null
         echo "grunt mocha $@"
         grunt mocha "$@"
+
+        scripts/test-make-requirements.sh
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
