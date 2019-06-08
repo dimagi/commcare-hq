@@ -220,7 +220,11 @@ def update_xml(xml, path, old_value, new_value):
     assert get_localname(root) == path[0], 'root "{}" not found in path {}'.format(root.tag, path)
     recurse_elements(root, path)
     if not any(found):
-        raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
+        raise ValueError('Unable to find "{value}" in "{xml}" at path "{path}"'.format(
+            value=old_value,
+            xml=xml if isinstance(xml, six.string_types) else etree.tostring(xml),
+            path=path,
+        ))
     if return_as_string:
         return etree.tostring(root, encoding='utf-8', xml_declaration=True)
 
