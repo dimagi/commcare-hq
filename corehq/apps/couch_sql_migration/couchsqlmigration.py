@@ -66,7 +66,11 @@ from corehq.form_processor.models import (
     XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
-from corehq.form_processor.utils import adjust_datetimes, should_use_sql_backend
+from corehq.form_processor.utils import (
+    adjust_datetimes,
+    should_use_sql_backend,
+    extract_meta_user_id,
+)
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
@@ -391,7 +395,7 @@ class CouchSqlDomainMigrator(object):
         if self.same_domain():
             set_local_domain_sql_backend_override(self.src_domain)
         try:
-            self._migrate_form_and_associated_models(wrapped_form, form_is_processed=True)
+            self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
             log.exception("Unable to migrate form: %s", wrapped_form.form_id)
         finally:
@@ -405,24 +409,30 @@ class CouchSqlDomainMigrator(object):
         """
         couch_form, form_xml = self._map_form_ids(couch_form)
         if form_is_processed:
+            form_data = couch_form.form
             with force_phone_timezones_should_be_processed():
-                adjust_datetimes(couch_form.form)
+                adjust_datetimes(form_data)
+            xmlns = form_data.get("@xmlns", "")
+            user_id = extract_meta_user_id(form_data)
+        else:
+            xmlns = couch_form.xmlns
+            user_id = couch_form.user_id
         form_id = couch_form.form_id if self.same_domain() else six.text_type(uuid.uuid4())
         sql_form = XFormInstanceSQL(
             form_id=form_id,
             domain=self.dst_domain,
-            xmlns=couch_form.xmlns,
-            user_id=couch_form.user_id,
+            xmlns=xmlns,
+            user_id=user_id,
         )
         _copy_form_properties(sql_form, couch_form)
         _migrate_form_attachments(sql_form, couch_form,
                                   incl_form_xml=self.same_domain(), dry_run=self.dry_run)
-        if form_xml is not None:
+        if not self.same_domain():
             attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
             sql_form.attachments_list.append(attachment)
         _migrate_form_operations(sql_form, couch_form)
 
-        if form_is_processed or couch_form.doc_type != 'SubmissionErrorLog':
+        if couch_form.doc_type != 'SubmissionErrorLog':
             self._save_diffs(couch_form, sql_form)
 
         case_stock_result = None
