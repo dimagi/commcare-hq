@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import logging
 import os
 import sys
+import uuid
 from collections import defaultdict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -57,7 +58,12 @@ from corehq.form_processor.models import (
     XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
-from corehq.form_processor.utils import adjust_datetimes, should_use_sql_backend
+from corehq.form_processor.utils import (
+    adjust_datetimes,
+    extract_meta_instance_id,
+    extract_meta_user_id,
+    should_use_sql_backend,
+)
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
@@ -240,15 +246,17 @@ class CouchSqlDomainMigrator(object):
         """
         Copies `couch_form` into a new sql form
         """
+        form_data = couch_form.form
         if form_is_processed:
             with force_phone_timezones_should_be_processed():
-                adjust_datetimes(couch_form.form)
+                adjust_datetimes(form_data)
 
+        form_id = extract_meta_instance_id(form_data) or six.text_type(uuid.uuid4())
         sql_form = XFormInstanceSQL(
-            form_id=couch_form.form_id,
+            form_id=form_id,
             domain=self.domain,
-            xmlns=couch_form.xmlns,
-            user_id=couch_form.user_id,
+            xmlns=form_data.get("@xmlns", ""),
+            user_id=extract_meta_user_id(form_data),
         )
         _copy_form_properties(sql_form, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
