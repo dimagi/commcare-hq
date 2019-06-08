@@ -524,11 +524,8 @@ class CouchSqlDomainMigrator(object):
         )
 
         form_xml = couch_form.get_xml()
-        form_xml_dict = xmltodict.parse(form_xml)
-
-        caseblocks_with_path = extract_case_blocks(couch_form.form, include_path=True)
         ignore_paths = []
-        for caseblock, path in caseblocks_with_path:
+        for caseblock, path in extract_case_blocks(couch_form.form, include_path=True):
             # Example caseblock:
             #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
             #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
@@ -538,22 +535,25 @@ class CouchSqlDomainMigrator(object):
             #                  u'case_type': u'case',
             #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
             case_path = ['form'] + path + ['case']
-            update_id(self._id_map, caseblock, '@userid', form_xml_dict, case_path + ['@userid'], ignore_paths)
+            form_xml = update_id(self._id_map, caseblock, '@userid', form_xml,
+                                 base_path=case_path + ['@userid'], changed_id_paths=ignore_paths)
 
             if 'create' in caseblock:
                 create_path = case_path + ['create']
                 for prop in id_properties:
-                    update_id(self._id_map, caseblock['create'], prop, form_xml_dict, create_path, ignore_paths)
+                    form_xml = update_id(self._id_map, caseblock['create'], prop, form_xml,
+                                         base_path=create_path, changed_id_paths=ignore_paths)
 
             if 'update' in caseblock:
                 update_path = case_path + ['update']
                 for prop in id_properties:
-                    update_id(self._id_map, caseblock['update'], prop, form_xml_dict, update_path, ignore_paths)
+                    form_xml = update_id(self._id_map, caseblock['update'], prop, form_xml,
+                                         base_path=update_path, changed_id_paths=ignore_paths)
 
-        update_id(self._id_map, couch_form.form['meta'], 'userID', form_xml_dict, ['form', 'meta'], ignore_paths)
+        form_xml = update_id(self._id_map, couch_form.form['meta'], 'userID', form_xml,
+                             base_path=['form', 'meta'], changed_id_paths=ignore_paths)
 
         self._ignore_paths[couch_form.get_id].extend(ignore_paths)
-        form_xml = xmltodict.unparse(form_xml_dict)
         return couch_form, form_xml
 
     def _map_case_ids(self, couch_case):
