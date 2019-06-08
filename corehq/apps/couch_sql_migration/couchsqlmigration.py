@@ -135,25 +135,38 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
     ).migrate()
 
 
-def update_id(id_map, caseblock_or_meta, prop, form_xml_dict, base_path, changed_id_paths):
+def update_id(id_map, caseblock_or_meta, prop, form_xml, base_path, changed_id_paths):
     """
     Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
-    Finds the same property in form_xml_dict, and maps it there too.
+    Finds the same property in `form_xml`, and maps it there too.
 
     Updates a list of paths of changed IDs.
     """
-    if prop in caseblock_or_meta and caseblock_or_meta[prop] in id_map:
-        old_id = caseblock_or_meta[prop]
-        new_id = id_map[old_id]
-        caseblock_or_meta[prop] = new_id
+    if prop not in caseblock_or_meta or caseblock_or_meta[prop] not in id_map:
+        return
 
-        item_path = base_path + [prop]
-        root = form_xml_dict.keys()[0]
-        assert root in ('data', 'system'), 'Unexpected Form XML root node "{}"'.format(root)
-        # Root node is "form" in form JSON, "data" in normal form XML, and "system" in case imports.
-        form_xml_path = [root] + item_path[1:]
-        update_xml(form_xml_dict, form_xml_path, old_id, new_id)
-        changed_id_paths.append(tuple(item_path))
+    if isinstance(form_xml, dict):
+        xml_dict = form_xml
+        return_as_string = False
+    else:
+        xml_dict = xmltodict.parse(form_xml)
+        return_as_string = True
+
+    old_id = caseblock_or_meta[prop]
+    new_id = id_map[old_id]
+    caseblock_or_meta[prop] = new_id
+
+    item_path = base_path + [prop]
+    root = xml_dict.keys()[0]
+    assert root in ('data', 'system'), 'Unexpected Form XML root node "{}"'.format(root)
+    # Root node is "form" in form JSON, "data" in normal form XML, and "system" in case imports.
+    form_xml_path = [root] + item_path[1:]
+    update_xml(xml_dict, form_xml_path, old_id, new_id)
+    changed_id_paths.append(tuple(item_path))
+
+    if return_as_string:
+        xml = xmltodict.unparse(xml_dict)
+        return xml
 
 
 def update_xml(xml, path, old_value, new_value):
