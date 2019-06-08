@@ -137,10 +137,11 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
     ).migrate()
 
 
-def update_id(id_map, caseblock_or_meta, prop, form_xml, base_path, changed_id_paths):
+def update_id(id_map, caseblock_or_meta, prop, form_root, base_path, changed_id_paths):
     """
     Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
-    Finds the same property in `form_xml`, and maps it there too.
+    Finds the same property under `form_root` Element, and maps it there
+    too.
 
     Updates a list of paths of changed IDs.
     """
@@ -151,24 +152,13 @@ def update_id(id_map, caseblock_or_meta, prop, form_xml, base_path, changed_id_p
     new_id = id_map[old_id]
     caseblock_or_meta[prop] = new_id
 
-    if isinstance(form_xml, six.string_types):
-        root = etree.XML(form_xml)
-        return_as_string = True
-    else:
-        root = form_xml
-        return_as_string = False
-
     item_path = base_path + [prop]
-
-    root_tag = get_localname(root)
+    root_tag = get_localname(form_root)
     assert root_tag in ('data', 'system'), 'Unexpected Form XML root node "{}"'.format(root_tag)
     # Root node is "form" in form JSON, "data" in normal form XML, and "system" in case imports.
     form_xml_path = [root_tag] + item_path[1:]
-    update_xml(root, form_xml_path, old_id, new_id)
+    update_xml(form_root, form_xml_path, old_id, new_id)
     changed_id_paths.append(tuple(item_path))
-
-    if return_as_string:
-        return etree.tostring(root, encoding='utf-8', xml_declaration=True)
 
 
 def get_localname(elem):
@@ -473,6 +463,7 @@ class CouchSqlDomainMigrator(object):
         )
 
         form_xml = couch_form.get_xml()
+        form_root = etree.XML(form_xml)
         ignore_paths = []
         for caseblock, path in extract_case_blocks(couch_form.form, include_path=True):
             # Example caseblock:
@@ -484,25 +475,26 @@ class CouchSqlDomainMigrator(object):
             #                  u'case_type': u'case',
             #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
             case_path = ['form'] + path + ['case']
-            form_xml = update_id(self._id_map, caseblock, '@userid', form_xml,
-                                 base_path=case_path + ['@userid'], changed_id_paths=ignore_paths)
+            update_id(self._id_map, caseblock, '@userid', form_root,
+                      base_path=case_path + ['@userid'], changed_id_paths=ignore_paths)
 
             if 'create' in caseblock:
                 create_path = case_path + ['create']
                 for prop in id_properties:
-                    form_xml = update_id(self._id_map, caseblock['create'], prop, form_xml,
-                                         base_path=create_path, changed_id_paths=ignore_paths)
+                    update_id(self._id_map, caseblock['create'], prop, form_root,
+                              base_path=create_path, changed_id_paths=ignore_paths)
 
             if 'update' in caseblock:
                 update_path = case_path + ['update']
                 for prop in id_properties:
-                    form_xml = update_id(self._id_map, caseblock['update'], prop, form_xml,
-                                         base_path=update_path, changed_id_paths=ignore_paths)
+                    update_id(self._id_map, caseblock['update'], prop, form_root,
+                              base_path=update_path, changed_id_paths=ignore_paths)
 
-        form_xml = update_id(self._id_map, couch_form.form['meta'], 'userID', form_xml,
-                             base_path=['form', 'meta'], changed_id_paths=ignore_paths)
+        update_id(self._id_map, couch_form.form['meta'], 'userID', form_root,
+                  base_path=['form', 'meta'], changed_id_paths=ignore_paths)
 
         self._ignore_paths[couch_form.get_id].extend(ignore_paths)
+        form_xml = etree.tostring(form_root, encoding='utf-8', xml_declaration=True)
         return couch_form, form_xml
 
     def _map_case_ids(self, couch_case):
