@@ -6,6 +6,7 @@ import re
 import uuid
 from datetime import datetime, timedelta
 from io import open
+from unittest import skip
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
@@ -73,7 +74,7 @@ from corehq.util.test_utils import (
     trap_extra_setup,
 )
 
-DECL = '<?xml version="1.0" encoding="utf-8"?>\n'
+DECL = b"<?xml version='1.0' encoding='utf-8'?>\n"
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -933,24 +934,27 @@ class UpdateXmlTests(SimpleTestCase):
     def test_simple_xml(self):
         orig_xml = '<foo><bar>BAZ</bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(updated_xml, DECL + '<foo><bar>QUUX</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><bar>QUUX</bar></foo>')
 
     def test_xml_attr(self):
         orig_xml = '<foo><bar baz="13"></bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar', '@baz'], '13', '42')
-        eq(updated_xml, DECL + '<foo><bar baz="42"></bar></foo>')
+        eq(updated_xml, DECL + b'<foo><bar baz="42"/></foo>')
 
-    def test_empty_elem(self):
-        # NOTE: update_xml expands empty elements
+    def test_collapsed_elem(self):
         orig_xml = '<foo><bar baz="13"/></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar', '@baz'], '13', '42')
-        eq(updated_xml, DECL + '<foo><bar baz="42"></bar></foo>')
+        eq(updated_xml, DECL + b'<foo><bar baz="42"/></foo>')
+
+    def test_empty_elem(self):
+        orig_xml = '<foo><ham></ham><bar>BAZ</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(updated_xml, DECL + b'<foo><ham/><bar>QUUX</bar></foo>')
 
     def test_parsing_xml_entities(self):
-        # NOTE: update_xml parses XML entities
         orig_xml = '<foo><bar>admin&#64;example.com</bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'admin@example.com', 'prince@example.com')
-        eq(updated_xml, DECL + '<foo><bar>prince@example.com</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><bar>prince@example.com</bar></foo>')
 
     def test_not_found(self):
         orig_xml = '<foo><bar>admin&#64;example.com</bar></foo>'
@@ -965,16 +969,14 @@ class UpdateXmlTests(SimpleTestCase):
             update_xml(orig_xml, ['foo', 'qux'], 'BAZ', 'BAR')
 
     def test_text_with_subelems(self):
-        # NOTE: updated_xml places text after sub-elements
         orig_xml = '<foo><bar>HAM<baz>eggs</baz></bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
-        eq(updated_xml, DECL + '<foo><bar><baz>eggs</baz>SPAM</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><bar>SPAM<baz>eggs</baz></bar></foo>')
 
     def test_unparsing_xml_entities(self):
-        # NOTE: update_xml unparses XML entities
         orig_xml = '<foo><bar>prince</bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'prince', 'hall & oates')
-        eq(updated_xml, DECL + '<foo><bar>hall &amp; oates</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><bar>hall &amp; oates</bar></foo>')
 
     def test_namespaces(self):
         form_xml = """<?xml version='1.0' ?>
@@ -1008,41 +1010,34 @@ class UpdateXmlTests(SimpleTestCase):
         form_xml = update_xml(form_xml, ['data', 'name'], 'Prince', 'Christopher')
         # NOTE: Path is not given as ['data', 'n0:case', 'n0:create', 'n0:case_name']
         form_xml = update_xml(form_xml, ['data', 'case', 'create', 'case_name'], 'Prince', 'Christopher')
-        eq(form_xml, DECL + (  # noqa: E1
-'<data uiVersion="1" '
-      'version="7" '
-      'name="Registration Form" '
-      'xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '
-      'xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A">'
-    '<name>Christopher</name>'
-    '<n0:case case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca" '
-             'date_modified="2019-02-07T11:15:48.575+02" '
-             'user_id="7ea59f550f35758447400937f800f78c" '
-             'xmlns:n0="http://commcarehq.org/case/transaction/v2">'
-        '<n0:create>'
-            '<n0:case_name>Christopher</n0:case_name>'
-            '<n0:owner_id>7ea59f550f35758447400937f800f78c</n0:owner_id>'
-            '<n0:case_type>case</n0:case_type>'
-        '</n0:create>'
-    '</n0:case>'
-    '<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">'
-        '<n1:deviceID>Formplayer</n1:deviceID>'
-        '<n1:timeStart>2019-02-07T11:15:35.853+02</n1:timeStart>'
-        '<n1:timeEnd>2019-02-07T11:15:48.575+02</n1:timeEnd>'
-        '<n1:username>admin@example.com</n1:username>'  # NOTE: "&#64;" has been replaced with "@"
-        '<n1:userID>7ea59f550f35758447400937f800f78c</n1:userID>'
-        '<n1:instanceID>4378faa0-58b1-4c51-9310-fef1cda29707</n1:instanceID>'
-        '<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Formplayer Version: 2.43</n2:appVersion>'
-        '<n1:drift></n1:drift>'  # NOTE: Empty element has been expanded
-    '</n1:meta>'
-'</data>'
-        ))
+        eq(form_xml, """<?xml version='1.0' encoding='utf-8'?>
+<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A" uiVersion="1" version="7" name="Registration Form">
+    <name>Christopher</name>
+    <n0:case xmlns:n0="http://commcarehq.org/case/transaction/v2" case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca" date_modified="2019-02-07T11:15:48.575+02" user_id="7ea59f550f35758447400937f800f78c">
+        <n0:create>
+            <n0:case_name>Christopher</n0:case_name>
+            <n0:owner_id>7ea59f550f35758447400937f800f78c</n0:owner_id>
+            <n0:case_type>case</n0:case_type>
+        </n0:create>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>Formplayer</n1:deviceID>
+        <n1:timeStart>2019-02-07T11:15:35.853+02</n1:timeStart>
+        <n1:timeEnd>2019-02-07T11:15:48.575+02</n1:timeEnd>
+        <n1:username>admin@example.com</n1:username>
+        <n1:userID>7ea59f550f35758447400937f800f78c</n1:userID>
+        <n1:instanceID>4378faa0-58b1-4c51-9310-fef1cda29707</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Formplayer Version: 2.43</n2:appVersion>
+        <n1:drift/>
+    </n1:meta>
+</data>""")
 
+    @skip  # We don't support this ... but keeping it for etree
     def test_as_dict(self):
         xml = '<foo><bar>BAZ</bar></foo>'
-        dict_ = xmltodict.parse(xml)
-        update_xml(dict_, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(dict_, {'foo': {'bar': 'QUUX'}})
+        xml_dict = xmltodict.parse(xml)
+        update_xml(xml_dict, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(xml_dict, {'foo': {'bar': 'QUUX'}})
 
     def test_node_list(self):
         orig_xml = (
@@ -1078,62 +1073,60 @@ class UpdateXmlTests(SimpleTestCase):
             '</foo>'
         ))
 
-    def test_list_item_text(self):
+    @skip  # We don't need to support replacing child element tails
+    def test_list_item_tail(self):
         orig_xml = (
             '<foo>'
-            '<bar><q/>eggs</bar>'
-            '<bar><q/>HAM</bar>'
-            '<bar><q/>HAM</bar>'
+            '<bar><q></q>eggs</bar>'
+            '<bar><q></q>HAM</bar>'
+            '<bar><q></q>HAM</bar>'
             '</foo>'
         )
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
         eq(updated_xml, DECL + (
             '<foo>'
-            '<bar><q></q>eggs</bar>'
-            '<bar><q></q>SPAM</bar>'
-            '<bar><q></q>SPAM</bar>'
+            '<bar><q/>eggs</bar>'
+            '<bar><q/>SPAM</bar>'
+            '<bar><q/>SPAM</bar>'
+            '</foo>'
+        ))
+
+    def test_list_item_text(self):
+        orig_xml = (
+            '<foo>'
+            '<bar>eggs<q></q></bar>'
+            '<bar>HAM<q></q></bar>'
+            '<bar>HAM<q></q></bar>'
+            '</foo>'
+        )
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
+        eq(updated_xml, DECL + (
+            '<foo>'
+            '<bar>eggs<q/></bar>'
+            '<bar>SPAM<q/></bar>'
+            '<bar>SPAM<q/></bar>'
             '</foo>'
         ))
 
     def test_trimming(self):
-        """
-        xmltodict should not, but does, trim text
-        """
         orig_xml = '<foo><ham> SPAM </ham><bar>BAZ</bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(updated_xml, DECL + '<foo><ham>SPAM</ham><bar>QUUX</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><ham> SPAM </ham><bar>QUUX</bar></foo>')
 
     def test_space(self):
-        """
-        xmltodict should not, but does, drop spaces
-        """
         orig_xml = '<foo><ham> </ham><bar>BAZ</bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(updated_xml, DECL + '<foo><ham></ham><bar>QUUX</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><ham> </ham><bar>QUUX</bar></foo>')
 
     def test_zero(self):
-        """
-        xmltodict leaves falsey values alone
-        """
         orig_xml = '<foo><ham>0</ham><bar>BAZ</bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(updated_xml, DECL + '<foo><ham>0</ham><bar>QUUX</bar></foo>')
-
-    def test_empty(self):
-        """
-        xmltodict leaves empty tags alone
-        """
-        orig_xml = '<foo><ham></ham><bar>BAZ</bar></foo>'
-        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(updated_xml, DECL + '<foo><ham></ham><bar>QUUX</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><ham>0</ham><bar>QUUX</bar></foo>')
 
     def test_single_tag(self):
-        """
-        xmltodict expands single tags
-        """
         orig_xml = '<foo><ham/><bar>BAZ</bar></foo>'
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(updated_xml, DECL + '<foo><ham></ham><bar>QUUX</bar></foo>')
+        eq(updated_xml, DECL + b'<foo><ham/><bar>QUUX</bar></foo>')
 
 
 def test_doctests():
