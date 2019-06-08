@@ -246,10 +246,11 @@ class CouchSqlDomainMigrator(object):
 
         sql_form = XFormInstanceSQL(
             form_id=couch_form.form_id,
+            domain=self.domain,
             xmlns=couch_form.xmlns,
             user_id=couch_form.user_id,
         )
-        _copy_form_properties(self.domain, sql_form, couch_form)
+        _copy_form_properties(sql_form, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
         if couch_form.doc_type != 'SubmissionErrorLog':
@@ -554,9 +555,8 @@ def _wrap_form(doc):
         return XFormInstance.wrap(doc)
 
 
-def _copy_form_properties(domain, sql_form, couch_form):
+def _copy_form_properties(sql_form, couch_form):
     assert isinstance(sql_form, XFormInstanceSQL)
-    sql_form.domain = domain
 
     # submission properties
     sql_form.auth_context = couch_form.auth_context
