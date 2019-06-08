@@ -17,7 +17,6 @@ from time import time
 
 import gevent
 import six
-import xmltodict
 from lxml import etree
 
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
