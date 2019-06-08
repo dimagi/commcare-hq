@@ -18,6 +18,8 @@ from time import time
 import gevent
 import six
 import xmltodict
+from lxml import etree
+
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import (
     CaseProcessingResult,
@@ -174,117 +176,48 @@ def update_xml(xml, path, old_value, new_value):
     Change a value in an XML document at path, where path is a list of
     node names.
 
-    xml can be given as a string or a dictionary. A dictionary will be
-    updated in-place. A string will be returned.
-
-    >>> decl = '<?xml version="1.0" encoding="utf-8"?>\\n'
+    >>> decl = "<?xml version='1.0' encoding='utf-8'?>\\n"
     >>> xml = '<foo><bar>BAZ</bar></foo>'
     >>> xml = update_xml(xml, ['foo', 'bar'], 'BAZ', 'QUUX')
     >>> xml == decl + '<foo><bar>QUUX</bar></foo>'
     True
 
     """
+    # TODO: When we have dropped Python 2, set `found = False` and use nonlocal
     found = []
 
-    def find_tag_with_ns(elem, step):
-        """
-        Return the first tag with namespace that matches step, or None
-        """
-        for ns_tag in six.iterkeys(elem):
-            ns, tag = ns_tag.split(':') if ':' in ns_tag else (None, ns_tag)
-            if tag == step:
-                return ns_tag
-        return None
+    def tag_equals(elem, string):
+        tag = elem.tag
+        if tag.startswith('{'):
+            tag = tag.split('}')[1]  # Drop namespace
+        return tag == string
 
-    def update_elem(elem, step):
-        """
-        Update the value of element identified by step from old_value
-        to new_value. key could be a sub-element or an attribute.
-
-        nonlocal old_value
-        nonlocal new_value
-        nonlocal found: Append True if elem[key] is changed
-        """
-        # TODO: When we have dropped Python 2, make `found` boolean and use nonlocal
-        # nonlocal found
-
-        key = find_tag_with_ns(elem, step)
-        if key is not None:
-            if isinstance(elem[key], list):
-                # e.g. <foo><bar>one</bar><bar>two</bar><bar>three</bar></foo>
-                #      key == 'bar'
-                #      elem == {'bar': ['one', 'two', 'three']}
-                for i, value in enumerate(elem[key]):
-                    if value == old_value:
-                        elem[key][i] = new_value
-                        found.append(True)
-                    elif (
-                            isinstance(value, dict) and
-                            '#text' in value and
-                            value['#text'] == old_value
-                    ):
-                        value['#text'] = new_value
-                        found.append(True)
-            else:
-                # e.g. <foo><bar>one</bar></foo>
-                #      key == 'bar'
-                #      elem == {'bar': 'one'}
-                if elem[key] == old_value:
-                    elem[key] = new_value
-                    found.append(True)
-                elif (
-                        isinstance(elem[key], dict) and
-                        '#text' in elem[key] and
-                        elem[key]['#text'] == old_value
-                ):
-                    # elem[key] has both text nodes and sub-nodes,
-                    # e.g. <foo><bar>one<qux>two</qux></bar></foo>
-                    #      elem = {'bar': {'#text': 'one', 'qux': 'two')}}
-                    elem[key]['#text'] = new_value
-                    found.append(True)
+    def has_attr(elem, string):
+        return string.startswith('@') and string[1:] in elem.attrib
 
     def recurse_elements(elem, next_steps):
+        assert next_steps, 'path is empty'
+        step, next_steps = next_steps[0], next_steps[1:]
         if not next_steps:
-            raise ValueError('path is empty')
-        step = next_steps[0]
-        if len(next_steps) > 1:
-            if isinstance(elem, list):
-                results = []
-                for e in elem:
-                    key = find_tag_with_ns(e, step)
-                    if key is None:
-                        raise KeyError('Unable to find node "{}" in element keys {}'.format(step, e.keys()))
-                    results.append(recurse_elements(e[key], next_steps[1:]))
-                return results
-            elif isinstance(elem, dict):
-                # namespaces cause KeyError: 'case' vs 'n0:case', 'meta' vs 'n1:meta'
-                # search keys of elem for the first one that ends with step
-                key = find_tag_with_ns(elem, step)
-                if key is None:
-                    raise KeyError('Unable to find node "{}" in element keys {}'.format(step, elem.keys()))
-                return recurse_elements(elem[key], next_steps[1:])
-            else:
-                raise ValueError('unable to traverse element')
-        # elem[step] is a leaf node
-        # Pass by reference so that update_elem updates nonlocal xml_dict
-        if isinstance(elem, list):
-            for e in elem:
-                update_elem(e, step)
-        else:
-            update_elem(elem, step)
+            if tag_equals(elem, step) and elem.text == old_value:
+                found.append(True)
+                elem.text = new_value
+            elif has_attr(elem, step) and elem.attrib[step[1:]] == old_value:
+                found.append(True)
+                elem.attrib[step[1:]] = new_value
+            return
+        for child in elem:
+            if tag_equals(child, next_steps[0]):
+                recurse_elements(child, next_steps)
+        if len(next_steps) == 1 and has_attr(elem, next_steps[0]):
+            recurse_elements(elem, next_steps)
 
-    if isinstance(xml, dict):
-        xml_dict = xml
-        return_as_string = False
-    else:
-        xml_dict = xmltodict.parse(xml)
-        return_as_string = True
-    recurse_elements(xml_dict, path)
+    root = etree.XML(xml)
+    assert tag_equals(root, path[0]), 'root "{}" not found in path {}'.format(root.tag, path)
+    recurse_elements(root, path)
     if not any(found):
         raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
-    if return_as_string:
-        xml = xmltodict.unparse(xml_dict)
-        return xml
+    return etree.tostring(root, encoding='utf-8', xml_declaration=True)
 
 
 class CouchSqlDomainMigrator(object):
