@@ -1011,9 +1011,16 @@ class UpdateXmlTests(SimpleTestCase):
         # NOTE: Path is not given as ['data', 'n0:case', 'n0:create', 'n0:case_name']
         form_xml = update_xml(form_xml, ['data', 'case', 'create', 'case_name'], 'Prince', 'Christopher')
         eq(form_xml, """<?xml version='1.0' encoding='utf-8'?>
-<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A" uiVersion="1" version="7" name="Registration Form">
+<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" """
+        """xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A" """
+        """uiVersion="1" """
+        """version="7" """
+        """name="Registration Form">
     <name>Christopher</name>
-    <n0:case xmlns:n0="http://commcarehq.org/case/transaction/v2" case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca" date_modified="2019-02-07T11:15:48.575+02" user_id="7ea59f550f35758447400937f800f78c">
+    <n0:case xmlns:n0="http://commcarehq.org/case/transaction/v2" """
+            """case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca" """
+            """date_modified="2019-02-07T11:15:48.575+02" """
+            """user_id="7ea59f550f35758447400937f800f78c">
         <n0:create>
             <n0:case_name>Christopher</n0:case_name>
             <n0:owner_id>7ea59f550f35758447400937f800f78c</n0:owner_id>
