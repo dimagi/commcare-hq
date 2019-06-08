@@ -147,28 +147,44 @@ def update_id(id_map, caseblock_or_meta, prop, form_xml, base_path, changed_id_p
     if prop not in caseblock_or_meta or caseblock_or_meta[prop] not in id_map:
         return
 
-    if isinstance(form_xml, dict):
-        xml_dict = form_xml
-        return_as_string = False
-    else:
-        xml_dict = xmltodict.parse(form_xml)
-        return_as_string = True
-
     old_id = caseblock_or_meta[prop]
     new_id = id_map[old_id]
     caseblock_or_meta[prop] = new_id
 
+    if isinstance(form_xml, six.string_types):
+        root = etree.XML(form_xml)
+        return_as_string = True
+    else:
+        root = form_xml
+        return_as_string = False
+
     item_path = base_path + [prop]
-    root = xml_dict.keys()[0]
-    assert root in ('data', 'system'), 'Unexpected Form XML root node "{}"'.format(root)
+
+    root_tag = get_localname(root)
+    assert root_tag in ('data', 'system'), 'Unexpected Form XML root node "{}"'.format(root_tag)
     # Root node is "form" in form JSON, "data" in normal form XML, and "system" in case imports.
-    form_xml_path = [root] + item_path[1:]
-    update_xml(xml_dict, form_xml_path, old_id, new_id)
+    form_xml_path = [root_tag] + item_path[1:]
+    update_xml(root, form_xml_path, old_id, new_id)
     changed_id_paths.append(tuple(item_path))
 
     if return_as_string:
-        xml = xmltodict.unparse(xml_dict)
-        return xml
+        return etree.tostring(root, encoding='utf-8', xml_declaration=True)
+
+
+def get_localname(elem):
+    """
+    Returns the tag name of `elem` without the namespace
+
+    >>> xml = '<data xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A"></data>'
+    >>> root = etree.XML(xml)
+    >>> get_localname(root) == 'data'
+    True
+
+    """
+    tag = elem.tag
+    if tag.startswith('{'):
+        tag = tag.split('}')[1]
+    return tag
 
 
 def update_xml(xml, path, old_value, new_value):
@@ -186,38 +202,38 @@ def update_xml(xml, path, old_value, new_value):
     # TODO: When we have dropped Python 2, set `found = False` and use nonlocal
     found = []
 
-    def tag_equals(elem, string):
-        tag = elem.tag
-        if tag.startswith('{'):
-            tag = tag.split('}')[1]  # Drop namespace
-        return tag == string
-
-    def has_attr(elem, string):
+    def elem_has_attr(elem, string):
         return string.startswith('@') and string[1:] in elem.attrib
 
     def recurse_elements(elem, next_steps):
         assert next_steps, 'path is empty'
         step, next_steps = next_steps[0], next_steps[1:]
         if not next_steps:
-            if tag_equals(elem, step) and elem.text == old_value:
+            if get_localname(elem) == step and elem.text == old_value:
                 found.append(True)
                 elem.text = new_value
-            elif has_attr(elem, step) and elem.attrib[step[1:]] == old_value:
+            elif elem_has_attr(elem, step) and elem.attrib[step[1:]] == old_value:
                 found.append(True)
                 elem.attrib[step[1:]] = new_value
             return
         for child in elem:
-            if tag_equals(child, next_steps[0]):
+            if get_localname(child) == next_steps[0]:
                 recurse_elements(child, next_steps)
-        if len(next_steps) == 1 and has_attr(elem, next_steps[0]):
+        if len(next_steps) == 1 and elem_has_attr(elem, next_steps[0]):
             recurse_elements(elem, next_steps)
 
-    root = etree.XML(xml)
-    assert tag_equals(root, path[0]), 'root "{}" not found in path {}'.format(root.tag, path)
+    if isinstance(xml, six.string_types):
+        root = etree.XML(xml)
+        return_as_string = True
+    else:
+        root = xml
+        return_as_string = False
+    assert get_localname(root) == path[0], 'root "{}" not found in path {}'.format(root.tag, path)
     recurse_elements(root, path)
     if not any(found):
         raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
-    return etree.tostring(root, encoding='utf-8', xml_declaration=True)
+    if return_as_string:
+        return etree.tostring(root, encoding='utf-8', xml_declaration=True)
 
 
 class CouchSqlDomainMigrator(object):

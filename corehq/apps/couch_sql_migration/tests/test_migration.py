@@ -15,9 +15,9 @@ from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase, override_settings
 
 import six
-import xmltodict
 from attr import attrib, attrs
 from couchdbkit.exceptions import ResourceNotFound
+from lxml import etree
 from six.moves import zip
 from testil import assert_raises, eq
 
@@ -1032,12 +1032,12 @@ class UpdateXmlTests(SimpleTestCase):
     </n1:meta>
 </data>""")
 
-    @skip  # We don't support this ... but keeping it for etree
-    def test_as_dict(self):
-        xml = '<foo><bar>BAZ</bar></foo>'
-        xml_dict = xmltodict.parse(xml)
-        update_xml(xml_dict, ['foo', 'bar'], 'BAZ', 'QUUX')
-        eq(xml_dict, {'foo': {'bar': 'QUUX'}})
+    def test_as_etree(self):
+        orig_xml = '<foo><bar>BAZ</bar></foo>'
+        root = etree.XML(orig_xml)
+        update_xml(root, ['foo', 'bar'], 'BAZ', 'QUUX')
+        updated_xml = etree.tostring(root)
+        eq(updated_xml, '<foo><bar>QUUX</bar></foo>')
 
     def test_node_list(self):
         orig_xml = (
