@@ -45,10 +45,10 @@
           {% if not request.is_view_only %}
             <button type="button"
                     class="btn btn-primary"
-                    id="newMobileWorkerModalTrigger"
+                    id="new-user-modal-trigger"
                     data-toggle="modal"
-                    data-target="#newMobileWorkerModal"
-                    data-bind="click: initializeMobileWorker">
+                    data-target="#new-user-modal"
+                    data-bind="click: initializeUser">
               <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
             </button>
             {% if can_bulk_edit_users and can_access_all_locations %}
@@ -69,13 +69,10 @@
       </div>
     </div>
     {% if not request.is_view_only %}
-      <div class="modal fade" id="newMobileWorkerModal">
+      <div class="modal fade" id="new-user-modal">
         {% if can_add_extra_users %}
           <div class="modal-dialog">
-            <form id="newMobileWorkerForm"
-                  name="mobileWorkerForm"
-                  novalidate
-                  data-bind="submit: submitNewMobileWorker">
+            <form novalidate data-bind="submit: submitNewUser">
               <div class="modal-content">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">
@@ -85,7 +82,7 @@
                   <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
                 </div>
                 <div class="modal-body">
-                  <div class="form-horizontal" data-bind="with: newMobileWorker">
+                  <div class="form-horizontal" data-bind="with: stagedUser">
                     {% crispy new_mobile_worker_form %}
                     {% if custom_fields_form.fields %}
                       {% crispy custom_fields_form %}
@@ -149,7 +146,7 @@
       </div>
     {% endif %}
 
-    <div class="panel panel-info" id="newMobileWorkersPanel" data-bind="visible: newMobileWorkers().length">
+    <div class="panel panel-info" id="new-users-list" data-bind="visible: newUsers().length">
       <div class="panel-heading">
         <h3 class="panel-title">
           {% trans 'New Mobile Workers' %}
@@ -165,7 +162,7 @@
               <th class="col-xs-3">{% trans "Status" %}</th>
             </tr>
           </thead>
-          <tbody data-bind="foreach: newMobileWorkers">
+          <tbody data-bind="foreach: newUsers">
             <tr>
               <td data-bind="attr: {class: creationStatus}">
                 <span data-bind="visible: !user_id()">
@@ -200,7 +197,7 @@
       </div>
     </div>
   </div>
-  <div id="mobile-workers-list" class="ko-template">
+  <div id="users-list" class="ko-template">
   <div class="panel panel-default">
     <div class="panel-heading">
       <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>

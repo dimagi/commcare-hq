@@ -1,7 +1,16 @@
 /* global RMI */
+/**
+ *  This file controls the mobile workers list page, which lists existing mobile workers
+ *  and allows creation of new ones. It contains the following models and applies their
+ *  bindings on document ready.
+ *
+ *  userModel: A single user, could be pre-existing or just created.
+ *  usersListModel: A panel of all pre-existing users. Has some interactivity: search, activate/deactivate.
+ *  newUserCreationModel: A modal to create a new user, plus a panel that lists those just-created users and their
+ *      server status (pending, success, error).
+ */
 hqDefine("users/js/mobile_workers", function () {
-    // TODO: rename to something more specific
-    var STATUS = {
+    var NEW_USER_STATUS = {
         NEW: 'new',
         PENDING: 'pending',
         WARNING: 'warning',
@@ -10,11 +19,10 @@ hqDefine("users/js/mobile_workers", function () {
 
     var rmi = function () {};
 
-    // TODO: rename to mobileWorkerModel for consistency
-    var mobileWorker = function (options) {
+    var userModel = function (options) {
         options = options || {};
         options = _.defaults(options, {
-            creationStatus: STATUS.NEW,     // only relevant for new mobile workers
+            creationStatus: NEW_USER_STATUS.NEW,
             username: '',
             first_name: '',
             last_name: '',
@@ -57,8 +65,7 @@ hqDefine("users/js/mobile_workers", function () {
         return self;
     };
 
-    // TODO: rename to mobileWorkersListModel for consistency
-    var mobileWorkersList = function () {
+    var usersListModel = function () {
         var self = {};
         self.users = ko.observableArray([]);
 
@@ -106,7 +113,7 @@ hqDefine("users/js/mobile_workers", function () {
                 success: function (data) {
                     self.totalItems(data.total);
                     self.users(_.map(data.users, function (user) {
-                        return mobileWorker(user);
+                        return userModel(user);
                     }));
 
                     if (!self.query()) {
@@ -127,16 +134,15 @@ hqDefine("users/js/mobile_workers", function () {
         return self;
     };
 
-    // TODO: rename worker / mobile worker to "user" everywhere?
-    var mobileWorkerCreationModel = function (options) {
+    var newUserCreationModel = function (options) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['location_url', 'require_location_id']);
 
         var self = {};
 
         self.usernameAvailabilityStatus = ko.observable();
         self.usernameStatusMessage = ko.observable();
-        self.newMobileWorker = ko.observable(mobileWorker());
-        self.newMobileWorkers = ko.observableArray();
+        self.stagedUser = ko.observable(userModel());   // User in new user modal, not yet sent to server
+        self.newUsers = ko.observableArray();           // New users sent to server
 
         USERNAME_STATUS = {
             PENDING: 'pending',
@@ -158,7 +164,7 @@ hqDefine("users/js/mobile_workers", function () {
             return self.usernameAvailabilityStatus() === USERNAME_STATUS.ERROR;
         });
 
-        self.newMobileWorker.subscribe(function (user) {
+        self.stagedUser.subscribe(function (user) {
             user.username.subscribe(_.debounce(function (newValue) {
                 if (!newValue) {
                     self.usernameAvailabilityStatus(null);
@@ -188,8 +194,8 @@ hqDefine("users/js/mobile_workers", function () {
             }, 300));
         });
 
-        self.initializeMobileWorker = function () {
-            self.newMobileWorker(mobileWorker());
+        self.initializeUser = function () {
+            self.stagedUser(userModel());
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
 
@@ -224,36 +230,36 @@ hqDefine("users/js/mobile_workers", function () {
         };
 
         self.allowSubmit = ko.computed(function () {
-            var isValid = self.newMobileWorker().username() && self.newMobileWorker().password();
+            var isValid = self.stagedUser().username() && self.stagedUser().password();
             if (options.require_location_id) {
-                isValid = isValid && self.newMobileWorker().location_id();
+                isValid = isValid && self.stagedUser().location_id();
             }
             isValid = isValid && self.usernameIsAvailable();
             return isValid;
         });
 
-        self.submitNewMobileWorker = function () {
-            $("#newMobileWorkerModal").modal('hide');
-            var submittedMobileWorker = mobileWorker(ko.mapping.toJS(self.newMobileWorker));
-            self.newMobileWorkers.push(submittedMobileWorker);
-            submittedMobileWorker.creationStatus(STATUS.PENDING);
+        self.submitNewUser = function () {
+            $("#new-user-modal").modal('hide');
+            var newUser = userModel(ko.mapping.toJS(self.stagedUser));
+            self.newUsers.push(newUser);
+            newUser.creationStatus(NEW_USER_STATUS.PENDING);
             if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
                 // TODO: draconian password requirements
                 //newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
             }
             rmi('create_mobile_worker', {
-                mobileWorker: ko.mapping.toJS(submittedMobileWorker),
+                mobileWorker: ko.mapping.toJS(newUser),
             })
             .done(function (data) {
                 if (data.success) {
-                    submittedMobileWorker.user_id(data.user_id);
-                    submittedMobileWorker.creationStatus(STATUS.SUCCESS);
+                    newUser.user_id(data.user_id);
+                    newUser.creationStatus(NEW_USER_STATUS.SUCCESS);
                 } else {
-                    submittedMobileWorker.creationStatus(STATUS.WARNING);
+                    newUser.creationStatus(NEW_USER_STATUS.WARNING);
                 }
             })
             .fail(function () {
-                submittedMobileWorker.creationStatus(STATUS.WARNING);
+                newUser.creationStatus(NEW_USER_STATUS.WARNING);
             });
         };
 
@@ -267,14 +273,14 @@ hqDefine("users/js/mobile_workers", function () {
             return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
         };
 
-        $("#mobile-workers-list").koApplyBindings(mobileWorkersList());
+        $("#users-list").koApplyBindings(usersListModel());
 
-        var mobileWorkerCreation = mobileWorkerCreationModel({
+        var newUserCreation = newUserCreationModel({
             location_url: initialPageData.reverse('child_locations_for_select2'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
         });
-        $("#newMobileWorkerModalTrigger").koApplyBindings(mobileWorkerCreation);  // TODO: rename this id (casing)
-        $("#newMobileWorkerModal").koApplyBindings(mobileWorkerCreation);  // TODO: rename this id (casing)
-        $("#newMobileWorkersPanel").koApplyBindings(mobileWorkerCreation); // TODO: rename this id (casing)
+        $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
+        $("#new-user-modal").koApplyBindings(newUserCreation);
+        $("#new-users-list").koApplyBindings(newUserCreation);
     });
 });
