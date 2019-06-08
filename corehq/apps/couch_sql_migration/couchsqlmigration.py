@@ -507,7 +507,6 @@ class CouchSqlDomainMigrator(object):
         couch_case.owner_id = self._id_map.get(couch_case.owner_id, couch_case.owner_id)
         couch_case.user_id = self._id_map.get(couch_case.user_id, couch_case.user_id)
         couch_case.opened_by = self._id_map.get(couch_case.opened_by, couch_case.opened_by)
-        couch_case.modified_by = self._id_map.get(couch_case.modified_by, couch_case.modified_by)
         couch_case.closed_by = self._id_map.get(couch_case.closed_by, couch_case.closed_by)
         return couch_case
 
@@ -587,7 +586,7 @@ class CouchSqlDomainMigrator(object):
             opened_on=dst_couch_case.opened_on or first_action.date,
             opened_by=dst_couch_case.opened_by or first_action.user_id,
             modified_on=dst_couch_case.modified_on,
-            modified_by=dst_couch_case.modified_by or dst_couch_case.user_id or '',
+            modified_by=dst_couch_case.modified_by or '',
             server_modified_on=dst_couch_case.server_modified_on,
             closed=dst_couch_case.closed,
             closed_on=dst_couch_case.closed_on,
