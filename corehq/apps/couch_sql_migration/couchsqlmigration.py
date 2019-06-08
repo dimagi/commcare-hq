@@ -135,6 +135,27 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
     ).migrate()
 
 
+def update_id(id_map, caseblock_or_meta, prop, form_xml_dict, base_path, changed_id_paths):
+    """
+    Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
+    Finds the same property in form_xml_dict, and maps it there too.
+
+    Updates a list of paths of changed IDs.
+    """
+    if prop in caseblock_or_meta and caseblock_or_meta[prop] in id_map:
+        old_id = caseblock_or_meta[prop]
+        new_id = id_map[old_id]
+        caseblock_or_meta[prop] = new_id
+
+        item_path = base_path + [prop]
+        root = form_xml_dict.keys()[0]
+        assert root in ('data', 'system'), 'Unexpected Form XML root node "{}"'.format(root)
+        # Root node is "form" in form JSON, "data" in normal form XML, and "system" in case imports.
+        form_xml_path = [root] + item_path[1:]
+        update_xml(form_xml_dict, form_xml_path, old_id, new_id)
+        changed_id_paths.append(tuple(item_path))
+
+
 def update_xml(xml, path, old_value, new_value):
     """
     Change a value in an XML document at path, where path is a list of
@@ -232,7 +253,7 @@ def update_xml(xml, path, old_value, new_value):
             else:
                 raise ValueError('unable to traverse element')
         # elem[step] is a leaf node
-        # Pass by reference so that update_elem updates nonlocal dict_
+        # Pass by reference so that update_elem updates nonlocal xml_dict
         if isinstance(elem, list):
             for e in elem:
                 update_elem(e, step)
@@ -240,16 +261,16 @@ def update_xml(xml, path, old_value, new_value):
             update_elem(elem, step)
 
     if isinstance(xml, dict):
-        dict_ = xml
+        xml_dict = xml
         return_as_string = False
     else:
-        dict_ = xmltodict.parse(xml)
+        xml_dict = xmltodict.parse(xml)
         return_as_string = True
-    recurse_elements(dict_, path)
+    recurse_elements(xml_dict, path)
     if not any(found):
         raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
     if return_as_string:
-        xml = xmltodict.unparse(dict_)
+        xml = xmltodict.unparse(xml_dict)
         return xml
 
 
@@ -489,26 +510,11 @@ class CouchSqlDomainMigrator(object):
             'user_location_id',
         )
 
-        def update_id(caseblock_or_meta, prop, base_path):
-            if prop in caseblock_or_meta and caseblock_or_meta[prop] in self._id_map:
-                item_path = base_path + [prop]
-                root = form_xml_dict.keys()[0]
-                if root in ('data', 'system'):
-                    # Form XML root node is "data" instead of "form". Case
-                    # import forms root node is "system".
-                    form_xml_path = [root] + item_path[1:]
-                else:
-                    raise KeyError('Unexpected Form XML root node "{}"'.format(root))
-                old_id = caseblock_or_meta[prop]
-                new_id = self._id_map[old_id]
-                caseblock_or_meta[prop] = new_id
-                update_xml(form_xml_dict, form_xml_path, old_id, new_id)
-                self._ignore_paths[couch_form.get_id].append(tuple(item_path))
-
         form_xml = couch_form.get_xml()
         form_xml_dict = xmltodict.parse(form_xml)
 
         caseblocks_with_path = extract_case_blocks(couch_form.form, include_path=True)
+        ignore_paths = []
         for caseblock, path in caseblocks_with_path:
             # Example caseblock:
             #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
@@ -519,19 +525,21 @@ class CouchSqlDomainMigrator(object):
             #                  u'case_type': u'case',
             #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
             case_path = ['form'] + path + ['case']
-            update_id(caseblock, '@userid', case_path + ['@userid'])
+            update_id(self._id_map, caseblock, '@userid', form_xml_dict, case_path + ['@userid'], ignore_paths)
 
             if 'create' in caseblock:
                 create_path = case_path + ['create']
                 for prop in id_properties:
-                    update_id(caseblock['create'], prop, create_path)
+                    update_id(self._id_map, caseblock['create'], prop, form_xml_dict, create_path, ignore_paths)
 
             if 'update' in caseblock:
                 update_path = case_path + ['update']
                 for prop in id_properties:
-                    update_id(caseblock['update'], prop, update_path)
+                    update_id(self._id_map, caseblock['update'], prop, form_xml_dict, update_path, ignore_paths)
 
-        update_id(couch_form.form['meta'], 'userID', ['form', 'meta'])
+        update_id(self._id_map, couch_form.form['meta'], 'userID', form_xml_dict, ['form', 'meta'], ignore_paths)
+
+        self._ignore_paths[couch_form.get_id].extend(ignore_paths)
         form_xml = xmltodict.unparse(form_xml_dict)
         return couch_form, form_xml
 
