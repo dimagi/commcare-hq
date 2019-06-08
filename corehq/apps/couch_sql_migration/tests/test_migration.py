@@ -1095,6 +1095,46 @@ class UpdateXmlTests(SimpleTestCase):
             '</foo>'
         ))
 
+    def test_trimming(self):
+        """
+        xmltodict should not, but does, trim text
+        """
+        orig_xml = '<foo><ham> SPAM </ham><bar>BAZ</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(updated_xml, DECL + '<foo><ham>SPAM</ham><bar>QUUX</bar></foo>')
+
+    def test_space(self):
+        """
+        xmltodict should not, but does, drop spaces
+        """
+        orig_xml = '<foo><ham> </ham><bar>BAZ</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(updated_xml, DECL + '<foo><ham></ham><bar>QUUX</bar></foo>')
+
+    def test_zero(self):
+        """
+        xmltodict leaves falsey values alone
+        """
+        orig_xml = '<foo><ham>0</ham><bar>BAZ</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(updated_xml, DECL + '<foo><ham>0</ham><bar>QUUX</bar></foo>')
+
+    def test_empty(self):
+        """
+        xmltodict leaves empty tags alone
+        """
+        orig_xml = '<foo><ham></ham><bar>BAZ</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(updated_xml, DECL + '<foo><ham></ham><bar>QUUX</bar></foo>')
+
+    def test_single_tag(self):
+        """
+        xmltodict expands single tags
+        """
+        orig_xml = '<foo><ham/><bar>BAZ</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(updated_xml, DECL + '<foo><ham></ham><bar>QUUX</bar></foo>')
+
 
 def test_doctests():
     results = doctest.testmod(couchsqlmigration)
