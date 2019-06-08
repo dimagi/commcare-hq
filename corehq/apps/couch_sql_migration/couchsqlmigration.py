@@ -104,6 +104,10 @@ UNDO_SET_DOMAIN = 'set_domain'
 UNDO_CREATE = 'create'
 
 
+class MissingValueError(ValueError):
+    pass
+
+
 def setup_logging(log_dir):
     if not log_dir:
         return
@@ -136,7 +140,8 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
     ).migrate()
 
 
-def update_id(id_map, caseblock_or_meta, prop, form_root, base_path, changed_id_paths):
+def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
+              changed_id_paths, ignore_missing_formxml_value=False):
     """
     Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
     Finds the same property under `form_root` Element, and maps it there
@@ -153,10 +158,16 @@ def update_id(id_map, caseblock_or_meta, prop, form_root, base_path, changed_id_
 
     item_path = base_path + [prop]
     root_tag = get_localname(form_root)
-    assert root_tag in ('data', 'system'), 'Unexpected Form XML root node "{}"'.format(root_tag)
-    # Root node is "form" in form JSON, "data" in normal form XML, and "system" in case imports.
+    # Root node is "form" in form JSON, "data" in normal form XML, and
+    # "system" in case imports.
+    assert root_tag in ('data', 'system'), \
+        'Unexpected Form XML root node "{}"'.format(root_tag)
     form_xml_path = [root_tag] + item_path[1:]
-    update_xml(form_root, form_xml_path, old_id, new_id)
+    try:
+        update_xml(form_root, form_xml_path, old_id, new_id)
+    except MissingValueError:
+        if not ignore_missing_formxml_value:
+            raise
     changed_id_paths.append(tuple(item_path))
 
 
@@ -220,7 +231,7 @@ def update_xml(xml, path, old_value, new_value):
     assert get_localname(root) == path[0], 'root "{}" not found in path {}'.format(root.tag, path)
     recurse_elements(root, path)
     if not any(found):
-        raise ValueError('Unable to find "{value}" in "{xml}" at path "{path}"'.format(
+        raise MissingValueError('Unable to find "{value}" in "{xml}" at path "{path}"'.format(
             value=old_value,
             xml=xml if isinstance(xml, six.string_types) else etree.tostring(xml),
             path=path,
@@ -485,13 +496,15 @@ class CouchSqlDomainMigrator(object):
                 create_path = case_path + ['create']
                 for prop in id_properties:
                     update_id(self._id_map, caseblock['create'], prop, form_root,
-                              base_path=create_path, changed_id_paths=ignore_paths)
+                              base_path=create_path, changed_id_paths=ignore_paths,
+                              ignore_missing_formxml_value=True)
 
             if 'update' in caseblock:
                 update_path = case_path + ['update']
                 for prop in id_properties:
                     update_id(self._id_map, caseblock['update'], prop, form_root,
-                              base_path=update_path, changed_id_paths=ignore_paths)
+                              base_path=update_path, changed_id_paths=ignore_paths,
+                              ignore_missing_formxml_value=True)
 
         update_id(self._id_map, couch_form.form['meta'], 'userID', form_root,
                   base_path=['form', 'meta'], changed_id_paths=ignore_paths)
