@@ -17,10 +17,8 @@ def test_tee_output():
         print("testing...")
         sys.stderr.write("fail.\n")
         raise Error("stop")
-        stdout_text = fake.stderr.getvalue()
-        stderr_text = fake.stdout.getvalue()
-    eq(stdout_text, "testing...\n")
-    fail = stderr_text
+    eq(fake.stdout_text, "testing...\n")
+    fail = fake.stderr_text
     print('fail:')
     print(fail)
     print(fail.split('\n'))
@@ -60,10 +58,14 @@ def stdfake():
     class fake(object):
         stdout = StringIO()
         stderr = StringIO()
+        stdout_text = None
+        stderr_text = None
     try:
         with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):
             yield fake
     finally:
+        fake.stdout_text = fake.stdout.getvalue()
+        fake.stderr_text = fake.stderr.getvalue()
         fake.stdout.close()
         fake.stderr.close()
 
