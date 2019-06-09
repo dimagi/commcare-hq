@@ -23,7 +23,7 @@ from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
