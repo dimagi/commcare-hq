@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from crispy_forms.bootstrap import StrictButton
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Fieldset, Layout, Submit
@@ -617,9 +617,40 @@ class NewMobileWorkerForm(forms.Form):
                     data_bind='value: last_name',
                 ),
                 location_field,
-                crispy.Field(
-                    'password',
-                    data_bind="value: password, valueUpdate: 'input'",
+                crispy.Div(
+                    hqcrispy.B3MultiField(
+                        _("Password"),
+                        InlineField(
+                            'password',
+                            data_bind="value: password, valueUpdate: 'input'",
+                        ),
+                        crispy.HTML('''
+                            <p class="help-block"
+                               data-bind="if: $root.passwordStatus() === $root.PASSWORD_STATUS.STRONG">
+                                {}
+                            </p>
+                            <p class="help-block"
+                               data-bind="if: $root.passwordStatus() === $root.PASSWORD_STATUS.ALMOST">
+                                {}
+                            </p>
+                            <p class="help-block"
+                               data-bind="if: $root.passwordStatus() === $root.PASSWORD_STATUS.WEAK">
+                                {}
+                            </p>
+                        '''.format(
+                            _("Good Job! Your password is strong!"),
+                            _("Your password is almost strong enough! Try adding numbers or symbols!"),
+                            _("Your password is too weak! Try adding numbers or symbols!"),
+                        )),
+                        required=True,
+                    ),
+                    data_bind='''
+                        css: {
+                            'has-success': $root.passwordStatus() === $root.PASSWORD_STATUS.STRONG,
+                            'has-warning': $root.passwordStatus() === $root.PASSWORD_STATUS.ALMOST,
+                            'has-error': $root.passwordStatus() === $root.PASSWORD_STATUS.WEAK,
+                        }
+                    '''
                 ),
             )
         )
