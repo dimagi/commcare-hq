@@ -95,13 +95,13 @@
             }
         }
         $('#report_filter_sf').on('change', function() {
-            sf = $(this).select2('data').id;
+            sf = $(this).val();
             hideFilters(sf);
         });
         $('#hq-report-filters').on('change', function() {
             hideFilters(sf);
         });
-        sf = $('#report_filter_sf').select2('data').id;
+        sf = $('#report_filter_sf').val();
         hideFilters(sf);
     </script>
 {% endblock %}

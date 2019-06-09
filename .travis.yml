@@ -35,12 +35,7 @@ script:
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
   - export DATADOG_API_KEY=$DATADOG_API_KEY
-  - |
-    if [[ "$TEST_MAKE_REQUIREMENTS" == "yes" ]]
-    then
-      bash scripts/test-make-requirements.sh
-    fi
-  - "scripts/docker py3test --noinput --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
+  - scripts/run-tests.sh
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro

@@ -412,25 +412,8 @@ def _update_order_index(update):
 
 
 def get_case_ids_from_form(xform):
-    from corehq.form_processor.parsers.ledgers.form import (
-        get_case_ids_from_stock_transactions,
-        MissingFormXml,
-    )
+    from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
     case_ids = set(cu.id for cu in get_case_updates(xform))
     if xform:
-        try:
-            case_ids.update(get_case_ids_from_stock_transactions(xform))
-        except MissingFormXml:
-            pass
+        case_ids.update(get_case_ids_from_stock_transactions(xform))
     return case_ids
-
-
-def cases_referenced_by_xform(xform):
-    """
-    Returns a list of CommCareCase or CommCareCaseSQL given a JSON
-    representation of an XFormInstance
-    """
-    assert xform.domain, "Form is missing 'domain'"
-    case_ids = get_case_ids_from_form(xform)
-    case_accessor = CaseAccessors(xform.domain)
-    return list(case_accessor.get_cases(list(case_ids)))
