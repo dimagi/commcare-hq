@@ -39,7 +39,6 @@ from corehq.apps.accounting.utils import (
     months_from_date
 )
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser
 
 DEFAULT_DAYS_UNTIL_DUE = 30
 
