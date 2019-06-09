@@ -1,4 +1,3 @@
-/* globals zxcvbn */
 (function (angular) {
     'use strict';
 
@@ -22,33 +21,6 @@
     };
 
     var visualFormCtrl = {
-        passwordSuccess: function () {
-            $formElements.password()
-                .removeClass('has-error has-pending')
-                .addClass('has-success');
-            if ($formElements.password().hasClass('non-default')) {
-                $formElements.passwordHint()
-                    .text(gettext('Good Job! Your password is strong!'));
-            }
-        },
-        passwordAlmost: function () {
-            $formElements.password()
-                .removeClass('has-error has-success')
-                .addClass('has-pending');
-            if ($formElements.password().hasClass('non-default')) {
-                $formElements.passwordHint()
-                    .text(gettext('Your password is almost strong enough! Try adding numbers or symbols!'));
-            }
-        },
-        passwordError: function () {
-            $formElements.password()
-                .removeClass('has-success has-pending')
-                .addClass('has-error');
-            if ($formElements.password().hasClass('non-default')) {
-                $formElements.passwordHint()
-                    .text(gettext('Your password is too weak! Try adding numbers or symbols!'));
-            }
-        },
         markDefault: function () {
             $formElements.password()
                 .removeClass('non-default')
@@ -145,32 +117,6 @@
         };
     };
 
-    mobileWorkerDirectives.validatePasswordStandard = function () {
-        return {
-            restrict: 'AE',
-            require: 'ngModel',
-            link: function ($scope, $elem, $attr, ctrl) {
-                ctrl.$validators.validatePassword = function (password) {
-                    if (!password) {
-                        return false;
-                    }
-                    var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score,
-                        goodEnough = score > 1;
-
-                    if (goodEnough) {
-                        visualFormCtrl.passwordSuccess();
-                    } else if (score < 1) {
-                        visualFormCtrl.passwordError();
-                    } else {
-                        visualFormCtrl.passwordAlmost();
-                    }
-
-                    return goodEnough;
-                };
-            },
-        };
-    };
-
     mobileWorkerDirectives.validatePasswordDraconian = function () {
         return {
             restrict: 'AE',
@@ -216,5 +162,4 @@
     mobileWorkerApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
     }]);
-    mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
 }(window.angular));

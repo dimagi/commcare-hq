@@ -1,4 +1,4 @@
-/* global RMI */
+/* global RMI, zxcvbn */
 /**
  *  This file controls the mobile workers list page, which lists existing mobile workers
  *  and allows creation of new ones. It contains the following models and applies their
@@ -141,16 +141,20 @@ hqDefine("users/js/mobile_workers", function () {
     };
 
     var newUserCreationModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['custom_field_slugs', 'location_url', 'require_location_id']);
+        hqImport("hqwebapp/js/assert_properties").assertRequired(options, [
+            'custom_field_slugs',
+            'location_url',
+            'require_location_id',
+            'strong_mobile_passwords',
+        ]);
 
         var self = {};
 
         self.customFieldSlugs = options.custom_field_slugs;
-        self.usernameAvailabilityStatus = ko.observable();
-        self.usernameStatusMessage = ko.observable();
         self.stagedUser = ko.observable();              // User in new user modal, not yet sent to server
         self.newUsers = ko.observableArray();           // New users sent to server
 
+        // Username handling
         USERNAME_STATUS = {
             PENDING: 'pending',
             TAKEN: 'taken',
@@ -158,6 +162,8 @@ hqDefine("users/js/mobile_workers", function () {
             AVAILABLE_WARNING: 'warning',
             ERROR: 'error',
         };
+        self.usernameAvailabilityStatus = ko.observable();
+        self.usernameStatusMessage = ko.observable();
         self.usernameIsPending = ko.computed(function () {
             return self.usernameAvailabilityStatus() === USERNAME_STATUS.PENDING;
         });
@@ -169,6 +175,37 @@ hqDefine("users/js/mobile_workers", function () {
         });
         self.usernameIsError = ko.computed(function () {
             return self.usernameAvailabilityStatus() === USERNAME_STATUS.ERROR;
+        });
+
+        // Password handling
+        self.PASSWORD_STATUS = {
+            STRONG: 'strong',
+            ALMOST: 'almost',
+            WEAK: 'weak',
+            PENDING: 'pending',
+        };
+        self.validatePassword = ko.observable(options.strong_mobile_passwords);
+        self.passwordStatus = ko.computed(function () {
+            if (!self.validatePassword()) {
+                return self.PASSWORD_STATUS.PENDING;
+            }
+
+            if (!self.stagedUser()) {
+                return self.PASSWORD_STATUS.PENDING;
+            }
+
+            var password = self.stagedUser().password();
+            if (!password) {
+                return self.PASSWORD_STATUS.PENDING;
+            }
+
+            var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
+            if (score > 1) {
+                return self.PASSWORD_STATUS.STRONG;
+            } else if (score < 1) {
+                return self.PASSWORD_STATUS.WEAK;
+            }
+            return self.PASSWORD_STATUS.ALMOST;
         });
 
         self.stagedUser.subscribe(function (user) {
@@ -302,6 +339,7 @@ hqDefine("users/js/mobile_workers", function () {
             custom_field_slugs: initialPageData.get('custom_field_slugs'),
             location_url: initialPageData.reverse('child_locations_for_select2'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
+            strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
         });
         $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
         $("#new-user-modal").koApplyBindings(newUserCreation);
