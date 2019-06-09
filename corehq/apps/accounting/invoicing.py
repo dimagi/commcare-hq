@@ -76,7 +76,6 @@ class DomainInvoiceFactory(object):
             except InvoiceAlreadyCreatedError as e:
                 log_accounting_info(
                     "Invoice already existed for domain %s: %s" % (self.domain.name, e),
-                    show_stack_trace=True,
                 )
 
     def _get_subscriptions(self):
@@ -359,7 +358,6 @@ class CustomerAccountInvoiceFactory(object):
         except InvoiceAlreadyCreatedError as e:
             log_accounting_info(
                 "Invoice already existed for account %s: %s" % (self.account.name, e),
-                show_stack_trace=True,
             )
 
     def _generate_customer_invoice(self):
