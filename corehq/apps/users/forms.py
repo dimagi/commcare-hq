@@ -492,39 +492,22 @@ class CommCareAccountForm(forms.Form):
 validate_username = EmailValidator(message=ugettext_lazy('Username contains invalid characters.'))
 
 
-_username_help = """
-<span data-bind="visible: $root.usernameAvailabilityStatus() === 'pending'">
-    <i class="fa fa-circle-o-notch fa-spin"></i>
-    %(checking)s
-</span>
-<span data-bind="visible: $root.usernameAvailabilityStatus() === 'taken'"
-      style="word-wrap:break-word;">
-    <i class="fa fa-remove"></i>
-    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
-</span>
-<span data-bind="visible: $root.usernameAvailabilityStatus() === 'available'"
-      style="word-wrap:break-word;">
-    <i class="fa fa-check"></i>
-    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
-</span>
-<span data-bind="visible: $root.usernameAvailabilityStatus() === 'warning'">
-    <i class="fa fa-exclamation-triangle"></i>
-    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
-</span>
-<span data-bind="visible: $root.usernameAvailabilityStatus() === 'error'">
-    <i class="fa fa-exclamation-triangle"></i>
-    <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
-</span>
-""" % {
-    'checking': ugettext_noop('Checking Availability...'),
-}
-
-
 class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(
         max_length=50,
         required=True,
-        help_text=_username_help,
+        help_text="""
+            <span data-bind="visible: $root.usernameAvailabilityStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-circle-o-notch fa-spin"
+                   data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.PENDING"></i>
+                <i class="fa fa-check"
+                   data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS"></i>
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.WARNING ||
+                                       $root.usernameAvailabilityStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
+            </span>
+        """,
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
@@ -593,10 +576,10 @@ class NewMobileWorkerForm(forms.Form):
                     ),
                     data_bind='''
                         css: {
-                            'has-pending': $root.usernameIsPending(),
-                            'has-success': $root.usernameIsAvailable(),
-                            'has-warning': $root.usernameIsWarning(),
-                            'has-error': $root.usernameIsError(),
+                            'has-pending': $root.usernameAvailabilityStatus() === $root.STATUS.PENDING,
+                            'has-success': $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS,
+                            'has-warning': $root.usernameAvailabilityStatus() === $root.STATUS.WARNING,
+                            'has-error': $root.usernameAvailabilityStatus() === $root.STATUS.ERROR,
                         },
                     '''
                 ),

@@ -156,28 +156,17 @@ hqDefine("users/js/mobile_workers", function () {
         self.stagedUser = ko.observable();              // User in new user modal, not yet sent to server
         self.newUsers = ko.observableArray();           // New users sent to server
 
-        // Username handling
-        USERNAME_STATUS = {
+        self.STATUS = {
+            NONE: '',
             PENDING: 'pending',
-            TAKEN: 'taken',
-            AVAILABLE: 'available',
-            AVAILABLE_WARNING: 'warning',
+            SUCCESS: 'success',
+            WARNING: 'warning',
             ERROR: 'error',
         };
+
+        // Username handling
         self.usernameAvailabilityStatus = ko.observable();
         self.usernameStatusMessage = ko.observable();
-        self.usernameIsPending = ko.computed(function () {
-            return self.usernameAvailabilityStatus() === USERNAME_STATUS.PENDING;
-        });
-        self.usernameIsAvailable = ko.computed(function () {
-            return self.usernameAvailabilityStatus() === USERNAME_STATUS.AVAILABLE;
-        });
-        self.usernameIsWarning = ko.computed(function () {
-            return self.usernameAvailabilityStatus() === USERNAME_STATUS.AVAILABLE_WARNING;
-        });
-        self.usernameIsError = ko.computed(function () {
-            return self.usernameAvailabilityStatus() === USERNAME_STATUS.ERROR;
-        });
 
         // Password handling
         self.PASSWORD_STATUS = {
@@ -288,22 +277,23 @@ hqDefine("users/js/mobile_workers", function () {
                     return;
                 }
 
-                self.usernameAvailabilityStatus(USERNAME_STATUS.PENDING);
+                self.usernameAvailabilityStatus(self.STATUS.PENDING);
+                self.usernameStatusMessage(gettext("Checking avilability..."));
                 rmi('check_username', {
                     username: newValue,
                 }).done(function (data) {
                     if (data.success) {
-                        self.usernameAvailabilityStatus(USERNAME_STATUS.AVAILABLE);
+                        self.usernameAvailabilityStatus(self.STATUS.SUCCESS);
                         self.usernameStatusMessage(data.success);
                     } else if (data.warning) {
-                        self.usernameAvailabilityStatus(USERNAME_STATUS.AVAILABLE_WARNING);
+                        self.usernameAvailabilityStatus(self.STATUS.WARNING);
                         self.usernameStatusMessage(data.warning);
                     } else {
-                        self.usernameAvailabilityStatus(USERNAME_STATUS.ERROR);
+                        self.usernameAvailabilityStatus(self.STATUS.ERROR);
                         self.usernameStatusMessage(data.error);
                     }
                 }).fail(function () {
-                    self.usernameAvailabilityStatus(USERNAME_STATUS.ERROR);
+                    self.usernameAvailabilityStatus(self.STATUS.ERROR);
                     self.usernameStatusMessage(gettext('Issue connecting to server. Check Internet connection.'));
                 });
             }, 300));
@@ -368,7 +358,7 @@ hqDefine("users/js/mobile_workers", function () {
             if (options.require_location_id && !self.stagedUser().location_id()) {
                 return false;
             }
-            if (!self.usernameIsAvailable()) {
+            if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
             var fieldData = self.stagedUser().customFields;
