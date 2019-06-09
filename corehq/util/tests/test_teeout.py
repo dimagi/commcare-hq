@@ -21,6 +21,7 @@ def test_tee_output():
     fail = fake.stderr.getvalue()
     print('fail:')
     print(fail)
+    print(fail.split('\n'))
     eq(fail, "fail.\n")
     eq(sanitize_tb(fileobj.getvalue()),
         "testing...\n"
