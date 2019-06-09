@@ -681,7 +681,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_all_names(cls):
-        return list({d['key'] for d in cls.get_all(include_docs=False)})
+        return sorted({d['key'] for d in cls.get_all(include_docs=False)})
 
     @classmethod
     def get_all_ids(cls):
