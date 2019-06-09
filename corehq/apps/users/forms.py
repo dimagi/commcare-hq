@@ -625,19 +625,23 @@ class NewMobileWorkerForm(forms.Form):
                             data_bind="value: password, valueUpdate: 'input'",
                         ),
                         crispy.HTML('''
-                            <p class="help-block"
-                               data-bind="if: $root.passwordStatus() === $root.PASSWORD_STATUS.STRONG">
-                                {}
+                            <p class="help-block" data-bind="if: $root.isDefaultPassword">
+                                <i class="fa fa-warning"></i> {}
                             </p>
-                            <p class="help-block"
-                               data-bind="if: $root.passwordStatus() === $root.PASSWORD_STATUS.ALMOST">
-                                {}
-                            </p>
-                            <p class="help-block"
-                               data-bind="if: $root.passwordStatus() === $root.PASSWORD_STATUS.WEAK">
-                                {}
+                            <p class="help-block" data-bind="if: !$root.isDefaultPassword()">
+                                <!-- ko if: $root.passwordStatus() === $root.PASSWORD_STATUS.STRONG -->
+                                    {}
+                                <!-- /ko -->
+                                <!-- ko if: $root.passwordStatus() === $root.PASSWORD_STATUS.ALMOST -->
+                                    {}
+                                <!-- /ko -->
+                                <!-- ko if: $root.passwordStatus() === $root.PASSWORD_STATUS.WEAK -->
+                                    {}
+                                <!-- /ko -->
                             </p>
                         '''.format(
+                            _("This password is automatically generated. Please copy it or create your own. "
+                              "It will not be shown again."),
                             _("Good Job! Your password is strong!"),
                             _("Your password is almost strong enough! Try adding numbers or symbols!"),
                             _("Your password is too weak! Try adding numbers or symbols!"),

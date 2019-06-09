@@ -184,9 +184,11 @@ hqDefine("users/js/mobile_workers", function () {
             WEAK: 'weak',
             PENDING: 'pending',
         };
-        self.validatePassword = ko.observable(options.strong_mobile_passwords);
+        self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
+        self.isDefaultPassword = ko.observable(false);
+
         self.passwordStatus = ko.computed(function () {
-            if (!self.validatePassword()) {
+            if (!self.useStrongPasswords()) {
                 return self.PASSWORD_STATUS.PENDING;
             }
 
@@ -198,6 +200,9 @@ hqDefine("users/js/mobile_workers", function () {
             if (!password) {
                 return self.PASSWORD_STATUS.PENDING;
             }
+            if (self.isDefaultPassword()) {
+                return self.PASSWORD_STATUS.STRONG;
+            }
 
             var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
             if (score > 1) {
@@ -207,6 +212,53 @@ hqDefine("users/js/mobile_workers", function () {
             }
             return self.PASSWORD_STATUS.ALMOST;
         });
+
+        self.generateStrongPassword = function () {
+            function pick(possible, min, max) {
+                var n, chars = '';
+
+                if (typeof max === 'undefined') {
+                    n = min;
+                } else {
+                    n = min + Math.floor(Math.random() * (max - min + 1));
+                }
+
+                for (var i = 0; i < n; i++) {
+                    chars += possible.charAt(Math.floor(Math.random() * possible.length));
+                }
+
+                return chars;
+            }
+
+            function shuffle(password) {
+                var array = password.split('');
+                var tmp, current, top = array.length;
+
+                if (top) while (--top) {
+                    current = Math.floor(Math.random() * (top + 1));
+                    tmp = array[current];
+                    array[current] = array[top];
+                    array[top] = tmp;
+                }
+
+                return array.join('');
+            }
+
+            var specials = '!@#$%^&*()_+{}:"<>?\|[];\',./`~';   // eslint-disable-line no-useless-escape
+            var lowercase = 'abcdefghijklmnopqrstuvwxyz';
+            var uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var numbers = '0123456789';
+
+            var all = specials + lowercase + uppercase + numbers;
+
+            var password = '';
+            password += pick(specials, 1);
+            password += pick(lowercase, 1);
+            password += pick(uppercase, 1);
+            password += pick(numbers, 1);
+            password += pick(all, 6, 10);
+            return shuffle(password);
+        };
 
         self.stagedUser.subscribe(function (user) {
             user.username.subscribe(_.debounce(function (newValue) {
@@ -234,14 +286,21 @@ hqDefine("users/js/mobile_workers", function () {
                     self.usernameStatusMessage(gettext('Issue connecting to server. Check Internet connection.'));
                 });
             }, 300));
+            user.password.subscribe(function () {
+                self.isDefaultPassword(false);
+            });
         });
 
         self.initializeUser = function () {
             self.stagedUser(userModel({
+                password: self.useStrongPasswords() ? self.generateStrongPassword() : '',
                 customFields: _.object(_.map(self.customFieldSlugs, function (slug) {
                     return [slug, ''];
                 })),
             }));
+            if (self.useStrongPasswords()) {
+                self.isDefaultPassword(true);
+            }
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
 
