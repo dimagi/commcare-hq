@@ -171,17 +171,17 @@
               <td data-bind="attr: {class: creationStatus}, text: first_name"></td>
               <td data-bind="attr: {class: creationStatus}, text: last_name"></td>
               <td data-bind="attr: {class: creationStatus}">
-                <div data-bind="visible: creationStatus() === 'pending'">
+                <div data-bind="visible: creationStatus() === $root.STATUS.PENDING">
                   <i class="fa fa-circle-o-notch fa-spin"></i>
                   {% trans 'Pending...' %}
                 </div>
-                <div data-bind="visible: creationStatus() === 'success'">
+                <div data-bind="visible: creationStatus() === $root.STATUS.SUCCESS">
                   <span class="text-success">
                     <i class="fa fa-check"></i> {% trans 'NEW' %}
                   </span>
                 </div>
-                <div data-bind="visible: creationStatus() === 'warning'">
-                  <span class="text-warning">
+                <div data-bind="visible: creationStatus() === $root.STATUS.ERROR">
+                  <span class="text-danger">
                     <i class="fa fa-exclamation-triangle"></i>
                     {% trans "ERROR" %}
                   </span>

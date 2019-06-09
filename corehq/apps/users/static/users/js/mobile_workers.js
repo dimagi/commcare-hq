@@ -20,11 +20,13 @@
  *    passwords are encrypted before the new user is sent to the server for creation.
  */
 hqDefine("users/js/mobile_workers", function () {
-    var NEW_USER_STATUS = {
-        NEW: 'new',
+    // These are used as css classes, so the values of success/warning/error need to be what they are.
+    var STATUS = {
+        NONE: '',
         PENDING: 'pending',
-        WARNING: 'warning',
         SUCCESS: 'success',
+        WARNING: 'warning',
+        ERROR: 'danger',
     };
 
     var rmi = function () {};
@@ -32,7 +34,7 @@ hqDefine("users/js/mobile_workers", function () {
     var userModel = function (options) {
         options = options || {};
         options = _.defaults(options, {
-            creationStatus: NEW_USER_STATUS.NEW,
+            creationStatus: STATUS.NONE,
             username: '',
             first_name: '',
             last_name: '',
@@ -161,18 +163,11 @@ hqDefine("users/js/mobile_workers", function () {
         ]);
 
         var self = {};
+        self.STATUS = STATUS;   // make status constants available to bindings in HTML
 
-        self.customFieldSlugs = options.custom_field_slugs;
-        self.stagedUser = ko.observable();              // User in new user modal, not yet sent to server
-        self.newUsers = ko.observableArray();           // New users sent to server
-
-        self.STATUS = {
-            NONE: '',
-            PENDING: 'pending',
-            SUCCESS: 'success',
-            WARNING: 'warning',
-            ERROR: 'error',
-        };
+        self.customFieldSlugs = options.custom_field_slugs; // Required custom fields this domain has configured
+        self.stagedUser = ko.observable();                  // User in new user modal, not yet sent to server
+        self.newUsers = ko.observableArray();               // New users sent to server
 
         // Username handling
         self.usernameAvailabilityStatus = ko.observable();
@@ -381,7 +376,7 @@ hqDefine("users/js/mobile_workers", function () {
             $("#new-user-modal").modal('hide');
             var newUser = userModel(ko.mapping.toJS(self.stagedUser));
             self.newUsers.push(newUser);
-            newUser.creationStatus(NEW_USER_STATUS.PENDING);
+            newUser.creationStatus(STATUS.PENDING);
             if (self.implementPasswordObfuscation()) {
                 newUser.password(hqImport("nic_compliance/js/encoder")().encode(newUser.password()));
             }
@@ -390,12 +385,12 @@ hqDefine("users/js/mobile_workers", function () {
             }).done(function (data) {
                 if (data.success) {
                     newUser.user_id(data.user_id);
-                    newUser.creationStatus(NEW_USER_STATUS.SUCCESS);
+                    newUser.creationStatus(STATUS.SUCCESS);
                 } else {
-                    newUser.creationStatus(NEW_USER_STATUS.WARNING);
+                    newUser.creationStatus(STATUS.ERROR);
                 }
             }).fail(function () {
-                newUser.creationStatus(NEW_USER_STATUS.WARNING);
+                newUser.creationStatus(STATUS.ERROR);
             });
         };
 
