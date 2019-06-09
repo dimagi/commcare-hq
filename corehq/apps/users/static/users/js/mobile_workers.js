@@ -34,7 +34,7 @@ hqDefine("users/js/mobile_workers", function () {
     var userModel = function (options) {
         options = options || {};
         options = _.defaults(options, {
-            creationStatus: STATUS.NONE,
+            creation_status: STATUS.NONE,
             username: '',
             first_name: '',
             last_name: '',
@@ -42,18 +42,18 @@ hqDefine("users/js/mobile_workers", function () {
             password: '',
             user_id: '',
             is_active: true,
-            customFields: {},
+            custom_fields: {},
         });
 
-        // Manually turn customFields into an object of observables, since the default ko.mapping doesn't handle this
-        options.customFields = _.mapObject(options.customFields, function (value) {
+        // Manually turn custom_fields into an object of observables, since the default ko.mapping doesn't handle this
+        options.custom_fields = _.mapObject(options.custom_fields, function (value) {
             return ko.observable(value);
         });
         var self = ko.mapping.fromJS(options);
 
-        self.action_error = ko.observable('');
+        self.action_error = ko.observable('');  // error when activating/deactivating a user
 
-        self.editUrl = ko.computed(function () {
+        self.edit_url = ko.computed(function () {
             return hqImport("hqwebapp/js/initial_page_data").reverse('edit_commcare_user', self.user_id());
         });
 
@@ -304,7 +304,7 @@ hqDefine("users/js/mobile_workers", function () {
         self.initializeUser = function () {
             self.stagedUser(userModel({
                 password: self.useStrongPasswords() ? self.generateStrongPassword() : '',
-                customFields: _.object(_.map(self.customFieldSlugs, function (slug) {
+                custom_fields: _.object(_.map(self.customFieldSlugs, function (slug) {
                     return [slug, ''];
                 })),
             }));
@@ -363,7 +363,7 @@ hqDefine("users/js/mobile_workers", function () {
             if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
-            var fieldData = self.stagedUser().customFields;
+            var fieldData = self.stagedUser().custom_fields;
             if (_.isObject(fieldData) && !_.isArray(fieldData)) {
                 if (!_.every(fieldData, function (value) { return value(); })) {
                     return false;
@@ -376,21 +376,21 @@ hqDefine("users/js/mobile_workers", function () {
             $("#new-user-modal").modal('hide');
             var newUser = userModel(ko.mapping.toJS(self.stagedUser));
             self.newUsers.push(newUser);
-            newUser.creationStatus(STATUS.PENDING);
+            newUser.creation_status(STATUS.PENDING);
             if (self.implementPasswordObfuscation()) {
                 newUser.password(hqImport("nic_compliance/js/encoder")().encode(newUser.password()));
             }
             rmi('create_mobile_worker', {
-                mobileWorker: ko.mapping.toJS(newUser),
+                user: ko.mapping.toJS(newUser),
             }).done(function (data) {
                 if (data.success) {
                     newUser.user_id(data.user_id);
-                    newUser.creationStatus(STATUS.SUCCESS);
+                    newUser.creation_status(STATUS.SUCCESS);
                 } else {
-                    newUser.creationStatus(STATUS.ERROR);
+                    newUser.creation_status(STATUS.ERROR);
                 }
             }).fail(function () {
-                newUser.creationStatus(STATUS.ERROR);
+                newUser.creation_status(STATUS.ERROR);
             });
         };
 

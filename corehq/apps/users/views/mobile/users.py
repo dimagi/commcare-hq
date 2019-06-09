@@ -605,7 +605,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
-            ko_model="customFields",
+            ko_model="custom_fields",
         )
 
     @property
@@ -729,17 +729,16 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if not self.can_add_extra_users:
             raise InvalidMobileWorkerRequest(_("No Permission."))
 
-        if 'mobileWorker' not in in_data:
+        if 'user' not in in_data:
             raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
 
         return None
 
     def _construct_form_data(self, in_data, fields):
-
         try:
-            user_data = in_data['mobileWorker']
+            user_data = in_data['user']
             form_data = {}
-            for k, v in user_data.get('customFields', {}).items():
+            for k, v in user_data.get('custom_fields', {}).items():
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
             for f in fields:
                 form_data[f] = user_data.get(f)
