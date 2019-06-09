@@ -58,8 +58,11 @@ def stdfake():
     class fake(object):
         stdout = StringIO()
         stderr = StringIO()
-    with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):
-        yield fake
+    try:
+        with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):
+            yield fake
+    finally:
+        pass
 
 
 def sanitize_tb(value):
