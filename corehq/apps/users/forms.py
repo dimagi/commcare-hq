@@ -560,16 +560,8 @@ class NewMobileWorkerForm(forms.Form):
             self.fields['location_id'].required = True
 
         if self.project.strong_mobile_passwords:
-            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-                validator = "validate_password_draconian"
-            else:
-                validator = "validate_password_standard"
-            # TODO: add back validator
-            self.fields['password'].widget = forms.TextInput() #attrs={
-            #    validator: "",
-            #    "ng_keydown": "markNonDefault()",
-            #    "class": "default",
-            #})
+            # Use normal text input so auto-generated strong password is visible
+            self.fields['password'].widget = forms.TextInput()
             self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
                 ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
                 '<br />'
@@ -638,6 +630,10 @@ class NewMobileWorkerForm(forms.Form):
                                 <!-- ko if: $root.passwordStatus() === $root.PASSWORD_STATUS.WEAK -->
                                     {}
                                 <!-- /ko -->
+                                <!-- ko if: $root.useDraconianSecurity()
+                                            && $root.passwordStatus() === $root.PASSWORD_STATUS.PENDING -->
+                                    <i class="fa fa-info-circle"></i> {}
+                                <!-- /ko -->
                             </p>
                         '''.format(
                             _("This password is automatically generated. Please copy it or create your own. "
@@ -645,6 +641,8 @@ class NewMobileWorkerForm(forms.Form):
                             _("Good Job! Your password is strong!"),
                             _("Your password is almost strong enough! Try adding numbers or symbols!"),
                             _("Your password is too weak! Try adding numbers or symbols!"),
+                            _("Password Requirements: 1 special character, 1 number, 1 capital letter, "
+                              "minimum length of 8 characters."),
                         )),
                         required=True,
                     ),
