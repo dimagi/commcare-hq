@@ -62,7 +62,8 @@ def stdfake():
         with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):
             yield fake
     finally:
-        pass
+        fake.stdout.close()
+        fake.stderr.close()
 
 
 def sanitize_tb(value):
