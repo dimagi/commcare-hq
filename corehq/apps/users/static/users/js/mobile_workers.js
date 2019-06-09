@@ -143,6 +143,7 @@ hqDefine("users/js/mobile_workers", function () {
     var newUserCreationModel = function (options) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, [
             'custom_field_slugs',
+            'draconian_security',
             'location_url',
             'require_location_id',
             'strong_mobile_passwords',
@@ -185,10 +186,12 @@ hqDefine("users/js/mobile_workers", function () {
             PENDING: 'pending',
         };
         self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
+        self.useDraconianSecurity = ko.observable(options.draconian_security);
         self.isDefaultPassword = ko.observable(false);
 
         self.passwordStatus = ko.computed(function () {
             if (!self.useStrongPasswords()) {
+                // No validation
                 return self.PASSWORD_STATUS.PENDING;
             }
 
@@ -204,6 +207,19 @@ hqDefine("users/js/mobile_workers", function () {
                 return self.PASSWORD_STATUS.STRONG;
             }
 
+            if (self.useDraconianSecurity()) {
+                if (!(
+                    password.length >= 8 &&
+                    /\W/.test(password) &&
+                    /\d/.test(password) &&
+                    /[A-Z]/.test(password)
+                )) {
+                    return self.PASSWORD_STATUS.PENDING;    // display help message
+                }
+                return self.PASSWORD_STATUS.STRONG;
+            }
+
+            // Standard validation
             var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
             if (score > 1) {
                 return self.PASSWORD_STATUS.STRONG;
@@ -396,6 +412,7 @@ hqDefine("users/js/mobile_workers", function () {
 
         var newUserCreation = newUserCreationModel({
             custom_field_slugs: initialPageData.get('custom_field_slugs'),
+            draconian_security: initialPageData.get('draconian_security'),
             location_url: initialPageData.reverse('child_locations_for_select2'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),

@@ -30,37 +30,6 @@
         $scope.workers = [];
     };
 
-    mobileWorkerDirectives.validatePasswordDraconian = function () {
-        return {
-            restrict: 'AE',
-            require: 'ngModel',
-            link: function ($scope, $elem, $attr, ctrl) {
-                ctrl.$validators.validatePassword = function (password) {
-                    if (!password) {
-                        return false;
-                    } else if (!(
-                        password.length >= 8 &&
-                        /\W/.test(password) &&
-                        /\d/.test(password) &&
-                        /[A-Z]/.test(password)
-                    )) {
-                        return false;
-                    }
-                    $formElements.password()
-                        .removeClass('has-error has-success')
-                        .addClass('has-pending');
-                    if ($formElements.password().hasClass('non-default')) {
-                        $formElements.passwordHint()
-                            .text(gettext(gettext("Password Requirements: 1 special character, " +
-                                          "1 number, 1 capital letter, minimum length of 8 characters.")));
-                    }
-
-                    return true;
-                };
-            },
-        };
-    };
-
     mobileWorkers.directive(mobileWorkerDirectives);
     mobileWorkers.controller(mobileWorkerControllers);
 
