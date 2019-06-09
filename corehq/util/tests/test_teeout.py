@@ -17,8 +17,8 @@ def test_tee_output():
         print("testing...")
         sys.stderr.write("fail.\n")
         raise Error("stop")
-        stdout_text = fail.stderr.getvalue()
-        stderr_text = fail.stdout.getvalue()
+        stdout_text = fake.stderr.getvalue()
+        stderr_text = fake.stdout.getvalue()
     eq(stdout_text, "testing...\n")
     fail = stderr_text
     print('fail:')
