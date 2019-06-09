@@ -18,7 +18,10 @@ def test_tee_output():
         sys.stderr.write("fail.\n")
         raise Error("stop")
     eq(fake.stdout.getvalue(), "testing...\n")
-    eq(fake.stderr.getvalue(), "fail.\n")
+    fail = fake.stderr.getvalue()
+    print('fail:')
+    print(fail)
+    eq(fail, "fail.\n")
     eq(sanitize_tb(fileobj.getvalue()),
         "testing...\n"
         "fail.\n"
