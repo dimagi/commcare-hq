@@ -600,22 +600,26 @@ class NewMobileWorkerForm(forms.Form):
                             data_bind="value: password, valueUpdate: 'input'",
                         ),
                         crispy.HTML('''
-                            <p class="help-block" data-bind="if: $root.isDefaultPassword">
+                            <p class="help-block" data-bind="if: $root.isSuggestedPassword">
                                 <i class="fa fa-warning"></i> {}
                             </p>
-                            <p class="help-block" data-bind="if: !$root.isDefaultPassword()">
-                                <!-- ko if: $root.passwordStatus() === $root.PASSWORD_STATUS.STRONG -->
-                                    {}
+                            <p class="help-block" data-bind="ifnot: $root.isSuggestedPassword()">
+                                <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
+                                    <i class="fa fa-check"></i> {}
                                 <!-- /ko -->
-                                <!-- ko if: $root.passwordStatus() === $root.PASSWORD_STATUS.ALMOST -->
-                                    {}
+                                <!-- ko ifnot: $root.useDraconianSecurity() -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
+                                        {}
+                                    <!-- /ko -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
+                                        <i class="fa fa-warning"></i> {}
+                                    <!-- /ko -->
                                 <!-- /ko -->
-                                <!-- ko if: $root.passwordStatus() === $root.PASSWORD_STATUS.WEAK -->
-                                    {}
-                                <!-- /ko -->
-                                <!-- ko if: $root.useDraconianSecurity()
-                                            && $root.passwordStatus() === $root.PASSWORD_STATUS.PENDING -->
-                                    <i class="fa fa-info-circle"></i> {}
+
+                                <!-- ko if: $root.useDraconianSecurity() -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
+                                        <i class="fa fa-warning"></i> {}
+                                    <!-- /ko -->
                                 <!-- /ko -->
                             </p>
                         '''.format(
@@ -631,9 +635,9 @@ class NewMobileWorkerForm(forms.Form):
                     ),
                     data_bind='''
                         css: {
-                            'has-success': $root.passwordStatus() === $root.PASSWORD_STATUS.STRONG,
-                            'has-warning': $root.passwordStatus() === $root.PASSWORD_STATUS.ALMOST,
-                            'has-error': $root.passwordStatus() === $root.PASSWORD_STATUS.WEAK,
+                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
+                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
+                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
                         }
                     '''
                 ),

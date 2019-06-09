@@ -8,6 +8,16 @@
  *  usersListModel: A panel of all pre-existing users. Has some interactivity: search, activate/deactivate.
  *  newUserCreationModel: A modal to create a new user, plus a panel that lists those just-created users and their
  *      server status (pending, success, error).
+ *
+ *  When creating a new user, validation for their password depends on a few settings.
+ *  - By default, passwords are not validated.
+ *  - If the project requires strong mobile passwords (Project Settings > Privacy and Security), the
+ *    password has to meet a minimum strength requirement, based on the zxcvbn strength algorithm.
+ *  - If strong mobile passwords are on AND the server setting ENABLE_DRACONIAN_SECURITY_FEATURES is on, the
+ *    password instead has to meet a specific set of requirements (8+ chars, at least one special character, etc.).
+ *  - If any validation is being used, we automatically generate a suggested password that passes validation.
+ *  - Independently of password validation, if the server setting OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE is on,
+ *    passwords are encrypted before the new user is sent to the server for creation.
  */
 hqDefine("users/js/mobile_workers", function () {
     var NEW_USER_STATUS = {
@@ -169,13 +179,7 @@ hqDefine("users/js/mobile_workers", function () {
         self.usernameStatusMessage = ko.observable();
 
         // Password handling
-        self.PASSWORD_STATUS = {
-            STRONG: 'strong',
-            ALMOST: 'almost',
-            WEAK: 'weak',
-            PENDING: 'pending',
-        };
-        self.isDefaultPassword = ko.observable(false);
+        self.isSuggestedPassword = ko.observable(false);
 
         // These don't need to be observables, but it doesn't add much overhead
         // and eliminates the need to remember which flags are observable and which aren't
@@ -186,19 +190,19 @@ hqDefine("users/js/mobile_workers", function () {
         self.passwordStatus = ko.computed(function () {
             if (!self.useStrongPasswords()) {
                 // No validation
-                return self.PASSWORD_STATUS.PENDING;
+                return self.STATUS.NONE;
             }
 
             if (!self.stagedUser()) {
-                return self.PASSWORD_STATUS.PENDING;
+                return self.STATUS.NONE;
             }
 
             var password = self.stagedUser().password();
             if (!password) {
-                return self.PASSWORD_STATUS.PENDING;
+                return self.STATUS.NONE;
             }
-            if (self.isDefaultPassword()) {
-                return self.PASSWORD_STATUS.STRONG;
+            if (self.isSuggestedPassword()) {
+                return self.STATUS.WARNING;
             }
 
             if (self.useDraconianSecurity()) {
@@ -208,19 +212,19 @@ hqDefine("users/js/mobile_workers", function () {
                     /\d/.test(password) &&
                     /[A-Z]/.test(password)
                 )) {
-                    return self.PASSWORD_STATUS.PENDING;    // display help message
+                    return self.STATUS.ERROR;
                 }
-                return self.PASSWORD_STATUS.STRONG;
+                return self.STATUS.SUCCESS;
             }
 
             // Standard validation
             var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
             if (score > 1) {
-                return self.PASSWORD_STATUS.STRONG;
+                return self.STATUS.SUCCESS;
             } else if (score < 1) {
-                return self.PASSWORD_STATUS.WEAK;
+                return self.STATUS.ERROR;
             }
-            return self.PASSWORD_STATUS.ALMOST;
+            return self.STATUS.WARNING;
         });
 
         self.generateStrongPassword = function () {
@@ -298,7 +302,7 @@ hqDefine("users/js/mobile_workers", function () {
                 });
             }, 300));
             user.password.subscribe(function () {
-                self.isDefaultPassword(false);
+                self.isSuggestedPassword(false);
             });
         });
 
@@ -310,7 +314,7 @@ hqDefine("users/js/mobile_workers", function () {
                 })),
             }));
             if (self.useStrongPasswords()) {
-                self.isDefaultPassword(true);
+                self.isSuggestedPassword(true);
             }
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
@@ -359,6 +363,9 @@ hqDefine("users/js/mobile_workers", function () {
                 return false;
             }
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
+                return false;
+            }
+            if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
             var fieldData = self.stagedUser().customFields;
