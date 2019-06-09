@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _, ungettext
 
 from memoized import memoized
 
-from corehq.util.dates import get_previous_month_date_range
+from corehq.util.dates import get_first_last_days, get_previous_month_date_range
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -653,7 +653,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return excess_users
 
     def all_month_ends_in_invoice(self):
-        month_end = self.invoice.date_end
+        _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
         dates = []
         while month_end > self.invoice.date_start:
             dates.append(month_end)
