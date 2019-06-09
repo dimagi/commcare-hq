@@ -66,9 +66,6 @@
         },
     };
 
-    mobileWorkers.constant('customFields', []);
-    mobileWorkers.constant('customFieldNames', []);
-
     var mobileWorker = function (data) {
         function generateStrongPassword() {
             function pick(possible, min, max) {
@@ -121,19 +118,9 @@
 
         self.password = data.generateStrongPasswords ? generateStrongPassword() : '';
 
-        self.customFields = {};
-
         self.isPending = function () {
             return self.creationStatus === STATUS.PENDING;
         };
-
-        if (_.isArray(data.customFields)) {
-            _.each(data.customFields, function (key) {
-                self.customFields[key] = '';
-            });
-        } else if (_.isObject(data.customFields)) {
-            self.customFields = data.customFields;
-        }
 
         return self;
     };
@@ -141,14 +128,12 @@
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.mobileWorkerCreationController = function (
-        $scope, djangoRMI, customFields,
-        customFieldNames, generateStrongPasswords, $http
+        $scope, djangoRMI, 
+        generateStrongPasswords, $http
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
         $scope.workers = [];
-        $scope.customFormFields = customFields;
-        $scope.customFormFieldNames = customFieldNames;
         $scope.generateStrongPasswords = generateStrongPasswords;
 
         $scope.markNonDefault = function () {
@@ -231,6 +216,5 @@
     mobileWorkerApp.config(["djangoRMIProvider", function (djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
     }]);
-    mobileWorkerApp.constant('customFields', initial_page_data('custom_fields'));
     mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
 }(window.angular));
