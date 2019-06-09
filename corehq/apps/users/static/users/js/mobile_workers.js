@@ -144,6 +144,7 @@ hqDefine("users/js/mobile_workers", function () {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, [
             'custom_field_slugs',
             'draconian_security',
+            'implement_password_obfuscation',
             'location_url',
             'require_location_id',
             'strong_mobile_passwords',
@@ -185,9 +186,13 @@ hqDefine("users/js/mobile_workers", function () {
             WEAK: 'weak',
             PENDING: 'pending',
         };
+        self.isDefaultPassword = ko.observable(false);
+
+        // These don't need to be observables, but it doesn't add much overhead
+        // and eliminates the need to remember which flags are observable and which aren't
         self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
         self.useDraconianSecurity = ko.observable(options.draconian_security);
-        self.isDefaultPassword = ko.observable(false);
+        self.implementPasswordObfuscation = ko.observable(options.implement_password_obfuscation);
 
         self.passwordStatus = ko.computed(function () {
             if (!self.useStrongPasswords()) {
@@ -380,9 +385,8 @@ hqDefine("users/js/mobile_workers", function () {
             var newUser = userModel(ko.mapping.toJS(self.stagedUser));
             self.newUsers.push(newUser);
             newUser.creationStatus(NEW_USER_STATUS.PENDING);
-            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
-                // TODO: draconian password requirements
-                //newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
+            if (self.implementPasswordObfuscation()) {
+                newUser.password(hqImport("nic_compliance/js/encoder")().encode(newUser.password()));
             }
             rmi('create_mobile_worker', {
                 mobileWorker: ko.mapping.toJS(newUser),
@@ -413,6 +417,7 @@ hqDefine("users/js/mobile_workers", function () {
         var newUserCreation = newUserCreationModel({
             custom_field_slugs: initialPageData.get('custom_field_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
+            implement_password_obfuscation: initialPageData.get('implement_password_obfuscation'),
             location_url: initialPageData.reverse('child_locations_for_select2'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
