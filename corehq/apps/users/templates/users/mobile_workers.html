@@ -160,27 +160,27 @@
           </thead>
           <tbody data-bind="foreach: newUsers">
             <tr>
-              <td data-bind="attr: {class: creationStatus}">
+              <td data-bind="attr: {class: creation_status}">
                 <span data-bind="visible: !user_id()">
                   <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
                 </span>
-                <a data-bind="attr: {href: editUrl}, visible: user_id">
+                <a data-bind="attr: {href: edit_url}, visible: user_id">
                   <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
                 </a>
               </td-->
-              <td data-bind="attr: {class: creationStatus}, text: first_name"></td>
-              <td data-bind="attr: {class: creationStatus}, text: last_name"></td>
-              <td data-bind="attr: {class: creationStatus}">
-                <div data-bind="visible: creationStatus() === $root.STATUS.PENDING">
+              <td data-bind="attr: {class: creation_status}, text: first_name"></td>
+              <td data-bind="attr: {class: creation_status}, text: last_name"></td>
+              <td data-bind="attr: {class: creation_status}">
+                <div data-bind="visible: creation_status() === $root.STATUS.PENDING">
                   <i class="fa fa-circle-o-notch fa-spin"></i>
                   {% trans 'Pending...' %}
                 </div>
-                <div data-bind="visible: creationStatus() === $root.STATUS.SUCCESS">
+                <div data-bind="visible: creation_status() === $root.STATUS.SUCCESS">
                   <span class="text-success">
                     <i class="fa fa-check"></i> {% trans 'NEW' %}
                   </span>
                 </div>
-                <div data-bind="visible: creationStatus() === $root.STATUS.ERROR">
+                <div data-bind="visible: creation_status() === $root.STATUS.ERROR">
                   <span class="text-danger">
                     <i class="fa fa-exclamation-triangle"></i>
                     {% trans "ERROR" %}
@@ -256,7 +256,7 @@
         <tbody data-bind="foreach: users">
         <tr>
           <td>
-            <a data-bind="attr: {href: editUrl}">
+            <a data-bind="attr: {href: edit_url}">
               <i class="fa fa-user"></i>
               <strong data-bind="text: username"></strong>
             </a>
