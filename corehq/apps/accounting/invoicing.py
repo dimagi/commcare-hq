@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _, ungettext
 
 from memoized import memoized
 
-from corehq.util.dates import get_previous_month_date_range
+from corehq.util.dates import get_previous_month_date_range, get_first_last_days
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -39,7 +39,6 @@ from corehq.apps.accounting.utils import (
     months_from_date
 )
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser
 
 DEFAULT_DAYS_UNTIL_DUE = 30
 
@@ -75,7 +74,7 @@ class DomainInvoiceFactory(object):
                 elif should_create_invoice(subscription, self.domain, self.date_start, self.date_end):
                     self._create_invoice_for_subscription(subscription)
             except InvoiceAlreadyCreatedError as e:
-                log_accounting_error(
+                log_accounting_info(
                     "Invoice already existed for domain %s: %s" % (self.domain.name, e),
                     show_stack_trace=True,
                 )
@@ -358,7 +357,7 @@ class CustomerAccountInvoiceFactory(object):
             self._generate_customer_invoice()
             self._email_invoice()
         except InvoiceAlreadyCreatedError as e:
-            log_accounting_error(
+            log_accounting_info(
                 "Invoice already existed for account %s: %s" % (self.account.name, e),
                 show_stack_trace=True,
             )
@@ -653,7 +652,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return excess_users
 
     def all_month_ends_in_invoice(self):
-        month_end = self.invoice.date_end
+        _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
         dates = []
         while month_end > self.invoice.date_start:
             dates.append(month_end)
