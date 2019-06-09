@@ -30,6 +30,12 @@ hqDefine("users/js/mobile_workers", function () {
             password: '',
             user_id: '',
             is_active: true,
+            customFields: {},
+        });
+
+        // Manually turn customFields into an object of observables, since the default ko.mapping doesn't handle this
+        options.customFields = _.mapObject(options.customFields, function (value) {
+            return ko.observable(value);
         });
         var self = ko.mapping.fromJS(options);
 
@@ -135,13 +141,14 @@ hqDefine("users/js/mobile_workers", function () {
     };
 
     var newUserCreationModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['location_url', 'require_location_id']);
+        hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['custom_field_slugs', 'location_url', 'require_location_id']);
 
         var self = {};
 
+        self.customFieldSlugs = options.custom_field_slugs;
         self.usernameAvailabilityStatus = ko.observable();
         self.usernameStatusMessage = ko.observable();
-        self.stagedUser = ko.observable(userModel());   // User in new user modal, not yet sent to server
+        self.stagedUser = ko.observable();              // User in new user modal, not yet sent to server
         self.newUsers = ko.observableArray();           // New users sent to server
 
         USERNAME_STATUS = {
@@ -195,7 +202,11 @@ hqDefine("users/js/mobile_workers", function () {
         });
 
         self.initializeUser = function () {
-            self.stagedUser(userModel());
+            self.stagedUser(userModel({
+                customFields: _.object(_.map(self.customFieldSlugs, function (slug) {
+                    return [slug, ''];
+                })),
+            }));
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
 
@@ -230,12 +241,28 @@ hqDefine("users/js/mobile_workers", function () {
         };
 
         self.allowSubmit = ko.computed(function () {
-            var isValid = self.stagedUser().username() && self.stagedUser().password();
-            if (options.require_location_id) {
-                isValid = isValid && self.stagedUser().location_id();
+            if (!self.stagedUser()) {
+                return false;
             }
-            isValid = isValid && self.usernameIsAvailable();
-            return isValid;
+            if (!self.stagedUser().username()) {
+                return false;
+            }
+            if (!self.stagedUser().password()) {
+                return false;
+            }
+            if (options.require_location_id && !self.stagedUser().location_id()) {
+                return false;
+            }
+            if (!self.usernameIsAvailable()) {
+                return false;
+            }
+            var fieldData = self.stagedUser().customFields;
+            if (_.isObject(fieldData) && !_.isArray(fieldData)) {
+                if (!_.every(fieldData, function (value) { return value(); })) {
+                    return false;
+                }
+            }
+            return true;
         });
 
         self.submitNewUser = function () {
@@ -276,6 +303,7 @@ hqDefine("users/js/mobile_workers", function () {
         $("#users-list").koApplyBindings(usersListModel());
 
         var newUserCreation = newUserCreationModel({
+            custom_field_slugs: initialPageData.get('custom_field_slugs'),
             location_url: initialPageData.reverse('child_locations_for_select2'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
         });
