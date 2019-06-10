@@ -24,6 +24,7 @@ function(doc){
             vellum_case_management: !!doc.vellum_case_management,
             // In legacy linked apps, the linked and master versions correspond, but newer linked apps stored the pulled master version
             pulled_from_master_version: doc.doc_type == 'LinkedApplication' ? doc.pulled_from_master_version || doc.version : null,
+            pulled_from_master_app_id: doc.doc_type == 'LinkedApplication' ? doc.pulled_from_master_app_id || doc.master : null
         });
     }
 }

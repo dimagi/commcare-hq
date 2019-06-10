@@ -7,7 +7,7 @@ from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.remote_accessors import get_released_app_version, get_released_app
 
 
-def get_master_app_version(domain_link, app_id):
+def get_master_app_version(domain_link, app_id):    # TODO: rename to get_pulled_from_master_version? delete?
     if domain_link.is_remote:
         return get_released_app_version(domain_link.master_domain, app_id, domain_link.remote_details)
     else:
