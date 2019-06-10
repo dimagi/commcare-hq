@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from corehq.apps.api.odata.utils import get_odata_property_from_export_item
-from corehq.apps.export.models import ExportItem, PathNode
+from corehq.apps.export.models import ExportItem
 
 
 class TestOdataFromExportItem(SimpleTestCase):
