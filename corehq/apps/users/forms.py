@@ -601,35 +601,35 @@ class NewMobileWorkerForm(forms.Form):
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">
-                                <i class="fa fa-warning"></i> {}
+                                <i class="fa fa-warning"></i> {suggested}
                             </p>
                             <p class="help-block" data-bind="ifnot: $root.isSuggestedPassword()">
                                 <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
-                                    <i class="fa fa-check"></i> {}
+                                    <i class="fa fa-check"></i> {strong}
                                 <!-- /ko -->
                                 <!-- ko ifnot: $root.useDraconianSecurity() -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
-                                        {}
+                                        {almost}
                                     <!-- /ko -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {}
+                                        <i class="fa fa-warning"></i> {weak}
                                     <!-- /ko -->
                                 <!-- /ko -->
 
                                 <!-- ko if: $root.useDraconianSecurity() -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {}
+                                        <i class="fa fa-warning"></i> {rules}
                                     <!-- /ko -->
                                 <!-- /ko -->
                             </p>
                         '''.format(
-                            _("This password is automatically generated. Please copy it or create your own. "
-                              "It will not be shown again."),
-                            _("Good Job! Your password is strong!"),
-                            _("Your password is almost strong enough! Try adding numbers or symbols!"),
-                            _("Your password is too weak! Try adding numbers or symbols!"),
-                            _("Password Requirements: 1 special character, 1 number, 1 capital letter, "
-                              "minimum length of 8 characters."),
+                            suggested=_("This password is automatically generated. Please copy it or create "
+                                "your own. It will not be shown again."),
+                            strong=_("Good Job! Your password is strong!"),
+                            almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
+                            weak=_("Your password is too weak! Try adding numbers or symbols!"),
+                            rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
+                                "minimum length of 8 characters."),
                         )),
                         required=True,
                     ),
