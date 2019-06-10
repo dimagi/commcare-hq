@@ -492,15 +492,13 @@ class CouchSqlDomainMigrator(object):
                 create_path = case_path + ['create']
                 for prop in id_properties:
                     update_id(self._id_map, caseblock['create'], prop, form_root,
-                              base_path=create_path, changed_id_paths=ignore_paths,
-                              ignore_missing_formxml_value=True)
+                              base_path=create_path, changed_id_paths=ignore_paths)
 
             if 'update' in caseblock:
                 update_path = case_path + ['update']
                 for prop in id_properties:
                     update_id(self._id_map, caseblock['update'], prop, form_root,
-                              base_path=update_path, changed_id_paths=ignore_paths,
-                              ignore_missing_formxml_value=True)
+                              base_path=update_path, changed_id_paths=ignore_paths)
 
         update_id(self._id_map, couch_form.form['meta'], 'userID', form_root,
                   base_path=['form', 'meta'], changed_id_paths=ignore_paths)
