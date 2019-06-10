@@ -106,6 +106,14 @@ class DuplicateLocationName(CaseRowError):
     )
 
 
+class InvalidLocation(CaseRowError):
+    title = ugettext_noop('Invalid Location')
+    message = ugettext_lazy(
+        "The location of the case owner needs to be at or below the "
+        "location of the user importing the cases."
+    )
+
+
 class InvalidInteger(CaseRowError):
     title = ugettext_noop('Invalid Integer')
     message = ugettext_lazy(
