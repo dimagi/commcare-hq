@@ -366,7 +366,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
             if rebuild_models:
                 xform_archived.send(sender="couchforms", xform=self)
 
-    def unarchive(self, user_id=None):
+    def unarchive(self, user_id=None, rebuild_models=True):
         if not self.is_archived:
             return
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
@@ -382,18 +382,20 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
             ))
             XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
             archive_stub.archive_history_updated()
-            xform_unarchived.send(sender="couchforms", xform=self)
+            if rebuild_models:
+                xform_unarchived.send(sender="couchforms", xform=self)
 
     def publish_archive_action_to_kafka(self, user_id, archive, rebuild_models=True):
         from couchforms.models import UnfinishedArchiveStub
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive and rebuild_models:
-                xform_archived.send(sender="couchforms", xform=self)
-            else:
-                xform_unarchived.send(sender="couchforms", xform=self)
+        if rebuild_models:
+            with unfinished_archive(instance=self, user_id=user_id, archive=archive):
+                if archive:
+                    xform_archived.send(sender="couchforms", xform=self)
+                else:
+                    xform_unarchived.send(sender="couchforms", xform=self)
 
 
 class XFormError(XFormInstance):

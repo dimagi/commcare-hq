@@ -573,7 +573,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             if rebuild_models:
                 xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user_id=None):
+    def unarchive(self, user_id=None, rebuild_models=True):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if not self.is_archived:
@@ -585,7 +585,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
             FormAccessorSQL.unarchive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_unarchived.send(sender="form_processor", xform=self)
+            if rebuild_models:
+                xform_unarchived.send(sender="form_processor", xform=self)
 
     def publish_archive_action_to_kafka(self, user_id, archive, rebuild_models=True):
         # Don't update the history, just send to kafka
@@ -594,12 +595,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from corehq.form_processor.change_publishers import publish_form_saved
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive and rebuild_models:
-                xform_archived.send(sender="form_processor", xform=self)
-            else:
-                xform_unarchived.send(sender="form_processor", xform=self)
-            publish_form_saved(self)
+        if rebuild_models:
+            with unfinished_archive(instance=self, user_id=user_id, archive=archive):
+                if archive:
+                    xform_archived.send(sender="form_processor", xform=self)
+                else:
+                    xform_unarchived.send(sender="form_processor", xform=self)
+                publish_form_saved(self)
 
     def __str__(self):
         return (
