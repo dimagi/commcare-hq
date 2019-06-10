@@ -90,7 +90,7 @@ class ODataXFormInstanceSerializer(Serializer):
         app_id = data.pop('app_id', None)
         if not app_id:
             raise Exception(
-                'API requires xmlns to be set! Did you add it in a custom create_response function?'
+                'API requires app_id to be set! Did you add it in a custom create_response function?'
             )
 
         xmlns = data.pop('xmlns', None)
