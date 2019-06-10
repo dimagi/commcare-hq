@@ -4,8 +4,6 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from six.moves.urllib.parse import quote
-
 from corehq import toggles
 from corehq.apps.api.odata.utils import get_case_type_to_properties, get_xmlns_by_app, get_xmlns_to_properties
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
@@ -64,9 +62,9 @@ class ODataFormServiceView(View):
             '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain, app_id]),
             'value': [
                 {
-                    'name': quote(xmlns, safe=''),
+                    'name': xmlns,
                     'kind': 'EntitySet',
-                    'url': quote(xmlns, safe=''),
+                    'url': xmlns,
                 }
                 for xmlns in get_xmlns_by_app(domain, app_id)
             ]
@@ -83,10 +81,7 @@ class ODataFormMetadataView(View):
     def get(self, request, domain, app_id):
         xmlns_to_properties = get_xmlns_to_properties(domain, app_id)
         metadata = render_to_string('api/odata_form_metadata.xml', {
-            'xmlns_to_properties': {
-                quote(xmlns, safe=''): properties
-                for xmlns, properties in xmlns_to_properties.items()
-            },
+            'xmlns_to_properties': xmlns_to_properties,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 

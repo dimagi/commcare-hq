@@ -93,7 +93,7 @@ class ODataXFormInstanceSerializer(Serializer):
         data['value'] = data.pop('objects')
 
         form_export_schema = get_latest_form_export_schema(
-            domain, app_id, xmlns
+            domain, app_id, 'http://openrosa.org/formdesigner/' + xmlns
         )
 
         if form_export_schema:

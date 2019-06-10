@@ -35,13 +35,14 @@ def get_xmlns_to_properties(domain, app_id):
 
 def get_xmlns_by_app(domain, app_id):
     app = get_current_app(domain, app_id)
-    return [form.xmlns for form in app.get_forms()]
+    return [form.xmlns.split('/')[-1] for form in app.get_forms()]
 
 
 def get_properties_by_xmlns(domain, app_id, xmlns):
+    complete_xmlns = 'http://openrosa.org/formdesigner/' + xmlns
     form_export_schema = get_latest_form_export_schema(
-        domain, app_id, xmlns
-    ) or FormExportDataSchema.generate_schema_from_builds(domain, app_id, xmlns)
+        domain, app_id, complete_xmlns
+    ) or FormExportDataSchema.generate_schema_from_builds(domain, app_id, complete_xmlns)
     export_items = [
         item for item in form_export_schema.group_schemas[0].items
         if isinstance(item, ExportItem)
