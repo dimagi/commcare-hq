@@ -42,7 +42,7 @@ class ODataCommCareCaseSerializer(Serializer):
         next_url = data.pop('meta', {}).get('next')
         if next_url:
             data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
-        # move "objects" to "value"
+
         data['value'] = data.pop('objects')
 
         # clean properties
@@ -114,7 +114,6 @@ class ODataXFormInstanceSerializer(Serializer):
         if next_url:
             data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
 
-        # move "objects" to "value"
         data['value'] = data.pop('objects')
 
         form_export_schema = get_latest_form_export_schema(
