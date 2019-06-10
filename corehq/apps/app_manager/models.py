@@ -5585,6 +5585,12 @@ class LinkedApplication(Application):
         from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
         return get_domain_master_link(self.domain)
 
+    @memoized
+    def get_master_app_briefs(self):
+        if self.domain_link:
+            return get_master_app_briefs(self.domain_link)
+        return []
+
     def get_master_version(self):
         if self.domain_link:
             return get_master_app_version(self.domain_link, self.master)
