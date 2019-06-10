@@ -58,6 +58,7 @@ function run_tests() {
 
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
     delta=$((`date +%s` - $now))
 
     send_timing_metric_to_datadog "tests" $delta
