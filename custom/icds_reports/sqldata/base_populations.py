@@ -7,8 +7,8 @@ class BasePopulation(ICDSMixin):
 
     slug = 'population'
 
-    def __init__(self, config):
-        super(BasePopulation, self).__init__(config)
+    def __init__(self, config, allow_conditional_agg=False):
+        super(BasePopulation, self).__init__(config, allow_conditional_agg)
         self.config.update(dict(
             location_id=config['location_id']
         ))

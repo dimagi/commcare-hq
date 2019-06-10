@@ -1,33 +1,49 @@
 (function () {
     var utils = {
-        getIcon: function (question) {
+        _getIcon: function (question) {
             if (question.tag === 'upload') {
                 return '<i class="fa fa-paperclip"></i> ';
             }
             return '';
         },
         getDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
+            return utils._getIcon(question) + utils._getLabel(question, MAXLEN)
                     + " (" + (question.hashtagValue || question.value) + ")";
         },
         getTruncatedDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
-                    + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
+            return utils._getIcon(question) + utils._getLabel(question, MAXLEN)
+                    + " (" + utils._truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
-        getLabel: function (question, MAXLEN) {
-            return utils.truncateLabel((question.repeat ? '- ' : '')
+        _getLabel: function (question, MAXLEN) {
+            return utils._truncateLabel((question.repeat ? '- ' : '')
                     + question.label, question.tag === 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
-        truncateLabel: function (label, suffix, MAXLEN) {
+        _truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";
             var MAXLEN = MAXLEN || 40,
                 maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
-        truncateValue: function (value, MAXLEN) {
+        _truncateValue: function (value, MAXLEN) {
             MAXLEN = MAXLEN || 40;
             return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN / 2) + "..." + value.slice(value.length - MAXLEN / 2));
         },
+    };
+
+    var questionsById = {};
+
+    // Transforms contents of this binding's value into a list of objects to feed to select2
+    var _valueToSelect2Data = function (optionObjects) {
+        var data = _(optionObjects).map(function (o) {
+            o = _.extend(o, {
+                id: o.value,
+                text: utils.getDisplay(o),
+            });
+            questionsById[o.id] = o;
+            return o;
+        });
+        data = [{id: '', text: ''}].concat(data);    // prepend option for placeholder
+        return data;
     };
 
     ko.bindingHandlers.questionsSelect = {
@@ -62,70 +78,60 @@
             }
 
             // Initialize select2
-            var options = {
-                    placeholder: gettext('Select a Question'),
-                    dropdownCssClass: 'bigdrop',
-                },
-                data = _(optionObjects).map(function (o) {
-                    return _.extend(o, {
-                        id: o.value,
-                        text: utils.getDisplay(o),
-                    });
-                }),
-                templateSelection = function (o) {
+            $(element).select2({
+                placeholder: gettext('Select a Question'),
+                dropdownCssClass: 'bigdrop',
+                escapeMarkup: function (m) { return m; },
+                data: _valueToSelect2Data(optionObjects),
+                width: '100%',
+                templateSelection: function (o) {
                     if (!o.id) {
                         // This is the placeholder
                         return o.text;
                     }
-                    return utils.getTruncatedDisplay(o);
+                    return utils.getTruncatedDisplay(questionsById[o.id]);
                 },
-                templateResult = function (o) {
+                templateResult: function (o) {
                     if (!o.value) {
                         // This is some select2 system option, like 'Searching...' text
                         return o.text;
                     }
-                    return utils.getTruncatedDisplay(o, 90);
-                };
-            // Imperfect way to determine whether we're looking at select2 v3 or v4
-            // v4 must use a <select>; v3 can but usually uses an <input>
-            // Right now userreports are the only v3 usage of this binding, and they're all <input>
-            if (element.nodeName.toLowerCase() === 'select') {
-                options = _.extend(options, {
-                    escapeMarkup: function (m) { return m; },
-                    width: '100%',
-                    data: [{id: '', text: ''}].concat(data),    // prepend option for placeholder
-                    templateSelection: templateSelection,
-                    templateResult: templateResult,
-                });
-            } else {
-                options = _.extend(options, {
-                    data: { results: data },
-                    formatSelection: templateSelection,
-                    formatResult: templateResult,
-                });
-            }
-            $(element).select2(options);
+                    return utils.getTruncatedDisplay(questionsById[o.id], 90);
+                },
+            });
             $(element).val(value).trigger('change.select2');
         },
         update: function (element, valueAccessor, allBindingsAccessor) {
-            var optionObjects = ko.utils.unwrapObservable(valueAccessor()),
-                allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
-                value = ko.utils.unwrapObservable(allBindings.value),
-                allowedValues = _.pluck(optionObjects, 'value'),
-                $element = $(element),
-                $container = $element.parent();
+            var $element = $(element),
+                newSelect2Data = _valueToSelect2Data(ko.utils.unwrapObservable(valueAccessor())),
+                oldOptionElements = $element.find("option"),
+                oldValues = _.map(oldOptionElements, function (o) { return o.value; }),
+                newValues = _.pluck(newSelect2Data, 'id');
 
-            if ($container.hasClass("has-error") && _.contains(allowedValues, value)) {
-                // There was an error but it's fixed now, so remove the error and the bad option
+            // Add any new options
+            _.each(newSelect2Data, function (option) {
+                if (!_.contains(oldValues, option.id)) {
+                    $element.append(new Option(option.text, option.id));
+                }
+            });
+
+            // Remove any options that are no longer relevant
+            _.each(oldOptionElements, function (option) {
+                if (option.value && !_.contains(newValues, option.value)) {
+                    $(option).remove();
+                }
+            });
+
+            // If there was an error but it's fixed now, remove it
+            var $container = $element.parent(),
+                allBindings = ko.utils.unwrapObservable(allBindingsAccessor()),
+                value = ko.utils.unwrapObservable(allBindings.value);
+            if ($container.hasClass("has-error") && _.contains(newValues, value)) {
                 $container.removeClass("has-error");
                 $container.find(".help-block").remove();
-                _.each($element.find("option"), function (option) {
-                    if (option.value && !_.contains(allowedValues, option.value)) {
-                        $(option).remove();
-                    }
-                });
-                $element.trigger('change.select2');
             }
+
+            $element.trigger('change.select2');
         },
     };
 }());

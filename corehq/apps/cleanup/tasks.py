@@ -248,7 +248,7 @@ def delete_web_user():
     if settings.SERVER_ENVIRONMENT == 'production':
         for username in [
             'create_growth' + '@' + 'outlook.com',
-            'growth-analytics' + '@' + 'outlook.com',
+            'growth_analytics' + '@' + 'outlook.com',
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:

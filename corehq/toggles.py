@@ -1742,7 +1742,6 @@ DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-
 PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'parallel_mpr_asr_report',
     'Release parallel loading of MPR and ASR report',
@@ -1750,12 +1749,6 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-IMPROVED_ASR_REPORT = StaticToggle(
-    'improved_asr_report',
-    'This makes ASR report use the new asr_2_3 UCR report',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
@@ -1790,4 +1783,19 @@ ENABLE_UCR_MIRRORS = StaticToggle(
     'Enable the mirrored engines for UCRs in this domain',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
+    'location_columns_app_status_report',
+    'Enables location columns to app status report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+MPR_ASR_CONDITIONAL_AGG = StaticToggle(
+    'mpr_asr_conditional_agg',
+    'Improved MPR ASR by doing aggregation at selected level',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+
 )

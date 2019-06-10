@@ -36,7 +36,7 @@ hqDefine('accounting/js/widgets', [
                     placeholder: '',    // required for allowClear to work
                     allowClear: true,
                     ajax: {
-                        quietMillis: 150,
+                        delay: 150,
                         url: '',
                         dataType: 'json',
                         type: 'post',
