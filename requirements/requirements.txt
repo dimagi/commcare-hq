@@ -5,7 +5,6 @@
 #    `make requirements` or `make upgrade-requirements`
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
--e git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 alembic==0.8.6
 amqp==2.4.2               # via kombu
 asn1crypto==0.24.0        # via cryptography
@@ -16,6 +15,7 @@ boto3==1.9.143
 botocore==1.12.143        # via boto3, s3transfer
 cairocffi==0.9.0          # via cairosvg, weasyprint
 cairosvg==1.0.22          # via weasyprint
+git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 certifi==2019.3.9         # via requests
 cffi==1.12.3              # via cairocffi, cryptography, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
