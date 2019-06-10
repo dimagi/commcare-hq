@@ -31,7 +31,11 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_MAPPING,
 )
-from corehq.toggles import CASE_LIST_EXPLORER
+from corehq.toggles import (
+    CASE_LIST_EXPLORER,
+    EXPLORE_CASE_DATA,
+    ECD_MIGRATED_DOMAINS,
+)
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
@@ -55,7 +59,10 @@ from pillowtop.reindexer.reindexer import (
 
 @quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
 def domains_needing_search_index():
-    return set(list(case_search_enabled_domains()) + CASE_LIST_EXPLORER.get_enabled_domains())
+    return set(list(case_search_enabled_domains())
+               + CASE_LIST_EXPLORER.get_enabled_domains()
+               + EXPLORE_CASE_DATA.get_enabled_domains()
+               + ECD_MIGRATED_DOMAINS.get_enabled_domains())
 
 
 def domain_needs_search_index(domain):

@@ -80,7 +80,7 @@ class ExploreCaseDataReport(BaseReport):
 
     @property
     def has_permission(self):
-        return (toggles.EXPLORE_CASE_DATA.enabled(self.domain)
+        return (toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
                 and self.request.couch_user.can_edit_data())
 
     @property
