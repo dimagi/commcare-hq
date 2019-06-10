@@ -131,11 +131,12 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(copy1.version, self.linked_app.get_master_version())
 
     def test_get_latest_master_release(self):
-        self.linked_app.master = self.master1.get_id
+        master_id = self.master1.get_id
 
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
         self._make_master1_build(False)
+
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
         copy1 = self._make_master1_build(True)
@@ -144,7 +145,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(copy1._rev, latest_master_release._rev)
 
     def test_incremental_versioning(self):
-        self.linked_app.master = self.master1.get_id
         original_master_version = self.master1.version or 0
         original_linked_version = self.linked_app.version or 0
 
@@ -178,16 +178,16 @@ class TestLinkedApps(BaseLinkedAppsTest):
         # Pull linked app from first master and refresh from database
         update_linked_app(self.linked_app, self.master1.get_id, 'test_incremental_versioning')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(self.linked_app.upstream_app_id, self.master1.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master1_version + 4)
 
         # Pull linked app from other master and refresh from database
         update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(self.linked_app.upstream_app_id, self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master2_version + 3)
 
     def test_get_latest_master_release_not_permitted(self):
-        self.linked_app.master = self.master1.get_id
-
         release = self._make_master1_build(True)
         latest_master_release = self.linked_app.get_latest_master_release()
         self.assertEqual(release.get_id, latest_master_release.get_id)
@@ -208,8 +208,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_override_translations(self):
         translations = {'en': {'updates.check.begin': 'update?'}}
-
-        self.linked_app.master = self.master1.get_id
 
         self._make_master1_build(True)
         self._make_master1_build(True)
@@ -252,8 +250,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
             },
         }
 
-        self.linked_app.master = self.master1.get_id
-
         self._make_master1_build(True)
         self._make_master1_build(True)
 
@@ -291,7 +287,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(master_app.delete)
 
         linked_app = LinkedApplication.new_app(self.linked_domain, "Linked Application")
-        linked_app.master = master_app.get_id
         linked_app.save()
         self.addCleanup(linked_app.delete)
 
