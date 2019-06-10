@@ -33,7 +33,7 @@ CREATE VIEW daily_attendance_view AS
         "daily_attendance"."form_location_long" AS "form_location_long",
         "daily_attendance"."image_name" AS "image_name"
     FROM "public"."awc_location_months" "awc_location_months"
-    LEFT JOIN "public"."daily_attendance" "daily_attendance" ON (
+    JOIN "public"."daily_attendance" "daily_attendance" ON (
         ("awc_location_months"."awc_id" = "daily_attendance"."awc_id") AND
         ("awc_location_months"."month" = "daily_attendance"."month")
     );
