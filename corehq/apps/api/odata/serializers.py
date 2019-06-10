@@ -4,7 +4,10 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from tastypie.serializers import Serializer
 
-from corehq.apps.api.odata.utils import get_case_type_to_properties
+from corehq.apps.api.odata.utils import get_case_type_to_properties, get_odata_property_from_export_item
+from corehq.apps.api.odata.views import ODataCaseMetadataView, ODataFormMetadataView
+from corehq.apps.export.dbaccessors import get_latest_form_export_schema
+from corehq.apps.export.models import ExportItem
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
@@ -18,25 +21,20 @@ class ODataCommCareCaseSerializer(Serializer):
     def to_json(self, data, options=None):
         options = options or {}
         domain = data.pop('domain', None)
-        if not domain:
-            raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
         case_type = data.pop('case_type', None)
-        if not case_type:
-            raise Exception(
-                'API requires case_type to be set! Did you add it in a custom create_response function?'
-            )
         api_path = data.pop('api_path', None)
-        if not api_path:
-            raise Exception(
-                'API requires api_path to be set! Did you add it in a custom create_response function?'
-            )
+        assert all([domain, case_type, api_path]), [domain, case_type, api_path]
+
         data = self.to_simple(data, options)
-        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), case_type)
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
+            case_type
+        )
 
         next_url = data.pop('meta', {}).get('next')
         if next_url:
             data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
-        # move "objects" to "value"
+
         data['value'] = data.pop('objects')
 
         # clean properties
@@ -65,5 +63,58 @@ class ODataCommCareCaseSerializer(Serializer):
             for property_name in list(properties):
                 if property_name not in properties_to_include:
                     properties.pop(property_name)
+
+        return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+
+class ODataXFormInstanceSerializer(Serializer):
+    """
+    A custom serializer that converts form data into an odata-compliant format.
+    Must be paired with ODataXFormInstanceResource
+    """
+    def to_json(self, data, options=None):
+        options = options or {}
+
+        domain = data.pop('domain', None)
+        app_id = data.pop('app_id', None)
+        xmlns = data.pop('xmlns', None)
+        api_path = data.pop('api_path', None)
+        assert all([domain, app_id, xmlns, api_path]), [domain, app_id, xmlns, api_path]
+
+        data = self.to_simple(data, options)
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(ODataFormMetadataView.urlname, args=[domain, app_id]),
+            xmlns
+        )
+        next_url = data.pop('meta', {}).get('next')
+        if next_url:
+            data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
+
+        data['value'] = data.pop('objects')
+
+        form_export_schema = get_latest_form_export_schema(
+            domain, app_id, xmlns
+        )
+
+        if form_export_schema:
+            export_items = [
+                item for item in form_export_schema.group_schemas[0].items
+                if isinstance(item, ExportItem)
+            ]
+
+            def _get_odata_value_by_export_item(item, xform_json):
+                for path_node in item.path:
+                    try:
+                        xform_json = xform_json[path_node.name]
+                    except KeyError:
+                        return None
+                return xform_json
+
+            for i, xform_json in enumerate(data['value']):
+                data['value'][i] = {
+                    get_odata_property_from_export_item(item): _get_odata_value_by_export_item(item, xform_json)
+                    for item in export_items
+                }
+                data['value'][i]['xform_id'] = xform_json['id']
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
