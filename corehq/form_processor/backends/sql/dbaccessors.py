@@ -91,8 +91,7 @@ def iter_all_rows(reindex_accessor):
 
 
 def iter_all_ids(reindex_accessor):
-    for doc_id in iter_all_ids_chunked(reindex_accessor):
-        yield doc_id
+    return itertools.chain.from_iterable(iter_all_ids_chunked(reindex_accessor))
 
 
 def iter_all_ids_chunked(reindex_accessor):
