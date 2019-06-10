@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import os
 import sys
 from collections import defaultdict
 
@@ -59,7 +60,7 @@ def _data_sources_by_engine_id():
 
 
 def _assert_migrated(apps, schema_editor):
-    if settings.UNIT_TESTING:
+    if settings.UNIT_TESTING or os.environ.get('CCHQ_IS_FRESH_INSTALL') == '1':
         return
 
     for engine_id, data_sources in _data_sources_by_engine_id().items():
