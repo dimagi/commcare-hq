@@ -547,7 +547,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    }
+                    },
+                    show_stack_trace=True
                 )
 
     def refresh_item(self, item_id):
