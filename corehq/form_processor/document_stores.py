@@ -91,7 +91,7 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
     def iter_document_ids(self, last_id=None):
         if should_use_sql_backend(self.domain):
             accessor = LedgerReindexAccessor(self.domain)
-            return iter(iter_all_ids(accessor))
+            return iter_all_ids(accessor)
         else:
             return iter(self._couch_iterator())
 
