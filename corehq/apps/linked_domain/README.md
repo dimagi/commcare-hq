@@ -36,7 +36,7 @@ Linked apps can be setup between linked domains by running `link_app_to_remote` 
 Linked applications predate linked domains and can be used independently of linked domains.
 
 ## Pulling changes from master
-A linked app can be pulled if its master app has a higher released version than the current version of the linked app.
+A linked app can be pulled if its master app has a higher released version than the current version of the linked app. Pulling a linked app is similar but not identical to copying an app.
 
 When a linked/downstream app is pulled from its master/upstream app:
 - The linked app's version will be set to the master app's version.
