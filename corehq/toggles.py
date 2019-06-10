@@ -1703,6 +1703,14 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 )
 
 
+LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
+    'location_safe_case_imports',
+    'Allow location-restricted users to import cases owned at their location or below',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
