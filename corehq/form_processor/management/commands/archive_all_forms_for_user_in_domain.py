@@ -49,7 +49,7 @@ class Command(BaseCommand):
         with open("forms_archived.txt", "w+b") as forms_log:
             for form in with_progress_bar(forms):
                 forms_log.write("%s\n" % form.form_id)
-                form.archive(rebuild_models=False)
+                form.archive(trigger_signals=False)
 
         # removing ledger transactions
         print("Starting with removing ledger transactions")

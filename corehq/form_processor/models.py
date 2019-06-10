@@ -558,7 +558,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').content_md5()
 
-    def archive(self, user_id=None, rebuild_models=True):
+    def archive(self, user_id=None, trigger_signals=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if self.is_archived:
@@ -570,10 +570,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
             FormAccessorSQL.archive_form(self, user_id)
             archive_stub.archive_history_updated()
-            if rebuild_models:
+            if trigger_signals:
                 xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user_id=None, rebuild_models=True):
+    def unarchive(self, user_id=None, trigger_signals=True):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if not self.is_archived:
@@ -585,17 +585,17 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
             FormAccessorSQL.unarchive_form(self, user_id)
             archive_stub.archive_history_updated()
-            if rebuild_models:
+            if trigger_signals:
                 xform_unarchived.send(sender="form_processor", xform=self)
 
-    def publish_archive_action_to_kafka(self, user_id, archive, rebuild_models=True):
+    def publish_archive_action_to_kafka(self, user_id, archive, trigger_signals=True):
         # Don't update the history, just send to kafka
         from couchforms.models import UnfinishedArchiveStub
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         from corehq.form_processor.change_publishers import publish_form_saved
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        if rebuild_models:
+        if trigger_signals:
             with unfinished_archive(instance=self, user_id=user_id, archive=archive):
                 if archive:
                     xform_archived.send(sender="form_processor", xform=self)
