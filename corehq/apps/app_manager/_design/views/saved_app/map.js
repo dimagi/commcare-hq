@@ -27,8 +27,8 @@ function(doc){
             // fields related to LinkedApplications
             family_id: doc.family_id,
             // In legacy linked apps, the linked and master versions correspond, but newer linked apps stored the pulled master version
-            upstream_version: doc.doc_type == 'LinkedApplication' ? doc.upstream_version || doc.version : null,
-            upstream_app_id: doc.doc_type == 'LinkedApplication' ? doc.upstream_app_id || doc.master : null
+            upstream_version: doc.doc_type == 'LinkedApplication' ? doc.upstream_version : null,
+            upstream_app_id: doc.doc_type == 'LinkedApplication' ? doc.upstream_app_id : null
         });
     }
 }
