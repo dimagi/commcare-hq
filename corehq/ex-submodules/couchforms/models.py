@@ -363,7 +363,8 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
             ))
             self.save()
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="couchforms", xform=self, rebuild_models=rebuild_models)
+            if rebuild_models:
+                xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None):
         if not self.is_archived:
@@ -389,8 +390,8 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive:
-                xform_archived.send(sender="couchforms", xform=self, rebuild_models=rebuild_models)
+            if archive and rebuild_models:
+                xform_archived.send(sender="couchforms", xform=self)
             else:
                 xform_unarchived.send(sender="couchforms", xform=self)
 

@@ -570,7 +570,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
             FormAccessorSQL.archive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="form_processor", xform=self, rebuild_models=rebuild_models)
+            if rebuild_models:
+                xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user_id=None):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
@@ -594,8 +595,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
         with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive:
-                xform_archived.send(sender="form_processor", xform=self, rebuild_models=rebuild_models)
+            if archive and rebuild_models:
+                xform_archived.send(sender="form_processor", xform=self)
             else:
                 xform_unarchived.send(sender="form_processor", xform=self)
             publish_form_saved(self)
