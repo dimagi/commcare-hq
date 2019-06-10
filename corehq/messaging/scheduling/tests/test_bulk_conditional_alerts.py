@@ -34,6 +34,7 @@ from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.messaging.scheduling.view_helpers import get_conditional_alert_rows, upload_conditional_alert_workbook
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.util.workbook_json.excel import get_workbook
+from six.moves import range
 
 
 class TestBulkConditionalAlerts(TestCase):
