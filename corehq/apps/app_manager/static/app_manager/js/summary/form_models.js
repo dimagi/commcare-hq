@@ -18,20 +18,33 @@ hqDefine('app_manager/js/summary/form_models',[
                         var moduleIsVisible = match(query, viewModel.translate(module.name));
                         _.each(module.forms, function (form) {
                             var formIsVisible = match(query, viewModel.translate(form.name));
-                            _.each(form.questions, function (question) {
-                                var questionIsVisible = match(query, question.value + viewModel.translateQuestion(question));
-                                questionIsVisible = questionIsVisible || _.find(question.options, function (option) {
-                                    return match(query, option.value + viewModel.translateQuestion(option));
-                                });
-                                var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
-                                    return match(query, prop.case_type) || match(query, prop.property);
-                                });
-                                if (!viewModel.showCaseProperties() && casePropsVisible) {
-                                    viewModel.showCaseProperties(true);
-                                }
-                                questionIsVisible = questionIsVisible || casePropsVisible;
-                                question.matchesQuery(questionIsVisible);
-                                formIsVisible = formIsVisible || questionIsVisible;
+                            _.each(form.questions, function (highestLevelQuestion) {
+                                var setQuestionVisible = function (question, parents) {
+                                    parents.push(question);
+                                    var questionIsVisible = match(query, question.value + viewModel.translateQuestion(question));
+                                    questionIsVisible = questionIsVisible || _.find(question.options, function (option) {
+                                        return match(query, option.value + viewModel.translateQuestion(option));
+                                    });
+                                    var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
+                                        return match(query, prop.case_type) || match(query, prop.property);
+                                    });
+                                    if (!viewModel.showCaseProperties() && casePropsVisible) {
+                                        viewModel.showCaseProperties(true);
+                                    }
+                                    questionIsVisible = questionIsVisible || casePropsVisible;
+                                    question.matchesQuery(questionIsVisible);
+                                    if (questionIsVisible) {
+                                        _.each(parents, function (parent) {
+                                            parent.matchesQuery(questionIsVisible);
+                                        });
+                                    }
+                                    formIsVisible = formIsVisible || questionIsVisible;
+                                    _.each(question.children, function (child) {
+                                        setQuestionVisible(child, parents);
+                                    });
+                                    parents.pop();
+                                };
+                                setQuestionVisible(highestLevelQuestion, []);
                             });
                             form.matchesQuery(formIsVisible);
                             moduleIsVisible = moduleIsVisible || formIsVisible;
