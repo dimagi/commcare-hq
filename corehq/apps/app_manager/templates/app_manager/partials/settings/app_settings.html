@@ -188,22 +188,16 @@
           <form action="{% url "pull_master_app" domain app.id %}" method="POST">
             {% csrf_token %}
             <legend>
-              {% if upstream_url %}
-                {% blocktrans %}Update from <a href="{{ upstream_url }}">master application</a>{% endblocktrans %}
-              {% else %}
-                {% trans "Update from master application" %}
-              {% endif %}
+              {% trans "Update from master application" %}
             </legend>
             <div class="panel-body">
               <p>
-                {% blocktrans with version=app.upstream_version %}
-                  Your app was last pulled from master version {{ version }}.
+                {% blocktrans with master_name=upstream_brief.name master_version=app.upstream_version %}
+                  Your app was last pulled from
+                  <a href='{{ upstream_url }}'>{{ master_name }}</a>,
+                  version {{ master_version }}.
                 {% endblocktrans %}
-                {% if master_version %}
-                  {% blocktrans %}The master app is at version {{ master_version }}.{% endblocktrans %}
-                {% else %}
-                  {% trans "Unable to get master version." %}
-                {% endif %}
+                {# TODO: dropdown of master apps, including current version of each #}
               </p>
               <div class="checkbox">
                 <label>

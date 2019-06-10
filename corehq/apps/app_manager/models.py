@@ -5561,6 +5561,7 @@ class LinkedApplication(Application):
     """
     master = StringProperty()   # Legacy, should be removed once all linked apps support multiple masters
     upstream_version = IntegerProperty()
+    upstream_app_id = StringProperty()
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5600,8 +5601,10 @@ class LinkedApplication(Application):
     def wrap(cls, data):
         # Legacy linked apps pulled the master's version along with its content.
         # So if the master's version wasn't recorded, that means it matches this app's version.
-        if not hasattr(data, 'upstream_version'):
+        if 'upstream_version' not in data:
             data['upstream_version'] = data['version']
+        if 'upstream_app_id' not in data:
+            data['upstream_app_id'] = data.get('master', None)
 
         return super(LinkedApplication, cls).wrap(data)
 
