@@ -29,7 +29,8 @@ class IncentiveReport(object):
         else:
             data = AWWIncentiveReport.objects.filter(
                 month=self.month, block_id=self.location
-            ).order_by('-supervisor_name', 'awc_name').values(
+            ).order_by('-supervisor_name', 'awc_name')
+        data = data.values(
                 'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'aww_name',
                 'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits',
                 'expected_visits', 'is_launched', 'visit_denominator', 'awh_eligible', 'incentive_eligible'
