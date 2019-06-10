@@ -21,18 +21,10 @@ class ODataCommCareCaseSerializer(Serializer):
     def to_json(self, data, options=None):
         options = options or {}
         domain = data.pop('domain', None)
-        if not domain:
-            raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
         case_type = data.pop('case_type', None)
-        if not case_type:
-            raise Exception(
-                'API requires case_type to be set! Did you add it in a custom create_response function?'
-            )
         api_path = data.pop('api_path', None)
-        if not api_path:
-            raise Exception(
-                'API requires api_path to be set! Did you add it in a custom create_response function?'
-            )
+        assert all([domain, case_type, api_path]), [domain, case_type, api_path]
+
         data = self.to_simple(data, options)
         data['@odata.context'] = '{}#{}'.format(
             absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
@@ -84,26 +76,10 @@ class ODataXFormInstanceSerializer(Serializer):
         options = options or {}
 
         domain = data.pop('domain', None)
-        if not domain:
-            raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
-
         app_id = data.pop('app_id', None)
-        if not app_id:
-            raise Exception(
-                'API requires app_id to be set! Did you add it in a custom create_response function?'
-            )
-
         xmlns = data.pop('xmlns', None)
-        if not xmlns:
-            raise Exception(
-                'API requires xmlns to be set! Did you add it in a custom create_response function?'
-            )
-
         api_path = data.pop('api_path', None)
-        if not api_path:
-            raise Exception(
-                'API requires api_path to be set! Did you add it in a custom create_response function?'
-            )
+        assert all([domain, app_id, xmlns, api_path]), [domain, app_id, xmlns, api_path]
 
         data = self.to_simple(data, options)
         data['@odata.context'] = '{}#{}'.format(
