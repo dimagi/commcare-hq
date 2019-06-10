@@ -58,4 +58,5 @@ branches:
   - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
   - rn_fix_assign_case_regression # Rohit June 6
   - jls/ko-create-mobile-worker # Jenny June 9
+  - remove-e # Nick P June 10
 submodules: {}
