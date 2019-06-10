@@ -5561,7 +5561,6 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    master = StringProperty()  # Legacy, should be removed once all linked apps support multiple masters
     upstream_app_id = StringProperty()  # ID of the app that was most recently pulled
     upstream_version = IntegerProperty()  # Version of the app that was most recently pulled
 
@@ -5583,6 +5582,12 @@ class LinkedApplication(Application):
     def domain_link(self):
         from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
         return get_domain_master_link(self.domain)
+
+    @memoized
+    def get_master_app_briefs(self):
+        if self.domain_link:
+            return get_master_app_briefs(self.domain_link)
+        return []
 
     def get_master_version(self):
         if self.domain_link:
