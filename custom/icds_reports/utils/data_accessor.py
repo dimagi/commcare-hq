@@ -12,11 +12,17 @@ from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructur
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data, get_cas_reach_data_with_cache
 from custom.icds_reports.reports.demographics_data import get_demographics_data, get_demographics_data_with_cache
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data, get_maternal_child_data_with_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _all_zeros(data):
     values = [(kpi['value'] == 0 and kpi['all'] == 0) for row in data['records'] for kpi in row]
+    if all(values):
+        logger.info("ICDS - All indicators in program summary equals 0  ")
     return all(values)
+
 
 def get_program_summary_data(step, domain, config, now, include_test, pre_release_features):
     data = {}
