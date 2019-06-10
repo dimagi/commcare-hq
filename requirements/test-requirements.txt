@@ -4,10 +4,10 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
 alembic==0.8.6
 amqp==2.4.2
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 argparse==1.4.0           # via unittest2
 asn1crypto==0.24.0
 attrs==18.2.0

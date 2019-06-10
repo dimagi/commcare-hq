@@ -109,8 +109,4 @@ werkzeug==0.11.15
 CommcareTranslationChecker==0.9.3.5
 WeasyPrint==0.42.3
 
-# Workaround for https://github.com/jazzband/pip-tools/issues/355
-# git URL installs need to be listed with -e to satisfy pip-compile
-# but once they're in requirements.txt we will strip the -e
-
--e git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3

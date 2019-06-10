@@ -4,9 +4,9 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alembic==0.8.6
 amqp==2.4.2               # via kombu
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
