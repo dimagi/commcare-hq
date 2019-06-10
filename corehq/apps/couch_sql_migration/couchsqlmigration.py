@@ -264,7 +264,7 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_operations(sql_form, couch_form)
         if couch_form.doc_type != 'SubmissionErrorLog':
             self._save_diffs(couch_form, sql_form)
-        case_stock_result = self._get_case_stock_result(sql_form, couch_form)
+        case_stock_result = self._get_case_stock_result(sql_form, couch_form) if form_is_processed else None
         _save_migrated_models(sql_form, case_stock_result)
 
     def _save_diffs(self, couch_form, sql_form):
@@ -279,7 +279,7 @@ class CouchSqlDomainMigrator(object):
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
-        if form_is_processed and sql_form.initial_processing_complete:
+        if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
             if len(case_stock_result.case_models):
                 touch_updates = [
