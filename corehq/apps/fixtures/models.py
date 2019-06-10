@@ -420,7 +420,7 @@ class FixtureDataItem(Document):
             if deleted_fixture_ids:
                 # delete ownership documents pointing deleted/non-existent fixture documents
                 # this cleanup is necessary since we used to not do this
-                remove_deleted_ownerships.delay(deleted_fixture_ids, user.domain)
+                remove_deleted_ownerships.delay(list(deleted_fixture_ids), user.domain)
             return docs
         else:
             return fixture_ids
