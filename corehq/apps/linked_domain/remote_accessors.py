@@ -30,6 +30,10 @@ def get_user_roles(domain_link):
     return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
 
+def get_brief_apps(domain_link):
+    return _do_simple_request('linked_domain:brief_apps', domain_link)['brief_apps']
+
+
 def get_case_search_config(domain_link):
     return _do_simple_request('linked_domain:case_search_config', domain_link)
 
