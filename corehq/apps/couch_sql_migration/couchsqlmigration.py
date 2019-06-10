@@ -240,15 +240,19 @@ class CouchSqlDomainMigrator(object):
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
-    def _migrate_form_and_associated_models(self, couch_form):
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
         """
         Copies `couch_form` into a new sql form
         """
-        form_data = couch_form.form
-        with force_phone_timezones_should_be_processed():
-            adjust_datetimes(form_data)
-        xmlns = form_data.get("@xmlns", "")
-        user_id = extract_meta_user_id(form_data)
+        if form_is_processed:
+            form_data = couch_form.form
+            with force_phone_timezones_should_be_processed():
+                adjust_datetimes(form_data)
+            xmlns = form_data.get("@xmlns", "")
+            user_id = extract_meta_user_id(form_data)
+        else:
+            xmlns = couch_form.xmlns
+            user_id = couch_form.user_id
         sql_form = XFormInstanceSQL(
             form_id=couch_form.form_id,
             domain=self.domain,
@@ -275,7 +279,7 @@ class CouchSqlDomainMigrator(object):
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
-        if sql_form.initial_processing_complete:
+        if form_is_processed and sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
             if len(case_stock_result.case_models):
                 touch_updates = [
@@ -308,7 +312,7 @@ class CouchSqlDomainMigrator(object):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         try:
             couch_form = _wrap_form(couch_form_json)
-            self._migrate_form_and_associated_models(couch_form)
+            self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
             self.processed_docs += 1
             self._log_unprocessed_forms_processed_count(throttled=True)
         except Exception:
