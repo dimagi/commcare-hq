@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import json
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -171,6 +173,13 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         correct_credentials = self._get_correct_credentials()
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            json.loads(response.content.decode('utf-8')),
+            {
+                '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/Forms/my_app_id/$metadata#my_xmlns',
+                'value': []
+            }
+        )
 
     @property
     def view_url(self):
