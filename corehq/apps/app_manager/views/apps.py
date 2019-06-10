@@ -33,7 +33,12 @@ from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
 )
-from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_app,
+    get_current_app,
+    get_latest_released_app_version
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
@@ -283,11 +288,13 @@ def get_app_view_context(request, app):
     context['is_app_view'] = True
 
     if app.get_doc_type() == 'LinkedApplication':
-        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
+        context['pulled_from_master_url'] = _get_upstream_url(app, request.couch_user)
         try:
+            # TODO: handle master domain being remote
+            pulled_from_master_brief = get_brief_app(app.domain_link.master_domain, app.pulled_from_master_app_id)
             context.update({
-                'master_version': app.get_master_version(),
                 'pulled_from_master_version': app.pulled_from_master_version,
+                'pulled_from_master_brief': pulled_from_master_brief,
             })
         except RemoteRequestError:
             pass
