@@ -24,7 +24,7 @@ hqDefine('app_manager/js/summary/form_models',[
                                     return match(query, option.value + viewModel.translateQuestion(option));
                                 });
                                 var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
-                                    return match(query, prop[0]) || match(query, prop[1]);
+                                    return match(query, prop.case_type) || match(query, prop.property);
                                 });
                                 if (!viewModel.showCaseProperties() && casePropsVisible) {
                                     viewModel.showCaseProperties(true);
@@ -38,8 +38,8 @@ hqDefine('app_manager/js/summary/form_models',[
                         });
                         module.matchesQuery(moduleIsVisible);
                     });
-                })
-                ;
+
+                });
             },
             query_label: gettext("Filter questions or cases"),
             onSelectMenuItem: function (selectedId) {
