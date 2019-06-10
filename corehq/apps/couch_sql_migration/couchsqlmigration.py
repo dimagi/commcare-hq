@@ -412,11 +412,7 @@ class CouchSqlDomainMigrator(object):
             user_id=user_id,
         )
         _copy_form_properties(sql_form, couch_form)
-        _migrate_form_attachments(sql_form, couch_form,
-                                  incl_form_xml=self.same_domain(), dry_run=self.dry_run)
-        if not self.same_domain():
-            attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
-            sql_form.attachments_list.append(attachment)
+        _migrate_form_attachments(sql_form, couch_form, form_xml, dry_run=self.dry_run)
         _migrate_form_operations(sql_form, couch_form)
 
         if couch_form.doc_type != 'SubmissionErrorLog':
@@ -888,7 +884,7 @@ def append_undo(meta, operation):
         writer.writerow(row)
 
 
-def _migrate_form_attachments(sql_form, couch_form, incl_form_xml=True, dry_run=False):
+def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False):
     """Copy over attachment meta"""
     attachments = []
     metadb = get_blob_db().metadb
@@ -911,7 +907,19 @@ def _migrate_form_attachments(sql_form, couch_form, incl_form_xml=True, dry_run=
         _migrate_couch_attachments_to_blob_db(couch_form)
 
     for name, blob in six.iteritems(couch_form.blobs):
-        if name == "form.xml" and not incl_form_xml:
+        if name == "form.xml" and form_xml:
+            # form_xml is None if we are migrating to the same domain
+            attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+            sql_form.attachments_list.append(attachment)
+            meta = metadb.new(
+                domain=sql_form.domain,
+                name=name,
+                parent_id=sql_form.form_id,
+                type_code=CODES.form_xml,
+                content_type=blob.content_type,
+            )
+            meta.save()
+            append_undo(meta, UNDO_CREATE)
             continue
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
