@@ -24,7 +24,7 @@ class OdataTestMixin(object):
     view_urlname = None
 
     @classmethod
-    def _setupclass(cls):
+    def _set_up_class(cls):
         cls.client = Client()
         cls.domain = Domain(name='test_domain')
         cls.domain.save()

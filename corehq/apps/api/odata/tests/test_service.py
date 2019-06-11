@@ -25,7 +25,7 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestCaseServiceDocumentCase, cls).setUpClass()
-        cls._setupclass()
+        cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
@@ -119,7 +119,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFormServiceDocument, cls).setUpClass()
-        cls._setupclass()
+        cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):

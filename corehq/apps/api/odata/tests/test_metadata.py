@@ -28,7 +28,7 @@ class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(TestCaseMetadataDocumentCase, cls).setUpClass()
-        cls._setupclass()
+        cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
@@ -119,7 +119,7 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFormMetadataDocumentCase, cls).setUpClass()
-        cls._setupclass()
+        cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):

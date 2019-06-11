@@ -27,7 +27,7 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestCaseOdataFeed, cls).setUpClass()
-        cls._setupclass()
+        cls._set_up_class()
         cls._setup_accounting()
 
     @classmethod
@@ -122,7 +122,7 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFormOdataFeed, cls).setUpClass()
-        cls._setupclass()
+        cls._set_up_class()
         cls._setup_accounting()
 
     @classmethod
