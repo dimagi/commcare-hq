@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
+
 from celery import states
 from celery.exceptions import Ignore
 from django.test import TestCase
@@ -17,7 +19,7 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, UserRole, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import flag_enabled
@@ -436,6 +438,81 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
         self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
 
+    def test_user_can_access_location(self):
+        loc_type = LocationType.objects.create(domain=self.domain, name='loc_type', shares_cases=True)
+        dimagi = make_loc('dimagi', 'Dimagi', self.domain, loc_type.code)
+        inc = make_loc('inc', 'Inc', self.domain, loc_type.code, parent=dimagi)
+        dsi = make_loc('dsi', 'DSI', self.domain, loc_type.code, parent=dimagi)
+        dsa = make_loc('dsa', 'DSA', self.domain, loc_type.code, parent=dimagi)
+
+        with restrict_user_to_location(self, dsa):
+            res = self.import_mock_file([
+                ['case_id', 'name',             'owner_id'  ],  # row 1
+                ['',        'Leonard Nimoy',    inc.group_id],  # row 2 should fail
+                ['',        'Kapil Dev',        dsi.group_id],  # row 3 should fail
+                ['',        'Quinton Fortune',  dsa.group_id],  # row 4 should succeed
+            ])
+
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.group_id)
+        self.assertTrue(res['errors'])
+        error_message = exceptions.InvalidLocation.title
+        error_col = None
+        self.assertEqual(res['errors'][error_message ][error_col]['rows'], [2, 3])
+
+    def test_user_can_access_owner(self):
+        loc_type = LocationType.objects.create(domain=self.domain, name='loc_type', shares_cases=True)
+        dimagi = make_loc('dimagi', 'Dimagi', self.domain, loc_type.code)
+        inc = make_loc('inc', 'Inc', self.domain, loc_type.code, parent=dimagi)
+        dsi = make_loc('dsi', 'DSI', self.domain, loc_type.code, parent=dimagi)
+        dsa = make_loc('dsa', 'DSA', self.domain, loc_type.code, parent=dimagi)
+
+        inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
+        dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
+        dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
+
+        with restrict_user_to_location(self, dsa):
+            res = self.import_mock_file([
+                ['case_id', 'name',             'owner_id'   ],  # row 1
+                ['',        'Leonard Nimoy',    inc_owner._id],  # row 2 should fail
+                ['',        'Kapil Dev',        dsi_owner._id],  # row 3 should fail
+                ['',        'Quinton Fortune',  dsa_owner._id],  # row 4 should succeed
+            ])
+
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa_owner._id)
+        self.assertTrue(res['errors'])
+        error_message = exceptions.InvalidLocation.title
+        error_col = None
+        self.assertEqual(res['errors'][error_message ][error_col]['rows'], [2, 3])
+
 
 def make_worksheet_wrapper(*rows):
     return WorksheetWrapper(make_worksheet(rows))
+
+
+@contextmanager
+def restrict_user_to_location(test_case, location):
+    orig_user = test_case.couch_user
+
+    role = UserRole.get_or_create_with_permissions(
+        domain=test_case.domain,
+        name='Regional Case Admin',
+        permissions={
+            'access_all_locations': False,
+            'edit_data': True,
+        },
+    )
+    restricted_user = WebUser.create(None, "restricted_user", "s3cr3t")
+    restricted_user.add_domain_membership(test_case.domain, role_id=role._id)
+    restricted_user.save()
+    restricted_user.set_location(test_case.domain, location)
+    test_case.couch_user = restricted_user
+    try:
+        yield
+    finally:
+        test_case.couch_user = orig_user
+        restricted_user.delete()
+        role.delete()
