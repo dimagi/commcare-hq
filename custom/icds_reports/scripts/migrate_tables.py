@@ -151,7 +151,7 @@ class Migrator(object):
     def __init__(self, db_path, source_db, source_host, source_user,
                  target_db, target_host, target_user,
                  start_date, end_date,
-                 start_table, only_table, confirm, dry_run):
+                 only_table, confirm, dry_run):
         self.db_path = db_path
         self.source_db = source_db
         self.source_host = source_host
@@ -161,7 +161,6 @@ class Migrator(object):
         self.target_user = target_user
         self.start_date = start_date
         self.end_date = end_date
-        self.start_table = start_table
         self.only_table = only_table
         self.confirm = confirm
         self.dry_run = dry_run
@@ -291,7 +290,6 @@ def main():
     parser.add_argument('--end-date', type=parse_date, help=(
         'Only migrate tables with date before this date. Format YYYY-MM-DD'
     ))
-    parser.add_argument('--start-after-table', help='Skip all tables up to and including this one')
     parser.add_argument('--table', help='Only migrate this table')
     parser.add_argument('--confirm', action='store_true', help='Confirm before each table.')
     parser.add_argument('--dry-run', action='store_true', help='Only output the commands.')
@@ -303,7 +301,7 @@ def main():
         args.db_path, args.source_db, args.source_host, args.source_user,
         args.target_db, args.target_host, args.target_user,
         args.start_date, args.end_date,
-        args.start_after_table, args.table, args.confirm, args.dry_run
+        args.table, args.confirm, args.dry_run
     )
     migrator.run(args.parallel)
 
