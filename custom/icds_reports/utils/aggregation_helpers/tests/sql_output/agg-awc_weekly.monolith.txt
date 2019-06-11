@@ -122,11 +122,12 @@
                 owner_id,
                 sum(open_count) AS cases_household
             FROM "ucr_icds-cas_static-household_cases_eadc276d"
+            WHERE opened_on<= %(end_date)s
             GROUP BY owner_id
        ) ut
         WHERE ut.owner_id = agg_awc.awc_id
         
-{}
+{"end_date": "2019-01-31T23:59:59"}
 
         UPDATE "agg_awc_2019-01-01_5" agg_awc SET
            cases_person = ut.cases_person,

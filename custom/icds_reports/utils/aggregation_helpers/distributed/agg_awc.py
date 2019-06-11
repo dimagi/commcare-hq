@@ -237,6 +237,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             owner_id,
             sum(open_count) AS cases_household
         FROM "{household_cases}"
+        WHERE opened_on<= %(end_date)s
         GROUP BY owner_id;
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household
