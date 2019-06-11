@@ -55,6 +55,17 @@ class BlobMeta(PartitionedModel, Model):
         `util.random_url_id(16)`. Defaults to `uuid4().hex`.
         """,
     )
+    bucket = CharField(
+        # todo add other validations https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
+        max_length=63,
+        blank=True,
+        default="",
+        help_text="""Bucket the blob is stored
+
+        Only required to be set when the blob is not saved in the default
+        bucket specified in settings.
+        """,
+    )
     type_code = PositiveSmallIntegerField(
         help_text="Blob type code. See `corehq.blobs.CODES`.",
     )
