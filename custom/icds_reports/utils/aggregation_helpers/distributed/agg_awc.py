@@ -247,7 +247,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         """.format(
             tablename=self.tablename,
             household_cases=self._ucr_tablename('static-household_cases'),
-        ), {}
+        ), {'end_date': self.month_end}
 
         yield """
         CREATE TEMPORARY TABLE "tmp_person" AS SELECT

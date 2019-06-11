@@ -136,7 +136,7 @@
         WHERE ut.owner_id = agg_awc.awc_id;
         DROP TABLE "tmp_household";
         
-{}
+{"end_date": "2019-01-31T23:59:59"}
 
         CREATE TEMPORARY TABLE "tmp_person" AS SELECT
             awc_id,
