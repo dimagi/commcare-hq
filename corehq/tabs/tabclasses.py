@@ -691,11 +691,11 @@ class ProjectDataTab(UITab):
                     },
                 ]
                 export_data_views.append({
-                        'title': _(ODataFeedListView.page_title),
-                        'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'subpages': subpages
-                    })
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': subpages
+                })
 
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
