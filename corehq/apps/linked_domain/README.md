@@ -45,6 +45,9 @@ When a linked/downstream app is pulled from its master/upstream app:
 - Corresponding forms in the master and linked app will have **different** unique ids.
 - Corresponding forms in the master and linked app will have the **same** XMLNS.
 
+## Exclusions
+A few fields are **not** copied from the master app to the linked app. They include basic metadata (doc type, name, date created, comment, etc) and some build-related fields (build profiles and practice mobile workers). For the full list, see [excluded_fields in overwrite_app](https://github.com/dimagi/commcare-hq/blob/47b197378fc196ff25a88dc5b2c56a389aaec85f/corehq/apps/app_manager/views/utils.py#L165-L169).
+
 ## Overrides
 A small number of settings can be overridden in a linked app. App settings can be tagged with the `supports_linked_app` flag to make them appear on the linked app's settings page. However, because linked app versions are tied to master versions, linked app versions do not increment on their own when a change is made. This makes the following workflow necessary for settings overrides:
 - Pull master app
