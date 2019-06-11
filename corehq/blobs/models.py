@@ -107,7 +107,7 @@ class BlobMeta(PartitionedModel, Model):
         The returned object should be closed when it is no longer needed.
         """
         from . import get_blob_db
-        return get_blob_db().get(key=self.key)
+        return get_blob_db().get(key=self.key, bucket=self.bucket)
 
     @memoized
     def content_md5(self):
