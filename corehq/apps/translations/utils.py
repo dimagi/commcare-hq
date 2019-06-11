@@ -25,12 +25,11 @@ def update_app_translations_from_trans_dict(app, trans_dict):
         app_translation_dict = app.translations
 
     if toggles.PARTIAL_UI_TRANSLATIONS.enabled(app.domain):
-        for lang, trans in six.iteritems(app.langs):
-            if lang in trans_dict:
-                if lang in app_translation_dict:
-                    app_translation_dict[lang].update(trans_dict[lang])
-                else:
-                    app_translation_dict[lang] = trans_dict[lang]
+        for lang in trans_dict:
+            if lang in app_translation_dict:
+                app_translation_dict[lang].update(trans_dict[lang])
+            else:
+                app_translation_dict[lang] = trans_dict[lang]
     else:
         if isinstance(app, LinkedApplication):
             app_translation_dict.update(trans_dict)
