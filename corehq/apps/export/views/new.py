@@ -147,7 +147,7 @@ class BaseNewExportView(BaseProjectDataView):
                 raise
         else:
             try:
-                post_data = json.loads(self.request.body)
+                post_data = json.loads(self.request.body.decode('utf-8'))
                 url = self.export_home_url
                 # short circuit to check if the submit is from a create or edit feed
                 # to redirect it to the list view
