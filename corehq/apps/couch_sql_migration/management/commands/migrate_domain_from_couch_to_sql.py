@@ -131,9 +131,6 @@ class Command(BaseCommand):
         set_couch_sql_migration_not_started(domain)
         blow_away_migration(domain)
 
-    def do_stats(self, domain):
-        self.print_stats(domain, short=not self.verbose)
-
     def do_COMMIT(self, domain):
         if not couch_sql_migration_in_progress(domain, include_dry_runs=False):
             raise CommandError("cannot commit a migration that is not in state in_progress")
@@ -144,6 +141,9 @@ class Command(BaseCommand):
                 "Are you sure you want to do this for domain '{}'?".format(domain)
             )
         set_couch_sql_migration_complete(domain)
+
+    def do_stats(self, domain):
+        self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
         db = get_diff_db(domain)
