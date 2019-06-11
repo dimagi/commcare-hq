@@ -19,22 +19,19 @@ def get_file_content_from_workbook(wb):
 
 
 def update_app_translations_from_trans_dict(app, trans_dict):
-    if toggles.PARTIAL_UI_TRANSLATIONS.enabled(app.domain):
-        if isinstance(app, LinkedApplication):
-            for lang, trans in six.iteritems(app.langs):
-                if lang in trans_dict:
-                    if lang in app.linked_app_translations:
-                        app.linked_app_translations[lang].update(trans_dict[lang])
-                    else:
-                        app.linked_app_translations[lang] = trans_dict[lang]
+    if isinstance(app, LinkedApplication):
+        app_translation_dict = app.linked_app_translations
+    else:
+        app_translation_dict = app.translations
 
+    if toggles.PARTIAL_UI_TRANSLATIONS.enabled(app.domain):
         for lang, trans in six.iteritems(app.langs):
             if lang in trans_dict:
-                if lang in app.translations:
-                    app.translations[lang].update(trans_dict[lang])
+                if lang in app_translation_dict:
+                    app_translation_dict[lang].update(trans_dict[lang])
                 else:
-                    app.translations[lang] = trans_dict[lang]
+                    app_translation_dict[lang] = trans_dict[lang]
     else:
         if isinstance(app, LinkedApplication):
-            app.linked_app_translations.update(trans_dict)
-        app.translations.update(trans_dict)
+            app_translation_dict.update(trans_dict)
+        app_translation_dict.update(trans_dict)
