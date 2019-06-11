@@ -693,7 +693,7 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-    app.smart_lang_display = json.loads(request.body)['smart_lang_display']
+    app.smart_lang_display = json.loads(request.body.decode('utf-8'))['smart_lang_display']
     app.save()
     return json_response(langs)
 
@@ -744,7 +744,7 @@ def edit_app_attr(request, domain, app_id, attr):
     app = get_app(domain, app_id)
 
     try:
-        hq_settings = json.loads(request.body)['hq']
+        hq_settings = json.loads(request.body.decode('utf-8'))['hq']
     except ValueError:
         hq_settings = request.POST
 

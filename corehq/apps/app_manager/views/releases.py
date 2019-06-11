@@ -558,7 +558,7 @@ class LanguageProfilesView(View):
         return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain, app_id, *args, **kwargs):
-        profiles = json.loads(request.body).get('profiles')
+        profiles = json.loads(request.body.decode('utf-8')).get('profiles')
         app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:

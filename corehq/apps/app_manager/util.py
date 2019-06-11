@@ -394,14 +394,14 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_form_unique_ids(app_source, id_map=None):
+def update_form_unique_ids(app_source, form_ids_by_xmlns=None):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
 
-    def change_form_unique_id(form, map):
+    def change_form_unique_id(form, ids_by_xmlns):
         unique_id = form['unique_id']
-        new_unique_id = map.get(form['xmlns'], uuid.uuid4().hex)
+        new_unique_id = ids_by_xmlns.get(form['xmlns'], uuid.uuid4().hex)
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
@@ -413,12 +413,12 @@ def update_form_unique_ids(app_source, id_map=None):
         del app_source['user_registration']
 
     id_changes = {}
-    if id_map is None:
-        id_map = {}
+    if form_ids_by_xmlns is None:
+        form_ids_by_xmlns = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], id_map)
+            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], form_ids_by_xmlns)
             id_changes[old_id] = new_id
 
     for reference_path in form_id_references:

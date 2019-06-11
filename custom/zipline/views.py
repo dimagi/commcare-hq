@@ -46,7 +46,7 @@ class ZiplineOrderStatusView(View, DomainViewMixin):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except (TypeError, ValueError):
             return get_error_response('Could not parse JSON')
 
@@ -268,7 +268,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
 
     def post(self, request, *args, **kwargs):
         # request.body already confirmed to be a valid json dict in ZiplineOrderStatusView
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8'))
 
         try:
             self.validate_and_clean_int(data, 'orderId')

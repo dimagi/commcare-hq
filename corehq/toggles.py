@@ -640,13 +640,13 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 
 def _enable_search_index(domain, enabled):
-    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index
     domains_needing_search_index.clear()
     if enabled:
+        # action is no longer reversible due to roll out of EXPLORE_CASE_DATA
+        # and upcoming migration of CaseES to CaseSearchES
         reindex_case_search_for_domain.delay(domain)
-    else:
-        delete_case_search_cases_for_domain.delay(domain)
 
 
 CASE_LIST_EXPLORER = StaticToggle(
@@ -659,10 +659,19 @@ CASE_LIST_EXPLORER = StaticToggle(
 
 EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
-    'Show the Explore Case Data report (in dev)',
+    'Show the Explore Case Data report (in dev). Please make sure the project '
+    'is fully migrated to support the CaseSearch index either by enabling '
+    'the Case List Explorer toggle or doing a manual migration.',
     TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+ECD_MIGRATED_DOMAINS = StaticToggle(
+    'ecd_migrated_domains',
+    'Domains that have undergone migration for Explore Case Data, but are not '
+    'yet ready to see the full report',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
 )
 
 LIVEQUERY_SYNC = StaticToggle(
@@ -1089,9 +1098,10 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 BULK_CONDITIONAL_ALERTS = StaticToggle(
     'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts.',
-    TAG_PRODUCT,
+    'Allow bulk download and upload of conditional alerts',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts', # noqa
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(
@@ -1732,7 +1742,6 @@ DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-
 PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'parallel_mpr_asr_report',
     'Release parallel loading of MPR and ASR report',
@@ -1740,12 +1749,6 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-IMPROVED_ASR_REPORT = StaticToggle(
-    'improved_asr_report',
-    'This makes ASR report use the new asr_2_3 UCR report',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
@@ -1780,4 +1783,19 @@ ENABLE_UCR_MIRRORS = StaticToggle(
     'Enable the mirrored engines for UCRs in this domain',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
+    'location_columns_app_status_report',
+    'Enables location columns to app status report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+MPR_ASR_CONDITIONAL_AGG = StaticToggle(
+    'mpr_asr_conditional_agg',
+    'Improved MPR ASR by doing aggregation at selected level',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+
 )

@@ -47,33 +47,30 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
 
     def missing_location_query(self):
         return """
-        DROP TABLE IF EXISTS "{temp_tablename}";
-        CREATE TEMPORARY TABLE "{temp_tablename}" AS SELECT
-            loc.doc_id as awc_id,
-            loc.awc_name as awc_name,
-            'awc' || loc.awc_site_code as awc_site_code,
-            loc.supervisor_id as supervisor_id,
-            loc.supervisor_name as supervisor_name,
-            loc.block_id as block_id,
-            loc.block_name as block_name,
-            loc.district_id as district_id,
-            loc.district_name as district_name,
-            loc.state_id as state_id,
-            loc.state_name as state_name
-        FROM "{awc_location_table_name}" loc
-        WHERE loc.doc_id not in (
-            SELECT aww.awc_id FROM "{table_name}" aww
-        ) and loc.doc_id != 'All';
         INSERT INTO "{table_name}" (
             awc_id, awc_name, awc_site_code, supervisor_id, supervisor_name,
             block_id, block_name, district_id, district_name, state_id, state_name
         ) (
-            SELECT * FROM "{temp_tablename}"
-        );
+            SELECT
+                loc.doc_id as awc_id,
+                loc.awc_name as awc_name,
+                'awc' || loc.awc_site_code as awc_site_code,
+                loc.supervisor_id as supervisor_id,
+                loc.supervisor_name as supervisor_name,
+                loc.block_id as block_id,
+                loc.block_name as block_name,
+                loc.district_id as district_id,
+                loc.district_name as district_name,
+                loc.state_id as state_id,
+                loc.state_name as state_name
+            FROM "{awc_location_table_name}" loc
+            WHERE loc.doc_id not in (
+              SELECT aww.awc_id FROM "{table_name}" aww
+            ) and loc.doc_id != 'All'
+        )
         """.format(
             table_name=self.aggregate_parent_table,
-            awc_location_table_name='awc_location',
-            temp_tablename=self.temp_tablename
+            awc_location_table_name='awc_location_local'
         )
 
     def aggregate_query(self):
@@ -89,15 +86,13 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 ucr.first_submission as first_submission,
                 ucr.last_submission as last_submission
               FROM "tmp_usage" ucr
-              JOIN "{temp_tablename}" loc
-              ON ucr.awc_id = loc.awc_id
+              JOIN "{awc_location_table_name}" loc
+              ON ucr.awc_id = loc.doc_id
             ) ut
             WHERE agg_table.awc_id = ut.awc_id;
-            DROP TABLE "{temp_tablename}";
             DROP TABLE "tmp_usage";
         """.format(
             table_name=self.aggregate_parent_table,
             ucr_table_query=ucr_query,
-            awc_location_table_name='awc_location',
-            temp_tablename=self.temp_tablename
+            awc_location_table_name='awc_location_local',
         ), params

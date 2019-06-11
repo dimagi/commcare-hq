@@ -9,13 +9,13 @@
       <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selectedCases">
         <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
         <span data-bind="visible: shouldShowOwners">
-            <input type="hidden" name="reassign_owner"
-                   id="reassign_owner_select"
-                   style="width: 300px;"
-                   data-bind="optionsText: 'name',
-                           optionsValue: 'ownerid',
-                           optionsCaption: '{% trans 'Select New Owner...' %}',
-                           event: {change: changeNewOwner}" />
+            <select name="reassign_owner"
+                    id="reassign_owner_select"
+                    style="width: 300px;"
+                    data-bind="optionsText: 'name',
+                            optionsValue: 'ownerid',
+                            optionsCaption: '{% trans 'Select New Owner...' %}',
+                            event: {change: changeNewOwner}"></select>
         </span>
         <button type="submit"
                 data-bind="hqbSubmitReady: isSubmitEnabled, visible: isSubmitEnabled"
