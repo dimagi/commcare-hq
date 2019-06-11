@@ -107,6 +107,8 @@ class Command(BaseCommand):
 
     def do_MIGRATE(self, domain):
         if self.run_timestamp:
+            if self.dry_run:
+                raise CommandError("--dry-run and --run-timestamp are mutually exclusive")
             if not couch_sql_migration_in_progress(domain):
                 raise CommandError("Migration must be in progress if --run-timestamp is provided")
         else:
