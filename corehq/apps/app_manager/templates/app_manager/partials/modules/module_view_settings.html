@@ -4,6 +4,7 @@
 
 <form class="form-horizontal save-button-form"
       action="{% url 'edit_module_attr' domain app.id module.unique_id 'all' %}"
+      data-moduleuid="{{ module.unique_id }}"
       id="module-settings-form">
   {% csrf_token %}
   <div class="save-button-holder clearfix"></div>
