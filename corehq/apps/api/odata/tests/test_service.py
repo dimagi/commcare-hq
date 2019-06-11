@@ -104,7 +104,7 @@ class TestCaseServiceDocumentUsingApiKey(TestCaseServiceDocumentCase):
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestCaseServiceDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
+        return TestCaseServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
@@ -198,7 +198,7 @@ class TestFormServiceDocumentUsingApiKey(TestFormServiceDocument):
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestFormServiceDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
+        return TestFormServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')

@@ -50,9 +50,9 @@ class OdataTestMixin(object):
     def _execute_query(self, credentials):
         return self.client.get(self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)
 
-    @staticmethod
-    def _get_correct_credentials():
-        return CaseOdataTestMixin._get_basic_credentials('test_user', 'my_password')
+    @classmethod
+    def _get_correct_credentials(cls):
+        return CaseOdataTestMixin._get_basic_credentials(cls.web_user.username, 'my_password')
 
     @staticmethod
     def _get_basic_credentials(username, password):

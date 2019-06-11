@@ -104,7 +104,7 @@ class TestCaseMetadataDocumentUsingApiKey(TestCaseMetadataDocumentCase):
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestCaseMetadataDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
+        return TestCaseMetadataDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
@@ -195,7 +195,7 @@ class TestFormMetadataDocumentUsingApiKey(TestFormMetadataDocumentCase):
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestFormMetadataDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
+        return TestFormMetadataDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
