@@ -6,7 +6,7 @@ requirements:
 	pip-compile -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
 	pip-compile -o requirements/test-requirements.txt requirements/test-requirements.in
 	pip-compile -o requirements/dev-requirements.txt requirements/dev-requirements.in
-	bash scripts/pip-post-compile.sh requirements/*requirements.txt
+	scripts/pip-post-compile.sh requirements/*requirements.txt
 
 	cp requirements/*requirements.txt requirements-python3/
 	grep -v '^futures==' requirements-python3/requirements.txt > temp && mv temp requirements-python3/requirements.txt
@@ -20,7 +20,7 @@ upgrade-requirements:
 	pip-compile --upgrade -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
 	pip-compile --upgrade -o requirements/test-requirements.txt requirements/test-requirements.in
 	pip-compile --upgrade -o requirements/dev-requirements.txt requirements/dev-requirements.in
-	bash scripts/pip-post-compile.sh requirements/*requirements.txt
+	scripts/pip-post-compile.sh requirements/*requirements.txt
 
 	cp requirements/*requirements.txt requirements-python3/
 	grep -v '^futures==' requirements-python3/requirements.txt > temp && mv temp requirements-python3/requirements.txt
