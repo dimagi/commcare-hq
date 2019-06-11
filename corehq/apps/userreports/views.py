@@ -623,7 +623,7 @@ class ConfigureReport(ReportBuilderView):
         if not has_report_builder_access(request):
             raise Http404
 
-        report_data = json.loads(request.body)
+        report_data = json.loads(request.body.decode('utf-8'))
         if report_data['existing_report'] and not self.existing_report:
             # This is the case if the user has clicked "Save" for a second time from the new report page
             # i.e. the user created a report with the first click, but didn't navigate to the report view page

@@ -226,8 +226,7 @@ class ESView(View):
         More powerful ES querying using POST params.
         """
         try:
-            raw_post = request.body
-            raw_query = json.loads(raw_post)
+            raw_query = json.loads(request.body.decode('utf-8'))
         except Exception as e:
             content_response = dict(message="Error parsing query request", exception=six.text_type(e))
             response = HttpResponse(status=406, content=json.dumps(content_response))
