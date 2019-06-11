@@ -60,7 +60,7 @@ class S3BlobDB(AbstractBlobDB):
     def put(self, content, **blob_meta_args):
         meta = self.metadb.new(**blob_meta_args)
         check_safe_key(meta.key)
-        s3_bucket = self._s3_bucket(create=True)
+        s3_bucket = self._s3_bucket(create=True, bucket=meta.bucket) # TODO: verify this would be None in most cases
         if isinstance(content, BlobStream) and content.blob_db is self:
             obj = s3_bucket.Object(content.blob_key)
             meta.content_length = obj.content_length
@@ -76,10 +76,10 @@ class S3BlobDB(AbstractBlobDB):
                 s3_bucket.upload_fileobj(content, meta.key)
         return meta
 
-    def get(self, key):
+    def get(self, key, bucket=None):
         check_safe_key(key)
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
-            resp = self._s3_bucket().Object(key).get()
+            resp = self._s3_bucket(bucket=bucket).Object(key).get()
         return BlobStream(resp["Body"], self, key)
 
     def size(self, key):
@@ -125,8 +125,8 @@ class S3BlobDB(AbstractBlobDB):
         with self.report_timing('copy_blobdb', key):
             self._s3_bucket(create=True).upload_fileobj(content, key)
 
-    def _s3_bucket(self, create=False):
-        if create and not self._s3_bucket_exists:
+    def _s3_bucket(self, create=False, bucket=None):
+        if create and not self._s3_bucket_exists and bucket is None:
             try:
                 with self.report_timing('head_bucket', self.s3_bucket_name):
                     self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
@@ -137,7 +137,7 @@ class S3BlobDB(AbstractBlobDB):
                 with self.report_timing('create_bucket', self.s3_bucket_name):
                     self.db.create_bucket(Bucket=self.s3_bucket_name)
             self._s3_bucket_exists = True
-        return self.db.Bucket(self.s3_bucket_name)
+        return self.db.Bucket(bucket or self.s3_bucket_name)
 
 
 class BlobStream(RawIOBase):
