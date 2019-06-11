@@ -51,17 +51,13 @@ from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.hqwebapp.decorators import (
-    use_angular_js,
-    use_multiselect,
-)
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import (
     check_duplicate_usernames,
@@ -568,12 +564,11 @@ def update_user_data(request, domain, couch_user_id):
 
 
 @location_safe
-class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
+class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_angular_js
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
@@ -610,7 +605,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
-            angular_model="mobileWorker.customFields",
+            ko_model="custom_fields",
         )
 
     @property
@@ -622,17 +617,16 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_fields': [f.slug for f in self.custom_data.fields],
-            'custom_field_names': [f.label for f in self.custom_data.fields],
+            'custom_field_slugs': [f.slug for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
+            'draconian_security': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'location_url': reverse('child_locations_for_select2', args=[self.domain]),
             'bulk_download_url': bulk_download_url
         }
 
@@ -710,10 +704,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
         return {
             'success': True,
-            'editUrl': reverse(
-                EditCommCareUserView.urlname,
-                args=[self.domain, couch_user.userID]
-            )
+            'user_id': couch_user.userID,
         }
 
     def _build_commcare_user(self):
@@ -738,17 +729,16 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         if not self.can_add_extra_users:
             raise InvalidMobileWorkerRequest(_("No Permission."))
 
-        if 'mobileWorker' not in in_data:
+        if 'user' not in in_data:
             raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
 
         return None
 
     def _construct_form_data(self, in_data, fields):
-
         try:
-            user_data = in_data['mobileWorker']
+            user_data = in_data['user']
             form_data = {}
-            for k, v in user_data.get('customFields', {}).items():
+            for k, v in user_data.get('custom_fields', {}).items():
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
             for f in fields:
                 form_data[f] = user_data.get(f)
