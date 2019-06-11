@@ -33,7 +33,7 @@ Linked apps can be setup between linked domains by running `link_app_to_remote` 
 
 # Linked Applications
 
-Linked applications predate linked domains and can be used independently of linked domains.
+Linked applications predate linked domains. Now that linked domains exist, when you link an app, the linked domain record is automatically created.
 
 ## Pulling changes from master
 A linked app can be pulled if its master app has a higher released version than the current version of the linked app. Pulling a linked app is similar but not identical to copying an app.
