@@ -51,7 +51,7 @@ def get_properties_by_xmlns(domain, app_id, xmlns):
 
 
 def get_odata_property_from_export_item(export_item):
-    return format_odata_property_for_power_bi(export_item.label.split('.')[-1])
+    return format_odata_property_for_power_bi(export_item.label)
 
 
 def format_odata_property_for_power_bi(odata_property):
