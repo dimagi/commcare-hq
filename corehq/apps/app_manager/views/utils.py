@@ -132,7 +132,7 @@ def encode_if_unicode(s):
 
 
 def validate_langs(request, existing_langs):
-    o = json.loads(request.body)
+    o = json.loads(request.body.decode('utf-8'))
     langs = o['langs']
     rename = o['rename']
 
