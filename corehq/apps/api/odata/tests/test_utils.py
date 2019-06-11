@@ -12,17 +12,17 @@ class TestOdataFromExportItem(SimpleTestCase):
     def test_get_odata_property_from_export_item(self):
         self.assertEqual(
             get_odata_property_from_export_item(ExportItem(label='form.group1.question1')),
-            'form.group1.question1'
+            'form_group1_question1'
         )
 
     def test_get_odata_property_from_export_item_with_hashtag(self):
         self.assertEqual(
             get_odata_property_from_export_item(ExportItem(label='form.group1.#question1')),
-            'form.group1.question1'
+            'form_group1_question1'
         )
 
     def test_get_odata_property_from_export_item_at_sign(self):
         self.assertEqual(
             get_odata_property_from_export_item(ExportItem(label='form.group1.@question1')),
-            'form.group1.question1'
+            'form_group1_question1'
         )

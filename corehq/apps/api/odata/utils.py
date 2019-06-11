@@ -55,4 +55,4 @@ def get_odata_property_from_export_item(export_item):
 
 
 def format_odata_property_for_power_bi(odata_property):
-    return odata_property.replace('#', '').replace('@', '').strip()
+    return odata_property.replace('#', '').replace('@', '').replace('.', '_').strip()
