@@ -31,6 +31,4 @@ def update_app_translations_from_trans_dict(app, trans_dict):
             else:
                 app_translation_dict[lang] = trans_dict[lang]
     else:
-        if isinstance(app, LinkedApplication):
-            app_translation_dict.update(trans_dict)
         app_translation_dict.update(trans_dict)
