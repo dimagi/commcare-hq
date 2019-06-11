@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 import weakref
 from contextlib import contextmanager
 from io import RawIOBase, UnsupportedOperation
+
+from django import settings
 
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
@@ -60,12 +63,19 @@ class S3BlobDB(AbstractBlobDB):
     def put(self, content, **blob_meta_args):
         meta = self.metadb.new(**blob_meta_args)
         check_safe_key(meta.key)
-        s3_bucket = self._s3_bucket(create=True, bucket=meta.bucket) # TODO: verify this would be None in most cases
+        if settings.BUCKET_NAME_FUNCTION:
+            s3_bucket_name = settings.BUCKET_NAME_FUNCTION()
+            s3_bucket = self._s3_bucket(bucket=s3_bucket_name)  # assumes bucket exists
+            meta.bucket = s3_bucket_name
+        else:
+            s3_bucket_name = self.s3_bucket_name
+            s3_bucket = self._s3_bucket(create=True)
+
         if isinstance(content, BlobStream) and content.blob_db is self:
             obj = s3_bucket.Object(content.blob_key)
             meta.content_length = obj.content_length
             self.metadb.put(meta)
-            source = {"Bucket": self.s3_bucket_name, "Key": content.blob_key}
+            source = {"Bucket": s3_bucket_name, "Key": content.blob_key}
             with self.report_timing('put-via-copy', meta.key):
                 s3_bucket.copy(source, meta.key)
         else:

@@ -808,6 +808,10 @@ DROPBOX_APP_NAME = ''
 S3_ACCESS_KEY = None
 S3_SECRET_KEY = None
 
+# Takes no arguments and returns a valid bucket naming scheme
+# ex: BUCKET_NAME_FUNCTION = lambda: datetime.datetime.utcnow().strftime('%Y-%m-%d')
+BUCKET_NAME_FUNCTION = None
+
 # Supervisor RPC
 SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
