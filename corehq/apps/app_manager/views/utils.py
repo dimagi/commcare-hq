@@ -346,7 +346,7 @@ def update_linked_app(app, user_id):
         report_map = get_static_report_mapping(latest_released_master_build.domain, app['domain'])
 
         try:
-            new_version = app.version + 1 if app.version else 1
+            new_version = app.version if app.version else 1
             app = overwrite_app(app, latest_released_master_build, report_map, version=new_version)
             app.pulled_from_master_version = latest_released_master_build.version
         except AppEditingError as e:
