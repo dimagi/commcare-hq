@@ -240,13 +240,16 @@ class Migrator(object):
                     progress.append(context['size'])
                     data_progress = sum(progress)
                     remaining = elapsed // data_progress * total_size if data_progress else 'unknown'
-                    print('\nProgress: {:.1f}% data ({} of {}), {:.1f}% tables ({} of {}) in {} ({} remaining)\n'.format(
-                        (100 * float(data_progress) / total_size) if total_size else 100,
-                        data_progress, total_size,
-                        100 * float(table_progress) / total_tables,
-                        table_progress, total_tables,
-                        elapsed, remaining
-                    ))
+                    print(
+                        '\nProgress: {:.1f}% data ({} of {}), '
+                        '{:.1f}% tables ({} of {}) in {} ({} remaining)\n'.format(
+                            (100 * float(data_progress) / total_size) if total_size else 100,
+                            data_progress, total_size,
+                            100 * float(table_progress) / total_tables,
+                            table_progress, total_tables,
+                            elapsed, remaining
+                        )
+                    )
                 else:
                     print('\nProgress: {:.1f}% tables ({} of {}) in {}\n'.format(
                         100 * float(table_progress) / total_tables,
@@ -257,7 +260,8 @@ class Migrator(object):
 
         pool = MigrationPool(max_concurrent, _update_progress, stop_on_error=self.stop_on_error)
         for table_index, [source_table, target_table, cmd] in enumerate(commands):
-            if not self.dry_run and (not self.confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
+            confirm_msg = 'Migrate {} to {}'.format(source_table, target_table)
+            if not self.dry_run and (not self.confirm or _confirm(confirm_msg)):
                 pool.run(cmd, {
                     'cmd': cmd,
                     'table': source_table,
