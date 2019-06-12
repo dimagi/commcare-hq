@@ -166,6 +166,7 @@ from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import (
     get_latest_master_app_release,
     get_master_app_version,
+    get_master_app_briefs,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.reports.daterange import (
