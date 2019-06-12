@@ -49,7 +49,7 @@
 
 4. Copy the data
 
-    Using the `custom/icds_reports/scripts/migrate_tables.py` script repeatedly top copy the data.
+    Using the `custom/icds_reports/scripts/migrate_tables.py` script repeatedly to copy the data.
 
     ```
     $ python migrate_tables.py --help
@@ -102,7 +102,7 @@
     * For authentication set up a [pgpass](https://www.postgresql.org/docs/9.6/libpq-pgpass.html) file
       for the user running the script.
     * Use `--parallel` to run multiple dumps in parallel
-    * The Sqlite database will get updated after each successfull migration so re-running the command after error
+    * The Sqlite database will get updated after each successful migration so re-running the command after error
       should be safe and will not re-migrate data.
     * Use `--dry-run` to check the command that will be run
 
