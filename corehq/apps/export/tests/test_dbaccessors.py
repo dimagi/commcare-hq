@@ -215,10 +215,10 @@ class TestExportInstanceDBAccessors(TestCase):
         self.assertEqual(len(instances), 1)
 
     def test_deid_case_exports_permissions(self):
-        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=True)
+        instances = get_case_exports_by_domain(self.domain, has_deid_permissions=True)
         self.assertEqual(len(instances), 2)
 
-        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=False)
+        instances = get_case_exports_by_domain(self.domain, has_deid_permissions=False)
         self.assertEqual(len(instances), 1)
 
 
