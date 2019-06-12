@@ -14,6 +14,18 @@ from six.moves import input
 logger = logging.getLogger(__name__)
 
 
+try:
+    import textwrap
+    textwrap.indent
+except AttributeError:
+    def indent(text, amount, ch=' '):
+        padding = amount * ch
+        return ''.join(padding + line for line in text.splitlines(True))
+else:
+    def indent(text, amount, ch=' '):
+        return textwrap.indent(text, amount * ch)
+
+
 def parse_date(s, default=None):
     if not s:
         return default
@@ -185,6 +197,16 @@ class Migrator(object):
             if self.dry_run or _confirm('Preparing to migrate {} tables.'.format(len(tables))):
                 self.migrate_tables(tables, max_concurrent)
 
+    def write_error(self, context, ret_code, stdout, stderr):
+        table = context['table']
+        with open(self.error_log, 'a') as out:
+            out.write('[ERROR] Unable to migrate table: {}\n'.format(table))
+            out.write('{}\n{}\n{}\n'.format(
+                indent(context['cmd'], 4),
+                indent(stdout.decode(), 4),
+                indent(stderr.decode(), 4)
+            ))
+
     def migrate_tables(self, tables, max_concurrent):
         table_sizes = None
         total_size = None
@@ -208,7 +230,9 @@ class Migrator(object):
                 print(stdout.decode())
             if stderr:
                 print(stderr.decode())
-            if success:
+            if not success:
+                self.write_error(context, ret_code, stdout, stderr)
+            else:
                 self.db.mark_migrated([context['table']])
                 table_progress = len(completed) + 1
                 elapsed = datetime.now() - start_time
