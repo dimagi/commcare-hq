@@ -183,9 +183,9 @@ class CouchSqlDomainMigrator(object):
             else:
                 gevent.sleep()  # swap greenlets
 
-            remaining_items = self.queues.remaining_items + len(pool)
             now = datetime.now()
             if now > next_check:
+                remaining_items = self.queues.remaining_items + len(pool)
                 log.info('Waiting on {} docs'.format(remaining_items))
                 next_check += update_interval
 
