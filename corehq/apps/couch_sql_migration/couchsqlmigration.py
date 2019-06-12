@@ -150,20 +150,12 @@ class CouchSqlDomainMigrator(object):
         log.info('migrated domain {}'.format(self.domain))
 
     def _process_main_forms(self):
+        """process main forms (including cases and ledgers)"""
         last_received_on = datetime.min
-        # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue(run_timestamp=self.run_timestamp)
-        pool = Pool(15)
-        self._rebuild_queues(pool)
-
-        # process main forms (including cases and ledgers)
+        pool = self._setup_worker_pool(15)
         changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
-
-        # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue()
-
         for change in self._with_progress(['XFormInstance'], changes):
-            log.debug('Processing doc: {}({})'.format('XFormInstance', change.id))
+            log.debug('Processing doc: XFormInstance(%s)', change.id)
             form = change.get_document()
             if form.get('problem'):
                 if six.text_type(form['problem']).startswith(PROBLEM_TEMPLATE_START):
@@ -216,6 +208,13 @@ class CouchSqlDomainMigrator(object):
             if not new_wrapped_form:
                 break
             pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
+
+    def _setup_worker_pool(self, size):
+        self.queues = PartiallyLockingQueue(run_timestamp=self.run_timestamp)
+        pool = Pool(size)
+        self._rebuild_queues(pool)
+        self.queues = PartiallyLockingQueue()
+        return pool
 
     def _rebuild_queues(self, pool):
         prev_ids = self.queues.get_ids_from_run_timestamp()
