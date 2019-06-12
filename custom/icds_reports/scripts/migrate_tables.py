@@ -188,6 +188,7 @@ class Migrator(object):
         progress = []
         completed = []
         total_tables = len(tables)
+        start_time = datetime.now()
 
         if not self.dry_run:
             table_sizes = get_table_sizes(self.source_db, self.source_host, self.source_user)
@@ -206,15 +207,23 @@ class Migrator(object):
                 print(stderr.decode())
             if success:
                 self.db.mark_migrated([context['table']])
+                table_progress = len(completed) + 1
+                elapsed = datetime.now() - start_time
                 if table_sizes:
                     progress.append(context['size'])
                     data_progress = sum(progress)
-                    table_progress = len(completed) + 1
-                    print('\nProgress: {:.1f}% data ({} of {}), {:.1f}% tables ({} of {})\n'.format(
+                    remaining = elapsed // data_progress * total_size if data_progress else 'unknown'
+                    print('\nProgress: {:.1f}% data ({} of {}), {:.1f}% tables ({} of {}) in {} ({} remaining)\n'.format(
                         (100 * float(data_progress) / total_size) if total_size else 100,
                         data_progress, total_size,
                         100 * float(table_progress) / total_tables,
                         table_progress, total_tables,
+                        elapsed, remaining
+                    ))
+                else:
+                    print('\nProgress: {:.1f}% tables ({} of {}) in {}\n'.format(
+                        100 * float(table_progress) / total_tables,
+                        table_progress, total_tables, elapsed
                     ))
 
         commands = self.get_dump_load_commands(tables)
