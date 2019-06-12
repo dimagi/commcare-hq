@@ -116,14 +116,15 @@ class CommandWithContext(object):
 
 
 class MigrationPool(object):
-    def __init__(self, max_size, callback):
+    def __init__(self, max_size, callback, stop_on_error=True):
         self.max_size = max_size
         self._pool = set()
         self.has_errors = False
         self.callback = callback
+        self.stop_on_error = stop_on_error
 
     def run(self, command, context):
-        if self.has_errors:
+        if self.has_errors and self.stop_on_error:
             return
 
         self.wait_for_capacity()
@@ -151,7 +152,8 @@ class Migrator(object):
     def __init__(self, db_path, source_db, source_host, source_user,
                  target_db, target_host, target_user,
                  start_date, end_date,
-                 start_table, only_table, confirm, dry_run):
+                 start_table, only_table, confirm, dry_run,
+                 stop_on_error):
         self.db_path = db_path
         self.source_db = source_db
         self.source_host = source_host
@@ -165,6 +167,7 @@ class Migrator(object):
         self.only_table = only_table
         self.confirm = confirm
         self.dry_run = dry_run
+        self.stop_on_error = stop_on_error
 
         self.db = Database(self.db_path)
 
@@ -228,7 +231,7 @@ class Migrator(object):
 
         commands = self.get_dump_load_commands(tables)
 
-        pool = MigrationPool(max_concurrent, _update_progress)
+        pool = MigrationPool(max_concurrent, _update_progress, stop_on_error=self.stop_on_error)
         for table_index, [source_table, target_table, cmd] in enumerate(commands):
             if not self.dry_run and (not self.confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
                 pool.run(cmd, {
@@ -305,6 +308,9 @@ def main():
     parser.add_argument('--confirm', action='store_true', help='Confirm before each table.')
     parser.add_argument('--dry-run', action='store_true', help='Only output the commands.')
     parser.add_argument('--parallel', type=int, default=1, help='How many commands to run in parallel')
+    parser.add_argument('--no-stop-on-error', action='store_true', help=(
+        'Do not stop the migration if an error is encountered'
+    ))
 
     args = parser.parse_args()
 
@@ -312,7 +318,8 @@ def main():
         args.db_path, args.source_db, args.source_host, args.source_user,
         args.target_db, args.target_host, args.target_user,
         args.start_date, args.end_date,
-        args.start_after_table, args.table, args.confirm, args.dry_run
+        args.start_after_table, args.table, args.confirm, args.dry_run,
+        not args.no_stop_on_error
     )
     migrator.run(args.parallel)
 
