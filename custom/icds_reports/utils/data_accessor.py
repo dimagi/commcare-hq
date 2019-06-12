@@ -6,7 +6,6 @@ from copy import deepcopy
 from time import sleep
 
 from custom.icds_reports.cache import icds_quickcache
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data, \
     get_awc_infrastructure_data_with_cache
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data, get_cas_reach_data_with_cache
@@ -14,13 +13,13 @@ from custom.icds_reports.reports.demographics_data import get_demographics_data,
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data, get_maternal_child_data_with_cache
 import logging
 
-logger = logging.getLogger(__name__)
+notify_logger = logging.getLogger('notify')
 
 
 def _all_zeros(data):
     values = [(kpi['value'] == 0 and kpi['all'] == 0) for row in data['records'] for kpi in row]
     if all(values):
-        logger.info("ICDS - All indicators in program summary equals 0  ")
+        notify_logger.info("ICDS - All indicators in program summary equals 0")
     return all(values)
 
 
