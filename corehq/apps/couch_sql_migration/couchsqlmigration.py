@@ -927,9 +927,9 @@ class AsyncFormProcessor(object):
             form_received = wrapped_form.received_on
             assert self.last_received_on <= form_received
             self.last_received_on = form_received
-            self._try_to_process_form(wrapped_form)
         except Exception:
             log.exception("Error migrating form %s", form_id)
+        self._try_to_process_form(wrapped_form)
         self._try_to_empty_queues()
 
     def _try_to_process_form(self, wrapped_form):
