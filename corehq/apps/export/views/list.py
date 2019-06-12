@@ -158,13 +158,22 @@ class ExportListHelper(object):
                 for e in brief_exports[limit * (page - 1):limit * page]]
         return (docs, len(brief_exports))
 
-
     @memoized
     def get_saved_exports(self):
         """The source of the data that will be processed by fmt_export_data
         for use in the template.
         """
-        raise NotImplementedError("must implement get_saved_exports")
+        combined_exports = []
+        for model_type, getter, has_permissions in [
+                ('form', get_form_exports_by_domain, self.permissions.has_form_export_permissions),
+                ('case', get_case_exports_by_domain, self.permissions.has_case_export_permissions),
+        ]:
+            if self.form_or_case in [model_type, None] and (self.is_deid or has_permissions):
+                combined_exports.extend(getter(self.domain, self.is_deid, include_docs=False))
+        return [x for x in combined_exports if self._should_appear_in_list(x)]
+
+    def _should_appear_in_list(self, export):
+        raise NotImplementedError("must implement _should_appear_in_list")
 
     def _edit_view(self, export):
         raise NotImplementedError("must implement _edit_view")
@@ -281,21 +290,10 @@ class DailySavedExportListHelper(ExportListHelper):
         # Daily Saved exports do not support bulk download
         return ""
 
-    @memoized
-    def get_saved_exports(self):
-        combined_exports = []
-        if self.permissions.has_form_export_permissions:
-            combined_exports.extend(get_form_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions,
-                                                               include_docs=False))
-        if self.permissions.has_case_export_permissions:
-            combined_exports.extend(get_case_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions,
-                                                               include_docs=False))
-        return [x for x in combined_exports
-                if x['is_daily_saved_export']
-                and not x['export_format'] == "html"
-                and not x['is_odata_config']]
+    def _should_appear_in_list(self, export):
+        return (export['is_daily_saved_export']
+                and not export['export_format'] == "html"
+                and not export['is_odata_config'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -333,12 +331,8 @@ class FormExportListHelper(ExportListHelper):
     def create_export_form_title(self):
         return _("Select a Form to Export")
 
-    @memoized
-    def get_saved_exports(self):
-        exports = get_form_exports_by_domain(self.domain,
-                                             self.permissions.has_deid_view_permissions,
-                                             include_docs=False)
-        return [x for x in exports if not x['is_daily_saved_export']]
+    def _should_appear_in_list(self, export):
+        return not export['is_daily_saved_export']
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
@@ -353,12 +347,8 @@ class CaseExportListHelper(ExportListHelper):
     form_or_case = 'case'
     allow_bulk_export = False
 
-    @memoized
-    def get_saved_exports(self):
-        exports = get_case_exports_by_domain(self.domain,
-                                             self.permissions.has_deid_view_permissions,
-                                             include_docs=False)
-        return [x for x in exports if not x['is_daily_saved_export'] and not x['is_odata_config']]
+    def _should_appear_in_list(self, export):
+        return not export['is_daily_saved_export'] and not export['is_odata_config']
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -386,21 +376,10 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
     def _priv_check(self):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
-    @memoized
-    def get_saved_exports(self):
-        combined_exports = []
-        if self.permissions.has_form_export_permissions:
-            combined_exports.extend(get_form_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions,
-                                                               include_docs=False))
-        if self.permissions.has_case_export_permissions:
-            combined_exports.extend(get_case_exports_by_domain(self.domain,
-                                                               self.permissions.has_deid_view_permissions,
-                                                               include_docs=False))
-        return [x for x in combined_exports
-                if x['is_daily_saved_export']
-                and x['export_format'] == "html"
-                and not x['is_odata_config']]
+    def _should_appear_in_list(self, export):
+        return (export['is_daily_saved_export']
+                and export['export_format'] == "html"
+                and not export['is_odata_config'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -433,12 +412,9 @@ class DeIdFormExportListHelper(FormExportListHelper):
 class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
     is_deid = True
 
-    def get_saved_exports(self):
-        exports = super(DeIdDailySavedExportListView, self).get_saved_exports()
-        return [
-            x for x in exports
-            if x['is_deidentified'] and x['is_daily_saved_export'] and not x['export_format'] == "html"
-        ]
+    def _should_appear_in_list(self, export):
+        return (super(DeIdDailySavedExportListView, self)._should_appear_in_list(export)
+                and export['is_deidentified'])
 
     @property
     def create_export_form(self):
@@ -448,10 +424,9 @@ class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
 class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
     is_deid = True
 
-    def get_saved_exports(self):
-        exports = super(DeIdDashboardFeedListView, self).get_saved_exports()
-        return [x for x in exports
-                if x['is_deidentified'] and x['is_daily_saved_export'] and x['export_format'] == "html"]
+    def _should_appear_in_list(self, export):
+        return (super(DeIdDashboardFeedListView, self)._should_appear_in_list(export)
+                and x['is_deidentified'])
 
     @property
     def create_export_form(self):
@@ -870,13 +845,8 @@ class ODataFeedListHelper(ExportListHelper):
     def create_export_form_title(self):
         return _("Select a model to export")
 
-    @memoized
-    def get_saved_exports(self):
-        if self.permissions.has_case_export_permissions:
-            exports = get_case_exports_by_domain(self.domain,
-                                                 self.permissions.has_deid_view_permissions,
-                                                 include_docs=False)
-        return [x for x in exports if x['is_odata_config']]
+    def _should_appear_in_list(self, export):
+        return export['is_odata_config']
 
     def fmt_export_data(self, export):
         data = super(ODataFeedListHelper, self).fmt_export_data(export)
