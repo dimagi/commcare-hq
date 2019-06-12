@@ -220,7 +220,7 @@ class CouchSqlDomainMigrator(object):
         prev_ids = self.queues.get_ids_from_run_timestamp()
 
         for chunked_ids in chunked(prev_ids, 100):
-            chunk = list([_id for _id in chunked_ids if _id])
+            chunk = [_id for _id in chunked_ids if _id]
             for form in FormAccessorCouch.get_forms(chunk):
                 self._try_to_process_form(form, pool)
 
