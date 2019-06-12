@@ -158,25 +158,7 @@ class CouchSqlDomainMigrator(object):
             self._process_xform(change.get_document(), change.id, pool)
             self._try_to_process_queues(pool)
 
-        # finish up the queues once all changes have been iterated through
-        update_interval = timedelta(seconds=10)
-        next_check = datetime.now()
-        while self.queues.has_next():
-            wrapped_form = self.queues.get_next()
-            if wrapped_form:
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-            else:
-                gevent.sleep()  # swap greenlets
-
-            now = datetime.now()
-            if now > next_check:
-                remaining_items = self.queues.remaining_items + len(pool)
-                log.info('Waiting on {} docs'.format(remaining_items))
-                next_check += update_interval
-
-        while not pool.join(timeout=10):
-            log.info('Waiting on {} docs'.format(len(pool)))
-
+        self._finish_processing_queues(pool)
         self._log_main_forms_processed_count()
         del self._last_received_on
 
@@ -228,6 +210,25 @@ class CouchSqlDomainMigrator(object):
                 self._try_to_process_form(form, pool)
 
         self._try_to_process_queues(pool)
+
+    def _finish_processing_queues(self, pool):
+        update_interval = timedelta(seconds=10)
+        next_check = datetime.now()
+        while self.queues.has_next():
+            wrapped_form = self.queues.get_next()
+            if wrapped_form:
+                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+            else:
+                gevent.sleep()  # swap greenlets
+
+            now = datetime.now()
+            if now > next_check:
+                remaining_items = self.queues.remaining_items + len(pool)
+                log.info('Waiting on {} docs'.format(remaining_items))
+                next_check += update_interval
+
+        while not pool.join(timeout=10):
+            log.info('Waiting on {} docs'.format(len(pool)))
 
     def _migrate_form_and_associated_models_async(self, wrapped_form):
         set_local_domain_sql_backend_override(self.domain)
