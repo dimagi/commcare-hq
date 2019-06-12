@@ -262,7 +262,7 @@ def get_table_sizes(source_db, source_host, source_user):
     try:
         from sqlalchemy import create_engine
     except ImportError:
-        print('sqlalchemy not installed. Progress not supported.')
+        print('\nsqlalchemy not installed. Progress not supported.\n')
         return
 
     engine = create_engine("postgresql://{}:@{}/{}".format(source_user, source_host, source_db))
