@@ -154,8 +154,10 @@ class CouchSqlDomainMigrator(object):
         with AsyncFormProcessor(self.run_timestamp, self._migrate_form) as pool:
             changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
             for change in self._with_progress(['XFormInstance'], changes):
-                pool.process_xform(change.get_document())
-                self.errors_with_normal_doc_type.extend(pool.errors_with_normal_doc_type)
+                try:
+                    pool.process_xform(change.get_document())
+                except ProblemForm as error:
+                    self.errors_with_normal_doc_type.append(error.form_id)
 
         self._log_main_forms_processed_count()
 
@@ -890,7 +892,6 @@ class AsyncFormProcessor(object):
         self.migrate_form = migrate_form
         self.last_received_on = datetime.min
         self.processed_docs = 0
-        self.errors_with_normal_doc_type = []
 
     def __enter__(self):
         self.pool = Pool(15)
@@ -908,14 +909,17 @@ class AsyncFormProcessor(object):
         self._try_to_empty_queues()
 
     def process_xform(self, doc):
+        """Process XFormInstance document asynchronously
+
+        :raises: `ProblemForm` for error forms with normal doc type.
+        """
         form_id = doc["_id"]
         log.debug('Processing doc: XFormInstance(%s)', form_id)
         if doc.get('problem'):
             if six.text_type(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
                 doc = _fix_replacement_form_problem_in_couch(doc)
             else:
-                self.errors_with_normal_doc_type.append(form_id)
-                return
+                raise ProblemForm(form_id)
         try:
             wrapped_form = XFormInstance.wrap(doc)
             form_received = wrapped_form.received_on
@@ -967,6 +971,13 @@ class AsyncFormProcessor(object):
             log.info('Waiting on {} docs'.format(len(pool)))
 
         self.queues = self.pool = None
+
+
+class ProblemForm(Exception):
+
+    def __init__(self, form_id):
+        super(ProblemForm, self).__init__(form_id)
+        self.form_id = form_id
 
 
 class PartiallyLockingQueue(object):
