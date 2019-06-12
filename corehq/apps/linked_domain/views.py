@@ -52,6 +52,12 @@ def user_roles(request, domain):
 
 @login_or_api_key
 @require_linked_domain
+def brief_apps(request, domain):
+    return JsonResponse({'brief_apps': get_brief_apps_in_domain(domain, include_remote=False)})
+
+
+@login_or_api_key
+@require_linked_domain
 def case_search_config(request, domain):
     try:
         config = CaseSearchConfig.objects.get(domain=domain).to_json()
