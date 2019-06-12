@@ -15,18 +15,6 @@ from six.moves import input
 logger = logging.getLogger(__name__)
 
 
-try:
-    import textwrap
-    textwrap.indent
-except AttributeError:
-    def indent(text, amount, ch=' '):
-        padding = amount * ch
-        return ''.join(padding + line for line in text.splitlines(True))
-else:
-    def indent(text, amount, ch=' '):
-        return textwrap.indent(text, amount * ch)
-
-
 def parse_date(s, default=None):
     if not s:
         return default
