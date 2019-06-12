@@ -97,8 +97,9 @@
 
     Notes:
     * For best performance run this either on the source DB host or the target DB host. You can copy the
-      script to the host and it should not require any additional libraries to be installed other than python
-      itself.
+      script to the host create a virutalenv with the following libraries:
+        - sqlalchemy (only required for detailed progress output)
+        - six (if not already installed)
     * For authentication set up a [pgpass](https://www.postgresql.org/docs/9.6/libpq-pgpass.html) file
       for the user running the script.
     * Use `--parallel` to run multiple dumps in parallel
