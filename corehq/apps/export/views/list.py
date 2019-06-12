@@ -69,20 +69,26 @@ class ExportListHelper(object):
     include_saved_filters = False
 
     @classmethod
-    def get(self, request, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_odata=False, is_deid=False):
-        if is_odata:
+    def from_request(cls, request):
+        def param_is_true(param):
+            return bool(json.loads(request.GET.get(param)))
+
+        is_deid = param_is_true('is_deid')
+
+        if param_is_true('is_odata'):
             return ODataFeedListHelper(request)
 
-        if is_feed:
+        if param_is_true('is_feed'):
             if is_deid:
                 return DeIdDashboardFeedListHelper(request)
             return DashboardFeedListHelper(request)
 
-        if is_daily_saved_export:
+        if param_is_true('is_daily_saved_export'):
             if is_deid:
                 return DeIdDailySavedExportListHelper(request)
             return DailySavedExportListHelper(request)
 
+        form_or_case = request.GET.get('model_type')
         if form_or_case == 'form':
             if is_deid:
                 return DeIdFormExportListHelper(request)
@@ -508,11 +514,7 @@ def get_exports_page(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
-    helper = ExportListHelper.get(request, form_or_case=request.GET.get('model_type'),
-                                  is_daily_saved_export=json.loads(request.GET.get('is_daily_saved_export')),
-                                  is_feed=json.loads(request.GET.get('is_feed')),
-                                  is_odata=json.loads(request.GET.get('is_odata')),
-                                  is_deid=json.loads(request.GET.get('is_deid')))
+    helper = ExportListHelper.from_request(request)
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
     my_exports = json.loads(request.GET.get('my_exports'))
