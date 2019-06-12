@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import six
 import logging
 
+from gevent.pool import Pool
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.db import connections
@@ -208,14 +209,16 @@ class Command(BaseCommand):
     def start_scripts(self, state_id, ucr_id):
         state_ids = [state_id] if state_id else get_state_ids()
         ucr_ids = [ucr_id] if ucr_id else get_sql_scripts(state_id).keys()
+        pool = Pool(10)
         for ucr_id in ucr_ids:
             for state_id in state_ids:
                 rows = self.get_session().query(BackfillScriptStub).filter_by(state_id=state_id, ucr_id=ucr_id).all()
                 assert len(rows) == 1, ("There should be just one row", ucr_id, state_id)
                 if rows[0].status in [Status.NOT_STARTED, Status.FAILED]:
-                    self.run_sql_script(state_id, ucr_id)
+                    pool.spawn(self.run_sql_script, state_id, ucr_id)
                 else:
                     logger.info("Backfilling already done for {} for state:{}, skipping.".format(ucr_id, state_id))
+        pool.join()
 
     @memoized
     def get_session(self):
