@@ -890,7 +890,6 @@ class AsyncFormProcessor(object):
     def __init__(self, run_timestamp, migrate_form):
         self.run_timestamp = run_timestamp
         self.migrate_form = migrate_form
-        self.last_received_on = datetime.min
         self.processed_docs = 0
 
     def __enter__(self):
@@ -924,9 +923,6 @@ class AsyncFormProcessor(object):
                 raise ProblemForm(form_id)
         try:
             wrapped_form = XFormInstance.wrap(doc)
-            form_received = wrapped_form.received_on
-            assert self.last_received_on <= form_received
-            self.last_received_on = form_received
         except Exception:
             log.exception("Error migrating form %s", form_id)
         self._try_to_process_form(wrapped_form)
