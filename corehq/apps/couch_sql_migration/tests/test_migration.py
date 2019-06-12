@@ -807,7 +807,7 @@ class LedgerMigrationTests(BaseMigrationTestCase):
 
 class TestLockingQueues(TestCase):
     def setUp(self):
-        self.queues = PartiallyLockingQueue()
+        self.queues = PartiallyLockingQueue("id", max_size=-1)
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
         self.queues._add_item(lock_ids, DummyObject(queue_obj_id))

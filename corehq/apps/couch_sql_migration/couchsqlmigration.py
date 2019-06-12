@@ -152,7 +152,7 @@ class CouchSqlDomainMigrator(object):
     def _process_main_forms(self):
         last_received_on = datetime.min
         # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=10000, run_timestamp=self.run_timestamp)
+        self.queues = PartiallyLockingQueue(run_timestamp=self.run_timestamp)
         pool = Pool(15)
         self._rebuild_queues(pool)
 
@@ -160,7 +160,7 @@ class CouchSqlDomainMigrator(object):
         changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
 
         # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=10000)
+        self.queues = PartiallyLockingQueue()
 
         for change in self._with_progress(['XFormInstance'], changes):
             log.debug('Processing doc: {}({})'.format('XFormInstance', change.id))
@@ -966,7 +966,7 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, queue_id_param="id", max_size=-1, run_timestamp=None):
+    def __init__(self, queue_id_param="form_id", max_size=10000, run_timestamp=None):
         """
         :queue_id_param string: param of the queued objects to pull an id from
         :max_size int: the maximum size the queue should reach. -1 means no limit
