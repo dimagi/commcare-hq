@@ -98,6 +98,11 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return !self.hideColumnFilterCondition(self.column());
         });
 
+        self.showColumnFilterPlaceholder = ko.computed(function () {
+            if (!self.column()) return false;
+            return self.column().name() === undefined || self.column().name().length === 0;
+        });
+
         self.showDelete = ko.computed(function () {
             if (!_.isFunction(self.noDeleteColumnCondition)) return true;
             if (!self.column()) return true;

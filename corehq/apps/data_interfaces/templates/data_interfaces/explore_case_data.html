@@ -276,8 +276,17 @@
                                      }" ></select>
                 </div>
               </div>
+
+              <hr data-bind="visible: $root.editColumnController.showColumnFilters()
+                             || $root.editColumnController.showColumnFilterPlaceholder()" />
+              <button type="button"
+                      class="btn btn-default disabled"
+                      disabled="disabled"
+                      data-bind="visible: $root.editColumnController.showColumnFilterPlaceholder">
+                {% trans "Filter Data in Column" %}
+              </button>
+
               <!-- ko if: $root.editColumnController.showColumnFilters -->
-                <hr />
                 <div class="form-group"
                      data-bind="visible: hasFilters">
                   <div class="datagrid-column-filter-clause">
@@ -342,6 +351,7 @@
                   </a>
                 </div>
                 <!-- /ko -->
+
                 <button type="button"
                         class="btn btn-default"
                         data-bind="click: $root.editColumnController.addFilter,
@@ -356,6 +366,7 @@
                   {% trans "Add Expression" %}
                 </button>
               <!-- /ko -->
+
             </div>
           </div>
           <div class="modal-footer">
