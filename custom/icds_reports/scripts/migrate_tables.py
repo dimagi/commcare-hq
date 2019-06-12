@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function
 from __future__ import unicode_literals, division
 
 import argparse
+import json
 import logging
 import sqlite3
 import subprocess
@@ -181,6 +182,8 @@ class Migrator(object):
         self.dry_run = dry_run
         self.stop_on_error = stop_on_error
 
+        self.error_log = 'icds_citus_migration_errors-{}.log'.format(datetime.utcnow().isoformat())
+
         self.db = Database(self.db_path)
 
     def run(self, max_concurrent):
@@ -198,14 +201,27 @@ class Migrator(object):
                 self.migrate_tables(tables, max_concurrent)
 
     def write_error(self, context, ret_code, stdout, stderr):
-        table = context['table']
+        stderr = stderr.decode()
+        try:
+            lines = stderr.splitlines()
+            if len(lines) == 2:
+                error, detail = lines
+                error = error.split(':  ')[1]
+                detail = detail.split(':  ')[1]
+        except Exception:
+            error = None
+            detail = None
+
+        error_json = context.copy()
+        error_json.update({
+            'ret_code': ret_code,
+            'stdout': stdout.decode(),
+            'stderr': stderr,
+            'ERROR': error,
+            'DETAIL': detail,
+        })
         with open(self.error_log, 'a') as out:
-            out.write('[ERROR] Unable to migrate table: {}\n'.format(table))
-            out.write('{}\n{}\n{}\n'.format(
-                indent(context['cmd'], 4),
-                indent(stdout.decode(), 4),
-                indent(stderr.decode(), 4)
-            ))
+            out.write('{}\n'.format(json.dumps(error_json)))
 
     def migrate_tables(self, tables, max_concurrent):
         table_sizes = None
@@ -223,7 +239,7 @@ class Migrator(object):
                 total_size = sum([size for table, size in table_sizes.items() if table in source_tables])
 
         def _update_progress(context, ret_code, stdout, stderr):
-            completed.append(context['table'])
+            completed.append(context['source_table'])
             success = ret_code == 0
             print('{} {}'.format('[ERROR] ' if not success else '', context['cmd']))
             if stdout:
@@ -233,7 +249,7 @@ class Migrator(object):
             if not success:
                 self.write_error(context, ret_code, stdout, stderr)
             else:
-                self.db.mark_migrated([context['table']])
+                self.db.mark_migrated([context['source_table']])
                 table_progress = len(completed) + 1
                 elapsed = datetime.now() - start_time
                 if table_sizes:
@@ -264,7 +280,8 @@ class Migrator(object):
             if not self.dry_run and (not self.confirm or _confirm(confirm_msg)):
                 pool.run(cmd, {
                     'cmd': cmd,
-                    'table': source_table,
+                    'source_table': source_table,
+                    'target_table': target_table,
                     'size': table_sizes[source_table] if table_sizes else 0
                 })
             else:
