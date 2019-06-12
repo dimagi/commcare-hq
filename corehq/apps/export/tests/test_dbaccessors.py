@@ -23,7 +23,9 @@ from corehq.apps.export.dbaccessors import (
     get_case_inferred_schema,
     get_form_inferred_schema,
     get_form_exports_by_domain,
-    get_case_exports_by_domain
+    get_case_exports_by_domain,
+    get_brief_exports,
+    get_brief_deid_exports,
 )
 
 
@@ -220,6 +222,26 @@ class TestExportInstanceDBAccessors(TestCase):
 
         instances = get_case_exports_by_domain(self.domain, has_deid_permissions=False)
         self.assertEqual(len(instances), 1)
+
+    def test_get_brief_exports(self):
+        stubs = get_brief_exports(self.domain, form_or_case='form')
+        self.assertEqual(len(stubs), 2)
+
+        stubs = get_brief_exports(self.domain, form_or_case='case')
+        self.assertEqual(len(stubs), 2)
+
+        stubs = get_brief_exports(self.domain, form_or_case=None)
+        self.assertEqual(len(stubs), 4)
+
+    def test_get_brief_deid_exports(self):
+        stubs = get_brief_deid_exports(self.domain, form_or_case='form')
+        self.assertEqual(len(stubs), 1)
+
+        stubs = get_brief_deid_exports(self.domain, form_or_case='case')
+        self.assertEqual(len(stubs), 1)
+
+        stubs = get_brief_deid_exports(self.domain, form_or_case=None)
+        self.assertEqual(len(stubs), 2)
 
 
 class TestInferredSchemasDBAccessors(TestCase):

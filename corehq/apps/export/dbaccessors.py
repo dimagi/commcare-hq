@@ -104,6 +104,32 @@ def get_form_exports_by_domain(domain, has_deid_permissions, include_docs=True):
     return _get_saved_exports(domain, has_deid_permissions, get_form_export_instances, include_docs=include_docs)
 
 
+def get_brief_exports(domain, form_or_case=None):
+    from .models import ExportInstance
+    if form_or_case == 'form':
+        key = [domain, 'FormExportInstance']
+    elif form_or_case == 'case':
+        key = [domain, 'CaseExportInstance']
+    else:
+        key = [domain]
+    return _get_export_instance(ExportInstance, key, include_docs=False)
+
+
+def get_brief_deid_exports(domain, form_or_case=None):
+    from .models import ExportInstance
+    doc_types = [doc_type for doc_type in [
+        'FormExportInstance' if form_or_case in ['form', None] else None,
+        'CaseExportInstance' if form_or_case in ['case', None] else None,
+    ] if doc_type is not None]
+    results = ExportInstance.get_db().view(
+        'export_instances_by_domain/view',
+        keys=[[domain, doc_type, True] for doc_type in doc_types],
+        include_docs=False,
+        reduce=False,
+    ).all()
+    return [result['value'] for result in results]
+
+
 def get_export_count_by_domain(domain):
     from .models import ExportInstance
 

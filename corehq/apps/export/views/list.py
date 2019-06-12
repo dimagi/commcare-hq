@@ -48,8 +48,8 @@ from corehq.apps.export.const import (
     SharingOption,
 )
 from corehq.apps.export.dbaccessors import (
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
+    get_brief_exports,
+    get_brief_deid_exports,
     get_properly_wrapped_export_instance,
 )
 from corehq.apps.export.forms import CreateExportTagForm, DashboardFeedFilterForm
@@ -163,14 +163,11 @@ class ExportListHelper(object):
         """The source of the data that will be processed by fmt_export_data
         for use in the template.
         """
-        combined_exports = []
-        for model_type, getter, has_permissions in [
-                ('form', get_form_exports_by_domain, self.permissions.has_form_export_permissions),
-                ('case', get_case_exports_by_domain, self.permissions.has_case_export_permissions),
-        ]:
-            if self.form_or_case in [model_type, None] and (self.is_deid or has_permissions):
-                combined_exports.extend(getter(self.domain, self.is_deid, include_docs=False))
-        return [x for x in combined_exports if self._should_appear_in_list(x)]
+        if self.is_deid:
+            exports = get_brief_deid_exports(self.domain, self.form_or_case)
+        else:
+            exports = get_brief_exports(self.domain, self.form_or_case)
+        return [x for x in exports if self._should_appear_in_list(x)]
 
     def _should_appear_in_list(self, export):
         raise NotImplementedError("must implement _should_appear_in_list")
