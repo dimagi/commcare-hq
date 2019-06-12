@@ -151,27 +151,12 @@ class CouchSqlDomainMigrator(object):
 
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
-        last_received_on = datetime.min
+        self._last_received_on = datetime.min
         pool = self._setup_worker_pool(15)
         changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
         for change in self._with_progress(['XFormInstance'], changes):
-            log.debug('Processing doc: XFormInstance(%s)', change.id)
-            form = change.get_document()
-            if form.get('problem'):
-                if six.text_type(form['problem']).startswith(PROBLEM_TEMPLATE_START):
-                    form = _fix_replacement_form_problem_in_couch(form)
-                else:
-                    self.errors_with_normal_doc_type.append(change.id)
-                    continue
-            try:
-                wrapped_form = XFormInstance.wrap(form)
-                form_received = wrapped_form.received_on
-                assert last_received_on <= form_received
-                last_received_on = form_received
-                self._try_to_process_form(wrapped_form, pool)
-                self._try_to_process_queues(pool)
-            except Exception:
-                log.exception("Error migrating form %s", change.id)
+            self._process_xform(change.get_document(), change.id, pool)
+            self._try_to_process_queues(pool)
 
         # finish up the queues once all changes have been iterated through
         update_interval = timedelta(seconds=10)
@@ -193,6 +178,24 @@ class CouchSqlDomainMigrator(object):
             log.info('Waiting on {} docs'.format(len(pool)))
 
         self._log_main_forms_processed_count()
+        del self._last_received_on
+
+    def _process_xform(self, form, form_id, pool):
+        log.debug('Processing doc: XFormInstance(%s)', form_id)
+        if form.get('problem'):
+            if six.text_type(form['problem']).startswith(PROBLEM_TEMPLATE_START):
+                form = _fix_replacement_form_problem_in_couch(form)
+            else:
+                self.errors_with_normal_doc_type.append(form_id)
+                return
+        try:
+            wrapped_form = XFormInstance.wrap(form)
+            form_received = wrapped_form.received_on
+            assert self._last_received_on <= form_received
+            self._last_received_on = form_received
+            self._try_to_process_form(wrapped_form, pool)
+        except Exception:
+            log.exception("Error migrating form %s", form_id)
 
     def _try_to_process_form(self, wrapped_form, pool):
         case_ids = get_case_ids(wrapped_form)
