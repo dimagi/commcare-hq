@@ -77,7 +77,7 @@ from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.linked_domain.applications import create_linked_app, get_master_app_briefs
+from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
@@ -284,9 +284,8 @@ def get_app_view_context(request, app):
         'is_remote_app': is_remote_app(app),
     })
     if is_linked_app(app):
-        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
-            master_briefs = get_master_app_briefs(app.domain_link)
+            master_briefs = app.get_master_app_briefs()
             upstream_brief = {}
             for b in master_briefs:
                 if b.id == app.upstream_app_id:
@@ -295,13 +294,14 @@ def get_app_view_context(request, app):
                 'master_briefs': master_briefs,
                 'upstream_version': app.upstream_version,
                 'upstream_brief': upstream_brief,
+                'upstream_url': _get_upstream_url(app, request.couch_user, master_app_id='---'),
             })
         except RemoteRequestError:
             pass
     return context
 
 
-def _get_upstream_url(app, request_user):
+def _get_upstream_url(app, request_user, master_app_id=None):
     """Get the upstream url if the user has access"""
     if (
             app.domain_link and (
@@ -311,7 +311,9 @@ def _get_upstream_url(app, request_user):
                 )
             )
     ):
-        url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
+        if master_app_id is None:
+            master_app_id = app.upstream_app_id
+        url = reverse('view_app', args=[app.domain_link.master_domain, master_app_id])
         if app.domain_link.is_remote:
             url = '{}{}'.format(app.domain_link.remote_base_url, url)
         return url

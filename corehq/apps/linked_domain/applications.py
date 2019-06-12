@@ -21,9 +21,11 @@ def get_master_app_version(domain_link, app_id):    # TODO: rename to get_upstre
 
 def get_master_app_briefs(domain_link):
     if domain_link.is_remote:
-        return get_brief_apps(domain_link.master_domain, domain_link.remote_details)
+        apps = get_brief_apps(domain_link.master_domain, domain_link.remote_details)
     else:
-        return get_brief_apps_in_domain(domain_link.master_domain, include_remote=False)
+        apps = get_brief_apps_in_domain(domain_link.master_domain, include_remote=False)
+    # Ignore deleted, linked and remote apps
+    return [app for app in apps if app.doc_type == 'Application']
 
 
 def get_latest_master_app_release(domain_link, app_id):
