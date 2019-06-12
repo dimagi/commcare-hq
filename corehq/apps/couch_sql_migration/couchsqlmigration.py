@@ -90,7 +90,13 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def setup_logging(log_dir):
+def setup_logging(log_dir, debug=False):
+    if debug:
+        assert log.level <= logging.DEBUG, log.level
+        logging.root.setLevel(logging.DEBUG)
+        for handler in logging.root.handlers:
+            if handler.name in ["file", "console"]:
+                handler.setLevel(logging.DEBUG)
     if not log_dir:
         return
     time = datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -102,33 +108,24 @@ def setup_logging(log_dir):
     log.info("command: %s", " ".join(sys.argv))
 
 
-def do_couch_to_sql_migration(domain, with_progress=True, debug=False, run_timestamp=None):
+def do_couch_to_sql_migration(domain, with_progress=True, run_timestamp=None):
     set_local_domain_sql_backend_override(domain)
     CouchSqlDomainMigrator(
         domain,
         with_progress=with_progress,
-        debug=debug,
         run_timestamp=run_timestamp
     ).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True, debug=False, run_timestamp=None):
+    def __init__(self, domain, with_progress=True, run_timestamp=None):
         from corehq.apps.tzmigration.planning import DiffDB
         self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
-        self.debug = debug
         self.domain = domain
         self.run_timestamp = run_timestamp or int(time())
         db_filepath = get_diff_db_filepath(domain)
         self.diff_db = DiffDB.init(db_filepath)
-        if debug:
-            assert log.level <= logging.DEBUG, log.level
-            logging.root.setLevel(logging.DEBUG)
-            for handler in logging.root.handlers:
-                if handler.name in ["file", "console"]:
-                    handler.setLevel(logging.DEBUG)
-
         self.errors_with_normal_doc_type = []
         self.forms_that_touch_cases_without_actions = set()
 

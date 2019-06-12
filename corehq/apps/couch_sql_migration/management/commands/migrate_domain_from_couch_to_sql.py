@@ -92,7 +92,7 @@ class Command(BaseCommand):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "debug", "verbose", "dry_run", "run_timestamp"]:
+        for opt in ["no_input", "verbose", "dry_run", "run_timestamp"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
@@ -102,7 +102,7 @@ class Command(BaseCommand):
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
-        setup_logging(options['log_dir'])
+        setup_logging(options['log_dir'], options['debug'])
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
@@ -117,7 +117,6 @@ class Command(BaseCommand):
         do_couch_to_sql_migration(
             domain,
             with_progress=not self.no_input,
-            debug=self.debug,
             run_timestamp=self.run_timestamp)
 
         has_diffs = self.print_stats(domain, short=True, diffs_only=True)
