@@ -31,7 +31,6 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_brief_app,
     get_current_app,
     get_latest_released_app,
 )
@@ -78,7 +77,7 @@ from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.linked_domain.applications import create_linked_app
+from corehq.apps.linked_domain.applications import create_linked_app, get_master_app_briefs
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
@@ -287,9 +286,13 @@ def get_app_view_context(request, app):
     if is_linked_app(app):
         context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
-            # TODO: handle master domain being remote
-            upstream_brief = get_brief_app(app.domain_link.master_domain, app.upstream_app_id)
+            master_briefs = get_master_app_briefs(app.domain_link)
+            upstream_brief = {}
+            for b in master_briefs:
+                if b.id == app.upstream_app_id:
+                    upstream_brief = b
             context.update({
+                'master_briefs': master_briefs,
                 'upstream_version': app.upstream_version,
                 'upstream_brief': upstream_brief,
             })
