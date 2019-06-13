@@ -4,17 +4,17 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Gladys Teos <info@enestranslations.com>, 2019
 # Dimagi Dev <devops@dimagi.com>, 2019
+# Gladys Teos <info@enestranslations.com>, 2019
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-04 19:56+0000\n"
+"POT-Creation-Date: 2019-06-11 20:20+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -503,18 +503,18 @@ msgstr "Tiene configuraciones de propiedades sin cambio"
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propiedad utiliza un prefijo<strong> no reconocido"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:51
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:67
 msgid "Unidentified Question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:56
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:72
 msgid ""
 "We cannot find this question in the allowed questions for this field. It is "
 "likely that you deleted or renamed the question. Please choose a valid "
 "question from the dropdown."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:66
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:82
 msgid "Select a Question"
 msgstr ""
 
@@ -737,12 +737,12 @@ msgstr "Ver Todos los Formularios"
 msgid "View Changed Items"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_models.js:44
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_models.js:57
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:50
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:256
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:50
 msgid "Latest saved"
 msgstr ""
 
@@ -2532,12 +2532,12 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:34
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:34
 msgid "no comment"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:63
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:72
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:63
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:72
 msgid "Select profile"
 msgstr ""
 
@@ -2835,24 +2835,24 @@ msgstr "Ocultar versiones anteriores"
 msgid "Show previous versions"
 msgstr "Mostrar versiones anteriores"
 
-#: corehq/apps/export/static/export/js/create_export.js:91
+#: corehq/apps/export/static/export/js/create_export.js:92
 msgid "<%= count %> form submission available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:93
+#: corehq/apps/export/static/export/js/create_export.js:94
 msgid "<%= count %> form submissions available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:104
+#: corehq/apps/export/static/export/js/create_export.js:105
 msgid "User Registration"
 msgstr "Registro de Usuario"
 
-#: corehq/apps/export/static/export/js/create_export.js:275
+#: corehq/apps/export/static/export/js/create_export.js:273
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:310
+#: corehq/apps/export/static/export/js/create_export.js:308
 msgid "There is an issue communicating with the server at this time."
 msgstr "Hay un problema de comunicación con el servidor en este momento."
 
@@ -2881,16 +2881,16 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr "Ocurrió un error al descargar su exportación."
 
-#: corehq/apps/export/static/export/js/export_list.js:79
+#: corehq/apps/export/static/export/js/export_list.js:80
 msgid "Download Requested"
 msgstr "Descarga Solicitada"
 
-#: corehq/apps/export/static/export/js/export_list.js:334
-#: corehq/apps/export/static/export/js/export_list.js:341
+#: corehq/apps/export/static/export/js/export_list.js:335
+#: corehq/apps/export/static/export/js/export_list.js:342
 msgid "Invalid date format"
 msgstr "Formato de fecha inválido"
 
-#: corehq/apps/export/static/export/js/export_list.js:448
+#: corehq/apps/export/static/export/js/export_list.js:462
 msgid "Problem saving dashboard feed filters"
 msgstr "Ocurrió un problema al guardar filtros de alimentación del tablero"
 
@@ -3084,8 +3084,7 @@ msgstr ""
 msgid "We could not turn off the new feature. Please try again later."
 msgstr "No pudimos apagar la nueva función. Por favor intente más tarde."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v3.js:82
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v4.js:100
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:100
 msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
@@ -3304,12 +3303,12 @@ msgstr ""
 msgid "e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:142
+#: corehq/apps/reports/static/reports/js/filters/main.js:147
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr "Todo"
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:188
+#: corehq/apps/reports/static/reports/js/filters/main.js:194
 msgid "Select a group"
 msgstr "Seleccione un grupo"
 
@@ -3437,16 +3436,12 @@ msgid "Failed to re-process"
 msgstr "Reproceso fallido"
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js:131
-#, fuzzy
-#| msgid "Filter"
 msgid "Save Filters"
-msgstr "Filtrar"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js:135
-#, fuzzy
-#| msgid "Form Data"
 msgid "Export Data"
-msgstr "Datos del Formulario"
+msgstr "Exportar Datos"
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:35
 msgid "Select <%= title %>..."

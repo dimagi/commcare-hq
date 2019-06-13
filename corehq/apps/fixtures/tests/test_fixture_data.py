@@ -6,7 +6,7 @@ import six
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from casexml.apps.phone.tests.utils import call_fixture_generator
+from casexml.apps.phone.tests.utils import call_fixture_generator as call_fixture_generator_raw
 from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data_types, \
     get_fixture_data_types_in_domain
@@ -16,6 +16,11 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
+
+
+def call_fixture_generator(user):
+    return [ElementTree.fromstring(f) if isinstance(f, bytes) else f
+            for f in call_fixture_generator_raw(fixturegenerators.item_lists, user)]
 
 
 class FixtureDataTest(TestCase):
@@ -122,7 +127,7 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixture, = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        fixture, = call_fixture_generator(self.user.to_ota_restore_user())
 
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
@@ -151,7 +156,7 @@ class FixtureDataTest(TestCase):
 
         self.data_item.remove_user(self.user)
 
-        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
         self.assertEqual(1, len(fixtures))
         check_xml_line_by_line(
             self,
@@ -182,7 +187,7 @@ class FixtureDataTest(TestCase):
         self.data_type.fields[2].is_indexed = True  # Set "district_id" as indexed
         self.data_type.save()
 
-        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
         self.assertEqual(len(fixtures), 2)
         check_xml_line_by_line(
             self,
@@ -230,7 +235,7 @@ class FixtureDataTest(TestCase):
         self.addCleanup(empty_data_type.delete)
         get_fixture_data_types_in_domain.clear(self.domain)
 
-        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
         self.assertEqual(2, len(fixtures))
         check_xml_line_by_line(
             self,
@@ -260,7 +265,7 @@ class FixtureDataTest(TestCase):
         self.make_data_item(cookie, "2.50")
         self.make_data_item(latte, "5.75")
 
-        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
         # make sure each fixture is there, and only once
         self.assertEqual(
             [item.attrib['id'] for item in fixtures],
@@ -274,7 +279,7 @@ class FixtureDataTest(TestCase):
     def test_empty_user_data_types(self):
         self.make_data_type("cookie", is_global=False)
 
-        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
         # make sure each fixture is there, and only once
         self.assertEqual(
             [item.attrib['id'] for item in fixtures],
@@ -290,12 +295,11 @@ class FixtureDataTest(TestCase):
         frank = self.user.to_ota_restore_user()
         sammy = CommCareUser.create(self.domain, 'sammy', '***').to_ota_restore_user()
 
-        fixtures = call_fixture_generator(fixturegenerators.item_lists, frank)
+        fixtures = call_fixture_generator(frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
         self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET + '/' + self.domain))
 
-        fixtures = [ElementTree.fromstring(f) if isinstance(f, bytes) else f
-            for f in call_fixture_generator(fixturegenerators.item_lists, sammy)]
+        fixtures = call_fixture_generator(sammy)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
 
     def make_data_type(self, name, is_global):
@@ -391,7 +395,7 @@ class TestFixtureOrdering(TestCase):
         super(TestFixtureOrdering, cls).tearDownClass()
 
     def test_fixture_order(self):
-        (fixture,) = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        (fixture,) = call_fixture_generator(self.user.to_ota_restore_user())
         rows = fixture.getchildren()[0].getchildren()
         actual_names = [row.getchildren()[0].text for row in rows]
         self.assertEqual(

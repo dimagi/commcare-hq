@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function
 from __future__ import unicode_literals, division
 
 import argparse
+import json
 import logging
 import sqlite3
 import subprocess
@@ -116,14 +117,15 @@ class CommandWithContext(object):
 
 
 class MigrationPool(object):
-    def __init__(self, max_size, callback):
+    def __init__(self, max_size, callback, stop_on_error=True):
         self.max_size = max_size
         self._pool = set()
         self.has_errors = False
         self.callback = callback
+        self.stop_on_error = stop_on_error
 
     def run(self, command, context):
-        if self.has_errors:
+        if self.has_errors and self.stop_on_error:
             return
 
         self.wait_for_capacity()
@@ -151,7 +153,8 @@ class Migrator(object):
     def __init__(self, db_path, source_db, source_host, source_user,
                  target_db, target_host, target_user,
                  start_date, end_date,
-                 start_table, only_table, confirm, dry_run):
+                 only_table, confirm, dry_run,
+                 stop_on_error):
         self.db_path = db_path
         self.source_db = source_db
         self.source_host = source_host
@@ -161,10 +164,12 @@ class Migrator(object):
         self.target_user = target_user
         self.start_date = start_date
         self.end_date = end_date
-        self.start_table = start_table
         self.only_table = only_table
         self.confirm = confirm
         self.dry_run = dry_run
+        self.stop_on_error = stop_on_error
+
+        self.error_log = 'icds_citus_migration_errors-{}.log'.format(datetime.utcnow().isoformat())
 
         self.db = Database(self.db_path)
 
@@ -182,12 +187,34 @@ class Migrator(object):
             if self.dry_run or _confirm('Preparing to migrate {} tables.'.format(len(tables))):
                 self.migrate_tables(tables, max_concurrent)
 
+    def write_error(self, context, ret_code, stdout, stderr):
+        stderr = stderr.decode()
+        try:
+            error, detail = stderr.splitlines()
+            error = error.split(':  ')[1]
+            detail = detail.split(':  ')[1]
+        except Exception:
+            error = None
+            detail = None
+
+        error_json = context.copy()
+        error_json.update({
+            'ret_code': ret_code,
+            'stdout': stdout.decode(),
+            'stderr': stderr,
+            'ERROR': error,
+            'DETAIL': detail,
+        })
+        with open(self.error_log, 'a') as out:
+            out.write('{}\n'.format(json.dumps(error_json)))
+
     def migrate_tables(self, tables, max_concurrent):
         table_sizes = None
         total_size = None
         progress = []
         completed = []
         total_tables = len(tables)
+        start_time = datetime.now()
 
         if not self.dry_run:
             table_sizes = get_table_sizes(self.source_db, self.source_host, self.source_user)
@@ -197,34 +224,58 @@ class Migrator(object):
                 total_size = sum([size for table, size in table_sizes.items() if table in source_tables])
 
         def _update_progress(context, ret_code, stdout, stderr):
-            completed.append(context['table'])
+            completed.append(context['source_table'])
             success = ret_code == 0
             print('{} {}'.format('[ERROR] ' if not success else '', context['cmd']))
             if stdout:
                 print(stdout.decode())
             if stderr:
                 print(stderr.decode())
-            if success:
-                self.db.mark_migrated([context['table']])
+            if not success:
+                self.write_error(context, ret_code, stdout, stderr)
+            else:
+                self.db.mark_migrated([context['source_table']])
+                table_progress = len(completed) + 1
+                elapsed = datetime.now() - start_time
                 if table_sizes:
                     progress.append(context['size'])
                     data_progress = sum(progress)
-                    table_progress = len(completed) + 1
-                    print('\nProgress: {:.1f}% data ({} of {}), {:.1f}% tables ({} of {})\n'.format(
-                        (100 * float(data_progress) / total_size) if total_size else 100,
-                        data_progress, total_size,
-                        100 * float(table_progress) / total_tables,
-                        table_progress, total_tables,
-                    ))
+                    remaining = elapsed // data_progress * total_size if data_progress else 'unknown'
+                    print(
+                        '\nProgress: {data_percent:.1f}% data ({data_progress} of {data_total}), '
+                        '{tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                        'in {elapsed} ({remaining} remaining)\n'.format(
+                            data_percent=(100 * float(data_progress) / total_size) if total_size else 100,
+                            data_progress=data_progress,
+                            data_total=total_size,
+                            tables_percent=100 * float(table_progress) / total_tables,
+                            tables_progress=table_progress,
+                            tables_total=total_tables,
+                            elapsed=elapsed,
+                            remaining=remaining
+                        )
+                    )
+                else:
+                    print(
+                        '\nProgress: {tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                        'in {elapsed}\n'.format(
+                            tables_percent=100 * float(table_progress) / total_tables,
+                            tables_progress=table_progress,
+                            tables_total=total_tables,
+                            elapsed=elapsed,
+                        )
+                    )
 
         commands = self.get_dump_load_commands(tables)
 
-        pool = MigrationPool(max_concurrent, _update_progress)
+        pool = MigrationPool(max_concurrent, _update_progress, stop_on_error=self.stop_on_error)
         for table_index, [source_table, target_table, cmd] in enumerate(commands):
-            if not self.dry_run and (not self.confirm or _confirm('Migrate {} to {}'.format(source_table, target_table))):
+            confirm_msg = 'Migrate {} to {}'.format(source_table, target_table)
+            if not self.dry_run and (not self.confirm or _confirm(confirm_msg)):
                 pool.run(cmd, {
                     'cmd': cmd,
-                    'table': source_table,
+                    'source_table': source_table,
+                    'target_table': target_table,
                     'size': table_sizes[source_table] if table_sizes else 0
                 })
             else:
@@ -253,7 +304,7 @@ def get_table_sizes(source_db, source_host, source_user):
     try:
         from sqlalchemy import create_engine
     except ImportError:
-        print('sqlalchemy not installed. Progress not supported.')
+        print('\nsqlalchemy not installed. Progress not supported.\n')
         return
 
     engine = create_engine("postgresql://{}:@{}/{}".format(source_user, source_host, source_db))
@@ -291,11 +342,13 @@ def main():
     parser.add_argument('--end-date', type=parse_date, help=(
         'Only migrate tables with date before this date. Format YYYY-MM-DD'
     ))
-    parser.add_argument('--start-after-table', help='Skip all tables up to and including this one')
     parser.add_argument('--table', help='Only migrate this table')
     parser.add_argument('--confirm', action='store_true', help='Confirm before each table.')
     parser.add_argument('--dry-run', action='store_true', help='Only output the commands.')
     parser.add_argument('--parallel', type=int, default=1, help='How many commands to run in parallel')
+    parser.add_argument('--no-stop-on-error', action='store_true', help=(
+        'Do not stop the migration if an error is encountered'
+    ))
 
     args = parser.parse_args()
 
@@ -303,7 +356,8 @@ def main():
         args.db_path, args.source_db, args.source_host, args.source_user,
         args.target_db, args.target_host, args.target_user,
         args.start_date, args.end_date,
-        args.start_after_table, args.table, args.confirm, args.dry_run
+        args.table, args.confirm, args.dry_run,
+        not args.no_stop_on_error
     )
     migrator.run(args.parallel)
 

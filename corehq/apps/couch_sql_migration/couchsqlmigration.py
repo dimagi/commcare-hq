@@ -57,7 +57,11 @@ from corehq.form_processor.models import (
     XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
-from corehq.form_processor.utils import adjust_datetimes, should_use_sql_backend
+from corehq.form_processor.utils import (
+    adjust_datetimes,
+    extract_meta_user_id,
+    should_use_sql_backend,
+)
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
@@ -236,25 +240,31 @@ class CouchSqlDomainMigrator(object):
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
-    def _migrate_form_and_associated_models(self, couch_form):
-        sql_form = _migrate_form(self.domain, couch_form)
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
+        """
+        Copies `couch_form` into a new sql form
+        """
+        if form_is_processed:
+            form_data = couch_form.form
+            with force_phone_timezones_should_be_processed():
+                adjust_datetimes(form_data)
+            xmlns = form_data.get("@xmlns", "")
+            user_id = extract_meta_user_id(form_data)
+        else:
+            xmlns = couch_form.xmlns
+            user_id = couch_form.user_id
+        sql_form = XFormInstanceSQL(
+            form_id=couch_form.form_id,
+            domain=self.domain,
+            xmlns=xmlns,
+            user_id=user_id,
+        )
+        _copy_form_properties(sql_form, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
-
-        self._save_diffs(couch_form, sql_form)
-
-        case_stock_result = None
-        if sql_form.initial_processing_complete:
-            case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
-            if len(case_stock_result.case_models):
-                touch_updates = [
-                    update for update in get_case_updates(couch_form)
-                    if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
-                ]
-                if len(touch_updates):
-                    # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
-                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
-
+        if couch_form.doc_type != 'SubmissionErrorLog':
+            self._save_diffs(couch_form, sql_form)
+        case_stock_result = self._get_case_stock_result(sql_form, couch_form) if form_is_processed else None
         _save_migrated_models(sql_form, case_stock_result)
 
     def _save_diffs(self, couch_form, sql_form):
@@ -266,6 +276,20 @@ class CouchSqlDomainMigrator(object):
             couch_form.doc_type, couch_form.form_id,
             filter_form_diffs(couch_form_json, sql_form_json, diffs)
         )
+
+    def _get_case_stock_result(self, sql_form, couch_form):
+        case_stock_result = None
+        if sql_form.initial_processing_complete:
+            case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+            if len(case_stock_result.case_models):
+                touch_updates = [
+                    update for update in get_case_updates(couch_form)
+                    if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
+                ]
+                if len(touch_updates):
+                    # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
+                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
+        return case_stock_result
 
     def _copy_unprocessed_forms(self):
         pool = Pool(10)
@@ -288,20 +312,7 @@ class CouchSqlDomainMigrator(object):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         try:
             couch_form = _wrap_form(couch_form_json)
-            sql_form = XFormInstanceSQL(
-                form_id=couch_form.form_id,
-                xmlns=couch_form.xmlns,
-                user_id=couch_form.user_id,
-            )
-            _copy_form_properties(self.domain, sql_form, couch_form)
-            _migrate_form_attachments(sql_form, couch_form)
-            _migrate_form_operations(sql_form, couch_form)
-
-            if couch_form.doc_type != 'SubmissionErrorLog':
-                self._save_diffs(couch_form, sql_form)
-
-            _save_migrated_models(sql_form)
-
+            self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
             self.processed_docs += 1
             self._log_unprocessed_forms_processed_count(throttled=True)
         except Exception:
@@ -555,28 +566,8 @@ def _wrap_form(doc):
         return XFormInstance.wrap(doc)
 
 
-def _migrate_form(domain, couch_form):
-    """
-    This copies the couch form into a new sql form but does not save it.
-
-    See form_processor.parsers.form._create_new_xform
-    and SubmissionPost._set_submission_properties for what this should do.
-    """
-    interface = FormProcessorInterface(domain)
-
-    form_data = couch_form.form
-    with force_phone_timezones_should_be_processed():
-        adjust_datetimes(form_data)
-    sql_form = interface.new_xform(form_data)
-    sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
-    if sql_form.xmlns is None:
-        sql_form.xmlns = ''
-    return _copy_form_properties(domain, sql_form, couch_form)
-
-
-def _copy_form_properties(domain, sql_form, couch_form):
+def _copy_form_properties(sql_form, couch_form):
     assert isinstance(sql_form, XFormInstanceSQL)
-    sql_form.domain = domain
 
     # submission properties
     sql_form.auth_context = couch_form.auth_context

@@ -681,7 +681,7 @@ def undo_remove_web_user(request, domain, record_id):
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
-    role_data = json.loads(request.body)
+    role_data = json.loads(request.body.decode('utf-8'))
     role_data = dict(
         (p, role_data[p])
         for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
@@ -729,7 +729,7 @@ def post_user_role(request, domain):
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
-    role_data = json.loads(request.body)
+    role_data = json.loads(request.body.decode('utf-8'))
     try:
         role = UserRole.get(role_data["_id"])
     except ResourceNotFound:

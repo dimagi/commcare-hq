@@ -443,7 +443,7 @@ class AddSavedReportConfigView(View):
 
     @property
     def post_data(self):
-        return json.loads(self.request.body)
+        return json.loads(self.request.body.decode('utf-8'))
 
     @property
     def user_id(self):

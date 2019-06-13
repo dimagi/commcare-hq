@@ -16,6 +16,7 @@ import polib
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.translations.forms import (
@@ -490,3 +491,9 @@ class DownloadTranslations(BaseTranslationsView):
                                             'You should receive an email shortly.'))
                 return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
+
+
+@login_and_domain_required
+def delete_translation_blacklist(request, domain, pk):
+    TransifexBlacklist.objects.filter(domain=domain, pk=pk).delete()
+    return redirect(BlacklistTranslations.urlname, domain=domain)
