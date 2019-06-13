@@ -92,11 +92,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-s', '--source-db-alias', default='icds-ucr',
-            help='Django alias for source database'
+            help='Engine ID for source database'
         )
         parser.add_argument(
             '-t', '--target-db-alias', default='icds-ucr-citus',
-            help='Django alias for target database'
+            help='Engine ID for target database'
         )
         parser.add_argument(
             '--dry-run',
