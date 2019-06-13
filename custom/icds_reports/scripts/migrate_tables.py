@@ -243,20 +243,29 @@ class Migrator(object):
                     data_progress = sum(progress)
                     remaining = elapsed // data_progress * total_size if data_progress else 'unknown'
                     print(
-                        '\nProgress: {:.1f}% data ({} of {}), '
-                        '{:.1f}% tables ({} of {}) in {} ({} remaining)\n'.format(
-                            (100 * float(data_progress) / total_size) if total_size else 100,
-                            data_progress, total_size,
-                            100 * float(table_progress) / total_tables,
-                            table_progress, total_tables,
-                            elapsed, remaining
+                        '\nProgress: {data_percent:.1f}% data ({data_progress} of {data_total}), '
+                        '{tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                        'in {elapsed} ({remaining} remaining)\n'.format(
+                            data_percent=(100 * float(data_progress) / total_size) if total_size else 100,
+                            data_progress=data_progress,
+                            data_total=total_size,
+                            tables_percent=100 * float(table_progress) / total_tables,
+                            tables_progress=table_progress,
+                            tables_total=total_tables,
+                            elapsed=elapsed,
+                            remaining=remaining
                         )
                     )
                 else:
-                    print('\nProgress: {:.1f}% tables ({} of {}) in {}\n'.format(
-                        100 * float(table_progress) / total_tables,
-                        table_progress, total_tables, elapsed
-                    ))
+                    print(
+                        '\nProgress: {tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                        'in {elapsed}\n'.format(
+                            tables_percent=100 * float(table_progress) / total_tables,
+                            tables_progress=table_progress,
+                            tables_total=total_tables,
+                            elapsed=elapsed,
+                        )
+                    )
 
         commands = self.get_dump_load_commands(tables)
 
