@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import hashlib
 import itertools
-from contextlib import contextmanager
 
 import boto3
 from botocore.client import Config
@@ -15,8 +14,10 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.s3db import BlobStream, get_file_size, is_not_found
+from corehq.blobs.models import KeyBucketMapping
+from corehq.blobs.s3db import BlobStream, get_file_size, is_not_found, maybe_not_found
 from corehq.blobs.util import check_safe_key
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_bucket_timer, datadog_counter
 
 DEFAULT_S3_BUCKET = "blobdb"
@@ -78,57 +79,25 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
             self.metadb.put(meta)
             with self.report_timing('put', meta.key):
                 s3_bucket.upload_fileobj(content, meta.key)
+        KeyBucketMapping.objects.create(key=meta.key, bucket=s3_bucket.name)
         return meta
 
     def get(self, key):
         check_safe_key(key)
-        with self.report_timing('get', key):
-            try:
-                resp = self._s3_bucket(key).Object(key).get()
-            except ClientError as err:
-                if not is_not_found(err):
-                    raise
-                try:
-                    resp = self._s3_bucket().Object(key).get()
-                except ClientError as err:
-                    if not is_not_found(err):
-                        raise
-                    datadog_counter('commcare.blobdb.notfound')
-                    raise NotFound(key)
+        with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
+            resp = self._s3_bucket(key).Object(key).get()
         return BlobStream(resp["Body"], self, key)
 
     def size(self, key):
         check_safe_key(key)
-        with self.report_timing('size', key):
-            try:
-                return self._s3_bucket(key).Object(key).content_length
-            except ClientError as err:
-                if not is_not_found(err):
-                    raise
-            try:
-                return self._s3_bucket().Object(key).content_length
-            except ClientError as err:
-                if not is_not_found(err):
-                    raise
-                datadog_counter('commcare.blobdb.notfound')
-                raise NotFound(key)
+        with maybe_not_found(throw=NotFound(key)), self.report_timing('size', key):
+            return self._s3_bucket(key).Object(key).content_length
 
     def exists(self, key):
         check_safe_key(key)
         try:
-            with self.report_timing('exists', key):
-                try:
-                    return self._s3_bucket(key).Object(key).load()
-                except ClientError as err:
-                    if not is_not_found(err):
-                        raise
-                try:
-                    return self._s3_bucket().Object(key).load()
-                except ClientError as err:
-                    if not is_not_found(err):
-                        raise
-                    datadog_counter('commcare.blobdb.notfound')
-                    raise NotFound(key)
+            with maybe_not_found(throw=NotFound(key)), self.report_timing('exists', key):
+                self._s3_bucket(key).Object(key).load()
             return True
         except NotFound:
             return False
@@ -137,26 +106,12 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
         deleted_bytes = 0
         check_safe_key(key)
         success = False
-        with self.report_timing('delete', key):
-            try:
-                obj = self._s3_bucket(key).Object(key)
-                # may raise a not found error -> return False
-                deleted_bytes = obj.content_length
-                obj.delete()
-                success = True
-            except ClientError as err:
-                if not is_not_found(err):
-                    raise
-                try:
-                    obj = self._s3_bucket().Object(key)
-                    # may raise a not found error -> return False
-                    deleted_bytes = obj.content_length
-                    obj.delete()
-                    success = True
-                except ClientError as err:
-                    if not is_not_found(err):
-                        raise
-                    datadog_counter('commcare.blobdb.notfound')
+        with maybe_not_found(), self.report_timing('delete', key):
+            obj = self._s3_bucket(key).Object(key)
+            # may raise a not found error -> return False
+            deleted_bytes = obj.content_length
+            obj.delete()
+            success = True
         self.metadb.delete(key, deleted_bytes)
         return success
 
@@ -178,9 +133,9 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
         with self.report_timing('copy_blobdb', key):
             self._s3_bucket(key, create=True).upload_fileobj(content, key)
 
-    def _s3_bucket(self, key=None, create=False):
-        if key is None:
-            bucket_name = '__default__'
+    def _s3_bucket(self, key, create=False):
+        if create is True:
+            bucket_name = self._generate_bucket_name(key)
         else:
             bucket_name = self._get_bucket(key)
 
@@ -201,5 +156,12 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
 
         return self.db.Bucket(bucket_name)
 
-    def _get_bucket(self, key):
+    def _generate_bucket_name(self, key):
         return hashlib.md5(key.encode())[:3]
+
+    def _get_bucket(self, key):
+        db_alias = get_db_aliases_for_partitioned_query(key)
+        key_bucket = KeyBucketMapping.objects.using(db_alias).filter(key=key).first()
+        if key_bucket:
+            return key_bucket.bucket
+        return "__default__"
