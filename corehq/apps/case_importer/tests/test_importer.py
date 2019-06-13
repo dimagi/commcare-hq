@@ -442,10 +442,10 @@ class ImporterTest(TestCase):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
                 restrict_user_to_location(self, dsa):
             res = self.import_mock_file([
-                ['case_id', 'name',             'owner_id'  ],
-                ['',        'Leonard Nimoy',    inc.group_id],
-                ['',        'Kapil Dev',        dsi.group_id],
-                ['',        'Quinton Fortune',  dsa.group_id],
+                ['case_id', 'name',             'owner_id'],  # noqa: E241
+                ['',        'Leonard Nimoy',    inc.group_id],  # noqa: E241
+                ['',        'Kapil Dev',        dsi.group_id],  # noqa: E241
+                ['',        'Quinton Fortune',  dsa.group_id],  # noqa: E241
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
@@ -454,7 +454,7 @@ class ImporterTest(TestCase):
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
         error_col = None
-        self.assertEqual(res['errors'][error_message ][error_col]['rows'], [2, 3])
+        self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
 
     def test_user_can_access_owner(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
@@ -464,10 +464,10 @@ class ImporterTest(TestCase):
             dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
 
             res = self.import_mock_file([
-                ['case_id', 'name',             'owner_id'   ],
-                ['',        'Leonard Nimoy',    inc_owner._id],
-                ['',        'Kapil Dev',        dsi_owner._id],
-                ['',        'Quinton Fortune',  dsa_owner._id],
+                ['case_id', 'name',             'owner_id'],  # noqa: E241
+                ['',        'Leonard Nimoy',    inc_owner._id],  # noqa: E241
+                ['',        'Kapil Dev',        dsi_owner._id],  # noqa: E241
+                ['',        'Quinton Fortune',  dsa_owner._id],  # noqa: E241
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
@@ -476,7 +476,7 @@ class ImporterTest(TestCase):
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
         error_col = None
-        self.assertEqual(res['errors'][error_message ][error_col]['rows'], [2, 3])
+        self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
 
 
 def make_worksheet_wrapper(*rows):
