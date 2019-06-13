@@ -64,31 +64,16 @@ def get_form_inferred_schema(domain, app_id, xmlns):
     return FormInferredSchema.wrap(result['doc']) if result else None
 
 
-def get_form_export_instances(domain):
-    from .models import FormExportInstance
-    key = [domain, 'FormExportInstance']
-    return _get_export_instance(FormExportInstance, key)
-
-
-def get_case_export_instances(domain):
+def get_case_exports_by_domain(domain):
     from .models import CaseExportInstance
     key = [domain, 'CaseExportInstance']
     return _get_export_instance(CaseExportInstance, key)
 
 
-def _get_saved_exports(domain, has_deid_permissions, new_exports_getter):
-    exports = new_exports_getter(domain)
-    if not has_deid_permissions:
-        exports = [e for e in exports if not e.is_safe]
-    return exports
-
-
-def get_case_exports_by_domain(domain, has_deid_permissions):
-    return _get_saved_exports(domain, has_deid_permissions, get_case_export_instances)
-
-
-def get_form_exports_by_domain(domain, has_deid_permissions):
-    return _get_saved_exports(domain, has_deid_permissions, get_form_export_instances)
+def get_form_exports_by_domain(domain):
+    from .models import FormExportInstance
+    key = [domain, 'FormExportInstance']
+    return _get_export_instance(FormExportInstance, key)
 
 
 def get_brief_exports(domain, form_or_case=None):
