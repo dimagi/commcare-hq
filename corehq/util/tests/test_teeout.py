@@ -6,12 +6,14 @@ import sys
 from contextlib import contextmanager
 from io import StringIO
 import six
+
 from django.test import SimpleTestCase
 
 from corehq.util.teeout import tee_output
 from testil import assert_raises, replattr, eq
 
 
+# Workaround for https://api.travis-ci.org/v3/job/545327504/log.txt
 class TestTee(SimpleTestCase):
 
     def test_tee_output(self):
@@ -20,12 +22,8 @@ class TestTee(SimpleTestCase):
             print("testing...")
             sys.stderr.write("fail.\n")
             raise Error("stop")
-        eq(fake.stdout_text, "testing...\n")
-        fail = fake.stderr_text
-        print('fail:')
-        print(fail)
-        print(fail.split('\n'))
-        eq(fail, "fail.\n")
+        eq(fake.stdout.getvalue(), "testing...\n")
+        eq(fake.stderr.getvalue(), "fail.\n")
         eq(sanitize_tb(fileobj.getvalue()),
             "testing...\n"
             "fail.\n"
@@ -61,16 +59,8 @@ def stdfake():
     class fake(object):
         stdout = StringIO()
         stderr = StringIO()
-        stdout_text = None
-        stderr_text = None
-    try:
-        with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):
-            yield fake
-    finally:
-        fake.stdout_text = fake.stdout.getvalue()
-        fake.stderr_text = fake.stderr.getvalue()
-        fake.stdout.close()
-        fake.stderr.close()
+    with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):
+        yield fake
 
 
 def sanitize_tb(value):
