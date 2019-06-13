@@ -191,11 +191,9 @@ class Migrator(object):
     def write_error(self, context, ret_code, stdout, stderr):
         stderr = stderr.decode()
         try:
-            lines = stderr.splitlines()
-            if len(lines) == 2:
-                error, detail = lines
-                error = error.split(':  ')[1]
-                detail = detail.split(':  ')[1]
+            error, detail = stderr.splitlines()
+            error = error.split(':  ')[1]
+            detail = detail.split(':  ')[1]
         except Exception:
             error = None
             detail = None
