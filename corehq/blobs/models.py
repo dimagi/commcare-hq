@@ -125,6 +125,29 @@ class DeletedBlobMeta(PartitionedModel, Model):
     deleted_on = DateTimeField()
 
 
+class KeyBucketMapping(PartitionedModel, Model):
+    """TODO: Fill in info about this being only used for bucketed s3"""
+
+    partition_attr = "key"
+    objects = RestrictedManager()
+
+    key = CharField(
+        max_length=255,
+        primary_key=True,
+        help_text="""Blob key in the external blob store.
+
+        See BlobMeta.key
+        """,
+    )
+    bucket = CharField(
+        max_length=63,
+        help_text="""S3 Bucket this blob is stored in""",
+    )
+
+    def __repr__(self):
+        return "<BlobMeta bucket={self.bucket} key={self.key}>".format(self=self)
+
+
 class BlobMigrationState(Model):
     slug = CharField(max_length=20, unique=True)
     timestamp = DateTimeField(auto_now=True)
