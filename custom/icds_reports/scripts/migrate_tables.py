@@ -63,7 +63,7 @@ class Database(object):
             filters.append("date < ?")
             params.append(end_date)
 
-        query = 'SELECT * FROM tables WHERE migrated is null'
+        query = 'SELECT * FROM tables WHERE migrated is null and errored is null'
         if filters:
             query += ' and ({})'.format(' and '.join(filters))
         return [
@@ -71,10 +71,10 @@ class Database(object):
             for row in self.execute(query, *params)
         ]
 
-    def mark_migrated(self, tables):
+    def mark_migrated(self, table, success):
         with self.db:
-            for table in tables:
-                self.db.execute('update tables set migrated = 1 where source_table = ?', [table])
+            field = 'migrated' if success else 'errored'
+            self.db.execute('update tables set {} = 1 where source_table = ?'.format(field), [table])
 
     def __enter__(self):
         self.db = sqlite3.connect(self.db_path)
@@ -233,6 +233,7 @@ class Migrator(object):
         def _update_progress(context, ret_code, stdout, stderr):
             completed.append(context['source_table'])
             success = ret_code == 0
+            self.db.mark_migrated([context['source_table']])
             print('{} {}'.format('[ERROR] ' if not success else '', context['cmd']))
             if stdout:
                 print(stdout.decode())
@@ -241,7 +242,6 @@ class Migrator(object):
             if not success:
                 self.write_error(context, ret_code, stdout, stderr)
             else:
-                self.db.mark_migrated([context['source_table']])
                 table_progress = len(completed) + 1
                 elapsed = datetime.now() - start_time
                 if table_sizes:
