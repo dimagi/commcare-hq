@@ -987,7 +987,7 @@ class TestFactSheetReportDemographics(TestCase):
                 },
                 'data': [
                     {'html': 'Number of Households'},
-                    {'html': 6964, 'sort_key': 6964},
+                    {'html': 6951, 'sort_key': 6951},
                     {'html': 6964, 'sort_key': 6964},
                     {'html': 0}
                 ],
