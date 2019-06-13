@@ -368,8 +368,6 @@ class CustomerAccountInvoiceFactory(object):
             date_start=self.date_start,
             date_end=self.date_end
         )
-        if not is_new_invoice:
-            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
 
         all_subscriptions = []
         for plan in self.subscriptions:

@@ -9,6 +9,9 @@ from corehq.apps.accounting.invoicing import should_create_invoice
 from corehq.apps.accounting.models import CustomerInvoice
 from six.moves import input
 
+from corehq.apps.accounting.invoicing import CustomerAccountInvoiceFactory
+
+
 class Command(BaseCommand):
     help = 'find customer invoice without subscriptions details and correct the data'
 
@@ -17,9 +20,13 @@ class Command(BaseCommand):
         self.permit_invoice_to_change(invoices)
 
         for invoice in invoices:
-            invoice_subs = self.get_invoice_subscriptions(invoice)
-            invoice.subscriptions.set(invoice_subs)
-            invoice.save()
+            invoice_factory = CustomerAccountInvoiceFactory(
+                account=invoice.account,
+                date_start=invoice.date_start,
+                date_end=invoice.date_end
+            )
+            invoice_factory.create_invoice()
+
         print("Updated Invoices")
 
     def permit_invoice_to_change(self, invoices):
