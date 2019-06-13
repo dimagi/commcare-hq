@@ -101,7 +101,6 @@ class S3BlobDB(AbstractBlobDB):
         check_safe_key(key)
         success = False
         with maybe_not_found(), self.report_timing('delete', key):
-            success = True
             obj = self._s3_bucket().Object(key)
             # may raise a not found error -> return False
             deleted_bytes = obj.content_length
