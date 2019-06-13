@@ -189,13 +189,19 @@ class Migrator(object):
 
     def write_error(self, context, ret_code, stdout, stderr):
         stderr = stderr.decode()
+        error, detail, context_line = None, None, None
         try:
-            error, detail = stderr.splitlines()
-            error = error.split(':  ')[1]
-            detail = detail.split(':  ')[1]
+            lines = stderr.splitlines()
+            if len(lines) == 2:
+                error, detail = lines
+            elif len(lines) == 3:
+                error, detail, context_line = lines
+
+            error = error.split(':  ')[1] if error else None
+            detail = detail.split(':  ')[1] if detail else None
+            context_line = context_line.split(':  ')[1] if context_line else None
         except Exception:
-            error = None
-            detail = None
+            pass
 
         error_json = context.copy()
         error_json.update({
@@ -204,6 +210,7 @@ class Migrator(object):
             'stderr': stderr,
             'ERROR': error,
             'DETAIL': detail,
+            'CONTEXT': context_line
         })
         with open(self.error_log, 'a') as out:
             out.write('{}\n'.format(json.dumps(error_json)))
