@@ -439,18 +439,13 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
 
     def test_user_can_access_location(self):
-        loc_type = LocationType.objects.create(domain=self.domain, name='loc_type', shares_cases=True)
-        dimagi = make_loc('dimagi', 'Dimagi', self.domain, loc_type.code)
-        inc = make_loc('inc', 'Inc', self.domain, loc_type.code, parent=dimagi)
-        dsi = make_loc('dsi', 'DSI', self.domain, loc_type.code, parent=dimagi)
-        dsa = make_loc('dsa', 'DSA', self.domain, loc_type.code, parent=dimagi)
-
-        with restrict_user_to_location(self, dsa):
+        with make_business_units(self.domain) as (inc, dsi, dsa), \
+                restrict_user_to_location(self, dsa):
             res = self.import_mock_file([
-                ['case_id', 'name',             'owner_id'  ],  # row 1
-                ['',        'Leonard Nimoy',    inc.group_id],  # row 2 should fail
-                ['',        'Kapil Dev',        dsi.group_id],  # row 3 should fail
-                ['',        'Quinton Fortune',  dsa.group_id],  # row 4 should succeed
+                ['case_id', 'name',             'owner_id'  ],
+                ['',        'Leonard Nimoy',    inc.group_id],
+                ['',        'Kapil Dev',        dsi.group_id],
+                ['',        'Quinton Fortune',  dsa.group_id],
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
@@ -462,22 +457,17 @@ class ImporterTest(TestCase):
         self.assertEqual(res['errors'][error_message ][error_col]['rows'], [2, 3])
 
     def test_user_can_access_owner(self):
-        loc_type = LocationType.objects.create(domain=self.domain, name='loc_type', shares_cases=True)
-        dimagi = make_loc('dimagi', 'Dimagi', self.domain, loc_type.code)
-        inc = make_loc('inc', 'Inc', self.domain, loc_type.code, parent=dimagi)
-        dsi = make_loc('dsi', 'DSI', self.domain, loc_type.code, parent=dimagi)
-        dsa = make_loc('dsa', 'DSA', self.domain, loc_type.code, parent=dimagi)
+        with make_business_units(self.domain) as (inc, dsi, dsa), \
+                restrict_user_to_location(self, dsa):
+            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
+            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
+            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
 
-        inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
-        dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
-        dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
-
-        with restrict_user_to_location(self, dsa):
             res = self.import_mock_file([
-                ['case_id', 'name',             'owner_id'   ],  # row 1
-                ['',        'Leonard Nimoy',    inc_owner._id],  # row 2 should fail
-                ['',        'Kapil Dev',        dsi_owner._id],  # row 3 should fail
-                ['',        'Quinton Fortune',  dsa_owner._id],  # row 4 should succeed
+                ['case_id', 'name',             'owner_id'   ],
+                ['',        'Leonard Nimoy',    inc_owner._id],
+                ['',        'Kapil Dev',        dsi_owner._id],
+                ['',        'Quinton Fortune',  dsa_owner._id],
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
@@ -516,3 +506,17 @@ def restrict_user_to_location(test_case, location):
         test_case.couch_user = orig_user
         restricted_user.delete()
         role.delete()
+
+
+@contextmanager
+def make_business_units(domain, shares_cases=True):
+        bu = LocationType.objects.create(domain=domain, name='bu', shares_cases=shares_cases)
+        dimagi = make_loc('dimagi', 'Dimagi', domain, bu.code)
+        inc = make_loc('inc', 'Inc', domain, bu.code, parent=dimagi)
+        dsi = make_loc('dsi', 'DSI', domain, bu.code, parent=dimagi)
+        dsa = make_loc('dsa', 'DSA', domain, bu.code, parent=dimagi)
+        try:
+            yield inc, dsi, dsa
+        finally:
+            for obj in dsa, dsi, inc, dimagi, bu:
+                obj.delete()
