@@ -145,6 +145,10 @@ class EnterpriseWebUserReport(EnterpriseReport):
         for user in get_all_user_rows(domain_obj.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
             user = CouchUser.wrap_correctly(user['doc'])
+            domain_membership = user.get_domain_membership(domain_obj.name)
+            last_accessed_domain = None
+            if domain_membership:
+                last_accessed_domain = domain_membership.last_accessed
             rows.append(
                 [
                     user.full_name,
@@ -153,7 +157,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     self.format_date(user.last_login),
                 ]
                 + self.domain_properties(domain_obj)
-                + [user.get_domain_membership(domain_obj.name).last_accessed])
+                + [last_accessed_domain])
         return rows
 
     def total_for_domain(self, domain_obj):

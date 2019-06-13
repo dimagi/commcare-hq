@@ -297,4 +297,7 @@ def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id, domain)
     domain_membership = user.get_domain_membership(domain)
-    domain_membership.last_accessed = datetime.today().date()
+    if domain_membership:
+        domain_membership.last_accessed = datetime.today().date()
+    else:
+        logger.error("DomainMembership does not exist for user %s in domain %s" % (user.name, domain))
