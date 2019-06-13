@@ -58,15 +58,15 @@
                              [--start-date START_DATE] [--end-date END_DATE]
                              [--start-after-table START_AFTER_TABLE]
                              [--table TABLE] [--confirm] [--dry-run]
-                             [--parallel PARALLEL]
+                             [--parallel PARALLEL] [--no-stop-on-error]
                              db_path
-
+    
     Migrate DB tables from one DB to another using pg_dump. Compainion to
     custom/icds_reports/management_commands/generate_migration_tables.py
-
+    
     positional arguments:
       db_path               Path to sqlite DB containing list of tables to migrate
-
+    
     optional arguments:
       -h, --help            show this help message and exit
       -D SOURCE_DB, --source-db SOURCE_DB
@@ -93,6 +93,7 @@
       --confirm             Confirm before each table.
       --dry-run             Only output the commands.
       --parallel PARALLEL   How many commands to run in parallel
+      --no-stop-on-error    Do not stop the migration if an error is encountered
     ```
 
     Notes:
