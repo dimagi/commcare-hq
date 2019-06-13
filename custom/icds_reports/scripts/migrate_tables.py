@@ -237,7 +237,7 @@ class Migrator(object):
         def _update_progress(context, ret_code, stdout, stderr):
             completed.append(context['source_table'])
             success = ret_code == 0
-            self.db.mark_migrated([context['source_table']])
+            self.db.mark_migrated(context['source_table'], success)
             print('{} {}'.format('[ERROR] ' if not success else '', context['cmd']))
             if stdout:
                 print(stdout.decode())
