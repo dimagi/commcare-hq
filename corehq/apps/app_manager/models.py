@@ -87,6 +87,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_built_app_ids_for_app_id_descending,
     get_latest_build_doc,
     get_latest_released_app_doc,
     get_build_by_version,
@@ -5609,20 +5610,31 @@ class LinkedApplication(Application):
             return get_master_app_briefs(self.domain_link)
         return []
 
-    def get_master_version(self):
+    def get_master_version(self, master_app_id):
         if self.domain_link:
-            return get_master_app_version(self.domain_link, self.master)
+            return get_master_app_version(self.domain_link, master_app_id)
 
     @property
     def master_is_remote(self):
         if self.domain_link:
             return self.domain_link.is_remote
 
-    def get_latest_master_release(self):
+    def get_latest_master_release(self, master_app_id):
         if self.domain_link:
-            return get_latest_master_app_release(self.domain_link, self.master)
+            return get_latest_master_app_release(self.domain_link, master_app_id)
         else:
             raise ActionNotPermitted
+
+    @memoized
+    def get_previous_version(self, master_app_id=None):
+        if master_app_id is None:
+            master_app_id = self.pulled_from_master_app_id
+        build_ids = get_built_app_ids_for_app_id_descending(self.domain, self.master_id)
+        for build_id in build_ids:
+            build_doc = Application.get_db().get(build_id)
+            if build_doc.get('pulled_from_master_app_id', build_doc['master']) == master_app_id:
+                return self.wrap(build_doc)
+        return None
 
     @classmethod
     def wrap(cls, data):
