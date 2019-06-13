@@ -22,7 +22,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED, LOCATION_SAFE_CASE_IMPORTS
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.datadog.utils import case_load_counter
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
@@ -98,10 +98,7 @@ class _Importer(object):
             else:
                 caseblock = row.get_update_caseblock()
                 self.results.add_updated(row_num)
-            if (
-                    LOCATION_SAFE_CASE_IMPORTS.enabled(self.domain)
-                    and not self.user_can_access_owner_location(caseblock)
-            ):
+            if not self.user_can_access_owner_location(caseblock):
                 raise exceptions.InvalidLocation()
         except CaseBlockError:
             raise exceptions.CaseGeneration()
@@ -128,7 +125,7 @@ class _Importer(object):
             return True
 
         owner = CouchUser.get_by_user_id(caseblock.owner_id)
-        if owner and owner.get_location_id() in self.location_ids_accessible_to_user:
+        if owner and owner.get_location_id(self.domain) in self.location_ids_accessible_to_user:
             return True
 
         return False
