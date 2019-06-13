@@ -9,8 +9,10 @@ from corehq.apps.case_importer.tracking.dbaccessors import (
 )
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.data_interfaces.views import DataInterfaceSection
+from corehq.apps.locations.permissions import location_safe
 
 
+@location_safe
 class ImportCases(DataInterface):
     name = ugettext_lazy("Import Cases from Excel")
     slug = "import_cases"

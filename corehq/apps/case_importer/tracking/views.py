@@ -29,10 +29,12 @@ from corehq.apps.case_importer.tracking.permissions import (
     user_may_view_file_upload,
 )
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.locations.permissions import location_safe
 from corehq.util.view_utils import set_file_download
 
 
 @require_can_edit_data
+@location_safe
 def case_uploads(request, domain):
     try:
         limit = int(request.GET.get('limit'))
@@ -58,6 +60,7 @@ def case_uploads(request, domain):
 
 
 @require_can_edit_data
+@location_safe
 def update_case_upload_comment(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
@@ -80,6 +83,7 @@ def update_case_upload_comment(request, domain, upload_id):
 
 
 @require_can_edit_data
+@location_safe
 def case_upload_file(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
@@ -96,6 +100,7 @@ def case_upload_file(request, domain, upload_id):
 
 
 @require_can_edit_data
+@location_safe
 def case_upload_form_ids(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
@@ -109,6 +114,7 @@ def case_upload_form_ids(request, domain, upload_id):
 
 
 @require_can_edit_data
+@location_safe
 def case_upload_case_ids(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)

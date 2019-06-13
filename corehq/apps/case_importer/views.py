@@ -21,6 +21,7 @@ from corehq.apps.case_importer.suggested_fields import (
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
@@ -61,6 +62,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
 
 
 @require_can_edit_data
+@location_safe
 def excel_config(request, domain):
     """
     Step one of three.
@@ -150,6 +152,7 @@ def excel_config(request, domain):
 
 @require_POST
 @require_can_edit_data
+@location_safe
 def excel_fields(request, domain):
     """
     Step two of three.
@@ -227,6 +230,7 @@ def excel_fields(request, domain):
 
 @require_POST
 @require_can_edit_data
+@location_safe
 def excel_commit(request, domain):
     """
     Step three of three.
