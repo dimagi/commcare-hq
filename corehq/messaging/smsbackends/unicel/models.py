@@ -80,9 +80,8 @@ class SQLUnicelBackend(SQLSMSBackend):
                   (OutboundParams.PASSWORD, config.password),
                   (OutboundParams.SENDER, config.sender)]
         try:
-            text = str(message.text)
-            # it's ascii
-            params.append((OutboundParams.MESSAGE, text))
+            text_as_ascii = message.text.encode('ascii')
+            params.append((OutboundParams.MESSAGE, text_as_ascii))
         except UnicodeEncodeError:
             params.extend(UNICODE_PARAMS)
             encoded = message.text.encode('utf_16_be').encode('hex').upper()

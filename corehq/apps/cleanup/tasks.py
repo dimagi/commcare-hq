@@ -22,7 +22,7 @@ from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns imp
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, FormReindexAccessor
 from corehq.sql_db.connections import ConnectionManager, UCR_ENGINE_ID
 from io import open
 
@@ -164,8 +164,11 @@ def _is_monday():
 def check_for_sql_cases_without_existing_domain():
     missing_domains_with_cases = set()
     for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
-        if CaseAccessorSQL.get_case_ids_in_domain(domain):
-            missing_domains_with_cases |= {domain}
+        accessor = CaseReindexAccessor(domain=domain, include_deleted=True)
+        for db_name in accessor.sql_db_aliases:
+            if accessor.get_doc_ids(db_name, limit=1):
+                missing_domains_with_cases |= {domain}
+                break
 
     if missing_domains_with_cases:
         mail_admins_async.delay(
@@ -182,9 +185,11 @@ def check_for_sql_cases_without_existing_domain():
 def check_for_sql_forms_without_existing_domain():
     missing_domains_with_forms = set()
     for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
-        for doc_type in doc_type_to_state:
-            if FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type):
+        accessor = FormReindexAccessor(domain=domain, include_deleted=True)
+        for db_name in accessor.sql_db_aliases:
+            if accessor.get_doc_ids(db_name, limit=1):
                 missing_domains_with_forms |= {domain}
+                break
 
     if missing_domains_with_forms:
         mail_admins_async.delay(

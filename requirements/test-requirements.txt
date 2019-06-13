@@ -22,6 +22,7 @@ git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#eg
 certifi==2019.3.9
 cffi==1.12.3
 chardet==3.0.4
+click==7.0                # via pip-tools
 cloudant==2.12.0
 commcaretranslationchecker==0.9.3.5
 concurrent-log-handler==0.9.12
@@ -113,6 +114,7 @@ pbr==5.2.0
 pdfrw==0.4
 phonenumberslite==8.10.10
 pillow==6.0.0
+pip-tools==3.8.0
 ply==3.11
 polib==1.1.0
 psycogreen==1.0.1

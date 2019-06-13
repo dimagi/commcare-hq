@@ -30,6 +30,11 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     PartiallyLockingQueue,
     get_diff_db,
 )
+from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
+    COMMIT,
+    MIGRATE,
+    RESET,
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -101,7 +106,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
     def _do_migration(self, domain):
         self.assertFalse(should_use_sql_backend(domain))
-        call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE, no_input=True)
 
     def _do_migration_and_assert_flags(self, domain):
         self._do_migration(domain)
@@ -559,7 +564,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
         clear_local_domain_sql_backend_override(self.domain_name)
-        call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT, no_input=True)
         self.assertTrue(Domain.get_by_name(self.domain_name).use_sql_backend)
 
     def test_v1_case(self):
@@ -639,13 +644,13 @@ class MigrationTestCase(BaseMigrationTestCase):
         call_command(
             'migrate_domain_from_couch_to_sql',
             self.domain_name,
-            MIGRATE=True,
+            MIGRATE,
             no_input=True,
             dry_run=True
         )
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.assertRaises(CommandError):
-            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
 
         xml = """<?xml version="1.0" ?>
@@ -664,7 +669,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         couch_form_ids = self._get_form_ids()
         self.assertEqual(1, len(couch_form_ids))
 
-        call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, RESET, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
 
     def test_case_forms_list_order(self):

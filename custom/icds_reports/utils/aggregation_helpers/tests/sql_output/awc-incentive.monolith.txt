@@ -44,10 +44,10 @@ DROP TABLE IF EXISTS "icds_db_aww_incentive_7a197ee47818209780c23ed9"
           INNER JOIN agg_ccs_record_monthly AS ccsm
           ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level
           WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
-          GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name, awcm.district_name,
-                   awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
-                   awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
-                   awcm.awc_days_open, awcm.is_launched
+          GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name,
+                awcm.district_name, awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
+                awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
+                awcm.awc_days_open, awcm.is_launched
         );
         /* update visits for cf cases (not in agg_ccs_record) */
         UPDATE "icds_db_aww_incentive_7a197ee47818209780c23ed9" perf
@@ -59,8 +59,13 @@ DROP TABLE IF EXISTS "icds_db_aww_incentive_7a197ee47818209780c23ed9"
              SUM(COALESCE(agg_cf.valid_visits, 0)) as valid,
              ucr.awc_id
              FROM "ucr_icds-cas_static-ccs_record_cases_cedcca39" ucr
-             LEFT OUTER JOIN "icds_dashboard_ccs_record_cf_forms" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(month)s
-             WHERE %(month)s - add BETWEEN 184 AND 548 AND (closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s) AND date_trunc('month', opened_on) <= %(month)s
+             LEFT OUTER JOIN "icds_dashboard_ccs_record_cf_forms" agg_cf ON ucr.doc_id = agg_cf.case_id
+                AND agg_cf.month = %(month)s
+             WHERE %(month)s - add BETWEEN 184 AND 548
+                AND (
+                    closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s
+                )
+                AND date_trunc('month', opened_on) <= %(month)s
              GROUP BY ucr.awc_id
              ) cf_data
         WHERE cf_data.awc_id = perf.awc_id

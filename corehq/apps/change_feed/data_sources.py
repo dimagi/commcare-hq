@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
+from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore, LOCATION_DOC_TYPE
 from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
@@ -79,6 +80,7 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
     * forms
     * cases
     * locations
+    * leddgers (V2 only)
     * all couch models
     """
     from corehq.apps.change_feed import document_types
@@ -90,6 +92,8 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
         load_counter = case_load_counter
     elif doc_type == LOCATION_DOC_TYPE:
         return ReadonlyLocationDocumentStore(domain)
+    elif doc_type == topics.LEDGER:
+        return ReadonlyLedgerV2DocumentStore(domain)
     else:
         # all other types still live in couchdb
         return CouchDocumentStore(

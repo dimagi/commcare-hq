@@ -30,6 +30,7 @@ keep_child_tables = [
     'agg_awc_daily',
     AWW_INCENTIVE_TABLE,
     ICDSAuditEntryRecord._meta.db_table,
+    AGG_INFRASTRUCTURE_TABLE,
 ]
 
 """
@@ -51,7 +52,6 @@ drop_child_tables = [
     'daily_attendance',
     'child_health_monthly',
     'ccs_record_monthly',
-    AGG_INFRASTRUCTURE_TABLE,
 ]
 
 """
@@ -92,11 +92,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '-s', '--source-db-alias', default='icds-ucr',
-            help='Django alias for source database'
+            help='Engine ID for source database'
         )
         parser.add_argument(
             '-t', '--target-db-alias', default='icds-ucr-citus',
-            help='Django alias for target database'
+            help='Engine ID for target database'
         )
         parser.add_argument(
             '--dry-run',
