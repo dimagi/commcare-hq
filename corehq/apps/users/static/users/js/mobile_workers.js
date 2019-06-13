@@ -360,8 +360,10 @@ hqDefine("users/js/mobile_workers", function () {
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
-            if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
-                return false;
+            if (self.useStrongPasswords()) {
+                if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
+                    return false;
+                }
             }
             var fieldData = self.stagedUser().custom_fields;
             if (_.isObject(fieldData) && !_.isArray(fieldData)) {
