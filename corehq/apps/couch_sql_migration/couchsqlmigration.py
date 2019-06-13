@@ -901,6 +901,11 @@ class AsyncFormProcessor(object):
         self.queues = PartiallyLockingQueue()
         return self
 
+    def __exit__(self, exc_type, exc, exc_tb):
+        if exc_type is None:
+            self._finish_processing_queues()
+        self.queues = self.pool = None
+
     def _rebuild_queues(self):
         prev_ids = self.queues.get_ids_from_run_timestamp()
         for chunked_ids in chunked(prev_ids, 100):
@@ -948,7 +953,7 @@ class AsyncFormProcessor(object):
                 break
             self.pool.spawn(self._async_migrate_form, new_wrapped_form)
 
-    def __exit__(self, *exc_info):
+    def _finish_processing_queues(self):
         update_interval = timedelta(seconds=10)
         next_check = datetime.now()
         pool = self.pool
@@ -967,8 +972,6 @@ class AsyncFormProcessor(object):
 
         while not pool.join(timeout=10):
             log.info('Waiting on {} docs'.format(len(pool)))
-
-        self.queues = self.pool = None
 
 
 class ProblemForm(Exception):
