@@ -15,7 +15,11 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         vm.locations = data.locations;
     });
     var now = moment();
-    now.subtract(1, 'months');
+    if (now.date() <= 7) {
+        now.subtract(2, 'months');
+    } else {
+        now.subtract(1, 'months');
+    }
 
     vm.selectedMonth = now.month() + 1;
     vm.selectedYear = now.year();
@@ -29,7 +33,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id < new Date().getMonth() || month.id === new Date().getMonth();
+            return month.id < new Date().getMonth() || (month.id === new Date().getMonth() && moment().date() > 7);
         });
     } else if (vm.selectedYear === 2017) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
