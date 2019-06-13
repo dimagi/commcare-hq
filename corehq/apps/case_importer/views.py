@@ -1,27 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import os.path
+
+from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.html import format_html
+from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
+
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
 from corehq.apps.case_importer.exceptions import ImporterError
-from django.views.decorators.http import require_POST
-from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
+from corehq.apps.case_importer.suggested_fields import (
+    get_suggested_case_fields,
+)
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-from corehq.util.workbook_reading import SpreadsheetFileExtError
 from corehq.apps.case_importer.util import get_importer_error_message
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-
-from django.contrib import messages
-from django.shortcuts import render
-from django.utils.translation import ugettext as _
+from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 

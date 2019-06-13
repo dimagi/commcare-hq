@@ -1,20 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.db import transaction
-from django.http import HttpResponseNotFound, HttpResponseForbidden, \
-    StreamingHttpResponse, HttpResponseBadRequest
+from __future__ import absolute_import, unicode_literals
 
-from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records, \
-    get_case_ids_for_case_upload, get_form_ids_for_case_upload
-from corehq.apps.case_importer.tracking.jsmodels import case_upload_to_user_json
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
-    MAX_COMMENT_LENGTH
-from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload, \
-    user_may_update_comment
+from io import open
+
+from django.db import transaction
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    StreamingHttpResponse,
+)
+
+from dimagi.utils.web import json_response
+
+from corehq.apps.case_importer.tracking.dbaccessors import (
+    get_case_ids_for_case_upload,
+    get_case_upload_records,
+    get_form_ids_for_case_upload,
+)
+from corehq.apps.case_importer.tracking.jsmodels import (
+    case_upload_to_user_json,
+)
+from corehq.apps.case_importer.tracking.models import (
+    MAX_COMMENT_LENGTH,
+    CaseUploadRecord,
+)
+from corehq.apps.case_importer.tracking.permissions import (
+    user_may_update_comment,
+    user_may_view_file_upload,
+)
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.web import json_response
-from io import open
 
 
 @require_can_edit_data

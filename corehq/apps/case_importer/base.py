@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_record_count
-from corehq.apps.data_interfaces.interfaces import DataInterface
-from corehq.apps.data_interfaces.views import DataInterfaceSection
-from django.utils.translation import ugettext_noop as _
+from __future__ import absolute_import, unicode_literals
+
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_noop as _
+
+from corehq.apps.case_importer.tracking.dbaccessors import (
+    get_case_upload_record_count,
+)
+from corehq.apps.data_interfaces.interfaces import DataInterface
+from corehq.apps.data_interfaces.views import DataInterfaceSection
 
 
 class ImportCases(DataInterface):
