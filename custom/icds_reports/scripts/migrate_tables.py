@@ -27,8 +27,9 @@ def parse_date(s, default=None):
 
 
 class Database(object):
-    def __init__(self, db_path):
+    def __init__(self, db_path, retry_errors):
         self.db_path = db_path
+        self.retry_errors = retry_errors
 
     def execute(self, query, *params):
         with self.db:
@@ -63,7 +64,10 @@ class Database(object):
             filters.append("date < ?")
             params.append(end_date)
 
-        query = 'SELECT * FROM tables WHERE migrated is null and errored is null'
+        query = 'SELECT * FROM tables WHERE migrated is null'
+        if not self.retry_errors:
+            query += '  and errored is null'
+
         if filters:
             query += ' and ({})'.format(' and '.join(filters))
         return [
@@ -154,7 +158,7 @@ class Migrator(object):
                  target_db, target_host, target_user,
                  start_date, end_date,
                  only_table, confirm, dry_run,
-                 stop_on_error):
+                 stop_on_error, retry_errors):
         self.db_path = db_path
         self.source_db = source_db
         self.source_host = source_host
@@ -171,7 +175,7 @@ class Migrator(object):
 
         self.error_log = 'icds_citus_migration_errors-{}.log'.format(datetime.utcnow().isoformat())
 
-        self.db = Database(self.db_path)
+        self.db = Database(self.db_path, retry_errors)
 
     def run(self, max_concurrent):
         with self.db:
@@ -356,6 +360,7 @@ def main():
     parser.add_argument('--no-stop-on-error', action='store_true', help=(
         'Do not stop the migration if an error is encountered'
     ))
+    parser.add_argument('--retry-errors', action='store_true', help='Retry tables that have errored')
 
     args = parser.parse_args()
 
@@ -364,7 +369,7 @@ def main():
         args.target_db, args.target_host, args.target_user,
         args.start_date, args.end_date,
         args.table, args.confirm, args.dry_run,
-        not args.no_stop_on_error
+        not args.no_stop_on_error, args.retry_errors
     )
     migrator.run(args.parallel)
 
