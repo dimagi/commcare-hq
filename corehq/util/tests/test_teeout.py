@@ -7,25 +7,30 @@ from contextlib import contextmanager
 from io import StringIO
 import six
 
+from django.test import SimpleTestCase
+
 from corehq.util.teeout import tee_output
 from testil import assert_raises, replattr, eq
 
 
-def test_tee_output():
-    fileobj = StringIO()
-    with assert_raises(Error), stdfake() as fake, tee_output(fileobj):
-        print("testing...")
-        sys.stderr.write("fail.\n")
-        raise Error("stop")
-    eq(fake.stdout.getvalue(), "testing...\n")
-    eq(fake.stderr.getvalue(), "fail.\n")
-    eq(sanitize_tb(fileobj.getvalue()),
-        "testing...\n"
-        "fail.\n"
-        "Traceback (most recent call last):\n"
-        "  ...\n" +
-        ("corehq.util.tests.test_teeout.Error" if six.PY3 else "Error") +
-        ": stop\n")
+# Workaround for https://api.travis-ci.org/v3/job/545327504/log.txt
+class TestTee(SimpleTestCase):
+
+    def test_tee_output(self):
+        fileobj = StringIO()
+        with assert_raises(Error), stdfake() as fake, tee_output(fileobj):
+            print("testing...")
+            sys.stderr.write("fail.\n")
+            raise Error("stop")
+        eq(fake.stdout.getvalue(), "testing...\n")
+        eq(fake.stderr.getvalue(), "fail.\n")
+        eq(sanitize_tb(fileobj.getvalue()),
+            "testing...\n"
+            "fail.\n"
+            "Traceback (most recent call last):\n"
+            "  ...\n" +
+            ("corehq.util.tests.test_teeout.Error" if six.PY3 else "Error") +
+            ": stop\n")
 
 
 def test_tee_output_with_KeyboardInterrupt():
