@@ -839,10 +839,10 @@ def _get_case_and_ledger_updates(domain, sql_form):
         for case in case_result.cases:
             case_db.post_process_case(case, sql_form)
             case_db.mark_changed(case)
-        cases = case_db.get_cases_for_saving(sql_form.received_on)
 
         try:
             stock_result = process_stock(xforms, case_db)
+            cases = case_db.get_cases_for_saving(sql_form.received_on)
             stock_result.populate_models()
         except MissingFormXml:
             stock_result = None
