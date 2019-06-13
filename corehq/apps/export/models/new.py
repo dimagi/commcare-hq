@@ -692,6 +692,8 @@ class ExportInstance(BlobMixin, Document):
     # Keep reference to old schema id if we have converted it from the legacy infrastructure
     legacy_saved_export_schema_id = StringProperty()
 
+    is_odata_config = BooleanProperty(default=False)
+
     is_daily_saved_export = BooleanProperty(default=False)
     auto_rebuild_enabled = BooleanProperty(default=True)
 
