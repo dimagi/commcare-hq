@@ -151,8 +151,6 @@ class ExportListHelper(object):
                 if _can_view(export, self.request.couch_user.user_id)
                 and ('owner_id' in export and export['owner_id'] == self.request.couch_user.user_id) == my_exports
             ]
-        if self.is_deid:
-            brief_exports = [x for x in brief_exports if x['is_deidentified']]
 
         docs = [self.fmt_export_data(get_properly_wrapped_export_instance(e['_id']))
                 for e in brief_exports[limit * (page - 1):limit * page]]
@@ -409,10 +407,6 @@ class DeIdFormExportListHelper(FormExportListHelper):
 class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
     is_deid = True
 
-    def _should_appear_in_list(self, export):
-        return (super(DeIdDailySavedExportListView, self)._should_appear_in_list(export)
-                and export['is_deidentified'])
-
     @property
     def create_export_form(self):
         return None
@@ -420,10 +414,6 @@ class DeIdDailySavedExportListHelper(DailySavedExportListHelper):
 
 class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
     is_deid = True
-
-    def _should_appear_in_list(self, export):
-        return (super(DeIdDashboardFeedListView, self)._should_appear_in_list(export)
-                and x['is_deidentified'])
 
     @property
     def create_export_form(self):
