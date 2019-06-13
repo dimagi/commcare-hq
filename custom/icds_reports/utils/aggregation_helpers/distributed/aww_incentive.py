@@ -70,7 +70,7 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             awcm.awc_days_open >= 21,
             (ROUND(awcm.wer_weighed / GREATEST(awcm.wer_eligible, 1)::NUMERIC, 4) >= 0.6 
                     OR COALESCE(awcm.wer_eligible, 0) = 0)
-                AND (ROUND(sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)::NUMERIC, 0) >= 0.6 
+                AND (ROUND(sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)::NUMERIC, 4) >= 0.6 
                     OR round(COALESCE(sum(ccsm.expected_visits), 0)) = 0)
           FROM agg_awc_monthly as awcm
           INNER JOIN agg_ccs_record_monthly AS ccsm
