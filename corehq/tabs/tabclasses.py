@@ -519,6 +519,7 @@ class ProjectDataTab(UITab):
                 EditCaseDailySavedExportView,
                 EditCaseFeedView,
                 EditODataCaseFeedView,
+                EditODataFormFeedView,
                 EditFormDailySavedExportView,
                 EditFormFeedView,
                 EditNewCustomCaseExportView,
@@ -539,6 +540,7 @@ class ProjectDataTab(UITab):
                 CreateNewFormFeedView,
                 CreateNewCaseFeedView,
                 CreateODataCaseFeedView,
+                CreateODataFormFeedView,
             )
             from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
@@ -688,6 +690,14 @@ class ProjectDataTab(UITab):
                     {
                         'title': _(EditODataCaseFeedView.page_title),
                         'urlname': EditODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(CreateODataFormFeedView.page_title),
+                        'urlname': CreateODataFormFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataFormFeedView.page_title),
+                        'urlname': EditODataFormFeedView.urlname,
                     },
                 ]
                 export_data_views.append({

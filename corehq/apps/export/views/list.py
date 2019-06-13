@@ -327,7 +327,7 @@ class FormExportListHelper(ExportListHelper):
         return _("Select a Form to Export")
 
     def _should_appear_in_list(self, export):
-        return not export['is_daily_saved_export']
+        return not export['is_daily_saved_export'] and not export['is_odata_config']
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
@@ -792,11 +792,16 @@ def submit_app_data_drilldown_form(request, domain):
         CreateNewDailySavedFormExport,
         CreateNewFormFeedView,
         CreateODataCaseFeedView,
+        CreateODataFormFeedView,
     )
 
     if is_odata:
-        export_tag = create_form.cleaned_data['case_type']
-        cls = CreateODataCaseFeedView
+        if create_form.cleaned_data['model_type'] == "case":
+            export_tag = create_form.cleaned_data['case_type']
+            cls = CreateODataCaseFeedView
+        else:
+            export_tag = create_form.cleaned_data['form']
+            cls = CreateODataFormFeedView
     elif is_daily_saved_export:
         if create_form.cleaned_data['model_type'] == "case":
             export_tag = create_form.cleaned_data['case_type']
@@ -824,7 +829,7 @@ def submit_app_data_drilldown_form(request, domain):
 
 class ODataFeedListHelper(ExportListHelper):
     allow_bulk_export = False
-    form_or_case = 'case'
+    form_or_case = None
     is_deid = False
     include_saved_filters = True
 
@@ -838,18 +843,21 @@ class ODataFeedListHelper(ExportListHelper):
     def fmt_export_data(self, export):
         data = super(ODataFeedListHelper, self).fmt_export_data(export)
         data.update({
-            'case_type': export.case_type,
             'isOData': True,
         })
         return data
 
     def _edit_view(self, export):
-        from corehq.apps.export.views.edit import EditODataCaseFeedView
+        from corehq.apps.export.views.edit import EditODataCaseFeedView, EditODataFormFeedView
+        if isinstance(export, FormExportInstance):
+            return EditODataFormFeedView
         return EditODataCaseFeedView
 
     def _download_view(self, export):
         # This isn't actually exposed in the UI
-        from corehq.apps.export.views.download import DownloadNewCaseExportView
+        from corehq.apps.export.views.download import DownloadNewCaseExportView, DownloadNewFormExportView
+        if isinstance(export, FormExportInstance):
+            return DownloadNewFormExportView
         return DownloadNewCaseExportView
 
 

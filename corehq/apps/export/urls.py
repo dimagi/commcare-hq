@@ -20,6 +20,7 @@ from corehq.apps.export.views.edit import (
     EditFormFeedView,
     EditFormDailySavedExportView,
     EditODataCaseFeedView,
+    EditODataFormFeedView,
 )
 from corehq.apps.export.views.list import (
     DailySavedExportListView,
@@ -47,6 +48,7 @@ from corehq.apps.export.views.new import (
     CreateNewCaseFeedView,
     CreateNewFormFeedView,
     CreateODataCaseFeedView,
+    CreateODataFormFeedView,
     CopyExportView,
     DeleteNewCustomExportView,
 )
@@ -110,6 +112,9 @@ urlpatterns = [
     url(r"^custom/new/odata_case_feed/create$",
         CreateODataCaseFeedView.as_view(),
         name=CreateODataCaseFeedView.urlname),
+    url(r"^custom/new/odata_form_feed/create$",
+        CreateODataFormFeedView.as_view(),
+        name=CreateODataFormFeedView.urlname),
     url(r"^custom/new/case_daily_saved/create$",
         CreateNewDailySavedCaseExport.as_view(),
         name=CreateNewDailySavedCaseExport.urlname),
@@ -147,6 +152,9 @@ urlpatterns = [
     url(r"^custom/odata_case_feed/edit/(?P<export_id>[\w\-]+)/$",
         EditODataCaseFeedView.as_view(),
         name=EditODataCaseFeedView.urlname),
+    url(r"^custom/odata_form_feed/edit/(?P<export_id>[\w\-]+)/$",
+        EditODataFormFeedView.as_view(),
+        name=EditODataFormFeedView.urlname),
     url(r"^custom/case_feed/edit/(?P<export_id>[\w\-]+)/$",
         EditCaseFeedView.as_view(),
         name=EditCaseFeedView.urlname),

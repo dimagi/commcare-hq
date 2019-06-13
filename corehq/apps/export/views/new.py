@@ -264,6 +264,13 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     allow_deid = False
 
 
+@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
+    urlname = 'new_odata_form_feed'
+    page_title = ugettext_lazy("Create OData Form Feed")
+    allow_deid = False
+
+
 class DeleteNewCustomExportView(BaseModifyNewCustomView):
     urlname = 'delete_new_custom_export'
     http_method_names = ['post']
