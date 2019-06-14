@@ -39,6 +39,7 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
             **kwargs
         )
         self.bulk_delete_chunksize = config.get("bulk_delete_chunksize", DEFAULT_BULK_DELETE_CHUNKSIZE)
+        # could be simplified by storing self._default_bucket_name and changin dict to {bucket_name: created}
         self.buckets = {
             '__default__': [config.get("s3_bucket", DEFAULT_S3_BUCKET), False]
         }
@@ -79,6 +80,7 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
             self.metadb.put(meta)
             with self.report_timing('put', meta.key):
                 s3_bucket.upload_fileobj(content, meta.key)
+        # this should be before the put, or it should use update_or_create, or update but log conflicts
         KeyBucketMapping.objects.create(key=meta.key, bucket=s3_bucket.name)
         return meta
 
