@@ -440,7 +440,7 @@ APP_BUILDER_ADVANCED = StaticToggle(
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'shadow-app-builder',
     'Shadow Modules',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
@@ -471,14 +471,14 @@ CASE_LIST_TILE = StaticToggle(
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
 )
 
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the caselist',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -492,7 +492,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
-    TAG_PRODUCT,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -521,7 +521,7 @@ DATA_FILE_DOWNLOAD = StaticToggle(
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -536,7 +536,7 @@ DHIS2_INTEGRATION = StaticToggle(
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/RD/Graphing+in+HQ',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -654,7 +654,7 @@ ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -773,7 +773,7 @@ TRANSFER_DOMAIN = StaticToggle(
 FORM_LINK_WORKFLOW = StaticToggle(
     'form_link_workflow',
     'Form linking workflow available on forms',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -834,7 +834,7 @@ WEBAPPS_CASE_MIGRATION = StaticToggle(
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
@@ -937,7 +937,7 @@ CUSTOM_INSTANCES = StaticToggle(
 CUSTOM_ASSERTIONS = StaticToggle(
     'custom_assertions',
     'Inject custom assertions into the suite',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     description=(
         'Enables the insertion of custom assertions into the suite file. '
     ),
@@ -1186,7 +1186,7 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
-    TAG_PRODUCT,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1235,7 +1235,7 @@ EXPORT_ZIPPED_APPS = StaticToggle(
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_USER]
 )
 
@@ -1380,14 +1380,14 @@ LOCATION_SAFETY_EXEMPTION = StaticToggle(
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'include_metadata_in_ucr_excel_exports',
     'Include metadata in UCR excel exports',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1448,7 +1448,7 @@ PHONE_HEARTBEAT = StaticToggle(
     'phone_apk_heartbeat',
     "Ability to configure a mobile feature to prompt "
     "users to update to latest CommCare app and apk",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1560,7 +1560,7 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking project spaces (successor to linked apps)',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
@@ -1642,7 +1642,7 @@ AGGREGATE_UCRS = StaticToggle(
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
     'Allow building report builder reports directly from raw UCR Data Sources',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
