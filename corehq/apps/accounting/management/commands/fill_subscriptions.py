@@ -3,9 +3,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 from django.core.management import BaseCommand
-from corehq.apps.accounting.models import SoftwarePlanEdition
 
-from corehq.apps.accounting.invoicing import should_create_invoice
 from corehq.apps.accounting.models import CustomerInvoice
 from six.moves import input
 
