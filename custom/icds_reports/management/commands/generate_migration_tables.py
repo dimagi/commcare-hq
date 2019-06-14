@@ -34,7 +34,8 @@ CREATE_TABLE = """
         source_table text NOT NULL,
         date text,
         target_table text,
-        migrated integer
+        migrated integer,
+        errored integer
     ); """
 
 
