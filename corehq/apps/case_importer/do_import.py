@@ -118,6 +118,9 @@ class _Importer(object):
         )
 
     def user_can_access_owner_location(self, caseblock):
+        if caseblock.owner_id == self.user._id:
+            return True
+
         if self.user.has_permission(self.domain, 'access_all_locations'):
             return True
 
