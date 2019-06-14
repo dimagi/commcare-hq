@@ -17,8 +17,8 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
-    get_form_export_instances,
-    get_case_export_instances,
+    get_form_exports_by_domain,
+    get_case_exports_by_domain,
 )
 from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
@@ -190,7 +190,7 @@ class ExportViewTest(ViewTestCase):
             follow=True
         )
         self.assertEqual(resp.status_code, 200)
-        exports = get_form_export_instances(self.domain.name)
+        exports = get_form_exports_by_domain(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 
@@ -232,7 +232,7 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        exports = get_case_export_instances(self.domain.name)
+        exports = get_case_exports_by_domain(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 
@@ -283,7 +283,7 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        exports = get_case_export_instances(self.domain.name)
+        exports = get_case_exports_by_domain(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 

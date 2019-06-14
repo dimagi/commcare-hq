@@ -1,18 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
+
+from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
 from corehq.apps.export.views.new import BaseModifyNewCustomView
-from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin
+from corehq.apps.export.views.utils import (
+    DailySavedExportMixin,
+    DashboardFeedMixin,
+    ODataFeedMixin,
+)
 
 
 class BaseEditNewCustomExportView(BaseModifyNewCustomView):
@@ -95,6 +99,11 @@ class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExpor
     urlname = 'edit_form_daily_saved_export'
 
 
-class EditODataCaseFeedView(EditNewCustomCaseExportView):
+class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
     page_title = ugettext_lazy("Edit OData Case Feed")
+
+
+class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
+    urlname = 'edit_odata_form_feed'
+    page_title = ugettext_lazy("Edit OData Form Feed")
