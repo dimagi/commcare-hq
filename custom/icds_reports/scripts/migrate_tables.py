@@ -228,7 +228,9 @@ class Migrator(object):
         table_sizes = None
         total_size = None
         progress = []
+        error_progress = []
         completed = []
+        errors = []
         total_tables = len(tables)
         start_time = datetime.now()
 
@@ -240,8 +242,10 @@ class Migrator(object):
                 total_size = sum([size for table, size in table_sizes.items() if table in source_tables])
 
         def _update_progress(context, ret_code, stdout, stderr):
-            completed.append(context['source_table'])
             success = ret_code == 0
+            completed.append(context['source_table'])
+            if not success:
+                errors.append(context['source_table'])
             self.db.mark_migrated(context['source_table'], success)
             print('{} {}'.format('[ERROR] ' if not success else '', context['cmd']))
             if stdout:
@@ -252,32 +256,41 @@ class Migrator(object):
                 self.write_error(context, ret_code, stdout, stderr)
 
             table_progress = len(completed) + 1
+            table_errors = len(errors)
             elapsed = datetime.now() - start_time
             if table_sizes:
                 progress.append(context['size'])
+                if not success:
+                    error_progress.append(context['size'])
                 data_progress = sum(progress)
+                data_errors = sum(error_progress)
                 remaining = elapsed // data_progress * total_size if data_progress else 'unknown'
                 print(
-                    '\nProgress: {data_percent:.1f}% data ({data_progress} of {data_total}), '
-                    '{tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                    '\nProgress: '
+                    '{data_percent:.1f}% data ({data_progress} of {data_total}) ({data_errors} errored), '
+                    '{tables_percent:.1f}% tables ({tables_progress} of {tables_total}) ({table_errors} errored) '
                     'in {elapsed} ({remaining} remaining)\n'.format(
                         data_percent=(100 * float(data_progress) / total_size) if total_size else 100,
                         data_progress=data_progress,
                         data_total=total_size,
+                        data_errors=data_errors,
                         tables_percent=100 * float(table_progress) / total_tables,
                         tables_progress=table_progress,
                         tables_total=total_tables,
+                        table_errors=table_errors,
                         elapsed=elapsed,
                         remaining=remaining
                     )
                 )
             else:
                 print(
-                    '\nProgress: {tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                    '\nProgress: '
+                    '{tables_percent:.1f}% tables ({tables_progress} of {tables_total}) ({table_errors} errored) '
                     'in {elapsed}\n'.format(
                         tables_percent=100 * float(table_progress) / total_tables,
                         tables_progress=table_progress,
                         tables_total=total_tables,
+                        table_errors=table_errors,
                         elapsed=elapsed,
                     )
                 )
