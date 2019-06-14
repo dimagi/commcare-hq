@@ -51,6 +51,27 @@ TAG_SOLUTIONS = Tag(
     description="These features are only available for our services projects. This may affect support and "
     "pricing when the project is transitioned to a subscription."
 )
+TAG_SOLUTIONS_OPEN = Tag(
+    name='Solutions - Open Use',
+    css_class='info',
+    description="These features are only available for our services projects. This may affect support and "
+    "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "
+    "enabled by GS."
+)
+TAG_SOLUTIONS_CONDITIONAL = Tag(
+    name='Solutions - Conditional Use',
+    css_class='info',
+    description="These features are only available for our services projects. This may affect support and "
+    "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "
+    "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."
+)
+TAG_SOLUTIONS_LIMITED = Tag(
+    name='Solutions - Limited Use',
+    css_class='info',
+    description="These features are only available for our services projects. This may affect support and "
+    "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
+    "enabled by GS before emailing solutions@dimagi.com and requesting the feature."
+)
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
     css_class='default',
