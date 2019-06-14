@@ -67,6 +67,11 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
         meta = self.metadb.new(**blob_meta_args)
         check_safe_key(meta.key)
         s3_bucket = self._s3_bucket(meta.key, create=True)
+        # Should this fail if the key already exists?
+        # Maybe it should just use the same bucket if it exists?
+        KeyBucketMapping.objects.update_or_create(
+            key=meta.key, defaults={'bucket': s3_bucket.name}
+        )
         if isinstance(content, BlobStream) and content.blob_db is self:
             obj = s3_bucket.Object(content.blob_key)
             meta.content_length = obj.content_length
@@ -80,8 +85,6 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
             self.metadb.put(meta)
             with self.report_timing('put', meta.key):
                 s3_bucket.upload_fileobj(content, meta.key)
-        # this should be before the put, or it should use update_or_create, or update but log conflicts
-        KeyBucketMapping.objects.create(key=meta.key, bucket=s3_bucket.name)
         return meta
 
     def get(self, key):
