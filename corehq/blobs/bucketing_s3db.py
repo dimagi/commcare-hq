@@ -39,9 +39,9 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
             **kwargs
         )
         self.bulk_delete_chunksize = config.get("bulk_delete_chunksize", DEFAULT_BULK_DELETE_CHUNKSIZE)
-        # could be simplified by storing self._default_bucket_name and changin dict to {bucket_name: created}
+        self.default_bucket_name = config.get("s3_bucket", DEFAULT_S3_BUCKET)
         self.buckets = {
-            '__default__': [config.get("s3_bucket", DEFAULT_S3_BUCKET), False]
+            self._default_bucket_name: False
         }
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
@@ -145,9 +145,9 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
             bucket_name = self._get_bucket(key)
 
         if bucket_name not in self.buckets:
-            self.buckets[bucket_name] = [bucket_name, False]
+            self.buckets[bucket_name] = False
 
-        if create and not self.buckets[bucket_name][1]:
+        if create and not self.buckets[bucket_name]:
             try:
                 with self.report_timing('head_bucket', bucket_name):
                     self.db.meta.client.head_bucket(Bucket=bucket_name)
@@ -157,7 +157,7 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
                     raise
                 with self.report_timing('create_bucket', bucket_name):
                     self.db.create_bucket(Bucket=bucket_name)
-            self.buckets[self._s3_bucket_exists][1] = True
+            self.buckets[bucket_name] = True
 
         return self.db.Bucket(bucket_name)
 
@@ -169,4 +169,4 @@ class BucketHashingS3BlobDB(AbstractBlobDB):
         key_bucket = KeyBucketMapping.objects.using(db_alias).filter(key=key).first()
         if key_bucket:
             return key_bucket.bucket
-        return "__default__"
+        return self.default_bucket_name
