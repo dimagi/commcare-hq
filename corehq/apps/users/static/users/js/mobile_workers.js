@@ -277,7 +277,7 @@ hqDefine("users/js/mobile_workers", function () {
                 }
 
                 self.usernameAvailabilityStatus(self.STATUS.PENDING);
-                self.usernameStatusMessage(gettext("Checking avilability..."));
+                self.usernameStatusMessage(gettext("Checking availability..."));
                 rmi('check_username', {
                     username: newValue,
                 }).done(function (data) {
