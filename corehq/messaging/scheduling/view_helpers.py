@@ -56,14 +56,11 @@ def get_conditional_alert_rows(domain):
             events = [events[0]]
 
         for event in events:
-            if not isinstance(event.content, SMSContent):
-                continue
-            message = event.content.message
             common_columns = [rule.pk, rule.name]
-            if '*' in message or len(message) == 0:
-                untranslated_rows.append(common_columns + [message.get('*', '')])
-            else:
-                translated_rows.append(common_columns + [message.get(lang, '') for lang in langs])
+            if UntranslatedConditionalAlertUploader.event_is_relevant(event):
+                untranslated_rows.append(common_columns + [event.content.message.get('*', '')])
+            elif TranslatedConditionalAlertUploader.event_is_relevant(event):
+                translated_rows.append(common_columns + [event.content.message.get(lang, '') for lang in langs])
 
     return (translated_rows, untranslated_rows)
 
@@ -82,6 +79,15 @@ class ConditionalAlertUploader(object):
         self.domain = domain
         self.langs = get_language_list(domain)
         self.msgs = []
+
+    @classmethod
+    def event_is_relevant(cls, event):
+        """
+        Whether the event belongs on the given sheet.
+        During download, this filters events onto the correct sheet.
+        During upload, depending on the circumstances, events may be allowed to change sheets.
+        """
+        return isinstance(event.content, SMSContent)
 
     def get_worksheet_errors(self, worksheet):
         if 'id' not in worksheet.headers:
@@ -157,7 +163,8 @@ class ConditionalAlertUploader(object):
                 is_custom = True
 
                 # Check that user provided one row for each event in the custom schedule
-                expected = len(rule.get_messaging_rule_schedule().memoized_events)
+                events = rule.get_messaging_rule_schedule().memoized_events
+                expected = len([e for e in events if self.event_is_relevant(e)])
                 actual = len(rows)
                 if expected != actual:
                     self.msgs.append((messages.error, _("Could not update rule with id {id} in '{sheet_name}' "
@@ -286,24 +293,36 @@ class ConditionalAlertUploader(object):
 class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
     sheet_name = 'translated'
 
+    @classmethod
+    def event_is_relevant(cls, event):
+        relevant = super(TranslatedConditionalAlertUploader, cls).event_is_relevant(event)
+        message = event.content.message
+        return relevant and len(message) and '*' not in message
+
     def update_rule(self, rule, rows, is_custom=False):
         dirty = super(TranslatedConditionalAlertUploader, self).update_rule(rule, rows)
 
         if is_custom:
-            events_and_rows = list(zip(rule.get_messaging_rule_schedule().memoized_events, rows))
+            events = rule.get_messaging_rule_schedule().memoized_events
+            allow_sheet_swap = len(rows) == len(events)
         else:
-            events_and_rows = [(rule.get_messaging_rule_schedule().memoized_events[0], rows[0])]
+            events = [rule.get_messaging_rule_schedule().memoized_events[0]]
+            allow_sheet_swap = True
 
         message_dirty = False
         new_messages = []
-        for event, row in events_and_rows:
+        row_index = 0
+        for index, event in enumerate(events):
             new_message = event.content.message
-            new_message.pop('*', None)
-            for lang in self.langs:
-                key = 'message_' + lang
-                if key in row and new_message.get(lang, '') != row[key]:
-                    new_message.update({lang: row[key]})
-                    message_dirty = True
+            if self.event_is_relevant(event) or allow_sheet_swap:
+                row = rows[row_index]
+                new_message.pop('*', None)
+                for lang in self.langs:
+                    key = 'message_' + lang
+                    if key in row and new_message.get(lang, '') != row[key]:
+                        new_message.update({lang: row[key]})
+                        message_dirty = True
+                row_index += 1
             new_messages.append(new_message)
 
         if message_dirty:
@@ -318,26 +337,37 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
 class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
     sheet_name = 'not translated'
 
+    @classmethod
+    def event_is_relevant(cls, event):
+        relevant = super(UntranslatedConditionalAlertUploader, cls).event_is_relevant(event)
+        message = event.content.message
+        return relevant and (not len(message) or '*' in message)
+
     def update_rule(self, rule, rows, is_custom=False):
         dirty = super(UntranslatedConditionalAlertUploader, self).update_rule(rule, rows)
         if not any(['message' in row for row in rows]):
             return dirty
 
         if is_custom:
-            events_and_messages = list(zip(rule.get_messaging_rule_schedule().memoized_events,
-                                           [row['message'] for row in rows]))
+            events = rule.get_messaging_rule_schedule().memoized_events
+            allow_sheet_swap = len(rows) == len(events)
         else:
-            events_and_messages = [(rule.get_messaging_rule_schedule().memoized_events[0],
-                                    rows[0]['message'])]
+            events = [rule.get_messaging_rule_schedule().memoized_events[0]]
+            allow_sheet_swap = True
 
         new_messages = []
-        for event, message in events_and_messages:
-            if event.content.message.get('*', '') != message:
-                dirty = True
-                if not message:
-                    raise RuleUpdateError(_("Missing content"))
-
-            new_messages.append({'*': message})
+        row_index = 0
+        for index, event in enumerate(events):
+            new_message = event.content.message
+            if self.event_is_relevant(event) or allow_sheet_swap:
+                row = rows[row_index]
+                if new_message.get('*', '') != row['message']:
+                    new_message = row['message']
+                    dirty = True
+                    if not new_message:
+                        raise RuleUpdateError(_("Missing content"))
+                row_index += 1
+            new_messages.append({'*': new_message})
 
         if dirty:
             self.update_rule_messages(rule, new_messages)

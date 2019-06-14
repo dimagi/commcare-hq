@@ -49,6 +49,7 @@ class TestBulkConditionalAlerts(TestCase):
     WEEKLY_RULE = 'weekly_rule'
     MONTHLY_RULE = 'monthly_rule'
     CUSTOM_IMMEDIATE_RULE = 'custom_immediate_rule'
+    CUSTOM_RULE_BOTH_SHEETS = 'custom_immediate_rule_both_sheets'
     CUSTOM_DAILY_RULE = 'custom_daily_rule'
 
     @classmethod
@@ -104,6 +105,22 @@ class TestBulkConditionalAlerts(TestCase):
                 SMSContent(message={
                     'en': 'A Mistake',
                     'es': 'Un Error',
+                }),
+            ]),
+            self.CUSTOM_RULE_BOTH_SHEETS: self._add_custom_immediate_rule([
+                SMSContent(message={
+                    'en': "I'm Lucky",
+                    'es': "Tengo Suerte",
+                }),
+                SMSContent(message={
+                    '*': 'Down to Zero',
+                }),
+                SMSContent(message={
+                    'en': 'Me Myself I',
+                    'es': 'Yo Mí Mismo Yo',
+                }),
+                SMSContent(message={
+                    '*': 'Rosie',
                 }),
             ])
         }
@@ -233,8 +250,8 @@ class TestBulkConditionalAlerts(TestCase):
         language_list_patch.return_value = self.langs
         (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain)
 
-        self.assertEqual(len(translated_rows), 5)
-        self.assertEqual(len(untranslated_rows), 6)
+        self.assertEqual(len(translated_rows), 7)
+        self.assertEqual(len(untranslated_rows), 8)
 
         rows_by_id = defaultdict(list)
         for row in translated_rows + untranslated_rows:
@@ -249,6 +266,12 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertListEqual(rows_by_id[self._get_rule(self.CUSTOM_IMMEDIATE_RULE).id],
                                        [['test', 'Paper Bag', 'Bolsa de Papel'],
                                         ['test', 'A Mistake', 'Un Error']])
+
+        self.assertListEqual(rows_by_id[self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id],
+                                       [['test', "I'm Lucky", "Tengo Suerte"],
+                                        ['test', 'Me Myself I', 'Yo Mí Mismo Yo'],
+                                        ['test', 'Down to Zero'],
+                                        ['test', 'Rosie']])
 
         self.assertListEqual(rows_by_id[self._get_rule(self.DAILY_RULE).id],
                                        [['test', 'Diamonds and Rust', 'Diamantes y Óxido']])
@@ -409,6 +432,50 @@ class TestBulkConditionalAlerts(TestCase):
         }, {
             'en': 'A Correction',
             'es': 'Una Corrección',
+        }])
+
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload_custom_schedule_both_sheets(self, language_list_patch):
+        """
+        This tests a rule that has a custom schedule with a mix of translated and untranslated messages.
+        The translated messages should be updated correctly, but the untranslated messages will get blocked,
+        because the rule will already be running, updating the transalted ones.
+        """
+        language_list_patch.return_value = self.langs
+        data = (
+            ("translated", (
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', "You're Lucky", "Tienes Suerte"),
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', "You Yourself You", "Tú Tú Mismo Tú"),
+            )),
+            ("not translated", (
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', 'Down to One'),
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', 'Willow'),
+            )),
+        )
+
+        old_schedule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).get_messaging_rule_schedule()
+
+        msgs = self._upload(data)
+
+        self.assertEqual(len(msgs), 4)
+        self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
+        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
+        self._assertPatternIn(r"Row 2 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
+        self._assertPatternIn(r"Row 3 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
+
+        rule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS)
+        schedule = rule.get_messaging_rule_schedule()
+        self._assertAlertScheduleEventsEqual(schedule, old_schedule)
+        self._assertCustomContent(schedule, [{
+            'en': "You're Lucky",
+            'es': "Tienes Suerte",
+        }, {
+            '*': 'Down to Zero',
+        }, {
+            'en': "You Yourself You",
+            'es': "Tú Tú Mismo Tú",
+        }, {
+            '*': 'Rosie',
         }])
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
