@@ -5,11 +5,12 @@ import errno
 import os
 import os.path
 from collections import namedtuple
+from datetime import datetime
 
 from django.conf import settings
 
 from memoized import memoized
-from sqlalchemy import func, Column, Integer, String
+from sqlalchemy import func, Column, Integer, String, Text
 
 from corehq.apps.tzmigration.planning import Base, DiffDB
 
@@ -40,12 +41,31 @@ def _get_state_db_filepath(domain):
 
 class StateDB(DiffDB):
 
+    @classmethod
+    def init(cls, path):
+        is_new_db = not os.path.exists(path)
+        db = super(StateDB, cls).init(path)
+        if is_new_db:
+            session = db.Session()
+            session.add(KeyValue(
+                key="db_unique_id",
+                value=datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"),
+            ))
+            session.commit()
+        return db
+
     def __enter__(self):
         return self
 
     def __exit__(self, *exc_info):
         if self._connection is not None:
             self._connection.close()
+
+    @property
+    @memoized
+    def unique_id(self):
+        query = self.Session().query(KeyValue).filter_by(key="db_unique_id")
+        return query.scalar().value
 
     def add_problem_form(self, form_id):
         session = self.Session()
@@ -128,6 +148,13 @@ class DocCount(Base):
 
     kind = Column(String(50), primary_key=True)
     value = Column(Integer, nullable=False)
+
+
+class KeyValue(Base):
+    __tablename__ = "keyvalue"
+
+    key = Column(String(50), nullable=False, primary_key=True)
+    value = Column(Text(), nullable=False)
 
 
 class MissingDoc(Base):

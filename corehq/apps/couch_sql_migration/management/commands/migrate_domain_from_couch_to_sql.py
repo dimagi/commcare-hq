@@ -83,18 +83,12 @@ class Command(BaseCommand):
                 operations like syncs, form submissions, sms activity,
                 etc. Dry-run migrations cannot be committed.
             ''')
-        parser.add_argument(
-            '--run-timestamp',
-            type=int,
-            default=None,
-            help='use this option to continue a previous run that was started at this timestamp'
-        )
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "dry_run", "run_timestamp"]:
+        for opt in ["no_input", "verbose", "dry_run"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
@@ -108,18 +102,8 @@ class Command(BaseCommand):
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
-        if self.run_timestamp:
-            if self.dry_run:
-                raise CommandError("--dry-run and --run-timestamp are mutually exclusive")
-            if not couch_sql_migration_in_progress(domain):
-                raise CommandError("Migration must be in progress if --run-timestamp is provided")
-        else:
-            set_couch_sql_migration_started(domain, self.dry_run)
-
-        do_couch_to_sql_migration(
-            domain,
-            with_progress=not self.no_input,
-            run_timestamp=self.run_timestamp)
+        set_couch_sql_migration_started(domain, self.dry_run)
+        do_couch_to_sql_migration(domain, with_progress=not self.no_input)
 
         has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if has_diffs:

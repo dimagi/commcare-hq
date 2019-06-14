@@ -110,26 +110,20 @@ def setup_logging(log_dir, debug=False):
     log.info("command: %s", " ".join(sys.argv))
 
 
-def do_couch_to_sql_migration(domain, with_progress=True, run_timestamp=None):
+def do_couch_to_sql_migration(domain, with_progress=True):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(
-        domain,
-        with_progress=with_progress,
-        run_timestamp=run_timestamp
-    ).migrate()
+    CouchSqlDomainMigrator(domain, with_progress).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True, run_timestamp=None):
+    def __init__(self, domain, with_progress=True):
         self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
         self.domain = domain
-        self.run_timestamp = run_timestamp or int(time())
         self.statedb = init_state_db(domain)
 
     def migrate(self):
         log.info('migrating domain {}'.format(self.domain))
-        log.info('run timestamp is {}'.format(self.run_timestamp))
 
         self.processed_docs = 0
         with TimingContext("couch_sql_migration") as timing_context:
@@ -148,7 +142,7 @@ class CouchSqlDomainMigrator(object):
 
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
-        with AsyncFormProcessor(self.run_timestamp, self._migrate_form) as pool:
+        with AsyncFormProcessor(self.statedb, self._migrate_form) as pool:
             changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
             for change in self._with_progress(['XFormInstance'], changes):
                 try:
@@ -463,7 +457,7 @@ class CouchSqlDomainMigrator(object):
         self._log_processed_docs_count(['type:case_diffs'], throttled)
 
     def _get_resumable_iterator(self, doc_types, slug):
-        key = "%s.%s.%s" % (self.domain, slug, self.run_timestamp)
+        key = "%s.%s.%s" % (self.domain, slug, self.statedb.unique_id)
         return _iter_changes(self.domain, doc_types, resumable_key=key)
 
     def _send_timings(self, timing_context):
@@ -859,14 +853,14 @@ def commit_migration(domain_name):
 
 class AsyncFormProcessor(object):
 
-    def __init__(self, run_timestamp, migrate_form):
-        self.run_timestamp = run_timestamp
+    def __init__(self, statedb, migrate_form):
+        self.statedb = statedb
         self.migrate_form = migrate_form
         self.processed_docs = 0
 
     def __enter__(self):
         self.pool = Pool(15)
-        self.queues = PartiallyLockingQueue(self.run_timestamp)
+        self.queues = PartiallyLockingQueue(self.statedb.unique_id)
         self._rebuild_queues()
         return self
 

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import re
+
 from testil import eq
 
 from ..statedb import Counts, delete_state_db, init_state_db
@@ -8,6 +10,19 @@ from ..statedb import Counts, delete_state_db, init_state_db
 
 def teardown():
     delete_state_db("test")
+
+
+def test_db_unique_id():
+    with init_state_db("test") as db:
+        uid = db.unique_id
+        assert re.search(r"\d{8}-\d{6}.\d{6}", uid), uid
+
+    with init_state_db("test") as db:
+        eq(db.unique_id, uid)
+
+    delete_state_db("test")
+    with init_state_db("test") as db:
+        assert db.unique_id != uid, uid
 
 
 def test_problem_forms():
