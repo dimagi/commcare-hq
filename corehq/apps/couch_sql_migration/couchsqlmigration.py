@@ -894,7 +894,7 @@ class AsyncFormProcessor(object):
 
     def __enter__(self):
         self.pool = Pool(15)
-        self.queues = PartiallyLockingQueue(run_timestamp=self.run_timestamp)
+        self.queues = PartiallyLockingQueue(self.run_timestamp)
         self._rebuild_queues()
         return self
 
@@ -992,7 +992,7 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, queue_id_param="form_id", max_size=10000, run_timestamp=None):
+    def __init__(self, run_timestamp, queue_id_param="form_id", max_size=10000):
         """
         :queue_id_param string: param of the queued objects to pull an id from
         :max_size int: the maximum size the queue should reach. -1 means no limit
