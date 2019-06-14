@@ -250,37 +250,37 @@ class Migrator(object):
                 print(stderr.decode())
             if not success:
                 self.write_error(context, ret_code, stdout, stderr)
+
+            table_progress = len(completed) + 1
+            elapsed = datetime.now() - start_time
+            if table_sizes:
+                progress.append(context['size'])
+                data_progress = sum(progress)
+                remaining = elapsed // data_progress * total_size if data_progress else 'unknown'
+                print(
+                    '\nProgress: {data_percent:.1f}% data ({data_progress} of {data_total}), '
+                    '{tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                    'in {elapsed} ({remaining} remaining)\n'.format(
+                        data_percent=(100 * float(data_progress) / total_size) if total_size else 100,
+                        data_progress=data_progress,
+                        data_total=total_size,
+                        tables_percent=100 * float(table_progress) / total_tables,
+                        tables_progress=table_progress,
+                        tables_total=total_tables,
+                        elapsed=elapsed,
+                        remaining=remaining
+                    )
+                )
             else:
-                table_progress = len(completed) + 1
-                elapsed = datetime.now() - start_time
-                if table_sizes:
-                    progress.append(context['size'])
-                    data_progress = sum(progress)
-                    remaining = elapsed // data_progress * total_size if data_progress else 'unknown'
-                    print(
-                        '\nProgress: {data_percent:.1f}% data ({data_progress} of {data_total}), '
-                        '{tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
-                        'in {elapsed} ({remaining} remaining)\n'.format(
-                            data_percent=(100 * float(data_progress) / total_size) if total_size else 100,
-                            data_progress=data_progress,
-                            data_total=total_size,
-                            tables_percent=100 * float(table_progress) / total_tables,
-                            tables_progress=table_progress,
-                            tables_total=total_tables,
-                            elapsed=elapsed,
-                            remaining=remaining
-                        )
+                print(
+                    '\nProgress: {tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
+                    'in {elapsed}\n'.format(
+                        tables_percent=100 * float(table_progress) / total_tables,
+                        tables_progress=table_progress,
+                        tables_total=total_tables,
+                        elapsed=elapsed,
                     )
-                else:
-                    print(
-                        '\nProgress: {tables_percent:.1f}% tables ({tables_progress} of {tables_total}) '
-                        'in {elapsed}\n'.format(
-                            tables_percent=100 * float(table_progress) / total_tables,
-                            tables_progress=table_progress,
-                            tables_total=total_tables,
-                            elapsed=elapsed,
-                        )
-                    )
+                )
 
         commands = self.get_dump_load_commands(tables)
 
