@@ -142,8 +142,8 @@ def get_module_rows(langs, module):
         return []
 
     return get_module_case_list_form_rows(langs, module) + \
-           get_module_case_list_menu_item_rows(langs, module) + \
-           get_module_detail_rows(langs, module)
+        get_module_case_list_menu_item_rows(langs, module) + \
+        get_module_detail_rows(langs, module)
 
 
 def get_module_case_list_form_rows(langs, module):
