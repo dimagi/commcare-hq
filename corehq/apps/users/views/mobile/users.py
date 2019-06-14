@@ -55,6 +55,7 @@ from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
+from corehq.apps.locations.views import LocationsSearchView
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
@@ -632,7 +633,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'location_url': reverse('child_locations_for_select2', args=[self.domain]),
+            'location_url': reverse(LocationsSearchView.urlname, args=[self.domain]),
             'bulk_download_url': bulk_download_url
         }
 

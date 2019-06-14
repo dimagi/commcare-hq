@@ -235,6 +235,7 @@ class LocationOptionsController(EmwfOptionsController):
 
 
 class LocationsSearchView(EmwfOptionsView):
+    urlname = 'location_search'
 
     @property
     @memoized

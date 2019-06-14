@@ -238,8 +238,8 @@
                             return {
                                 results: _.map(data.results, function (r) {
                                     return {
-                                        text: r.name,
-                                        id: r.id,
+                                        text: r.text,
+                                        id: r.id.substr(3), //ids returned in form l__abcdef123
                                     };
                                 }),
                             };
