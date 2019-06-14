@@ -896,9 +896,6 @@ class AsyncFormProcessor(object):
         self.pool = Pool(15)
         self.queues = PartiallyLockingQueue(run_timestamp=self.run_timestamp)
         self._rebuild_queues()
-        # FIXME initializing without run_timestamp looks like a bug:
-        # form ids saved with wrong key? -> resume is probably broken
-        self.queues = PartiallyLockingQueue()
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
