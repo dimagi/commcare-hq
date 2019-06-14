@@ -430,7 +430,7 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description="Advanced Modules allow you to autoload and manage multiple case types, "
                 "but may behave in unexpected ways.",
@@ -448,7 +448,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Allow custom XML to define case lists (ex. for case tiles)',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
 )
@@ -456,7 +456,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
     'case_list_custom_variables',
     'Show text area for entering custom variables',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Defines custom variables that can be used in case list or detail calculations',
 )
@@ -529,7 +529,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -574,7 +574,7 @@ VISIT_SCHEDULER = StaticToggle(
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
@@ -758,7 +758,7 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
 LOCATION_TYPE_STOCK_RATES = StaticToggle(
     'location_type_stock_rates',
     "Specify stock rates per location type.",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -783,7 +783,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
     help_link='https://confluence.dimagi.com/display/ccinternal/Save+to+Case+Feature+Flag',
@@ -792,7 +792,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Allows printing from CommCare on the device',
     help_link='https://confluence.dimagi.com/display/ccinternal/Printing+from+a+form+in+CommCare+Android',
@@ -801,7 +801,7 @@ VELLUM_PRINTING = StaticToggle(
 VELLUM_DATA_IN_SETVALUE = StaticToggle(
     'allow_data_reference_in_setvalue',
     "Allow data references in a setvalue",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description="This allows referencing other questions in the form in a setvalue. "
                 "This may still cause issues if the other questions have not been calculated yet",
@@ -818,7 +818,7 @@ CACHE_AND_INDEX = StaticToggle(
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
@@ -843,7 +843,7 @@ MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
      'through the app builder'),
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )
@@ -900,7 +900,7 @@ def _commtrackify(domain_name, toggle_is_enabled):
 COMMTRACK = StaticToggle(
     'commtrack',
     "CommCare Supply",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     description=(
         '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
@@ -993,7 +993,7 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1128,7 +1128,7 @@ BULK_CONDITIONAL_ALERTS = StaticToggle(
 COPY_CONDITIONAL_ALERTS = StaticToggle(
     'copy_conditional_alerts',
     'Allow copying conditional alerts to another project (or within the same project).',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_USER],
 )
 
@@ -1412,7 +1412,7 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
