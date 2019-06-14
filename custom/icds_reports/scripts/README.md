@@ -52,17 +52,14 @@
     Using the `custom/icds_reports/scripts/migrate_tables.py` script repeatedly to copy the data.
 
     ```
-    $ python migrate_tables.py --help
-    usage: migrate_tables.py [-h] -D SOURCE_DB -O SOURCE_HOST -U SOURCE_USER -d
-                             TARGET_DB -o TARGET_HOST -u TARGET_USER
-                             [--start-date START_DATE] [--end-date END_DATE]
-                             [--start-after-table START_AFTER_TABLE]
-                             [--table TABLE] [--confirm] [--dry-run]
-                             [--parallel PARALLEL] [--no-stop-on-error]
-                             db_path
-    
-    Migrate DB tables from one DB to another using pg_dump. Compainion to
-    custom/icds_reports/management_commands/generate_migration_tables.py
+    $ python migrate_tables.py migrate --help
+    usage: migrate_tables.py migrate [-h] -D SOURCE_DB -O SOURCE_HOST -U
+                                     SOURCE_USER -d TARGET_DB -o TARGET_HOST -u
+                                     TARGET_USER [--start-date START_DATE]
+                                     [--end-date END_DATE] [--table TABLE]
+                                     [--confirm] [--dry-run] [--parallel PARALLEL]
+                                     [--no-stop-on-error] [--retry-errors]
+                                     db_path
     
     positional arguments:
       db_path               Path to sqlite DB containing list of tables to migrate
@@ -87,13 +84,34 @@
                             Format YYYY-MM-DD
       --end-date END_DATE   Only migrate tables with date before this date. Format
                             YYYY-MM-DD
-      --start-after-table START_AFTER_TABLE
-                            Skip all tables up to and including this one
       --table TABLE         Only migrate this table
       --confirm             Confirm before each table.
       --dry-run             Only output the commands.
       --parallel PARALLEL   How many commands to run in parallel
       --no-stop-on-error    Do not stop the migration if an error is encountered
+      --retry-errors        Retry tables that have errored
+    ```
+    
+    The script also comes with some utility functions to interrogate the status of the migration:
+    ```
+    $ python migrate_tables.py status --help
+    usage: migrate_tables.py status [-h] [-s START_DATE] [-e END_DATE] [-M] [-E]
+                                    db_path [{stats,list_tables}]
+    
+    positional arguments:
+      db_path               Path to sqlite DB containing list of tables to migrate
+      {stats,list_tables}
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -s START_DATE, --start-date START_DATE
+                            Only show tables with date on or after this date.
+                            Format YYYY-MM-DD. Only applies to "list".
+      -e END_DATE, --end-date END_DATE
+                            Only show tables with date before this date. Format
+                            YYYY-MM-DD. Only applies to "list".
+      -M, --migrated        Only show migrated tables. Only applies to "list".
+      -E, --errored         Only show errored tables. Only applies to "list".
     ```
 
     Notes:

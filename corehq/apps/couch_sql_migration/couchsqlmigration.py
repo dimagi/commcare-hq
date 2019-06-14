@@ -37,7 +37,7 @@ from corehq.apps.couch_sql_migration.diff import (
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.blobs import CODES, get_blob_db
+from corehq.blobs import CODES, get_blob_db, NotFound as BlobNotFound
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -56,6 +56,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL,
     XFormOperationSQL,
 )
+from corehq.form_processor.parsers.ledgers.form import MissingFormXml
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import (
     adjust_datetimes,
@@ -202,7 +203,7 @@ class CouchSqlDomainMigrator(object):
         self._log_main_forms_processed_count()
 
     def _try_to_process_form(self, wrapped_form, pool):
-        case_ids = get_case_ids_from_form(wrapped_form)
+        case_ids = get_case_ids(wrapped_form)
         if self.queues.try_obj(case_ids, wrapped_form):
             pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
         elif self.queues.full:
@@ -267,7 +268,7 @@ class CouchSqlDomainMigrator(object):
     def _save_diffs(self, couch_form, sql_form):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         couch_form_json = couch_form.to_json()
-        sql_form_json = sql_form.to_json()
+        sql_form_json = sql_form_to_json(sql_form)
         diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
         self.diff_db.add_diffs(
             couch_form.doc_type, couch_form.form_id,
@@ -765,6 +766,19 @@ def _fix_replacement_form_problem_in_couch(doc):
     return form.to_json()
 
 
+def sql_form_to_json(form):
+    """Serialize SQL form to JSON
+
+    Handles missing form XML gracefully.
+    """
+    try:
+        form.get_xml()
+    except BlobNotFound:
+        form.get_xml.get_cache(form)[()] = ""
+        assert form.get_xml() == "", form.get_xml()
+    return form.to_json()
+
+
 def _migrate_case_attachments(couch_case, sql_case):
     """Copy over attachment meta """
     for name, attachment in six.iteritems(couch_case.case_attachments):
@@ -826,15 +840,30 @@ def _get_case_and_ledger_updates(domain, sql_form):
             case_db.post_process_case(case, sql_form)
             case_db.mark_changed(case)
 
-        stock_result = process_stock(xforms, case_db)
-        cases = case_db.get_cases_for_saving(sql_form.received_on)
-        stock_result.populate_models()
+        try:
+            stock_result = process_stock(xforms, case_db)
+            cases = case_db.get_cases_for_saving(sql_form.received_on)
+            stock_result.populate_models()
+        except MissingFormXml:
+            stock_result = None
 
     return CaseStockProcessingResult(
         case_result=case_result,
         case_models=cases,
         stock_result=stock_result,
     )
+
+
+def get_case_ids(form):
+    """Get case ids referenced in form
+
+    Gracefully handles missing XML, but will omit case ids referenced in
+    ledger updates if XML is missing.
+    """
+    try:
+        return get_case_ids_from_form(form)
+    except MissingFormXml:
+        return [update.id for update in get_case_updates(form)]
 
 
 def _save_migrated_models(sql_form, case_stock_result=None):
