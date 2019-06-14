@@ -27,7 +27,7 @@ def parse_date(s, default=None):
 
 
 class Database(object):
-    def __init__(self, db_path, retry_errors):
+    def __init__(self, db_path, retry_errors=False):
         self.db_path = db_path
         self.retry_errors = retry_errors
 
@@ -48,21 +48,7 @@ class Database(object):
         return row['source_table'], row['target_table']
 
     def get_tables(self, start_date=None, end_date=None):
-        params = []
-        filters = []
-        if start_date and end_date:
-            filters.append('date is not null')
-
-        if start_date:
-            if not end_date:
-                filters.append("date is null OR date >= ?")
-            else:
-                filters.append("date >= ?")
-            params.append(start_date)
-
-        if end_date:
-            filters.append("date < ?")
-            params.append(end_date)
+        filters, params = self._get_date_filters_params(start_date, end_date)
 
         query = 'SELECT * FROM tables WHERE migrated is null'
         if not self.retry_errors:
@@ -74,6 +60,22 @@ class Database(object):
             (row['source_table'], row['target_table'])
             for row in self.execute(query, *params)
         ]
+
+    def _get_date_filters_params(self, start_date, end_date):
+        params = []
+        filters = []
+        if start_date and end_date:
+            filters.append('date is not null')
+        if start_date:
+            if not end_date:
+                filters.append("date is null OR date >= ?")
+            else:
+                filters.append("date >= ?")
+            params.append(start_date)
+        if end_date:
+            filters.append("date < ?")
+            params.append(end_date)
+        return filters, params
 
     def mark_migrated(self, table, success):
         with self.db:
@@ -332,46 +334,141 @@ def _confirm(msg):
     return confirm_update == 'yes'
 
 
+def stats(db_path, **kwargs):
+    db = Database(db_path)
+    with db:
+        res = db.execute('select migrated, errored, count(*) as count from tables group by migrated, errored')
+    migrated, errored, total = 0, 0, 0
+    for row in res:
+        total += row['count']
+        if row['migrated']:
+            migrated += row['count']
+        if row['errored']:
+            errored += row['count']
+    print("""
+    Migration stats:
+        Total   : {}
+        Migrated: {} ({}%)
+        Errored : {} ({}%)
+    """.format(total, migrated, 100 * migrated // total, errored, 100 * errored // total))
+
+
+def print_table(rows):
+    cols = [
+        ('source_table', '<', 55),
+        ('date', '<', 15),
+        ('migrated', '^', 8),
+        ('errored', '^', 8),
+        ('target_table', '<', 50)
+    ]
+    template = " | ".join(['{{{}:{}{}}}'.format(*col) for col in cols])
+    print(template.format(
+        source_table='Source Table',
+        date='Table Date',
+        migrated='Migrated',
+        errored='Errored',
+        target_table='Target Table'
+    ))
+    for row in rows:
+        row = {
+            col: val if val is not None else ''
+            for col, val in dict(row).items()
+        }
+        print(template.format(**row))
+
+
+def list_tables(db_path, start_date, end_date, migrated=False, errored=False):
+    db = Database(db_path)
+
+    query = 'select * from tables'
+
+    filters, params = db._get_date_filters_params(start_date, end_date)
+    if migrated:
+        filters.append('migrated = 1')
+    if errored:
+        filters.append('errored = 1')
+    if filters:
+        query += ' where {}'.format(' and '.join(filters))
+
+    with db:
+        res = db.execute(query, *params)
+
+    print_table(res)
+
+
 def main():
     parser = argparse.ArgumentParser(description="""
         Migrate DB tables from one DB to another using pg_dump.
         Compainion to custom/icds_reports/management_commands/generate_migration_tables.py
     """)
-    parser.add_argument('db_path', help='Path to sqlite DB containing list of tables to migrate')
-    parser.add_argument('-D', '--source-db', required=True, help='Name for source database')
-    parser.add_argument('-O', '--source-host', required=True, help='Name for source database')
-    parser.add_argument('-U', '--source-user', required=True, help='Name for source database')
-    parser.add_argument('-d', '--target-db', required=True, help='Name for target database')
-    parser.add_argument('-o', '--target-host', required=True, help='Name for target database')
-    parser.add_argument('-u', '--target-user', required=True, help=(
+    subparser = parser.add_subparsers(dest='action')
+
+    status_parser = subparser.add_parser('status')
+    status_parser.add_argument('db_path', help='Path to sqlite DB containing list of tables to migrate')
+    status_parser.add_argument(
+        'command',
+        nargs='?',
+        choices=('stats', 'list'),
+        default='stats',
+    )
+    status_parser.add_argument('-s', '--start-date', type=parse_date, help=(
+        'Only show tables with date on or after this date. Format YYYY-MM-DD. Only applies to "list".'
+    ))
+    status_parser.add_argument('-e', '--end-date', type=parse_date, help=(
+        'Only show tables with date before this date. Format YYYY-MM-DD. Only applies to "list".'
+    ))
+    status_parser.add_argument('-M', '--migrated', action='store_true', help=(
+        'Only show migrated tables. Only applies to "list".'
+    ))
+    status_parser.add_argument('-E', '--errored', action='store_true', help=(
+        'Only show errored tables. Only applies to "list".'
+    ))
+
+    migrate_parser = subparser.add_parser('migrate')
+    migrate_parser.add_argument('db_path', help='Path to sqlite DB containing list of tables to migrate')
+    migrate_parser.add_argument('-D', '--source-db', required=True, help='Name for source database')
+    migrate_parser.add_argument('-O', '--source-host', required=True, help='Name for source database')
+    migrate_parser.add_argument('-U', '--source-user', required=True, help='Name for source database')
+    migrate_parser.add_argument('-d', '--target-db', required=True, help='Name for target database')
+    migrate_parser.add_argument('-o', '--target-host', required=True, help='Name for target database')
+    migrate_parser.add_argument('-u', '--target-user', required=True, help=(
         'PG user to connect to target DB as. This user should be able to connect to the target'
         'DB without a password.'
     ))
-    parser.add_argument('--start-date', type=parse_date, help=(
+    migrate_parser.add_argument('--start-date', type=parse_date, help=(
         'Only migrate tables with date on or after this date. Format YYYY-MM-DD'
     ))
-    parser.add_argument('--end-date', type=parse_date, help=(
+    migrate_parser.add_argument('--end-date', type=parse_date, help=(
         'Only migrate tables with date before this date. Format YYYY-MM-DD'
     ))
-    parser.add_argument('--table', help='Only migrate this table')
-    parser.add_argument('--confirm', action='store_true', help='Confirm before each table.')
-    parser.add_argument('--dry-run', action='store_true', help='Only output the commands.')
-    parser.add_argument('--parallel', type=int, default=1, help='How many commands to run in parallel')
-    parser.add_argument('--no-stop-on-error', action='store_true', help=(
+    migrate_parser.add_argument('--table', help='Only migrate this table')
+    migrate_parser.add_argument('--confirm', action='store_true', help='Confirm before each table.')
+    migrate_parser.add_argument('--dry-run', action='store_true', help='Only output the commands.')
+    migrate_parser.add_argument('--parallel', type=int, default=1, help='How many commands to run in parallel')
+    migrate_parser.add_argument('--no-stop-on-error', action='store_true', help=(
         'Do not stop the migration if an error is encountered'
     ))
-    parser.add_argument('--retry-errors', action='store_true', help='Retry tables that have errored')
+    migrate_parser.add_argument('--retry-errors', action='store_true', help='Retry tables that have errored')
 
     args = parser.parse_args()
 
-    migrator = Migrator(
-        args.db_path, args.source_db, args.source_host, args.source_user,
-        args.target_db, args.target_host, args.target_user,
-        args.start_date, args.end_date,
-        args.table, args.confirm, args.dry_run,
-        not args.no_stop_on_error, args.retry_errors
-    )
-    migrator.run(args.parallel)
+    if args.action == 'migrate':
+        migrator = Migrator(
+            args.db_path, args.source_db, args.source_host, args.source_user,
+            args.target_db, args.target_host, args.target_user,
+            args.start_date, args.end_date,
+            args.table, args.confirm, args.dry_run,
+            not args.no_stop_on_error, args.retry_errors
+        )
+        migrator.run(args.parallel)
+    elif args.action == 'status':
+        kwargs = vars(args)
+        kwargs.pop('action')
+        command = kwargs.pop('command')
+        {
+            'stats': stats,
+            'list': list_tables
+        }[command](**kwargs)
 
 
 if __name__ == "__main__":
