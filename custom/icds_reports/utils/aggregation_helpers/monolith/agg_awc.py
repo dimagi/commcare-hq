@@ -23,6 +23,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
         self.month_end = self.month_start + relativedelta(months=1, seconds=-1)
+        self.next_month = self.month_start + relativedelta(months=1)
         self.prev_month = self.month_start - relativedelta(months=1)
         self.month_start_6m = self.month_start - relativedelta(months=6)
         self.month_end_11yr = self.month_end - relativedelta(years=11)
@@ -363,14 +364,16 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(due_list_ccs) AS usage_num_due_list_ccs,
                 sum(due_list_child) AS usage_num_due_list_child_health
             FROM "{usage_table}"
-            WHERE month = %(start_date)s GROUP BY awc_id, month
+            WHERE month = %(start_date)s AND form_date >= %(start_date)s AND form_date < %(next_month)
+            GROUP BY awc_id, month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
             usage_table=self._ucr_tablename('static-usage_forms'),
         ), {
-            'start_date': self.month_start
+            'start_date': self.month_start,
+            'next_month': self.next_month,
         }
 
         yield """
