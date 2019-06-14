@@ -127,8 +127,6 @@ class CouchSqlDomainMigrator(object):
         self.run_timestamp = run_timestamp or int(time())
         self.statedb = init_state_db(domain)
         # FIXME state is lost on resume
-        # this one is bad: forms would be lost (not migrated) on stop/resume
-        self.errors_with_normal_doc_type = []
         # this one may only affect diffs?
         self.forms_that_touch_cases_without_actions = set()
 
@@ -159,7 +157,7 @@ class CouchSqlDomainMigrator(object):
                 try:
                     pool.process_xform(change.get_document())
                 except ProblemForm as error:
-                    self.errors_with_normal_doc_type.append(error.form_id)
+                    self.statedb.add_problem_form(error.form_id)
 
         self._log_main_forms_processed_count()
 
@@ -226,7 +224,8 @@ class CouchSqlDomainMigrator(object):
 
     def _copy_unprocessed_forms(self):
         pool = Pool(10)
-        for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
+        problems = self.statedb.iter_problem_forms()
+        for couch_form_json in iter_docs(XFormInstance.get_db(), problems, chunksize=1000):
             assert couch_form_json['problem']
             couch_form_json['doc_type'] = 'XFormError'
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)

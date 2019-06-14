@@ -39,6 +39,23 @@ def _get_state_db_filepath(domain):
 
 class StateDB(DiffDB):
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        if self._connection is not None:
+            self._connection.close()
+
+    def add_problem_form(self, form_id):
+        session = self.Session()
+        session.add(ProblemForm(id=form_id))
+        session.commit()
+
+    def iter_problem_forms(self):
+        query = self.Session().query(ProblemForm.id)
+        for form_id, in iter_large(query, ProblemForm.id):
+            yield form_id
+
     def add_missing_docs(self, kind, doc_ids):
         session = self.Session()
         session.bulk_save_objects([
@@ -109,4 +126,31 @@ class MissingDoc(Base):
     doc_id = Column(String(50), nullable=False)
 
 
+class ProblemForm(Base):
+    __tablename__ = "problemform"
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
 Counts = namedtuple('Counts', 'total missing')
+
+
+def iter_large(query, pk_attr, maxrq=1000):
+    """Specialized windowed query generator using WHERE/LIMIT
+
+    Iterate over a dataset that is too large to fetch at once. Results
+    are ordered by `pk_attr`.
+
+    Adapted from https://github.com/sqlalchemy/sqlalchemy/wiki/WindowedRangeQuery
+    """
+    first_id = None
+    while True:
+        qry = query
+        if first_id is not None:
+            qry = query.filter(pk_attr > first_id)
+        rec = None
+        for rec in qry.order_by(pk_attr).limit(maxrq):
+            yield rec
+        if rec is None:
+            break
+        first_id = getattr(rec, pk_attr.name)
