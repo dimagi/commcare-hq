@@ -34,6 +34,7 @@ from corehq.apps.couch_sql_migration.diff import (
     filter_form_diffs,
     filter_ledger_diffs,
 )
+from corehq.apps.couch_sql_migration.statedb import init_state_db
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
@@ -120,13 +121,11 @@ def do_couch_to_sql_migration(domain, with_progress=True, run_timestamp=None):
 
 class CouchSqlDomainMigrator(object):
     def __init__(self, domain, with_progress=True, run_timestamp=None):
-        from corehq.apps.tzmigration.planning import DiffDB
         self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
         self.domain = domain
         self.run_timestamp = run_timestamp or int(time())
-        db_filepath = get_diff_db_filepath(domain)
-        self.diff_db = DiffDB.init(db_filepath)
+        self.statedb = init_state_db(domain)
         # FIXME state is lost on resume
         # this one is bad: forms would be lost (not migrated) on stop/resume
         self.errors_with_normal_doc_type = []
@@ -206,7 +205,7 @@ class CouchSqlDomainMigrator(object):
         couch_form_json = couch_form.to_json()
         sql_form_json = sql_form_to_json(sql_form)
         diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
-        self.diff_db.add_diffs(
+        self.statedb.add_diffs(
             couch_form.doc_type, couch_form.form_id,
             filter_form_diffs(couch_form_json, sql_form_json, diffs)
         )
@@ -331,7 +330,7 @@ class CouchSqlDomainMigrator(object):
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         log.debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
-        diff_db = self.diff_db
+        statedb = self.statedb
         counts = defaultdict(int)
         case_ids = list(couch_cases)
         sql_cases = CaseAccessorSQL.get_cases(case_ids)
@@ -352,7 +351,7 @@ class CouchSqlDomainMigrator(object):
                     log.warning('Case {} rebuild -> {}: {}'.format(
                         sql_case.case_id, type(err).__name__, err))
             if diffs:
-                diff_db.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+                statedb.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
             counts[couch_case['doc_type']] += 1
 
         self._diff_ledgers(case_ids)
@@ -363,11 +362,11 @@ class CouchSqlDomainMigrator(object):
             missing_cases = [couch_cases[x] for x in couch_ids - sql_case_ids]
             log.debug("Found %s missing SQL cases", len(missing_cases))
             for doc_type, doc_ids in self._filter_missing_cases(missing_cases):
-                diff_db.add_missing_docs(doc_type, doc_ids)
+                statedb.add_missing_docs(doc_type, doc_ids)
                 counts[doc_type] += len(doc_ids)
 
         for doc_type, count in six.iteritems(counts):
-            diff_db.increment_counter(doc_type, count)
+            statedb.increment_counter(doc_type, count)
         self.processed_docs += len(case_ids)
         self._log_case_diff_count(throttled=True)
 
@@ -398,7 +397,7 @@ class CouchSqlDomainMigrator(object):
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
             diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
-            self.diff_db.add_diffs(
+            self.statedb.add_diffs(
                 'stock state', ledger_value.ledger_reference.as_id(),
                 filter_ledger_diffs(diffs)
             )
@@ -850,29 +849,6 @@ def _iter_changes(domain, doc_types, **kw):
         doc_types=doc_types,
         event_handler=MigrationPaginationEventHandler(domain),
     ).iter_all_changes(**kw)
-
-
-def get_diff_db_filepath(domain):
-    return os.path.join(settings.SHARED_DRIVE_CONF.tzmigration_planning_dir,
-                        '{}-tzmigration.db'.format(domain))
-
-
-def get_diff_db(domain):
-    from corehq.apps.tzmigration.planning import DiffDB
-
-    db_filepath = get_diff_db_filepath(domain)
-    return DiffDB.open(db_filepath)
-
-
-def delete_diff_db(domain):
-    db_filepath = get_diff_db_filepath(domain)
-    try:
-        os.remove(db_filepath)
-    except OSError as e:
-        # continue if the file didn't exist to begin with
-        # reraise on any other error
-        if e.errno != 2:
-            raise
 
 
 def commit_migration(domain_name):

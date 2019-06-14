@@ -30,7 +30,6 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     MigrationRestricted,
     PartiallyLockingQueue,
     get_case_ids,
-    get_diff_db,
     sql_form_to_json,
 )
 from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
@@ -38,6 +37,7 @@ from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_cou
     MIGRATE,
     RESET,
 )
+from corehq.apps.couch_sql_migration.statedb import open_state_db
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -116,13 +116,13 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
-        diff_db = get_diff_db(self.domain_name)
-        diffs = diff_db.get_diffs()
+        state = open_state_db(self.domain_name)
+        diffs = state.get_diffs()
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
         self.assertEqual(expected, json_diffs)
         self.assertEqual({
             kind: counts.missing
-            for kind, counts in six.iteritems(diff_db.get_doc_counts())
+            for kind, counts in six.iteritems(state.get_doc_counts())
             if counts.missing
         }, {})
 

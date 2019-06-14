@@ -14,9 +14,7 @@ from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
-    delete_diff_db,
     do_couch_to_sql_migration,
-    get_diff_db,
     setup_logging,
 )
 from corehq.apps.couch_sql_migration.progress import (
@@ -25,6 +23,10 @@ from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_complete,
     set_couch_sql_migration_not_started,
     set_couch_sql_migration_started,
+)
+from corehq.apps.couch_sql_migration.statedb import (
+    delete_state_db,
+    open_state_db,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
@@ -147,7 +149,7 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        db = get_diff_db(domain)
+        db = open_state_db(domain)
         diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
         for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
             print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
@@ -157,7 +159,7 @@ class Command(BaseCommand):
     def print_stats(self, domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(domain)
         print("Couch to SQL migration status for {}: {}".format(domain, status))
-        db = get_diff_db(domain)
+        db = open_state_db(domain)
         try:
             diff_stats = db.get_diff_stats()
         except OperationalError:
@@ -269,7 +271,7 @@ def _confirm(message):
 
 def blow_away_migration(domain):
     assert not should_use_sql_backend(domain)
-    delete_diff_db(domain)
+    delete_state_db(domain)
 
     for doc_type in doc_types():
         sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
