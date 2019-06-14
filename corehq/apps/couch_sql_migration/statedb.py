@@ -8,6 +8,7 @@ from collections import namedtuple
 
 from django.conf import settings
 
+from memoized import memoized
 from sqlalchemy import func, Column, Integer, String
 
 from corehq.apps.tzmigration.planning import Base, DiffDB
@@ -55,6 +56,17 @@ class StateDB(DiffDB):
         query = self.Session().query(ProblemForm.id)
         for form_id, in iter_large(query, ProblemForm.id):
             yield form_id
+
+    def add_no_action_case_form(self, form_id):
+        session = self.Session()
+        session.add(NoActionCaseForm(id=form_id))
+        session.commit()
+        self.get_no_action_case_forms.reset_cache(self)
+
+    @memoized
+    def get_no_action_case_forms(self):
+        """Get the set of form ids that touch cases without actions"""
+        return {x for x, in self.Session().query(NoActionCaseForm.id)}
 
     def add_missing_docs(self, kind, doc_ids):
         session = self.Session()
@@ -124,6 +136,12 @@ class MissingDoc(Base):
     id = Column(Integer, primary_key=True)
     kind = Column(String(50), nullable=False)
     doc_id = Column(String(50), nullable=False)
+
+
+class NoActionCaseForm(Base):
+    __tablename__ = "noactioncaseform"
+
+    id = Column(String(50), nullable=False, primary_key=True)
 
 
 class ProblemForm(Base):

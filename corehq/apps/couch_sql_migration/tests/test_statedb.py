@@ -19,6 +19,18 @@ def test_problem_forms():
         eq(set(db.iter_problem_forms()), {"abc", "def"})
 
 
+def test_no_action_case_forms():
+    with init_state_db("test") as db:
+        db.add_no_action_case_form("abc")
+
+    with init_state_db("test") as db:
+        eq(db.get_no_action_case_forms(), {"abc"})
+
+        # verify that memoized result is cleared on add
+        db.add_no_action_case_form("def")
+        eq(db.get_no_action_case_forms(), {"abc", "def"})
+
+
 def test_counters():
     with init_state_db("test") as db:
         db.increment_counter("abc", 1)
@@ -30,3 +42,4 @@ def test_counters():
             "abc": Counts(4, 3),
             "def": Counts(2, 0),
         })
+

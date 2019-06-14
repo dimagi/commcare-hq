@@ -126,9 +126,6 @@ class CouchSqlDomainMigrator(object):
         self.domain = domain
         self.run_timestamp = run_timestamp or int(time())
         self.statedb = init_state_db(domain)
-        # FIXME state is lost on resume
-        # this one may only affect diffs?
-        self.forms_that_touch_cases_without_actions = set()
 
     def migrate(self):
         log.info('migrating domain {}'.format(self.domain))
@@ -218,8 +215,9 @@ class CouchSqlDomainMigrator(object):
                     if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
                 ]
                 if len(touch_updates):
-                    # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
-                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
+                    # record these for later use when filtering case diffs.
+                    # See ``_filter_forms_touch_case``
+                    self.statedb.add_no_action_case_form(couch_form.form_id)
         return case_stock_result
 
     def _copy_unprocessed_forms(self):
@@ -339,9 +337,7 @@ class CouchSqlDomainMigrator(object):
             couch_case = couch_cases[sql_case.case_id]
             sql_case_json = sql_case.to_json()
             diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-            diffs = filter_case_diffs(
-                couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
-            )
+            diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
             if diffs and not sql_case.is_deleted:
                 try:
                     couch_case, diffs = self._rebuild_couch_case_and_re_diff(
@@ -378,9 +374,7 @@ class CouchSqlDomainMigrator(object):
         )
         rebuilt_case_json = rebuilt_case.to_json()
         diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
-        diffs = filter_case_diffs(
-            rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
-        )
+        diffs = filter_case_diffs(rebuilt_case_json, sql_case_json, diffs, self.statedb)
         return rebuilt_case_json, diffs
 
     def _diff_ledgers(self, case_ids):
