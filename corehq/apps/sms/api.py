@@ -37,7 +37,7 @@ from corehq.util.datadog.utils import sms_load_counter
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 
-_sms_content_is_unicode = soft_assert(
+_py3_soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=True,
 )
@@ -519,15 +519,15 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     timestamp - message received timestamp; defaults to now (UTC)
     domain_scope - set the domain scope for this SMS; see SMSBase.domain_scope for details
     """
-    _sms_content_is_unicode(
+    _py3_soft_assert(
         isinstance(phone_number, six.text_type),
         '[SMS] phone_number is type %s' % type(phone_number)
     )
-    _sms_content_is_unicode(
+    _py3_soft_assert(
         isinstance(text, six.text_type),
         '[SMS] text is type %s' % type(text)
     )
-    _sms_content_is_unicode(
+    _py3_soft_assert(
         isinstance(raw_text, (six.text_type, type(None))),
         '[SMS] raw_text is type %s' % type(raw_text)
     )
