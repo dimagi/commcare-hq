@@ -479,6 +479,67 @@ class TestBulkConditionalAlerts(TestCase):
         }])
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
+    def test_upload_custom_schedule_both_sheets_swap(self, language_list_patch):
+        language_list_patch.return_value = self.langs
+        # This rule originally has two translated messages and two untranslated.
+        # Trying to move just one of the messages to the other sheet should fail.
+        data = (
+            ("translated", (
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', "You're Lucky", "Tienes Suerte"),
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', "You Yourself You", "Tú Tú Mismo Tú"),
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', 'Down to One', 'Solamente Uno'),
+            )),
+            ("not translated", (
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', 'Willow'),
+            )),
+        )
+
+        msgs = self._upload(data)
+
+        self.assertEqual(len(msgs), 4)
+        self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
+        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
+        self._assertPatternIn(r"Could not update rule with id \d+ in 'translated' sheet: "
+                              r"expected 2 .* but found 3.", msgs)
+        self._assertPatternIn(r"Could not update rule with id \d+ in 'not translated' sheet: "
+                              r"expected 2 .* but found 1.", msgs)
+
+        # Moving all of the messages to the same sheet should work.
+        data = (
+            ("translated", (
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', "You're Lucky", "Tienes Suerte"),
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', 'Down to One', 'Solamente Uno'),
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', "You Yourself You", "Tú Tú Mismo Tú"),
+                (self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).id, 'test', 'Willow', 'Árbol'),
+            )),
+            ("not translated", ()),
+        )
+
+        old_schedule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).get_messaging_rule_schedule()
+        msgs = self._upload(data)
+
+        self.assertEqual(len(msgs), 2)
+        self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
+        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
+
+        rule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS)
+        schedule = rule.get_messaging_rule_schedule()
+        self._assertAlertScheduleEventsEqual(schedule, old_schedule)
+        self._assertCustomContent(schedule, [{
+            'en': "You're Lucky",
+            'es': "Tienes Suerte",
+        }, {
+            'en': 'Down to One',
+            'es': 'Solamente Uno'
+        }, {
+            'en': "You Yourself You",
+            'es': "Tú Tú Mismo Tú",
+        }, {
+            'en': 'Willow',
+            'es': 'Árbol',
+        }])
+
+    @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
     def test_upload_custom_schedule_message_count_mismatch(self, language_list_patch):
         language_list_patch.return_value = self.langs
 

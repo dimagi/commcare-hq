@@ -161,10 +161,10 @@ class ConditionalAlertUploader(object):
 
             if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
                 # Check that user provided one row for each event in the custom schedule
-                events = rule.get_messaging_rule_schedule().memoized_events
-                expected = len([e for e in events if self.event_is_relevant(e)])
+                all_events = rule.get_messaging_rule_schedule().memoized_events
+                expected = len([e for e in all_events if self.event_is_relevant(e)])
                 actual = len(rows)
-                if expected != actual:
+                if expected != actual and actual != len(all_events):
                     self.msgs.append((messages.error, _("Could not update rule with id {id} in '{sheet_name}' "
                                                         "sheet: expected {expected} row(s) but found "
                                                         "{actual}.").format(id=rule.id, sheet_name=self.sheet_name,
