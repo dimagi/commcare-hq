@@ -179,6 +179,26 @@ class DashboardFeedMixin(DailySavedExportMixin):
         return DashboardFeedListView
 
 
+class ODataFeedMixin(object):
+
+    def create_new_export_instance(self, schema):
+        instance = super(ODataFeedMixin, self).create_new_export_instance(schema)
+        instance.is_odata_config = True
+        instance.transform_dates = False
+        return instance
+
+    @property
+    def page_context(self):
+        context = super(ODataFeedMixin, self).page_context
+        context['format_options'] = ["odata"]
+        return context
+
+    @property
+    def report_class(self):
+        from corehq.apps.export.views.list import ODataFeedListView
+        return ODataFeedListView
+
+
 class GenerateSchemaFromAllBuildsView(View):
     urlname = 'build_full_schema'
 

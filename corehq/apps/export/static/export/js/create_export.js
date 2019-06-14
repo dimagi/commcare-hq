@@ -29,7 +29,9 @@ hqDefine("export/js/create_export", [
         // This contains flags that distinguish the various pages that use this modal.
         // Note that there is both a page-level model type and an observable model type below, since model type
         // is static on the basic form/case export pages but is a user option on the daily saved & feed pages.
-        assertProperties.assert(options.page, ['is_daily_saved_export', 'is_feed', 'is_deid', 'model_type']);
+        assertProperties.assert(options.page, [
+            'is_daily_saved_export', 'is_feed', 'is_deid', 'model_type', 'is_odata',
+        ]);
         self.pageOptions = options.page;
 
         // Flags for the drilldown form, which is fetched via ajax on page initialization.
@@ -250,6 +252,7 @@ hqDefine("export/js/create_export", [
                     is_daily_saved_export: self.pageOptions.is_daily_saved_export,
                     is_feed: self.pageOptions.is_feed,
                     is_deid: self.pageOptions.is_deid,
+                    is_odata: self.pageOptions.is_odata,
                     model_type: self.pageOptions.model_type,
                     form_data: JSON.stringify({
                         model_type: self.modelType(),

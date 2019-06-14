@@ -66,19 +66,29 @@ class ExportListHelper(object):
     form_or_case = None         # None if this handles both forms and cases
     is_deid = False
     allow_bulk_export = True
+    include_saved_filters = False
 
     @classmethod
-    def get(self, request, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_deid=False):
-        if is_feed:
+    def from_request(cls, request):
+        def param_is_true(param):
+            return bool(json.loads(request.GET.get(param)))
+
+        is_deid = param_is_true('is_deid')
+
+        if param_is_true('is_odata'):
+            return ODataFeedListHelper(request)
+
+        if param_is_true('is_feed'):
             if is_deid:
                 return DeIdDashboardFeedListHelper(request)
             return DashboardFeedListHelper(request)
 
-        if is_daily_saved_export:
+        if param_is_true('is_daily_saved_export'):
             if is_deid:
                 return DeIdDailySavedExportListHelper(request)
             return DailySavedExportListHelper(request)
 
+        form_or_case = request.GET.get('model_type')
         if form_or_case == 'form':
             if is_deid:
                 return DeIdFormExportListHelper(request)
@@ -181,6 +191,7 @@ class ExportListHelper(object):
             ),
             'can_edit': export.can_edit(self.request.couch_user),
             'exportType': export.type,
+            'filters': self._get_filters(export),
             'formname': formname,
             'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
                                  args=(self.domain, export.type, export.get_id)),
@@ -188,6 +199,7 @@ class ExportListHelper(object):
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
             'lastBuildDuration': '',
             'addedToBulk': False,
+            'emailedExport': self._get_daily_saved_export_metadata(export),
         }
 
     def _get_daily_saved_export_metadata(self, export):
@@ -195,6 +207,8 @@ class ExportListHelper(object):
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to javascript.
         """
+        if not export.is_daily_saved_export:
+            return None
 
         has_file = export.has_file()
         file_data = {}
@@ -208,9 +222,8 @@ class ExportListHelper(object):
 
         location_restrictions = []
         locations = []
-        filters = export.filters
-        if filters.accessible_location_ids:
-            locations = SQLLocation.objects.filter(location_id__in=filters.accessible_location_ids)
+        if export.filters.accessible_location_ids:
+            locations = SQLLocation.objects.filter(location_id__in=export.filters.accessible_location_ids)
         for location in locations:
             location_restrictions.append(location.display_name)
 
@@ -219,14 +232,17 @@ class ExportListHelper(object):
             'hasFile': has_file,
             'index': None,  # This can be removed when we're off legacy exports
             'fileData': file_data,
-            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
-                filters, self.domain, type(export)
-            ),
-            'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
+            'isLocationSafeForUser': export.filters.is_location_safe_for_user(self.request),
             'locationRestrictions': location_restrictions,
             'taskStatus': _get_task_status_json(export._id),
             'updatingData': False,
         }
+
+    def _get_filters(self, export):
+        if self.include_saved_filters:
+            return DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
+                export.filters, self.domain, type(export)
+            )
 
     def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
                                      last_accessed, download_url):
@@ -250,6 +266,7 @@ class ExportListHelper(object):
 
 class DailySavedExportListHelper(ExportListHelper):
     allow_bulk_export = False
+    include_saved_filters = True
 
     def _priv_check(self):
         return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
@@ -257,7 +274,7 @@ class DailySavedExportListHelper(ExportListHelper):
     @property
     @memoized
     def create_export_form_title(self):
-        return "Select a model to export"  # could be form or case
+        return _("Select a model to export")
 
     @property
     def bulk_download_url(self):
@@ -275,7 +292,10 @@ class DailySavedExportListHelper(ExportListHelper):
             combined_exports.extend(get_case_exports_by_domain(self.domain,
                                                                self.permissions.has_deid_view_permissions,
                                                                include_docs=False))
-        return [x for x in combined_exports if x['is_daily_saved_export'] and not x['export_format'] == "html"]
+        return [x for x in combined_exports
+                if x['is_daily_saved_export']
+                and not x['export_format'] == "html"
+                and not x['is_odata_config']]
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -297,7 +317,6 @@ class DailySavedExportListHelper(ExportListHelper):
                                   if export.last_build_duration else ''),
             'isDailySaved': True,
             'isAutoRebuildEnabled': export.auto_rebuild_enabled,
-            'emailedExport': self._get_daily_saved_export_metadata(export),
         })
         return data
 
@@ -329,18 +348,6 @@ class FormExportListHelper(ExportListHelper):
         from corehq.apps.export.views.download import DownloadNewFormExportView
         return DownloadNewFormExportView
 
-    def fmt_export_data(self, export):
-        data = super(FormExportListHelper, self).fmt_export_data(export)
-
-        emailed_export = None
-        if export.is_daily_saved_export:
-            emailed_export = self._get_daily_saved_export_metadata(export)
-
-        data.update({
-            'emailedExport': emailed_export,
-        })
-        return data
-
 
 class CaseExportListHelper(ExportListHelper):
     form_or_case = 'case'
@@ -351,7 +358,7 @@ class CaseExportListHelper(ExportListHelper):
         exports = get_case_exports_by_domain(self.domain,
                                              self.permissions.has_deid_view_permissions,
                                              include_docs=False)
-        return [x for x in exports if not x['is_daily_saved_export']]
+        return [x for x in exports if not x['is_daily_saved_export'] and not x['is_odata_config']]
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -363,14 +370,8 @@ class CaseExportListHelper(ExportListHelper):
 
     def fmt_export_data(self, export):
         data = super(CaseExportListHelper, self).fmt_export_data(export)
-
-        emailed_export = None
-        if export.is_daily_saved_export:
-            emailed_export = self._get_daily_saved_export_metadata(export)
-
         data.update({
             'case_type': export.case_type,
-            'emailedExport': emailed_export,
         })
         return data
 
@@ -396,7 +397,10 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
             combined_exports.extend(get_case_exports_by_domain(self.domain,
                                                                self.permissions.has_deid_view_permissions,
                                                                include_docs=False))
-        return [x for x in combined_exports if x['is_daily_saved_export'] and x['export_format'] == "html"]
+        return [x for x in combined_exports
+                if x['is_daily_saved_export']
+                and x['export_format'] == "html"
+                and not x['is_odata_config']]
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -456,7 +460,6 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-
     lead_text = ugettext_lazy('''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
@@ -488,6 +491,8 @@ class BaseExportListView(BaseProjectDataView):
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
             'lead_text': self.lead_text,
+            "export_filter_form": (DashboardFeedFilterForm(self.domain_object)
+                                   if self.include_saved_filters else None),
         }
 
 
@@ -509,10 +514,7 @@ def get_exports_page(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
-    helper = ExportListHelper.get(request, form_or_case=request.GET.get('model_type'),
-                                  is_daily_saved_export=json.loads(request.GET.get('is_daily_saved_export')),
-                                  is_feed=json.loads(request.GET.get('is_feed')),
-                                  is_deid=json.loads(request.GET.get('is_deid')))
+    helper = ExportListHelper.from_request(request)
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
     my_exports = json.loads(request.GET.get('my_exports'))
@@ -592,9 +594,6 @@ class DailySavedExportListView(BaseExportListView, DailySavedExportListHelper):
             "is_daily_saved_export": True,
             "model_type": model_type,
             "static_model_type": False,
-            "export_filter_form": DashboardFeedFilterForm(
-                self.domain_object,
-            )
         })
         return context
 
@@ -611,6 +610,8 @@ def commit_filters(request, domain):
     if export.is_daily_saved_export and not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
+        raise Http404
+    if export.is_odata_config and not toggles.ODATA.enabled_for_request(request):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -630,7 +631,8 @@ def commit_filters(request, domain):
         if export.filters != filters:
             export.filters = filters
             export.save()
-            rebuild_saved_export(export_id, manual=True)
+            if export.is_daily_saved_export:
+                rebuild_saved_export(export_id, manual=True)
         return json_response({
             'success': True,
         })
@@ -712,7 +714,7 @@ def can_download_daily_saved_export(export, domain, couch_user):
     elif export.type == CASE_EXPORT and has_permission_to_view_report(
             couch_user, domain, CASE_EXPORT_PERMISSION):
         return True
-    return False 
+    return False
 
 
 @location_safe
@@ -807,6 +809,7 @@ def submit_app_data_drilldown_form(request, domain):
     form_data = json.loads(request.POST.get('form_data'))
     is_daily_saved_export = json.loads(request.POST.get('is_daily_saved_export'))
     is_feed = json.loads(request.POST.get('is_feed'))
+    is_odata = json.loads(request.POST.get('is_odata'))
 
     create_form = CreateExportTagForm(
         permissions.has_form_export_permissions,
@@ -826,9 +829,13 @@ def submit_app_data_drilldown_form(request, domain):
         CreateNewDailySavedCaseExport,
         CreateNewDailySavedFormExport,
         CreateNewFormFeedView,
+        CreateODataCaseFeedView,
     )
 
-    if is_daily_saved_export:
+    if is_odata:
+        export_tag = create_form.cleaned_data['case_type']
+        cls = CreateODataCaseFeedView
+    elif is_daily_saved_export:
         if create_form.cleaned_data['model_type'] == "case":
             export_tag = create_form.cleaned_data['case_type']
             cls = CreateNewCaseFeedView if is_feed else CreateNewDailySavedCaseExport
@@ -851,3 +858,54 @@ def submit_app_data_drilldown_form(request, domain):
         'success': True,
         'url': reverse(cls.urlname, args=[domain]) + url_params,
     })
+
+
+class ODataFeedListHelper(ExportListHelper):
+    allow_bulk_export = False
+    form_or_case = 'case'
+    is_deid = False
+    include_saved_filters = True
+
+    @property
+    def create_export_form_title(self):
+        return _("Select a model to export")
+
+    @memoized
+    def get_saved_exports(self):
+        if self.permissions.has_case_export_permissions:
+            exports = get_case_exports_by_domain(self.domain,
+                                                 self.permissions.has_deid_view_permissions,
+                                                 include_docs=False)
+        return [x for x in exports if x['is_odata_config']]
+
+    def fmt_export_data(self, export):
+        data = super(ODataFeedListHelper, self).fmt_export_data(export)
+        data.update({
+            'case_type': export.case_type,
+            'isOData': True,
+        })
+        return data
+
+    def _edit_view(self, export):
+        from corehq.apps.export.views.edit import EditODataCaseFeedView
+        return EditODataCaseFeedView
+
+    def _download_view(self, export):
+        # This isn't actually exposed in the UI
+        from corehq.apps.export.views.download import DownloadNewCaseExportView
+        return DownloadNewCaseExportView
+
+
+@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
+    urlname = 'list_odata_feeds'
+    page_title = ugettext_lazy("OData Integration")
+    lead_text = ugettext_lazy('''
+        OData feeds allow you to directly connect CommCareHQ to BI tools.
+    ''')
+
+    @property
+    def page_context(self):
+        context = super(ODataFeedListView, self).page_context
+        context['is_odata'] = True
+        return context
