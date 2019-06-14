@@ -11,7 +11,7 @@ from dimagi.utils.dates import DateSpan
 
 from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.exceptions import EnterpriseReportError
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
+from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.models import Domain
@@ -137,19 +137,27 @@ class EnterpriseWebUserReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseWebUserReport, self).headers
-        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]')] + headers
+        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]')] + headers + \
+               [_("Last Access Date [UTC]")]
 
     def rows_for_domain(self, domain_obj):
         rows = []
         for user in get_all_user_rows(domain_obj.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
             user = CouchUser.wrap_correctly(user['doc'])
-            rows.append([
-                user.full_name,
-                user.username,
-                user.role_label(domain_obj.name),
-                self.format_date(user.last_login),
-            ] + self.domain_properties(domain_obj))
+            domain_membership = user.get_domain_membership(domain_obj.name)
+            last_accessed_domain = None
+            if domain_membership:
+                last_accessed_domain = domain_membership.last_accessed
+            rows.append(
+                [
+                    user.full_name,
+                    user.username,
+                    user.role_label(domain_obj.name),
+                    self.format_date(user.last_login),
+                ]
+                + self.domain_properties(domain_obj)
+                + [last_accessed_domain])
         return rows
 
     def total_for_domain(self, domain_obj):
