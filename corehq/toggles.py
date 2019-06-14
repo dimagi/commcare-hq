@@ -513,7 +513,7 @@ COPY_FORM_TO_APP = StaticToggle(
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'Offer hosting and sharing data files for downloading from a secure dropzone',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -673,7 +673,7 @@ def _enable_search_index(domain, enabled):
 CASE_LIST_EXPLORER = StaticToggle(
     'case_list_explorer',
     'Show the case list explorer report',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_enable_search_index,
 )
@@ -948,7 +948,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
@@ -1033,7 +1033,7 @@ SUPPORT = StaticToggle(
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
     'Basic modules can be child modules',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1218,7 +1218,7 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
 MOBILE_USER_DEMO_MODE = StaticToggle(
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -1271,7 +1271,7 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
 CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for Web Apps instead of latest published',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -1317,7 +1317,7 @@ DATA_MIGRATION = StaticToggle(
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
     'Make the Worker Activity Report use the Groups or Users or Locations filter',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
         "This flag allows you filter the users to display in the same way as the "
@@ -1345,7 +1345,7 @@ ICDS = StaticToggle(
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Project level data dictionary of cases',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
 )
@@ -1394,7 +1394,7 @@ INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
@@ -1440,7 +1440,7 @@ PUBLISH_CUSTOM_REPORTS = StaticToggle(
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1479,7 +1479,7 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
 ENABLE_ALL_ADD_ONS = StaticToggle(
     'enable_all_add_ons',
     'Enable all app manager add-ons',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1487,7 +1487,7 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
     "Ability to filter mobile workers based on Role and username "
     "when doing bulk download",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1501,7 +1501,7 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
 REGEX_FIELD_VALIDATION = StaticToggle(
     'regex_field_validation',
     'Enable regex validation for custom data fields',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1601,7 +1601,7 @@ TRAINING_MODULE = StaticToggle(
 EXPORT_MULTISORT = StaticToggle(
     'export_multisort',
     'Sort multiple rows in exports at once.',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1609,7 +1609,7 @@ EXPORT_MULTISORT = StaticToggle(
 EXPORT_OWNERSHIP = StaticToggle(
     'export_ownership',
     'Allow exports to have ownership.',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
 
