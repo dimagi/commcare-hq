@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import six
 
 from collections import defaultdict
+from copy import copy
 from django.contrib import messages
 from django.db import transaction
 from django.utils.translation import ugettext as _
@@ -157,11 +158,8 @@ class ConditionalAlertUploader(object):
             rule = rules_by_id[rule_id]
             schedule = rule.get_messaging_rule_schedule()
             send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
-            is_custom = False
 
             if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
-                is_custom = True
-
                 # Check that user provided one row for each event in the custom schedule
                 events = rule.get_messaging_rule_schedule().memoized_events
                 expected = len([e for e in events if self.event_is_relevant(e)])
@@ -175,7 +173,7 @@ class ConditionalAlertUploader(object):
 
             with transaction.atomic():
                 try:
-                    dirty = self.update_rule(rule, rows, is_custom=is_custom)
+                    dirty = self.update_rule(rule, rows)
                 except RuleUpdateError as e:
                     self.msgs.append((messages.error, _("Error updating rule with id {id} in '{sheet_name}' "
                                       "sheet: {detail}").format(id=rule.id, sheet_name=self.sheet_name,
@@ -193,37 +191,89 @@ class ConditionalAlertUploader(object):
         return self.msgs
 
     def update_rule(self, rule, rows):
+        name_dirty = self.update_rule_name(rule, rows)
+        message_dirty = self.save_rule_messages(rule, rows)
+        return name_dirty or message_dirty
+
+    def update_rule_name(self, rule, rows):
         if len(set([r['name'] for r in rows])) != 1:
             raise RuleUpdateError(_("Rule name must be the same in all rows"))
 
         row = rows[0]
-        dirty = False
         if 'name' in row and rule.name != row['name']:
-            dirty = True
             rule.name = row['name']
+            return True
+        return False
 
-        return dirty
-
-    def update_rule_messages(self, rule, messages):
+    def save_rule_messages(self, rule, rows):
         schedule = rule.get_messaging_rule_schedule()
         send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
-        {
-            ScheduleForm.SEND_IMMEDIATELY: self.save_immediate_schedule,
-            ScheduleForm.SEND_DAILY: self.save_daily_schedule,
-            ScheduleForm.SEND_WEEKLY: self.save_weekly_schedule,
-            ScheduleForm.SEND_MONTHLY: self.save_monthly_schedule,
-            ScheduleForm.SEND_CUSTOM_IMMEDIATE: self.save_custom_immediate_schedule,
-            ScheduleForm.SEND_CUSTOM_DAILY: self.save_custom_daily_schedule,
-        }[send_frequency](schedule, messages)
 
-    def save_immediate_schedule(self, schedule, messages):
+        # Iterate over rule's events
+        if send_frequency not in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
+            # For standard schedules, the rule may have multiple events (e.g., a daily rule run Mon and Tues
+            # will have 2 events), but all events will have the same message, so we only need to look at the
+            # first event. Since there's only one message, the user is free to move it between sheets.
+            events = [rule.get_messaging_rule_schedule().memoized_events[0]]
+            allow_sheet_swap = True
+        else:
+            # For custom schedules, each event has its own message, so we need to look at all of them, and they may
+            # be a mix of translated and untranslated.
+            # If all messages are on one sheet: The user may update any or all and may move ALL of them to the
+            #   other sheet. We assume that the order of rows is the same as the rule's order of events.
+            # If messages are split between sheets: The user may only make updates on one sheet (once the first
+            #   sheet is updated, the rule will begin processing, so the second sheet's updates will fail). Again,
+            #   we assume the order of rows matches the order of events (with the other sheet's rows interleaved).
+            #   The user may not move messages between sheets, since we can't match events to messages.
+            events = rule.get_messaging_rule_schedule().memoized_events
+            allow_sheet_swap = len(rows) == len(events)
+
+        message_dirty = False
+        new_messages = []
+        row_index = 0
+        for index, event in enumerate(events):
+            old_message = event.content.message
+            new_message = copy(old_message)
+            if self.event_is_relevant(event) or allow_sheet_swap:
+                new_message = self.update_message(new_message, rows[row_index])
+                message_dirty = old_message != new_message
+                row_index += 1
+            new_messages.append(new_message)
+
+        if message_dirty:
+            self.check_for_missing_content(new_messages)
+
+        {
+            ScheduleForm.SEND_IMMEDIATELY: self._save_immediate_schedule,
+            ScheduleForm.SEND_DAILY: self._save_daily_schedule,
+            ScheduleForm.SEND_WEEKLY: self._save_weekly_schedule,
+            ScheduleForm.SEND_MONTHLY: self._save_monthly_schedule,
+            ScheduleForm.SEND_CUSTOM_IMMEDIATE: self._save_custom_immediate_schedule,
+            ScheduleForm.SEND_CUSTOM_DAILY: self._save_custom_daily_schedule,
+        }[send_frequency](schedule, new_messages)
+
+        return message_dirty
+
+    def check_for_missing_content(self, messages):
+        """
+        Raise an exception if any of the given messages are missing content in any language.
+        """
+        raise NotImplementedError()
+
+    def update_message(self, message, row):
+        """
+        Update the given message with values from given row, return updated message.
+        """
+        raise NotImplementedError()
+
+    def _save_immediate_schedule(self, schedule, messages):
         AlertSchedule.assert_is(schedule)
         assert len(messages) == 1, "Immediate schedule expected 1 message, got %s" % len(messages)
 
         schedule.set_simple_alert(SMSContent(message=messages[0]),
                                   extra_options=schedule.get_extra_scheduling_options())
 
-    def save_daily_schedule(self, schedule, messages):
+    def _save_daily_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
         assert len(messages) == 1, "Daily schedule expected 1 message, got %s" % len(messages)
 
@@ -236,7 +286,7 @@ class ConditionalAlertUploader(object):
             repeat_every=schedule.repeat_every,
         )
 
-    def save_weekly_schedule(self, schedule, messages):
+    def _save_weekly_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
         assert len(messages) == 1, "Weekly schedule expected 1 message, got %s" % len(messages)
 
@@ -250,7 +300,7 @@ class ConditionalAlertUploader(object):
             repeat_every=schedule.repeat_every,
         )
 
-    def save_monthly_schedule(self, schedule, messages):
+    def _save_monthly_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
         assert len(messages) == 1, "Monthly schedule expected 1 message, got %s" % len(messages)
 
@@ -267,7 +317,7 @@ class ConditionalAlertUploader(object):
             repeat_every=repeat_every,
         )
 
-    def save_custom_immediate_schedule(self, schedule, messages):
+    def _save_custom_immediate_schedule(self, schedule, messages):
         AlertSchedule.assert_is(schedule)
         assert len(messages) == len(schedule.memoized_events), \
             "Custom schedule expected {} messages, got {}".format(len(messages), len(schedule.memoized_events))
@@ -275,7 +325,7 @@ class ConditionalAlertUploader(object):
         event_and_content_objects = list(zip(schedule.memoized_events, [SMSContent(message=m) for m in messages]))
         schedule.set_custom_alert(event_and_content_objects, extra_options=schedule.get_extra_scheduling_options())
 
-    def save_custom_daily_schedule(self, schedule, messages):
+    def _save_custom_daily_schedule(self, schedule, messages):
         TimedSchedule.assert_is(schedule)
         assert len(messages) == len(schedule.memoized_events), \
             "Custom schedule expected {} messages, got {}".format(len(messages), len(schedule.memoized_events))
@@ -299,39 +349,18 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
         message = event.content.message
         return relevant and len(message) and '*' not in message
 
-    def update_rule(self, rule, rows, is_custom=False):
-        dirty = super(TranslatedConditionalAlertUploader, self).update_rule(rule, rows)
+    def check_for_missing_content(self, messages):
+        missing = [lang for message in messages for lang, value in message.items() if not message[lang]]
+        if missing:
+            raise RuleUpdateError(_("Missing content for {langs}").format(langs=", ".join(missing)))
 
-        if is_custom:
-            events = rule.get_messaging_rule_schedule().memoized_events
-            allow_sheet_swap = len(rows) == len(events)
-        else:
-            events = [rule.get_messaging_rule_schedule().memoized_events[0]]
-            allow_sheet_swap = True
-
-        message_dirty = False
-        new_messages = []
-        row_index = 0
-        for index, event in enumerate(events):
-            new_message = event.content.message
-            if self.event_is_relevant(event) or allow_sheet_swap:
-                row = rows[row_index]
-                new_message.pop('*', None)
-                for lang in self.langs:
-                    key = 'message_' + lang
-                    if key in row and new_message.get(lang, '') != row[key]:
-                        new_message.update({lang: row[key]})
-                        message_dirty = True
-                row_index += 1
-            new_messages.append(new_message)
-
-        if message_dirty:
-            missing = [lang for message in new_messages for lang, value in message.items() if not message[lang]]
-            if missing:
-                raise RuleUpdateError(_("Missing content for {langs}").format(langs=", ".join(missing)))
-            self.update_rule_messages(rule, new_messages)
-
-        return dirty or message_dirty
+    def update_message(self, message, row):
+        message.pop('*', None)
+        for lang in self.langs:
+            key = 'message_' + lang
+            if key in row:
+                message.update({lang: row[key]})
+        return message
 
 
 class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
@@ -343,33 +372,12 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
         message = event.content.message
         return relevant and (not len(message) or '*' in message)
 
-    def update_rule(self, rule, rows, is_custom=False):
-        dirty = super(UntranslatedConditionalAlertUploader, self).update_rule(rule, rows)
-        if not any(['message' in row for row in rows]):
-            return dirty
+    def check_for_missing_content(self, messages):
+        missing = [m for m in messages if not m.get('*', '')]
+        if missing:
+            raise RuleUpdateError(_("Missing content"))
 
-        if is_custom:
-            events = rule.get_messaging_rule_schedule().memoized_events
-            allow_sheet_swap = len(rows) == len(events)
-        else:
-            events = [rule.get_messaging_rule_schedule().memoized_events[0]]
-            allow_sheet_swap = True
-
-        new_messages = []
-        row_index = 0
-        for index, event in enumerate(events):
-            new_message = event.content.message
-            if self.event_is_relevant(event) or allow_sheet_swap:
-                row = rows[row_index]
-                if new_message.get('*', '') != row['message']:
-                    new_message = row['message']
-                    dirty = True
-                    if not new_message:
-                        raise RuleUpdateError(_("Missing content"))
-                row_index += 1
-            new_messages.append({'*': new_message})
-
-        if dirty:
-            self.update_rule_messages(rule, new_messages)
-
-        return dirty
+    def update_message(self, message, row):
+        if 'message' in row:
+            return {'*': row['message']}
+        return message
