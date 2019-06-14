@@ -299,5 +299,6 @@ def update_domain_date(user_id, domain):
     domain_membership = user.get_domain_membership(domain)
     if domain_membership:
         domain_membership.last_accessed = datetime.today().date()
+        user.save()
     else:
         logger.error("DomainMembership does not exist for user %s in domain %s" % (user.name, domain))
