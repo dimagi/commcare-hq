@@ -127,7 +127,10 @@ class CouchSqlDomainMigrator(object):
         self.run_timestamp = run_timestamp or int(time())
         db_filepath = get_diff_db_filepath(domain)
         self.diff_db = DiffDB.init(db_filepath)
+        # FIXME state is lost on resume
+        # this one is bad: forms would be lost (not migrated) on stop/resume
         self.errors_with_normal_doc_type = []
+        # this one may only affect diffs?
         self.forms_that_touch_cases_without_actions = set()
 
     def migrate(self):
