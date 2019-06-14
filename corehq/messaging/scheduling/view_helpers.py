@@ -345,9 +345,11 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
     @classmethod
     def event_is_relevant(cls, event):
-        relevant = super(TranslatedConditionalAlertUploader, cls).event_is_relevant(event)
+        if not super(TranslatedConditionalAlertUploader, cls).event_is_relevant(event):
+            return False
+
         message = event.content.message
-        return relevant and len(message) and '*' not in message
+        return len(message) and '*' not in message
 
     def check_for_missing_content(self, messages):
         missing = [lang for message in messages for lang, value in message.items() if not message[lang]]
@@ -368,9 +370,11 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
     @classmethod
     def event_is_relevant(cls, event):
-        relevant = super(UntranslatedConditionalAlertUploader, cls).event_is_relevant(event)
+        if not super(UntranslatedConditionalAlertUploader, cls).event_is_relevant(event):
+            return False
+
         message = event.content.message
-        return relevant and (not len(message) or '*' in message)
+        return (not len(message) or '*' in message)
 
     def check_for_missing_content(self, messages):
         missing = [m for m in messages if not m.get('*', '')]
