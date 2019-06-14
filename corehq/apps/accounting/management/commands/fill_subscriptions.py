@@ -35,15 +35,7 @@ class Command(BaseCommand):
             print("Customer Invoice ID: {}, Account Id : {}".format(invoice.id, invoice.account_id))
 
         choice = input('Do you want to continue updating these (y/n)')
-        assert choice.startswith('y')
-
-    def get_invoice_subscriptions(self, invoice):
-        all_subscriptions = invoice.account.subscription_set.filter(do_not_invoice=False)
-        return [
-            sub for sub in all_subscriptions
-            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
-                and should_create_invoice(sub, sub.subscriber.domain, invoice.date_start, invoice.date_end))
-        ]
+        assert choice.lower() == 'y'
 
 
 
