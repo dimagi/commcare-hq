@@ -180,6 +180,9 @@ class Migrator(object):
         self.db = Database(self.db_path, retry_errors)
 
     def run(self, max_concurrent):
+
+        print('\n\nWriting error logs to {}\n\n'.format(self.error_log))
+
         with self.db:
             if self.only_table:
                 table = self.db.get_table(self.only_table)
