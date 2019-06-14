@@ -25,12 +25,12 @@ from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_started,
 )
 from corehq.apps.couch_sql_migration.statedb import (
+    Counts,
     delete_state_db,
     open_state_db,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.tzmigration.planning import Counts
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
