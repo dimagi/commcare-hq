@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 
 import re
 
-from testil import eq
+from testil import assert_raises, eq
 
-from ..statedb import Counts, delete_state_db, init_state_db
+from ..statedb import Counts, delete_state_db, init_state_db, ResumeError
 
 
 def teardown():
@@ -46,6 +46,20 @@ def test_no_action_case_forms():
         eq(db.get_no_action_case_forms(), {"abc", "def"})
 
 
+def test_save_resume_state():
+    with init_state_db("test") as db:
+        eq(db.pop_saved_resume_state(), [])
+        db.save_resume_state(["abc", "def"])
+
+    with init_state_db("test") as db:
+        eq(db.pop_saved_resume_state(), ["abc", "def"])
+
+    # simulate resume without save
+    with init_state_db("test") as db:
+        with assert_raises(ResumeError):
+            db.pop_saved_resume_state()
+
+
 def test_counters():
     with init_state_db("test") as db:
         db.increment_counter("abc", 1)
@@ -57,4 +71,3 @@ def test_counters():
             "abc": Counts(4, 3),
             "def": Counts(2, 0),
         })
-

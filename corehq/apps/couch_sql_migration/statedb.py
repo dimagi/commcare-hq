@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import errno
+import json
 import os
 import os.path
 from collections import namedtuple
@@ -46,26 +47,22 @@ class StateDB(DiffDB):
         is_new_db = not os.path.exists(path)
         db = super(StateDB, cls).init(path)
         if is_new_db:
-            session = db.Session()
-            session.add(KeyValue(
-                key="db_unique_id",
-                value=datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"),
-            ))
-            session.commit()
+            db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
+            db.save_resume_state([])
         return db
 
     def __enter__(self):
         return self
 
     def __exit__(self, *exc_info):
+        self.engine.dispose()
         if self._connection is not None:
             self._connection.close()
 
     @property
     @memoized
     def unique_id(self):
-        query = self.Session().query(KeyValue).filter_by(key="db_unique_id")
-        return query.scalar().value
+        return self._get_kv("db_unique_id").value
 
     def add_problem_form(self, form_id):
         session = self.Session()
@@ -87,6 +84,34 @@ class StateDB(DiffDB):
     def get_no_action_case_forms(self):
         """Get the set of form ids that touch cases without actions"""
         return {x for x, in self.Session().query(NoActionCaseForm.id)}
+
+    def save_resume_state(self, state):
+        self._set_kv("resume_state", json.dumps(state))
+
+    def pop_saved_resume_state(self):
+        value = self._pop_kv("resume_state")
+        if value is None:
+            raise ResumeError(
+                "Cannot resume because previous session did not exit cleanly.")
+        return json.loads(value.value)
+
+    def _get_kv(self, key, session=None):
+        if session is None:
+            session = self.Session()
+        return session.query(KeyValue).filter_by(key=key).scalar()
+
+    def _pop_kv(self, key):
+        session = self.Session()
+        kv = self._get_kv(key, session)
+        if kv is not None:
+            session.delete(kv)
+            session.commit()
+        return kv
+
+    def _set_kv(self, key, value):
+        session = self.Session()
+        session.add(KeyValue(key=key, value=value))
+        session.commit()
 
     def add_missing_docs(self, kind, doc_ids):
         session = self.Session()
@@ -141,6 +166,10 @@ class StateDB(DiffDB):
             .query(MissingDoc.doc_id)
             .filter(MissingDoc.kind == doc_type)
         }
+
+
+class ResumeError(Exception):
+    pass
 
 
 class DocCount(Base):

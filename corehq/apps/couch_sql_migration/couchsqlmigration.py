@@ -23,7 +23,6 @@ from casexml.apps.case.xform import (
 from casexml.apps.case.xml.parser import CaseNoopAction
 from django.conf import settings
 from django.db.utils import IntegrityError
-from django_redis import get_redis_connection
 from gevent.pool import Pool
 
 from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
@@ -860,19 +859,18 @@ class AsyncFormProcessor(object):
 
     def __enter__(self):
         self.pool = Pool(15)
-        self.queues = PartiallyLockingQueue(self.statedb.unique_id)
-        self._rebuild_queues()
+        self.queues = PartiallyLockingQueue()
+        self._rebuild_queues(self.statedb.pop_saved_resume_state())
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
         if exc_type is None:
             self._finish_processing_queues()
+        self.statedb.save_resume_state(self.queues.queue_ids)
         self.queues = self.pool = None
 
-    def _rebuild_queues(self):
-        prev_ids = self.queues.get_ids_from_run_timestamp()
-        for chunked_ids in chunked(prev_ids, 100):
-            chunk = [_id for _id in chunked_ids if _id]
+    def _rebuild_queues(self, form_ids):
+        for chunk in chunked(form_ids, 100, list):
             for form in FormAccessorCouch.get_forms(chunk):
                 self._try_to_process_form(form)
         self._try_to_empty_queues()
@@ -936,6 +934,10 @@ class AsyncFormProcessor(object):
         while not pool.join(timeout=10):
             log.info('Waiting on {} docs'.format(len(pool)))
 
+        unprocessed = self.queues.queue_ids
+        if unprocessed:
+            log.error("Unprocessed forms (unexpected): %s", unprocessed)
+
 
 class ProblemForm(Exception):
 
@@ -958,7 +960,7 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, run_timestamp, queue_id_param="form_id", max_size=10000):
+    def __init__(self, queue_id_param="form_id", max_size=10000):
         """
         :queue_id_param string: param of the queued objects to pull an id from
         :max_size int: the maximum size the queue should reach. -1 means no limit
@@ -973,24 +975,14 @@ class PartiallyLockingQueue(object):
             return getattr(queue_obj, queue_id_param)
         self.get_queue_obj_id = get_queue_obj_id
 
-        def get_cached_list_key():
-            return "partial_queues.queued_or_processing.%s" % run_timestamp
-        self.get_cached_list_key = get_cached_list_key
-        client = get_redis_connection()
-        client.rpush(get_cached_list_key(), '')  # hack to make key exist
-        client.expire(get_cached_list_key(), 60 * 60 * 24 * 30)  # 30 days
+    @property
+    def queue_ids(self):
+        """Return a list of queue object ids
 
-    def add_processing_doc_id(self, doc_id):
-        client = get_redis_connection()
-        client.rpush(self.get_cached_list_key(), doc_id)
-
-    def remove_processing_doc_id(self, doc_id):
-        client = get_redis_connection()
-        gevent.spawn(client.lrem, self.get_cached_list_key(), 1, doc_id)
-
-    def get_ids_from_run_timestamp(self):
-        client = get_redis_connection()
-        return client.lrange(self.get_cached_list_key(), 0, -1) or []
+        Queue state can be ruilt using this list by looking up each
+        queue object and lock ids and passing them to `try_obj()`.
+        """
+        return list(self.lock_ids_by_queue_id)
 
     def try_obj(self, lock_ids, queue_obj):
         """ Checks if the object can acquire some locks. If not, adds item to queue
@@ -1064,11 +1056,9 @@ class PartiallyLockingQueue(object):
         releasing a lock that isn't held
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
-        lock_ids = self.lock_ids_by_queue_id.get(queue_obj_id)
-        self.remove_processing_doc_id(queue_obj_id)
+        lock_ids = self.lock_ids_by_queue_id.pop(queue_obj_id, None)
         if lock_ids:
             self._release_lock(lock_ids)
-            del self.lock_ids_by_queue_id[queue_obj_id]
             return True
         return False
 
@@ -1092,7 +1082,6 @@ class PartiallyLockingQueue(object):
                 self.queue_by_lock_id[lock_id].append(queue_obj_id)
             self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
         self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
-        self.add_processing_doc_id(queue_obj_id)
 
     def _remove_item(self, queued_obj_id):
         """ Removes a queued obj from data model
