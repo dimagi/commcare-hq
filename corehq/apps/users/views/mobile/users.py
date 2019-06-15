@@ -678,17 +678,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {
                 'error': _("You do not have permission to create mobile workers.")
             }
-        fields = [
-            'username',
-            'password',
-            'first_name',
-            'last_name',
-            'location_id',
-        ]
 
         try:
             self._ensure_proper_request(in_data)
-            form_data = self._construct_form_data(in_data, fields)
+            form_data = self._construct_form_data(in_data)
         except InvalidMobileWorkerRequest as e:
             return {
                 'error': six.text_type(e)
@@ -709,7 +702,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
-        password = self.new_mobile_worker_form.cleaned_data['password']
+        password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
@@ -734,15 +727,19 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         return None
 
-    def _construct_form_data(self, in_data, fields):
+    def _construct_form_data(self, in_data):
         try:
             user_data = in_data['user']
-            form_data = {}
+            form_data = {
+                'username': user_data.get('username'),
+                'new_password': user_data.get('password'),
+                'first_name': user_data.get('first_name'),
+                'last_name': user_data.get('last_name'),
+                'location_id': user_data.get('location_id'),
+                'domain': self.domain,
+            }
             for k, v in user_data.get('custom_fields', {}).items():
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in fields:
-                form_data[f] = user_data.get(f)
-            form_data['domain'] = self.domain
             return form_data
         except Exception as e:
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
@@ -874,7 +871,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
-            password = self.new_commcare_user_form.cleaned_data['password']
+            password = self.new_commcare_user_form.cleaned_data['password_1']
             phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
 
             user = CommCareUser.create(

@@ -434,8 +434,10 @@ class CommCareAccountForm(forms.Form):
     Form for CommCareAccounts
     """
     username = forms.CharField(required=True)
-    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
-    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
+    password_1 = forms.CharField(label=ugettext_lazy('Password'), widget=PasswordInput(),
+                                 required=True, min_length=1)
+    password_2 = forms.CharField(label=ugettext_lazy('Password (reenter)'), widget=PasswordInput(),
+                                 required=True, min_length=1)
     phone_number = forms.CharField(
         max_length=80,
         required=False,
@@ -456,7 +458,7 @@ class CommCareAccountForm(forms.Form):
             Fieldset(
                 _("Mobile Worker's Primary Information"),
                 'username',
-                'password',
+                'password_1',
                 'password_2',
                 'phone_number',
             )
@@ -479,12 +481,12 @@ class CommCareAccountForm(forms.Form):
 
     def clean(self):
         try:
-            password = self.cleaned_data['password']
+            password_1 = self.cleaned_data['password_1']
             password_2 = self.cleaned_data['password_2']
         except KeyError:
             pass
         else:
-            if password != password_2:
+            if password_1 != password_2:
                 raise forms.ValidationError("Passwords do not match")
 
         return self.cleaned_data
@@ -524,7 +526,7 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
-    password = forms.CharField(
+    new_password = forms.CharField(
         widget=forms.PasswordInput(),
         required=True,
         min_length=1,
@@ -544,8 +546,8 @@ class NewMobileWorkerForm(forms.Form):
 
         if self.project.strong_mobile_passwords:
             # Use normal text input so auto-generated strong password is visible
-            self.fields['password'].widget = forms.TextInput()
-            self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
+            self.fields['new_password'].widget = forms.TextInput()
+            self.fields['new_password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
                 ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
                 '<br />'
             ))
@@ -596,7 +598,7 @@ class NewMobileWorkerForm(forms.Form):
                     hqcrispy.B3MultiField(
                         _("Password"),
                         InlineField(
-                            'password',
+                            'new_password',
                             data_bind="value: password, valueUpdate: 'input'",
                         ),
                         crispy.HTML('''
@@ -656,8 +658,8 @@ class NewMobileWorkerForm(forms.Form):
             raise forms.ValidationError("The username %s is reserved for CommCare." % username)
         return clean_mobile_worker_username(self.domain, username)
 
-    def clean_password(self):
-        cleaned_password = decode_password(self.cleaned_data.get('password'))
+    def clean_new_password(self):
+        cleaned_password = decode_password(self.cleaned_data.get('new_password'))
         if self.project.strong_mobile_passwords:
             return clean_password(cleaned_password)
         return cleaned_password
