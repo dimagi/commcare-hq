@@ -471,7 +471,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1165,7 +1165,7 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1675,7 +1675,7 @@ DONT_INDEX_SAME_CASETYPE = StaticToggle(
 SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'sort_out_of_order_form_submissions_sql',
     'Sort out of order form submissions in the SQL update strategy',
-    TAG_PRODUCT,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1706,7 +1706,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -1730,7 +1730,7 @@ DASHBOARD_REACH_REPORT = StaticToggle(
 PARTIAL_UI_TRANSLATIONS = StaticToggle(
     'partial_ui_translations',
     'Enable uploading a subset of translations in the UI Translations Excel upload',
-    TAG_PRODUCT,
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
