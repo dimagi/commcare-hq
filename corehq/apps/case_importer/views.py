@@ -14,7 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
-from corehq.apps.case_importer.base import locsafe_imports_enabled
+from corehq.apps.case_importer.base import location_safe_case_imports_enabled
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
 from corehq.apps.case_importer.exceptions import ImporterError
 from corehq.apps.case_importer.suggested_fields import (
@@ -63,7 +63,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
 
 
 @require_can_edit_data
-@conditionally_location_safe(locsafe_imports_enabled)
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def excel_config(request, domain):
     """
     Step one of three.
@@ -153,7 +153,7 @@ def excel_config(request, domain):
 
 @require_POST
 @require_can_edit_data
-@conditionally_location_safe(locsafe_imports_enabled)
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def excel_fields(request, domain):
     """
     Step two of three.
@@ -231,7 +231,7 @@ def excel_fields(request, domain):
 
 @require_POST
 @require_can_edit_data
-@conditionally_location_safe(locsafe_imports_enabled)
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def excel_commit(request, domain):
     """
     Step three of three.

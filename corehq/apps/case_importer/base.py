@@ -13,11 +13,11 @@ from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.toggles import LOCATION_SAFE_CASE_IMPORTS
 
 
-def locsafe_imports_enabled(view_func, request, *args, **kwargs):
+def location_safe_case_imports_enabled(view_func, request, *args, **kwargs):
     return LOCATION_SAFE_CASE_IMPORTS.enabled_for_request(request)
 
 
-@conditionally_location_safe(locsafe_imports_enabled)
+@conditionally_location_safe(location_safe_case_imports_enabled)
 class ImportCases(DataInterface):
     name = ugettext_lazy("Import Cases from Excel")
     slug = "import_cases"
