@@ -1792,10 +1792,9 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-MPR_ASR_CONDITIONAL_AGG = StaticToggle(
+MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     'mpr_asr_conditional_agg',
     'Improved MPR ASR by doing aggregation at selected level',
     TAG_CUSTOM,
     [NAMESPACE_USER]
-
 )
