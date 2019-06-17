@@ -293,12 +293,9 @@ class ProgramSummaryView(BaseReportView):
         config.update(get_location_filter(location, domain))
         now = tuple(now.date().timetuple())[:3]
         pre_release_features = icds_pre_release_features(self.request.couch_user)
-        if pre_release_features:
-            data = get_program_summary_data_with_retrying(
-                step, domain, config, now, include_test, pre_release_features
-            )
-        else:
-            data = get_program_summary_data(step, domain, config, now, include_test, pre_release_features)
+        data = get_program_summary_data_with_retrying(
+            step, domain, config, now, include_test, pre_release_features
+        )
         return JsonResponse(data=data)
 
 
