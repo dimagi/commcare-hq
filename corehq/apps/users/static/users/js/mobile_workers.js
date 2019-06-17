@@ -346,32 +346,32 @@ hqDefine("users/js/mobile_workers", function () {
 
         self.allowSubmit = ko.computed(function () {
             if (!self.stagedUser()) {
-                return false;
+                return "There is no staged user";
             }
             if (!self.stagedUser().username()) {
-                return false;
+                return "There is no username";
             }
             if (!self.stagedUser().password()) {
-                return false;
+                return "There is no password";
             }
             if (options.require_location_id && !self.stagedUser().location_id()) {
-                return false;
+                return "A location id is required but not provided";
             }
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
-                return false;
+                return "The username availability is not success, but is " + self.usernameAvailabilityStatus();
             }
             if (self.useStrongPasswords()) {
                 if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
-                    return false;
+                    return "The password is not the auto-generated one, and password status should be success but is " + self.passwordStatus();
                 }
             }
             var fieldData = self.stagedUser().custom_fields;
             if (_.isObject(fieldData) && !_.isArray(fieldData)) {
                 if (!_.every(fieldData, function (value) { return value(); })) {
-                    return false;
+                    return "The following required custom fields are missing: " + _.compact(_.map(fieldData, function (value, key) { if (!value()) { return key; } })).join(", ");
                 }
             }
-            return true;
+            return false;
         });
 
         self.submitNewUser = function () {
