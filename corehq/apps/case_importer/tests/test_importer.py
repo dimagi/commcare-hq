@@ -19,7 +19,8 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
-from corehq.apps.users.models import CommCareUser, UserRole, WebUser
+from corehq.apps.locations.tests.util import restrict_user_by_location
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import flag_enabled
@@ -493,25 +494,15 @@ def make_worksheet_wrapper(*rows):
 def restrict_user_to_location(test_case, location):
     orig_user = test_case.couch_user
 
-    role = UserRole.get_or_create_with_permissions(
-        domain=test_case.domain,
-        name='Regional Case Admin',
-        permissions={
-            'access_all_locations': False,
-            'edit_data': True,
-        },
-    )
-    restricted_user = WebUser.create(None, "restricted_user", "s3cr3t")
-    restricted_user.add_domain_membership(test_case.domain, role_id=role._id)
-    restricted_user.save()
+    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t")
     restricted_user.set_location(test_case.domain, location)
+    restrict_user_by_location(test_case.domain, restricted_user)
     test_case.couch_user = restricted_user
     try:
         yield
     finally:
         test_case.couch_user = orig_user
         restricted_user.delete()
-        role.delete()
 
 
 @contextmanager
