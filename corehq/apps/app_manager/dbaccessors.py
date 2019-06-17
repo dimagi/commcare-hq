@@ -300,28 +300,24 @@ def get_built_app_ids(domain):
     return [app_id for app_id in app_ids if app_id]
 
 
-# TODO: rename - this is only used once, in "deprecated" exports
-def get_built_app_ids_for_app_id(domain, app_id, version=None):
+def get_build_ids_after_version(domain, app_id, version):
     """
-    Returns all the built apps for an application id. If version is specified returns all apps after that
-    version.
+    Returns ids of all an app's builds that are more recent than the given version.
     """
     from .models import Application
     key = [domain, app_id]
-    skip = 1 if version else 0
     results = Application.get_db().view(
         'app_manager/saved_app',
         startkey=key + [version],
         endkey=key + [{}],
         reduce=False,
         include_docs=False,
-        skip=skip
+        skip=1
     ).all()
     return [result['id'] for result in results]
 
 
-# TODO: write test, rename this and above function
-def get_built_app_ids_for_app_id_descending(domain, app_id):
+def get_build_ids(domain, app_id):
     """
     Returns all the built apps for an application id, in descending order.
     """
