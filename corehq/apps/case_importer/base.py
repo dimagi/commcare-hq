@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext_noop
 
 from corehq.apps.case_importer.tracking.dbaccessors import (
     get_case_upload_record_count,
@@ -52,11 +52,11 @@ class ImportCases(DataInterface):
     def get_subpages(cls):
         return [
             {
-                'title': _('Case Options'),
+                'title': ugettext_noop('Case Options'),
                 'urlname': 'excel_config'
             },
             {
-                'title': _('Match Excel Columns to Case Properties'),
+                'title': ugettext_noop('Match Excel Columns to Case Properties'),
                 'urlname': 'excel_fields'
             }
         ]
