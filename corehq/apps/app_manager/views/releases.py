@@ -44,7 +44,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_built_app_ids_for_app_id,
+    get_build_ids,
     get_current_app_version,
     get_latest_build_id,
     get_latest_build_version,
@@ -114,7 +114,7 @@ def paginate_releases(request, domain, app_id):
     if not bool(only_show_released or query):
         # If user is limiting builds by released status or build comment, it's much
         # harder to be performant with couch. So if they're not doing so, take shortcuts.
-        total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
+        total_apps = len(get_build_ids(domain, app_id))
         saved_apps = _get_batch(skip=skip)
     else:
         app_es = (
