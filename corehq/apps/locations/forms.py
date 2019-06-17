@@ -454,7 +454,7 @@ class LocationFormSet(object):
         user_data = (self.custom_user_data.get_data_to_save()
                      if self.custom_user_data.is_valid() else {})
         username = self.user_form.cleaned_data.get('username', "")
-        password = self.user_form.cleaned_data.get('password', "")
+        password = self.user_form.cleaned_data.get('new_password', "")
         first_name = self.user_form.cleaned_data.get('first_name', "")
         last_name = self.user_form.cleaned_data.get('last_name', "")
 
@@ -502,11 +502,11 @@ class LocationFormSet(object):
         if domain_obj.strong_mobile_passwords:
             initial_password = generate_strong_password()
             pw_field = crispy.Field(
-                'password',
+                'new_password',
                 value=initial_password,
             )
         else:
-            pw_field = 'password'
+            pw_field = 'new_password'
 
         form.fields['username'].help_text = None
         form.fields['location_id'].required = False  # This field isn't displayed
