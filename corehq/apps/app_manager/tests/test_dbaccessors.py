@@ -10,7 +10,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain,
     get_brief_apps_in_domain,
     get_build_doc_by_version,
-    get_built_app_ids_for_app_id,
+    get_build_ids,
+    get_build_ids_after_version,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
@@ -137,11 +138,12 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(domain_has_apps(self.domain), True)
         self.assertEqual(domain_has_apps('somecrazydomainthathasnoapps'), False)
 
-    def test_get_built_app_ids_for_app_id(self):
-        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id)
+    def test_get_build_ids(self):
+        app_ids = get_build_ids(self.domain, self.apps[0].get_id)
         self.assertEqual(len(app_ids), 2)
 
-        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id, self.first_saved_version)
+    def test_get_build_ids_after_version(self):
+        app_ids = get_build_ids_after_version(self.domain, self.apps[0].get_id, self.first_saved_version)
         self.assertEqual(len(app_ids), 1)
         self.assertEqual(self.decoy_apps[1].get_id, app_ids[0])
 
