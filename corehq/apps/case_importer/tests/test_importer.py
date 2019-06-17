@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from contextlib import contextmanager
+from string import Template
 
 from celery import states
 from celery.exceptions import Ignore
@@ -441,12 +442,13 @@ class ImporterTest(TestCase):
     def test_user_can_access_location(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
                 restrict_user_to_location(self, dsa):
-            res = self.import_mock_file([
-                ['case_id', 'name',             'owner_id'],  # noqa: E241
-                ['',        'Leonard Nimoy',    inc.group_id],  # noqa: E241
-                ['',        'Kapil Dev',        dsi.group_id],  # noqa: E241
-                ['',        'Quinton Fortune',  dsa.group_id],  # noqa: E241
-            ])
+            table = """
+                case_id | name            | owner_id
+                        | Leonard Nimoy   | {inc}
+                        | Kapil Dev       | {dsi}
+                        | Quinton Fortune | {dsa}
+            """.format(inc=inc.group_id, dsi=dsi.group_id, dsa=dsa.group_id)
+            res = self.import_mock_file(_get_rows(table))
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
@@ -462,13 +464,13 @@ class ImporterTest(TestCase):
             inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
             dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
             dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
-
-            res = self.import_mock_file([
-                ['case_id', 'name',             'owner_id'],  # noqa: E241
-                ['',        'Leonard Nimoy',    inc_owner._id],  # noqa: E241
-                ['',        'Kapil Dev',        dsi_owner._id],  # noqa: E241
-                ['',        'Quinton Fortune',  dsa_owner._id],  # noqa: E241
-            ])
+            table = """
+                case_id | name            | owner_id
+                        | Leonard Nimoy   | {inc}
+                        | Kapil Dev       | {dsi}
+                        | Quinton Fortune | {dsa}
+            """.format(inc=inc_owner._id, dsi=dsi_owner._id, dsa=dsa_owner._id)
+            res = self.import_mock_file(_get_rows(table))
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
@@ -477,6 +479,11 @@ class ImporterTest(TestCase):
         error_message = exceptions.InvalidOwnerId.title
         error_col = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
+
+
+def _get_rows(table):
+    lines = (line for line in table.split('\n') if line.strip())
+    return [[column.strip() for column in row.split('|')] for row in lines]
 
 
 def make_worksheet_wrapper(*rows):
