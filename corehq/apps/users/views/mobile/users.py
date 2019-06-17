@@ -83,7 +83,7 @@ from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, QA_ENABLE_DRACONIAN_SECURITY_FEATURES
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
     enforce_string_type,
@@ -621,7 +621,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
-            'draconian_security': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'draconian_security': settings.ENABLE_DRACONIAN_SECURITY_FEATURES or QA_ENABLE_DRACONIAN_SECURITY_FEATURES.enabled(self.domain),
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
