@@ -1,1 +1,1 @@
-AWC {{ awc }} has not reported a visit during the PNC within one week of delivery for {{ beneficiary }}
+ಅಂಗನವಾಡಿ ಕೇಂದ್ರವು  {{ awc }}  ಪಿ‍ಎನ್‍ಸಿ‍ಯ ಸಮಯದಲ್ಲಿ ಪ್ರಸವವಾದ ಒಂದು ವಾರದೊಳಗೆ ಫಲಾನುಭವಿಯನ್ನು ಭೇಟಿ ಮಾಡಿದ ವರದಿ ಮಾಡಿಲ್ಲ.{{ beneficiary }}
