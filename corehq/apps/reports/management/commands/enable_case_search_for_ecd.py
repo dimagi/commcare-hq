@@ -149,7 +149,7 @@ class Command(BaseCommand):
         self.stdout.write('\n\n')
 
     def print_totals(self, domains):
-        max_space = '\t' * (int(max(map(lambda x: len(x), domains)) / 8) + 2)
+        max_space = '\t' * (int(max([len(x) for x in domains]) / 8) + 2)
         header = 'Domain{}CaseES\t\tCaseSearchES\n'.format(max_space)
         divider = '{}\n'.format('*' * (len(header) + len(max_space) * 8))
         self.stdout.write(divider)
