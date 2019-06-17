@@ -42,12 +42,6 @@ def get_case_search_config(domain_link):
     return _do_simple_request('linked_domain:case_search_config', domain_link)
 
 
-def get_released_app_version(master_domain, app_id, remote_details):
-    url = reverse('current_app_version', args=[master_domain, app_id])
-    response = _do_request_to_remote_hq_json(url, remote_details, None)
-    return response.get('latestReleasedBuild')
-
-
 def get_released_app(master_domain, app_id, linked_domain, remote_details):
     url = reverse('linked_domain:latest_released_app_source', args=[master_domain, app_id])
     response = _do_request_to_remote_hq_json(url, remote_details, linked_domain)
