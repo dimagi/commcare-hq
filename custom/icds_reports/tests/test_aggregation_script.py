@@ -1,24 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from datetime import date, datetime, time
-from decimal import Decimal
 import os
 import re
+from datetime import date, datetime, time
+from decimal import Decimal
+
+from django.test.testcases import TestCase, override_settings
 
 import six
 import sqlalchemy
-
-from django.test.testcases import TestCase, override_settings
 from freezegun import freeze_time
-
-from corehq.sql_db.connections import connection_manager
 from six.moves import zip
 
-from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
-from custom.icds_reports.tests import CSVTestCase, OUTPUT_PATH
+from corehq.sql_db.connections import connection_manager
+from custom.icds_reports.models.aggregate import (
+    AggregateInactiveAWW,
+    get_cursor,
+)
+from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
-from custom.icds_reports.utils.aggregation_helpers.monolith import InactiveAwwsAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    InactiveAwwsAggregationHelper,
+)
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
