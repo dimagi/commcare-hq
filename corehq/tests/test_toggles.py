@@ -14,3 +14,12 @@ def test_toggle_properties():
         assert toggle.tag, 'Toggle "{}" tag missing'.format(toggle.slug)
         assert toggle.tag in ALL_TAGS, 'Toggle "{}" tag "{}" unrecognized'.format(toggle.slug, toggle.tag)
         assert toggle.namespaces, 'Toggle "{}" namespaces missing'.format(toggle.slug)
+
+
+def test_solutions_sub_tags():
+    """
+    Check Solutions sub-tags begin with 'Solutions - '
+    """
+    solutions_tags = [toggles.TAG_SOLUTIONS_OPEN, toggles.TAG_SOLUTIONS_CONDITIONAL, toggles.TAG_SOLUTIONS_LIMITED]
+    for tag in solutions_tags:
+        assert tag.name.startswith('Solutions - ')
