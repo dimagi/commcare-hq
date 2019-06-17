@@ -127,7 +127,10 @@ class CouchSqlDomainMigrator(object):
         self.run_timestamp = run_timestamp or int(time())
         db_filepath = get_diff_db_filepath(domain)
         self.diff_db = DiffDB.init(db_filepath)
+        # FIXME state is lost on resume
+        # this one is bad: forms would be lost (not migrated) on stop/resume
         self.errors_with_normal_doc_type = []
+        # this one may only affect diffs?
         self.forms_that_touch_cases_without_actions = set()
 
     def migrate(self):
@@ -150,91 +153,24 @@ class CouchSqlDomainMigrator(object):
         log.info('migrated domain {}'.format(self.domain))
 
     def _process_main_forms(self):
-        last_received_on = datetime.min
-        # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=10000, run_timestamp=self.run_timestamp)
-        pool = Pool(15)
-        self._rebuild_queues(pool)
-
-        # process main forms (including cases and ledgers)
-        changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
-
-        # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=10000)
-
-        for change in self._with_progress(['XFormInstance'], changes):
-            log.debug('Processing doc: {}({})'.format('XFormInstance', change.id))
-            form = change.get_document()
-            if form.get('problem'):
-                if six.text_type(form['problem']).startswith(PROBLEM_TEMPLATE_START):
-                    form = _fix_replacement_form_problem_in_couch(form)
-                else:
-                    self.errors_with_normal_doc_type.append(change.id)
-                    continue
-            try:
-                wrapped_form = XFormInstance.wrap(form)
-                form_received = wrapped_form.received_on
-                assert last_received_on <= form_received
-                last_received_on = form_received
-                self._try_to_process_form(wrapped_form, pool)
-                self._try_to_process_queues(pool)
-            except Exception:
-                log.exception("Error migrating form %s", change.id)
-
-        # finish up the queues once all changes have been iterated through
-        update_interval = timedelta(seconds=10)
-        next_check = datetime.now()
-        while self.queues.has_next():
-            wrapped_form = self.queues.get_next()
-            if wrapped_form:
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-            else:
-                gevent.sleep()  # swap greenlets
-
-            remaining_items = self.queues.remaining_items + len(pool)
-            now = datetime.now()
-            if now > next_check:
-                log.info('Waiting on {} docs'.format(remaining_items))
-                next_check += update_interval
-
-        while not pool.join(timeout=10):
-            log.info('Waiting on {} docs'.format(len(pool)))
+        """process main forms (including cases and ledgers)"""
+        with AsyncFormProcessor(self.run_timestamp, self._migrate_form) as pool:
+            changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
+            for change in self._with_progress(['XFormInstance'], changes):
+                try:
+                    pool.process_xform(change.get_document())
+                except ProblemForm as error:
+                    self.errors_with_normal_doc_type.append(error.form_id)
 
         self._log_main_forms_processed_count()
 
-    def _try_to_process_form(self, wrapped_form, pool):
-        case_ids = get_case_ids(wrapped_form)
-        if self.queues.try_obj(case_ids, wrapped_form):
-            pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-        elif self.queues.full:
-            gevent.sleep()  # swap greenlets
-
-    def _try_to_process_queues(self, pool):
-        # regularly check if we can empty the queues
-        while True:
-            new_wrapped_form = self.queues.get_next()
-            if not new_wrapped_form:
-                break
-            pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
-
-    def _rebuild_queues(self, pool):
-        prev_ids = self.queues.get_ids_from_run_timestamp()
-
-        for chunked_ids in chunked(prev_ids, 100):
-            chunk = [_id for _id in chunked_ids if _id]
-            for form in FormAccessorCouch.get_forms(chunk):
-                self._try_to_process_form(form, pool)
-
-        self._try_to_process_queues(pool)
-
-    def _migrate_form_and_associated_models_async(self, wrapped_form):
+    def _migrate_form(self, wrapped_form):
         set_local_domain_sql_backend_override(self.domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
             log.exception("Unable to migrate form: %s", wrapped_form.form_id)
         finally:
-            self.queues.release_lock_for_queue_obj(wrapped_form)
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
@@ -952,6 +888,99 @@ def commit_migration(domain_name):
     log.info("committed migration for {}".format(domain_name))
 
 
+class AsyncFormProcessor(object):
+
+    def __init__(self, run_timestamp, migrate_form):
+        self.run_timestamp = run_timestamp
+        self.migrate_form = migrate_form
+        self.processed_docs = 0
+
+    def __enter__(self):
+        self.pool = Pool(15)
+        self.queues = PartiallyLockingQueue(self.run_timestamp)
+        self._rebuild_queues()
+        return self
+
+    def __exit__(self, exc_type, exc, exc_tb):
+        if exc_type is None:
+            self._finish_processing_queues()
+        self.queues = self.pool = None
+
+    def _rebuild_queues(self):
+        prev_ids = self.queues.get_ids_from_run_timestamp()
+        for chunked_ids in chunked(prev_ids, 100):
+            chunk = [_id for _id in chunked_ids if _id]
+            for form in FormAccessorCouch.get_forms(chunk):
+                self._try_to_process_form(form)
+        self._try_to_empty_queues()
+
+    def process_xform(self, doc):
+        """Process XFormInstance document asynchronously
+
+        :raises: `ProblemForm` for error forms with normal doc type.
+        """
+        form_id = doc["_id"]
+        log.debug('Processing doc: XFormInstance(%s)', form_id)
+        if doc.get('problem'):
+            if six.text_type(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+                doc = _fix_replacement_form_problem_in_couch(doc)
+            else:
+                raise ProblemForm(form_id)
+        try:
+            wrapped_form = XFormInstance.wrap(doc)
+        except Exception:
+            log.exception("Error migrating form %s", form_id)
+        self._try_to_process_form(wrapped_form)
+        self._try_to_empty_queues()
+
+    def _try_to_process_form(self, wrapped_form):
+        case_ids = get_case_ids(wrapped_form)
+        if self.queues.try_obj(case_ids, wrapped_form):
+            self.pool.spawn(self._async_migrate_form, wrapped_form)
+        elif self.queues.full:
+            gevent.sleep()  # swap greenlets
+
+    def _async_migrate_form(self, wrapped_form):
+        try:
+            self.migrate_form(wrapped_form)
+        finally:
+            self.queues.release_lock_for_queue_obj(wrapped_form)
+
+    def _try_to_empty_queues(self):
+        while True:
+            new_wrapped_form = self.queues.get_next()
+            if not new_wrapped_form:
+                break
+            self.pool.spawn(self._async_migrate_form, new_wrapped_form)
+
+    def _finish_processing_queues(self):
+        update_interval = timedelta(seconds=10)
+        next_check = datetime.now()
+        pool = self.pool
+        while self.queues.has_next():
+            wrapped_form = self.queues.get_next()
+            if wrapped_form:
+                pool.spawn(self._async_migrate_form, wrapped_form)
+            else:
+                gevent.sleep()  # swap greenlets
+
+            now = datetime.now()
+            if now > next_check:
+                remaining_items = self.queues.remaining_items + len(pool)
+                log.info('Waiting on {} docs'.format(remaining_items))
+                next_check += update_interval
+
+        while not pool.join(timeout=10):
+            log.info('Waiting on {} docs'.format(len(pool)))
+
+
+class ProblemForm(Exception):
+
+    def __init__(self, form_id):
+        super(ProblemForm, self).__init__(form_id)
+        self.form_id = form_id
+
+
 class PartiallyLockingQueue(object):
     """ Data structure that holds a queue of objects returning them as locks become free
 
@@ -966,7 +995,7 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, queue_id_param="id", max_size=-1, run_timestamp=None):
+    def __init__(self, run_timestamp, queue_id_param="form_id", max_size=10000):
         """
         :queue_id_param string: param of the queued objects to pull an id from
         :max_size int: the maximum size the queue should reach. -1 means no limit
