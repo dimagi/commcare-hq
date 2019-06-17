@@ -43,11 +43,15 @@ def get_properties_by_xmlns(domain, app_id, xmlns):
     form_export_schema = get_latest_form_export_schema(
         domain, app_id, complete_xmlns
     ) or FormExportDataSchema.generate_schema_from_builds(domain, app_id, complete_xmlns)
-    export_items = [
-        item for item in form_export_schema.group_schemas[0].items
-        if isinstance(item, ExportItem)
-    ]
-    return set([get_odata_property_from_export_item(item) for item in export_items]) - {''}
+
+    if not form_export_schema.group_schemas:
+        return set()
+    else:
+        export_items = [
+            item for item in form_export_schema.group_schemas[0].items
+            if isinstance(item, ExportItem)
+        ]
+        return set([get_odata_property_from_export_item(item) for item in export_items]) - {''}
 
 
 def get_odata_property_from_export_item(export_item):
