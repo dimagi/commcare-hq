@@ -30,7 +30,7 @@ class ImportCases(DataInterface):
         return {
             'current_page': self.current_page_context(domain=self.domain),
             'section': self.section_context(),
-            'record_count': get_case_upload_record_count(self.domain),
+            'record_count': get_case_upload_record_count(self.domain, self.request.couch_user),
         }
 
     @classmethod

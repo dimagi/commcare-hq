@@ -47,7 +47,7 @@ def case_uploads(request, domain):
     except (TypeError, ValueError):
         page = 1
 
-    case_upload_records = get_case_upload_records(domain, limit, skip=limit * (page - 1))
+    case_upload_records = get_case_upload_records(domain, request.couch_user, limit, skip=limit * (page - 1))
 
     with transaction.atomic():
         for case_upload_record in case_upload_records:
@@ -104,7 +104,7 @@ def case_upload_file(request, domain, upload_id):
 @conditionally_location_safe(locsafe_imports_enabled)
 def case_upload_form_ids(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
@@ -118,7 +118,7 @@ def case_upload_form_ids(request, domain, upload_id):
 @conditionally_location_safe(locsafe_imports_enabled)
 def case_upload_case_ids(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
@@ -126,3 +126,13 @@ def case_upload_case_ids(request, domain, upload_id):
                   for case_id in get_case_ids_for_case_upload(case_upload))
 
     return StreamingHttpResponse(ids_stream, content_type='text/plain')
+
+
+def _get_case_upload_record(domain, upload_id, user):
+    kwargs = {
+        'domain': domain,
+        'upload_id': upload_id,
+    }
+    if not user.has_permission(domain, 'access_all_locations'):
+        kwargs['couch_user_id'] = user._id
+    return CaseUploadRecord.objects.get(**kwargs)
