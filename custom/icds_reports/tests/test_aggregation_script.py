@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from datetime import date, time
+from datetime import date, datetime, time
 from decimal import Decimal
 import os
 import re
@@ -10,6 +10,7 @@ import six
 import sqlalchemy
 
 from django.test.testcases import TestCase, override_settings
+from freezegun import freeze_time
 
 from corehq.sql_db.connections import connection_manager
 from six.moves import zip
@@ -464,17 +465,18 @@ class InactiveAWWsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
+        cls.agg_time = datetime(2017, 5, 31, 18)
         helper_class = get_helper(InactiveAwwsAggregationHelper.helper_key)
         cls.helper = helper_class(last_sync)
-        super(InactiveAWWsTest, cls).setUpClass()
 
     def tearDown(self):
         AggregateInactiveAWW.objects.all().delete()
 
     def test_missing_locations_query(self):
         missing_location_query = self.helper.missing_location_query()
-        with get_cursor(AggregateInactiveAWW) as cursor:
+        with freeze_time(self.agg_time), get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
         self.assertEquals(records.count(), 0)
@@ -482,7 +484,7 @@ class InactiveAWWsTest(TestCase):
     def test_aggregate_query(self):
         missing_location_query = self.helper.missing_location_query()
         aggregation_query, agg_params = self.helper.aggregate_query()
-        with get_cursor(AggregateInactiveAWW) as cursor:
+        with freeze_time(self.agg_time), get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
@@ -491,7 +493,7 @@ class InactiveAWWsTest(TestCase):
     def test_submission_dates(self):
         missing_location_query = self.helper.missing_location_query()
         aggregation_query, agg_params = self.helper.aggregate_query()
-        with get_cursor(AggregateInactiveAWW) as cursor:
+        with freeze_time(self.agg_time), get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
