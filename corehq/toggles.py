@@ -710,6 +710,13 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     [NAMESPACE_USER]
 )
 
+QA_ENABLE_DRACONIAN_SECURITY_FEATURES = StaticToggle(
+    'qa_enable_draconian_security_features',
+    'Mimic draconian security on mobile worker creation, for testing purposes',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
+)
+
 PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
