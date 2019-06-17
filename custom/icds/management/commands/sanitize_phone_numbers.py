@@ -98,7 +98,7 @@ class Command(BaseCommand):
     def _find_case_ids_with_invalid_phone_number(self):
         case_ids_with_invalid_phone_number = []
 
-        start_date = date.today() - timedelta(days=180)
+        start_date = date.today() - timedelta(days=100)
         reindex_accessor = CaseReindexAccessor(
             case_type='person', limit_db_aliases=[self.db_alias],
             start_date=start_date
