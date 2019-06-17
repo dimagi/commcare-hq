@@ -35,6 +35,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         # These get populated by _get_condensed_rows
         self.condensed_rows = None
         self.case_list_form_label = None
+        self.case_list_menu_item_label = None
         self.tab_headers = None
 
     def update(self, rows):
@@ -86,8 +87,12 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         for index, tab in enumerate(self.tab_headers):
             if tab:
                 self._update_translation(tab, self.module.case_details.long.tabs[index].header)
+
         if self.case_list_form_label:
             self._update_translation(self.case_list_form_label, self.module.case_list_form.label)
+
+        if self.case_list_menu_item_label:
+            self._update_translation(self.case_list_menu_item_label, self.module.case_list.label)
 
         return self.msgs
 
@@ -100,10 +105,12 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         This function also pulls out case detail tab headers and the case list form label,
         which will be processed separately from the case proeprty rows.
 
-        Populates class attributes condensed_rows, case_list_form_label, and tab_headers.
+        Populates class attributes condensed_rows, case_list_form_label, case_list_menu_item_label,
+        and tab_headers.
         '''
         self.condensed_rows = []
         self.case_list_form_label = None
+        self.case_list_menu_item_label = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
         index_of_last_graph_in_condensed = -1
@@ -146,9 +153,13 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 parent = self.condensed_rows[index_of_last_graph_in_condensed]
                 parent['annotations'] = parent.get('annotations', []) + [row]
 
-            # It's a case list registration form label. Don't add it to condensed rows
+            # It's the case list registration form label. Don't add it to condensed rows
             elif row['case_property'] == 'case_list_form_label':
                 self.case_list_form_label = row
+
+            # It's the case list menu item label. Don't add it to condensed rows
+            elif row['case_property'] == 'case_list_menu_item_label':
+                self.case_list_menu_item_label = row
 
             # If it's a tab header, don't add it to condensed rows
             elif re.search(r'^Tab \d+$', row['case_property']):
