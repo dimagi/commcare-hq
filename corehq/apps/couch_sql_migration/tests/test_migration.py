@@ -74,7 +74,7 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     MIGRATE,
     RESET,
 )
-from ..statedb import delete_state_db, init_state_db, open_state_db
+from ..statedb import open_state_db
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
