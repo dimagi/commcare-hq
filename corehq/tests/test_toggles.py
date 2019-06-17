@@ -19,6 +19,9 @@ def test_toggle_properties():
 def test_solutions_sub_tags():
     """
     Check Solutions sub-tags begin with 'Solutions - '
+
+    Client side toggle filtering logic currently depends on "Solutions" being in these tag names.
+    For context, see https://github.com/dimagi/commcare-hq/pull/24575#discussion_r293995391
     """
     solutions_tags = [toggles.TAG_SOLUTIONS_OPEN, toggles.TAG_SOLUTIONS_CONDITIONAL, toggles.TAG_SOLUTIONS_LIMITED]
     for tag in solutions_tags:
