@@ -44,7 +44,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         });
 
         self.showAddExpression = ko.computed(function () {
-            return self.appliedFilters().length === 1;
+            return self.appliedFilters().length > 0 && self.appliedFilters().length < 5;
         });
 
         self.unwrap = function () {
