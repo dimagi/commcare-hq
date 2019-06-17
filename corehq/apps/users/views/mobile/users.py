@@ -83,7 +83,7 @@ from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, QA_ENABLE_DRACONIAN_SECURITY_FEATURES
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, QA_ENABLE_DRACONIAN_SECURITY_FEATURES, QA_ENABLE_OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
     enforce_string_type,
@@ -626,7 +626,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE or QA_ENABLE_OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE.enabled(self.domain),
             'bulk_download_url': bulk_download_url
         }
 
