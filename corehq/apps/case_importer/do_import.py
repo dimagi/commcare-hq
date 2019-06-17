@@ -460,10 +460,11 @@ def _is_valid_owner(owner, domain, user_id=None, locations=ALL_LOCATIONS):
 
 
 def _is_valid_location_owner(owner, domain):
-    if isinstance(owner, SQLLocation):
-        return owner.domain == domain and owner.location_type.shares_cases
-    else:
-        return False
+    return (
+        isinstance(owner, SQLLocation) and
+        owner.domain == domain and
+        owner.location_type.shares_cases
+    )
 
 
 def _is_owner_location_accessible_to_user(owner, domain, user_id, locations_accessible_to_user):
