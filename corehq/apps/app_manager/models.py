@@ -87,7 +87,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
-    get_built_app_ids_for_app_id_descending,
+    get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
     get_build_by_version,
@@ -5617,7 +5617,7 @@ class LinkedApplication(Application):
     def get_previous_version(self, master_app_id=None):
         if master_app_id is None:
             master_app_id = self.pulled_from_master_app_id
-        build_ids = get_built_app_ids_for_app_id_descending(self.domain, self.master_id)
+        build_ids = get_build_ids(self.domain, self.master_id)
         for build_id in build_ids:
             build_doc = Application.get_db().get(build_id)
             if build_doc.get('pulled_from_master_app_id', build_doc['master']) == master_app_id:
