@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from contextlib import contextmanager
-from string import Template
 
 from celery import states
 from celery.exceptions import Ignore
