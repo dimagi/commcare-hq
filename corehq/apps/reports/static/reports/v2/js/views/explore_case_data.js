@@ -22,6 +22,13 @@ hqDefine('reports/v2/js/views/explore_case_data', [
         columnEndpoint: view.config.endpoint.case_properties,
         columnFilters: context.getColumnFilters(),
         reportFilters: context.getReportFilters(),
+        hideColumnFilterCondition: function (column) {
+            return column.name() === '@case_type';
+        },
+        noDeleteColumnCondition: function (column) {
+            return column.name() === 'case_name';
+        },
+        unsortableColumnNames: context.getUnsortableColumnNames(),
     });
 
     view.datagridController.init();

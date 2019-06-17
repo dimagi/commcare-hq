@@ -58,6 +58,12 @@ class TestExportData(TestCase):
                         "16:21:11 15 November 2017"
                     ],
                     [
+                        'State',
+                        'st1'],
+                    [
+                        'Supervisor',
+                        's1'],
+                    [
                         "Block",
                         "b1"
                     ]
@@ -507,6 +513,8 @@ class TestExportData(TestCase):
                     'Export Info',
                     [
                         ['Generated at', '16:21:11 15 November 2017'],
+                        ['State', 'st1'],
+                        ['Supervisor', 's1'],
                         ['Block', 'b1']
                     ]
                 ]
@@ -538,11 +546,11 @@ class TestExportData(TestCase):
                     'Number of adolescent girls 11 to 14 years old that are enrolled for services',
                     'Number of adolescent girls 15 to 18 years old that are enrolled for services'
                 ],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
                 ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
                 ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
                 ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
@@ -642,6 +650,8 @@ class TestExportData(TestCase):
                 ]],
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['Supervisor', 's1'],
                     ['Block', 'b1'],
                     ['Month', 'May'],
                     ['Year', 2017]
@@ -736,6 +746,8 @@ class TestExportData(TestCase):
                 ]],
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['Supervisor', 's1'],
                     ['Block', 'b1'],
                     ['Grouped By', 'AWC'],
                     ['Month', 'May'],
@@ -1050,6 +1062,14 @@ class TestExportData(TestCase):
                         [
                             "Generated at",
                             "16:21:11 15 November 2017"
+                        ],
+                        [
+                            'State',
+                            'st1'
+                        ],
+                        [
+                            'Supervisor',
+                            's1'
                         ],
                         [
                             "Block",
@@ -2025,7 +2045,7 @@ class TestExportData(TestCase):
                         'Lady Supervisor User ID',
                         'Total No. of AWCs visited',
                         'Total No. of Beneficiaries Visited',
-                        'Total No. of VHNDs observed'
+                        'Total No. of VHSNDs observed'
                     ],
                     [
                         'st1',
@@ -2138,7 +2158,6 @@ class TestExportData(TestCase):
                'No', 13, 'No']]],
             ['Export Info',
                 [
-                    ['Generated at', india_now()],
                     ['Grouped By', 'AWC'],
                     ['Month', 5],
                     ['Year', 2017],

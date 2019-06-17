@@ -335,7 +335,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         if ex is not None:
             raise ex
 
-        orig_exception = getattr(exception, 'orig')
+        orig_exception = getattr(exception, 'orig', None)
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
                 from corehq.apps.userreports.models import InvalidUCRData

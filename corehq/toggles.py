@@ -471,7 +471,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
 )
 
@@ -640,13 +640,13 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 
 def _enable_search_index(domain, enabled):
-    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain
     from corehq.pillows.case_search import domains_needing_search_index
     domains_needing_search_index.clear()
     if enabled:
+        # action is no longer reversible due to roll out of EXPLORE_CASE_DATA
+        # and upcoming migration of CaseES to CaseSearchES
         reindex_case_search_for_domain.delay(domain)
-    else:
-        delete_case_search_cases_for_domain.delay(domain)
 
 
 CASE_LIST_EXPLORER = StaticToggle(
@@ -659,10 +659,19 @@ CASE_LIST_EXPLORER = StaticToggle(
 
 EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
-    'Show the Explore Case Data report (in dev)',
+    'Show the Explore Case Data report (in dev). Please make sure the project '
+    'is fully migrated to support the CaseSearch index either by enabling '
+    'the Case List Explorer toggle or doing a manual migration.',
     TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+ECD_MIGRATED_DOMAINS = StaticToggle(
+    'ecd_migrated_domains',
+    'Domains that have undergone migration for Explore Case Data, but are not '
+    'yet ready to see the full report',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_enable_search_index,
 )
 
 LIVEQUERY_SYNC = StaticToggle(
@@ -1058,11 +1067,11 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
-    "Message Log Report: Test new additions",
-    TAG_CUSTOM,
+    'Message Log Report v2',
+    TAG_SOLUTIONS,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
-    description=("Include failed messages, show message status, show event. "
-                 "This feature flag exists to QA on real prod data."),
+    description=("This flag makes failed messages appear in the Message Log "
+                 "Report, and adds Status and Event columns"),
 )
 
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
@@ -1089,9 +1098,10 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 BULK_CONDITIONAL_ALERTS = StaticToggle(
     'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts.',
-    TAG_PRODUCT,
+    'Allow bulk download and upload of conditional alerts',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts', # noqa
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(
@@ -1155,7 +1165,7 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1665,7 +1675,7 @@ DONT_INDEX_SAME_CASETYPE = StaticToggle(
 SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'sort_out_of_order_form_submissions_sql',
     'Sort out of order form submissions in the SQL update strategy',
-    TAG_PRODUCT,
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1696,7 +1706,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -1720,7 +1730,7 @@ DASHBOARD_REACH_REPORT = StaticToggle(
 PARTIAL_UI_TRANSLATIONS = StaticToggle(
     'partial_ui_translations',
     'Enable uploading a subset of translations in the UI Translations Excel upload',
-    TAG_PRODUCT,
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1732,7 +1742,6 @@ DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-
 PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'parallel_mpr_asr_report',
     'Release parallel loading of MPR and ASR report',
@@ -1740,12 +1749,6 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-IMPROVED_ASR_REPORT = StaticToggle(
-    'improved_asr_report',
-    'This makes ASR report use the new asr_2_3 UCR report',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
@@ -1780,4 +1783,18 @@ ENABLE_UCR_MIRRORS = StaticToggle(
     'Enable the mirrored engines for UCRs in this domain',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
+    'location_columns_app_status_report',
+    'Enables location columns to app status report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
+    'mpr_asr_conditional_agg',
+    'Improved MPR ASR by doing aggregation at selected level',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

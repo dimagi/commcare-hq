@@ -296,6 +296,21 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                 print(self.filename)
 
 
+class BlobDbBackendCheckMigrator(BlobDbBackendMigrator):
+    def migrate(self, doc):
+        meta = doc["_obj_not_json"]
+        self.total_blobs += 1
+        if not self.db.new_db.exists(key=meta.key):
+            try:
+                content = self.db.old_db.get(key=meta.key)
+            except NotFound:
+                self.save_backup(doc)
+            else:
+                with content:
+                    self.db.copy_blob(content, key=meta.key)
+        return True
+
+
 class BlobMetaReindexAccessor(ReindexAccessor):
 
     model_class = BlobMeta
@@ -406,11 +421,11 @@ class BackendMigrator(Migrator):
 
     has_worker_pool = True
 
-    def __init__(self, slug):
+    def __init__(self, slug, doc_migrator_class):
         reindexer = BlobMetaReindexAccessor()
         types = [reindexer.model_class]
         assert not hasattr(types[0], "get_db"), types[0]  # not a couch model
-        super(BackendMigrator, self).__init__(slug, types, BlobDbBackendMigrator)
+        super(BackendMigrator, self).__init__(slug, types, doc_migrator_class)
         self.reindexer = reindexer
 
     def get_doc_migrator(self, filename, date_range=None, **kw):
@@ -493,7 +508,8 @@ def _migrator_with_worker_pool(migrator, reindexer, iterable, max_retry, num_wor
 
 
 MIGRATIONS = {m.slug: m for m in [
-    BackendMigrator("migrate_backend"),
+    BackendMigrator("migrate_backend", BlobDbBackendMigrator),
+    BackendMigrator("migrate_backend_check", BlobDbBackendCheckMigrator),
     migrate_metadata,
     # Kept for reference when writing new migrations.
     # Migrator("applications", [

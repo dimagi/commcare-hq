@@ -230,13 +230,14 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 owner_id,
                 sum(open_count) AS cases_household
             FROM "{household_cases}"
+            WHERE opened_on<= %(end_date)s
             GROUP BY owner_id
        ) ut
         WHERE ut.owner_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
             household_cases=self._ucr_tablename('static-household_cases'),
-        ), {}
+        ), {'end_date': self.month_end}
 
         yield """
         UPDATE "{tablename}" agg_awc SET

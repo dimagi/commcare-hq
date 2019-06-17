@@ -7,7 +7,7 @@ from tastypie.authentication import Authentication
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case import xform as casexml_xform
+from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.es import XFormES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.models import ESXFormInstance, ESCase
@@ -31,6 +31,7 @@ from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
@@ -81,7 +82,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     cases = UseIfRequested(
         ToManyDocumentsField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
+            attribute=lambda xform: _cases_referenced_by_xform(xform)
         )
     )
 
@@ -162,6 +163,18 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         resource_name = 'form'
         ordering = ['received_on', 'server_modified_on']
         serializer = XFormInstanceSerializer(formats=['json'])
+
+
+def _cases_referenced_by_xform(esxform):
+    """Get a list of cases referenced by ESXFormInstance
+
+    Note: this does not load cases referenced in stock transactions
+    because ESXFormInstance does not have access to form XML, which
+    is needed to find stock transactions.
+    """
+    assert esxform.domain, esxform.form_id
+    case_ids = set(cu.id for cu in get_case_updates(esxform))
+    return CaseAccessors(esxform.domain).get_cases(list(case_ids))
 
 
 class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):

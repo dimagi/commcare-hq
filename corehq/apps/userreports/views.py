@@ -58,7 +58,6 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
-    use_select2_legacy,
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
@@ -279,7 +278,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_select2_legacy
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -625,7 +623,7 @@ class ConfigureReport(ReportBuilderView):
         if not has_report_builder_access(request):
             raise Http404
 
-        report_data = json.loads(request.body)
+        report_data = json.loads(request.body.decode('utf-8'))
         if report_data['existing_report'] and not self.existing_report:
             # This is the case if the user has clicked "Save" for a second time from the new report page
             # i.e. the user created a report with the first click, but didn't navigate to the report view page

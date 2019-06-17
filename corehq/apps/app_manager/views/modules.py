@@ -571,8 +571,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
-    handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
-
+    if hasattr(module, 'case_list'):
+        handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -801,7 +801,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.short.custom_variables = custom_variables['short']
 
@@ -810,7 +810,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.long.custom_variables = custom_variables['long']
 

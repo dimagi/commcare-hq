@@ -165,6 +165,18 @@ class DiffTestCases(SimpleTestCase):
         filtered = filter_case_diffs(couch_case, sql_case, DELETION_DIFFS + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
+    def test_filter_missing_case_deletion_id(self):
+        couch_case = {
+            'doc_type': 'CommCareCase-Deleted',
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase-Deleted',
+            'deletion_id': None,
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
     def test_filter_case_deleted_on_in_sql(self):
         couch_case = {
             'doc_type': 'CommCareCase-Deleted',
@@ -501,6 +513,25 @@ class DiffTestCases(SimpleTestCase):
         sql_case = {
             "doc_type": "XFormInstance",
             "opened_by": "somebody else",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_form_with_opened_by_diff2(self):
+        couch_case = {
+            "doc_type": "XFormInstance",
+            "actions": [
+                {
+                    "action_type": "close",
+                    "user_id": "somebody",
+                },
+            ],
+            "opened_by": None,
+        }
+        sql_case = {
+            "doc_type": "XFormInstance",
+            "opened_by": "somebody",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)

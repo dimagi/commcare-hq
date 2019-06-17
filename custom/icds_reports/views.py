@@ -37,8 +37,8 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT
@@ -293,12 +293,9 @@ class ProgramSummaryView(BaseReportView):
         config.update(get_location_filter(location, domain))
         now = tuple(now.date().timetuple())[:3]
         pre_release_features = icds_pre_release_features(self.request.couch_user)
-        if pre_release_features:
-            data = get_program_summary_data_with_retrying(
-                step, domain, config, now, include_test, pre_release_features
-            )
-        else:
-            data = get_program_summary_data(step, domain, config, now, include_test, pre_release_features)
+        data = get_program_summary_data_with_retrying(
+            step, domain, config, now, include_test, pre_release_features
+        )
         return JsonResponse(data=data)
 
 
@@ -1759,7 +1756,7 @@ class DishaAPIView(View):
         return dump.get_export_as_http_response(request)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
@@ -1848,7 +1845,7 @@ class CasDataExportAPIView(View):
 
         user_states = [loc.name
                        for loc in self.request.couch_user.get_sql_locations(self.request.domain)
-                       if loc.location_type__name == 'state']
+                       if loc.location_type.name == 'state']
         if state_name not in user_states and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
             return JsonResponse(self.message('no_access'), status=403)
 
@@ -1867,7 +1864,7 @@ class CasDataExportAPIView(View):
             return JsonResponse(self.message('not_available'), status=400)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 

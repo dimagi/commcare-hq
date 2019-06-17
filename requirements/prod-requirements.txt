@@ -4,10 +4,9 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
-git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
--e git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 alembic==0.8.6
 amqp==2.4.2
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
@@ -18,6 +17,7 @@ boto3==1.9.143
 botocore==1.12.143
 cairocffi==0.9.0
 cairosvg==1.0.22
+git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 certifi==2019.3.9
 cffi==1.12.3
 chardet==3.0.4
@@ -59,7 +59,7 @@ django-transfer==0.4
 django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
-django==1.11.20
+django==1.11.21
 djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14

@@ -14,6 +14,7 @@ hqDefine("export/js/create_export", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -121,8 +122,8 @@ hqDefine("export/js/create_export", [
             if ($formElem.length > 0) {
                 $formElem.select2({
                     data: self._app_types || [],
-                    triggerChange: true,
-                }).select2('val', drilldownDefaults.app_type).trigger('change');
+                    width: '100%',
+                }).val(drilldownDefaults.app_type).trigger('change');
             }
         },
         self._initSelect2 = function (observable, fieldSlug) {
@@ -134,11 +135,8 @@ hqDefine("export/js/create_export", [
                     if ($formElem.length > 0) {
                         $formElem.select2({
                             data: fieldData || [],
-                            triggerChange: true,
-                        }).select2('val', drilldownDefaults[fieldSlug]).trigger('change');
-                        $('#s2id_id_' + fieldSlug)
-                            .find('.select2-choice').addClass('select2-default')
-                            .find('.select2-chosen').text(self._placeholders[fieldSlug]);
+                            width: '100%',
+                        }).val(drilldownDefaults[fieldSlug]).trigger('change');
                     }
                 }
             };

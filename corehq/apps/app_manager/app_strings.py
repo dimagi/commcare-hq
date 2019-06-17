@@ -19,7 +19,7 @@ from corehq import toggles
 
 
 def non_empty_only(dct):
-    return dict([(key, value) for key, value in dct.items() if value])
+    return {key: value for key, value in dct.items() if value}
 
 
 def convert_to_two_letter_code(lc):
@@ -313,21 +313,21 @@ class SimpleAppStrings(AppStringsBase):
 
 
 class SelectKnownAppStrings(AppStringsBase):
+    """
+    Like DumpKnownAppStrings, but instead of returning all default
+    translations, only returns those used by the app.
+
+    This is the default behaviour.
+    """
 
     def get_app_translation_keys(self, app):
-        return set.union(set(), *(
-            set(t.keys()) for t in app.translations.values()
-        ))
+        return {k for t in app.translations.values() for k in t.keys()}
 
     def app_strings_parts(self, app, lang, for_default=False, build_profile_id=None):
-        yield self.create_custom_app_strings(app, lang,
-                                             for_default=for_default,
-                                             build_profile_id=build_profile_id)
+        yield self.create_custom_app_strings(app, lang, for_default=for_default, build_profile_id=build_profile_id)
         commcare_version = app.build_version.vstring if app.build_version else None
         cc_trans = self.get_default_translations(lang, commcare_version)
-        yield dict((key, cc_trans[key])
-                   for key in self.get_app_translation_keys(app)
-                   if key in cc_trans)
+        yield {key: cc_trans[key] for key in self.get_app_translation_keys(app) if key in cc_trans}
         yield non_empty_only(app.translations.get(lang, {}))
 
 

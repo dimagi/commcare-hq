@@ -12,7 +12,10 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
+import mock
+import six
 from couchdbkit.exceptions import ResourceNotFound
+from six.moves import zip
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -26,7 +29,14 @@ from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     MigrationRestricted,
     PartiallyLockingQueue,
+    get_case_ids,
     get_diff_db,
+    sql_form_to_json,
+)
+from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
+    COMMIT,
+    MIGRATE,
+    RESET,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -35,13 +45,14 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.blobs import get_blob_db
+from corehq.blobs import get_blob_db, NotFound as BlobNotFound
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
     LedgerAccessorSQL,
 )
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -63,7 +74,6 @@ from corehq.util.test_utils import (
     softer_assert,
     trap_extra_setup,
 )
-from six.moves import zip
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -99,16 +109,22 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
     def _do_migration(self, domain):
         self.assertFalse(should_use_sql_backend(domain))
-        call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE, no_input=True)
 
     def _do_migration_and_assert_flags(self, domain):
         self._do_migration(domain)
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
-        diffs = get_diff_db(self.domain_name).get_diffs()
+        diff_db = get_diff_db(self.domain_name)
+        diffs = diff_db.get_diffs()
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
         self.assertEqual(expected, json_diffs)
+        self.assertEqual({
+            kind: counts.missing
+            for kind, counts in six.iteritems(diff_db.get_doc_counts())
+            if counts.missing
+        }, {})
 
     def _get_form_ids(self, doc_type='XFormInstance'):
         return FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain(doc_type=doc_type)
@@ -551,7 +567,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
         clear_local_domain_sql_backend_override(self.domain_name)
-        call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT, no_input=True)
         self.assertTrue(Domain.get_by_name(self.domain_name).use_sql_backend)
 
     def test_v1_case(self):
@@ -631,13 +647,13 @@ class MigrationTestCase(BaseMigrationTestCase):
         call_command(
             'migrate_domain_from_couch_to_sql',
             self.domain_name,
-            MIGRATE=True,
+            MIGRATE,
             no_input=True,
             dry_run=True
         )
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.assertRaises(CommandError):
-            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
 
         xml = """<?xml version="1.0" ?>
@@ -656,7 +672,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         couch_form_ids = self._get_form_ids()
         self.assertEqual(1, len(couch_form_ids))
 
-        call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, RESET, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
 
     def test_case_forms_list_order(self):
@@ -712,6 +728,26 @@ class MigrationTestCase(BaseMigrationTestCase):
         form = FormAccessors(self.domain_name).get_form('new-form')
         self.assertEqual(form.deprecated_form_id, "test-form")
         self.assertIsNone(form.problem)
+
+    def test_missing_case(self):
+        # This can happen when a form is edited, removing the last
+        # remaining reference to a case. The case effectively becomes
+        # orphaned, and will be ignored by the migration.
+        from corehq.apps.cloudcare.const import DEVICE_ID
+        # replace device id to avoid edit form soft assert
+        test_form = TEST_FORM.replace("cloudcare", DEVICE_ID)
+        submit_form_locally(test_form, self.domain_name)
+        edited_form = test_form.replace("test-case", "other-case")
+        submit_form_locally(edited_form, self.domain_name)
+        self.assertEqual(self._get_case("test-case").xform_ids, ["test-form"])
+        self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
+        with self.assertRaises(CaseNotFound):
+            self._get_case("test-case")
+        self._compare_diffs([])
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
@@ -771,7 +807,7 @@ class LedgerMigrationTests(BaseMigrationTestCase):
 
 class TestLockingQueues(TestCase):
     def setUp(self):
-        self.queues = PartiallyLockingQueue()
+        self.queues = PartiallyLockingQueue(0, "id", max_size=-1)
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
         self.queues._add_item(lock_ids, DummyObject(queue_obj_id))
@@ -885,6 +921,48 @@ class TestLockingQueues(TestCase):
         queue_obj = DummyObject('west osceola')
         self.queues._add_item(lock_ids, queue_obj)
         self.assertTrue(self.queues.full)  # full when over full
+
+
+class TestHelperFunctions(TestCase):
+
+    def setUp(self):
+        super(TestHelperFunctions, self).setUp()
+
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        self.domain_name = uuid.uuid4().hex
+        self.domain = create_domain(self.domain_name)
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        self.domain.delete()
+
+    def get_form_with_missing_xml(self):
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form = FormAccessors(self.domain_name).get_form(form.form_id)
+        blobs = get_blob_db()
+        with mock.patch.object(blobs.metadb, "delete"):
+            if isinstance(form, XFormInstance):
+                # couch
+                form.delete_attachment("form.xml")
+                self.assertIsNone(form.get_xml())
+            else:
+                # sql
+                blobs.delete(form.get_attachment_meta("form.xml").key)
+                with self.assertRaises(BlobNotFound):
+                    form.get_xml()
+        return form
+
+    def test_sql_form_to_json_with_missing_xml(self):
+        self.domain.use_sql_backend = True
+        self.domain.save()
+        form = self.get_form_with_missing_xml()
+        data = sql_form_to_json(form)
+        self.assertEqual(data["form"], {})
+
+    def test_get_case_ids_with_missing_xml(self):
+        form = self.get_form_with_missing_xml()
+        self.assertEqual(get_case_ids(form), ["test-case"])
 
 
 class DummyObject(object):
