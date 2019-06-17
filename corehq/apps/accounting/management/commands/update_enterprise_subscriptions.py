@@ -27,25 +27,20 @@ class Command(BaseCommand):
         parser.add_argument('april_and_may_plan_version_id')
         parser.add_argument('post_may_plan_version_id')
 
-    def handle(self, account_id, plan_id, april_and_may_plan_version_id, post_may_plan_version_id, **options):
+    def handle(self, account_id, plan_id, april_and_may_plan_version_id, **options):
         account = BillingAccount.objects.get(id=account_id)
         plan = SoftwarePlan.objects.get(id=plan_id)
         april_and_may_plan_version = SoftwarePlanVersion.objects.get(id=april_and_may_plan_version_id)
-        post_may_plan_version = SoftwarePlanVersion.objects.get(id=post_may_plan_version_id)
 
         print('account = %s' % account.name)
         print('plan = %s' % plan.name)
         print('april_plan_version = %s' % april_and_may_plan_version)
-        print('post_april_plan_version = %s' % post_may_plan_version)
         print(self.get_april_subscriptions_queryset(account, plan, april_and_may_plan_version))
         print('april_subscriptions.count() = %s' % self.get_april_subscriptions_queryset(
             account, plan, april_and_may_plan_version).count())
         print(self.get_may_subscriptions_queryset(account, plan, april_and_may_plan_version))
         print('may_subscriptions.count() = %s' % self.get_may_subscriptions_queryset(
             account, plan, april_and_may_plan_version).count())
-        print(self.get_post_may_subscriptions_queryset(account, plan, post_may_plan_version))
-        print('post_may_subscriptions.count() = %s' % self.get_post_may_subscriptions_queryset(
-            account, plan, post_may_plan_version).count())
 
         confirm = input('Proceed? Y/N\n')
         if confirm != 'Y':
@@ -73,18 +68,6 @@ class Command(BaseCommand):
                     note='CRS Enterprise after May 1 2019'
                 )
 
-        with transaction.atomic():
-            post_may_subscriptions = self.get_post_may_subscriptions_queryset(
-                account, plan, post_may_plan_version
-            )
-            for post_may_subscription in with_progress_bar(post_may_subscriptions):
-                original_end_date = post_may_subscription.date_end
-                new_end_date = max(JUNE_1, post_may_subscription.date_start)
-                post_may_subscription.change_plan(
-                    post_may_plan_version, new_end_date, date_end=original_end_date,
-                    note='CRS Enterprise after June 1 2019'
-                )
-
     @staticmethod
     def get_april_subscriptions_queryset(account, plan, april_plan_version):
         return Command.get_enterprise_subscriptions_queryset(account, plan).filter(
@@ -101,14 +84,6 @@ class Command(BaseCommand):
             date_start__lt=JUNE_1,
         ).exclude(
             plan_version=may_plan_version,
-        )
-
-    @staticmethod
-    def get_post_may_subscriptions_queryset(account, plan, post_may_plan_version):
-        return Command.get_enterprise_subscriptions_queryset(account, plan).filter(
-            Q(date_end__isnull=True) | Q(date_end__gt=JUNE_1)
-        ).exclude(
-            plan_version=post_may_plan_version,
         )
 
     @staticmethod
