@@ -25,7 +25,6 @@ class Command(BaseCommand):
         parser.add_argument('account_id')
         parser.add_argument('plan_id')
         parser.add_argument('april_and_may_plan_version_id')
-        parser.add_argument('post_may_plan_version_id')
 
     def handle(self, account_id, plan_id, april_and_may_plan_version_id, **options):
         account = BillingAccount.objects.get(id=account_id)
