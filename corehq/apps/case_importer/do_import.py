@@ -451,12 +451,11 @@ def _is_valid_id(uploaded_id, domain, cache, user_id, locations):
 
 
 def _is_valid_owner(owner, domain, user_id=None, locations=ALL_LOCATIONS):
+    owner_is_user = isinstance(owner, CouchUser) and owner.is_member_of(domain)
+    owner_is_casesharing_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)
     return (
-        (
-            (isinstance(owner, CouchUser) and owner.is_member_of(domain)) or
-            (isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)) or
-            _is_valid_location_owner(owner, domain)
-        ) and _is_owner_location_accessible_to_user(owner, domain, user_id, locations)
+        (owner_is_user or owner_is_casesharing_group or _is_valid_location_owner(owner, domain))
+        and _is_owner_location_accessible_to_user(owner, domain, user_id, locations)
     )
 
 
