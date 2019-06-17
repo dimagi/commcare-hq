@@ -364,7 +364,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(due_list_ccs) AS usage_num_due_list_ccs,
                 sum(due_list_child) AS usage_num_due_list_child_health
             FROM "{usage_table}"
-            WHERE month = %(start_date)s AND form_date >= %(start_date)s AND form_date < %(next_month)
+            WHERE month = %(start_date)s AND form_date >= %(start_date)s AND form_date < %(next_month)s
             GROUP BY awc_id, month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
