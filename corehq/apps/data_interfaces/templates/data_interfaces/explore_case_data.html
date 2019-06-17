@@ -292,38 +292,36 @@
               </button>
 
               <!-- ko if: $root.editColumnController.showColumnFilters -->
-                <div class="form-group"
-                     data-bind="visible: hasFilters">
-                  <div class="datagrid-column-filter-clause">
-                    {% trans "Match" %}
-                    <select data-bind="value: clause,
-                                     event: { change: $root.editColumnController.updateFilter }"
-                            class="form-control">
-                      <option value="all">
-                        {% trans "all of the" %}
-                      </option>
-                      <option value="any">
-                        {% trans "any of the" %}
-                      </option>
-                    </select>
-                    {% trans "following conditions:" %}
-                  </div>
-                </div>
-
                 <!-- ko foreach: appliedFilters -->
-                <div class="datagrid-filter">
+
                   <!-- ko if: $index() === 0 -->
-                  <select class="form-control datagrid-filter-type"
-                          data-bind="options: $root.editColumnController.availableFilterNames,
-                                     optionsText: function (val) {
-                                       return $root.editColumnController.filterTitleByName[val];
-                                     },
-                                     value: filterName,
-                                     event: { change: $root.editColumnController.updateFilterName }"></select>
+                  <div class="datagrid-filter-settings">
+                    {% blocktrans %}
+                      Treat this property as
+                      <select class="form-control filter-type"
+                              data-bind="options: $root.editColumnController.availableFilterNames,
+                                         optionsText: function (val) {
+                                           return $root.editColumnController.filterTitleByName[val];
+                                         },
+                                         value: filterName,
+                                         event: { change: $root.editColumnController.updateFilterName }"></select>
+                      and match
+                      <select data-bind="value: $parent.clause,
+                                         event: { change: $root.editColumnController.updateFilter }"
+                              class="form-control filter-clause">
+                        <option value="all">
+                          all of the
+                        </option>
+                        <option value="any">
+                          any of the
+                        </option>
+                      </select>
+                      following conditions:
+                    {% endblocktrans %}
+                  </div>
                   <!-- /ko -->
-                  <!-- ko if: $index() !== 0 -->
-                  <div class="datagrid-filter-type-spacer"></div>
-                  <!-- /ko -->
+
+                  <div class="datagrid-filter">
                   <select class="form-control datagrid-filter-choice"
                           data-bind="options: $root.editColumnController.availableChoiceNames,
                                      optionsText: function (val) {
