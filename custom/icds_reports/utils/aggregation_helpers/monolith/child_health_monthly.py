@@ -177,6 +177,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "CASE WHEN {} THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END".format(pnc_eligible)),
             # GM Indicators
             ("wer_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(wer_eligible)),
+            ("wer_eligible_0_2", "CASE WHEN {} THEN 1 ELSE 0 END".format(wer_eligible_0_2)),
             ("nutrition_status_last_recorded",
                 "CASE "
                 "WHEN NOT {} THEN NULL "

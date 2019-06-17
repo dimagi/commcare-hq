@@ -159,6 +159,9 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(valid_all_registered_in_month) AS cases_child_health_all,
                 sum(nutrition_status_weighed) AS wer_weighed,
                 sum(wer_eligible) AS wer_eligible
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2
+                
             FROM agg_child_health
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
         ) ut
@@ -516,6 +519,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('awc_num_open',),
             ('wer_weighed',),
             ('wer_eligible',),
+            ('wer_eligible_0_2',),
+            ('wer_weighed_0_2',),
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
