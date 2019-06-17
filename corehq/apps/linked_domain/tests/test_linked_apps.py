@@ -115,16 +115,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
             _get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
 
-    def test_get_master_version(self):
-        self.linked_app.master = self.master1.get_id
-
-        self.assertIsNone(self.linked_app.get_master_version())
-        self._make_master1_build(False)
-        self.assertIsNone(self.linked_app.get_master_version())
-
-        copy1 = self._make_master1_build(True)
-        self.assertEqual(copy1.version, self.linked_app.get_master_version())
-
     def test_get_latest_master_release(self):
         self.linked_app.master = self.master1.get_id
 
