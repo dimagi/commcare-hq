@@ -9,10 +9,15 @@ from corehq.apps.case_importer.tracking.dbaccessors import (
 )
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.data_interfaces.views import DataInterfaceSection
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.toggles import LOCATION_SAFE_CASE_IMPORTS
 
 
-@location_safe
+def locsafe_imports_enabled(view_func, request, *args, **kwargs):
+    return LOCATION_SAFE_CASE_IMPORTS.enabled_for_request(request)
+
+
+@conditionally_location_safe(locsafe_imports_enabled)
 class ImportCases(DataInterface):
     name = ugettext_lazy("Import Cases from Excel")
     slug = "import_cases"

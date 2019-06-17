@@ -12,6 +12,7 @@ from django.http import (
 
 from dimagi.utils.web import json_response
 
+from corehq.apps.case_importer.base import locsafe_imports_enabled
 from corehq.apps.case_importer.tracking.dbaccessors import (
     get_case_ids_for_case_upload,
     get_case_upload_records,
@@ -29,12 +30,12 @@ from corehq.apps.case_importer.tracking.permissions import (
     user_may_view_file_upload,
 )
 from corehq.apps.case_importer.views import require_can_edit_data
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.util.view_utils import set_file_download
 
 
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def case_uploads(request, domain):
     try:
         limit = int(request.GET.get('limit'))
@@ -60,7 +61,7 @@ def case_uploads(request, domain):
 
 
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def update_case_upload_comment(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
@@ -83,7 +84,7 @@ def update_case_upload_comment(request, domain, upload_id):
 
 
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def case_upload_file(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
@@ -100,7 +101,7 @@ def case_upload_file(request, domain, upload_id):
 
 
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def case_upload_form_ids(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
@@ -114,7 +115,7 @@ def case_upload_form_ids(request, domain, upload_id):
 
 
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def case_upload_case_ids(request, domain, upload_id):
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)

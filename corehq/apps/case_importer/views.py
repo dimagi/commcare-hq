@@ -14,6 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
+from corehq.apps.case_importer.base import locsafe_imports_enabled
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
 from corehq.apps.case_importer.exceptions import ImporterError
 from corehq.apps.case_importer.suggested_fields import (
@@ -21,12 +22,13 @@ from corehq.apps.case_importer.suggested_fields import (
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.toggles import LOCATION_SAFE_CASE_IMPORTS
 from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -62,7 +64,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
 
 
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def excel_config(request, domain):
     """
     Step one of three.
@@ -152,7 +154,7 @@ def excel_config(request, domain):
 
 @require_POST
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def excel_fields(request, domain):
     """
     Step two of three.
@@ -230,7 +232,7 @@ def excel_fields(request, domain):
 
 @require_POST
 @require_can_edit_data
-@location_safe
+@conditionally_location_safe(locsafe_imports_enabled)
 def excel_commit(request, domain):
     """
     Step three of three.
