@@ -322,32 +322,26 @@ def update_linked_app(app, master_app_id, user_id):
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. '
         ))
+
     try:
-        master_version = app.get_master_version(master_app_id)  # TODO: kill this? only used here, and we usually have to get the whole build anyway
+        latest_released_master_build = app.get_latest_master_release(master_app_id)
+    except ActionNotPermitted:
+        raise AppLinkError(_(
+            'This project is not authorized to update from the master application. '
+            'Please contact the maintainer of the master app if you believe this is a mistake. '
+        ))
+    except RemoteAuthError:
+        raise AppLinkError(_(
+            'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+            'Please verify your authentication details for the remote link are correct.'
+        ))
     except RemoteRequestError:
         raise AppLinkError(_(
             'Unable to pull latest master from remote CommCare HQ. Please try again later.'
         ))
 
-    previous = app.get_previous_version()
-    if app.version is None or previous is None or master_version > previous.pulled_from_master_version:
-        try:
-            latest_released_master_build = app.get_latest_master_release(master_app_id)
-        except ActionNotPermitted:
-            raise AppLinkError(_(
-                'This project is not authorized to update from the master application. '
-                'Please contact the maintainer of the master app if you believe this is a mistake. '
-            ))
-        except RemoteAuthError:
-            raise AppLinkError(_(
-                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
-                'Please verify your authentication details for the remote link are correct.'
-            ))
-        except RemoteRequestError:
-            raise AppLinkError(_(
-                'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-            ))
-
+    previous = app.get_previous_version(master_app_id)
+    if previous is None or latest_released_master_build.version > previous.pulled_from_master_version:
         report_map = get_static_report_mapping(latest_released_master_build.domain, app['domain'])
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
 
