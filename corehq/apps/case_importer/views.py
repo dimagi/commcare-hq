@@ -28,7 +28,6 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.toggles import LOCATION_SAFE_CASE_IMPORTS
 from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
