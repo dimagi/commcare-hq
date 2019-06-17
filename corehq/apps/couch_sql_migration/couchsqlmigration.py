@@ -915,6 +915,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
                 parent_id=sql_form.form_id,
                 type_code=CODES.form_xml,
                 content_type=blob.content_type,
+                content_length=blob.content_length,
             )
             meta.save()
             append_undo(meta, UNDO_CREATE)
