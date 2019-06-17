@@ -452,8 +452,8 @@ class ImporterTest(TestCase):
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.group_id)
         self.assertTrue(res['errors'])
-        error_message = exceptions.InvalidLocation.title
-        error_col = None
+        error_message = exceptions.InvalidOwnerId.title
+        error_col = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
 
     def test_user_can_access_owner(self):
@@ -474,8 +474,8 @@ class ImporterTest(TestCase):
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
         self.assertEqual(cases['Quinton Fortune'].owner_id, dsa_owner._id)
         self.assertTrue(res['errors'])
-        error_message = exceptions.InvalidLocation.title
-        error_col = None
+        error_message = exceptions.InvalidOwnerId.title
+        error_col = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
 
 
