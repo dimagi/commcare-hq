@@ -510,13 +510,13 @@ def restrict_user_to_location(test_case, location):
 
 @contextmanager
 def make_business_units(domain, shares_cases=True):
-        bu = LocationType.objects.create(domain=domain, name='bu', shares_cases=shares_cases)
-        dimagi = make_loc('dimagi', 'Dimagi', domain, bu.code)
-        inc = make_loc('inc', 'Inc', domain, bu.code, parent=dimagi)
-        dsi = make_loc('dsi', 'DSI', domain, bu.code, parent=dimagi)
-        dsa = make_loc('dsa', 'DSA', domain, bu.code, parent=dimagi)
-        try:
-            yield inc, dsi, dsa
-        finally:
-            for obj in dsa, dsi, inc, dimagi, bu:
-                obj.delete()
+    bu = LocationType.objects.create(domain=domain, name='bu', shares_cases=shares_cases)
+    dimagi = make_loc('dimagi', 'Dimagi', domain, bu.code)
+    inc = make_loc('inc', 'Inc', domain, bu.code, parent=dimagi)
+    dsi = make_loc('dsi', 'DSI', domain, bu.code, parent=dimagi)
+    dsa = make_loc('dsa', 'DSA', domain, bu.code, parent=dimagi)
+    try:
+        yield inc, dsi, dsa
+    finally:
+        for obj in dsa, dsi, inc, dimagi, bu:
+            obj.delete()
