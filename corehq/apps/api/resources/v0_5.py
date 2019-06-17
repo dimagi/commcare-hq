@@ -924,6 +924,11 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
         # adds required odata headers to the returned response
         return add_odata_headers(response)
 
+    def obj_get_list(self, bundle, domain, **kwargs):
+        elastic_query_set = super(ODataCommCareCaseResource, self).obj_get_list(bundle, domain, **kwargs)
+        elastic_query_set.payload['filter']['and'].append({'term': {'type.exact': self.case_type}})
+        return elastic_query_set
+
     class Meta(v0_4.CommCareCaseResource.Meta):
         authentication = ODataAuthentication(Permissions.edit_data)
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)

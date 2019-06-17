@@ -27,7 +27,8 @@ from corehq.apps.translations.app_translations.download import (
     get_bulk_app_single_sheet_by_name,
     get_form_question_label_name_media,
     get_module_case_list_form_rows,
-    get_module_rows,
+    get_module_case_list_menu_item_rows,
+    get_module_detail_rows,
 )
 from corehq.apps.translations.app_translations.upload_app import process_bulk_app_translation_upload
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
@@ -75,7 +76,10 @@ EXCEL_DATA = (
       ('Form', 'menu6_form1', 'Advanced Form', '', '', '2b9c856ba2ea4ec1ab8743af299c1627'),
       ('Form', 'menu6_form2', 'Shadow Form', '', '', 'c42e1a50123c43f2bd1e364f5fa61379'),
       )),
-    ('menu1', (('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
+    ('menu1',
+     (('case_list_menu_item_label', 'list', 'Steth List'),
+      ('name', 'list', 'Name'),
+      ('name', 'detail', 'Name'))),
     ('menu1_form1',
      (('What_does_this_look_like-label', 'What does this look like?',
        'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
@@ -345,6 +349,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         )),
         ("menu1", (
             ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
+            ("case_list_menu_item_label", "list", "List Stethoscopes", "French List of Stethoscopes"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
             ("Tab 1", "detail", "Other", "Autre"),
@@ -393,6 +398,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         (SINGLE_SHEET_NAME, (
           ("menu1", "", "", "", "My & awesome module", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
           ("menu1", "case_list_form_label", "list", "", "Register Mother", "", "", "", ""),
+          ("menu1", "case_list_menu_item_label", "list", "",
+           "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
           ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
@@ -611,10 +618,18 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'Name'
             )
             self.assertEqual(
+                module.case_list.label['en'],
+                'List Stethoscopes'
+            )
+            self.assertEqual(
                 module.case_details.long.columns[3].enum[0].value['en'],
                 'jr://file/commcare/image/module1_list_icon_energy_high_english.jpg'
             )
         if fra:
+            self.assertEqual(
+                module.case_list.label['fra'],
+                'French List of Stethoscopes'
+            )
             self.assertEqual(
                 module.case_details.long.tabs[1].header['fra'],
                 'Autre'
@@ -1091,8 +1106,12 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(get_module_case_list_form_rows(app.langs, app.modules[0]),
                          [('case_list_form_label', 'list', 'New Case')])
 
-    def test_module_rows(self):
-        self.assertListEqual(get_module_rows(self.app.langs, self.app.modules[0]), [
+    def test_module_case_list_menu_item_rows(self):
+        self.assertEqual(get_module_case_list_menu_item_rows(self.app.langs, self.app.modules[0]),
+                         [('case_list_menu_item_label', 'list', 'Steth List')])
+
+    def test_module_detail_rows(self):
+        self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
             ('name', 'list', 'Name'),
             ('name', 'detail', 'Name'),
         ])
@@ -1136,6 +1155,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertListEqual(sheet, [
             ['menu1', '', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None, '',
              '58ce5c9cf6eda401526973773ef216e7980bc6cc'],
+            ['menu1', 'case_list_menu_item_label', 'list', '', 'Steth List', '', '', '', ''],
             ['menu1', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu1', 'name', 'detail', '', 'Name', '', '', '', ''],
 

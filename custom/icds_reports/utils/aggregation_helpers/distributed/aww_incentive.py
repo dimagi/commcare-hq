@@ -68,11 +68,10 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             awcm.is_launched = 'yes',
             round(sum(ccsm.expected_visits)),
             awcm.awc_days_open >= 21,
-            CASE
-                WHEN round(sum(ccsm.expected_visits)) = 0 AND awcm.wer_eligible = 0 THEN true
-                ELSE (awcm.wer_weighed / GREATEST(awcm.wer_eligible, 1)) >= 0.6 AND
-                     (sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)) >= 0.6
-            END
+            (ROUND(awcm.wer_weighed / GREATEST(awcm.wer_eligible, 1)::NUMERIC, 4) >= 0.6 
+                    OR COALESCE(awcm.wer_eligible, 0) = 0)
+                AND (ROUND(sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)::NUMERIC, 4) >= 0.6 
+                    OR round(COALESCE(sum(ccsm.expected_visits), 0)) = 0)
           FROM agg_awc_monthly as awcm
           INNER JOIN agg_ccs_record_monthly AS ccsm
           ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level

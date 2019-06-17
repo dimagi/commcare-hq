@@ -58,5 +58,7 @@ branches:
   - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
   - rn_fix_assign_case_regression # Rohit June 6
   - jls/ko-create-mobile-worker # Jenny June 9
+  - jls/draconian-flag # Jenny June 17
+  - jls/ko-create-mobile-worker-debug # Jenny June 17
   - es/odata-exports  # Ethan June 11
 submodules: {}
