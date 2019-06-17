@@ -23,6 +23,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
         self.isDataLoading = ko.observable(false);
         self.isLoadingError = ko.observable(false);
+        self.ajaxPromise = undefined;
 
         self.isDataLoading.subscribe(function (isLoading) {
             if (!isLoading) return;
@@ -84,6 +85,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 throw new Error("Please call init() before calling loadRecords().");
             }
 
+            if (self.ajaxPromise) {
+                self.ajaxPromise.abort();
+            }
+
             if (self.isDataLoading()) return;
 
             // wait for pagination widget to kick in
@@ -92,7 +97,8 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
             self.isLoadingError(false);
             self.isDataLoading(true);
-            $.ajax({
+
+            self.ajaxPromise = $.ajax({
                 url: self.endpoint.getUrl(),
                 method: 'post',
                 dataType: 'json',
@@ -118,12 +124,15 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                         });
                     }
                 })
-                .fail(function () {
-                    self.rows([]);
-                    self.isLoadingError(true);
+                .fail(function (e) {
+                    if (e.statusText !== 'abort') {
+                        self.rows([]);
+                        self.isLoadingError(true);
+                    }
                 })
                 .always(function () {
                     self.isDataLoading(false);
+                    self.ajaxPromise = undefined;
                 });
         };
 
