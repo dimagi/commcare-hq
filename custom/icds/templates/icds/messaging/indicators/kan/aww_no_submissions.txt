@@ -1,7 +1,7 @@
 {% if more_than_one_week %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one week. Please follow up with Block Level Helpdesk or Supervisor for assistance
+ಅಂಗನವಾಡಿ ಕೇಂದ್ರವು  {{ awc }} ಐಸಿಡಿ‌ಎಸ್ ಸಿ‌ಎ‌ಎಸ್ ಅಪ್ಲಿಕೇಶನ್‍ನಲ್ಲಿ  ಸಮೊನೆ ಸಲ್ಲಿಸಿಲ್ಲ ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ವಾರಗಳಲ್ಲಿ ಯಾವುದೇ ಚಟುವಟಿಕೆಯನ್ನು ಮಾಡಿಲ್ಲ.  ಸಹಾಯಕ್ಕಾಗಿ ದಯವಿಟ್ಟು ಬ್ಲಾಕ್ ಮಟ್ಟದ ಸಹಾ ಯವಾಣಿ ಅಥವಾ ಮೇಲ್ವಿಚಾರಕನೊಂದಿಗೆ ದಯವಿಟ್ಟು ಅನುಸರಿಸಿ
 {% endif %}
 
 {% if more_than_one_month %}
-AWC {{ awc }} has not submitted any form or done any activity in ICDS CAS application in more than one month. Please follow up with Block Level Helpdesk or Supervisor for assistance
+ಅಂಗನವಾಡಿ ಕೇಂದ್ರವು {{ awc }} ಐಸಿಡಿ‌ಎಸ್ ಸಿ‌ಎ‌ಎಸ್ ಅಪ್ಲಿಕೇಶನ್‍ನಲ್ಲಿ ಸಮೊನೆ ಸಲ್ಲಿಸಿಲ್ಲ ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ವಾರಗಳಲ್ಲಿ ಯಾವುದೇ ಚಟುವಟಿಕೆಯನ್ನು ಮಾಡಿಲ್ಲ. ಸಹಾಯಕ್ಕಾಗಿ ದಯವಿಟ್ಟು ಬ್ಲಾಕ್ ಮಟ್ಟದ ಸಹಾ ಯವಾಣಿ ಅಥವಾ ಮೇಲ್ವಿಚಾರಕನೊಂದಿಗೆ ದಯವಿಟ್ಟು ಅನುಸರಿಸಿ
 {% endif %}
