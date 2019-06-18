@@ -17,5 +17,15 @@
         </select>
       </p>
     </li>
+    {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
+    <li>
+      <p>
+        {% trans "Skip blacklisted translations?" %}
+      </p>
+      <p>
+        <input type="checkbox" id="skip_blacklisted" data-bind="checked: skipBlacklisted"/>
+      </p>
+    </li>
+    {% endif %}
   {% endif %}
 {% endblock %}
