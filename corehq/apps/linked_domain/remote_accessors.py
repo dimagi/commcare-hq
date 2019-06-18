@@ -48,6 +48,10 @@ def get_released_app(master_domain, app_id, linked_domain, remote_details):
     return _convert_app_from_remote_linking_source(response)
 
 
+def get_latest_released_versions_by_app_id(domain_link):
+    return _do_simple_request('linked_domain:released_app_versions', domain_link)['versions']
+
+
 def _convert_app_from_remote_linking_source(app_json):
     attachments = app_json.pop('_LAZY_ATTACHMENTS', {})
     app = wrap_app(app_json)
