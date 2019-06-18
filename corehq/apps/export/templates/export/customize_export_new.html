@@ -101,34 +101,35 @@
         </div>
         <div class="form-group">
           <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-4">
-            <div class="checkbox">
-              <label>
-                <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
-                {% trans "Automatically convert dates and links for Excel" %}
-              </label>
-            </div>
+              {% if not export_instance.is_odata_config %}
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
+                  {% trans "Automatically convert dates and links for Excel" %}
+                </label>
+              </div>
 
-            <div class="checkbox">
-              <label>
-                <input
-                  type="checkbox"
-                  id="daily-saved-export-checkbox"
-                  data-bind="
-                                    checked: is_daily_saved_export,
-                                    attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}
-                            "/>
-                {% trans "Create a Daily Saved Export" %}
-              </label>
-              {% if not has_daily_saved_export_access %}
-                <span
-                  class="hq-help-template"
-                  data-content='{% blocktrans %}
+              <div class="checkbox">
+                <label>
+                  <input
+                    type="checkbox"
+                    id="daily-saved-export-checkbox"
+                    data-bind="checked: is_daily_saved_export,
+                               attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}"/>
+                  {% trans "Create a Daily Saved Export" %}
+                </label>
+                {% if not has_daily_saved_export_access %}
+                  <span
+                    class="hq-help-template"
+                    data-content='{% blocktrans %}
                                     Daily saved exports are only available on the Standard Plan or higher.
                                     Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
-                                {% endblocktrans %}'
-                ></span>
-              {% endif %}
-            </div>
+                                  {% endblocktrans %}'
+                  ></span>
+                {% endif %}
+              </div>
+            {% endif %}
+
 
             {% if export_instance.type == 'form' %}
               <div class="checkbox" {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>
@@ -199,9 +200,9 @@
         </fieldset>
       {% endif %}
 
-      <fieldset>
-        <legend>{% trans "Privacy Settings" %}</legend>
-        {% if allow_deid %}
+      {% if allow_deid %}
+        <fieldset>
+          <legend>{% trans "Privacy Settings" %}</legend>
           <div class="form-group">
             <label for="is_safe" class="col-sm-3 col-md-2 control-label"></label>
             <div class="col-sm-9 col-md-8 col-lg-6 deid-column" >
@@ -224,8 +225,8 @@
               </button>
             </div>
           </div>
-        {% endif %}
-      </fieldset>
+        </fieldset>
+      {% endif %}
       <div class="form-actions">
         <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-8 col-md-9 col-lg-10 controls">
           {% if can_edit %}
