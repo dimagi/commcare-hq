@@ -33,7 +33,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_app,
     get_current_app,
-    get_latest_released_app_version
+    get_latest_released_app_version,
+    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -287,13 +288,15 @@ def get_app_view_context(request, app):
     if is_linked_app(app):
         context['pulled_from_master_url'] = _get_upstream_url(app, request.couch_user)
         try:
-            master_briefs = app.get_master_app_briefs()
+            master_versions_by_id = get_latest_released_app_versions_by_app_id(app.domain)
+            master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
             pulled_from_master_brief = {}
             for b in master_briefs:
                 if b.id == app.pulled_from_master_app_id:
                     pulled_from_master_brief = b
             context.update({
                 'master_briefs': master_briefs,
+                'master_versions_by_id': master_versions_by_id,
                 'pulled_from_master_version': app.pulled_from_master_version,
                 'pulled_from_master_brief': pulled_from_master_brief,
                 'upstream_url': _get_upstream_url(app, request.couch_user, master_app_id='---'),
