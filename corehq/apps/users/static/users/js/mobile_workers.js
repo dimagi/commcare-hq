@@ -282,6 +282,11 @@ hqDefine("users/js/mobile_workers", function () {
                 rmi('check_username', {
                     username: newValue,
                 }).done(function (data) {
+                    // There are likely to be a few of these requests in a row.
+                    // If this isn't the most recent one, bail.
+                    if (newValue !== user.username()) {
+                        return;
+                    }
                     if (data.success) {
                         self.usernameAvailabilityStatus(self.STATUS.SUCCESS);
                         self.usernameStatusMessage(data.success);
