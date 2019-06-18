@@ -84,7 +84,12 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
         /* update visits for cf cases (not in agg_ccs_record) */
         UPDATE "{tablename}" perf
         SET expected_visits = expected_visits + cf_data.expected,
-            valid_visits = valid_visits + cf_data.valid
+            valid_visits = valid_visits + cf_data.valid,
+            visit_denominator = round(expected_visits + cf_data.expected),
+            incentive_eligible = (ROUND(wer_weighed / GREATEST(wer_eligible, 1)::NUMERIC, 4) >= 0.6 
+                                  OR COALESCE(wer_eligible, 0) = 0)
+                                 AND (ROUND((valid_visits + cf_data.valid) / GREATEST(round(expected_visits + cf_data.expected), 1)::NUMERIC, 4) >= 0.6
+                                  OR round(COALESCE((expected_visits + cf_data.expected), 0)) = 0)
         FROM (
              SELECT
              SUM(0.39) AS expected,
