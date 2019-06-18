@@ -273,6 +273,7 @@ hqDefine("users/js/mobile_workers", function () {
             user.username.subscribe(_.debounce(function (newValue) {
                 if (!newValue) {
                     self.usernameAvailabilityStatus(null);
+                    self.usernameStatusMessage('');
                     return;
                 }
 
@@ -295,7 +296,7 @@ hqDefine("users/js/mobile_workers", function () {
                     self.usernameAvailabilityStatus(self.STATUS.ERROR);
                     self.usernameStatusMessage(gettext('Issue connecting to server. Check Internet connection.'));
                 });
-            }, 300));
+            }, 100));
             user.password.subscribe(function () {
                 self.isSuggestedPassword(false);
             });
