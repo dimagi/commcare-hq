@@ -16,7 +16,7 @@ from django.views.generic import View
 from soil import DownloadBase
 from soil.progress import get_task_status
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.models import SQLLocation
@@ -177,6 +177,30 @@ class DashboardFeedMixin(DailySavedExportMixin):
     def report_class(self):
         from corehq.apps.export.views.list import DashboardFeedListView
         return DashboardFeedListView
+
+
+class ODataFeedMixin(object):
+
+    @method_decorator(toggles.ODATA.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
+
+    def create_new_export_instance(self, schema):
+        instance = super(ODataFeedMixin, self).create_new_export_instance(schema)
+        instance.is_odata_config = True
+        instance.transform_dates = False
+        return instance
+
+    @property
+    def page_context(self):
+        context = super(ODataFeedMixin, self).page_context
+        context['format_options'] = ["odata"]
+        return context
+
+    @property
+    def report_class(self):
+        from corehq.apps.export.views.list import ODataFeedListView
+        return ODataFeedListView
 
 
 class GenerateSchemaFromAllBuildsView(View):
