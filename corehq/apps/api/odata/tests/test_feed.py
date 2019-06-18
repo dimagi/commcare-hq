@@ -2,19 +2,22 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
+from mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
 
 from elasticsearch.exceptions import ConnectionError
 
+from casexml.apps.case.mock import CaseFactory
 from corehq.apps.api.odata.tests.utils import (
     OdataTestMixin,
     generate_api_key_from_web_user,
 )
 from corehq.apps.api.resources.v0_5 import ODataCommCareCaseResource, ODataXFormInstanceResource
 from corehq.apps.domain.models import Domain
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -72,12 +75,40 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
             initialize_index_and_mapping(elasticsearch_instance, CASE_INDEX_INFO)
         self.addCleanup(self._ensure_case_index_deleted)
 
+        case = CaseFactory('test_domain').create_case(case_type='my_case_type', update={'abc': 'xyz'})
+        send_to_elasticsearch('cases', transform_case_for_elasticsearch(case.to_json()))
+
         self.web_user.set_role(self.domain.name, 'admin')
         self.web_user.save()
 
         correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        with patch('corehq.apps.api.odata.serializers.get_case_type_to_properties', return_value={
+            'my_case_type': ['abc']
+        }):
+            response = self._execute_query(correct_credentials)
+
         self.assertEqual(response.status_code, 200)
+        feed = json.loads(response.content.decode('utf-8'))
+        self.assertCountEqual(['@odata.context', 'value'], feed)
+        self.assertEqual(
+            feed['@odata.context'],
+            'http://localhost:8000/a/test_domain/api/v0.5/odata/Cases/$metadata#my_case_type'
+        )
+        feed_value = feed['value']
+        self.assertEqual(len(feed_value), 1)
+        feed_value_row = feed_value[0]
+        self.assertCountEqual(
+            feed_value_row,
+            [
+                'case_id', 'closed', 'date_closed', 'date_modified', 'domain', 'opened_by', 'properties',
+                'server_date_modified' ,'server_date_opened', 'user_id', 'xform_ids'
+            ]
+        )
+        self.assertCountEqual(
+            ['abc', 'backendid', 'casename', 'casetype', 'dateopened', 'ownerid'],
+            feed_value_row['properties']
+        )
+        self.assertEqual(type(feed_value_row['xform_ids']), list)
 
     @property
     def view_url(self):
