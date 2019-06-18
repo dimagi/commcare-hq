@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
+
+from memoized import memoized
 from tastypie.serializers import Serializer
 
 from corehq.apps.api.odata.utils import get_case_type_to_properties, get_odata_property_from_export_item
@@ -10,6 +12,13 @@ from corehq.apps.export.dbaccessors import get_latest_form_export_schema
 from corehq.apps.export.models import ExportItem
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
+
+
+# clean properties
+def _clean_property_name(name):
+    # for whatever ridiculous reason, at least in Tableau,
+    # when these are nested inside an object they can't have underscores in them
+    return name.replace('_', '')
 
 
 class ODataCommCareCaseSerializer(Serializer):
@@ -37,34 +46,33 @@ class ODataCommCareCaseSerializer(Serializer):
 
         data['value'] = data.pop('objects')
 
-        # clean properties
-        def _clean_property_name(name):
-            # for whatever ridiculous reason, at least in Tableau,
-            # when these are nested inside an object they can't have underscores in them
-            return name.replace('_', '')
-
-        for i, case_json in enumerate(data['value']):
-            case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
-
-        case_type_to_properties = get_case_type_to_properties(domain)
-        properties_to_include = [
-            'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
-        ] + case_type_to_properties.get(case_type, [])
-
-        for value in data['value']:
-            for remove_property in [
-                'id',
-                'indexed_on',
-                'indices',
-                'resource_uri',
-            ]:
-                value.pop(remove_property)
-            properties = value.get('properties')
-            for property_name in list(properties):
-                if property_name not in properties_to_include:
-                    properties.pop(property_name)
+        case_json_list = data['value']
+        for i, case_json in enumerate(case_json_list):
+            self.update_case_json(case_json, domain, case_type)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+    def update_case_json(self, case_json, domain, case_type):
+        case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
+        properties_to_include = self.get_properties_to_include(domain, case_type)
+        for remove_property in [
+            'id',
+            'indexed_on',
+            'indices',
+            'resource_uri',
+        ]:
+            case_json.pop(remove_property)
+        properties = case_json.get('properties')
+        for property_name in list(properties):
+            if property_name not in properties_to_include:
+                properties.pop(property_name)
+
+    @memoized
+    def get_properties_to_include(self, domain, case_type):
+        case_type_to_properties = get_case_type_to_properties(domain)
+        return [
+            'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
+        ] + case_type_to_properties.get(case_type, [])
 
 
 class ODataXFormInstanceSerializer(Serializer):
