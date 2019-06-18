@@ -33,6 +33,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_current_app,
     get_latest_released_app,
+    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps

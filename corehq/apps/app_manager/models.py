@@ -168,6 +168,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import (
     get_latest_master_app_release,
+    get_latest_master_releases_versions,
     get_master_app_briefs,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
@@ -5600,6 +5601,11 @@ class LinkedApplication(Application):
         if self.domain_link:
             return get_latest_master_app_release(self.domain_link, master_app_id)
         raise ActionNotPermitted
+
+    def get_latest_master_releases_versions(self):
+        if self.domain_link:
+            return get_latest_master_releases_versions(self.domain_link)
+        return {}
 
     @memoized
     def get_previous_version(self, master_app_id=None):
