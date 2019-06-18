@@ -14,13 +14,6 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
 
-# clean properties
-def _clean_property_name(name):
-    # for whatever ridiculous reason, at least in Tableau,
-    # when these are nested inside an object they can't have underscores in them
-    return name.replace('_', '')
-
-
 class ODataCommCareCaseSerializer(Serializer):
     """
     A custom serializer that converts case data into an odata-compliant format.
@@ -53,7 +46,6 @@ class ODataCommCareCaseSerializer(Serializer):
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
     def update_case_json(self, case_json, domain, case_type):
-        case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
         properties_to_include = self.get_properties_to_include(domain, case_type)
         for remove_property in [
             'id',
@@ -72,7 +64,7 @@ class ODataCommCareCaseSerializer(Serializer):
     def get_properties_to_include(self, domain, case_type):
         case_type_to_properties = get_case_type_to_properties(domain)
         return [
-            'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
+            'case_name', 'case_type', 'date_opened', 'owner_id', 'backend_id'
         ] + case_type_to_properties.get(case_type, [])
 
 
