@@ -87,9 +87,13 @@ def download_bulk_ui_translations(request, domain, app_id):
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
     lang = request.GET.get('lang')
+    skip_blacklisted = request.GET.get('skipbl', 'false') == 'true'
     app = get_app(domain, app_id)
     headers = get_bulk_app_sheet_headers(app, lang=lang)
-    sheets = get_bulk_app_single_sheet_by_name(app, lang) if lang else get_bulk_app_sheets_by_name(app)
+    if lang:
+        sheets = get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted)
+    else:
+        sheets = get_bulk_app_sheets_by_name(app, skip_blacklisted=skip_blacklisted)
 
     temp = io.BytesIO()
     data = [(k, v) for k, v in six.iteritems(sheets)]
