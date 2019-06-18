@@ -206,10 +206,8 @@
                               data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
                         <option value="">{% trans "Select a master app to pull" %}</option>
                         {% for brief in master_briefs %}
-                          <option value="{{ brief.id }}">
-                            {{ brief.name }}
-                            {% if brief.version %} ({% trans "version" %} {{ brief.version }}){% endif %}
-                          </option>
+                          {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
+                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in master_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
                         {% endfor %}
                       </select>
                     </div>
