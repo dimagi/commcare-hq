@@ -470,7 +470,7 @@ class InactiveAWWsTest(TestCase):
     def setUpClass(cls):
         super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
-        cls.agg_time = datetime(2017, 5, 31, 18)
+        cls.agg_time = datetime(2017, 7, 31, 18)
         helper_class = get_helper(InactiveAwwsAggregationHelper.helper_key)
         cls.helper = helper_class(last_sync)
 
@@ -478,25 +478,28 @@ class InactiveAWWsTest(TestCase):
         AggregateInactiveAWW.objects.all().delete()
 
     def test_missing_locations_query(self):
-        missing_location_query = self.helper.missing_location_query()
-        with freeze_time(self.agg_time), get_cursor(AggregateInactiveAWW) as cursor:
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
         self.assertEquals(records.count(), 0)
 
     def test_aggregate_query(self):
-        missing_location_query = self.helper.missing_location_query()
-        aggregation_query, agg_params = self.helper.aggregate_query()
-        with freeze_time(self.agg_time), get_cursor(AggregateInactiveAWW) as cursor:
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
+            aggregation_query, agg_params = self.helper.aggregate_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
         self.assertEquals(records.count(), 46)
 
     def test_submission_dates(self):
-        missing_location_query = self.helper.missing_location_query()
-        aggregation_query, agg_params = self.helper.aggregate_query()
-        with freeze_time(self.agg_time), get_cursor(AggregateInactiveAWW) as cursor:
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
+            aggregation_query, agg_params = self.helper.aggregate_query()
+        with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
