@@ -3,24 +3,6 @@ from __future__ import unicode_literals
 from functools import wraps
 
 
-def use_angular_js(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the angularjs library at the base template
-    level.
-
-    Example:
-
-    @use_angular_js
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    @wraps(view_func)
-    def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_angular_js = True
-        return view_func(class_based_view, request, *args, **kwargs)
-    return _wrapped
-
-
 def use_daterangepicker(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the daterangepicker library at the base template

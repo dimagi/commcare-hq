@@ -2,7 +2,14 @@
 {% load hq_shared_tags %}
 
 {% block core_libraries %}{{ block.super }}
-    {% include "hqwebapp/includes/angular.html" %}
+    <script src="{% static 'angular/angular.min.js' %}"></script>
+    <script src="{% static 'angular-route/angular-route.js' %}"></script>
+    <script src="{% static 'angular-resource/angular-resource.js' %}"></script>
+    <script src="{% static 'angular-message-format/angular-message-format.js' %}"></script>
+    <script src="{% static 'angular-messages/angular-messages.js' %}"></script>
+    <script src="{% static 'angular-cookies/angular-cookies.js' %}"></script>
+    <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+    <script src="{% static 'djangular/js/django-angular.min.js' %}"></script>
     <script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
 {% endblock %}
 
