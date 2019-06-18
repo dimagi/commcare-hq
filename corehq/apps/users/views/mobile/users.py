@@ -642,25 +642,22 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
         if username == 'admin' or username == 'demo_user':
-            return {
-                'error': _('Username {} is reserved.').format(username),
-                'username': username,
-            }
+            return {'error': _('Username {} is reserved.').format(username)}
         try:
             validate_email("{}@example.com".format(username))
             if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
                 raise ValidationError("Username contained an invalid character")
         except ValidationError:
-            error = ''
             if '..' in username:
-                error = _("Username may not contain consecutive . (period).")
-            elif username.endswith('.'):
-                error = _("Username may not end with a . (period).")
-            else:
-                error = _("Username may not contain special characters.")
+                return {
+                    'error': _("Username may not contain consecutive . (period).")
+                }
+            if username.endswith('.'):
+                return {
+                    'error': _("Username may not end with a . (period).")
+                }
             return {
-                'error': error,
-                'username': username,
+                'error': _("Username may not contain special characters.")
             }
 
         full_username = format_username(username, self.domain)
@@ -673,7 +670,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 result = {'error': _('Username {} is already taken').format(username)}
         else:
             result = {'success': _('Username {} is available').format(username)}
-        result.update({'username': username})
         return result
 
     @allow_remote_invocation
