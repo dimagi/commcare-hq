@@ -55,6 +55,8 @@ class TestODataCommCareCaseSerializer(SimpleTestCase):
                 'casetype': 'my_case_type',
                 'casename': 'nick',
                 'dateopened': '2019-01-23T18:24:33.118000Z',
-                'includedproperty': 'abc'
+                'includedproperty': 'abc',
+                'missingproperty': None,
+                'backendid': None
             }
         })
