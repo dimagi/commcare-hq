@@ -26,18 +26,6 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     FIXED_FORM_PROBLEM_TEMPLATE,
 )
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    MigrationRestricted,
-    PartiallyLockingQueue,
-    get_case_ids,
-    get_diff_db,
-    sql_form_to_json,
-)
-from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
-    COMMIT,
-    MIGRATE,
-    RESET,
-)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -74,6 +62,19 @@ from corehq.util.test_utils import (
     softer_assert,
     trap_extra_setup,
 )
+
+from ..couchsqlmigration import (
+    MigrationRestricted,
+    PartiallyLockingQueue,
+    get_case_ids,
+    sql_form_to_json,
+)
+from ..management.commands.migrate_domain_from_couch_to_sql import (
+    COMMIT,
+    MIGRATE,
+    RESET,
+)
+from ..statedb import open_state_db
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -116,13 +117,13 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
-        diff_db = get_diff_db(self.domain_name)
-        diffs = diff_db.get_diffs()
+        state = open_state_db(self.domain_name)
+        diffs = state.get_diffs()
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
         self.assertEqual(expected, json_diffs)
         self.assertEqual({
             kind: counts.missing
-            for kind, counts in six.iteritems(diff_db.get_doc_counts())
+            for kind, counts in six.iteritems(state.get_doc_counts())
             if counts.missing
         }, {})
 
@@ -807,7 +808,7 @@ class LedgerMigrationTests(BaseMigrationTestCase):
 
 class TestLockingQueues(TestCase):
     def setUp(self):
-        self.queues = PartiallyLockingQueue(0, "id", max_size=-1)
+        self.queues = PartiallyLockingQueue("id", max_size=-1)
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
         self.queues._add_item(lock_ids, DummyObject(queue_obj_id))
