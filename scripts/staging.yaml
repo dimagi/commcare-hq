@@ -51,10 +51,8 @@ name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
   #- nh/cdc/one_domain  # Norman March 26
-  - sr-ucr-mirror # Sravan May 1
   - fr/case-templates      # FR May 15
   - form-odata-2.1  # Nick P May 21
-  - web-user-reports-project-access  # Gabriella May 13
   - rn_fix_assign_case_regression # Rohit June 6
   - jls/ko-create-mobile-worker # Jenny June 9
   - jls/draconian-flag # Jenny June 17
