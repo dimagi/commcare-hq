@@ -645,7 +645,10 @@ class MigrationTestCase(BaseMigrationTestCase):
             'commcare.couch_sql_migration.count.duration:',
         ]
         for t_stat in tracked_stats:
-            self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
+            self.assertTrue(
+                any(r_stat.startswith(t_stat) for r_stat in received_stats),
+                "missing stat %r" % t_stat,
+            )
 
     def test_dry_run(self):
         self.assertFalse(should_use_sql_backend(self.domain_name))
