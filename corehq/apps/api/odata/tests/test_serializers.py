@@ -5,7 +5,7 @@ from mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer, ODataXFormInstanceSerializer
+from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
 
 
 class TestODataCommCareCaseSerializer(SimpleTestCase):
