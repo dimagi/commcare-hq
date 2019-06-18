@@ -55,7 +55,6 @@ branches:
   - fr/case-templates      # FR May 15
   - form-odata-2.1  # Nick P May 21
   - web-user-reports-project-access  # Gabriella May 13
-  - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
   - rn_fix_assign_case_regression # Rohit June 6
   - jls/ko-create-mobile-worker # Jenny June 9
   - jls/draconian-flag # Jenny June 17
