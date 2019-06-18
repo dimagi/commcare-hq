@@ -62,10 +62,11 @@ class ODataCommCareCaseSerializer(Serializer):
             'resource_uri',
         ]:
             case_json.pop(remove_property)
-        case_json['properties'] = {
-            property_name: case_json['properties'].get(property_name, None)
+        case_properties = case_json.pop('properties')
+        case_json.update({
+            property_name: case_properties.get(property_name, None)
             for property_name in properties_to_include
-        }
+        })
 
     @memoized
     def get_properties_to_include(self, domain, case_type):
