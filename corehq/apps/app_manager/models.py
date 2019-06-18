@@ -5620,6 +5620,11 @@ class LinkedApplication(Application):
         else:
             raise ActionNotPermitted
 
+    def get_latest_master_releases_versions(self):
+        if self.domain_link:
+            return get_latest_master_releases_versions(self.domain_link)
+        return {}
+
     @memoized
     def get_previous_version(self, master_app_id=None):
         if master_app_id is None:

@@ -206,7 +206,11 @@
                       {% for brief in master_briefs %}
                         <option value="{{ brief.id }}">
                           {{ brief.name }}
-                          {% if brief.version %} ({% trans "version" %} {{ brief.version }}){% endif %}
+                          {% for id, version in master_versions_by_id.items %}
+                            {% if id == brief.id %}
+                              ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %})
+                            {% endif %}
+                          {% endfor %}
                         </option>
                       {% endfor %}
                     </select>
