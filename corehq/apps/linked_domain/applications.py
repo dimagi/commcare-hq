@@ -2,14 +2,17 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from corehq.apps.app_manager.dbaccessors import (
-    get_app,
     get_brief_apps_in_domain,
     get_latest_released_app,
-    get_latest_released_app_version,
+    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.linked_domain.remote_accessors import get_brief_apps, get_released_app
+from corehq.apps.linked_domain.remote_accessors import (
+    get_brief_apps,
+    get_released_app,
+    get_latest_released_versions_by_app_id,
+)
 
 
 def get_master_app_briefs(domain_link):
@@ -28,6 +31,13 @@ def get_latest_master_app_release(domain_link, app_id):
         return get_released_app(master_domain, app_id, linked_domain, domain_link.remote_details)
     else:
         return get_latest_released_app(master_domain, app_id)
+
+
+def get_latest_master_releases_versions(domain_link):
+    if domain_link.is_remote:
+        return get_latest_released_versions_by_app_id(domain_link)
+    else:
+        return get_latest_released_app_versions_by_app_id(domain_link.master_domain)
 
 
 def create_linked_app(master_domain, master_id, target_domain, target_name, remote_details=None):
