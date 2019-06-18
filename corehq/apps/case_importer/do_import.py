@@ -11,6 +11,7 @@ from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
+from corehq.apps.case_importer.exceptions import CaseRowError
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import set_task_progress
@@ -236,15 +237,33 @@ class _CaseImportRow(object):
 
         if owner_id:
             # If an owner_id mapping exists, verify it is a valid user
-            # or case sharing group
-            if _is_valid_id(owner_id, self.domain, self.id_cache, self.user_id, self.accessible_locations):
-                self.id_cache[owner_id] = True
-            else:
-                self.id_cache[owner_id] = False
-                raise exceptions.InvalidOwnerId('owner_id')
+            # or case sharing group and that their location is valid
+            self._check_owner_id(owner_id)
 
         # if they didn't supply an owner, default to current user
         return owner_id or self.user_id
+
+    def _check_owner_id(self, owner_id):
+        """
+        Raises InvalidOwnerId if the owner cannot own cases.
+        Raises InvalidLocation if a location-restricted user tries to assign
+            an owner outside their location hierarchy.
+        Returns True if owner ID is valid.
+        """
+        if owner_id in self.id_cache:
+            if isinstance(self.id_cache[owner_id], CaseRowError):
+                raise self.id_cache[owner_id]
+            return True
+
+        owner = get_wrapped_owner(owner_id)
+        try:
+            _check_owner(owner, self.domain, self.user_id, self.accessible_locations)
+        except CaseRowError as err:
+            self.id_cache[owner_id] = err
+            raise
+        else:
+            self.id_cache[owner_id] = True
+        return True
 
     def _get_parent_index(self):
         for column, search_field, search_id in [
@@ -442,21 +461,14 @@ def _populate_updated_fields(config, row):
     return fields_to_update
 
 
-def _is_valid_id(uploaded_id, domain, cache, user_id, locations):
-    if uploaded_id in cache:
-        return cache[uploaded_id]
-
-    owner = get_wrapped_owner(uploaded_id)
-    return _is_valid_owner(owner, domain, user_id, locations)
-
-
-def _is_valid_owner(owner, domain, user_id=None, locations=ALL_LOCATIONS):
+def _check_owner(owner, domain, user_id=None, locations=ALL_LOCATIONS):
     owner_is_user = isinstance(owner, CouchUser) and owner.is_member_of(domain)
     owner_is_casesharing_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)
-    return (
-        (owner_is_user or owner_is_casesharing_group or _is_valid_location_owner(owner, domain))
-        and _is_owner_location_accessible_to_user(owner, domain, user_id, locations)
-    )
+    if not (owner_is_user or owner_is_casesharing_group or _is_valid_location_owner(owner, domain)):
+        raise exceptions.InvalidOwnerId('owner_id')
+    if not _is_owner_location_accessible_to_user(owner, domain, user_id, locations):
+        raise exceptions.InvalidLocation('owner_id')
+    return True
 
 
 def _is_valid_location_owner(owner, domain):
