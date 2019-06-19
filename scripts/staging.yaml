@@ -59,4 +59,5 @@ branches:
   - es/odata-exports  # Ethan June 11
   - je/pillow-etl-metrics  # J$ June 18
   - case-serialization-updates  # Nick June 18
+  - jls/linked-app-multiple-masters # Jenny June 18
 submodules: {}
