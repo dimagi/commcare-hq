@@ -173,7 +173,7 @@ def _deactivate_schedules(domain, survey_only=False):
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 
-            initiate_messaging_rule_run(domain.name, rule.pk)
+            initiate_messaging_rule_run(domain.name, rule)
 
 
 class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):

@@ -83,10 +83,12 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
         MessagingRuleProgressHelper(rule_id).increment_current_case_count()
 
 
-def initiate_messaging_rule_run(domain, rule_id):
-    MessagingRuleProgressHelper(rule_id).set_initial_progress()
-    AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=True)
-    transaction.on_commit(lambda: run_messaging_rule.delay(domain, rule_id))
+def initiate_messaging_rule_run(domain, rule):
+    if not rule.active:
+        return
+    MessagingRuleProgressHelper(rule.pk).set_initial_progress()
+    AutomaticUpdateRule.objects.filter(pk=rule.pk).update(locked_for_editing=True)
+    transaction.on_commit(lambda: run_messaging_rule.delay(domain, rule.pk))
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
