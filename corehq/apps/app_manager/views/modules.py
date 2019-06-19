@@ -630,7 +630,7 @@ def delete_module(request, domain, app_id, module_unique_id):
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
     if module.get_child_modules():
-        messages.error(request, _('"{}" has child menus. You must remove these before '
+        messages.error(request, _('"{}" has sub-menus. You must remove these before '
                                   'you can delete it.').format(module.default_name()))
         return back_to_main(request, domain, app_id)
 
