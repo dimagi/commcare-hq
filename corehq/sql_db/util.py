@@ -82,7 +82,7 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     :param q_expression: An instance of django.db.models.Q representing the
     filter to apply
 
-    :param annotate: (optional) If specified, should by a dictionary of annotated fields
+    :param annotate: (optional) If specified, should be a dictionary of annotated fields
     and their calculations. The dictionary will be splatted into the `.annotate` function
 
     :param values: (optional) If specified, should be a list of values to retrieve rather
