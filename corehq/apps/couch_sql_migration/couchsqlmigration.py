@@ -947,7 +947,7 @@ class PartiallyLockingQueue(object):
     Interface:
     `.try_obj(lock_ids, queue_obj)` use to add a new object, seeing if it can be
         processed immediately
-    `.get_next()` use to get the next object off the queue that can be processed
+    `.get_next()` use to get the next object that can be processed
     `.has_next()` use to make sure there are still objects in the queue
     `.release_lock_for_queue_obj(queue_obj)` use to release the locks associated
         with an object once finished processing
@@ -959,8 +959,8 @@ class PartiallyLockingQueue(object):
         :max_size int: the maximum size the queue should reach. -1 means no limit
         """
         self.queue_by_lock_id = defaultdict(deque)
-        self.lock_ids_by_queue_id = defaultdict(list)
-        self.queue_objs_by_queue_id = dict()
+        self.lock_ids_by_queue_id = {}
+        self.queue_objs_by_queue_id = {}
         self.currently_locked = set()
         self.max_size = max_size
 
@@ -1012,23 +1012,18 @@ class PartiallyLockingQueue(object):
         :returns: A tuple: `(<queue_obj>, <lock_ids>)`; `(None, None)`
         if nothing can acquire the lock currently.
         """
-        for lock_id, queue in six.iteritems(self.queue_by_lock_id):
+        def is_first(queue_id, lock_id):
+            return queue_by_lock_id[lock_id][0] == queue_id
+
+        queue_by_lock_id = self.queue_by_lock_id
+        lock_ids_by_queue_id = self.lock_ids_by_queue_id
+        for queue in six.itervalues(queue_by_lock_id):
             if not queue:
                 continue
-            peeked_obj_id = queue[0]
-
-            lock_ids = self.lock_ids_by_queue_id[peeked_obj_id]
-            first_in_all_queues = True
-            for lock_id in lock_ids:
-                first_in_queue = self.queue_by_lock_id[lock_id][0]  # can assume there always will be one
-                if not first_in_queue == peeked_obj_id:
-                    first_in_all_queues = False
-                    break
-            if not first_in_all_queues:
-                continue
-
-            if self._set_lock(lock_ids):
-                return self._remove_item(peeked_obj_id), lock_ids
+            queue_id = queue[0]
+            lock_ids = lock_ids_by_queue_id[queue_id]
+            if all(is_first(queue_id, x) for x in lock_ids) and self._set_lock(lock_ids):
+                return self._pop_queue_obj(queue_id), lock_ids
         return None, None
 
     def has_next(self):
@@ -1036,7 +1031,7 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if there are objs left, False if not
         """
-        for _, queue in six.iteritems(self.queue_by_lock_id):
+        for queue in six.itervalues(self.queue_by_lock_id):
             if queue:
                 return True
         return False
@@ -1077,8 +1072,8 @@ class PartiallyLockingQueue(object):
             self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
         self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
 
-    def _remove_item(self, queued_obj_id):
-        """ Removes a queued obj from data model
+    def _pop_queue_obj(self, queued_obj_id):
+        """Removes and returns a queued obj from data model
 
         :queue_obj_id string: An id of an object of the type in the queues
 
