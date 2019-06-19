@@ -64,7 +64,7 @@ def case_uploads(request, domain):
 @conditionally_location_safe(location_safe_case_imports_enabled)
 def update_case_upload_comment(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
@@ -87,7 +87,7 @@ def update_case_upload_comment(request, domain, upload_id):
 @conditionally_location_safe(location_safe_case_imports_enabled)
 def case_upload_file(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
