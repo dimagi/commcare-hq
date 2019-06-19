@@ -149,7 +149,7 @@ class CouchSqlDomainMigrator(object):
 
         self._log_main_forms_processed_count()
 
-    def _migrate_form(self, wrapped_form):
+    def _migrate_form(self, wrapped_form, case_ids):
         set_local_domain_sql_backend_override(self.domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
@@ -897,31 +897,31 @@ class AsyncFormProcessor(object):
     def _try_to_process_form(self, wrapped_form):
         case_ids = get_case_ids(wrapped_form)
         if self.queues.try_obj(case_ids, wrapped_form):
-            self.pool.spawn(self._async_migrate_form, wrapped_form)
+            self.pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
         elif self.queues.full:
             gevent.sleep()  # swap greenlets
 
-    def _async_migrate_form(self, wrapped_form):
+    def _async_migrate_form(self, wrapped_form, case_ids):
         try:
-            self.migrate_form(wrapped_form)
+            self.migrate_form(wrapped_form, case_ids)
         finally:
             self.queues.release_lock_for_queue_obj(wrapped_form)
 
     def _try_to_empty_queues(self):
         while True:
-            new_wrapped_form = self.queues.get_next()
+            new_wrapped_form, case_ids = self.queues.get_next()
             if not new_wrapped_form:
                 break
-            self.pool.spawn(self._async_migrate_form, new_wrapped_form)
+            self.pool.spawn(self._async_migrate_form, new_wrapped_form, case_ids)
 
     def _finish_processing_queues(self):
         update_interval = timedelta(seconds=10)
         next_check = datetime.now()
         pool = self.pool
         while self.queues.has_next():
-            wrapped_form = self.queues.get_next()
+            wrapped_form, case_ids = self.queues.get_next()
             if wrapped_form:
-                pool.spawn(self._async_migrate_form, wrapped_form)
+                pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
             else:
                 gevent.sleep()  # swap greenlets
 
@@ -1004,12 +1004,13 @@ class PartiallyLockingQueue(object):
         return True
 
     def get_next(self):
-        """ Returns the next object that can be processed
+        """Returns the next object and lock ids that can be processed
 
-        Iterates through the first object in each queue, then checks that that object is the
-        first in every lock queue it is in
+        Iterates through the first object in each queue, then checks
+        that that object is the first in every lock queue it is in.
 
-        Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
+        :returns: A tuple: `(<queue_obj>, <lock_ids>)`; `(None, None)`
+        if nothing can acquire the lock currently.
         """
         for lock_id, queue in six.iteritems(self.queue_by_lock_id):
             if not queue:
@@ -1027,8 +1028,8 @@ class PartiallyLockingQueue(object):
                 continue
 
             if self._set_lock(lock_ids):
-                return self._remove_item(peeked_obj_id)
-        return None
+                return self._remove_item(peeked_obj_id), lock_ids
+        return None, None
 
     def has_next(self):
         """ Makes sure there are still objects in the queue
