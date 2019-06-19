@@ -1150,6 +1150,16 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             self.assertEqual(actual_sheet, expected_sheet)
         self.assertEqual(actual_workbook, self.expected_workbook)
 
+    def test_bulk_app_sheet_blacklisted(self):
+        menu1_id = self.app.modules[0].unique_id
+        with patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_get_blacklist.return_value = {
+                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}
+            }
+            menu1_sheet = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)['menu1']
+        self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
+        self.assertIn(('name', 'list', 'Name'), menu1_sheet)
+
     def test_bulk_app_single_sheet_rows(self):
         sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0])[SINGLE_SHEET_NAME]
         self.assertListEqual(sheet, [
@@ -1215,6 +1225,18 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form1', '', '', '', 'Advanced Form', None, None, '', '2b9c856ba2ea4ec1ab8743af299c1627'],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
+
+
+    def test_bulk_app_single_sheet_blacklisted(self):
+        menu1_id = self.app.modules[0].unique_id
+        with patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_get_blacklist.return_value = {
+                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}
+            }
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      skip_blacklisted=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
+        self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
 
 
 class RenameLangTest(SimpleTestCase):
