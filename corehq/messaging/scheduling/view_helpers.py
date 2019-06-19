@@ -122,7 +122,6 @@ class ConditionalAlertUploader(object):
                 condensed_rows[row['id']].append(row)
                 continue
 
-            rule = getattr(rules_by_id, six.text_type(row['id']), None)
             try:
                 rule = AutomaticUpdateRule.objects.get(
                     pk=row['id'],
