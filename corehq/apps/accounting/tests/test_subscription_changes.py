@@ -415,7 +415,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p3.call_count, 2)
             p3.assert_has_calls(
                 [
-                    call(rule.domain, rule.pk)
+                    call(rule)
                     for rule in (self.domain_1_sms_schedules[2], self.domain_1_survey_schedules[2])
                 ],
                 any_order=True
@@ -445,7 +445,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             p2.assert_called_once_with(b.schedule_id, b.recipients)
 
             rule = self.domain_1_survey_schedules[2]
-            p3.assert_called_once_with(rule.domain, rule.pk)
+            p3.assert_called_once_with(rule)
 
         self.assertSchedulesActive(self.domain_1_sms_schedules)
         self.assertSchedulesInactive(self.domain_1_survey_schedules)
