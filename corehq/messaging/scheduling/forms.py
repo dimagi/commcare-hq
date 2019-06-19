@@ -3121,8 +3121,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 crispy.Div(
                     crispy.HTML(
                         '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
-                        _("This cannot be changed after initial configuration.")
+                        _("This cannot be changed after initial configuration."),
                     ),
+                    css_class='col-sm-12',
                 ),
             ),
             hqcrispy.B3MultiField(
