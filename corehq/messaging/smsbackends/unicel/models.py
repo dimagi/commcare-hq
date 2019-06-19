@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import codecs
+import six
 
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
@@ -84,8 +85,12 @@ class SQLUnicelBackend(SQLSMSBackend):
             params.append((OutboundParams.MESSAGE, text_as_ascii))
         except UnicodeEncodeError:
             params.extend(UNICODE_PARAMS)
-            encoded = message.text.encode('utf_16_be').encode('hex').upper()
-            params.append((OutboundParams.MESSAGE, encoded))
+            text_as_utf_16_be = message.text.encode('utf_16_be')
+            if six.PY3:
+                text_as_hex = text_as_utf_16_be.hex()
+            else:
+                text_as_hex = text_as_utf_16_be.encode('hex')
+            params.append((OutboundParams.MESSAGE, text_as_hex.upper()))
 
         data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
             timeout=settings.SMS_GATEWAY_TIMEOUT).read()
