@@ -171,7 +171,22 @@ def overwrite_app(app, master_build, report_map=None):
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
-    form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
+
+    # Corresponding forms in a master app and linked app need to have the same XMLNS but different unique ids,
+    # so the linked app needs to know if there are any new forms and, if so, assign those forms new unique ids.
+    # To do this lookup, get the XMLNSes from the the most recent versions of this app pulled from each master
+    # and compare those to the XMLNSes present in this app.
+    form_ids_by_xmlns = {}
+    master_app_briefs = app.get_master_app_briefs()
+    for brief in master_app_briefs:
+        previous_app = app.get_previous_version(master_app_id=brief.master_id)
+        if previous_app:
+            form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
+    # Add in any forms from the current linked app, before the source is overwritten.
+    # This is particularly important if there's no previous version.
+    for module in app['modules']:
+        for form in module['forms']:
+            form_ids_by_xmlns[form.xmlns] = form['unique_id']
 
     for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
@@ -195,14 +210,6 @@ def overwrite_app(app, master_build, report_map=None):
     return wrapped_app
 
 
-def _get_form_ids_by_xmlns(app):
-    id_map = {}
-    for module in app['modules']:
-        for form in module['forms']:
-            id_map[form['xmlns']] = form['unique_id']
-    return id_map
-
-
 def _update_form_ids(app, master_app, form_ids_by_xmlns):
 
     _attachments = master_app.get_attachments()
@@ -217,6 +224,14 @@ def _update_form_ids(app, master_app, form_ids_by_xmlns):
     new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
+
+
+def _get_form_ids_by_xmlns(app):
+    id_map = {}
+    for module in app.get_modules():
+        for form in module.get_forms():
+            id_map[form.xmlns] = form.unique_id
+    return id_map
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
