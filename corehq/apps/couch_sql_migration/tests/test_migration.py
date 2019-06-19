@@ -121,8 +121,11 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected_diffs=None, missing=None):
+        def diff_key(diff):
+            return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
+
         state = open_state_db(self.domain_name)
-        diffs = state.get_diffs()
+        diffs = sorted(state.get_diffs(), key=diff_key)
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
         self.assertEqual(json_diffs, expected_diffs or [])
         self.assertEqual({
@@ -766,15 +769,15 @@ class MigrationTestCase(BaseMigrationTestCase):
         with self.assertRaises(CaseNotFound):
             self._get_case("test-case")
         self._compare_diffs([
+            ('XFormInstance', Diff('missing', ['form', '#type'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['form', '@name'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['form', '@uiVersion'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['form', '@version'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['form', '@xmlns'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', 'first_name'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['form', 'age'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['form', 'case'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'first_name'], new=MISSING)),
             ('XFormInstance', Diff('missing', ['form', 'meta'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', '#type'], new=MISSING)),
         ], missing={'CommCareCase': 1})
 
 
