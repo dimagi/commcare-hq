@@ -13,16 +13,18 @@ from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_recor
     get_case_ids_for_case_upload
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class DbaccessorsTest(TestCase):
-    domain = 'test-case-importer-dbaccessors'
 
     @classmethod
     def setUpClass(cls):
         super(DbaccessorsTest, cls).setUpClass()
+        cls.domain_obj = create_domain('test-case-importer-dbaccessors')
+        cls.domain = cls.domain_obj.name
         cls.user = WebUser.create(cls.domain, 'username', 'password')
         cls.case_upload_1 = CaseUploadRecord(
             upload_id=UUID('7ca20e75-8ba3-4d0d-9c9c-66371e8895dc'),
