@@ -1226,7 +1226,6 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
 
-
     def test_bulk_app_single_sheet_blacklisted(self):
         menu1_id = self.app.modules[0].unique_id
         with patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
