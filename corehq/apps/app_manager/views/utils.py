@@ -169,7 +169,6 @@ def overwrite_app(app, master_build, report_map=None):
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
-    form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
 
     for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
@@ -188,20 +187,12 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
-    wrapped_app = _update_form_ids(wrapped_app, master_build, form_ids_by_xmlns)
+    wrapped_app = _update_form_ids(wrapped_app, master_build)
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
 
 
-def _get_form_ids_by_xmlns(app):
-    id_map = {}
-    for module in app['modules']:
-        for form in module['forms']:
-            id_map[form['xmlns']] = form['unique_id']
-    return id_map
-
-
-def _update_form_ids(app, master_app, form_ids_by_xmlns):
+def _update_form_ids(app, master_app):
 
     _attachments = master_app.get_attachments()
 
@@ -209,12 +200,21 @@ def _update_form_ids(app, master_app, form_ids_by_xmlns):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
+    form_ids_by_xmlns = _get_form_ids_by_xmlns(app.get_previous_version(master_app_id=master_app.copy_of))
     updated_source = update_form_unique_ids(app_source, form_ids_by_xmlns)
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
+
+
+def _get_form_ids_by_xmlns(app):
+    id_map = {}
+    for module in app.get_modules():
+        for form in module.get_forms():
+            id_map[form.xmlns] = form.unique_id
+    return id_map
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
