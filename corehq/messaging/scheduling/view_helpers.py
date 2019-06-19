@@ -182,7 +182,7 @@ class ConditionalAlertUploader(object):
 
                 if dirty:
                     rule.save()
-                    initiate_messaging_rule_run(self.domain, rule.pk)
+                    initiate_messaging_rule_run(rule)
                     success_count += 1
 
         self.msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
