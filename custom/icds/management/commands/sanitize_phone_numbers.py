@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from __future__ import print_function
 
 import csv342 as csv
 import six
@@ -39,7 +38,14 @@ CASE_ITERATION_COUNT = 10000
 MAX_RESCUE_EXCEPTIONS_ON_UPDATE = 5
 CSV_HEADERS = ['Case Id']
 
-TEST_STATES = ['Test State', 'Test State 2', 'VL State', 'Trial State', 'Uttar Pradesh_GZB', 'AWW Test State']
+TEST_STATES = [
+    'Test State',
+    'Test State 2',
+    'VL State',
+    'Trial State',
+    'Uttar Pradesh_GZB',
+    'AWW Test State',
+]
 
 
 class Command(BaseCommand):
@@ -111,10 +117,10 @@ class Command(BaseCommand):
             writer = csv.writer(output)
             writer.writerow(CSV_HEADERS)
             if self.log_progress:
-                print('iterating now')
+                self.stdout.write('iterating now')
             for case in iter_all_rows(reindex_accessor):
                 if self.log_progress and cases_iterated % CASE_ITERATION_COUNT == 0:
-                    print("cases iterated: %s" % cases_iterated)
+                    self.stdout.write("cases iterated: %s" % cases_iterated)
                 cases_iterated += 1
                 if self._case_needs_to_be_updated(case):
                     case_ids_with_invalid_phone_number.append(case.case_id)
@@ -142,7 +148,7 @@ class Command(BaseCommand):
                 exc = sys.exc_info()
                 exceptions_raised += 1
                 if self.log_progress:
-                    print("rescuing exception %s %s" % (exceptions_raised, six.text_type(e)))
+                    self.stdout.write("rescuing exception %s %s" % (exceptions_raised, six.text_type(e)))
                 if exceptions_raised > MAX_RESCUE_EXCEPTIONS_ON_UPDATE:
                     six.reraise(*exc)
                 else:
@@ -170,7 +176,7 @@ class Command(BaseCommand):
         case_ids_with_invalid_phone_number = self._find_case_ids_with_invalid_phone_number()
         self._store_case_ids_with_unexpected_phone_number()
         if self.log_progress:
-            print('starting update now for %s cases', len(case_ids_with_invalid_phone_number))
+            self.stdout.write('starting update now for %s cases', len(case_ids_with_invalid_phone_number))
         self._update_cases(case_ids_with_invalid_phone_number)
 
 
