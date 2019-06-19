@@ -187,30 +187,54 @@
           <form action="{% url "pull_master_app" domain app.id %}" method="POST">
             {% csrf_token %}
             <legend>
-              {% if upstream_url %}
-                {% blocktrans %}Update from <a href="{{ upstream_url }}">master application</a>{% endblocktrans %}
-              {% else %}
-                {% trans "Update from master application" %}
-              {% endif %}
+              {% trans "Update from master application" %}
             </legend>
             <div class="panel-body">
-              <p>{% blocktrans with version=app.version %}Your app is at version {{ version }}.{% endblocktrans %}
-                {% if master_version %}
-                  {% blocktrans %}The master app is at version {{ master_version }}.{% endblocktrans %}
-                {% else %}
-                  {% trans "Unable to get master version." %}
-                {% endif %}
+              <p>
+                {% blocktrans with master_name=pulled_from_master_brief.name master_version=app.pulled_from_master_version %}
+                  Your app was last pulled from
+                  <a href='{{ pulled_from_master_url }}'>{{ master_name }}</a>,
+                  version {{ master_version }}.
+                {% endblocktrans %}
               </p>
-              <div class="checkbox">
-                <label>
-                  <input type="checkbox" name="notify">
-                  {% trans "Email when when finished (recommended for large applications)" %}
-                </label>
+              <div class="form-horizontal">
+                <div class="form-group">
+                  <div class="{% css_field_class %}">
+                    <select name="master_app_id" class="form-control hqwebapp-select2"
+                            data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
+                      <option value="">{% trans "Select a master app to pull" %}</option>
+                      {% for brief in master_briefs %}
+                        <option value="{{ brief.id }}">
+                          {{ brief.name }}
+                          {% for id, version in master_versions_by_id.items %}
+                            {% if id == brief.id %}
+                              ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %})
+                            {% endif %}
+                          {% endfor %}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="{% css_field_class %}">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" name="notify">
+                        {% trans "Email when when finished (recommended for large applications)" %}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="{% css_field_class %}">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fa fa-arrow-up"></i>
+                      {% trans "Update" %}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary">
-                <i class="fa fa-arrow-up"></i>
-                {% trans "Update" %}
-              </button>
             </div>
           </form>
         </div>
