@@ -219,13 +219,13 @@ def should_sync_hierarchical_fixture(project, app):
     if not project.uses_locations:
         return False
 
-    if not toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(project.name):
-        return False
-
     if app and app.location_fixture_restore in SYNC_HIERARCHICAL_FIXTURE:
         return True
 
     if app and app.location_fixture_restore != DEFAULT_LOCATION_FIXTURE_OPTION:
+        return False
+
+    if not toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(project.name):
         return False
 
     return LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
