@@ -164,6 +164,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import (
     get_latest_master_app_release,
+    get_latest_master_releases_versions,
     get_master_app_briefs,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted

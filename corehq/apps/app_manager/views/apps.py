@@ -35,7 +35,6 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_brief_app,
     get_current_app,
     get_latest_released_app_version,
     get_latest_released_app_versions_by_app_id,
