@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from corehq.apps.app_manager.dbaccessors import (
-    get_app,
     get_brief_apps_in_domain,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
@@ -36,9 +35,9 @@ def get_latest_master_app_release(domain_link, app_id):
 
 def get_latest_master_releases_versions(domain_link):
     if domain_link.is_remote:
-        return get_released_app_versions(domain_link)
+        return get_latest_released_versions_by_app_id(domain_link)
     else:
-        return get_latest_released_versions_by_app_id(master_domain)
+        return get_latest_released_app_versions_by_app_id(domain_link.master_domain)
 
 
 def create_linked_app(master_domain, master_id, target_domain, target_name, remote_details=None):
