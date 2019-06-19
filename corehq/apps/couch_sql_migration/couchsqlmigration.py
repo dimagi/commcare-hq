@@ -1138,7 +1138,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
         domain=domain, lock=False, deleted_ok=True, xforms=xforms,
         load_src="couchsqlmigration",
     ) as case_db:
-        touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)  # broken
+        touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
         extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
         case_result = CaseProcessingResult(
             domain,

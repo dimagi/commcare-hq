@@ -120,6 +120,8 @@ class Command(BaseCommand):
                     raise CommandError("Migration must be in progress if run_timestamp is passed in")
             else:
                 set_couch_sql_migration_started(domain, self.dry_run)
+                if domain != dst_domain:
+                    set_couch_sql_migration_started(dst_domain, self.dry_run)
 
             do_couch_to_sql_migration(
                 domain,
@@ -142,6 +144,8 @@ class Command(BaseCommand):
                     "Are you sure you want to continue?".format(dst_domain)
                 )
             set_couch_sql_migration_not_started(domain)
+            if domain != dst_domain:
+                set_couch_sql_migration_not_started(dst_domain)
             _blow_away_migration(domain, dst_domain)
 
         if options['stats_short'] or options['stats_long']:
@@ -167,6 +171,8 @@ class Command(BaseCommand):
             else:
                 toggles.DATA_MIGRATION.enable(domain)  # Prevent any more changes on domain
                 set_couch_sql_migration_not_started(domain)
+                set_couch_sql_migration_not_started(dst_domain)
+                # TODO: Reindex forms & cases
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
