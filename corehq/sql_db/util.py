@@ -69,7 +69,8 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
             yield result
 
 
-def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000, values=None):
+def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
+                                                values=None):
     """
     Runs a query across all partitioned databases in small chunks and produces a generator
     with the results.
