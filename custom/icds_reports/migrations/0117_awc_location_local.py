@@ -5,11 +5,6 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 
-from corehq.sql_db.operations import RawSQLMigration
-from custom.icds_reports.utils.migrations import get_view_migrations
-
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
-
 
 class Migration(migrations.Migration):
 
@@ -33,5 +28,3 @@ class Migration(migrations.Migration):
             bases=('icds_reports.awclocation',),
         ),
     ]
-    operations.extend(get_view_migrations())
-    operations.append(migrator.get_migration('service_delivery_monthly.sql'),)
