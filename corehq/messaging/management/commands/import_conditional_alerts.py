@@ -124,6 +124,6 @@ class Command(BaseCommand):
         print("Import complete. Starting instance refresh tasks...")
 
         for rule in rules:
-            initiate_messaging_rule_run(rule.domain, rule)
+            initiate_messaging_rule_run(rule)
 
         print("Done.")

@@ -692,7 +692,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
             schedule.active = active_flag
             schedule.save()
-            initiate_messaging_rule_run(self.domain, rule)
+            initiate_messaging_rule_run(rule)
 
         return JsonResponse({
             'status': 'success',
@@ -712,7 +712,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
             minutes_remaining = helper.rule_initiation_key_minutes_remaining()
             return JsonResponse({'status': 'error', 'minutes_remaining': minutes_remaining})
 
-        initiate_messaging_rule_run(rule.domain, rule)
+        initiate_messaging_rule_run(rule)
         return JsonResponse({
             'status': 'success',
             'rule': self._format_rule_for_json(rule),
@@ -746,7 +746,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
                 'error_msg': _("This rule includes references that cannot be copied."),
             })
 
-        initiate_messaging_rule_run(copied_rule.domain, copied_rule)
+        initiate_messaging_rule_run(copied_rule)
         return JsonResponse({
             'status': 'success',
             'rule': self._format_rule_for_json(rule),
@@ -908,7 +908,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            initiate_messaging_rule_run(rule.domain, rule)
+            initiate_messaging_rule_run(rule)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
