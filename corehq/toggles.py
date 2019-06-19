@@ -1090,7 +1090,7 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description=("This flag makes failed messages appear in the Message Log "
                  "Report, and adds Status and Event columns"),
@@ -1734,7 +1734,7 @@ LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
