@@ -1021,6 +1021,8 @@ class Diff(object):
     def __ne__(self, other):
         return not (self == other)
 
+    __hash__ = None
+
 
 class DummyObject(object):
     def __init__(self, id=None):
