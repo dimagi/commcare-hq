@@ -9,7 +9,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import run_query_across_partitioned_databases, paginate_query_across_partitioned_databases
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.utils import case_load_counter
 from dimagi.utils.couch import CriticalSection
@@ -89,15 +89,17 @@ def initiate_messaging_rule_run(domain, rule_id):
     transaction.on_commit(lambda: run_messaging_rule.delay(domain, rule_id))
 
 
+def paginated_case_ids(domain, case_type):
+    for case in paginate_query_across_partitioned_databases(CommCareCaseSQL,
+                                                            Q(domain=domain, type=case_type, deleted=False)):
+        yield case.case_id
+
+
 def get_case_ids_for_messaging_rule(domain, case_type):
     if not should_use_sql_backend(domain):
         return CaseAccessors(domain).get_case_ids_in_domain(case_type)
     else:
-        return run_query_across_partitioned_databases(
-            CommCareCaseSQL,
-            Q(domain=domain, type=case_type, deleted=False),
-            values=['case_id']
-        )
+        return paginated_case_ids(domain, case_type)
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
