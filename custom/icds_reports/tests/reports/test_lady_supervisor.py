@@ -73,7 +73,7 @@ class TestDemographics(TestCase):
             'format': 'number',
             'percent': None,
             'value': 0,
-            'label': 'Number of VHNDs observed',
+            'label': 'Number of VHSNDs observed',
             'frequency': 'month',
             'help_text': lady_supervisor_number_of_vhnds_observed_help_text()
         }

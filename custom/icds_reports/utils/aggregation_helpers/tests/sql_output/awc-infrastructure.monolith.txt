@@ -1,0 +1,163 @@
+DROP TABLE IF EXISTS "icds_db_infra_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_infra_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_infrastructure_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_infrastructure_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_infra_form_7a197ee47818209780c23ed9" (
+            state_id, supervisor_id, month, awc_id, latest_time_end_processed,
+            awc_building, source_drinking_water, toilet_functional,
+            electricity_awc, adequate_space_pse,
+            adult_scale_available, baby_scale_available, flat_scale_available,
+            adult_scale_usable, baby_scale_usable, cooking_utensils_usable,
+            infantometer_usable, medicine_kits_usable, stadiometer_usable
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            ucr.supervisor_id AS supervisor_id,
+            %(month)s AS month,
+            ucr.awc_id AS awc_id,
+            ucr.timeend as latest_time_end_processed,
+            ucr.awc_building as awc_building,
+            ucr.source_drinking_water as source_drinking_water,
+            ucr.toilet_functional as toilet_functional,
+            ucr.electricity_awc as electricity_awc,
+            ucr.adequate_space_pse as adequate_space_pse,
+            ucr.adult_scale_available as adult_scale_available,
+            ucr.baby_scale_available as baby_scale_available,
+            ucr.flat_scale_available as flat_scale_available,
+            ucr.adult_scale_usable as adult_scale_usable,
+            ucr.baby_scale_usable as baby_scale_usable,
+            ucr.cooking_utensils_usable as cooking_utensils_usable,
+            ucr.infantometer_usable as infantometer_usable,
+            ucr.medicine_kits_usable as medicine_kits_usable,
+            ucr.stadiometer_usable as stadiometer_usable
+          FROM (
+            SELECT
+                DISTINCT awc_id AS awc_id,
+                LAST_VALUE(supervisor_id) OVER supervisor_id AS supervisor_id, LAST_VALUE(timeend) OVER timeend AS timeend, LAST_VALUE(awc_building) OVER awc_building AS awc_building, LAST_VALUE(source_drinking_water) OVER source_drinking_water AS source_drinking_water, LAST_VALUE(toilet_functional) OVER toilet_functional AS toilet_functional, LAST_VALUE(electricity_awc) OVER electricity_awc AS electricity_awc, LAST_VALUE(adequate_space_pse) OVER adequate_space_pse AS adequate_space_pse, LAST_VALUE(adult_scale_available) OVER adult_scale_available AS adult_scale_available, LAST_VALUE(baby_scale_available) OVER baby_scale_available AS baby_scale_available, LAST_VALUE(flat_scale_available) OVER flat_scale_available AS flat_scale_available, LAST_VALUE(adult_scale_usable) OVER adult_scale_usable AS adult_scale_usable, LAST_VALUE(baby_scale_usable) OVER baby_scale_usable AS baby_scale_usable, LAST_VALUE(cooking_utensils_usable) OVER cooking_utensils_usable AS cooking_utensils_usable, LAST_VALUE(infantometer_usable) OVER infantometer_usable AS infantometer_usable, LAST_VALUE(medicine_kits_usable) OVER medicine_kits_usable AS medicine_kits_usable, LAST_VALUE(stadiometer_usable) OVER stadiometer_usable AS stadiometer_usable
+            FROM "ucr_icds-cas_static-infrastructure_form_v_9918f894"
+            WHERE timeend >= %(six_months_ago)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND awc_id IS NOT NULL
+            WINDOW
+                
+            supervisor_id AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN supervisor_id IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            timeend AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN timeend IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            awc_building AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN awc_building IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            source_drinking_water AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN source_drinking_water IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            toilet_functional AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN toilet_functional IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            electricity_awc AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN electricity_awc IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            adequate_space_pse AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN adequate_space_pse IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            adult_scale_available AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN adult_scale_available IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            baby_scale_available AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN baby_scale_available IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            flat_scale_available AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN flat_scale_available IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            adult_scale_usable AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN adult_scale_usable IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            baby_scale_usable AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN baby_scale_usable IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            cooking_utensils_usable AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN cooking_utensils_usable IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            infantometer_usable AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN infantometer_usable IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            medicine_kits_usable AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN medicine_kits_usable IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            stadiometer_usable AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN stadiometer_usable IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            
+        ) ucr
+        )
+        
+{"month": "2019-01-01", "next_month_start": "2019-02-01", "six_months_ago": "2018-07-01", "state_id": "st1"}

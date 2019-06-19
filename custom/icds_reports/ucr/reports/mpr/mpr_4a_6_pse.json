@@ -212,6 +212,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "open_one_acts_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "count_unique",
+        "column_id": "awc_count",
+        "field": "awc_id",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "awc_count"
       }
     ],
     "sort_expression": [],

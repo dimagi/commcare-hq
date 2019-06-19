@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import zipfile
-import csv
+from csv342 import csv
 import io
 
 from django.test.testcases import TestCase
@@ -41,10 +41,11 @@ class TestInactiveMobileUsers(TestCase):
                 csv_reader = csv.reader(items_file)
                 data = list(csv_reader)
                 sorted(data, key=lambda x: x[0])
-                self.assertEqual([['Username', 'Location', 'State'],
-                                  ['234.testing@icds-cas.commcare.org', '', ''],
-                                  ['123.testing@icds-cas.commcare.org', '', '']
-                                  ], data)
+                self.assertEqual(['Username', 'Location', 'State'], data[0])
+                self.assertCountEqual([
+                    ['123.testing@icds-cas.commcare.org', '', ''],
+                    ['234.testing@icds-cas.commcare.org', '', ''],
+                ], data[1:])
 
     def tearDown(self):
         user = CommCareUser.get_by_username('123.testing@icds-cas.commcare.org')

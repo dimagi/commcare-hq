@@ -2,9 +2,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block reportcontent %}
-    <h3>({{ patient_case.pactid }}) {{ patient_case.name }} DOT Report <small>{{ startdate }}-{{ enddate }} &nbsp; <a href="{{ patient_case.get_info_url }}" target="_blank">Profile</a></small></h3>
-    <small>Observations spanning <strong>visits</strong> during this time</small>
-    <a id="legendpop" href="#" class="btn btn-info" rel="popover" data-content='<strong>Obs. Method</strong><br>
+  <h3>({{ patient_case.pactid }}) {{ patient_case.name }} DOT Report <small>{{ startdate }}-{{ enddate }} &nbsp; <a href="{{ patient_case.get_info_url }}" target="_blank">Profile</a></small></h3>
+  <small>Observations spanning <strong>visits</strong> during this time</small>
+  <a id="legendpop" href="#" class="btn btn-info" rel="popover" data-content='<strong>Obs. Method</strong><br>
             <img src="{% static 'pact/icons/plus.png' %}">&nbsp;Direct<br>
             <img src="{% static 'pact/icons/bucket.png' %}">&nbsp;Pillbox<br>
             <img src="{% static 'pact/icons/minus.png' %}">&nbsp;Self Report<br>
@@ -15,26 +15,26 @@
             <img src="{% static 'pact/icons/check.jpg' %}">&nbsp; Empty<br>
             <img src="{% static 'pact/icons/exclamation-point.jpg' %}">&nbsp;Partial<br>
             <img src="{% static 'pact/icons/x-mark.png' %}">&nbsp; Full<br> ' data-original-title="Report Legend">Legend</a>
-    <script>
-        $(function ()
+  <script>
+    $(function ()
+    {
+      $('#legendpop').popover(
         {
-            $('#legendpop').popover(
-                    {
-                        html:true,
-                    }
-            );
-        });
-    </script>
+          html:true,
+        }
+      );
+    });
+  </script>
 
-    <div class="col-sm-11">
+  <div class="col-sm-11">
     {% for calendar in dot_calendar.calendars %}
-        {{ calendar|safe }}
+      {{ calendar|safe }}
     {% endfor %}
-    </div>
-        <link type="text/css" rel="stylesheet" href="{% static 'pact/stylesheets/dots.css' %}"/>
+  </div>
+  <link type="text/css" rel="stylesheet" href="{% static 'pact/stylesheets/dots.css' %}"/>
 
-    <div class="col-sm-11">
+  <div class="col-sm-11">
     <hr>
     {% include "pact/dots/dots_report_visits.html" %}
-    </div>
+  </div>
 {% endblock %}

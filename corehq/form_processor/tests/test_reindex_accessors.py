@@ -10,6 +10,7 @@ from django.conf import settings
 from django.db import connections
 from django.test import TestCase
 
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, FormReindexAccessor, CaseReindexAccessor,
     LedgerAccessorSQL, LedgerReindexAccessor
@@ -21,6 +22,7 @@ from six.moves import range
 
 class BaseReindexAccessorTest(object):
     accessor_class = None
+    doc_type = None
 
     @classmethod
     def setUpClass(cls):
@@ -121,10 +123,15 @@ class BaseReindexAccessorTest(object):
     def test_get_doc_count_domain(self):
         self.assertEqual(8, self.accessor_class(domain=self.domain).get_approximate_doc_count('default'))
 
+    def test_doc_store(self):
+        doc_store = get_document_store_for_doc_type(self.domain, self.doc_type)
+        self.assertSetEqual(set(self.all_doc_ids_domain), set(doc_store.iter_document_ids()))
+
 
 @use_sql_backend
 class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = CaseReindexAccessor
+    doc_type = 'CommCareCase'
 
     @classmethod
     def setUpClass(cls):
@@ -145,6 +152,7 @@ class UnshardedCaseReindexAccessorTests(BaseReindexAccessorTest, TestCase):
 @use_sql_backend
 class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = FormReindexAccessor
+    doc_type = 'XFormInstance'
 
     @classmethod
     def setUpClass(cls):
@@ -163,6 +171,7 @@ class UnshardedFormReindexAccessorTests(BaseReindexAccessorTest, TestCase):
 @use_sql_backend
 class UnshardedLedgerReindexAccessorTests(BaseReindexAccessorTest, TestCase):
     accessor_class = LedgerReindexAccessor
+    doc_type = 'ledger'
 
     @classmethod
     def setUpClass(cls):

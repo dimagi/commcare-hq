@@ -10,6 +10,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'daily-attendance'
     base_tablename = 'daily_attendance'
     ucr_daily_attendance_table = DAILY_FEEDING_TABLE_ID
 

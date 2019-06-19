@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import re
+import pytz
 import tempfile
 import zipfile
 from collections import namedtuple
@@ -28,11 +29,14 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 
+from corehq import toggles
+
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
     get_primary_db_case_counts,
     get_primary_db_form_counts,
 )
+
 from corehq.apps.es.cases import CaseES, server_modified_range
 from corehq.apps.es.forms import FormES, submitted
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -45,8 +49,9 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.sql_db.connections import get_icds_ucr_db_alias
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
+    get_icds_ucr_db_alias_or_citus
+from corehq.sql_db.routers import db_for_read_write, force_citus_engine, forced_citus
 from corehq.util.datadog.utils import case_load_counter, create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -63,7 +68,9 @@ from custom.icds_reports.const import (
     PREGNANT_WOMEN_EXPORT,
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
+    INDIA_TIMEZONE
 )
+from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
     AggAwc,
     AggCcsRecord,
@@ -87,7 +94,7 @@ from custom.icds_reports.models import (
     ChildHealthMonthly,
     ICDSAuditEntryRecord,
     UcrTableNameMapping,
-)
+    IcdsMonths)
 from custom.icds_reports.models.aggregate import (
     AggAwcDaily,
     AggregateBeneficiaryForm,
@@ -121,10 +128,12 @@ from custom.icds_reports.utils import (
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
     create_pdf_file,
+    get_performance_report_blob_key,
     icds_pre_release_features,
     track_time,
     zip_folder,
 )
+from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     ChildHealthMonthlyAggregationHelper,
 )
@@ -133,6 +142,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
     CcsMbtHelper,
     ChildHealthMbtHelper,
 )
+from six.moves import zip
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -165,7 +175,6 @@ UCR_TABLE_NAME_MAPPING = [
 
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
 ]
 
@@ -174,11 +183,17 @@ SQL_FUNCTION_PATHS = [
                acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task():
     move_ucr_data_into_aggregation_tables.delay()
+    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
+        move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
 
-@serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
-def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
-    date = date or datetime.utcnow().date()
+@serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
+def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
+    if force_citus:
+        force_citus_engine()
+
+    start_time = datetime.now(pytz.utc)
+    date = date or start_time.date()
     monthly_dates = []
 
     # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
@@ -194,7 +209,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
     monthly_dates.append(date)
 
-    db_alias = get_icds_ucr_db_alias()
+    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
@@ -207,59 +222,58 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table', force_citus=force_citus)
             res_daily.get(disable_sync_subtasks=False)
 
             stage_1_tasks = [
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms')
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms', force_citus=force_citus)
                 for state_id in state_ids
             ]
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_df_forms')
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_df_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms')
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_cf_forms')
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_cf_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_child_health_thr_forms')
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_child_health_thr_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_record_thr_forms')
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_record_thr_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func_name='_aggregate_child_health_pnc_forms'
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_child_health_pnc_forms', force_citus=force_citus
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_record_pnc_forms'
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_record_pnc_forms', force_citus=force_citus
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func_name='_aggregate_delivery_forms'
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_delivery_forms', force_citus=force_citus
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func_name='_aggregate_bp_forms'
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_bp_forms', force_citus=force_citus
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_awc_infra_forms')
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_awc_infra_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
-            stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
-
+            stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table', force_citus=force_citus))
 
             # https://github.com/celery/celery/issues/4274
             stage_1_task_results = [stage_1_task.delay() for stage_1_task in stage_1_tasks]
@@ -268,13 +282,13 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_child = chain(
                 icds_state_aggregation_task.si(
-                    state_id=state_ids, date=calculation_date, func_name='_child_health_monthly_table'
+                    state_id=state_ids, date=calculation_date, func_name='_child_health_monthly_table', force_citus=force_citus
                 ),
-                icds_aggregation_task.si(date=calculation_date, func_name='_agg_child_health_table'),
+                icds_aggregation_task.si(date=calculation_date, func_name='_agg_child_health_table', force_citus=force_citus)
             ).apply_async()
             res_ccs = chain(
-                icds_aggregation_task.si(date=calculation_date, func_name='_ccs_record_monthly_table'),
-                icds_aggregation_task.si(date=calculation_date, func_name='_agg_ccs_record_table'),
+                icds_aggregation_task.si(date=calculation_date, func_name='_ccs_record_monthly_table', force_citus=force_citus),
+                icds_aggregation_task.si(date=calculation_date, func_name='_agg_ccs_record_table', force_citus=force_citus),
             ).apply_async()
 
             res_ccs.get(disable_sync_subtasks=False)
@@ -282,20 +296,20 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_ls_tasks = list()
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
-                                                                func_name='_agg_ls_awc_mgt_form')
+                                                                func_name='_agg_ls_awc_mgt_form', force_citus=force_citus)
                                  for state_id in state_ids
                                  ])
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
-                                                                func_name='_agg_ls_vhnd_form')
+                                                                func_name='_agg_ls_vhnd_form', force_citus=force_citus)
                                  for state_id in state_ids
                                  ])
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
-                                                                func_name='_agg_beneficiary_form')
+                                                                func_name='_agg_beneficiary_form', force_citus=force_citus)
                                  for state_id in state_ids
                                  ])
-            res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table'))
+            res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table', force_citus=force_citus))
 
-            res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
+            res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table', force_citus=force_citus),
                             *res_ls_tasks
                             ).apply_async()
 
@@ -305,13 +319,14 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             for state_id in state_ids:
                 create_mbt_for_month.delay(state_id, first_of_month_string)
         if date.weekday() == 5:
-            icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly')
+            icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly', force_citus=force_citus)
         chain(
-            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily'),
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
+            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
+                                     force_citus=force_citus),
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
+                                   force_citus=force_citus),
             _bust_awc_cache.si()
         ).delay()
-
 
 
 def _create_aggregate_functions(cursor):
@@ -352,7 +367,9 @@ def _update_aggregate_locations_tables():
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
-def icds_aggregation_task(self, date, func_name):
+def icds_aggregation_task(self, date, func_name, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     func = {
         '_agg_ls_table': _agg_ls_table,
         '_update_months_table': _update_months_table,
@@ -368,7 +385,7 @@ def icds_aggregation_task(self, date, func_name):
     if six.PY2 and isinstance(date, bytes):
         date = date.decode('utf-8')
 
-    db_alias = get_icds_ucr_db_alias()
+    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
     if not db_alias:
         return
 
@@ -382,8 +399,8 @@ def icds_aggregation_task(self, date, func_name):
         )
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, date
+            "{}{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+                'Citus' if force_citus else '', func.__name__, settings.SERVER_ENVIRONMENT, date
             )
         )
         self.retry(exc=exc)
@@ -392,7 +409,9 @@ def icds_aggregation_task(self, date, func_name):
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
-def icds_state_aggregation_task(self, state_id, date, func_name):
+def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     func = {
         '_aggregate_gm_forms': _aggregate_gm_forms,
         '_aggregate_df_forms': _aggregate_df_forms,
@@ -414,7 +433,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
     if six.PY2 and isinstance(date, bytes):
         date = date.decode('utf-8')
 
-    db_alias = get_icds_ucr_db_alias()
+    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
     if not db_alias:
         return
 
@@ -483,8 +502,11 @@ def _aggregate_awc_infra_forms(state_id, day):
     AggregateAwcInfrastructureForms.aggregate(state_id, day)
 
 
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _aggregate_inactive_aww(day):
+def _aggregate_inactive_aww(day, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     AggregateInactiveAWW.aggregate(day)
 
 
@@ -498,8 +520,7 @@ def _aggregate_bp_forms(state_id, day):
     AggregateBirthPreparednesForms.aggregate(state_id, day)
 
 
-def _run_custom_sql_script(commands, day=None):
-    db_alias = get_icds_ucr_db_alias()
+def _run_custom_sql_script(commands, day=None, db_alias=None):
     if not db_alias:
         return
 
@@ -517,7 +538,8 @@ def aggregate_awc_daily(day):
 
 @track_time
 def _update_months_table(day):
-    _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
+    db_alias = db_for_read_write(IcdsMonths)
+    _run_custom_sql_script(["SELECT update_months_table(%s)"], day, db_alias=db_alias)
 
 
 def get_cursor(model, write=True):
@@ -527,7 +549,8 @@ def get_cursor(model, write=True):
 
 @track_time
 def _child_health_monthly_table(state_ids, day):
-    helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
+    force_citus = forced_citus()
+    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
 
     celery_task_logger.info("Creating temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
@@ -536,7 +559,7 @@ def _child_health_monthly_table(state_ids, day):
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
-        _child_health_helper.delay(query=query, params=params)
+        _child_health_helper.delay(query=query, params=params, force_citus=force_citus)
         for query, params in helper.pre_aggregation_queries()
     ]
     for sub_aggregation in sub_aggregations:
@@ -544,9 +567,6 @@ def _child_health_monthly_table(state_ids, day):
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
-        _run_custom_sql_script([
-            "SELECT create_new_table_for_month('child_health_monthly', %s)",
-        ], day)
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
     celery_task_logger.info("Dropping temporary table")
@@ -556,7 +576,9 @@ def _child_health_monthly_table(state_ids, day):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _child_health_helper(query, params):
+def _child_health_helper(query, params, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     celery_task_logger.info("Running child_health_helper with %s", params)
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(query, params)
@@ -565,9 +587,6 @@ def _child_health_helper(query, params):
 @track_time
 def _ccs_record_monthly_table(day):
     with transaction.atomic(using=db_for_read_write(CcsRecordMonthly)):
-        _run_custom_sql_script([
-            "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
-        ], day)
         CcsRecordMonthly.aggregate(force_to_date(day))
 
 
@@ -578,28 +597,31 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    with transaction.atomic(using=db_for_read_write(AggChildHealth)):
+    db_alias = db_for_read_write(AggChildHealth)
+    with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        ], day)
+        ], day, db_alias=db_alias)
         AggChildHealth.aggregate(force_to_date(day))
 
 
 @track_time
 def _agg_ccs_record_table(day):
-    with transaction.atomic(using=db_for_read_write(AggCcsRecord)):
+    db_alias = db_for_read_write(AggCcsRecord)
+    with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
-        ], day)
+        ], day, db_alias=db_alias)
         AggCcsRecord.aggregate(force_to_date(day))
 
 
 @track_time
 def _agg_awc_table(day):
-    with transaction.atomic(using=db_for_read_write(AggAwc)):
+    db_alias = db_for_read_write(AggAwc)
+    with transaction.atomic(using=db_alias):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
-        ], day)
+        ], day, db_alias=db_alias)
         AggAwc.aggregate(force_to_date(day))
 
 
@@ -634,12 +656,20 @@ def _agg_awc_table_weekly(day):
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
-def email_dashboad_team(aggregation_date):
+def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=False):
+    aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
+    aggregation_finish_time = datetime.now(INDIA_TIMEZONE)
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
+
     # temporary soft assert to verify it's completing
     if not settings.UNIT_TESTING:
-        _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
+        citus = 'Citus ' if force_citus else ''
+        timings = "Aggregation Started At : {} IST, Completed At : {} IST".format(aggregation_start_time,
+                                                                                  aggregation_finish_time)
+        _dashboard_team_soft_assert(False, "{}Aggregation completed on {}".format(citus,
+                                                                                  settings.SERVER_ENVIRONMENT),
+                                    timings)
     celery_task_logger.info("Aggregation has completed")
     icds_data_validation.delay(aggregation_date)
 
@@ -752,31 +782,19 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             beta=beta
         ).get_excel_data(location)
     elif indicator == AWW_INCENTIVE_REPORT:
-        data_type = 'AWW_Performance'
-        excel_data = IncentiveReport(
-            location=location,
-            month=config['month'],
-            aggregation_level=aggregation_level,
-            beta=beta
-        ).get_excel_data()
-        if file_format == 'xlsx':
-            cache_key = create_aww_performance_excel_file(
-                excel_data,
-                data_type,
-                config['month'].strftime("%B %Y"),
-                state=SQLLocation.objects.get(
-                    location_id=config['state_id'], domain=config['domain']
-                ).name,
-                district=SQLLocation.objects.get(
-                    location_id=config['district_id'], domain=config['domain']
-                ).name if aggregation_level >= 2 else None,
-                block=SQLLocation.objects.get(
-                    location_id=config['block_id'], domain=config['domain']
-                ).name if aggregation_level == 3 else None,
-                beta=beta
-            )
-        else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
+        today = date.today()
+        data_type = 'AWW_Performance_{}'.format(today.strftime('%Y_%m_%d'))
+        month = config['month'].strftime("%B %Y")
+        state = SQLLocation.objects.get(
+            location_id=config['state_id'], domain=config['domain']
+        ).name
+        district = SQLLocation.objects.get(
+            location_id=config['district_id'], domain=config['domain']
+        ).name if aggregation_level >= 2 else None
+        block = SQLLocation.objects.get(
+            location_id=config['block_id'], domain=config['domain']
+        ).name if aggregation_level == 3 else None
+        cache_key = get_performance_report_blob_key(state, district, block, month, file_format)
     elif indicator == LS_REPORT_EXPORT:
         data_type = 'Lady_Supervisor'
         config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
@@ -982,6 +1000,8 @@ def collect_inactive_awws():
         last_sync_date = last_sync.file_added
 
     _aggregate_inactive_aww(last_sync_date)
+    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
+        _aggregate_inactive_aww.delay(last_sync_date, force_citus=True)
 
     celery_task_logger.info("Collecting inactive AWW to generate zip file")
     excel_data = AggregateInactiveAWW.objects.all()
@@ -1155,22 +1175,63 @@ def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                  .values_list('location_id', flat=True))
+    locations = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name__in=['state', 'district', 'block'])
+                 .select_related('parent__parent', 'location_type'))
     if agg_date is None:
         current_month = date.today().replace(day=1)
         agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
+    for file_format in ['xlsx', 'csv']:
+        for location in locations:
+            if location.location_type.name == 'state':
+                build_incentive_files.delay(location, agg_date, file_format, 1, location)
+            elif location.location_type.name == 'district':
+                build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
+            else:
+                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+
+
+@task(queue='icds_dashboard_reports_queue', serializer='pickle')
+def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
+    data_type = 'AWW_Performance'
+    excel_data = IncentiveReport(
+        location=location.location_id,
+        month=month,
+        aggregation_level=aggregation_level
+    ).get_excel_data()
+    state_name = state.name
+    district_name = district.name if aggregation_level >= 2 else None
+    block_name = location.name if aggregation_level == 3 else None
+    month_string = month.strftime("%B %Y")
+    if file_format == 'xlsx':
+        create_aww_performance_excel_file(
+            excel_data,
+            data_type,
+            month_string,
+            state_name,
+            district_name,
+            block_name
+        )
+    else:
+        blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month_string, file_format)
+        create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month):
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
-        helper = helper_class(state_id, month)
-        with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
+        helper = get_helper(helper_class.helper_key)(state_id, month)
+        # run on primary DB to avoid "conflict with recovery" errors
+        with get_cursor(helper.base_class, write=True) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)
-            icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))
+            icds_file, _ = IcdsFile.objects.get_or_create(
+                blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month),
+                data_type='mbt_{}'.format(helper.base_tablename)
+            )
             icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
             icds_file.save()
 
@@ -1182,3 +1243,36 @@ def _bust_awc_cache():
     for key in reach_keys:
         cache.delete(key)
     create_datadog_event('redis: delete dashboard keys', 'finish')
+
+
+@task(queue='dashboard_comparison_queue')
+def run_citus_experiment_raw_sql(parameterized_sql, params, data_source="Unknown"):
+    experiment_context = {
+        "data_source": data_source,
+        "sql_query": parameterized_sql,
+        "params": params,
+    }
+    experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
+    with experiment.control() as control:
+        db_alias = get_icds_ucr_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(parameterized_sql, params)
+            control.record(_dictfetchall(cursor))
+
+    with experiment.candidate() as candidate:
+        db_alias = get_icds_ucr_citus_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(parameterized_sql, params)
+            candidate.record(_dictfetchall(cursor))
+
+    objects = experiment.run()
+    return objects
+
+
+def _dictfetchall(cursor):
+    "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]

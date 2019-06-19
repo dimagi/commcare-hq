@@ -143,7 +143,7 @@ class ExportableMixin(object):
             num_of_days_awc_was_open_column = excel_rows[0].index(NUM_OF_DAYS_AWC_WAS_OPEN)
             for record in excel_rows[1:]:
                 if record[num_of_days_awc_was_open_column] == DATA_NOT_ENTERED:
-                    record[num_of_days_awc_was_open_column] = 'Not Applicable'
+                    record[num_of_days_awc_was_open_column] = 'Applicable at only AWC level'
         return [
             [
                 self.title,

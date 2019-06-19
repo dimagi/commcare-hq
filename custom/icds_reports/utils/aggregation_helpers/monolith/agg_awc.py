@@ -16,6 +16,7 @@ from six.moves import range
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-awc'
     base_tablename = 'agg_awc'
     ucr_data_source_id = 'static-awc_location'
 
@@ -80,7 +81,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             'no',
             5,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END 
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -229,13 +230,14 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 owner_id,
                 sum(open_count) AS cases_household
             FROM "{household_cases}"
+            WHERE opened_on<= %(end_date)s
             GROUP BY owner_id
        ) ut
         WHERE ut.owner_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
             household_cases=self._ucr_tablename('static-household_cases'),
-        ), {}
+        ), {'end_date': self.month_end}
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -656,9 +658,12 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             awc_id,
             month,
             sum(add_household) AS usage_num_hh_reg,
-            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched
-            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs
-            CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
+            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
+            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
+            CASE WHEN (
+                sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp)
+                 + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
+            ) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
             FROM "{usage_table}"
             WHERE month >= %(start_date)s GROUP BY awc_id, month
         ) ut

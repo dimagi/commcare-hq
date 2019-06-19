@@ -1,0 +1,95 @@
+DROP TABLE IF EXISTS "agg_awc_daily_2019-01-01"
+{}
+
+        CREATE TABLE IF NOT EXISTS "agg_awc_daily_2019-01-01" (
+            CHECK (date = DATE %(date)s),
+            LIKE "agg_awc_daily" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("agg_awc_daily")
+        
+{"date": "2019-01-01"}
+
+        INSERT INTO "agg_awc_daily_2019-01-01" (
+            state_id, district_id, block_id, supervisor_id, awc_id, aggregation_level, date, cases_household, cases_person, cases_person_all, cases_person_has_aadhaar, cases_person_beneficiary, cases_child_health, cases_child_health_all, cases_ccs_pregnant, cases_ccs_pregnant_all, cases_ccs_lactating, cases_ccs_lactating_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, daily_attendance_open, num_awcs, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (SELECT
+            state_id, district_id, block_id, supervisor_id, awc_id, aggregation_level, %(date)s, cases_household, cases_person, cases_person_all, cases_person_has_aadhaar, cases_person_beneficiary, cases_child_health, cases_child_health_all, cases_ccs_pregnant, cases_ccs_pregnant_all, cases_ccs_lactating, cases_ccs_lactating_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, 0, num_awcs, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+            FROM agg_awc
+            WHERE aggregation_level = 5 and month = %(start_date)s
+        )
+        
+{"date": "2019-01-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
+
+        CREATE TEMPORARY TABLE "temp_agg_awc_daily_2019-01-01" AS
+            SELECT
+                awc_id,
+                pse_date,
+                sum(awc_open_count) AS daily_attendance_open
+            FROM daily_attendance WHERE pse_date = %(date)s
+            GROUP BY awc_id, pse_date;
+        UPDATE "agg_awc_daily_2019-01-01" agg_awc SET
+            daily_attendance_open = ut.daily_attendance_open
+        FROM (
+            SELECT * FROM "temp_agg_awc_daily_2019-01-01"
+        ) ut
+        WHERE ut.pse_date = agg_awc.date AND ut.awc_id = agg_awc.awc_id
+        
+{"date": "2019-01-01T00:00:00"}
+
+        INSERT INTO "agg_awc_daily_2019-01-01" (
+            state_id, district_id, block_id, supervisor_id, awc_id, aggregation_level, date, cases_household, cases_person, cases_person_all, cases_person_has_aadhaar, cases_person_beneficiary, cases_child_health, cases_child_health_all, cases_ccs_pregnant, cases_ccs_pregnant_all, cases_ccs_lactating, cases_ccs_lactating_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, daily_attendance_open, num_awcs, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, block_id, supervisor_id, 'All', 4, date, SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_person_has_aadhaar), SUM(cases_person_beneficiary), SUM(cases_child_health), SUM(cases_child_health_all), SUM(cases_ccs_pregnant), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating), SUM(cases_ccs_lactating_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(daily_attendance_open), SUM(num_awcs), CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, sum(num_launched_awcs), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), MAX(supervisor_is_test), 0
+            FROM "agg_awc_daily_2019-01-01"
+            WHERE aggregation_level = 5 AND awc_is_test = 0
+            GROUP BY state_id, district_id, block_id, supervisor_id, date
+        )
+        
+{}
+
+        INSERT INTO "agg_awc_daily_2019-01-01" (
+            state_id, district_id, block_id, supervisor_id, awc_id, aggregation_level, date, cases_household, cases_person, cases_person_all, cases_person_has_aadhaar, cases_person_beneficiary, cases_child_health, cases_child_health_all, cases_ccs_pregnant, cases_ccs_pregnant_all, cases_ccs_lactating, cases_ccs_lactating_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, daily_attendance_open, num_awcs, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, block_id, 'All', 'All', 3, date, SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_person_has_aadhaar), SUM(cases_person_beneficiary), SUM(cases_child_health), SUM(cases_child_health_all), SUM(cases_ccs_pregnant), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating), SUM(cases_ccs_lactating_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(daily_attendance_open), SUM(num_awcs), CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, sum(num_launched_supervisors), sum(num_launched_awcs), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), 0, 0
+            FROM "agg_awc_daily_2019-01-01"
+            WHERE aggregation_level = 4 AND supervisor_is_test = 0
+            GROUP BY state_id, district_id, block_id, date
+        )
+        
+{}
+
+        INSERT INTO "agg_awc_daily_2019-01-01" (
+            state_id, district_id, block_id, supervisor_id, awc_id, aggregation_level, date, cases_household, cases_person, cases_person_all, cases_person_has_aadhaar, cases_person_beneficiary, cases_child_health, cases_child_health_all, cases_ccs_pregnant, cases_ccs_pregnant_all, cases_ccs_lactating, cases_ccs_lactating_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, daily_attendance_open, num_awcs, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, district_id, 'All', 'All', 'All', 2, date, SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_person_has_aadhaar), SUM(cases_person_beneficiary), SUM(cases_child_health), SUM(cases_child_health_all), SUM(cases_ccs_pregnant), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating), SUM(cases_ccs_lactating_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(daily_attendance_open), SUM(num_awcs), CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, sum(num_launched_blocks), sum(num_launched_supervisors), sum(num_launched_awcs), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), MAX(state_is_test), MAX(district_is_test), 0, 0, 0
+            FROM "agg_awc_daily_2019-01-01"
+            WHERE aggregation_level = 3 AND block_is_test = 0
+            GROUP BY state_id, district_id, date
+        )
+        
+{}
+
+        INSERT INTO "agg_awc_daily_2019-01-01" (
+            state_id, district_id, block_id, supervisor_id, awc_id, aggregation_level, date, cases_household, cases_person, cases_person_all, cases_person_has_aadhaar, cases_person_beneficiary, cases_child_health, cases_child_health_all, cases_ccs_pregnant, cases_ccs_pregnant_all, cases_ccs_lactating, cases_ccs_lactating_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, daily_attendance_open, num_awcs, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+        ) (
+            SELECT state_id, 'All', 'All', 'All', 'All', 1, date, SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_person_has_aadhaar), SUM(cases_person_beneficiary), SUM(cases_child_health), SUM(cases_child_health_all), SUM(cases_ccs_pregnant), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating), SUM(cases_ccs_lactating_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(daily_attendance_open), SUM(num_awcs), CASE WHEN (sum(num_launched_districts) > 0) THEN 1 ELSE 0 END, sum(num_launched_districts), sum(num_launched_blocks), sum(num_launched_supervisors), sum(num_launched_awcs), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), MAX(state_is_test), 0, 0, 0, 0
+            FROM "agg_awc_daily_2019-01-01"
+            WHERE aggregation_level = 2 AND district_is_test = 0
+            GROUP BY state_id, date
+        )
+        
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (date)
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (aggregation_level)
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (state_id, district_id, block_id, supervisor_id, awc_id)
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (state_id)
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (district_id)
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (block_id)
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (supervisor_id)
+{}
+CREATE INDEX ON "agg_awc_daily_2019-01-01" (awc_id)
+{}

@@ -25,7 +25,8 @@ describe('Person models', function () {
         assert.isTrue(personModel.hasOwnProperty('id'));
         assert.isTrue(personModel.hasOwnProperty('name'));
         assert.isTrue(personModel.hasOwnProperty('gender'));
-        assert.isTrue(personModel.hasOwnProperty('status'));
+        assert.isTrue(personModel.hasOwnProperty('maritalStatus'));
+        assert.isTrue(personModel.hasOwnProperty('migrationStatus'));
         assert.isTrue(personModel.hasOwnProperty('dob'));
         assert.isTrue(personModel.hasOwnProperty('marriedAt'));
         assert.isTrue(personModel.hasOwnProperty('aadhaarNo'));
@@ -48,7 +49,7 @@ describe('Person models', function () {
             dob: '2018-09-01',
         };
         var personModel = personModels.personModel(initialData, postData);
-        assert.equal('1 Yr 4 Mon', personModel.age());
+        assert.equal('7 Mon', personModel.age());
     });
 
     it('test gender', function () {
@@ -81,6 +82,7 @@ describe('Person models', function () {
             selectedYear: 2019,
         });
         var initialData = {
+            id: 1,
             name: 'test Person',
         };
         var personModel = personModels.personModel(initialData, postData);

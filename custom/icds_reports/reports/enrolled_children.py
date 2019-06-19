@@ -8,7 +8,7 @@ import six
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_children_enrolled_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
@@ -16,7 +16,7 @@ from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_t
     indian_formatted_number, get_child_locations
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -95,7 +95,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False):
     config['month'] = datetime(*config['month'])
 
@@ -155,7 +155,7 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_enrolled_children_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 

@@ -100,6 +100,8 @@ class ReadableFormdataTest(SimpleTestCase):
                 'required': False,
                 'relevant': None,
                 'setvalue': 'default',
+                "options": [],
+                "children": [],
             }])
         )
 
@@ -280,9 +282,10 @@ class ReadableFormdataTest(SimpleTestCase):
 
         # Search for 'READABLE FORMS TEST' for more info
         # to bootstrap a test and have it print out your yaml result
-        # uncomment this line. Ghetto but it works.
-        # print yaml.safe_dump([json.loads(json.dumps(x.to_json()))
-        #                       for x in questions])
+        # uncomment this line. Unconventional, but it works.
+        # BE SURE TO UPDATE BOTH THE PYTHON 2 AND 3 RESULT FILES!
+        # print(yaml.safe_dump([json.loads(json.dumps(x.to_json()))
+        #                       for x in questions]))
 
         self.assertJSONEqual(json.dumps([x.to_json() for x in questions]),
                              json.dumps(result),

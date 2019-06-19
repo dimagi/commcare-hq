@@ -58,6 +58,12 @@ class TestExportData(TestCase):
                         "16:21:11 15 November 2017"
                     ],
                     [
+                        'State',
+                        'st1'],
+                    [
+                        'Supervisor',
+                        's1'],
+                    [
                         "Block",
                         "b1"
                     ]
@@ -507,6 +513,8 @@ class TestExportData(TestCase):
                     'Export Info',
                     [
                         ['Generated at', '16:21:11 15 November 2017'],
+                        ['State', 'st1'],
+                        ['Supervisor', 's1'],
                         ['Block', 'b1']
                     ]
                 ]
@@ -538,11 +546,11 @@ class TestExportData(TestCase):
                     'Number of adolescent girls 11 to 14 years old that are enrolled for services',
                     'Number of adolescent girls 15 to 18 years old that are enrolled for services'
                 ],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7266, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
                 ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
                 ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
                 ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
@@ -591,7 +599,7 @@ class TestExportData(TestCase):
                     'domain': 'icds-cas',
                     'month': datetime(2017, 5, 1)
                 }
-            ).get_excel_data('b1'),
+            ).get_excel_data('b1', False, True),
             [
                 ['System Usage', [
                     [
@@ -604,44 +612,46 @@ class TestExportData(TestCase):
                         'Number of complementary feeding forms', 'Number of growth monitoring forms',
                         'Number of take home rations forms', 'Number of due list forms'
                     ],
-                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
-                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st3', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st4', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st5', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 ]],
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['Supervisor', 's1'],
                     ['Block', 'b1'],
                     ['Month', 'May'],
                     ['Year', 2017]
@@ -736,6 +746,8 @@ class TestExportData(TestCase):
                 ]],
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['Supervisor', 's1'],
                     ['Block', 'b1'],
                     ['Grouped By', 'AWC'],
                     ['Month', 'May'],
@@ -1050,6 +1062,14 @@ class TestExportData(TestCase):
                         [
                             "Generated at",
                             "16:21:11 15 November 2017"
+                        ],
+                        [
+                            'State',
+                            'st1'
+                        ],
+                        [
+                            'Supervisor',
+                            's1'
                         ],
                         [
                             "Block",
@@ -2022,10 +2042,10 @@ class TestExportData(TestCase):
                         'District',
                         'Block',
                         'Sector Name',
-                        'Name of Lady Supervisor',
+                        'Lady Supervisor User ID',
                         'Total No. of AWCs visited',
                         'Total No. of Beneficiaries Visited',
-                        'Total No. of VHNDs observed'
+                        'Total No. of VHSNDs observed'
                     ],
                     [
                         'st1',
@@ -2096,71 +2116,15 @@ class TestExportData(TestCase):
             ]
         ]
         self.assertListEqual(
-            data,
-            expected
+            expected,
+            data
         )
 
     def test_aww_performance_export(self):
         data = IncentiveReport(
             location='b2',
-            month=datetime(2017,5,1),
-            aggregation_level=3,
-            beta=False
-        ).get_excel_data()
-
-        expected = [
-            ['AWW Performance Report',
-             [['State', 'District', 'Block', 'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
-               'Home Visits Conducted', 'Number of Days AWC was Open', 'Weighing Efficiency',
-               'Eligible for Incentive'],
-              ['st1', 'd1', 'b2', 's4', 'a12', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', '0.00%', 5, '0.00%',
-               'No'],
-              ['st1', 'd1', 'b2', 's4', 'a4', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', '0.00%', 17, '7.50%',
-               'No'],
-              ['st1', 'd1', 'b2', 's4', 'a20', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's4', 'a44', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a27', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a11', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a19', 'Data Not Entered', 'Data Not Entered', '0.00%', 16, '90.00%',
-               'No'],
-              ['st1', 'd1', 'b2', 's3', 'a3', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%', 12, '100.00%',
-               'No'],
-              ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', '0.00%', 13, '90.48%',
-               'No']]],
-            ['Export Info',
-                          [
-                              ['Generated at', india_now()],
-                              ['Grouped By', 'AWC'],
-                              ['Month', 5],
-                              ['Year', 2017],
-                              ['Disclaimer',
-                               'The information in the report is based on the self-reported '
-                               'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                               ' and is subject to timely data syncs.']
-                          ]
-             ]
-        ]
-        self.assertListEqual(
-            data,
-            expected
-        )
-
-    def test_aww_performance_export_2(self):
-        data = IncentiveReport(
-            location='b2',
             month=datetime(2017, 5, 1),
-            aggregation_level=3,
-            beta=True
+            aggregation_level=3
         ).get_excel_data()
 
         expected = [
@@ -2170,22 +2134,22 @@ class TestExportData(TestCase):
                'Number of Days AWC was Open', 'AWH Eligible for Incentive'],
               ['st1', 'd1', 'b2', 's4', 'a12', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', '0.00%', '0.00%',
-               'No', 5, 'No'],
-              ['st1', 'd1', 'b2', 's4', 'a4', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', '0.00%', '7.50%',
-               'No', 17, 'No'],
               ['st1', 'd1', 'b2', 's4', 'a20', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's4', 'a44', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+              ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', '0.00%', '0.00%',
+               'No', 5, 'No'],
+              ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', '0.00%', '7.50%',
+               'No', 17, 'No'],
+              ['st1', 'd1', 'b2', 's4', 'a4', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a27', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+              ['st1', 'd1', 'b2', 's4', 'a44', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a11', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a19', 'Data Not Entered', 'Data Not Entered', '0.00%', '90.00%',
                'No', 16, 'No'],
+              ['st1', 'd1', 'b2', 's3', 'a27', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a3', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%', '100.00%',
@@ -2194,7 +2158,6 @@ class TestExportData(TestCase):
                'No', 13, 'No']]],
             ['Export Info',
                 [
-                    ['Generated at', india_now()],
                     ['Grouped By', 'AWC'],
                     ['Month', 5],
                     ['Year', 2017],

@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+
 from django.http import HttpResponse, HttpRequest
 from django.utils.functional import cached_property
+
+import six
 
 
 class AsyncHandlerMixin(object):
@@ -67,7 +70,7 @@ class BaseAsyncHandler(object):
     def _fmt_error(self, error):
         return json.dumps({
             'success': False,
-            'error': error.message,
+            'error': six.text_type(error),
         })
 
     def _fmt_success(self, data):

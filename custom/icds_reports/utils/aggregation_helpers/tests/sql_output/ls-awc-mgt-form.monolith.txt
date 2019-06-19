@@ -1,0 +1,26 @@
+DROP TABLE IF EXISTS "icds_db_ls_awc_mgt_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_ls_awc_mgt_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_ls_awc_visits_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_ls_awc_visits_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_ls_awc_mgt_form_7a197ee47818209780c23ed9" (
+        state_id, supervisor_id, month, awc_visits
+        ) (
+            SELECT
+            state_id,
+            location_id as supervisor_id,
+            %(start_date)s::DATE AS month,
+            count(*) as awc_visits
+                FROM "ucr_icds-cas_static-awc_mgt_forms_ad1b11f0"
+                WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
+                AND location_entered is not null and location_entered <> ''
+                AND state_id=%(state_id)s
+                GROUP BY state_id,location_id
+        )
+        
+{"end_date": "2019-02-01", "start_date": "2019-01-01", "state_id": "st1"}

@@ -69,31 +69,12 @@ class _Select2AjaxMixin():
             return {"id": val, "text": val}
 
 
-class Select2AjaxV3(_Select2AjaxMixin, forms.TextInput):
+class Select2Ajax(_Select2AjaxMixin, forms.Select):
     def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
         self.multiple = multiple
         self._initial = None
-        super(Select2AjaxV3, self).__init__(attrs)
-
-    def render(self, name, value, attrs=None):
-        attrs.update({
-            'class': 'form-control hqwebapp-select2-ajax-v3',
-            'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
-            'data-endpoint': self.url,
-            'data-page-size': self.page_size,
-            'data-multiple': '1' if self.multiple else '0',
-        })
-        output = super(Select2AjaxV3, self).render(name, value, attrs)
-        return mark_safe(output)
-
-
-class Select2AjaxV4(_Select2AjaxMixin, forms.Select):
-    def __init__(self, attrs=None, page_size=20, multiple=False):
-        self.page_size = page_size
-        self.multiple = multiple
-        self._initial = None
-        super(Select2AjaxV4, self).__init__(attrs)
+        super(Select2Ajax, self).__init__(attrs)
 
     def render(self, name, value, attrs=None):
         attrs.update({
@@ -103,7 +84,7 @@ class Select2AjaxV4(_Select2AjaxMixin, forms.Select):
             'data-page-size': self.page_size,
             'data-multiple': '1' if self.multiple else '0',
         })
-        output = super(Select2AjaxV4, self).render(name, value, attrs)
+        output = super(Select2Ajax, self).render(name, value, attrs)
         return mark_safe(output)
 
 

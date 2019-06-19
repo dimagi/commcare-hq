@@ -197,10 +197,6 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_in_domain(domain, type=type)
 
     @staticmethod
-    def iter_case_ids_by_domain_and_type(domain, type_=None):
-        return get_case_ids_in_domain(domain, type=type_)
-
-    @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
         return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
 

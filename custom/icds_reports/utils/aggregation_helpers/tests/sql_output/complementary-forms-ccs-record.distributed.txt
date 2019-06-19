@@ -1,0 +1,41 @@
+DELETE FROM "icds_dashboard_ccs_record_cf_forms" WHERE month=%(month)s AND state_id = %(state)s
+{"month": "2019-01-01", "state": "st1"}
+
+        INSERT INTO "icds_dashboard_ccs_record_cf_forms" (
+          state_id, month, supervisor_id, case_id, latest_time_end_processed, valid_visits
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) as supervisor_id,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+          COALESCE(ucr.valid_visits, 0) as valid_visits
+          FROM (
+        SELECT DISTINCT ccs_record_case_id AS case_id,
+        %(current_month_start)s as month,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        SUM(
+            CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8
+            THEN 1 ELSE 0 END
+        ) OVER w as valid_visits,
+        supervisor_id as supervisor_id
+        FROM "ucr_icds-cas_static-complementary_feeding_f2d76da0"
+        WHERE (
+          timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+          state_id = %(state_id)s AND ccs_record_case_id IS NOT NULL
+        )
+        WINDOW w AS (
+            PARTITION BY supervisor_id, ccs_record_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        ) ucr
+          FULL OUTER JOIN "icds_dashboard_ccs_record_cf_forms" prev_month
+          ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
+          WHERE coalesce(ucr.month, %(month)s) = %(month)s
+            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
+        )
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}

@@ -6,13 +6,11 @@ from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, get_color_with_green_positive
 
 
-@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
 def get_cas_reach_data(domain, now_date, config, show_test=False):
     now_date = datetime(*now_date)
 
@@ -54,7 +52,6 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     del config['prev_month']
 
     awc_this_month_data = get_data_for_awc_monthly(current_month, config)
-    awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
 
     current_month_selected = (current_month.year == now_date.year and current_month.month == now_date.month)
 
@@ -83,6 +80,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'redirect': 'icds_cas_reach/awc_daily_status',
         }
     else:
+        awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
         monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
         number_of_awc_open_yesterday = {
             'help_text': _("Total Number of AWCs open for at least one day in month"),

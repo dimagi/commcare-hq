@@ -60,8 +60,9 @@ def check_non_dimagi_superusers():
         (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
     ).values_list('username', flat=True)))
     if non_dimagis_superuser:
-        _soft_assert_superusers(
-            False, "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser))
+        message = "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser)
+        _soft_assert_superusers(False, message)
+        notify_error(message=message)
 
 
 @task(serializer='pickle', queue="email_queue")

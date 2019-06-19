@@ -15,6 +15,8 @@
  *          in the success and error callbacks).
  *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
  *          in a cookie.
+ *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
+ *          which shows up next to the left of the limit dropdown.
  *
  *  See releases_table.html for an example.
  */
@@ -30,7 +32,17 @@ hqDefine('hqwebapp/js/components/pagination', [
         viewModel: function (params) {
             var self = {};
 
-            self.currentPage = ko.observable(params.currentPage || 1);
+            // load initial values based on GET parameters
+            self.initialValues = {};
+            self._url = new URL(window.location.href);
+            if (params.pageSlug) {
+                self.initialValues.page = parseInt(self._url.searchParams.get(params.pageSlug));
+            }
+            if (params.limitSlug) {
+                self.initialValues.limit = parseInt(self._url.searchParams.get(params.limitSlug));
+            }
+
+            self.currentPage = ko.observable(self.initialValues.page || self.currentPage || 1);
 
             self.totalItems = params.totalItems;
             self.totalItems.subscribe(function (newValue) {
@@ -42,7 +54,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
             if (!self.inlinePageListOnly) {
                 self.perPageCookieName = 'ko-pagination-' + self.slug;
-                self.perPage($.cookie(self.perPageCookieName) || self.perPage());
+                self.perPage(self.initialValues.limit || $.cookie(self.perPageCookieName) || self.perPage());
                 self.perPage.subscribe(function (newValue) {
                     self.goToPage(1);
                     if (self.slug) {
@@ -69,7 +81,9 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.goToPage(Math.max(self.currentPage() - 1, 1), e);
             };
             self.goToPage = function (page, e) {
-                self.currentPage(page);
+                // make sure that the first goToPage that's called does not override the initialValues from GET
+                self.currentPage(self.initialValues.page || page);
+                self.initialValues.page = undefined;
                 params.goToPage(self.currentPage());
                 if (e) {
                     e.stopPropagation();
@@ -81,7 +95,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.itemsText = ko.computed(function () {
                 var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
                 return _.template(
-                    gettext('Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries')
+                    params.itemsTextTemplate || gettext('Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries')
                 )({
                     firstItem: ((self.currentPage() - 1) * self.perPage()) + 1,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,

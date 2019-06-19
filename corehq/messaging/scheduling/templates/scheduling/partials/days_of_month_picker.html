@@ -1,14 +1,14 @@
 <div class="controls">
-    <table class="day-of-month-choices-table">
-        <tbody data-bind="foreach: days_of_month_choices">
-            <tr data-bind="foreach: row">
-                <td class="day-of-month-choices-cell">
-                    <label>
-                        <input type="checkbox" name="schedule-days_of_month" data-bind="value: code, checked: $root.days_of_month" />
-                        <span data-bind="text: name"></span>
-                    </label>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+  <table class="day-of-month-choices-table">
+    <tbody data-bind="foreach: days_of_month_choices">
+      <tr data-bind="foreach: row">
+        <td class="day-of-month-choices-cell">
+          <label>
+            <input type="checkbox" name="schedule-days_of_month" data-bind="value: code, checked: $root.days_of_month" />
+            <span data-bind="text: name"></span>
+          </label>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

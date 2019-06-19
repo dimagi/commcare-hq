@@ -12,7 +12,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class AggLsHelper(BaseICDSAggregationHelper):
-
+    helper_key = 'agg-ls'
     base_tablename = 'agg_ls'
     awc_location_ucr = 'static-awc_location'
 

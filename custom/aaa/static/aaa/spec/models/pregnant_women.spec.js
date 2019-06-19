@@ -21,7 +21,7 @@ describe('Pregnant women models', function () {
             var configModel = pregnantWomenModels.config();
             var expectedColumns = [
                 {data: 'name()', name: 'name', title: 'Name'},
-                {data: 'age()', name: 'age', title: 'Age'},
+                {data: 'age()', name: 'dob', title: 'Age'},
                 {data: 'pregMonth()', name: 'pregMonth', title: 'Preg. Month'},
                 {data: 'highRiskPregnancy()', name: 'highRiskPregnancy', title: 'High Risk Pregnancy'},
                 {data: 'noOfAncCheckUps()', name: 'noOfAncCheckUps', title: 'No. Of ANC Check-Ups'},
@@ -115,7 +115,6 @@ describe('Pregnant women models', function () {
                 dob: '2017-01-01',
             };
             var pregnantModel = pregnantWomenModels.pregnantModel(initialData, postData);
-            assert.isTrue(pregnantModel.hasOwnProperty('dateOfLmp'));
             assert.isTrue(pregnantModel.hasOwnProperty('weightOfPw'));
             assert.isTrue(pregnantModel.hasOwnProperty('dateOfRegistration'));
             assert.isTrue(pregnantModel.hasOwnProperty('edd'));
@@ -277,6 +276,22 @@ describe('Pregnant women models', function () {
                 bloodGroup: '',
             });
             assert.equal('N/A', pregnantModel.personBloodGroup());
+        });
+
+        it('test abortionWeeks should return N/A', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                abortionDays: 'N/A',
+            });
+            assert.equal('N/A', pregnantModel.abortionWeeks());
+        });
+
+        it('test abortionWeeks should return number of weeks', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                abortionDays: 85,
+            });
+            assert.equal(12, pregnantModel.abortionWeeks());
         });
     });
 

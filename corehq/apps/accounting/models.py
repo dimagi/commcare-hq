@@ -641,6 +641,9 @@ class SoftwareProductRate(models.Model):
                 return False
         return True
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
         rate = SoftwareProductRate(name=product_name, monthly_fee=monthly_fee)
@@ -704,6 +707,9 @@ class FeatureRate(models.Model):
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -1124,6 +1130,9 @@ class Subscription(models.Model):
             and other.subscriber.pk == self.subscriber.pk
             and other.account.pk == self.account.pk
         )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def save(self, *args, **kwargs):
         """
@@ -3681,12 +3690,7 @@ class DomainUserHistory(models.Model):
     """
     domain = models.CharField(max_length=256)
     record_date = models.DateField()
-    num_users = models.IntegerField(default=0, null=True)
+    num_users = models.IntegerField(default=0)
 
-    @classmethod
-    def create(cls, domain, num_users, record_date):
-        return cls(
-            domain=domain,
-            num_users=num_users,
-            record_date=record_date
-        )
+    class Meta:
+        unique_together = ('domain', 'record_date')

@@ -10,7 +10,10 @@ instructions), before using this script to push changes to master.
 
 This script assumes that the vellum-staging branch is in staging.yaml.
 """
+from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
+
 import os
 import re
 import subprocess
@@ -19,7 +22,9 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from os.path import abspath, dirname, exists, join
 
 import sh
+import six
 from gitutils import get_git
+from six.moves import input
 
 VELLUM_TAR = "vellum.tar.gz"
 
@@ -76,7 +81,7 @@ def main():
                 sys.exit("{} not found".format(vellum_tar))
             elif args.mode == "master":
                 print("Using {}".format(vellum_tar))
-                ok = raw_input("Type 'ok' to continue: ")
+                ok = input("Type 'ok' to continue: ")
                 if ok != "ok":
                     sys.exit("Aborted.")
             vellum_rev = get_version(vellum_tar)
@@ -84,7 +89,7 @@ def main():
             if vellum_rev != head_rev:
                 print("{} version ({})\ndiffers from HEAD ({})"
                       .format(vellum_tar, vellum_rev, head_rev))
-                ok = raw_input("Type 'ok' to continue: ")
+                ok = input("Type 'ok' to continue: ")
                 if ok != "ok":
                     sys.exit("Aborted.")
         else:
@@ -107,7 +112,9 @@ def build_vellum(path, branch, test=True):
 
     print("Building Vellum...")
     make_args = ("test",) if test else ()
-    sh.make(_cwd=path, _out=sys.stdout, _err=sys.stderr, *make_args)
+    stdout = byte_stream(sys.stdout)
+    stderr = byte_stream(sys.stderr)
+    sh.make(_cwd=path, _out=stdout, _err=stderr, *make_args)
 
     return str(git("rev-parse", "HEAD"))
 
@@ -224,6 +231,12 @@ def get_version(vellum_tar):
         return sh.tar("xOf", vellum_tar, "version.txt").strip()
     except sh.ErrorReturnCode:
         return ""
+
+
+def byte_stream(stream):
+    # Get a stream that accepts bytes
+    # https://github.com/amoffat/sh/issues/242
+    return stream if six.PY2 else stream.buffer
 
 
 if __name__ == '__main__':

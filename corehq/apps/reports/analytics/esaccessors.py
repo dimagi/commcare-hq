@@ -4,7 +4,16 @@ from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
-from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations, LedgerES
+from corehq.apps.es import (
+    FormES,
+    UserES,
+    GroupES,
+    CaseES,
+    filters,
+    aggregations,
+    LedgerES,
+    CaseSearchES,
+)
 from corehq.apps.es.aggregations import (
     TermsAggregation,
     ExtendedStatsAggregation,
@@ -652,10 +661,15 @@ def _get_attachment_dicts_from_form(form):
     return []
 
 
-@quickcache(['domain'], timeout=24 * 3600)
-def get_case_types_for_domain_es(domain):
+@quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
+def get_case_types_for_domain_es(domain, use_case_search=False):
+    index_class = CaseSearchES if use_case_search else CaseES
     query = (
-        CaseES().domain(domain).size(0)
+        index_class().domain(domain).size(0)
         .terms_aggregation("type.exact", "case_types")
     )
     return set(query.run().aggregations.case_types.keys)
+
+
+def get_case_search_types_for_domain_es(domain):
+    return get_case_types_for_domain_es(domain, True)

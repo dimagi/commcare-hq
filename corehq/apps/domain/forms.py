@@ -14,7 +14,7 @@ from six.moves.urllib.parse import urlparse, parse_qs
 from captcha.fields import CaptchaField
 
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
+from corehq.apps.callcenter.views import CallCenterOwnerOptionsView, CallCenterOptionsController
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from crispy_forms import bootstrap as twbscrispy
@@ -80,7 +80,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV4
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import WebUser, CouchUser
@@ -495,13 +495,13 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2AjaxV4):
+class CallCenterOwnerWidget(Select2Ajax):
 
     def set_domain(self, domain):
         self.domain = domain
 
     def render(self, name, value, attrs=None):
-        value_to_render = CallCenterOwnerOptionsView.convert_owner_id_to_select_choice(value, self.domain)
+        value_to_render = CallCenterOptionsController.convert_owner_id_to_select_choice(value, self.domain)
         return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs)
 
 

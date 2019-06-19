@@ -21,8 +21,10 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
+    get_menu_or_form_by_sheet_name,
+    get_menu_or_form_by_unique_id,
 )
-from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
 from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
@@ -69,6 +71,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
         return msgs
 
     processed_sheets = set()
+    sheet_name_to_unique_id = {}
     for sheet in workbook.worksheets:
         try:
             _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
@@ -83,24 +86,9 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
             msgs.append((messages.warning, warning))
 
         if is_single_sheet(sheet.worksheet.title):
-            module_or_form = None
-            modules_and_forms_rows = []
-            rows = []
-            for row in sheet:
-                if not row['case_property'] and not row['list_or_detail'] and not row['label']:
-                    modules_and_forms_rows.append(row)
-                elif module_or_form != row['menu_or_form']:
-                    msgs.extend(_process_rows(app, module_or_form, rows, lang=lang))
-                    module_or_form = row['menu_or_form']
-                    rows = [row]
-                else:
-                    rows.append(row)
-            msgs.extend(_process_rows(app, module_or_form, rows, lang=lang))
-            msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
-                                      modules_and_forms_rows, lang=lang))
+            msgs.extend(_process_single_sheet(app, sheet, names_map=sheet_name_to_unique_id, lang=lang))
         else:
-            msgs.extend(_process_rows(app, sheet.worksheet.title, sheet,
-                                      sheet_name=sheet.worksheet.title))
+            msgs.extend(_process_rows(app, sheet.worksheet.title, sheet, names_map=sheet_name_to_unique_id))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
@@ -108,37 +96,99 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
     return msgs
 
 
-def _process_rows(app, identifier, rows, sheet_name=None, lang=None):
-    if not identifier or not rows:
+def _process_single_sheet(app, sheet, names_map, lang=None):
+    """
+    A single-sheet translation file deals with only one language, and
+    fits all the items to be translated onto the same sheet. All items
+    share the same columns. If the column is not applicable to the row,
+    it is left empty.
+
+    :param app: The application being translated
+    :param sheet: The worksheet containing the translations
+    :param names_map: A map of sheet_name (like "menu1" or "menu1_form1") to
+                      module/form unique_id, used to fetch a module/form
+                      even if it has been moved since the worksheet was created
+    :param lang: The language that the app is being translated into
+    :return: A list of error messages or an empty list
+    """
+    msgs = []
+    module_or_form = None
+    # Rows pertaining to a module (e.g. case list / case detail) or a form
+    # (i.e. questions). Keyed on that module/form's identifier:
+    module_or_form_rows = {}
+    # Rows about the app's modules and forms, like their names and unique IDs:
+    modules_and_forms_rows = []
+    rows = []
+    for row in sheet:
+        if not row['case_property'] and not row['list_or_detail'] and not row['label']:
+            modules_and_forms_rows.append(row)
+        elif module_or_form != row['menu_or_form']:
+            module_or_form_rows[module_or_form] = rows
+            module_or_form = row['menu_or_form']
+            rows = [row]
+        else:
+            rows.append(row)
+    module_or_form_rows[module_or_form] = rows
+    # Process modules_and_forms_rows first to populate names_map with their unique IDs
+    msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
+                              modules_and_forms_rows, names_map, lang=lang))
+    # Then process the rows for the modules and the forms.
+    for module_or_form, rows in six.iteritems(module_or_form_rows):
+        msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
+    return msgs
+
+
+def _process_rows(app, sheet_name, rows, names_map, lang=None):
+    """
+    Processes the rows of a worksheet of translations.
+
+    This is the complement of get_bulk_app_sheets_by_name() and
+    get_bulk_app_single_sheet_by_name(), from
+    corehq/apps/translations/app_translations/download.py, which creates
+    these worksheets and rows.
+
+    :param app: The application being translated
+    :param sheet_name: The tab name of the sheet being processed.
+                       e.g. "menu1", "menu1_form1", or "Menus_and_forms"
+    :param rows: The rows in the worksheet
+    :param names_map: A map of sheet_name to module/form unique_id, used
+                      to fetch a module/form even if it has been moved
+                      since the worksheet was created
+    :param lang: The language that the app is being translated into
+    :return: A list of error messages or an empty list
+    """
+    if not sheet_name or not rows:
         return []
 
-    if is_modules_and_forms_sheet(identifier):
-        updater = BulkAppTranslationModulesAndFormsUpdater(app, lang=lang)
+    if is_modules_and_forms_sheet(sheet_name):
+        updater = BulkAppTranslationModulesAndFormsUpdater(app, names_map, lang=lang)
         return updater.update(rows)
 
-    if is_module_sheet(identifier):
+    if is_module_sheet(sheet_name):
+        unique_id = names_map.get(sheet_name)
         try:
-            updater = BulkAppTranslationModuleUpdater(app, identifier, lang=lang)
+            updater = BulkAppTranslationModuleUpdater(app, sheet_name, unique_id, lang=lang)
         except ModuleNotFoundException:
             return [(
                 messages.error,
-                _('Invalid menu in row "%s", skipping row.') % identifier
+                _('Invalid menu in row "%s", skipping row.') % sheet_name
             )]
         return updater.update(rows)
 
-    if is_form_sheet(identifier):
+    if is_form_sheet(sheet_name):
+        unique_id = names_map.get(sheet_name)
         try:
-            updater = BulkAppTranslationFormUpdater(app, identifier, lang=lang)
+            updater = BulkAppTranslationFormUpdater(app, sheet_name, unique_id, lang=lang)
         except FormNotFoundException:
             return [(
                 messages.error,
-                _('Invalid form in row "%s", skipping row.') % identifier
+                _('Invalid form in row "%s", skipping row.') % sheet_name
             )]
         return updater.update(rows)
 
     return [(
         messages.error,
-        _('Did not recognize "%s", skipping row.') % identifier
+        _('Did not recognize "%s", skipping row.') % sheet_name
     )]
 
 
@@ -158,7 +208,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
         raise BulkAppTranslationsException(_('Sheet "%s" was repeated. Only the first occurrence has been '
                                              'processed.') % sheet.worksheet.title)
 
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
     if expected_headers is None:
         raise BulkAppTranslationsException(_('Skipping sheet "%s", could not recognize title') %
                                            sheet.worksheet.title)
@@ -182,40 +232,13 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
                                                  expected=", ".join(expected_required_headers)))
 
 
-def _get_expected_headers(sheet, expected_sheets):
-    if sheet.worksheet.title == LEGACY_MODULES_AND_FORMS_SHEET_NAME:
-        expected_headers = expected_sheets.get(MODULES_AND_FORMS_SHEET_NAME, None)
-    elif is_module_sheet(sheet.worksheet.title) or is_form_sheet(sheet.worksheet.title):
-        expected_headers = expected_sheets.get(sheet.worksheet.title.replace("module", "menu"), None)
-    else:
-        expected_headers = expected_sheets.get(sheet.worksheet.title, None)
-    return expected_headers
-
-
 def _check_for_sheet_warnings(app, sheet, headers):
     warnings = []
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
 
-    missing_cols = _get_missing_cols(app, sheet, headers)
+    missing_cols = set(expected_headers) - set(sheet.headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
-
-    # Backwards compatibility for old "filepath" header names
-    not_missing_cols = set()
-    for col in missing_cols:
-        for key, legacy in (
-            ('image_', 'icon_filepath_'),
-            ('audio_', 'audio_filepath_'),
-        ):
-            for lang in app.langs:
-                if key + lang in missing_cols and legacy + lang in extra_cols:
-                    not_missing_cols.add(key + lang)
-                    extra_cols.remove(legacy + lang)
-    missing_cols = missing_cols - not_missing_cols
-
-    # Backwards compatibility for old "sheet_name" header
-    extra_cols = extra_cols - {'sheet_name'}
-    missing_cols = missing_cols - {'menu_or_form'}
 
     if len(missing_cols) > 0:
         warnings.append((_('Sheet "%s" has fewer columns than expected. '
@@ -230,15 +253,10 @@ def _check_for_sheet_warnings(app, sheet, headers):
     return warnings
 
 
-def _get_missing_cols(app, sheet, headers):
-    expected_sheets = {h[0]: h[1] for h in headers}
-    expected_columns = _get_expected_headers(sheet, expected_sheets)
-    return set(expected_columns) - set(sheet.headers)
-
-
 class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
-    def __init__(self, app, lang=None):
+    def __init__(self, app, names_map, lang=None):
         super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
+        self.sheet_name_to_unique_id = names_map
 
     def update(self, rows):
         """
@@ -247,50 +265,37 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         """
         self.msgs = []
         for row in get_unicode_dicts(rows):
-            identifying_text = row.get('menu_or_form', row.get('sheet_name', ''))
-            identifying_parts = identifying_text.split('_')
+            sheet_name = row.get('menu_or_form', '')
+            # The unique_id column is populated on the "Menus_and_forms" sheet in multi-sheet translation files,
+            # and in the "name / menu media" row in single-sheet translation files.
+            unique_id = row.get('unique_id')
 
-            if len(identifying_parts) not in (1, 2):
-                self.msgs.append((
-                    messages.error,
-                    _('Did not recognize "%s", skipping row.') % identifying_text
-                ))
-                continue
+            if unique_id and sheet_name not in self.sheet_name_to_unique_id:
+                # If we have a value for unique_id, save it in self.sheet_name_to_unique_id so we can look it up
+                # for rows where the unique_id column is not populated.
+                self.sheet_name_to_unique_id[sheet_name] = unique_id
+            elif not unique_id and sheet_name in self.sheet_name_to_unique_id:
+                # If we don't have a value for unique_id, try to fetch it from self.sheet_name_to_unique_id
+                unique_id = self.sheet_name_to_unique_id[sheet_name]
 
-            module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
             try:
-                document = self.app.get_module(module_index)
-            except ModuleNotFoundException:
-                self.msgs.append((
-                    messages.error,
-                    _('Invalid menu in row "%s", skipping row.') % identifying_text
-                ))
+                if unique_id:
+                    document = get_menu_or_form_by_unique_id(self.app, unique_id, sheet_name)
+                else:
+                    document = get_menu_or_form_by_sheet_name(self.app, sheet_name)
+            except (ModuleNotFoundException, FormNotFoundException, ValueError) as err:
+                self.msgs.append((messages.error, six.text_type(err)))
                 continue
-            if len(identifying_parts) == 2:
-                form_index = int(identifying_parts[1].replace("form", "")) - 1
-                try:
-                    document = document.get_form(form_index)
-                except FormNotFoundException:
-                    self.msgs.append((
-                        messages.error,
-                        _('Invalid form in row "%s", skipping row.') % identifying_text
-                    ))
-                    continue
 
             self.update_translation_dict('default_', document.name, row)
 
             # Update menu media
-            # For backwards compatibility with previous code, accept old "filepath" header names
             for lang in self.langs:
                 image_header = 'image_%s' % lang
-                if image_header not in row:
-                    image_header = 'icon_filepath_%s' % lang
                 if image_header in row:
                     document.set_icon(lang, row[image_header])
 
                 audio_header = 'audio_%s' % lang
-                if audio_header not in row:
-                    audio_header = 'audio_filepath_%s' % lang
                 if audio_header in row:
                     document.set_audio(lang, row[audio_header])
 

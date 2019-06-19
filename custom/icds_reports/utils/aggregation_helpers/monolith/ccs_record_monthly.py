@@ -16,6 +16,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'ccs-record-monthly'
     base_tablename = 'ccs_record_monthly'
 
     def __init__(self, month):
@@ -23,13 +24,27 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     def aggregate(self, cursor):
+        create_query, create_params = self.create_table_query()
         agg_query, agg_params = self.aggregation_query()
         index_queries = self.indexes()
 
         cursor.execute(self.drop_table_query())
+        cursor.execute(create_query, create_params)
         cursor.execute(agg_query, agg_params)
         for query in index_queries:
             cursor.execute(query)
+
+    def create_table_query(self):
+        return """
+        CREATE TABLE IF NOT EXISTS "{tablename}" (
+            CHECK (month = DATE %(date)s)
+        ) INHERITS ("{parent_tablename}")
+        """.format(
+            parent_tablename=self.base_tablename,
+            tablename=self.tablename,
+        ), {
+            "date": self.month.strftime("%Y-%m-%d"),
+        }
 
     @property
     def ccs_record_case_ucr_tablename(self):
@@ -54,7 +69,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
 
     @property
     def person_case_ucr_tablename(self):
@@ -65,7 +80,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def aggregation_query(self):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
-        age_in_days = "({} - case_list.dob)::integer".format(end_month_string)
+        age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         open_in_month = ("({} - case_list.opened_on::date)::integer >= 0"
                          " AND (case_list.closed = 0"
@@ -91,7 +106,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         valid_in_month = "( {} OR {})".format(pregnant_to_consider, lactating)
 
         add_in_month = "(case_list.add>= {} AND case_list.add<={})".format(start_month_string, end_month_string)
-        delivered_in_month = "({} AND {})".format(seeking_services, add_in_month)
+        add_in_month_after_opened_on = "({} AND case_list.opened_on<=case_list.add)".format(add_in_month)
+        delivered_in_month = "({} AND {})".format(seeking_services, add_in_month_after_opened_on)
         extra_meal = "(agg_bp.eating_extra=1 AND {})".format(pregnant_to_consider)
         b1_complete = "(case_list.bp1_date <= {})".format(end_month_string)
         b2_complete = "(case_list.bp2_date <= {})".format(end_month_string)
@@ -221,7 +237,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('bp_date', 'agg_bp.latest_time_end_processed::DATE'),
             ('is_ebf', 'agg_pnc.is_ebf'),
             ('breastfed_at_birth', 'agg_delivery.breastfed_at_birth'),
-            ('person_name', 'case_list.person_name'),
+            ('person_name', 'person_cases.name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
             ('mobile_number', 'person_cases.phone_number'),
@@ -236,7 +252,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
-            ('dob', 'case_list.dob'),
+            ('dob', 'person_cases.dob'),
             ('closed', 'case_list.closed'),
             ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),

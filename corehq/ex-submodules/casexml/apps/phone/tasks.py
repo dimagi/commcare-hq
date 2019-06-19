@@ -11,6 +11,7 @@ from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.form_processor.backends.sql.dbaccessors import get_cursor
+from dimagi.utils.logging import notify_exception
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
@@ -45,6 +46,15 @@ def get_async_restore_payload(restore_config, domain=None, username=None):
     Process an async restore
     domain and username: added for displaying restore request details on flower
     """
+    try:
+        repr(restore_config)
+    except Exception as e:
+        notify_exception(
+            None,
+            'Something went wrong with RestoreConfig.__repr__()',
+            details={'error': str(e)}
+        )
+
     response = restore_config.generate_payload(async_task=current_task)
 
     # delete the task id from the task, since the payload can now be fetched from the cache

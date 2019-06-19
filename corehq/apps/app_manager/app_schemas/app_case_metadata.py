@@ -253,7 +253,7 @@ class FormQuestion(JsonObject):
     value = StringProperty()
     repeat = StringProperty()
     group = StringProperty()
-    options = ListProperty(FormQuestionOption, exclude_if_none=True)
+    options = ListProperty(FormQuestionOption)
     calculate = StringProperty()
     relevant = StringProperty()
     required = BooleanProperty()
@@ -296,7 +296,7 @@ class LoadSaveProperty(JsonObject):
 
 class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()
-    children = ListProperty(lambda: FormQuestionResponse, exclude_if_none=True)
+    children = ListProperty(lambda: FormQuestionResponse)
 
     def get_formatted_response(self):
         timezone = get_timezone_for_request()

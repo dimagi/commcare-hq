@@ -50,10 +50,6 @@ from io import open
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
-    def __init__(self, suite, app, modules, build_profile_id=None):
-        super(DetailContributor, self).__init__(suite, app, modules)
-        self.build_profile_id = build_profile_id
-
     def get_section_elements(self):
         def include_sort(detail_type, detail):
             return detail_type.endswith('short') or detail.sort_nodeset_columns_for_detail()
@@ -242,8 +238,8 @@ class DetailContributor(SectionContributor):
             case_list_form = module.case_list_form
             action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=case_list_form.uses_image(),
-                media_audio=case_list_form.uses_audio(),
+                media_image=case_list_form.uses_image(build_profile_id=self.build_profile_id),
+                media_audio=case_list_form.uses_audio(build_profile_id=self.build_profile_id),
                 image_locale_id=id_strings.case_list_form_icon_locale(module),
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),

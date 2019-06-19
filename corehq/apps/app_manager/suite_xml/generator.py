@@ -59,8 +59,8 @@ class SuiteGenerator(object):
             ])
 
         # by module
-        entries = EntriesContributor(self.suite, self.app, self.modules)
-        menus = MenuContributor(self.suite, self.app, self.modules)
+        entries = EntriesContributor(self.suite, self.app, self.modules, self.build_profile_id)
+        menus = MenuContributor(self.suite, self.app, self.modules, self.build_profile_id)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
 
         if any(module.is_training_module for module in self.modules):
@@ -114,8 +114,8 @@ class MediaSuiteGenerator(object):
     @property
     def media_resources(self):
         PREFIX = 'jr://file/'
-        for path, m in sorted(list(self.app.multimedia_map_for_build(build_profile=self.build_profile).items()),
-                              key=lambda item: item[0]):
+        multimedia_map = self.app.multimedia_map_for_build(build_profile=self.build_profile, remove_unused=True)
+        for path, m in sorted(list(multimedia_map.items()), key=lambda item: item[0]):
             unchanged_path = path
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]

@@ -150,6 +150,9 @@ class PathNode(DocumentSchema):
     def __eq__(self, other):
         return self.__key() == other.__key()
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash(self.__key())
 
@@ -194,6 +197,9 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
 
     def __eq__(self, other):
         return self.__key() == other.__key()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def wrap(cls, data):
@@ -667,7 +673,7 @@ class ExportInstance(BlobMixin, Document):
     name = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
-    export_format = StringProperty(default='csv')
+    export_format = StringProperty(default='xlsx')
     app_id = StringProperty()
 
     # The id of the schema that was used to generate the instance.

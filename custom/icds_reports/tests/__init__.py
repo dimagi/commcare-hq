@@ -20,6 +20,8 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
+from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
+
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     build_incentive_report,
@@ -29,6 +31,8 @@ from custom.icds_reports.tasks import (
 from io import open
 from six.moves import range
 from six.moves import zip
+
+from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
@@ -61,6 +65,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
+_use_citus = override_settings(ICDS_USE_CITUS=True)
+
 
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
@@ -71,71 +77,87 @@ def setUpModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
+    # _use_citus.enable()
 
     domain = create_domain('icds-cas')
-    location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='block',
-    )
-    SQLLocation.objects.create(
-        domain=domain.name,
-        name='b1',
-        location_id='b1',
-        location_type=location_type
-    )
-
+    SQLLocation.objects.all().delete()
+    LocationType.objects.all().delete()
     state_location_type = LocationType.objects.create(
         domain=domain.name,
         name='state',
     )
-    SQLLocation.objects.create(
+    st1 = SQLLocation.objects.create(
         domain=domain.name,
         name='st1',
         location_id='st1',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st2 = SQLLocation.objects.create(
         domain=domain.name,
         name='st2',
         location_id='st2',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st3 = SQLLocation.objects.create(
         domain=domain.name,
         name='st3',
         location_id='st3',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st4 = SQLLocation.objects.create(
         domain=domain.name,
         name='st4',
         location_id='st4',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st5 = SQLLocation.objects.create(
         domain=domain.name,
         name='st5',
         location_id='st5',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st6 = SQLLocation.objects.create(
         domain=domain.name,
         name='st6',
         location_id='st6',
         location_type=state_location_type
     )
-    SQLLocation.objects.create(
+    st7 = SQLLocation.objects.create(
         domain=domain.name,
         name='st7',
         location_id='st7',
         location_type=state_location_type
     )
 
+    supervisor_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='supervisor',
+    )
+    s1 = SQLLocation.objects.create(
+        domain=domain.name,
+        name='s1',
+        location_id='s1',
+        location_type=supervisor_location_type,
+        parent=st1
+    )
+
+    block_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='block',
+    )
+    b1 = SQLLocation.objects.create(
+        domain=domain.name,
+        name='b1',
+        location_id='b1',
+        location_type=block_location_type,
+        parent=s1
+    )
+
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
         name='awc',
     )
-    SQLLocation.objects.create(
+    a7 = SQLLocation.objects.create(
         domain=domain.name,
         name='a7',
         location_id='a7',
@@ -171,6 +193,8 @@ def setUpModule():
                         null='' if six.PY3 else b'', columns=columns
                     )
 
+        _distribute_tables_for_citus(engine)
+
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
@@ -185,6 +209,35 @@ def setUpModule():
             raise
         finally:
             _call_center_domain_mock.stop()
+
+
+def _distribute_tables_for_citus(engine):
+    if not getattr(settings, 'ICDS_USE_CITUS', False):
+        return
+
+    for table, col in DISTRIBUTED_TABLES:
+        with engine.begin() as conn:
+
+            # TODO: remove this after citus migration
+            res = conn.execute(
+                """
+                SELECT c.relname AS child
+                FROM
+                    pg_inherits JOIN pg_class AS c ON (inhrelid=c.oid)
+                    JOIN pg_class as p ON (inhparent=p.oid)
+                    where p.relname = %s;
+                """,
+                table
+            )
+            for child in [row.child for row in res]:
+                # only need this because of reusedb if testing on master and this branch
+                conn.execute('drop table if exists "{}"'.format(child))
+
+            create_citus_distributed_table(conn, table, col)
+
+    for table in REFERENCE_TABLES:
+        with engine.begin() as conn:
+            create_citus_reference_table(conn, table)
 
 
 def tearDownModule():
@@ -216,6 +269,7 @@ def tearDownModule():
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
     Domain.get_by_name('icds-cas').delete()
+    # _use_citus.disable()
     _call_center_domain_mock.stop()
 
 

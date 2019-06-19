@@ -24,9 +24,10 @@ from tastypie.utils import dict_strip_unicode_keys
 from casexml.apps.stock.models import StockTransaction
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
+from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer, ODataXFormInstanceSerializer
 from corehq.apps.api.odata.views import add_odata_headers
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
+    ODataAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
@@ -393,9 +394,9 @@ class GroupResource(v0_4.GroupResource):
             try:
 
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as ex:
+            except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = ex.message
+                bundle.data['_id'] = six.text_type(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -419,8 +420,8 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
-        except AssertionError as ex:
-            bundle.data['error_message'] = ex.message
+        except AssertionError as e:
+            bundle.data['error_message'] = six.text_type(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):
@@ -923,7 +924,13 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
         # adds required odata headers to the returned response
         return add_odata_headers(response)
 
+    def obj_get_list(self, bundle, domain, **kwargs):
+        elastic_query_set = super(ODataCommCareCaseResource, self).obj_get_list(bundle, domain, **kwargs)
+        elastic_query_set.payload['filter']['and'].append({'term': {'type.exact': self.case_type}})
+        return elastic_query_set
+
     class Meta(v0_4.CommCareCaseResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
         serializer = ODataCommCareCaseSerializer()
         max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
@@ -931,5 +938,51 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
     def prepend_urls(self):
         return [
             url(r"^(?P<resource_name>%s)/(?P<case_type>[\w\d_.-]+)/$" % self._meta.resource_name,
+                self.wrap_view('dispatch_list'))
+        ]
+
+
+ODATA_XFORM_INSTANCE_RESOURCE_NAME = 'Forms'
+
+
+class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
+
+    xmlns = None
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not toggles.ODATA.enabled_for_request(request):
+            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        self.app_id = kwargs['app_id']
+        self.xmlns = kwargs['xmlns']
+        return super(ODataXFormInstanceResource, self).dispatch(request_type, request, **kwargs)
+
+    def determine_format(self, request):
+        # json only
+        return 'application/json'
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        data['domain'] = request.domain
+        data['app_id'] = self.app_id
+        data['xmlns'] = self.xmlns
+        data['api_path'] = request.path
+        response = super(ODataXFormInstanceResource, self).create_response(
+            request, data, response_class, **response_kwargs)
+        return add_odata_headers(response)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        elastic_query_set = super(ODataXFormInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
+        full_xmlns = 'http://openrosa.org/formdesigner/' + kwargs['xmlns']
+        elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': full_xmlns}})
+        return elastic_query_set
+
+    class Meta(v0_4.XFormInstanceResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/{}'.format(ODATA_XFORM_INSTANCE_RESOURCE_NAME)
+        serializer = ODataXFormInstanceSerializer()
+        max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<app_id>[\w\d_.-]+)/(?P<xmlns>[\w\d_.-]+)" % self._meta.resource_name,
                 self.wrap_view('dispatch_list'))
         ]
