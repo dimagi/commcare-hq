@@ -90,14 +90,14 @@ def initiate_messaging_rule_run(domain, rule_id):
 
 
 def paginated_case_ids(domain, case_type):
-    case_generator = paginate_query_across_partitioned_databases(
+    row_generator = paginate_query_across_partitioned_databases(
         CommCareCaseSQL,
         Q(domain=domain, type=case_type, deleted=False),
         values=['case_id']
     )
-    for case in case_generator:
-        # return value from case generator is ('pk', 'case_id')
-        yield case[1]
+    for row in row_generator:
+        # return value from case generator is ('<pk>', '<case_id>')
+        yield row[1]
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
