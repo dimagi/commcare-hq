@@ -109,7 +109,7 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
         if last_value is not None:
             qs = qs.order_by(sort_col)
             if return_values:
-                qs.values_list(*return_values)
+                qs = qs.values_list(*return_values)
             while value < last_value:
                 filter_expression = {'{}__gt'.format(sort_col): value}
                 for row in qs.filter(**filter_expression)[:query_size]:
