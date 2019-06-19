@@ -113,7 +113,10 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
             while value < last_value:
                 filter_expression = {'{}__gt'.format(sort_col): value}
                 for row in qs.filter(**filter_expression)[:query_size]:
-                    value = row.pk
+                    if return_values:
+                        value = row[0]
+                    else:
+                        value = row.pk
                     yield row
 
 
