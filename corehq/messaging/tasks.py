@@ -9,7 +9,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
-from corehq.sql_db.util import run_query_across_partitioned_databases, paginate_query_across_partitioned_databases
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.utils import case_load_counter
 from dimagi.utils.couch import CriticalSection
