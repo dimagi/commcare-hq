@@ -39,7 +39,7 @@ from corehq.apps.export.models import (
 from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin, ODataFeedMixin
 
 
-class BaseModifyNewCustomView(BaseProjectDataView):
+class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
     export_type = None
@@ -48,7 +48,7 @@ class BaseModifyNewCustomView(BaseProjectDataView):
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
+        return super(BaseExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def export_helper(self):
@@ -190,7 +190,7 @@ class BaseModifyNewCustomView(BaseProjectDataView):
 
 
 @location_safe
-class CreateNewCustomFormExportView(BaseModifyNewCustomView):
+class CreateNewCustomFormExportView(BaseExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
@@ -209,7 +209,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
 
 
 @location_safe
-class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
+class CreateNewCustomCaseExportView(BaseExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
@@ -262,7 +262,7 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     allow_deid = False
 
 
-class DeleteNewCustomExportView(BaseModifyNewCustomView):
+class DeleteNewCustomExportView(BaseExportView):
     urlname = 'delete_new_custom_export'
     http_method_names = ['post']
     is_async = False
