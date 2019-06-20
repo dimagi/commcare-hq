@@ -13,7 +13,10 @@ import polib
 import six
 from memoized import memoized
 
-from corehq.apps.app_manager.dbaccessors import get_version_build_id
+from corehq.apps.app_manager.dbaccessors import (
+    get_current_app,
+    get_version_build_id,
+)
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.models import TransifexBlacklist
 
@@ -130,18 +133,20 @@ class AppTranslationsGenerator(object):
                             "that would result in empty msgstr and no display for other lang")
         self.domain = domain
         self.app_id = app_id
+        self.app = get_current_app(domain, app_id)
         self.key_lang = key_lang
         self.source_lang = source_lang
         self.lang_prefix = lang_prefix
         self.exclude_if_default = exclude_if_default
-        self.translations = OrderedDict()
-        self.version = version
+        self.version = self.app.version if version is None else version
         self.use_version_postfix = use_version_postfix
+        self.checker = EligibleForTransifexChecker(self.app)
+
         self.headers = dict()  # headers for each sheet name
         self.sheet_name_to_module_or_form_type_and_id = dict()
         self.slug_to_name = defaultdict(dict)
         self.slug_to_name[MODULES_AND_FORMS_SHEET_NAME] = {'en': MODULES_AND_FORMS_SHEET_NAME}
-        self._build_translations()
+        self.translations = self._build_translations()
 
     @cached_property
     def build_id(self):
@@ -150,61 +155,18 @@ class AppTranslationsGenerator(object):
         else:
             return self.app_id
 
-    @cached_property
-    def _get_labels_to_skip(self):
-        """Returns the labels of questions that have the skip string in the comment,
-        so that those labels are not sent to transifex later.
-
-        If there are questions that share the same label reference (and thus the
-        same translation), they will be included if any question does not have the
-        skip string.
-        """
-        def _labels_from_question(question):
-            ret = {
-                question.get('label_ref'),
-                question.get('constraintMsg_ref'),
-            }
-            if question.get('options'):
-                for option in question['options']:
-                    ret.add(option.get('label_ref'))
-            return ret
-
-        labels_to_skip = defaultdict(set)
-        necessary_labels = defaultdict(set)
-
-        for module in self.app.modules:
-            for form in module.get_forms():
-                questions = form.get_questions(self.app.langs, include_triggers=True,
-                                               include_groups=True, include_translations=True)
-                for question in questions:
-                    if not question.get('label_ref'):
-                        continue
-                    if question['comment'] and SKIP_TRANSFEX_STRING in question['comment']:
-                        labels_to_skip[form.unique_id] |= _labels_from_question(question)
-                    else:
-                        necessary_labels[form.unique_id] |= _labels_from_question(question)
-
-        for form_id in labels_to_skip.keys():
-            labels_to_skip[form_id] = labels_to_skip[form_id] - necessary_labels[form_id]
-
-        return labels_to_skip
-
-    def _translation_data(self, app):
+    def _translation_data(self):
         # get the translations data
         from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
         # simply the rows of data per sheet name
-        rows = get_bulk_app_sheets_by_name(
-            app,
-            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
-        )
+        rows = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)
 
         # get the translation data headers
         from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
-            app,
-            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
+            self.app,
+            exclude_module=self.checker.exclude_module,
+            exclude_form=self.checker.exclude_form,
         )
         for header_row in headers:
             self.headers[header_row[0]] = header_row[1]
@@ -296,7 +258,7 @@ class AppTranslationsGenerator(object):
         """
         Remove translations from questions that have SKIP TRANSIFEX in the comment
         """
-        labels_to_skip = self._get_labels_to_skip[form_id]
+        labels_to_skip = self.checker.get_labels_to_skip()[form_id]
         valid_rows = []
         for i, row in enumerate(rows):
             question_label = row[label_index]
@@ -315,23 +277,12 @@ class AppTranslationsGenerator(object):
             list_or_detail = row[list_or_detail_index]
             case_property = row[case_property_index]
             default_lang = row[default_lang_index]
-            in_blacklist = any(
-                True
-                for blacklisted_trans in self._blacklisted_translations
-                if (
-                    blacklisted_trans.module_id == module_id
-                    and blacklisted_trans.field_type == list_or_detail
-                    and blacklisted_trans.field_name == case_property
-                    and (
-                        blacklisted_trans.display_text == default_lang if blacklisted_trans.display_text else True
-                    )
-                )
-            )
-            if not in_blacklist:
+            # TODO: They already got filtered in self._translation_data()
+            if not self.checker.is_blacklisted(module_id, list_or_detail, case_property, [default_lang]):
                 valid_rows.append(row)
         return valid_rows
 
-    def _get_translation_for_sheet(self, app, sheet_name, rows):
+    def _get_translation_for_sheet(self, sheet_name, rows):
         occurrence = None
         # a dict mapping of a context to a Translation object with
         # multiple occurrences
@@ -339,7 +290,7 @@ class AppTranslationsGenerator(object):
         type_and_id = None
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
-        default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
+        default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.app.default_language)
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
             type_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
             sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
@@ -402,12 +353,6 @@ class AppTranslationsGenerator(object):
             for filename, translations in six.iteritems(self.translations)
         )
 
-    @property
-    @memoized
-    def app(self):
-        from corehq.apps.app_manager.dbaccessors import get_current_app
-        return get_current_app(self.domain, self.app_id)
-
     def _build_translations(self):
         """
         :return:
@@ -418,16 +363,14 @@ class AppTranslationsGenerator(object):
             ]
         }
         """
-        app = self.app
-        if self.version is None:
-            self.version = app.version
-        rows = self._translation_data(app)
-
-        for sheet_name in rows:
+        translations = OrderedDict()
+        rows = self._translation_data()
+        for sheet_name, sheet in six.iteritems(rows):
             file_name = self._get_filename(sheet_name)
-            self.translations[file_name] = self._get_translation_for_sheet(
-                app, sheet_name, rows[sheet_name]
+            translations[file_name] = self._get_translation_for_sheet(
+                sheet_name, sheet
             )
+        return translations
 
     @property
     def metadata(self):
