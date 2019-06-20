@@ -5,7 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
-from itertools import groupby
+from itertools import groupby, chain
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -174,30 +174,8 @@ class Command(BaseCommand):
                 toggles.DATA_MIGRATION.enable(domain)  # Prevent any more changes on domain
                 set_couch_sql_migration_not_started(domain)
                 set_couch_sql_migration_not_started(dst_domain)
-                for case in self._iter_migrated_cases(domain, dst_domain):
+                for case in _iter_migrated_cases(dst_domain):
                     publish_case_saved(case, send_post_save_signal=True)
-
-    def _iter_migrated_cases(self, src_domain, dst_domain):
-        db = get_diff_db(src_domain)
-        ZERO = Counts(0, 0)
-        if db.has_doc_counts():
-            doc_counts = db.get_doc_counts()
-        else:
-            doc_counts = None
-        for doc_type in CASE_DOC_TYPES:
-            if doc_counts is not None:
-                counts = doc_counts.get(doc_type, ZERO)
-                case_ids = counts
-            elif doc_type == "CommCareCase":
-                case_ids = set(CaseAccessorSQL.get_case_ids_in_domain(dst_domain))
-            elif doc_type == "CommCareCase-Deleted":
-                case_ids = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain))
-            else:
-                raise NotImplementedError(doc_type)
-            for case_ids_chunk in chunked(case_ids, 500):
-                cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
-                for case in cases:
-                    yield case
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
@@ -343,3 +321,14 @@ def _blow_away_migration(domain, dst_domain):
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain)
     CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
     log.info("blew away migration for domain {}\n".format(domain))
+
+
+def _iter_migrated_cases(domain):
+    case_ids = chain(
+        CaseAccessorSQL.get_case_ids_in_domain(domain),
+        CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
+    )
+    for case_ids_chunk in chunked(case_ids, 500):
+        cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
+        for case in cases:
+            yield case
