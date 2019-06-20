@@ -22,7 +22,7 @@ def get_sync_key(case_id):
     return 'sync-case-for-messaging-%s' % case_id
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging(self, domain, case_id):
     try:
@@ -32,7 +32,7 @@ def sync_case_for_messaging(self, domain, case_id):
         self.retry(exc=e)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
     try:
@@ -105,13 +105,13 @@ def get_case_ids_for_messaging_rule(domain, case_type):
         return paginated_case_ids(domain, case_type)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
 def set_rule_complete(rule_id):
     AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=False)
     MessagingRuleProgressHelper(rule_id).set_rule_complete()
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
+@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
 def run_messaging_rule(domain, rule_id):
     rule = _get_cached_rule(domain, rule_id)
     if not rule:
