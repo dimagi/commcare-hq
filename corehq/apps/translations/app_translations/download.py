@@ -335,32 +335,3 @@ def get_form_question_label_name_media(langs, form):
             rows.append(row)
 
     return rows
-
-
-@quickcache(['domain', 'app_id'])
-def _get_blacklist(domain, app_id):
-    """
-    Returns a nested dictionary of blacklisted translations for a given app.
-
-    A nested dictionary is used so that search for a translation fails at the
-    first missing key.
-    """
-    blacklist = {}
-    for b in TransifexBlacklist.objects.filter(domain=domain, app_id=app_id).all():
-        blacklist.setdefault(b.domain, {})
-        blacklist[b.domain].setdefault(b.app_id, {})
-        blacklist[b.domain][b.app_id].setdefault(b.module_id, {})
-        blacklist[b.domain][b.app_id][b.module_id].setdefault(b.field_type, {})
-        blacklist[b.domain][b.app_id][b.module_id][b.field_type].setdefault(b.field_name, {})
-        blacklist[b.domain][b.app_id][b.module_id][b.field_type][b.field_name][b.display_text] = True
-    return blacklist
-
-
-def _is_blacklisted(domain, app_id, module_id, field_type, field_name, translations):
-    blacklist = _get_blacklist(domain, app_id)
-    for display_text in chain([''], translations):
-        try:
-            return blacklist[domain][app_id][module_id][field_type][field_name][display_text]
-        except KeyError:
-            pass
-    return False

@@ -5,6 +5,7 @@ import os
 import re
 import tempfile
 from collections import OrderedDict, defaultdict, namedtuple
+from itertools import chain
 
 from django.utils.functional import cached_property
 
@@ -22,6 +23,88 @@ HQ_MODULE_SHEET_NAME = re.compile(r'^menu(\d+)$')
 HQ_FORM_SHEET_NAME = re.compile(r'^menu(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
 SKIP_TRANSFEX_STRING = "SKIP TRANSIFEX"
+
+
+class EligibleForTransifexChecker(object):
+    def __init__(self, app):
+        self.app = app
+
+    @staticmethod
+    def exclude_module(module):
+        return SKIP_TRANSFEX_STRING in module.comment
+
+    @staticmethod
+    def exclude_form(form):
+        return SKIP_TRANSFEX_STRING in form.comment
+
+    def is_label_to_skip(self, form_id, label):
+        return label in self.get_labels_to_skip()[form_id]
+
+    def is_blacklisted(self, module_id, field_type, field_name, translations):
+        blacklist = self._get_blacklist()
+        for display_text in chain([''], translations):
+            try:
+                return blacklist[self.app.domain][self.app.id][module_id][field_type][field_name][display_text]
+            except KeyError:
+                pass
+        return False
+
+    @memoized
+    def get_labels_to_skip(self):
+        """Returns the labels of questions that have the skip string in the comment,
+        so that those labels are not sent to Transifex later.
+
+        If there are questions that share the same label reference (and thus the
+        same translation), they will be included if any question does not have the
+        skip string.
+        """
+        def _labels_from_question(question):
+            ret = {
+                question.get('label_ref'),
+                question.get('constraintMsg_ref'),
+            }
+            if question.get('options'):
+                for option in question['options']:
+                    ret.add(option.get('label_ref'))
+            return ret
+
+        labels_to_skip = defaultdict(set)
+        necessary_labels = defaultdict(set)
+
+        for module in self.app.modules:
+            for form in module.get_forms():
+                questions = form.get_questions(self.app.langs, include_triggers=True,
+                                               include_groups=True, include_translations=True)
+                for question in questions:
+                    if not question.get('label_ref'):
+                        continue
+                    if question['comment'] and SKIP_TRANSFEX_STRING in question['comment']:
+                        labels_to_skip[form.unique_id] |= _labels_from_question(question)
+                    else:
+                        necessary_labels[form.unique_id] |= _labels_from_question(question)
+
+        for form_id in labels_to_skip.keys():
+            labels_to_skip[form_id] = labels_to_skip[form_id] - necessary_labels[form_id]
+
+        return labels_to_skip
+
+    @memoized
+    def _get_blacklist(self):
+        """
+        Returns a nested dictionary of blacklisted translations for a given app.
+
+        A nested dictionary is used so that search for a translation fails at the
+        first missing key.
+        """
+        blacklist = {}
+        for b in TransifexBlacklist.objects.filter(domain=self.app.domain, app_id=self.app.id).all():
+            blacklist.setdefault(b.domain, {})
+            blacklist[b.domain].setdefault(b.app_id, {})
+            blacklist[b.domain][b.app_id].setdefault(b.module_id, {})
+            blacklist[b.domain][b.app_id][b.module_id].setdefault(b.field_type, {})
+            blacklist[b.domain][b.app_id][b.module_id][b.field_type].setdefault(b.field_name, {})
+            blacklist[b.domain][b.app_id][b.module_id][b.field_type][b.field_name][b.display_text] = True
+        return blacklist
 
 
 class AppTranslationsGenerator(object):
