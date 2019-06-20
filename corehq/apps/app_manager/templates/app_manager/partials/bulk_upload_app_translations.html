@@ -20,7 +20,7 @@
     {% if request|toggle_enabled:'APP_TRANSLATIONS_WITH_TRANSIFEX' %}
     <li>
       <p>
-        {% trans "Skip blacklisted translations?" %}
+        {% trans "Download only translations eligible for Transifex?" %}
       </p>
       <p>
         <input type="checkbox" id="skip_blacklisted" data-bind="checked: skipBlacklisted"/>
