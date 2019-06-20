@@ -2,12 +2,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import io
 import tempfile
 from collections import defaultdict
 from io import BytesIO
 import os
 
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 from couchexport.export import export_raw
 from couchexport.models import Format
 from django.test import SimpleTestCase
@@ -1152,35 +1152,37 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(actual_workbook, self.expected_workbook)
 
     def test_bulk_app_sheet_blacklisted(self):
-        menu1_id = self.app.modules[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
-                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
-            mock_is_label.return_value = False
-            mock_get_blacklist.return_value = {
-                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}
-            }
+
+        def blacklist_without_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
             menu1_sheet = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)['menu1']
         self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
         self.assertIn(('name', 'list', 'Name'), menu1_sheet)
 
     def test_bulk_app_sheet_blacklisted_text(self):
-        menu1_id = self.app.modules[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
-                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
-            mock_is_label.return_value = False
-            mock_get_blacklist.return_value = {
-                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}
-            }
+
+        def blacklist_with_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
             menu1_sheet = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)['menu1']
         self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
         self.assertIn(('name', 'list', 'Name'), menu1_sheet)
 
     def test_bulk_app_sheet_skipped_label(self):
-        menu1_form1_id = self.app.modules[0].forms[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download.get_labels_to_skip') as mock_get_labels, \
-                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
-            mock_get_blacklist.return_value = {}
-            mock_get_labels.return_value = defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        def get_labels_to_skip(self):
+            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', lambda self: {}):
             menu1_form1_sheet = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)['menu1_form1']
         self.assertNotIn(['What_does_this_look_like-label', 'What does this look like?',
                           'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''], menu1_form1_sheet)
@@ -1253,37 +1255,39 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
 
     def test_bulk_app_single_sheet_blacklisted(self):
-        menu1_id = self.app.modules[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
-                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
-            mock_is_label.return_value = False
-            mock_get_blacklist.return_value = {
-                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}
-            }
+
+        def blacklist_without_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
             sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
                                                       skip_blacklisted=True)[SINGLE_SHEET_NAME]
         self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
         self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
 
     def test_bulk_app_single_sheet_blacklisted_text(self):
-        menu1_id = self.app.modules[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
-                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
-            mock_is_label.return_value = False
-            mock_get_blacklist.return_value = {
-                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}
-            }
+
+        def blacklist_with_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
             sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
                                                       skip_blacklisted=True)[SINGLE_SHEET_NAME]
         self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
         self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
 
     def test_bulk_app_single_sheet_skipped_label(self):
-        menu1_form1_id = self.app.modules[0].forms[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download.get_labels_to_skip') as mock_get_labels, \
-                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
-            mock_get_blacklist.return_value = {}
-            mock_get_labels.return_value = defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        def get_labels_to_skip(self):
+            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', lambda self: {}):
             sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
                                                       skip_blacklisted=True)[SINGLE_SHEET_NAME]
         self.assertNotIn(['menu1_form1', '', '', 'What_does_this_look_like-label', 'What does this look like?',
