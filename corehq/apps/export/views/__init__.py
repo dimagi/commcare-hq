@@ -29,7 +29,6 @@ from corehq.apps.export.views.list import (
     download_daily_saved_export,
 )
 from corehq.apps.export.views.new import (
-    BaseNewExportView,
     BaseModifyNewCustomView,
     DeleteNewCustomExportView,
     CreateNewCustomFormExportView,

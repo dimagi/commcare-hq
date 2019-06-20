@@ -39,14 +39,16 @@ from corehq.apps.export.models import (
 from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin, ODataFeedMixin
 
 
-class BaseNewExportView(BaseProjectDataView):
+class BaseModifyNewCustomView(BaseProjectDataView):
+    """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
     export_type = None
     is_async = True
     allow_deid = True
 
+    @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
+        return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
 
     @property
     def export_helper(self):
@@ -86,6 +88,15 @@ class BaseNewExportView(BaseProjectDataView):
     @property
     def page_context(self):
         owner_id = self.export_instance.owner_id
+        schema = self.get_export_schema(
+            self.domain,
+            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
+            self.export_instance.identifier,
+        )
+        if self.export_instance.owner_id or not self.export_instance._id:
+            sharing_options = SharingOption.CHOICES
+        else:
+            sharing_options = [SharingOption.EDIT_AND_EXPORT]
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -95,6 +106,9 @@ class BaseNewExportView(BaseProjectDataView):
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
+            'format_options': ["xls", "xlsx", "csv"],
+            'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
+            'sharing_options': sharing_options,
         }
 
     @property
@@ -165,13 +179,6 @@ class BaseNewExportView(BaseProjectDataView):
                 })
             return HttpResponseRedirect(url)
 
-
-class BaseModifyNewCustomView(BaseNewExportView):
-
-    @method_decorator(require_can_edit_data)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
-
     @memoized
     def get_export_schema(self, domain, app_id, identifier):
         return self.export_schema_cls.generate_schema_from_builds(
@@ -180,22 +187,6 @@ class BaseModifyNewCustomView(BaseNewExportView):
             identifier,
             only_process_current_builds=True,
         )
-
-    @property
-    def page_context(self):
-        result = super(BaseModifyNewCustomView, self).page_context
-        result['format_options'] = ["xls", "xlsx", "csv"]
-        if self.export_instance.owner_id or not self.export_instance._id:
-            result['sharing_options'] = SharingOption.CHOICES
-        else:
-            result['sharing_options'] = [SharingOption.EDIT_AND_EXPORT]
-        schema = self.get_export_schema(
-            self.domain,
-            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
-            self.export_instance.identifier,
-        )
-        result['number_of_apps_to_process'] = schema.get_number_of_apps_to_process()
-        return result
 
 
 @location_safe
