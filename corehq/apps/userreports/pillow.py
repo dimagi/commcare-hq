@@ -311,8 +311,10 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             # bulk delete by adapter
             to_delete = [c.id for c in changes_chunk if c.deleted]
             for adapter in adapters:
+                delete_ids = to_delete_by_adapter[adapter] + to_delete
+                if not delete_ids:
+                    continue
                 with self._datadog_timing('delete', adapter.config._id):
-                    delete_ids = to_delete_by_adapter[adapter] + to_delete
                     try:
                         adapter.bulk_delete(delete_ids)
                     except Exception:
