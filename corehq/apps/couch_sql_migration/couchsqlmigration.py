@@ -46,6 +46,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     doc_type_to_state,
 )
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachmentSQL,
@@ -397,7 +398,10 @@ class CouchSqlDomainMigrator(object):
     def _is_orphaned_case(self, couch_case):
         def references_case(form_id):
             form = FormAccessorCouch.get_form(form_id)
-            return case_id in get_case_ids_from_form(form)
+            try:
+                return case_id in get_case_ids_from_form(form)
+            except MissingFormXml:
+                return True  # assume case is referenced if form XML is missing
 
         case_id = couch_case["_id"]
         return not any(references_case(x) for x in couch_case["xform_ids"])
@@ -691,7 +695,7 @@ def sql_form_to_json(form):
     """
     try:
         form.get_xml()
-    except BlobNotFound:
+    except (AttachmentNotFound, BlobNotFound):
         form.get_xml.get_cache(form)[()] = ""
         assert form.get_xml() == "", form.get_xml()
     return form.to_json()
@@ -757,6 +761,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
         for case in case_result.cases:
             case_db.post_process_case(case, sql_form)
             case_db.mark_changed(case)
+        cases = case_result.cases
 
         try:
             stock_result = process_stock(xforms, case_db)
