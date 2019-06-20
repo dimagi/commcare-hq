@@ -93,7 +93,7 @@ def download_bulk_app_translations(request, domain, app_id):
     if lang:
         sheets = get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted)
     else:
-        sheets = get_bulk_app_sheets_by_name(app, skip_blacklisted=skip_blacklisted)
+        sheets = get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=skip_blacklisted)
 
     temp = io.BytesIO()
     data = [(k, v) for k, v in six.iteritems(sheets)]

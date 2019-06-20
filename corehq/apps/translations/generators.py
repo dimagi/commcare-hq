@@ -159,14 +159,13 @@ class AppTranslationsGenerator(object):
         # get the translations data
         from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
         # simply the rows of data per sheet name
-        rows = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)
+        rows = get_bulk_app_sheets_by_name(self.app, eligible_for_transifex_only=True)
 
         # get the translation data headers
         from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
             self.app,
-            exclude_module=self.checker.exclude_module,
-            exclude_form=self.checker.exclude_form,
+            eligible_for_transifex_only=True
         )
         for header_row in headers:
             self.headers[header_row[0]] = header_row[1]

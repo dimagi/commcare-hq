@@ -22,7 +22,7 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.generators import EligibleForTransifexChecker
 
 
-def get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted=False):
+def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=False):
     checker = EligibleForTransifexChecker(app)
 
     rows = []
@@ -30,7 +30,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted=False):
         sheet_name = get_module_sheet_name(module)
         rows.append(get_name_menu_media_row(module, sheet_name, lang))
         for module_row in get_module_rows([lang], module):
-            if skip_blacklisted:
+            if eligible_for_transifex_only:
                 field_name, field_type, translation = module_row
                 if checker.is_blacklisted(module.unique_id, field_type, field_name, [translation]):
                     continue
@@ -41,7 +41,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted=False):
             rows.append(get_name_menu_media_row(form, sheet_name, lang))
             for label_name_media in get_form_question_label_name_media([lang], form):
                 if (
-                    skip_blacklisted and
+                    eligible_for_transifex_only and
                     checker.is_label_to_skip(form.unique_id, label_name_media[0])
                 ):
                     continue
@@ -50,7 +50,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted=False):
     return OrderedDict({SINGLE_SHEET_NAME: rows})
 
 
-def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, skip_blacklisted=False):
+def get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=False):
     """
     Data rows for bulk app translation download
 
@@ -68,7 +68,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, ski
     rows = OrderedDict({MODULES_AND_FORMS_SHEET_NAME: []})
 
     for module in app.get_modules():
-        if exclude_module is not None and exclude_module(module):
+        if eligible_for_transifex_only and checker.exclude_module(module):
             continue
 
         module_sheet_name = get_module_sheet_name(module)
@@ -83,7 +83,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, ski
 
         rows[module_sheet_name] = []
         for module_row in get_module_rows(app.langs, module):
-            if skip_blacklisted:
+            if eligible_for_transifex_only:
                 field_name, field_type, translations = module_row[0], module_row[1], module_row[2:]
                 # field_name, field_type, *translations = module_row  # TODO: Post-Py2
                 if checker.is_blacklisted(module.unique_id, field_type, field_name, translations):
@@ -91,7 +91,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, ski
             rows[module_sheet_name].append(module_row)
 
         for form in module.get_forms():
-            if exclude_form is not None and exclude_form(form):
+            if eligible_for_transifex_only and checker.exclude_form(form):
                 continue
 
             form_sheet_name = get_form_sheet_name(form)
@@ -107,7 +107,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, ski
             rows[form_sheet_name] = []
             for label_name_media in get_form_question_label_name_media(app.langs, form):
                 if (
-                    skip_blacklisted and
+                    eligible_for_transifex_only and
                     checker.is_label_to_skip(form.unique_id, label_name_media[0])
                 ):
                     continue

@@ -10,10 +10,11 @@ from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 from corehq.util.python_compatibility import soft_assert_type_text
 
 
-def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form=None):
+def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -61,7 +62,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
     ])
 
     for module in app.get_modules():
-        if exclude_module is not None and exclude_module(module):
+        if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_module(module):
             continue
 
         sheet_name = get_module_sheet_name(module)
@@ -70,7 +71,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         for form in module.get_forms():
             if form.form_type == 'shadow_form':
                 continue
-            if exclude_form is not None and exclude_form(form):
+            if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_form(form):
                 continue
 
             sheet_name = get_form_sheet_name(form)
