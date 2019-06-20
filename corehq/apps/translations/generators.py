@@ -276,7 +276,6 @@ class AppTranslationsGenerator(object):
             list_or_detail = row[list_or_detail_index]
             case_property = row[case_property_index]
             default_lang = row[default_lang_index]
-            # TODO: They already got filtered in self._translation_data()
             if not self.checker.is_blacklisted(module_id, list_or_detail, case_property, [default_lang]):
                 valid_rows.append(row)
         return valid_rows
@@ -307,8 +306,6 @@ class AppTranslationsGenerator(object):
             if type_and_id.type == "Menu":
                 case_property_index = self._get_header_index(sheet_name, 'case_property')
                 list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
-                rows = self._filter_invalid_rows_for_module(rows, type_and_id.id, case_property_index,
-                                                            list_or_detail_index, default_lang_index)
 
                 def occurrence(_row):
                     case_property = _row[case_property_index]
@@ -317,7 +314,6 @@ class AppTranslationsGenerator(object):
                     return ':'.join([case_property, _row[list_or_detail_index]])
             elif type_and_id.type == "Form":
                 label_index = self._get_header_index(sheet_name, 'label')
-                rows = self._filter_invalid_rows_for_form(rows, type_and_id.id, label_index)
 
                 def occurrence(_row):
                     return _row[label_index]
