@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import io
 import tempfile
+from collections import defaultdict
 from io import BytesIO
 import os
 
@@ -1152,13 +1153,38 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     def test_bulk_app_sheet_blacklisted(self):
         menu1_id = self.app.modules[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
+                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_is_label.return_value = False
+            mock_get_blacklist.return_value = {
+                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}
+            }
+            menu1_sheet = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)['menu1']
+        self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
+        self.assertIn(('name', 'list', 'Name'), menu1_sheet)
+
+    def test_bulk_app_sheet_blacklisted_text(self):
+        menu1_id = self.app.modules[0].unique_id
+        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
+                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_is_label.return_value = False
             mock_get_blacklist.return_value = {
                 self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}
             }
             menu1_sheet = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)['menu1']
         self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
         self.assertIn(('name', 'list', 'Name'), menu1_sheet)
+
+    def test_bulk_app_sheet_skipped_label(self):
+        menu1_form1_id = self.app.modules[0].forms[0].unique_id
+        with patch('corehq.apps.translations.app_translations.download.get_labels_to_skip') as mock_get_labels, \
+                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_get_blacklist.return_value = {}
+            mock_get_labels.return_value = defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+            menu1_form1_sheet = get_bulk_app_sheets_by_name(self.app, skip_blacklisted=True)['menu1_form1']
+        self.assertNotIn(['What_does_this_look_like-label', 'What does this look like?',
+                          'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''], menu1_form1_sheet)
+        self.assertIn(['no_media-label', 'No media', '', '', ''], menu1_form1_sheet)
 
     def test_bulk_app_single_sheet_rows(self):
         sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0])[SINGLE_SHEET_NAME]
@@ -1228,7 +1254,22 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     def test_bulk_app_single_sheet_blacklisted(self):
         menu1_id = self.app.modules[0].unique_id
-        with patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
+                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_is_label.return_value = False
+            mock_get_blacklist.return_value = {
+                self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}
+            }
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      skip_blacklisted=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
+        self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
+
+    def test_bulk_app_single_sheet_blacklisted_text(self):
+        menu1_id = self.app.modules[0].unique_id
+        with patch('corehq.apps.translations.app_translations.download._is_label_to_skip') as mock_is_label, \
+                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_is_label.return_value = False
             mock_get_blacklist.return_value = {
                 self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}
             }
@@ -1236,6 +1277,18 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                                                       skip_blacklisted=True)[SINGLE_SHEET_NAME]
         self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
         self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
+
+    def test_bulk_app_single_sheet_skipped_label(self):
+        menu1_form1_id = self.app.modules[0].forms[0].unique_id
+        with patch('corehq.apps.translations.app_translations.download.get_labels_to_skip') as mock_get_labels, \
+                patch('corehq.apps.translations.app_translations.download._get_blacklist') as mock_get_blacklist:
+            mock_get_blacklist.return_value = {}
+            mock_get_labels.return_value = defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      skip_blacklisted=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1_form1', '', '', 'What_does_this_look_like-label', 'What does this look like?',
+             'jr://file/commcare/image/data/What_does_this_look_like.png', '', '', ''], sheet)
+        self.assertIn(['menu1_form1', '', '', 'no_media-label', 'No media', '', '', '', ''], sheet)
 
 
 class RenameLangTest(SimpleTestCase):
