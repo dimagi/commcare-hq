@@ -290,6 +290,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         with self._datadog_timing('single_batch_transform'):
             for doc in docs:
+                change = changes_by_id[doc['_id']]
+                doc_subtype = change.metadata.document_subtype
                 eval_context = EvaluationContext(doc)
                 with self._datadog_timing('single_doc_transform'):
                     for adapter in adapters:
@@ -301,10 +303,12 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     try:
                                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                                     except Exception as e:
-                                        change_exceptions.append((changes_by_id[doc["_id"]], e))
+                                        change_exceptions.append((change, e))
                                     eval_context.reset_iteration()
-                            else:
-                                # Delete regardless whether doc exists or not to avoid individual doc lookups
+                            elif (doc_subtype is None
+                                    or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
+                                # Delete if the subtype is unknown or
+                                # if the subtype matches our filters, but the full filter no longer applies
                                 to_delete_by_adapter[adapter].append(doc['_id'])
 
         with self._datadog_timing('single_batch_delete'):
