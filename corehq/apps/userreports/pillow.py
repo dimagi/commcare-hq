@@ -291,6 +291,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         with self._datadog_timing('single_batch_transform'):
             for doc in docs:
                 change = changes_by_id[doc['_id']]
+                doc_subtype = change.metadata.document_subtype
                 eval_context = EvaluationContext(doc)
                 with self._datadog_timing('single_doc_transform'):
                     for adapter in adapters:
@@ -304,8 +305,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     except Exception as e:
                                         change_exceptions.append((change, e))
                                     eval_context.reset_iteration()
-                            elif (change.document_subtype is None
-                                    or change.document_subtype in adapter.get_case_type_or_xmlns_filter()):
+                            elif (doc_subtype is None
+                                    or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
                                 # Delete if the subtype is unknown or if it does not exist in our filters
                                 to_delete_by_adapter[adapter].append(doc['_id'])
 
