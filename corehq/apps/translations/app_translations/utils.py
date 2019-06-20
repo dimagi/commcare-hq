@@ -26,9 +26,8 @@ def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False
         ...
     ]
 
-    exclude_module and exclude_form are functions that take in one argument
-    (form or module) and return True if the module/form should be excluded
-    from the returned list
+    `eligible_for_transifex_only` will skip modules and forms that have "SKIP
+    TRANSIFEX" in their comment.
     '''
     langs = [lang] if lang else app.langs
 
