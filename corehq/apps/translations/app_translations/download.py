@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import re
 from collections import OrderedDict
-from itertools import chain
 
 import six
 from django.utils.encoding import force_text
@@ -20,11 +19,12 @@ from corehq.apps.translations.app_translations.utils import (
     get_module_sheet_name,
     get_modules_and_forms_row,
 )
-from corehq.apps.translations.models import TransifexBlacklist
-from corehq.util.quickcache import quickcache
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 
 
 def get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted=False):
+    checker = EligibleForTransifexChecker(app)
+
     rows = []
     for module in app.modules:
         sheet_name = get_module_sheet_name(module)
@@ -32,7 +32,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted=False):
         for module_row in get_module_rows([lang], module):
             if skip_blacklisted:
                 field_name, field_type, translation = module_row
-                if _is_blacklisted(app.domain, app.id, module.unique_id, field_type, field_name, [translation]):
+                if checker.is_blacklisted(module.unique_id, field_type, field_name, [translation]):
                     continue
             rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
@@ -40,6 +40,11 @@ def get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted=False):
             sheet_name = get_form_sheet_name(form)
             rows.append(get_name_menu_media_row(form, sheet_name, lang))
             for label_name_media in get_form_question_label_name_media([lang], form):
+                if (
+                    skip_blacklisted and
+                    checker.is_label_to_skip(form.unique_id, label_name_media[0])
+                ):
+                    continue
                 rows.append(get_question_row(label_name_media, sheet_name))
 
     return OrderedDict({SINGLE_SHEET_NAME: rows})
@@ -57,6 +62,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, ski
     APP_TRANSLATIONS_WITH_TRANSIFEX enabled. If it is True, sheets will omit
     translations that have been blacklisted.
     """
+    checker = EligibleForTransifexChecker(app)
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = OrderedDict({MODULES_AND_FORMS_SHEET_NAME: []})
@@ -80,7 +86,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, ski
             if skip_blacklisted:
                 field_name, field_type, translations = module_row[0], module_row[1], module_row[2:]
                 # field_name, field_type, *translations = module_row  # TODO: Post-Py2
-                if _is_blacklisted(app.domain, app.id, module.unique_id, field_type, field_name, translations):
+                if checker.is_blacklisted(module.unique_id, field_type, field_name, translations):
                     continue
             rows[module_sheet_name].append(module_row)
 
@@ -98,7 +104,14 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None, ski
                 unique_id=form.unique_id
             ))
 
-            rows[form_sheet_name] = get_form_question_label_name_media(app.langs, form)
+            rows[form_sheet_name] = []
+            for label_name_media in get_form_question_label_name_media(app.langs, form):
+                if (
+                    skip_blacklisted and
+                    checker.is_label_to_skip(form.unique_id, label_name_media[0])
+                ):
+                    continue
+                rows[form_sheet_name].append(label_name_media)
 
     return rows
 
