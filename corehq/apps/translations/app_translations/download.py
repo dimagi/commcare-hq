@@ -27,6 +27,8 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
 
     rows = []
     for module in app.modules:
+        if eligible_for_transifex_only and checker.exclude_module(module):
+            continue
         sheet_name = get_module_sheet_name(module)
         rows.append(get_name_menu_media_row(module, sheet_name, lang))
         for module_row in get_module_rows([lang], module):
@@ -37,6 +39,8 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
             rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
         for form in module.get_forms():
+            if eligible_for_transifex_only and checker.exclude_form(form):
+                continue
             sheet_name = get_form_sheet_name(form)
             rows.append(get_name_menu_media_row(form, sheet_name, lang))
             for label_name_media in get_form_question_label_name_media([lang], form):
