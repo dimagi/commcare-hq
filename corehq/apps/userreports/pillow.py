@@ -288,40 +288,50 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             retry_changes, docs = self.get_docs_for_changes(to_update, domain)
         change_exceptions = []
 
-        for doc in docs:
-            eval_context = EvaluationContext(doc)
+        with self._datadog_timing('single_batch_transform'):
+            for doc in docs:
+                change = changes_by_id[doc['_id']]
+                doc_subtype = change.metadata.document_subtype
+                eval_context = EvaluationContext(doc)
+                with self._datadog_timing('single_doc_transform'):
+                    for adapter in adapters:
+                        with self._datadog_timing('transform', adapter.config._id):
+                            if adapter.config.filter(doc, eval_context):
+                                if adapter.run_asynchronous:
+                                    async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                                else:
+                                    try:
+                                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                                    except Exception as e:
+                                        change_exceptions.append((change, e))
+                                    eval_context.reset_iteration()
+                            elif (doc_subtype is None
+                                    or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
+                                # Delete if the subtype is unknown or
+                                # if the subtype matches our filters, but the full filter no longer applies
+                                to_delete_by_adapter[adapter].append(doc['_id'])
+
+        with self._datadog_timing('single_batch_delete'):
+            # bulk delete by adapter
+            to_delete = [c.id for c in changes_chunk if c.deleted]
             for adapter in adapters:
-                with self._datadog_timing('transform', adapter.config._id):
-                    if adapter.config.filter(doc, eval_context):
-                        if adapter.run_asynchronous:
-                            async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
-                        else:
-                            try:
-                                rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
-                            except Exception as e:
-                                change_exceptions.append((changes_by_id[doc["_id"]], e))
-                            eval_context.reset_iteration()
-                    else:
-                        # Delete regardless whether doc exists or not to avoid individual doc lookups
-                        to_delete_by_adapter[adapter].append(doc['_id'])
-
-        # bulk delete by adapter
-        to_delete = [c.id for c in changes_chunk if c.deleted]
-        for adapter in adapters:
-            with self._datadog_timing('delete', adapter.config._id):
                 delete_ids = to_delete_by_adapter[adapter] + to_delete
-                try:
-                    adapter.bulk_delete(delete_ids)
-                except Exception:
-                    retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
+                if not delete_ids:
+                    continue
+                with self._datadog_timing('delete', adapter.config._id):
+                    try:
+                        adapter.bulk_delete(delete_ids)
+                    except Exception:
+                        retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
 
-        # bulk update by adapter
-        for adapter, rows in six.iteritems(rows_to_save_by_adapter):
-            with self._datadog_timing('load', adapter.config._id):
-                try:
-                    adapter.save_rows(rows)
-                except Exception:
-                    retry_changes.update(to_update)
+        with self._datadog_timing('single_batch_load'):
+            # bulk update by adapter
+            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+                with self._datadog_timing('load', adapter.config._id):
+                    try:
+                        adapter.save_rows(rows)
+                    except Exception:
+                        retry_changes.update(to_update)
 
         if async_configs_by_doc_id:
             with self._datadog_timing('async_config_load'):
