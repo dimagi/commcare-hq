@@ -62,13 +62,13 @@ class UploadedTranslationsValidator(object):
 
     def _filter_rows(self, for_type, expected_rows, sheet_name):
         if for_type == 'form':
-            return self.app_translation_generator._filter_invalid_rows_for_form(
+            return self.app_translation_generator.filter_invalid_rows_for_form(
                 expected_rows,
                 self.app_translation_generator.sheet_name_to_module_or_form_type_and_id[sheet_name].id,
                 self._get_header_index(sheet_name, 'label')
             )
         elif for_type == 'module':
-            return self.app_translation_generator._filter_invalid_rows_for_module(
+            return self.app_translation_generator.filter_invalid_rows_for_module(
                 expected_rows,
                 self.app_translation_generator.sheet_name_to_module_or_form_type_and_id[sheet_name].id,
                 self._get_header_index(sheet_name, 'case_property'),

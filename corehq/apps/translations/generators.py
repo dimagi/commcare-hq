@@ -254,7 +254,7 @@ class AppTranslationsGenerator(object):
                 return index
         raise Exception("Column not found with name {}".format(column_name))
 
-    def _filter_invalid_rows_for_form(self, rows, form_id, label_index):
+    def filter_invalid_rows_for_form(self, rows, form_id, label_index):
         """
         Remove translations from questions that have SKIP TRANSIFEX in the comment
         """
@@ -270,8 +270,8 @@ class AppTranslationsGenerator(object):
     def _blacklisted_translations(self):
         return TransifexBlacklist.objects.filter(domain=self.domain, app_id=self.app_id).all()
 
-    def _filter_invalid_rows_for_module(self, rows, module_id, case_property_index,
-                                        list_or_detail_index, default_lang_index):
+    def filter_invalid_rows_for_module(self, rows, module_id, case_property_index,
+                                       list_or_detail_index, default_lang_index):
         valid_rows = []
         for i, row in enumerate(rows):
             list_or_detail = row[list_or_detail_index]
