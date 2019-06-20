@@ -46,7 +46,10 @@ class UploadedTranslationsValidator(object):
             self.lang_prefix)
 
     def _generate_expected_headers_and_rows(self):
-        self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(self.app)}
+        self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
+            self.app,
+            eligible_for_transifex_only=True  # TODO: Confirm via https://github.com/dimagi/commcare-hq/pull/24621
+        )}
         self.expected_rows = get_bulk_app_sheets_by_name(
             self.app,
             eligible_for_transifex_only=True
