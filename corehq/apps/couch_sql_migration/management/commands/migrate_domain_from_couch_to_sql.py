@@ -13,6 +13,7 @@ from django.core.management.base import BaseCommand, CommandError
 from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
+from corehq.form_processor.change_publishers import publish_case_saved
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 
@@ -41,6 +42,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
+from dimagi.utils.chunked import chunked
 
 log = logging.getLogger('main_couch_sql_datamigration')
 
@@ -172,7 +174,30 @@ class Command(BaseCommand):
                 toggles.DATA_MIGRATION.enable(domain)  # Prevent any more changes on domain
                 set_couch_sql_migration_not_started(domain)
                 set_couch_sql_migration_not_started(dst_domain)
-                # TODO: Reindex forms & cases
+                for case in self._iter_migrated_cases(domain, dst_domain):
+                    publish_case_saved(case, send_post_save_signal=True)
+
+    def _iter_migrated_cases(self, src_domain, dst_domain):
+        db = get_diff_db(src_domain)
+        ZERO = Counts(0, 0)
+        if db.has_doc_counts():
+            doc_counts = db.get_doc_counts()
+        else:
+            doc_counts = None
+        for doc_type in CASE_DOC_TYPES:
+            if doc_counts is not None:
+                counts = doc_counts.get(doc_type, ZERO)
+                case_ids = counts
+            elif doc_type == "CommCareCase":
+                case_ids = set(CaseAccessorSQL.get_case_ids_in_domain(dst_domain))
+            elif doc_type == "CommCareCase-Deleted":
+                case_ids = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain))
+            else:
+                raise NotImplementedError(doc_type)
+            for case_ids_chunk in chunked(case_ids, 500):
+                cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
+                for case in cases:
+                    yield case
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
