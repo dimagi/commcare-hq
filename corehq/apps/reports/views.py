@@ -1683,7 +1683,12 @@ class FormDataView(BaseProjectReportSectionView):
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    instance = safely_get_form(request, domain, xform_id)
+    instance = get_form_or_404(domain, xform_id)
+    if not can_edit_form_location(domain, request.couch_user, instance):
+        # This can happen if a user can view the case but not a particular form
+        return JsonResponse({
+            'html': _("You do not have permission to view this form."),
+        }, status=403)
     context = _get_form_render_context(request, domain, instance, case_id)
     return JsonResponse({
         'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
