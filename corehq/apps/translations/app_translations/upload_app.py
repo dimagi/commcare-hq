@@ -68,6 +68,17 @@ def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, 
     """
 
     def get_expected_headers(sheet_name):
+        # This function does its best to return the headers we expect, based
+        # on the current app, for an uploaded sheet. If the sheet is old, it
+        # might not include the unique IDs of the modules/forms. In that case
+        # `sheet_name_to_unique_id` will be empty and we fall back to using the
+        # name of the sheet and hope that modules/forms have not been moved
+        # since the sheet was originally downloaded.
+        #
+        # If a user created a new sheet, or renamed a sheet, or a form/module
+        # has been deleted since this sheet was downloaded, then expected
+        # headers will not be found. We return an empty list, and
+        # `_check_for_sheet_error()` will handle it.
         if sheet_name in sheet_name_to_unique_id:
             unique_id = sheet_name_to_unique_id[sheet_name]
             if unique_id in expected_headers_by_id:
@@ -110,6 +121,18 @@ def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, 
 
 
 def get_sheet_name_to_unique_id_map(file_or_filename, lang):
+    """
+    Returns a map of sheet names to unique IDs, so that when modules or
+    forms have been moved we can use their ID and not their (changed) name.
+
+    This function is called before we process the upload so that we can use
+    the sheet-name-to-unique-ID map to check the sheets before they are
+    processed.
+
+    `file_or_filename` is a file not a workbook because we read uploaded
+    Excel files using WorkbookJSONReader, and it can only iterate sheet
+    rows once. This function opens its own Reader to parse the first sheet.
+    """
 
     def get_sheet_name():
         return MODULES_AND_FORMS_SHEET_NAME if is_multisheet() else SINGLE_SHEET_NAME
@@ -118,7 +141,10 @@ def get_sheet_name_to_unique_id_map(file_or_filename, lang):
         return not lang
 
     def is_modules_and_forms_row(row):
-        # Rows about the app's modules and forms, like their names and unique IDs
+        """
+        Returns the rows about modules and forms in single-sheet uploads.
+        They are the rows that include the unique IDs.
+        """
         return not row['case_property'] and not row['list_or_detail'] and not row['label']
 
     sheet_name_to_unique_id = {}
@@ -126,6 +152,9 @@ def get_sheet_name_to_unique_id_map(file_or_filename, lang):
     try:
         worksheet = get_single_worksheet(file_or_filename, title=get_sheet_name())
     except WorkbookJSONError:
+        # There is something wrong with the file. The problem will happen
+        # again when we try to process the upload. To preserve current
+        # behaviour, just return silently.
         return sheet_name_to_unique_id
 
     if is_multisheet():
