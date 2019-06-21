@@ -94,6 +94,24 @@
           "type": "location_parent_id"
         }
       },
+       {
+        "display_name": "State ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "state_id",
+        "type": "expression"
+      },
       {
         "display_name": "Submission Date",
         "datatype": "date",
