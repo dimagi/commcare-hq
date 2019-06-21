@@ -86,6 +86,23 @@ class BaseExportView(BaseProjectDataView):
             raise SuspiciousOperation('Attempted to access list view {}'.format(self.export_type))
 
     @property
+    def terminology(self):
+        return {
+            'page_header': _("Export Settings"),
+            'help_text': mark_safe(_("""
+                Learn more about exports on our <a
+                href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
+                target="_blank">Help Site</a>.
+            """)),
+            'name_label': _("Export Name"),
+            'choose_fields_label': _("Choose the fields you want to export."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them. You can also rename
+                fields, which will update the headers in the export file.
+            """),
+        }
+
+    @property
     def page_context(self):
         owner_id = self.export_instance.owner_id
         schema = self.get_export_schema(
@@ -109,6 +126,7 @@ class BaseExportView(BaseProjectDataView):
             'format_options': ["xls", "xlsx", "csv"],
             'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
             'sharing_options': sharing_options,
+            'terminology': self.terminology,
         }
 
     @property
