@@ -30,7 +30,6 @@ from corehq.apps.translations.app_translations.download import (
 )
 from corehq.apps.translations.app_translations.upload_app import (
     get_sheet_name_to_unique_id_map,
-    get_unique_ids_sheet_title,
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
 )
@@ -42,7 +41,6 @@ from corehq.apps.translations.utils import (
 )
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
-    get_single_worksheet,
     get_workbook,
 )
 
