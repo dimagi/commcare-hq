@@ -1023,6 +1023,106 @@ class MovedModuleTest(BulkAppTranslationTestBaseWithApp):
         self.assert_question_label("What does this look like?", 1, 0, "en", "/data/What_does_this_look_like")
 
 
+class MovedFormTest(BulkAppTranslationTestBaseWithApp):
+    """
+    Test the bulk app translation upload when a form is moved to a
+    different module, resulting in different expected headers.
+    """
+    file_path = "data", "bulk_app_translation", "moved_module"
+
+    def test_moved_form(self):
+        headers = (
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id')),
+            ('menu1', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu1_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            # was menu6_form1:
+            ('menu1_form2', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu2', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu2_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu3', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu3_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu4', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu4_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu5', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu6', ('case_property', 'list_or_detail', 'default_en')),
+        )
+        data = (
+            (MODULES_AND_FORMS_SHEET_NAME, (
+                ('Menu', 'menu1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
+                ('Form', 'menu1_form1', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', '', 'c480ace490edc870ae952765e8dfacec33c69fec'),
+                # was menu6_form1:
+                ('Form', 'menu1_form2', 'Advanced Form', '', '', '2b9c856ba2ea4ec1ab8743af299c1627'),
+                # was menu6_form2:
+                ('Form', 'menu1_form3', 'Shadow Form', '', '', 'c42e1a50123c43f2bd1e364f5fa61379'),
+                ('Menu', 'menu2', 'Register Series', '', '', 'b9c25abe21054632a3623199debd7cfa'),
+                ('Form', 'menu2_form1', 'Registration Form', '', '', '280b1b06d1b442b9bba863453ba30bc3'),
+                ('Menu', 'menu3', 'Followup Series', '', '', '217e1c8de3dd46f98c7d2806bc19b580'),
+                ('Form', 'menu3_form1', 'Add Point to Series', '', '', 'a01b55fd2c1a483492c1166029946249'),
+                ('Menu', 'menu4', 'Remove Point', '', '', '17195132472446ed94bd91ba19a2b379'),
+                ('Form', 'menu4_form1', 'Remove Point', '', '', '98458acd899b4d5f87df042a7585e8bb'),
+                ('Menu', 'menu5', 'Empty Reports Module', '', '', '703eb807ae584d1ba8bf9457d7ac7590'),
+                ('Menu', 'menu6', 'Advanced Module', '', '', '7f75ed4c15be44509591f41b3d80746e'),
+            )),
+            ('menu1', (
+                ('case_list_menu_item_label', 'list', 'Steth List'),
+                ('name', 'list', 'Name'),
+                ('name', 'detail', 'Name')
+            )),
+            ('menu1_form1', (
+                ('What_does_this_look_like-label', 'What does this look like?', 'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
+                ('no_media-label', 'No media', '', '', ''),
+                ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')
+            )),
+            # was menu6_form1:
+            ('menu1_form2', (
+                 ('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
+            )),
+            ('menu2', (
+                ('name', 'list', 'Name'), ('name', 'detail', 'Name')
+            )),
+            ('menu2_form1', (
+                ('name_of_series-label', 'Name of series', '', '', '')
+            )),
+            ('menu3', (
+                ('name', 'list', 'Name'),
+                ('Tab 0', 'detail', 'Name'),
+                ('Tab 1', 'detail', 'Graph'),
+                ('name', 'detail', 'Name'),
+                ('line_graph (graph)', 'detail', 'Line Graph'),
+                ('secondary-y-title (graph config)', 'detail', ''),
+                ('x-title (graph config)', 'detail', 'xxx'),
+                ('y-title (graph config)', 'detail', 'yyy'),
+                ('x-name 0 (graph series config)', 'detail', 'xxx'),
+                ('name 0 (graph series config)', 'detail', 'yyy'),
+                ('graph annotation 1', 'detail', 'This is (2, 2)')
+            )),
+            ('menu3_form1', (
+                ('x-label', 'x', '', '' ''),
+                ('y-label', 'y', '', '', '')
+            )),
+            ('menu4', (
+                ('x', 'list', 'X'),
+                ('y', 'list', 'Y'),
+                ('x (ID Mapping Text)', 'detail', 'X Name'),
+                ('1 (ID Mapping Value)', 'detail', 'one'),
+                ('2 (ID Mapping Value)', 'detail', 'two'),
+                ('3 (ID Mapping Value)', 'detail', 'three')
+            )),
+            ('menu4_form1', (
+                ('confirm_remove-label', 'Swipe to remove the point at (<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).')
+            )),
+            ('menu5', ()),
+            ('menu6', (
+                ('name', 'list', 'Name'),
+                ('name', 'detail', 'Name'),
+            )),
+        )
+        expected_messages = [
+            'App Translations Updated!',
+        ]
+        self.upload_raw_excel_translations(headers, data, expected_messages=expected_messages)
+
+
 class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):
 
     file_path = "data", "bulk_app_translation", "form_modifications"
