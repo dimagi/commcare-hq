@@ -922,6 +922,15 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     return render_full_report_notification(request, content)
 
 
+def safely_get_case(request, domain, case_id):
+    """Get case if accessible else raise a 404 or 403"""
+    case = get_case_or_404(domain, case_id)
+    if not (request.can_access_all_locations or
+            user_can_access_case(domain, request.couch_user, case)):
+        raise location_restricted_exception(request)
+    return case
+
+
 @location_safe
 class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_data'
@@ -1086,10 +1095,7 @@ def form_to_json(domain, form, timezone):
 @login_and_domain_required
 @require_GET
 def case_forms(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
-    if not (request.can_access_all_locations or
-                user_can_access_case(domain, request.couch_user, case)):
-        raise location_restricted_exception(request)
+    case = safely_get_case(request, domain, case_id)
     try:
         start_range = int(request.GET['start_range'])
         end_range = int(request.GET['end_range'])
@@ -1111,8 +1117,7 @@ def case_forms(request, domain, case_id):
 def case_property_changes(request, domain, case_id, case_property_name):
     """Returns all changes to a case property
     """
-
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     timezone = get_timezone_for_user(request.couch_user, domain)
     next_transaction = int(request.GET.get('next_transaction', 0))
 
@@ -1140,7 +1145,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 @login_and_domain_required
 @require_GET
 def download_case_history(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     track_workflow(request.couch_user.username, "Case Data Page: Case History csv Downloaded")
     history = get_case_history(case)
     properties = set()
@@ -1188,11 +1193,12 @@ def case_xml(request, domain, case_id):
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_GET
 def case_property_names(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
 
     # We need to look at the export schema in order to remove any case properties that
     # have been deleted from the app. When the data dictionary is fully public, we can use that
@@ -1217,6 +1223,7 @@ def case_property_names(request, domain, case_id):
     return json_response(all_property_names)
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -1224,7 +1231,7 @@ def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     user = request.couch_user
 
     old_properties = case.dynamic_case_properties()
@@ -1277,11 +1284,12 @@ def resave_case_view(request, domain, case_id):
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
 def close_case_view(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     if case.closed:
         messages.info(request, 'Case {} is already closed.'.format(case.name))
     else:
@@ -1298,11 +1306,12 @@ def close_case_view(request, domain, case_id):
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
 def undo_close_case_view(request, domain, case_id, xform_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     if not case.closed:
         messages.info(request, 'Case {} is not closed.'.format(case.name))
     else:
@@ -1314,11 +1323,12 @@ def undo_close_case_view(request, domain, case_id, xform_id):
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
+@location_safe
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
 def export_case_transactions(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     products_by_id = dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
 
     headers = [
@@ -1668,11 +1678,12 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@location_safe
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    instance = get_form_or_404(domain, xform_id)
+    instance = safely_get_form(request, domain, xform_id)
     context = _get_form_render_context(request, domain, instance, case_id)
     return JsonResponse({
         'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
