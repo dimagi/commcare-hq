@@ -233,6 +233,12 @@
               </button>
             </form>
           {% endif %}
+          {% if show_case_templates %}
+            <button type="button" class="btn btn-default pull-left" data-toggle="modal" data-target="#case-templates-modal">
+              <i class="fa fa-puzzle-piece"></i>
+              {% trans 'Create Case Template' %}
+            </button>
+          {% endif %}
           {% if not case.closed and not is_usercase %}
             <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case" class="pull-left">{% csrf_token %}
               <button type="submit" class="btn btn-danger disable-on-submit" >
@@ -250,5 +256,8 @@
 {% block modals %}{{ block.super }}
   {% if show_properties_edit %}
     {% include 'reports/partials/data_corrections_modal.html' %}
+  {% endif %}
+  {% if show_case_templates %}
+    {% include 'reports/partials/create_case_template_modal.html' %}
   {% endif %}
 {% endblock %}
