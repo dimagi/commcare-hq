@@ -115,7 +115,7 @@ def get_sheet_name_to_unique_id_map(file_or_filename, lang):
         return MODULES_AND_FORMS_SHEET_NAME if is_multisheet() else SINGLE_SHEET_NAME
 
     def is_multisheet():
-        return lang is None
+        return not lang
 
     def is_modules_and_forms_row(row):
         # Rows about the app's modules and forms, like their names and unique IDs
@@ -230,10 +230,10 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
 
 
 def _check_workbook_length(workbook, lang):
-    if lang is not None and len(workbook.worksheets) > 1:
+    if lang and len(workbook.worksheets) > 1:
         return _("Expected a single sheet. If you are uploading a multi-sheet file, "
                  "please select 'All Languages'.")
-    if lang is None and len(workbook.worksheets) == 1:
+    if not lang and len(workbook.worksheets) == 1:
         return _("File contains only one sheet. If you are uploading a single-language file, "
                  "please select a language.")
 
