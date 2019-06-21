@@ -36,16 +36,19 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
 )
-from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin
+from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin, ODataFeedMixin
 
 
-class BaseNewExportView(BaseProjectDataView):
+class BaseExportView(BaseProjectDataView):
+    """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
     export_type = None
     is_async = True
+    allow_deid = True
 
+    @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
+        return super(BaseExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def export_helper(self):
@@ -83,17 +86,45 @@ class BaseNewExportView(BaseProjectDataView):
             raise SuspiciousOperation('Attempted to access list view {}'.format(self.export_type))
 
     @property
+    def terminology(self):
+        return {
+            'page_header': _("Export Settings"),
+            'help_text': mark_safe(_("""
+                Learn more about exports on our <a href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview" target="_blank">Help Site</a>.
+            """)),
+            'name_label': _("Export Name"),
+            'choose_fields_label': _("Choose the fields you want to export."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them. You can also rename
+                fields, which will update the headers in the export file.
+            """),
+        }
+
+    @property
     def page_context(self):
         owner_id = self.export_instance.owner_id
+        schema = self.get_export_schema(
+            self.domain,
+            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
+            self.export_instance.identifier,
+        )
+        if self.export_instance.owner_id or not self.export_instance._id:
+            sharing_options = SharingOption.CHOICES
+        else:
+            sharing_options = [SharingOption.EDIT_AND_EXPORT]
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
-            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+            'allow_deid': self.allow_deid and has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
+            'format_options': ["xls", "xlsx", "csv"],
+            'number_of_apps_to_process': schema.get_number_of_apps_to_process(),
+            'sharing_options': sharing_options,
+            'terminology': self.terminology,
         }
 
     @property
@@ -164,13 +195,6 @@ class BaseNewExportView(BaseProjectDataView):
                 })
             return HttpResponseRedirect(url)
 
-
-class BaseModifyNewCustomView(BaseNewExportView):
-
-    @method_decorator(require_can_edit_data)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
-
     @memoized
     def get_export_schema(self, domain, app_id, identifier):
         return self.export_schema_cls.generate_schema_from_builds(
@@ -180,25 +204,9 @@ class BaseModifyNewCustomView(BaseNewExportView):
             only_process_current_builds=True,
         )
 
-    @property
-    def page_context(self):
-        result = super(BaseModifyNewCustomView, self).page_context
-        result['format_options'] = ["xls", "xlsx", "csv"]
-        if self.export_instance.owner_id or not self.export_instance._id:
-            result['sharing_options'] = SharingOption.CHOICES
-        else:
-            result['sharing_options'] = [SharingOption.EDIT_AND_EXPORT]
-        schema = self.get_export_schema(
-            self.domain,
-            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
-            self.export_instance.identifier,
-        )
-        result['number_of_apps_to_process'] = schema.get_number_of_apps_to_process()
-        return result
-
 
 @location_safe
-class CreateNewCustomFormExportView(BaseModifyNewCustomView):
+class CreateNewCustomFormExportView(BaseExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
@@ -217,7 +225,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
 
 
 @location_safe
-class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
+class CreateNewCustomCaseExportView(BaseExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
@@ -256,7 +264,21 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
     urlname = 'new_form_faily_saved_export'
 
 
-class DeleteNewCustomExportView(BaseModifyNewCustomView):
+@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
+    urlname = 'new_odata_case_feed'
+    page_title = ugettext_lazy("Create OData Case Feed")
+    allow_deid = False
+
+
+@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
+    urlname = 'new_odata_form_feed'
+    page_title = ugettext_lazy("Create OData Form Feed")
+    allow_deid = False
+
+
+class DeleteNewCustomExportView(BaseExportView):
     urlname = 'delete_new_custom_export'
     http_method_names = ['post']
     is_async = False
