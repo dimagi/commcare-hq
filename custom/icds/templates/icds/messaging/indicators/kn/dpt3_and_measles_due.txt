@@ -1,1 +1,0 @@
-{{ child_name }} is due for DPT3 and Measles for this month and have not received the vaccination
