@@ -311,11 +311,7 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
             # and in the "name / menu media" row in single-sheet translation files.
             unique_id = row.get('unique_id')
 
-            if unique_id and sheet_name not in self.sheet_name_to_unique_id:
-                # If we have a value for unique_id, save it in self.sheet_name_to_unique_id so we can look it up
-                # for rows where the unique_id column is not populated.
-                self.sheet_name_to_unique_id[sheet_name] = unique_id
-            elif not unique_id and sheet_name in self.sheet_name_to_unique_id:
+            if not unique_id and sheet_name in self.sheet_name_to_unique_id:
                 # If we don't have a value for unique_id, try to fetch it from self.sheet_name_to_unique_id
                 unique_id = self.sheet_name_to_unique_id[sheet_name]
 
