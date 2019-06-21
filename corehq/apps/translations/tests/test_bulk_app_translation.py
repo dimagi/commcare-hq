@@ -1045,7 +1045,7 @@ class MovedFormTest(BulkAppTranslationTestBaseWithApp):
 
     def test_moved_form(self):
         headers = (
-            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id')),
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id')),  # noqa: E501
             ('menu1', ('case_property', 'list_or_detail', 'default_en')),
             ('menu1_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
             # was menu6_form1:
