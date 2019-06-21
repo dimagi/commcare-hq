@@ -478,6 +478,7 @@ class AggAwc(models.Model, AggregateMixin):
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
+    thr_image_count = models.IntegerField(null=True)
 
     objects = CitusComparisonManager()
 
