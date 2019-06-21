@@ -40,7 +40,7 @@ class TestMobileWorkerListView(TestCase):
 
     def test_create_mobile_worker(self):
         resp = self._remote_invoke('create_mobile_worker', {
-            "mobileWorker": {
+            "user": {
                 "first_name": "Test",
                 "last_name": "Test",
                 "username": "test.test",
