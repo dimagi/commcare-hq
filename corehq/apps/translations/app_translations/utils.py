@@ -14,7 +14,7 @@ from corehq.apps.translations.generators import EligibleForTransifexChecker
 from corehq.util.python_compatibility import soft_assert_type_text
 
 
-def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False):
+def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False, by_id=False):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -64,7 +64,7 @@ def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False
         if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_module(module):
             continue
 
-        sheet_name = get_module_sheet_name(module)
+        sheet_name = module.unique_id if by_id else get_module_sheet_name(module)
         headers.append([sheet_name, ['case_property', 'list_or_detail'] + default_lang_list])
 
         for form in module.get_forms():
@@ -73,11 +73,8 @@ def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False
             if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_form(form):
                 continue
 
-            sheet_name = get_form_sheet_name(form)
-            headers.append([
-                sheet_name,
-                ["label"] + lang_list
-            ])
+            sheet_name = form.unique_id if by_id else get_form_sheet_name(form)
+            headers.append([sheet_name, ["label"] + lang_list])
     return headers
 
 

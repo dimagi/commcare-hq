@@ -1,28 +1,22 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
+import os
 import tempfile
 from collections import defaultdict
 from io import BytesIO
-import os
 
-from corehq.apps.translations.generators import EligibleForTransifexChecker
-from couchexport.export import export_raw
-from couchexport.models import Format
 from django.test import SimpleTestCase
+
 from mock import patch
 from six.moves import zip
+
+from couchexport.export import export_raw
+from couchexport.models import Format
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.translations.app_translations.utils import (
-    get_bulk_app_sheet_headers,
-    get_form_sheet_name,
-    get_menu_row,
-    get_module_sheet_name,
-)
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
@@ -31,13 +25,29 @@ from corehq.apps.translations.app_translations.download import (
     get_module_case_list_menu_item_rows,
     get_module_detail_rows,
 )
-from corehq.apps.translations.app_translations.upload_app import process_bulk_app_translation_upload
-from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
-from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
+from corehq.apps.translations.app_translations.upload_app import (
+    get_sheet_name_to_unique_id_map,
+    process_bulk_app_translation_upload,
+)
+from corehq.apps.translations.app_translations.upload_form import (
+    BulkAppTranslationFormUpdater,
+)
+from corehq.apps.translations.app_translations.upload_module import (
+    BulkAppTranslationModuleUpdater,
+)
+from corehq.apps.translations.app_translations.utils import (
+    get_bulk_app_sheet_headers,
+    get_form_sheet_name,
+    get_menu_row,
+    get_module_sheet_name,
+)
+from corehq.apps.translations.const import (
+    MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_NAME,
+)
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 from corehq.util.test_utils import flag_enabled
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONReader
-
+from corehq.util.workbook_json.excel import WorkbookJSONReader, get_workbook
 
 EXCEL_HEADERS = (
     (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en',
@@ -156,8 +166,9 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             f.seek(0)
             workbook = get_workbook(f)
             assert workbook
-            expected_headers = get_bulk_app_sheet_headers(app, lang=lang)
-            messages = process_bulk_app_translation_upload(app, workbook, expected_headers, lang=lang)
+
+            sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(f, lang)
+            messages = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
 
         self.assertSetEqual(
             {m[1] for m in messages}, set(expected_messages)
@@ -1022,6 +1033,106 @@ class MovedModuleTest(BulkAppTranslationTestBaseWithApp):
     def test_moved_module(self):
         self.upload_raw_excel_translations(EXCEL_HEADERS, EXCEL_DATA)
         self.assert_question_label("What does this look like?", 1, 0, "en", "/data/What_does_this_look_like")
+
+
+class MovedFormTest(BulkAppTranslationTestBaseWithApp):
+    """
+    Test the bulk app translation upload when a form is moved to a
+    different module, resulting in different expected headers.
+    """
+    file_path = "data", "bulk_app_translation", "moved_module"
+
+    def test_moved_form(self):
+        headers = (
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id')),  # noqa: E501
+            ('menu1', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu1_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            # was menu6_form1:
+            ('menu1_form2', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu2', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu2_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu3', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu3_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu4', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu4_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu5', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu6', ('case_property', 'list_or_detail', 'default_en')),
+        )
+        data = (
+            (MODULES_AND_FORMS_SHEET_NAME, (
+                ('Menu', 'menu1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),  # noqa: E501
+                ('Form', 'menu1_form1', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', '', 'c480ace490edc870ae952765e8dfacec33c69fec'),  # noqa: E501
+                # was menu6_form1:
+                ('Form', 'menu1_form2', 'Advanced Form', '', '', '2b9c856ba2ea4ec1ab8743af299c1627'),
+                # was menu6_form2:
+                ('Form', 'menu1_form3', 'Shadow Form', '', '', 'c42e1a50123c43f2bd1e364f5fa61379'),
+                ('Menu', 'menu2', 'Register Series', '', '', 'b9c25abe21054632a3623199debd7cfa'),
+                ('Form', 'menu2_form1', 'Registration Form', '', '', '280b1b06d1b442b9bba863453ba30bc3'),
+                ('Menu', 'menu3', 'Followup Series', '', '', '217e1c8de3dd46f98c7d2806bc19b580'),
+                ('Form', 'menu3_form1', 'Add Point to Series', '', '', 'a01b55fd2c1a483492c1166029946249'),
+                ('Menu', 'menu4', 'Remove Point', '', '', '17195132472446ed94bd91ba19a2b379'),
+                ('Form', 'menu4_form1', 'Remove Point', '', '', '98458acd899b4d5f87df042a7585e8bb'),
+                ('Menu', 'menu5', 'Empty Reports Module', '', '', '703eb807ae584d1ba8bf9457d7ac7590'),
+                ('Menu', 'menu6', 'Advanced Module', '', '', '7f75ed4c15be44509591f41b3d80746e'),
+            )),
+            ('menu1', (
+                ('case_list_menu_item_label', 'list', 'Steth List'),
+                ('name', 'list', 'Name'),
+                ('name', 'detail', 'Name')
+            )),
+            ('menu1_form1', (
+                ('What_does_this_look_like-label', 'What does this look like?', 'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),  # noqa: E501
+                ('no_media-label', 'No media', '', '', ''),
+                ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')  # noqa: E501
+            )),
+            # was menu6_form1:
+            ('menu1_form2', (
+                ('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
+            )),
+            ('menu2', (
+                ('name', 'list', 'Name'), ('name', 'detail', 'Name')
+            )),
+            ('menu2_form1', (
+                ('name_of_series-label', 'Name of series', '', '', '')
+            )),
+            ('menu3', (
+                ('name', 'list', 'Name'),
+                ('Tab 0', 'detail', 'Name'),
+                ('Tab 1', 'detail', 'Graph'),
+                ('name', 'detail', 'Name'),
+                ('line_graph (graph)', 'detail', 'Line Graph'),
+                ('secondary-y-title (graph config)', 'detail', ''),
+                ('x-title (graph config)', 'detail', 'xxx'),
+                ('y-title (graph config)', 'detail', 'yyy'),
+                ('x-name 0 (graph series config)', 'detail', 'xxx'),
+                ('name 0 (graph series config)', 'detail', 'yyy'),
+                ('graph annotation 1', 'detail', 'This is (2, 2)')
+            )),
+            ('menu3_form1', (
+                ('x-label', 'x', '', '' ''),
+                ('y-label', 'y', '', '', '')
+            )),
+            ('menu4', (
+                ('x', 'list', 'X'),
+                ('y', 'list', 'Y'),
+                ('x (ID Mapping Text)', 'detail', 'X Name'),
+                ('1 (ID Mapping Value)', 'detail', 'one'),
+                ('2 (ID Mapping Value)', 'detail', 'two'),
+                ('3 (ID Mapping Value)', 'detail', 'three')
+            )),
+            ('menu4_form1', (
+                ('confirm_remove-label', 'Swipe to remove the point at (<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).')  # noqa: E501
+            )),
+            ('menu5', ()),
+            ('menu6', (
+                ('name', 'list', 'Name'),
+                ('name', 'detail', 'Name'),
+            )),
+        )
+        expected_messages = [
+            'App Translations Updated!',
+        ]
+        self.upload_raw_excel_translations(headers, data, expected_messages=expected_messages)
 
 
 class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):

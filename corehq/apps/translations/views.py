@@ -1,35 +1,48 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import io
 
-import six
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-from dimagi.utils.decorators.view import get_file
-from dimagi.utils.logging import notify_exception
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
+import six
+
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.decorators.view import get_file
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps
-from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
-    build_ui_translation_download_file
-from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
+)
+from corehq.apps.app_manager.ui_translations import (
+    build_ui_translation_download_file,
+    process_ui_translation_upload,
+)
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
 )
 from corehq.apps.translations.app_translations.upload_app import (
+    get_sheet_name_to_unique_id_map,
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
 )
-from corehq.apps.translations.utils import update_app_translations_from_trans_dict
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
+from corehq.apps.translations.app_translations.utils import (
+    get_bulk_app_sheet_headers,
+)
+from corehq.apps.translations.utils import (
+    update_app_translations_from_trans_dict,
+)
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONError,
+    get_workbook,
+)
 
 
 @no_conflict_require_POST
@@ -89,7 +102,7 @@ def download_bulk_app_translations(request, domain, app_id):
     lang = request.GET.get('lang')
     skip_blacklisted = request.GET.get('skipbl', 'false') == 'true'
     app = get_app(domain, app_id)
-    headers = get_bulk_app_sheet_headers(app, lang=lang)
+    headers = get_bulk_app_sheet_headers(app, lang=lang, eligible_for_transifex_only=skip_blacklisted)
     if lang:
         sheets = get_bulk_app_single_sheet_by_name(app, lang, skip_blacklisted)
     else:
@@ -113,28 +126,27 @@ def upload_bulk_app_translations(request, domain, app_id):
     validate = request.POST.get('validate')
 
     app = get_app(domain, app_id)
-    workbook = None
-    msgs = []
     try:
         workbook = get_workbook(request.file)
     except WorkbookJSONError as e:
         messages.error(request, six.text_type(e))
-
-    if workbook:
+    else:
         if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
         else:
-            headers = get_bulk_app_sheet_headers(app, lang=lang)
-            msgs = process_bulk_app_translation_upload(app, workbook, headers, lang=lang)
+            sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(request.file, lang)
+            msgs = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
             app.save()
-
-    for msg in msgs:
-        # Add the messages to the request object.
-        # msg[0] should be a function like django.contrib.messages.error .
-        # msg[1] should be a string.
-        msg[0](request, msg[1])
+        _add_messages_to_request(request, msgs)
 
     # In v2, languages is the default tab on the settings page
     return HttpResponseRedirect(
         reverse('app_settings', args=[domain, app_id])
     )
+
+
+def _add_messages_to_request(request, msgs):
+    for add_message_func, message in msgs:
+        # add_message_func is a function like django.contrib.messages.error
+        # message is a string
+        add_message_func(request, message)

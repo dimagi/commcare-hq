@@ -50,14 +50,14 @@ trunk: master
 name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
-  #- nh/cdc/one_domain  # Norman March 26
+  - nh/icds/translations  # Norman June 21
   - fr/case-templates      # FR May 15
   - rn_fix_assign_case_regression # Rohit June 6
   - jls/ko-create-mobile-worker # Jenny June 9
   - jls/draconian-flag # Jenny June 17
   - jls/ko-create-mobile-worker-debug # Jenny June 17
-  - es/odata-exports  # Ethan June 11
-  - je/pillow-etl-metrics  # J$ June 18
+  - es/odata-text  # Ethan June 21
+#  - je/pillow-etl-metrics  # J$ June 18
   - jls/linked-app-multiple-masters # Jenny June 18
   - jls/disable-autofill # Jenny June 19
 submodules: {}
