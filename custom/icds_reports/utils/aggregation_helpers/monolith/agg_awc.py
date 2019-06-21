@@ -68,7 +68,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}"
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
-            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe
+            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
+            thr_image_count
         )
         (
             SELECT
@@ -82,15 +83,20 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             'no',
             5,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END,
+            icds_dashboard_thr_v2.image_count
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            LEFT JOIN icds_dashboard_thr_v2 on (awc_location.doc_id = icds_dashboard_thr_v2.awc_id AND
+                                                icds_dashboard_thr_v2.month = %(start_date)s
+                                                )
             group by awc_location.state_id,
             awc_location.district_id,
             awc_location.block_id,
             awc_location.supervisor_id,
-            awc_location.doc_id
+            awc_location.doc_id,
+            image_count
         )
         """.format(
             tablename=self.tablename,
@@ -581,6 +587,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('num_awc_infra_last_update',),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
+            ('thr_image_count',),
             ('electricity_awc', 'COALESCE(sum(electricity_awc), 0)'),
             ('infantometer', 'COALESCE(sum(infantometer), 0)'),
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
