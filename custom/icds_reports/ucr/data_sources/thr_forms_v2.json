@@ -121,6 +121,22 @@
           "type": "constant",
           "constant": 1
         }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "photo_thr_packets_distributed"
+          ]
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "image_name",
+        "type": "expression"
       }
     ],
     "named_expressions": {
