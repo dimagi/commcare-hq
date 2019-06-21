@@ -58,13 +58,8 @@ def get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=False):
     """
     Data rows for bulk app translation download
 
-    `exclude_module` and `exclude_form` are functions that take in one argument
-    (form or module) and return True if the module/form should be excluded
-    from the returned list
-
-    `skip_blacklisted` applies only to project spaces with
-    APP_TRANSLATIONS_WITH_TRANSIFEX enabled. If it is True, sheets will omit
-    translations that have been blacklisted.
+    If `eligible_for_transifex_only` is True, sheets will omit
+    translations that would not be sent to Transifex.
     """
     checker = EligibleForTransifexChecker(app)
 
