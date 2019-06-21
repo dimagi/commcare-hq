@@ -1605,11 +1605,11 @@ def _get_display_options(request, domain, user, form, support_enabled):
     }
 
 
-def _get_location_safe_form(domain, user, instance_id):
+def safely_get_form(request, domain, instance_id):
     """Fetches a form and verifies that the user can access it."""
     form = get_form_or_404(domain, instance_id)
-    if not can_edit_form_location(domain, user, form):
-        raise PermissionDenied()
+    if not can_edit_form_location(domain, request.couch_user, form):
+        raise location_restricted_exception(request)
     return form
 
 
@@ -1635,8 +1635,7 @@ class FormDataView(BaseProjectReportSectionView):
     @property
     @memoized
     def xform_instance(self):
-        return _get_location_safe_form(
-            self.domain, self.request.couch_user, self.instance_id)
+        return safely_get_form(self.request, self.domain, self.instance_id)
 
     @property
     @memoized
@@ -1737,7 +1736,7 @@ class EditFormInstance(View):
         if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
             raise Http404()
 
-        instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+        instance = safely_get_form(request, domain, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
             deviceID = instance.metadata.deviceID
@@ -1835,7 +1834,7 @@ def restore_edit(request, domain, instance_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     if instance.is_deprecated:
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _('Form was restored from a previous version.'))
@@ -1850,7 +1849,7 @@ def restore_edit(request, domain, instance_id):
 @require_POST
 @location_safe
 def archive_form(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
 
@@ -1937,7 +1936,7 @@ def _get_case_id_and_redirect_url(domain, request):
 @require_permission(Permissions.edit_data)
 @location_safe
 def unarchive_form(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     if instance.is_archived:
         instance.unarchive(user_id=request.couch_user._id)
@@ -1965,7 +1964,7 @@ def _get_data_cleaning_updates(request, old_properties):
 @require_POST
 @location_safe
 def edit_form(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
@@ -1992,7 +1991,7 @@ def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
     from corehq.form_processor.change_publishers import publish_form_saved
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     resave_form(domain, instance)
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
