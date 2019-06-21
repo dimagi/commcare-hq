@@ -1061,8 +1061,8 @@ class MovedFormTest(BulkAppTranslationTestBaseWithApp):
         )
         data = (
             (MODULES_AND_FORMS_SHEET_NAME, (
-                ('Menu', 'menu1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
-                ('Form', 'menu1_form1', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', '', 'c480ace490edc870ae952765e8dfacec33c69fec'),
+                ('Menu', 'menu1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),  # noqa: E501
+                ('Form', 'menu1_form1', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', '', 'c480ace490edc870ae952765e8dfacec33c69fec'),  # noqa: E501
                 # was menu6_form1:
                 ('Form', 'menu1_form2', 'Advanced Form', '', '', '2b9c856ba2ea4ec1ab8743af299c1627'),
                 # was menu6_form2:
@@ -1082,13 +1082,13 @@ class MovedFormTest(BulkAppTranslationTestBaseWithApp):
                 ('name', 'detail', 'Name')
             )),
             ('menu1_form1', (
-                ('What_does_this_look_like-label', 'What does this look like?', 'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
+                ('What_does_this_look_like-label', 'What does this look like?', 'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),  # noqa: E501
                 ('no_media-label', 'No media', '', '', ''),
-                ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')
+                ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')  # noqa: E501
             )),
             # was menu6_form1:
             ('menu1_form2', (
-                 ('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
+                ('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
             )),
             ('menu2', (
                 ('name', 'list', 'Name'), ('name', 'detail', 'Name')
@@ -1122,7 +1122,7 @@ class MovedFormTest(BulkAppTranslationTestBaseWithApp):
                 ('3 (ID Mapping Value)', 'detail', 'three')
             )),
             ('menu4_form1', (
-                ('confirm_remove-label', 'Swipe to remove the point at (<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).')
+                ('confirm_remove-label', 'Swipe to remove the point at (<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).')  # noqa: E501
             )),
             ('menu5', ()),
             ('menu6', (
