@@ -23,11 +23,11 @@ class TestTHRFormsV2(BaseFormsTest):
               }
              ])
 
-    def test_with_image_taken(self):
+    def test_without_image_taken(self):
         self._test_data_source_results(
             'thr_form_v2_without_image',
             [{'count': 1,
                 "doc_id": None,
                 "submitted_on": None,
-                'image_name': None
+                'image_name': ''
               }])
