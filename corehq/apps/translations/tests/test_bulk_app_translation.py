@@ -1,27 +1,21 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import io
+import os
 import tempfile
 from io import BytesIO
-import os
+
+from django.test import SimpleTestCase
+
+from mock import patch
+from six.moves import zip
 
 from couchexport.export import export_raw
 from couchexport.models import Format
-from django.test import SimpleTestCase
-from mock import patch
-from six.moves import zip
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.translations.app_translations.utils import (
-    get_bulk_app_sheet_headers,
-    get_form_sheet_name,
-    get_menu_row,
-    get_module_sheet_name,
-)
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
@@ -30,13 +24,31 @@ from corehq.apps.translations.app_translations.download import (
     get_module_case_list_menu_item_rows,
     get_module_detail_rows,
 )
-from corehq.apps.translations.app_translations.upload_app import process_bulk_app_translation_upload
-from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
-from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
+from corehq.apps.translations.app_translations.upload_app import (
+    get_sheet_name_to_unique_id_map,
+    process_bulk_app_translation_upload,
+)
+from corehq.apps.translations.app_translations.upload_form import (
+    BulkAppTranslationFormUpdater,
+)
+from corehq.apps.translations.app_translations.upload_module import (
+    BulkAppTranslationModuleUpdater,
+)
+from corehq.apps.translations.app_translations.utils import (
+    get_bulk_app_sheet_headers,
+    get_form_sheet_name,
+    get_menu_row,
+    get_module_sheet_name,
+)
+from corehq.apps.translations.const import (
+    MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_NAME,
+)
 from corehq.util.test_utils import flag_enabled
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONReader
-
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONReader,
+    get_workbook,
+)
 
 EXCEL_HEADERS = (
     (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en',
@@ -155,8 +167,9 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             f.seek(0)
             workbook = get_workbook(f)
             assert workbook
-            expected_headers = get_bulk_app_sheet_headers(app, lang=lang)
-            messages = process_bulk_app_translation_upload(app, workbook, expected_headers, lang=lang)
+
+            sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(f, lang)
+            messages = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
 
         self.assertSetEqual(
             {m[1] for m in messages}, set(expected_messages)
