@@ -5,7 +5,12 @@ from django.utils.decorators import method_decorator
 from django.views import View
 
 from corehq import toggles
-from corehq.apps.api.odata.utils import get_case_type_to_properties, get_xmlns_by_app, get_xmlns_to_properties
+from corehq.apps.api.odata.utils import (
+    get_case_odata_fields_from_config,
+    get_case_type_to_properties,
+    get_xmlns_by_app,
+    get_xmlns_to_properties,
+)
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
@@ -111,6 +116,18 @@ class ODataCaseServiceFromExportInstanceView(View):
 class ODataCaseMetadataFromExportInstanceView(View):
 
     urlname = 'odata_case_metadata_from_export_instance'
+
+    @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(toggles.ODATA.required_decorator())
+    def get(self, request, domain):
+        configs = get_odata_case_configs_by_domain(domain)
+        metadata = render_to_string('api/case_odata_metadata.xml', {
+            'config_ids_to_properties': {
+                config.get_id: get_case_odata_fields_from_config(config)
+                for config in sorted(configs, key=lambda _config: _config.get_id)  # For deterministic tests
+            },
+        })
+        return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
 def add_odata_headers(response):
