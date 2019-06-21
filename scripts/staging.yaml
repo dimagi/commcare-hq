@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
-  #- nh/cdc/one_domain  # Norman March 26
+  - nh/icds/translations  # Norman June 21
   - fr/case-templates      # FR May 15
   - rn_fix_assign_case_regression # Rohit June 6
   - jls/ko-create-mobile-worker # Jenny June 9
