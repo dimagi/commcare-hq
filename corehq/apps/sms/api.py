@@ -524,7 +524,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         '[SMS] phone_number is type %s' % type(phone_number)
     )
     _py3_soft_assert(
-        isinstance(text, six.text_type),
+        isinstance(text, (six.text_type, type(None))),
         '[SMS] text is type %s' % type(text)
     )
     _py3_soft_assert(

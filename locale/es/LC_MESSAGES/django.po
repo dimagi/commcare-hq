@@ -14,9 +14,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-11 20:18+0000\n"
-"PO-Revision-Date: 2019-06-04 19:57+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>\n"
+"POT-Creation-Date: 2019-06-18 19:24+0000\n"
+"PO-Revision-Date: 2019-06-11 20:21+0000\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
 "Language: es\n"
@@ -84,7 +84,7 @@ msgid "Web Users"
 msgstr ""
 
 #: corehq/apps/accounting/enterprise.py:140
-#: corehq/apps/accounting/enterprise.py:168
+#: corehq/apps/accounting/enterprise.py:176
 #: corehq/apps/accounting/forms.py:1755 corehq/apps/accounting/forms.py:1819
 #: corehq/apps/app_manager/forms.py:27 corehq/apps/app_manager/models.py:2424
 #: corehq/apps/app_manager/models.py:2927
@@ -154,7 +154,11 @@ msgstr "Rol"
 msgid "Last Login [UTC]"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:160
+#: corehq/apps/accounting/enterprise.py:141
+msgid "Last Access Date [UTC]"
+msgstr ""
+
+#: corehq/apps/accounting/enterprise.py:168
 #: corehq/apps/accounting/user_text.py:49
 #: corehq/apps/users/templates/users/mobile_workers.html:225
 #: corehq/apps/users/templates/users/roles_and_permissions.html:75
@@ -162,7 +166,7 @@ msgstr ""
 msgid "Mobile Workers"
 msgstr "Usuarios Móviles"
 
-#: corehq/apps/accounting/enterprise.py:168
+#: corehq/apps/accounting/enterprise.py:176
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html:18
 #: corehq/apps/accounting/views.py:1103
 #: corehq/apps/data_interfaces/interfaces.py:206
@@ -190,19 +194,19 @@ msgstr "Usuarios Móviles"
 msgid "Username"
 msgstr "Nombre de Usuario"
 
-#: corehq/apps/accounting/enterprise.py:168
+#: corehq/apps/accounting/enterprise.py:176
 msgid "Created Date [UTC]"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:168
+#: corehq/apps/accounting/enterprise.py:176
 msgid "Last Sync [UTC]"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:169
+#: corehq/apps/accounting/enterprise.py:177
 msgid "Last Submission [UTC]"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:169
+#: corehq/apps/accounting/enterprise.py:177
 #: corehq/apps/app_manager/forms.py:116
 #: corehq/apps/app_manager/static_strings.py:64
 #: corehq/apps/hqadmin/reports.py:1274
@@ -211,33 +215,33 @@ msgstr ""
 msgid "CommCare Version"
 msgstr "Versión CommCare"
 
-#: corehq/apps/accounting/enterprise.py:191
+#: corehq/apps/accounting/enterprise.py:199
 msgid "Mobile Form Submissions"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:196
+#: corehq/apps/accounting/enterprise.py:204
 msgid "past {} days"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:201
+#: corehq/apps/accounting/enterprise.py:209
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html:138
 #: corehq/apps/reports/standard/monitoring.py:1092
 msgid "Form Name"
 msgstr "Nombre del Formulario"
 
-#: corehq/apps/accounting/enterprise.py:201
+#: corehq/apps/accounting/enterprise.py:209
 msgid "Submitted [UTC]"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:201
+#: corehq/apps/accounting/enterprise.py:209
 msgid "App Name"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:201
+#: corehq/apps/accounting/enterprise.py:209
 msgid "Mobile User"
 msgstr ""
 
-#: corehq/apps/accounting/enterprise.py:229
+#: corehq/apps/accounting/enterprise.py:237
 msgid "App not found"
 msgstr ""
 
@@ -1254,7 +1258,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html:269
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html:33
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html:20
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:371
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:385
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:75
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html:42
 #: corehq/apps/domain/forms.py:1611 corehq/apps/domain/forms.py:1733
@@ -3018,7 +3022,6 @@ msgstr ""
 #: corehq/apps/reports/standard/sms.py:844
 #: corehq/apps/reports/standard/sms.py:985
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:290
-#: corehq/apps/reports/v2/filters/xpath_column.py:116
 #: corehq/apps/users/templates/users/web_users.html:211
 #: custom/aaa/templates/aaa/reports/unified_beneficiary_details.html:716
 #: custom/ilsgateway/tanzania/reports/facility_details.py:124
@@ -5806,7 +5809,7 @@ msgstr "Problemas:"
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:37
 #: corehq/apps/data_dictionary/views.py:118
 #: corehq/apps/data_dictionary/views.py:124
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:261
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:266
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:7
 msgid "Case Property"
 msgstr "Propiedad del Caso"
@@ -6259,8 +6262,8 @@ msgstr "Instale CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html:12
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:337
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:128
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:235
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:396
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:240
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:410
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html:45
 #: corehq/apps/domain/templates/domain/confirm_plan.html:142
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html:110
@@ -6839,7 +6842,7 @@ msgstr ""
 #: corehq/apps/case_search/templates/case_search/case_search.html:73
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:127
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:220
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:367
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:381
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html:56
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html:17
 #: corehq/apps/domain/templates/domain/stripe_cards.html:68
@@ -7118,7 +7121,6 @@ msgstr "Etiqueta del Caso"
 #: corehq/apps/reports/filters/select.py:70
 #: corehq/apps/reports/standard/cases/basic.py:252
 #: corehq/apps/reports/v2/filters/case_report.py:43
-#: corehq/apps/reports/v2/reports/explore_case_data.py:61
 #: corehq/ex-submodules/casexml/apps/case/views.py:62
 #: corehq/ex-submodules/casexml/apps/case/views.py:103
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:67
@@ -9444,6 +9446,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html:58
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:78
 msgid "Learn more."
 msgstr "Aprender más."
 
@@ -9515,7 +9518,7 @@ msgid "Email when when finished (recommended for large applications)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html:212
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:379
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:393
 #: corehq/apps/domain/forms.py:1950 corehq/apps/integration/forms.py:54
 #: corehq/apps/locations/templates/locations/manage/location.html:128
 #: corehq/apps/translations/templates/app_translations.html:21
@@ -12236,7 +12239,6 @@ msgid "Visit CommCare's knowledge base"
 msgstr "Visite la base de conocimientos de CommCare"
 
 #: corehq/apps/data_dictionary/models.py:12
-#: corehq/apps/reports/v2/filters/xpath_column.py:94
 msgid "Number"
 msgstr "Número"
 
@@ -12613,114 +12615,132 @@ msgid "Case Search"
 msgstr "Búsqueda de Caso"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:69
-#: corehq/apps/data_interfaces/views.py:124
-msgid "Explore Case Data"
-msgstr ""
+#, fuzzy
+#| msgid "Data Preview"
+msgid "Explore Case Data (Preview)"
+msgstr "Vista Previa de Datos"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:72
 msgid ""
 "\n"
-"      Create a custom report or look for data inconsistencies.\n"
+"      This feature allows you to quickly discover the cases of your interest."
+"<br />\n"
+"      This is a Preview Feature.\n"
 "    "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:78
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:83
 msgid ""
 "\n"
 "      Loading...\n"
 "    "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:93
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:98
 #: corehq/tabs/tabclasses.py:691
 msgid "Export Data"
 msgstr "Exportar Datos"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:99
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:104
 msgid "Save Filters"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:112
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:117
 #: corehq/apps/reports/templates/reports/async/filters.html:4
 #: corehq/apps/reports_core/templates/reports_core/partials/filter_panel.html:12
 #: custom/care_pathways/templates/care_pathways/filters.html:4
 msgid "Report Filters"
 msgstr "Filtros de Reporte"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:168
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:238
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:173
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:243
 msgid "Add Column"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:197
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:202
 msgid ""
 "\n"
 "          Loading...\n"
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:205
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:210
 msgid ""
 "\n"
 "          No cases found.\n"
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:213
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:218
 msgid ""
 "\n"
 "          There was an issue fetching cases with these filters.\n"
 "        "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:241
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:246
 msgid "Edit Column"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:248
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:253
 #: corehq/apps/domain/forms.py:227
 msgid "Title"
 msgstr "Título"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:284
-msgid "Match"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:289
-msgid "all of the"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:292
-msgid "any of the"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:295
-msgid "following conditions:"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:349
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:291
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:362
 msgid "Filter Data in Column"
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:356
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:299
+msgid ""
+"\n"
+"                      Treat this property as\n"
+"                      <select class=\"form-control filter-type\"\n"
+"                              data-bind=\"options: $root."
+"editColumnController.availableFilterNames,\n"
+"                                         optionsText: function (val) {\n"
+"                                           return $root.editColumnController."
+"filterTitleByName[val];\n"
+"                                         },\n"
+"                                         value: filterName,\n"
+"                                         event: { change: $root."
+"editColumnController.updateFilterName }\"></select>\n"
+"                      and match\n"
+"                      <select data-bind=\"value: $parent.clause,\n"
+"                                         event: { change: $root."
+"editColumnController.updateFilter }\"\n"
+"                              class=\"form-control filter-clause\">\n"
+"                        <option value=\"all\">\n"
+"                          all of the\n"
+"                        </option>\n"
+"                        <option value=\"any\">\n"
+"                          any of the\n"
+"                        </option>\n"
+"                      </select>\n"
+"                      following conditions:\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:369
 msgid "Add Expression"
 msgstr "Agregue Expresión"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:376
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:390
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html:314
 #: corehq/apps/translations/forms.py:306
 msgid "Add"
 msgstr "Agregar"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:403
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:417
 msgid ""
 "\n"
-"              This task is currently not supported, but we are happy to see\n"
-"              your interest.\n"
+"              This task is currently not supported, but we are happy to\n"
+"              learn about your interest.\n"
 "            "
 msgstr ""
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:411
+#: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:425
 msgid "Ok"
 msgstr ""
 
@@ -13124,6 +13144,10 @@ msgstr "No se pudo encontrar XForm {form_id}"
 #, python-brace-format
 msgid "{success_msg} {count} form(s)"
 msgstr "{success_msg} {count} formulario(s)"
+
+#: corehq/apps/data_interfaces/views.py:124
+msgid "Explore Case Data"
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py:163
 #: corehq/messaging/scheduling/forms.py:1043
@@ -21404,20 +21428,32 @@ msgid "Give Feedback"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html:25
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Are you sure you want to delete this form?\n"
+#| "          "
 msgid ""
 "\n"
-"              Give Feedback on <span data-bind=\"text: featureName\"></"
-"span>\n"
+"              We would love to get your feedback\n"
 "            "
 msgstr ""
+"\n"
+"¿Está seguro de que desea eliminar este formulario?"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html:34
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Are you sure you want to delete this form?\n"
+#| "          "
 msgid ""
 "\n"
-"                How would you rate <span data-bind=\"text: featureName\"></"
-"span>?\n"
+"                How would you rate this feature?\n"
 "              "
 msgstr ""
+"\n"
+"¿Está seguro de que desea eliminar este formulario?"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html:44
 msgid "Don't Like It / Not Useful"
@@ -26840,28 +26876,50 @@ msgid "{num} cases"
 msgstr ""
 
 #: corehq/apps/reports/v2/filters/xpath_column.py:85
-msgid "Equals"
-msgstr ""
+#, fuzzy
+#| msgid "equals"
+msgid "Text equals"
+msgstr "equivalentes"
 
 #: corehq/apps/reports/v2/filters/xpath_column.py:86
-msgid "Does not equal"
-msgstr ""
+#, fuzzy
+#| msgid "does not equal"
+msgid "Text does not equal"
+msgstr "no es equivalente"
+
+#: corehq/apps/reports/v2/filters/xpath_column.py:94
+#, fuzzy
+#| msgid "Number"
+msgid "a Number"
+msgstr "Número"
 
 #: corehq/apps/reports/v2/filters/xpath_column.py:98
-msgid "Is equal to"
+msgid "Number is equal to"
 msgstr ""
 
 #: corehq/apps/reports/v2/filters/xpath_column.py:99
-msgid "Is less than"
-msgstr ""
+#, fuzzy
+#| msgid "less than"
+msgid "Number is less than"
+msgstr "Menos de"
 
 #: corehq/apps/reports/v2/filters/xpath_column.py:100
-msgid "Is greater than"
-msgstr ""
+#, fuzzy
+#| msgid "greater than"
+msgid "Number is greater than"
+msgstr "Mas de"
 
 #: corehq/apps/reports/v2/filters/xpath_column.py:101
-msgid "Is not equal to"
-msgstr ""
+#, fuzzy
+#| msgid "does not equal"
+msgid "Number is not equal to"
+msgstr "no es equivalente"
+
+#: corehq/apps/reports/v2/filters/xpath_column.py:116
+#, fuzzy
+#| msgid "Date"
+msgid "a Date"
+msgstr "Fecha"
 
 #: corehq/apps/reports/v2/filters/xpath_column.py:120
 msgid "Date is"
@@ -26883,7 +26941,7 @@ msgstr ""
 msgid "Could not find the report filter '{}'"
 msgstr ""
 
-#: corehq/apps/reports/v2/reports/explore_case_data.py:93
+#: corehq/apps/reports/v2/reports/explore_case_data.py:87
 msgid "Project Data"
 msgstr ""
 
@@ -29359,15 +29417,15 @@ msgid ""
 "skipping."
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:69
+#: corehq/apps/translations/app_translations/upload_module.py:70
 msgid "case list"
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:73
+#: corehq/apps/translations/app_translations/upload_module.py:74
 msgid "case detail"
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:75
+#: corehq/apps/translations/app_translations/upload_module.py:76
 #, python-brace-format
 msgid ""
 "Expected {expected_count} {list_or_detail} properties in menu {index}, found "
@@ -29375,23 +29433,23 @@ msgid ""
 "updated."
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:159
+#: corehq/apps/translations/app_translations/upload_module.py:170
 #, python-brace-format
 msgid ""
 "Expected {0} case detail tabs for menu {1} but found row for Tab {2}. No "
 "changes were made for menu {1}."
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:190
+#: corehq/apps/translations/app_translations/upload_module.py:201
 #, python-format
 msgid "You must provide at least one translation of the case property '%s'"
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:205
+#: corehq/apps/translations/app_translations/upload_module.py:216
 msgid "You must provide all ID mappings for property '{}'"
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:243
+#: corehq/apps/translations/app_translations/upload_module.py:254
 #, python-brace-format
 msgid ""
 "A row for menu {index} has an unexpected case property \"{field}\". Case "
@@ -29399,7 +29457,7 @@ msgid ""
 "translation download. No translations updated for this row."
 msgstr ""
 
-#: corehq/apps/translations/app_translations/upload_module.py:266
+#: corehq/apps/translations/app_translations/upload_module.py:277
 #, python-brace-format
 msgid ""
 "There is more than one translation for case property \"{field}\" for menu "
@@ -31244,54 +31302,54 @@ msgstr "Descarga Archivo Datos"
 msgid "No landing page found with id {}"
 msgstr "No se encontró una página de inicio con id {}"
 
-#: corehq/apps/users/models.py:245
+#: corehq/apps/users/models.py:242
 msgid "Read Only (No Reports)"
 msgstr "Solo Lectura (No Reportes)"
 
-#: corehq/apps/users/models.py:246
+#: corehq/apps/users/models.py:243
 msgid "App Editor"
 msgstr "Editor de App"
 
-#: corehq/apps/users/models.py:247
+#: corehq/apps/users/models.py:244
 msgid "Read Only"
 msgstr "Solo Lectura"
 
-#: corehq/apps/users/models.py:248
+#: corehq/apps/users/models.py:245
 msgid "Field Implementer"
 msgstr "Implementador de Campo"
 
-#: corehq/apps/users/models.py:249
+#: corehq/apps/users/models.py:246
 msgid "Billing Admin"
 msgstr "Administrador de Facturación"
 
-#: corehq/apps/users/models.py:744
+#: corehq/apps/users/models.py:742
 msgid "Unknown User"
 msgstr "Usuario Desconocido"
 
-#: corehq/apps/users/models.py:746
+#: corehq/apps/users/models.py:744
 msgid "Dimagi User"
 msgstr "Usuario Dimagi"
 
-#: corehq/apps/users/models.py:746
+#: corehq/apps/users/models.py:744
 msgid "Unauthorized User"
 msgstr "Usuario No Autorizado"
 
-#: corehq/apps/users/models.py:2578
+#: corehq/apps/users/models.py:2576
 #, python-format
 msgid "Request to join %s approved"
 msgstr "Solicitud de unirse a %s aprobada "
 
-#: corehq/apps/users/models.py:2594
+#: corehq/apps/users/models.py:2592
 #, python-format
 msgid "Request from %(name)s to join %(domain)s"
 msgstr "Solicitud de %(name)s para unirse a %(domain)s"
 
-#: corehq/apps/users/models.py:2639
+#: corehq/apps/users/models.py:2637
 #, python-format
 msgid "Invitation from %s to join CommCareHQ"
 msgstr "Invitación de %s para unirse a CommCareHQ"
 
-#: corehq/apps/users/models.py:2643
+#: corehq/apps/users/models.py:2641
 msgid "Request to join CommCareHQ approved"
 msgstr "Solicitud para unirse a CommCareHQ, aprobada"
 
@@ -34361,63 +34419,65 @@ msgstr ""
 msgid "Broadcasts"
 msgstr "Transmisiones"
 
-#: corehq/messaging/scheduling/view_helpers.py:86
+#: corehq/messaging/scheduling/view_helpers.py:95
 #, python-brace-format
 msgid ""
 "The '{sheet_name}' sheet is missing an id column. This sheet has been "
 "skipped."
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:102
+#: corehq/messaging/scheduling/view_helpers.py:116
 #, python-brace-format
 msgid "Row {index} in '{sheet_name}' sheet is missing an id."
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:116
+#: corehq/messaging/scheduling/view_helpers.py:135
 #, python-brace-format
 msgid ""
 "Could not find rule for row {index} in '{sheet_name}' sheet, with id {id}"
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:123
+#: corehq/messaging/scheduling/view_helpers.py:142
 #, python-brace-format
 msgid ""
 "Row {index} in '{sheet_name}' sheet, with rule id {id}, is currently "
 "processing and cannot be updated."
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:131
-#, python-brace-format
-msgid ""
-"Row {index} in '{sheet_name}' sheet, with rule id {id}, uses a custom "
-"schedule and cannot be updated."
-msgstr ""
-
-#: corehq/messaging/scheduling/view_helpers.py:137
+#: corehq/messaging/scheduling/view_helpers.py:148
 #, python-brace-format
 msgid ""
 "Row {index} in '{sheet_name}' sheet, with rule id {id}, does not use SMS "
 "content."
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:146
+#: corehq/messaging/scheduling/view_helpers.py:168
 #, python-brace-format
 msgid ""
-"Error updating row {index} in '{sheet_name}' sheet, with rule id {id}: "
-"{detail}"
+"Could not update rule with id {id} in '{sheet_name}' sheet: expected "
+"{expected} row(s) but found {actual}."
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:157
+#: corehq/messaging/scheduling/view_helpers.py:178
+#, python-brace-format
+msgid "Error updating rule with id {id} in '{sheet_name}' sheet: {detail}"
+msgstr ""
+
+#: corehq/messaging/scheduling/view_helpers.py:188
 #, python-brace-format
 msgid "Updated {count} rule(s) in '{sheet_name}' sheet"
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:238
+#: corehq/messaging/scheduling/view_helpers.py:200
+msgid "Rule name must be the same in all rows"
+msgstr ""
+
+#: corehq/messaging/scheduling/view_helpers.py:357
 #, python-brace-format
 msgid "Missing content for {langs}"
 msgstr ""
 
-#: corehq/messaging/scheduling/view_helpers.py:254
+#: corehq/messaging/scheduling/view_helpers.py:382
 msgid "Missing content"
 msgstr ""
 
@@ -36189,7 +36249,7 @@ msgid "High Risk Pregnancies"
 msgstr ""
 
 #: custom/aaa/const.py:16 custom/icds_reports/reports/awc_reports.py:658
-#: custom/icds_reports/reports/maternal_child.py:282
+#: custom/icds_reports/reports/maternal_child.py:276
 msgid "Institutional Deliveries"
 msgstr ""
 
@@ -38055,25 +38115,25 @@ msgstr ""
 msgid "II. Average no. of days on which any PSE activity was conducted at AWCs"
 msgstr ""
 
-#: custom/icds_reports/reports/awc_infrastracture.py:52
+#: custom/icds_reports/reports/awc_infrastracture.py:46
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:112
 msgid "AWCs Reported Clean Drinking Water"
 msgstr ""
 
-#: custom/icds_reports/reports/awc_infrastracture.py:73
+#: custom/icds_reports/reports/awc_infrastracture.py:67
 msgid "AWCs Reported Functional Toilet"
 msgstr ""
 
-#: custom/icds_reports/reports/awc_infrastracture.py:105
+#: custom/icds_reports/reports/awc_infrastracture.py:99
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:124
 msgid "AWCs Reported Weighing Scale: Infants"
 msgstr ""
 
-#: custom/icds_reports/reports/awc_infrastracture.py:126
+#: custom/icds_reports/reports/awc_infrastracture.py:120
 msgid "AWCs Reported Weighing Scale: Mother and Child"
 msgstr ""
 
-#: custom/icds_reports/reports/awc_infrastracture.py:149
+#: custom/icds_reports/reports/awc_infrastracture.py:143
 msgid "AWCs Reported Medicine Kit"
 msgstr ""
 
@@ -38087,17 +38147,17 @@ msgid "Percentage of AWCs with a functional toilet"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:452
-#: custom/icds_reports/reports/maternal_child.py:127
+#: custom/icds_reports/reports/maternal_child.py:121
 msgid "Underweight (Weight-for-Age)"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:476
-#: custom/icds_reports/reports/maternal_child.py:148
+#: custom/icds_reports/reports/maternal_child.py:142
 msgid "Wasting (Weight-for-Height)"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:498
-#: custom/icds_reports/reports/maternal_child.py:171
+#: custom/icds_reports/reports/maternal_child.py:165
 msgid "Stunting (Height-for-Age)"
 msgstr ""
 
@@ -38112,13 +38172,13 @@ msgid ""
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:544
-#: custom/icds_reports/reports/maternal_child.py:192
+#: custom/icds_reports/reports/maternal_child.py:186
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:35
 msgid "Newborns with Low Birth Weight"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:566
-#: custom/icds_reports/reports/maternal_child.py:217
+#: custom/icds_reports/reports/maternal_child.py:211
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:38
 msgid "Early Initiation of Breastfeeding"
 msgstr ""
@@ -38129,7 +38189,7 @@ msgid "Exclusive breastfeeding"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:608
-#: custom/icds_reports/reports/maternal_child.py:261
+#: custom/icds_reports/reports/maternal_child.py:255
 msgid "Children initiated appropriate Complementary Feeding"
 msgstr ""
 
@@ -38138,40 +38198,40 @@ msgid "Immunization Coverage (at age 1 year)"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:767
-#: custom/icds_reports/reports/demographics_data.py:79
+#: custom/icds_reports/reports/demographics_data.py:73
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:79
 msgid "Registered Households"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:768
-#: custom/icds_reports/reports/demographics_data.py:80
+#: custom/icds_reports/reports/demographics_data.py:74
 #: custom/icds_reports/reports/registered_household.py:120
 msgid "Total number of households registered"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:784
-#: custom/icds_reports/reports/demographics_data.py:93
+#: custom/icds_reports/reports/demographics_data.py:87
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:99
 msgid "Percent Aadhaar-seeded Beneficiaries"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:809
-#: custom/icds_reports/reports/demographics_data.py:115
+#: custom/icds_reports/reports/demographics_data.py:109
 msgid "Percent children (0-6 years) enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:822
-#: custom/icds_reports/reports/demographics_data.py:129
+#: custom/icds_reports/reports/demographics_data.py:123
 msgid "Percent pregnant women enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:841
-#: custom/icds_reports/reports/demographics_data.py:148
+#: custom/icds_reports/reports/demographics_data.py:142
 msgid "Percent lactating women enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:857
-#: custom/icds_reports/reports/demographics_data.py:164
+#: custom/icds_reports/reports/demographics_data.py:158
 msgid "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
 msgstr ""
 
@@ -38219,52 +38279,52 @@ msgid ""
 "{:d}"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:77
+#: custom/icds_reports/reports/cas_reach_data.py:71
 msgid "Number of AWCs Open yesterday"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:92
+#: custom/icds_reports/reports/cas_reach_data.py:86
 msgid "Total Number of AWCs open for at least one day in month"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:93
+#: custom/icds_reports/reports/cas_reach_data.py:87
 msgid "Number of AWCs open for at least one day in month"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:106
+#: custom/icds_reports/reports/cas_reach_data.py:100
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:66
 msgid "AWCs Launched"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:120
+#: custom/icds_reports/reports/cas_reach_data.py:114
 msgid "Sectors covered"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:121
+#: custom/icds_reports/reports/cas_reach_data.py:115
 msgid "Total Sectors that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:129
+#: custom/icds_reports/reports/cas_reach_data.py:123
 msgid "Blocks covered"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:130
+#: custom/icds_reports/reports/cas_reach_data.py:124
 msgid "Total Blocks that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:141
+#: custom/icds_reports/reports/cas_reach_data.py:135
 msgid "Districts covered"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:142
+#: custom/icds_reports/reports/cas_reach_data.py:136
 msgid "Total Districts that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:150
+#: custom/icds_reports/reports/cas_reach_data.py:144
 msgid "States/UTs covered"
 msgstr ""
 
-#: custom/icds_reports/reports/cas_reach_data.py:151
+#: custom/icds_reports/reports/cas_reach_data.py:145
 msgid "Total States that have launched ICDS CAS"
 msgstr ""
 
@@ -38280,7 +38340,7 @@ msgstr ""
 msgid "Number of VHSNDs observed"
 msgstr ""
 
-#: custom/icds_reports/reports/maternal_child.py:238
+#: custom/icds_reports/reports/maternal_child.py:232
 msgid "Exclusive Breastfeeding"
 msgstr ""
 
@@ -41473,206 +41533,124 @@ msgstr ""
 #~ "\n"
 #~ "                        Implementation Bundles\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Paquetes de Implementación"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Inquire About Dimagi's Implementation Bundles\n"
 #~ "                        "
-#~ msgstr ""
-#~ "\n"
-#~ "Pregunte Acerca de los Paquetes de Implementación Dimagi"
-
-#~ msgid "Scope"
-#~ msgstr "Alcance"
-
-#~ msgid "Launch"
-#~ msgstr "Lanzamiento"
-
-#~ msgid "Boost"
-#~ msgstr "Impulso"
-
-#~ msgid "Growth"
-#~ msgstr "Crecimiento"
-
-#~ msgid "Scale"
-#~ msgstr "Escalar"
-
-#~ msgid "Cost"
-#~ msgstr "Costo"
-
-#~ msgid "$10,000"
-#~ msgstr "$10,000"
-
-#~ msgid "$40,000"
-#~ msgstr "$40,000"
-
-#~ msgid "$60,000"
-#~ msgstr "$60,000"
-
-#~ msgid "$90,000"
-#~ msgstr "$90,000"
-
-#~ msgid "$160,000"
-#~ msgstr "$160,000"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                    Research and develop a comprehensive "
 #~ "plan for your future digital system.\n"
 #~ "                                "
-#~ msgstr ""
-#~ "\n"
-#~ "Investigue y desarrolle un plan integral para su futuro sistema digital. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Launch a comprehensive pilot system "
 #~ "deployed at test sites.\n"
 #~ "                                "
-#~ msgstr ""
-#~ "\n"
-#~ "Lance un sistema piloto integral desplegado en sitios de prueba. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Strengthen your initial pilot with extra "
 #~ "capacity building services.\n"
 #~ "                                "
-#~ msgstr ""
-#~ "\n"
-#~ "Refuerce su piloto inicial con servicios de desarrollo de capacidad extra."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Further prep for scale with dedicated "
 #~ "capacity building and technology services.\n"
 #~ "                                "
-#~ msgstr ""
-#~ "\n"
-#~ "Preparación adicional para escalar con una dedicada capacidad de "
-#~ "desarrollo y servicios de tecnología. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Go from a pilot through scale with "
 #~ "dedicated capacity building and technology.\n"
 #~ "                                "
-#~ msgstr ""
-#~ "\n"
-#~ "Vaya desde un piloto a través de la escala con una dedicada capacidad de "
-#~ "desarrollo y tecnología. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                On-Site Scoping Visit\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Visita Exploratoria en Campo"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Requirements Analysis\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Análisis de Requisitos"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Application Workflow Design\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Aplicación de Diseño de Flujo de Trabajo"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Field Testing &amp; Iteration\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Prueba en Campo e Iteración"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Training of Trainers\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Capacitación de Capacitadores"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Build &amp; Launch App\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Desarrollar y Lanzar Aplicación"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Additional Program Capacity Services\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Servicios de Capacidad Adicional del Programa"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                            (<a href=\"#services-capacity\">See capacity "
 #~ "services</a>)\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "(<a href=\"#services-capacity\"> Ver servicios de capacidad</a>)"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                                Additional Technology Capacity Services\n"
 #~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Servicios de Capacidad de Tecnología Adicional"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Included CommCare Software Plan"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Indefinitely"
-#~ msgstr "Indefinidamente"
-
-#~ msgid "12 months"
-#~ msgstr "12 meses"
-
-#~ msgid "18 months"
-#~ msgstr "18 meses"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Capacity Services\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Servicios de Capacidad"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Inquire About Dimagi's Capacity Services\n"
 #~ "                        "
-#~ msgstr ""
-#~ "\n"
-#~ "Pregunte Acerca de los Servicios de Capacidad Dimagi"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Program Capacity Services\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Programas de Servicios de Capacidad"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41680,26 +41658,19 @@ msgstr ""
 #~ "spending one\n"
 #~ "                        on one time to develop skills with your staff.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Dimagi viaja en línea para desarrollar capacidades y toma tiempo para "
-#~ "desarrollar habilidades con su personal de forma individual."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        $15,000 per capacity service package.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "$15,000 por paquete de servicios de capacidad."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Worker Performance Monitoring\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Monitoreo de Desempeño del Trabajador"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41707,18 +41678,13 @@ msgstr ""
 #~ "reports\n"
 #~ "                    to strengthen supervision and monitoring processes.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Implementación estratégica de reportes estándar CommCare HQ\n"
-#~ "para reforzar la supervisión y los procesos de monitoreo. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Training of Trainers\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Capacitación de Capacitadores"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41728,18 +41694,13 @@ msgstr ""
 #~ "&amp;\n"
 #~ "                        installation.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Desarrollo de capacidades para capacitadores de la organización para "
-#~ "escalamiento a futuro, incluyendo preparación por teléfono e instalación. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Capacity for Technical Support\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Capacidad para el Soporte Técnico"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41747,18 +41708,13 @@ msgstr ""
 #~ "issue\n"
 #~ "                        tracking for mobile technology.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Capacite al personal técnico acerca de la resolución de problemas y \n"
-#~ "seguimiento de asuntos para tecnología móvil."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Capacity to Build Applications\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Capacidad para Desarrollar Aplicaciones"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41766,19 +41722,13 @@ msgstr ""
 #~ "                        including case management, advanced logic, and\n"
 #~ "                        multimedia.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Aprenda cómo construir sus propias aplicaciones\n"
-#~ "incluyendo manejo de casos, lógica avanzada y\n"
-#~ "multimedia."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Technology Capacity Services\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Servicios de Capacidad de Tecnología"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41786,26 +41736,19 @@ msgstr ""
 #~ "new\n"
 #~ "                        technical capabilities to your program.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Dimagi provee refinamiento adicional de sistema o nuevas\n"
-#~ "capacidades técnicas para su programa. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        $30,000 per capacity service package.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "$30,000 por paquete de servicios de capacidad."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Technology for Outcomes Monitoring\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Tecnología para Monitoreo de Resultados"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41815,20 +41758,13 @@ msgstr ""
 #~ "indicators\n"
 #~ "                        more effectively.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Cree reportes de Excel personalizados y fuera de línea para 5-10 "
-#~ "indicadores de resultados. Optimice la aplicación para dar seguimiento a "
-#~ "indicadores\n"
-#~ "más efectivamente. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Apps for Supportive Supervision\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Aplicaciones para Supervisión de Soporte"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41838,19 +41774,13 @@ msgstr ""
 #~ "supervision\n"
 #~ "                        and monitor quality of FLW service delivery.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Integre una aplicación móvil diseñada para supervisores\n"
-#~ "de campo. Use datos para proveer supervisión de soporte y controle la "
-#~ "calidad del servicio de los Agentes de Campo. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        App Refinement by Dimagi\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Mejora de la Aplicación por Dimagi"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41858,36 +41788,26 @@ msgstr ""
 #~ "on\n"
 #~ "                        feedback from a deployed application.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Dimagi hará modificaciones a la aplicación basadas en\n"
-#~ "retroalimentación recibida de una aplicación lanzada."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Technology for Reminder Messages\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Tecnología para Recordatorio de Mensajes"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Send SMS reminders directly to beneficiaries or\n"
 #~ "                        staff about notifications or upcoming visits.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Envíe recordatorios en SMS directamente a beneficiarios o\n"
-#~ "personal acerca de notificaciones o próximas visitas.  "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Have questions?\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "¿Tiene preguntas?"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41896,41 +41816,28 @@ msgstr ""
 #~ "                           class=\"btn btn-success btn-xl\">Get in Touch "
 #~ "With Us</a>\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "<a href=\"#contactDimagi\"\n"
-#~ "data-toggle=\"modal\"\n"
-#~ "class=\"btn btn-success btn-xl\">Contáctenos</a>"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                            CommCare<br class=\"visible-xs-block\" /> "
 #~ "Global Implementation Services\n"
 #~ "                        "
-#~ msgstr ""
-#~ "\n"
-#~ "CommCare<br class=\"visible-xs-block\" /> Servicios de Implementación "
-#~ "Global"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                            We’re here to help you design, deploy, or\n"
 #~ "                            scale a mobile system, big or small.\n"
 #~ "                        "
-#~ msgstr ""
-#~ "\n"
-#~ "Estamos aquí para ayudarlo a diseñar, lanzar o\n"
-#~ "escalar un sistema móvil, pequeño o grande. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Based all over the world.<br />\n"
 #~ "                        Tailored specifically for local needs.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Presente en todo el mundo.\n"
-#~ "Hecho a la medida específicamente para necesidades locales."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41938,42 +41845,21 @@ msgstr ""
 #~ "design,\n"
 #~ "                        implement, and maintain mobile systems.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Nuestro experimentado equipo de servicios está listo para diseñar,\n"
-#~ "implementar, y mantener sistemas móviles. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Dimagi has a strong history\n"
 #~ "                        of helping organizations deploy mobile systems.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Dimagi tiene mucha experiencia\n"
-#~ "ayudando a organizaciones a lanzar sistemas móviles. "
-
-#~ msgid ""
-#~ "\n"
-#~ "                        View our <a href=\"http://www.dimagi.com/partners/"
-#~ "\">list of partners</a> to see who\n"
-#~ "                        we’ve worked with in the past.\n"
-#~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Vea nuestra <a href=\"http://www.dimagi.com/partners/\"> lista de socios "
-#~ "</a> para ver con quiénes\n"
-#~ "hemos trabajado en el pasado.  "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        On site. In person.<br />\n"
 #~ "                        Our team works with your organization directly.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "En el lugar. En persona. <br />\n"
-#~ "Nuestro equipo trabaja directamente con su organización."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
@@ -41981,33 +41867,21 @@ msgstr ""
 #~ "                        for a mobile deployment and its targeted "
 #~ "outcome.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Lo ayudamos a evaluar el nivel de madurez de su proyecto\n"
-#~ "para un lanzamiento móvil y su resultado esperado. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        We then build the ideal project roadmap, taking\n"
 #~ "                        into account capacity-building needs.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Luego desarrollamos la hoja de ruta del proyecto ideal, tomando\n"
-#~ "en consideración necesidades de desarrollo de capacidades. "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
 #~ "                        Using our custom tools and experience, we create\n"
 #~ "                        a plan tailored to your project.\n"
 #~ "                    "
-#~ msgstr ""
-#~ "\n"
-#~ "Usando nuestras propias herramientas y experiencia, creamos\n"
-#~ "un plan hecho a la medida para su proyecto."
-
-#~ msgid "Rows"
-#~ msgstr "Filas"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "View Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"

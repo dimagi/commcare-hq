@@ -21,8 +21,7 @@ def get_case_type_to_properties(domain):
             or CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
         )
         for export_group_schema in case_export_schema.group_schemas[0].items:
-            cleaned_case_property = export_group_schema.label.replace('_', '')
-            case_type_to_properties[case_type].append(cleaned_case_property)
+            case_type_to_properties[case_type].append(export_group_schema.label)
     return dict(case_type_to_properties)
 
 

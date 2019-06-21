@@ -13,16 +13,19 @@ from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_recor
     get_case_ids_for_case_upload
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class DbaccessorsTest(TestCase):
-    domain = 'test-case-importer-dbaccessors'
 
     @classmethod
     def setUpClass(cls):
         super(DbaccessorsTest, cls).setUpClass()
+        cls.domain_obj = create_domain('test-case-importer-dbaccessors')
+        cls.domain = cls.domain_obj.name
+        cls.user = WebUser.create(cls.domain, 'username', 'password')
         cls.case_upload_1 = CaseUploadRecord(
             upload_id=UUID('7ca20e75-8ba3-4d0d-9c9c-66371e8895dc'),
             task_id=UUID('a2ebc913-11e6-4b6b-b909-355a863e0682'),
@@ -40,6 +43,7 @@ class DbaccessorsTest(TestCase):
     def tearDownClass(cls):
         cls.case_upload_1.delete()
         cls.case_upload_2.delete()
+        cls.user.delete()
         super(DbaccessorsTest, cls).tearDownClass()
 
     def assert_model_lists_equal(self, list_1, list_2):
@@ -48,16 +52,16 @@ class DbaccessorsTest(TestCase):
 
     def test_get_case_uploads(self):
         self.assert_model_lists_equal(
-            get_case_upload_records(self.domain, limit=1),
+            get_case_upload_records(self.domain, self.user, limit=1),
             # gets latest
             [self.case_upload_2])
         self.assert_model_lists_equal(
-            get_case_upload_records(self.domain, limit=2),
+            get_case_upload_records(self.domain, self.user, limit=2),
             # gets latest first
             [self.case_upload_2,
              self.case_upload_1])
         self.assert_model_lists_equal(
-            get_case_upload_records(self.domain, limit=1, skip=1),
+            get_case_upload_records(self.domain, self.user, limit=1, skip=1),
             # skips latest, gets previous
             [self.case_upload_1])
 

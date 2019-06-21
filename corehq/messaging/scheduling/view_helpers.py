@@ -122,7 +122,6 @@ class ConditionalAlertUploader(object):
                 condensed_rows[row['id']].append(row)
                 continue
 
-            rule = getattr(rules_by_id, six.text_type(row['id']), None)
             try:
                 rule = AutomaticUpdateRule.objects.get(
                     pk=row['id'],
@@ -182,7 +181,7 @@ class ConditionalAlertUploader(object):
 
                 if dirty:
                     rule.save()
-                    initiate_messaging_rule_run(self.domain, rule.pk)
+                    initiate_messaging_rule_run(rule)
                     success_count += 1
 
         self.msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(

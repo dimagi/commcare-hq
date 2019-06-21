@@ -238,7 +238,8 @@ class GrapevineResource(Resource):
             content_text = root.find('content').text
             if six.PY2:
                 phone_number = phone_number.decode('utf-8')
-                content_text = content_text.decode('utf-8')
+                if content_text is not None:
+                    content_text = content_text.decode('utf-8')
             bundle.obj = SmsMessage(phone_number, content_text)
 
         elif root.tag == 'gviSmsResponse':

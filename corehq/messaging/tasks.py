@@ -9,7 +9,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.utils import case_load_counter
 from dimagi.utils.couch import CriticalSection
@@ -67,11 +67,7 @@ def _sync_case_for_messaging(domain, case_id):
 def _get_cached_rule(domain, rule_id):
     rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules = [rule for rule in rules if rule.pk == rule_id]
-
-    if len(rules) != 1:
-        return None
-
-    return rules[0]
+    return rules[0] if len(rules) == 1 else None
 
 
 def _sync_case_for_messaging_rule(domain, case_id, rule_id):
@@ -83,21 +79,30 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
         MessagingRuleProgressHelper(rule_id).increment_current_case_count()
 
 
-def initiate_messaging_rule_run(domain, rule_id):
-    MessagingRuleProgressHelper(rule_id).set_initial_progress()
-    AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=True)
-    transaction.on_commit(lambda: run_messaging_rule.delay(domain, rule_id))
+def initiate_messaging_rule_run(rule):
+    if not rule.active:
+        return
+    MessagingRuleProgressHelper(rule.pk).set_initial_progress()
+    AutomaticUpdateRule.objects.filter(pk=rule.pk).update(locked_for_editing=True)
+    transaction.on_commit(lambda: run_messaging_rule.delay(rule.domain, rule.pk))
+
+
+def paginated_case_ids(domain, case_type):
+    row_generator = paginate_query_across_partitioned_databases(
+        CommCareCaseSQL,
+        Q(domain=domain, type=case_type, deleted=False),
+        values=['case_id']
+    )
+    for row in row_generator:
+        # return value from case generator is ('<pk>', '<case_id>')
+        yield row[1]
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
     if not should_use_sql_backend(domain):
         return CaseAccessors(domain).get_case_ids_in_domain(case_type)
     else:
-        return run_query_across_partitioned_databases(
-            CommCareCaseSQL,
-            Q(domain=domain, type=case_type, deleted=False),
-            values=['case_id']
-        )
+        return paginated_case_ids(domain, case_type)
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
