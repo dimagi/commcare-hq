@@ -5,7 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
-from itertools import groupby, chain
+from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -13,7 +13,7 @@ from django.core.management.base import BaseCommand, CommandError
 from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
-from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.change_publishers import publish_case_saved, publish_form_saved
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 
@@ -174,6 +174,8 @@ class Command(BaseCommand):
                 toggles.DATA_MIGRATION.enable(domain)  # Prevent any more changes on domain
                 set_couch_sql_migration_not_started(domain)
                 set_couch_sql_migration_not_started(dst_domain)
+                for form in _iter_migrated_forms(dst_domain):
+                    publish_form_saved(form)
                 for case in _iter_migrated_cases(dst_domain):
                     publish_case_saved(case, send_post_save_signal=True)
 
@@ -323,12 +325,20 @@ def _blow_away_migration(domain, dst_domain):
     log.info("blew away migration for domain {}\n".format(domain))
 
 
+def _iter_migrated_forms(domain):
+    for doc_type in doc_types():
+        form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
+        for form_ids_chunk in chunked(form_ids, 500):
+            for form in FormAccessorSQL.get_forms(list(form_ids_chunk)):
+                yield form
+
+
 def _iter_migrated_cases(domain):
-    case_ids = chain(
-        CaseAccessorSQL.get_case_ids_in_domain(domain),
-        CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
-    )
-    for case_ids_chunk in chunked(case_ids, 500):
-        cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
-        for case in cases:
-            yield case
+    for get_case_ids_func in [
+        CaseAccessorSQL.get_case_ids_in_domain,
+        CaseAccessorSQL.get_deleted_case_ids_in_domain
+    ]:
+        case_ids = get_case_ids_func(domain)
+        for case_ids_chunk in chunked(case_ids, 500):
+            for case in CaseAccessorSQL.get_cases(list(case_ids_chunk)):
+                yield case
