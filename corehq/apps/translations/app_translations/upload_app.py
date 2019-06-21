@@ -158,28 +158,20 @@ def _process_single_sheet(app, sheet, names_map, lang=None):
     """
     msgs = []
     module_or_form = None
-    # Rows pertaining to a module (e.g. case list / case detail) or a form
-    # (i.e. questions). Keyed on that module/form's identifier:
-    module_or_form_rows = {}
-    # Rows about the app's modules and forms, like their names and unique IDs:
     modules_and_forms_rows = []
     rows = []
     for row in sheet:
         if not row['case_property'] and not row['list_or_detail'] and not row['label']:
             modules_and_forms_rows.append(row)
         elif module_or_form != row['menu_or_form']:
-            module_or_form_rows[module_or_form] = rows
+            msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
             module_or_form = row['menu_or_form']
             rows = [row]
         else:
             rows.append(row)
-    module_or_form_rows[module_or_form] = rows
-    # Process modules_and_forms_rows first to populate names_map with their unique IDs
+    msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
     msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
                               modules_and_forms_rows, names_map, lang=lang))
-    # Then process the rows for the modules and the forms.
-    for module_or_form, rows in six.iteritems(module_or_form_rows):
-        msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
     return msgs
 
 
