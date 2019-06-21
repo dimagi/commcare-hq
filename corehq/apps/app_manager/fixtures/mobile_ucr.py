@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
-import random
 
 from django.conf import settings
 from lxml.builder import E
@@ -17,9 +18,9 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_MIGRATING_TO_2,
     MOBILE_UCR_VERSION_2,
 )
-from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.toggles import COMPARE_UCR_REPORTS, NAMESPACE_OTHER
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -33,8 +34,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from six.moves import zip
 from six.moves import map
-
-UCR_COMPARISONS_THRESHOLD = 1000
 
 
 def _should_sync(restore_state):
@@ -91,7 +90,7 @@ class BaseReportFixturesProvider(FixtureProvider):
         return {
             report_config.uuid: report_config
             for app_ in apps
-            for module in app_.modules if isinstance(module, ReportModule)
+            for module in app_.get_report_modules()
             for report_config in module.report_configs
         }
 
@@ -206,7 +205,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             defer_filters, filter_options_by_field, restore_user._couch_user)
 
         if (report_config.report_id in settings.UCR_COMPARISONS and
-                random.randint(0, UCR_COMPARISONS_THRESHOLD) == UCR_COMPARISONS_THRESHOLD):
+                COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
             compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
@@ -383,7 +382,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         report_filter_elem.append(filters_elem)
 
         if (report_config.report_id in settings.UCR_COMPARISONS and
-                random.randint(0, UCR_COMPARISONS_THRESHOLD) == UCR_COMPARISONS_THRESHOLD):
+                COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
             compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.fixture(

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _assign_default_values(apps, schema_editor):
@@ -25,5 +25,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_assign_default_values),
+        migrations.RunPython(_assign_default_values),
     ]

@@ -32,6 +32,8 @@ class AppManagerTest(TestCase):
     min_paths = (
         'files/profile.ccpr',
         'files/profile.xml',
+        'files/suite.xml',
+        'files/media_suite.xml',
         'files/modules-0/forms-0.xml',
     )
     jad_jar_paths = (
@@ -185,7 +187,13 @@ class AppManagerTest(TestCase):
 
     def _check_has_build_files(self, build, paths):
         for path in paths:
-            self.assertTrue(build.fetch_attachment(path, return_bytes=True))
+            self.assertTrue(build.fetch_attachment(path))
+
+    def _app_strings_files(self, build):
+        paths = ['files/default/app_strings.txt']
+        for lang in build.langs:
+            paths.append('files/{}/app_strings.txt'.format(lang))
+        return paths
 
     def _check_legacy_odk_files(self, build):
         self.assertTrue(build.copy_of)
@@ -198,7 +206,7 @@ class AppManagerTest(TestCase):
         build.save()
         build = Application.get(build.get_id)
         self.assertEqual(build.version, build_version)
-        self.assertTrue(build.fetch_attachment(path, return_bytes=True))
+        self.assertTrue(build.fetch_attachment(path))
         self.assertEqual(build.odk_profile_created_after_build, True)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -211,6 +219,15 @@ class AppManagerTest(TestCase):
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy, self.min_paths)
+
+        app_strings_files = self._app_strings_files(copy)
+        self._check_has_build_files(copy, app_strings_files)
+        for path in app_strings_files:
+            lang = path.split("/")[1]
+            data_path = os.path.join(os.path.dirname(__file__), 'data', 'yesno_{}_app_strings.txt'.format(lang))
+            with open(data_path, encoding='utf-8') as f:
+                self.assertEqual(f.read().strip(), copy.fetch_attachment(path).decode('utf-8').strip())
+
         self._check_legacy_odk_files(copy)
 
     @patch_default_builds

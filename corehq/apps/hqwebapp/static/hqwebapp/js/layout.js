@@ -161,5 +161,6 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function ($) {
         showPublishStatus: self.actions.showPublishStatus,
         setBalancePreviewFn: self.utils.setBalancePreviewFn,
         setIsAppbuilderResizing: self.utils.setIsAppbuilderResizing,
+        getAvailableContentHeight: self.utils.getAvailableContentHeight,
     };
 });

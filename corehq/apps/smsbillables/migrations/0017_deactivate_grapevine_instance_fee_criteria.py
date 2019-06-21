@@ -7,7 +7,7 @@ from django.db import migrations
 
 from corehq.apps.smsbillables.management.commands.deactivate_grapevine_instance_fee_criteria import \
     deactivate_grapevine_instance_fee_criteria
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def deactivate_grapevine_instance_fees(apps, schema_editor):
@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(deactivate_grapevine_instance_fees),
+        migrations.RunPython(deactivate_grapevine_instance_fees),
     ]

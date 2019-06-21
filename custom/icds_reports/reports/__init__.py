@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import json
 
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
@@ -23,9 +25,39 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         return self.title
 
     @property
+    def data_provider_classes(self):
+        raise NotImplementedError()
+
+    @property
+    def allow_conditional_agg(self):
+        return toggles.MPR_ASR_CONDITIONAL_AGG.enabled_for_request(self.request)
+
+    @property
     @memoized
     def data_providers(self):
-        raise NotImplementedError()
+        config = self.report_config
+        return [
+            provider_cls(config, allow_conditional_agg=self.allow_conditional_agg)
+            for provider_cls in self.data_provider_classes
+        ]
+
+    @property
+    def template_context(self):
+        context = super(IcdsBaseReport, self).template_context
+        data_providers = [
+            {'title': provider.title,
+            'provider_slug': provider.slug}
+            for provider in self.data_provider_classes
+        ]
+        context['data_providers'] = data_providers
+        context['data_providers_json'] = json.dumps(data_providers)
+        context['parallel_render'] = self.parallel_render
+        return context
+
+    @property
+    def parallel_render(self):
+        return (not self.is_rendered_as_email and not self.is_rendered_as_export
+            and toggles.PARALLEL_MPR_ASR_REPORT.enabled_for_request(self.request))
 
     @property
     def report_config(self):
@@ -57,15 +89,33 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         return config
 
     @property
-    def report_context(self):
-        context = {
-            'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title,
-        }
+    def should_render_subreport(self):
+        return bool(self.request.GET.get('provider_slug', None))
 
-        return context
+    @property
+    def template_report(self):
+        if self.should_render_subreport:
+            return "icds_reports/partials/subreport.html"
+        else:
+            return super(IcdsBaseReport, self).template_report
+
+    @property
+    def report_context(self):
+        if self.parallel_render:
+            if self.should_render_subreport:
+                subreport = self.request.GET.get('provider_slug', None)
+                dp = [_dp for _dp in self.data_providers if _dp.slug == subreport][0]
+                return {'report': self.get_report_context(dp)}
+            else:
+                return {}
+        else:
+            return {
+                'reports': [self.get_report_context(dp) for dp in self.data_providers],
+                'title': self.title,
+            }
 
     def get_report_context(self, data_provider):
+        rows = data_provider.rows if self.filter_set else []
         context = dict(
             has_sections=data_provider.has_sections,
             posttitle=data_provider.posttitle,
@@ -73,7 +123,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
                 title=data_provider.title,
                 slug=data_provider.slug,
                 headers=data_provider.headers,
-                rows=data_provider.rows,
+                rows=rows,
                 subtitle=data_provider.subtitle,
                 default_rows=self.default_rows,
                 start_at_row=0,

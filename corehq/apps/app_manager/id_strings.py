@@ -42,6 +42,14 @@ def _regex_union(regexes):
     return '|'.join('({})'.format(regex) for regex in regexes)
 
 
+def _clean_field_for_mobile(field):
+    """Used for translations that are intended to be sent down to mobile in app_strings.txt
+    Both # and = are un-escapable in this file, so lets remove them and cross our fingers
+    that no one ever wants some_property and some_#property as fields in the same case list
+    """
+    return field.replace('#', '').replace('=', '')
+
+
 REGEXES = []
 REGEX_DEFAULT_VALUES = {}
 
@@ -102,7 +110,7 @@ def detail_column_header_locale(module, detail_type, column):
     if column.useXpathExpression:
         field = 'calculated_property'
     else:
-        field = column.field.replace('#', '')
+        field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.header".format(
         detail_type=detail_type,
         module=module,
@@ -114,7 +122,7 @@ def detail_column_header_locale(module, detail_type, column):
 
 @pattern('m%d.%s.%s_%s_%s.enum.%s')
 def detail_column_enum_variable(module, detail_type, column, key_as_var):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.enum.{key_as_var}".format(
         module=module,
         detail_type=detail_type,
@@ -127,7 +135,7 @@ def detail_column_enum_variable(module, detail_type, column, key_as_var):
 
 @pattern('m%d.%s.%s_%s_%s.graph.key.%s')
 def graph_configuration(module, detail_type, column, key):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.key.{key}".format(
         module=module,
         detail_type=detail_type,
@@ -149,7 +157,7 @@ def mobile_ucr_configuration(module, uuid, key):
 
 @pattern('m%d.%s.%s_%s_%s.graph.series_%d.key.%s')
 def graph_series_configuration(module, detail_type, column, series_index, key):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.series_{series_index}.key.{key}".format(
         module=module,
         detail_type=detail_type,
@@ -173,7 +181,7 @@ def mobile_ucr_series_configuration(module, uuid, series_index, key):
 
 @pattern('m%d.%s.%s_%s_%s.graph.a.%d')
 def graph_annotation(module, detail_type, column, annotation_index):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.a.{a_id}".format(
         module=module,
         detail_type=detail_type,
@@ -193,9 +201,26 @@ def mobile_ucr_annotation(module, uuid, annotation_index):
     )
 
 
+@pattern('m%d.enum.%s')
+def module_name_enum_variable(module, key_as_var):
+    return "m{module.id}.enum.{key_as_var}".format(
+        module=module,
+        key_as_var=key_as_var,
+    )
+
+
 @pattern('modules.m%d')
 def module_locale(module):
     return "modules.m{module.id}".format(module=module)
+
+
+@pattern('m%df%d.enum.%s')
+def form_name_enum_variable(form, key_as_var):
+    return "m{module.id}f{form.id}.enum.{key_as_var}".format(
+        module=form.get_module(),
+        form=form,
+        key_as_var=key_as_var,
+    )
 
 
 @pattern('forms.m%df%d')

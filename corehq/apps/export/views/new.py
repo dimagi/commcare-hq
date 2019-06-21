@@ -1,83 +1,42 @@
 from __future__ import absolute_import
-
-from __future__ import division
 from __future__ import unicode_literals
 
+import json
+
 from couchdbkit import ResourceNotFound
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
+from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
-
-from corehq.apps.export.views.utils import DailySavedExportMixin, DailySavedExportMixin, DashboardFeedMixin
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.models import WebUser
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
-import json
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.generic import View
-
+from django_prbac.utils import has_privilege
+from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
-)
-from corehq.apps.export.exceptions import (
-    ExportAppException,
-    BadExportConfiguration,
-)
-from corehq.apps.export.forms import (
-    EmwfFilterFormExport,
-    FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
-)
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.users.models import WebUser
+from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
+
+from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, SharingOption
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.exceptions import ExportAppException, BadExportConfiguration
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
-    SMSExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
-    SMSExportInstance,
-    ExportInstance,
 )
-from corehq.apps.export.const import (
-    FORM_EXPORT,
-    CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
-    MAX_DATA_FILE_SIZE,
-    MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
-)
-from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
-    get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
-from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.users.permissions import (
-    can_download_data_files,
-    CASE_EXPORT_PERMISSION,
-    DEID_EXPORT_PERMISSION,
-    FORM_EXPORT_PERMISSION,
-    has_permission_to_view_report,
-)
-from memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
+from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin
 
 
 class BaseNewExportView(BaseProjectDataView):
@@ -145,7 +104,7 @@ class BaseNewExportView(BaseProjectDataView):
         }]
 
     def commit(self, request):
-        export = self.export_instance_cls.wrap(json.loads(request.body))
+        export = self.export_instance_cls.wrap(json.loads(request.body.decode('utf-8')))
         if (self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
@@ -188,7 +147,7 @@ class BaseNewExportView(BaseProjectDataView):
                 raise
         else:
             try:
-                post_data = json.loads(self.request.body)
+                post_data = json.loads(self.request.body.decode('utf-8'))
                 url = self.export_home_url
                 # short circuit to check if the submit is from a create or edit feed
                 # to redirect it to the list view
@@ -371,5 +330,13 @@ class CopyExportView(View):
                 new_export.owner_id = request.couch_user.user_id
                 new_export.sharing = SharingOption.PRIVATE
             new_export.save()
-        referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
-        return HttpResponseRedirect(referer)
+            messages.success(
+                request,
+                mark_safe(
+                    _("Export <strong>{}</strong> created.").format(
+                        new_export.name
+                    )
+                )
+            )
+        redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
+        return HttpResponseRedirect(redirect)

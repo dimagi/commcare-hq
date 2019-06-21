@@ -5,7 +5,7 @@ from collections import defaultdict
 from couchdbkit import Database
 
 from django.core.management.base import BaseCommand
-from corehq.preindex import get_preindex_plugins
+from corehq.preindex.accessors import get_preindex_designs
 from dimagi.utils.couch.database import get_design_docs
 from six.moves import input
 
@@ -26,11 +26,9 @@ class Command(BaseCommand):
         db_label_map = defaultdict(lambda: set())
 
         # pull design docs from preindex plugins
-        plugins = get_preindex_plugins()
-        for plugin in plugins:
-            for design in plugin.get_designs():
-                if design.design_path:
-                    db_label_map[design.db.uri].add(design.app_label)
+        for design in get_preindex_designs():
+            if design.design_path:
+                db_label_map[design.db.uri].add(design.app_label)
 
         designs_to_delete = {}
         for db_uri in db_label_map:

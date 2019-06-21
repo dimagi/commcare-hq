@@ -34,12 +34,10 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     """
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
+    if not role_id and not search_string and not count_only:
+        return get_all_commcare_users_by_domain(domain)
+
     query = UserES().domain(domain).mobile_users()
-    if not role_id and not search_string:
-        if count_only:
-            query.count()
-        else:
-            return get_all_commcare_users_by_domain(domain)
 
     if role_id:
         query = query.role_id(role_id)
@@ -48,7 +46,7 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
 
     if count_only:
         return query.count()
-    user_ids = [u['_id'] for u in query.source(['_id']).run().hits]
+    user_ids = query.scroll_ids()
     return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), user_ids))
 
 
@@ -143,13 +141,25 @@ def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
 
 
 def get_user_docs_by_username(usernames):
+    return [
+        ret['doc'] for ret in _get_user_results_by_username(usernames)
+    ]
+
+
+def get_existing_usernames(usernames):
+    return [
+        ret['key'] for ret in _get_user_results_by_username(usernames, include_docs=False)
+    ]
+
+
+def _get_user_results_by_username(usernames, include_docs=True):
     from corehq.apps.users.models import CouchUser
-    return [res['doc'] for res in CouchUser.get_db().view(
+    return CouchUser.get_db().view(
         'users/by_username',
         keys=list(usernames),
         reduce=False,
-        include_docs=True,
-    ).all()]
+        include_docs=include_docs,
+    ).all()
 
 
 def get_all_user_ids():

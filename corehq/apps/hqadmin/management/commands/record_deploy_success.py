@@ -16,27 +16,24 @@ from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
 STYLE_MARKDOWN = 'markdown'
-STYLE_SLACK = 'slack'
 DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'
 INTEGRATION_TEST_URL = 'https://jenkins.dimagi.com/job/integration-tests/'
 
 
-def integration_tests_link(style, url):
-    return make_link(style, 'tests', url)
-
-def diff_link(style, url):
-    return make_link(style, 'here', url)
+def integration_tests_link(url):
+    return make_link('tests', url)
 
 
-def dashboard_link(style, url):
-    return make_link(style, 'dashboard', url)
+def diff_link(url):
+    return make_link('here', url)
 
 
-def make_link(style, label, url):
-    if style == STYLE_MARKDOWN:
-        return '[{label}]({url})'.format(label=label, url=url)
-    elif style == STYLE_SLACK:
-        return '<{url}|{label}>'.format(label=label, url=url)
+def dashboard_link(url):
+    return make_link('dashboard', url)
+
+
+def make_link(label, url):
+    return '[{label}]({url})'.format(label=label, url=url)
 
 
 class Command(BaseCommand):
@@ -96,33 +93,15 @@ class Command(BaseCommand):
 
         deploy_notification_text += "Find the diff {diff_link}"
 
-        if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
-            link = diff_link(STYLE_SLACK, compare_url)
-            if options['environment'] == 'staging':
-                channel = '#staging'
-            elif options['environment'] == 'icds':
-                channel = '#nic-server-standup'
-            else:
-                channel = '#hq-ops'
-            requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
-                "username": "Igor the Iguana",
-                "channel": channel,
-                "text": deploy_notification_text.format(
-                    dashboard_link=dashboard_link(STYLE_SLACK, DASHBOARD_URL),
-                    diff_link=link,
-                    integration_tests_link=integration_tests_link(STYLE_SLACK, INTEGRATION_TEST_URL)
-                ),
-            }))
-
         if settings.DATADOG_API_KEY:
             tags = ['environment:{}'.format(options['environment'])]
-            link = diff_link(STYLE_MARKDOWN, compare_url)
+            link = diff_link(compare_url)
             datadog_api.Event.create(
                 title="Deploy Success",
                 text=deploy_notification_text.format(
-                    dashboard_link=dashboard_link(STYLE_MARKDOWN, DASHBOARD_URL),
+                    dashboard_link=dashboard_link(DASHBOARD_URL),
                     diff_link=link,
-                    integration_tests_link=integration_tests_link(STYLE_MARKDOWN, INTEGRATION_TEST_URL)
+                    integration_tests_link=integration_tests_link(INTEGRATION_TEST_URL)
                 ),
                 tags=tags,
                 alert_type="success"

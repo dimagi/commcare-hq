@@ -39,9 +39,9 @@ hqDefine("reports/js/report_config_models", [
                 if (!_.isNumber(days) || _.isNaN(days)) {
                     error = true;
                 }
-            } else if ((date_range === 'since' || date_range === 'range') && _.isEmpty(self.start_date())) {
+            } else if ((date_range === 'since' || date_range === 'range') && _.isEmpty(ko.utils.unwrapObservable(self.start_date))) {
                 error = true;
-            } else if (date_range === 'range' && _.isEmpty(self.end_date())) {
+            } else if (date_range === 'range' && _.isEmpty(ko.utils.unwrapObservable(self.end_date))) {
                 error = true;
             }
             self.error(error);
@@ -241,26 +241,25 @@ hqDefine("reports/js/report_config_models", [
         self.modalSaveButton = {
             state: ko.observable(),
             saveOptions: function () {
-                var config_data = self.configBeingEdited().unwrap();
-                var select2 = $("[data-ajax-select2]").map(function () {
-                    return $(this).attr('name');
-                }).toArray();
-                for (var key in config_data["filters"]) {
-                    // Make ajax select2 fields into lists so they serialize properly
-                    if (select2.indexOf(key) >= 0) {
-                        config_data["filters"][key] = config_data["filters"][key].split(',');
-                    }
+                // TODO: Ideally the separator would be defined in one place. Right now it is
+                //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
+                var separator = "\u001F",
+                    configData = self.configBeingEdited().unwrap();
+                for (var key in configData.filters) {
                     // remove null filters
-                    if (config_data["filters"].hasOwnProperty(key)) {
-                        if (config_data["filters"][key] === null) {
-                            delete config_data["filters"][key];
+                    if (configData.filters.hasOwnProperty(key)) {
+                        if (configData.filters[key] === null) {
+                            delete configData.filters[key];
+                        }
+                        if (_.isArray(configData.filters[key])) {
+                            configData.filters[key] = configData.filters[key].join(separator);
                         }
                     }
                 }
                 return {
                     url: options.saveUrl,
                     type: 'post',
-                    data: JSON.stringify(config_data),
+                    data: JSON.stringify(configData),
                     dataType: 'json',
                     success: function (data) {
                         var newConfig = reportConfig(data);

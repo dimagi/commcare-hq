@@ -1,0 +1,55 @@
+<div class="col-sm-4">
+  <div class="panel panel-default swatch">
+    <div class="main{% if swatch.inverse %} inverse{% endif %}" style="background-color: #{{ swatch.main.0 }};">
+      <ul class="list-unstyled pull-left shade-list">
+        {% for shade in swatch.shades %}
+          <li class="shade" style="background-color: #{{ shade.0 }};"></li>
+        {% endfor %}
+      </ul>
+      <div class="pull-right description">
+        #{{ swatch.main.0|upper }}
+        <br>
+        @{{ swatch.main.1 }}
+      </div>
+    </div>
+    <div><strong>{{ swatch.name }}</strong></div>
+    <div>{{ swatch.description|safe }}</div>
+    {% if swatch.shades %}
+      <br>
+      <a href="#color-info-modal-{{ swatch.main.0 }}" data-toggle="modal">
+        View shades
+      </a>
+    {% endif %}
+  </div>
+
+  {% if swatch.shades %}
+    <div class="modal fade shades-modal" id="color-info-modal-{{ swatch.main.0 }}">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title">
+              Shades for {{ swatch.name }}
+            </h4>
+          </div>
+          <div class="modal-body">
+            <ul class="list-unstyled shade-list">
+              {% for shade in swatch.shades %}
+                <li>
+                  <div class="shade" style="background-color: #{{ shade.0 }}"></div>
+                  &nbsp;&nbsp;
+                  #{{ shade.0|upper }}
+                  &nbsp;&nbsp;
+                  @{{ shade.1 }}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>

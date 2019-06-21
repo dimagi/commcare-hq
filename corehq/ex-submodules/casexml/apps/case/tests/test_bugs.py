@@ -41,7 +41,7 @@ class CaseBugTestCouchOnly(TestCase):
         case_block = CaseBlock(
             case_id=conflict_id,
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         with self.assertRaises(BulkSaveError):
             submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
 
@@ -70,7 +70,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         case_block = CaseBlock(
             case_id='',
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         form, cases = submit_case_blocks(case_block, 'test-domain')
         self.assertIn('IllegalCaseId', form.problem)
         self.assertEqual([], cases)  # should make no cases
@@ -83,7 +83,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             case_name=value,
             case_type=value,
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         update_caseblock = CaseBlock(
             case_id=case_id,
             user_id=value,
@@ -91,7 +91,7 @@ class CaseBugTest(TestCase, TestFileMixin):
                 'case_name': value,
                 'case_type': value,
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         for caseblock in create_caseblock, update_caseblock:
             form, [case] = submit_case_blocks(caseblock, 'test-domain')
             self.assertEqual(value, case.user_id)

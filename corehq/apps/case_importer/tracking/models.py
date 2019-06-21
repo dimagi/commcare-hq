@@ -1,11 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from django.db import models
 from jsonfield import JSONField
-from corehq.apps.case_importer.tracking.task_status import TaskStatus, \
-    get_task_status_json
-
 from memoized import memoized
+
+from corehq.apps.case_importer.tracking.task_status import (
+    TaskStatus,
+    get_task_status_json,
+)
 from soil.util import get_task
 
 MAX_COMMENT_LENGTH = 2048
@@ -15,8 +18,12 @@ class CaseUploadRecord(models.Model):
     domain = models.CharField(max_length=256)
     created = models.DateTimeField(auto_now_add=True)
 
-    upload_id = models.UUIDField(unique=True)
-    task_id = models.UUIDField(unique=True)
+    upload_id = models.UUIDField(
+        unique=True, help_text="An HQ-level ID that is used to provide a link to this upload record"
+    )
+    task_id = models.UUIDField(
+        unique=True, help_text="The celery task id that handled this upload"
+    )
     task_status_json = JSONField(null=True)
     couch_user_id = models.CharField(max_length=256)
     case_type = models.CharField(max_length=256)

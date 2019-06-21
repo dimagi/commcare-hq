@@ -18,6 +18,7 @@ import re
 
 import operator
 import six
+from ddtrace import tracer
 from django.conf import settings
 from django.db import connections, InternalError, transaction
 from django.db.models import Q, F
@@ -60,6 +61,7 @@ from corehq.form_processor.utils.sql import (
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import split_list_by_db_partition
+from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
@@ -89,8 +91,7 @@ def iter_all_rows(reindex_accessor):
 
 
 def iter_all_ids(reindex_accessor):
-    for doc_id in iter_all_ids_chunked(reindex_accessor):
-        yield doc_id
+    return itertools.chain.from_iterable(iter_all_ids_chunked(reindex_accessor))
 
 
 def iter_all_ids_chunked(reindex_accessor):
@@ -326,10 +327,11 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None):
+    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None, include_deleted=False):
         super(FormReindexAccessor, self).__init__(limit_db_aliases)
         self.domain = domain
         self.include_attachments = include_attachments
+        self.include_deleted = include_deleted
 
     @property
     def model_class(self):
@@ -350,7 +352,7 @@ class FormReindexAccessor(ReindexAccessor):
 
     def extra_filters(self, for_count=False):
         filters = []
-        if not for_count:
+        if not (for_count or self.include_deleted):
             # don't inlucde in count query since the query planner can't account for it
             # hack for django: 'state & DELETED = 0' so 'state = state + state & DELETED'
             filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
@@ -366,7 +368,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         try:
             return XFormInstanceSQL.objects.partitioned_get(form_id)
         except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
+            raise XFormNotFound(form_id)
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
@@ -588,9 +590,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
-        from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
-        case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
+        case_ids = list(get_case_ids_from_form(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
@@ -647,13 +648,8 @@ class FormAccessorSQL(AbstractFormAccessor):
             if form.form_id_updated():
                 operations = form.original_operations + new_operations
                 with transaction.atomic(db_name):
-                    # Reparent must happen before form.save() changes the
-                    # form id; otherwise the form's attachments will disappear
-                    # from the blobs_blobmeta view because of the INNER JOIN
-                    # with the old form attachments table in the view.
-                    # This can be removed when with the blobs_blobmeta view.
-                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
                     form.save()
+                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
                     for model in operations:
                         model.form = form
                         model.save()
@@ -727,11 +723,14 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None):
+    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None, case_type=None,
+                 include_deleted=False):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
         self.start_date = start_date
         self.end_date = end_date
+        self.case_type = case_type
+        self.include_deleted = include_deleted
 
     @property
     def model_class(self):
@@ -748,13 +747,15 @@ class CaseReindexAccessor(ReindexAccessor):
             pass
 
     def extra_filters(self, for_count=False):
-        filters = [Q(deleted=False)]
+        filters = [] if self.include_deleted else [Q(deleted=False)]
         if self.domain:
             filters.append(Q(domain=self.domain))
         if self.start_date is not None:
             filters.append(Q(server_modified_on__gte=self.start_date))
         if self.end_date is not None:
             filters.append(Q(server_modified_on__lt=self.end_date))
+        if self.case_type is not None:
+            filters.append(Q(type=self.case_type))
         return filters
 
 
@@ -873,6 +874,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
+    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_transaction_order_for_case(case_id):
         """ Returns whether the order of transactions needs to be reconciled by client_date
 
@@ -971,16 +973,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
-
-    @staticmethod
-    def iter_case_ids_by_domain_and_type(domain, type_=None):
-        from corehq.sql_db.util import run_query_across_partitioned_databases
-        q_expr = Q(domain=domain) & Q(deleted=False)
-        if type_:
-            q_expr &= Q(type=type_)
-        for case_id in run_query_across_partitioned_databases(
-                CommCareCaseSQL, q_expr, values=['case_id']):
-            yield case_id
 
     @staticmethod
     def save_case(case):
@@ -1242,6 +1234,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         updated_xform_ids = set(updated_xforms_map)
         form_ids_to_fetch = list(form_ids - updated_xform_ids)
+        form_load_counter("rebuild_case", case.domain)(len(form_ids_to_fetch))
         xform_map = {
             form.form_id: form
             for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)
@@ -1272,7 +1265,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             try:
                 return xform_map[form_id]
             except KeyError:
-                raise XFormNotFound
+                raise XFormNotFound(form_id)
 
         for case_transaction in transactions:
             if case_transaction.form_id:

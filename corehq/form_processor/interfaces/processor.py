@@ -228,14 +228,13 @@ class FormProcessorInterface(object):
     def submission_error_form_instance(self, instance, message):
         return self.processor.submission_error_form_instance(self.domain, instance, message)
 
-    def get_case_with_lock(self, case_id, lock=False, strip_history=False, wrap=False):
+    def get_case_with_lock(self, case_id, lock=False, wrap=False):
         """
         Get a case with option lock. If case not found in domains DB also check other DB
         and raise IllegalCaseId if found.
 
         :param case_id: ID of case to fetch
         :param lock: Get a Redis lock for the case. Returns None if False or case not found.
-        :param strip_history: If False, don't include case actions. (Couch only)
         :param wrap: Return wrapped case if True. (Couch only)
         :return: tuple(case, lock). Either could be None
         :raises: IllegalCaseId
@@ -244,7 +243,7 @@ class FormProcessorInterface(object):
         # check this domains DB first to support existing bad data
         from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 
-        case, lock = self.processor.get_case_with_lock(case_id, lock, strip_history, wrap)
+        case, lock = self.processor.get_case_with_lock(case_id, lock, wrap)
         if case:
             return case, lock
 

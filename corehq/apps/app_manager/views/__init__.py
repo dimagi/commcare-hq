@@ -7,6 +7,7 @@ from corehq.apps.app_manager.views.app_summary import (
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
+    FormSummaryDiffView,
 )
 from corehq.apps.app_manager.views.apps import (
     app_from_template,
@@ -75,6 +76,7 @@ from corehq.apps.app_manager.views.forms import (
     view_form_legacy,
     view_form,
     get_form_questions,
+    FormHasSubmissionsView,
 )
 from corehq.apps.app_manager.views.modules import (
     delete_module,
@@ -90,7 +92,6 @@ from corehq.apps.app_manager.views.modules import (
 )
 from corehq.apps.app_manager.views.multimedia import (
     multimedia_ajax,
-    multimedia_list_download,
 )
 from corehq.apps.app_manager.views.releases import (
     AppDiffView,
@@ -107,6 +108,7 @@ from corehq.apps.app_manager.views.releases import (
     short_odk_url,
     short_url,
     update_build_comment,
+    toggle_build_profile,
 )
 from corehq.apps.app_manager.views.schedules import (
     edit_schedule_phases,

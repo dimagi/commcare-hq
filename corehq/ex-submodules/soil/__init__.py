@@ -15,11 +15,13 @@ from django.db import IntegrityError
 from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
-from soil.progress import get_task_progress, get_multiple_task_progress
+from soil.progress import get_task_progress, get_multiple_task_progress, set_task_progress
 from corehq.blobs import get_blob_db
 import six
 from io import open
 
+from corehq.const import ONE_DAY
+from corehq.util.python_compatibility import soft_assert_type_text
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
@@ -106,6 +108,7 @@ class DownloadBase(object):
         headers and causes the download to fail.
         """
         if isinstance(content_disposition, six.string_types):
+            soft_assert_type_text(content_disposition)
             return re.compile('[\r\n]').sub('', content_disposition)
 
         return content_disposition
@@ -130,7 +133,7 @@ class DownloadBase(object):
     def __str__(self):
         return "content-type: %s, disposition: %s" % (self.content_type, self.content_disposition)
 
-    def set_task(self, task, timeout=60 * 60 * 24):
+    def set_task(self, task, timeout=ONE_DAY):
         self.get_cache().set(self._task_key(), task.task_id, timeout)
 
     def _task_key(self):
@@ -138,9 +141,11 @@ class DownloadBase(object):
 
     @property
     def task_id(self):
-        timeout = 60 * 60 * 24
-        task_id = self.get_cache().get(self._task_key(), None)
-        self.get_cache().set(self._task_key(), task_id, timeout)
+        timeout = ONE_DAY
+        task_id = self.get_cache().get(self._task_key())
+        if task_id is not None:
+            # This resets the timeout whenever a task in the cache is accessed in any way
+            self.get_cache().set(self._task_key(), task_id, timeout)
         return task_id
 
     @property
@@ -162,14 +167,7 @@ class DownloadBase(object):
 
     @classmethod
     def set_progress(cls, task, current, total):
-        try:
-            if task:
-                task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
-        except (TypeError, NotImplementedError):
-            pass
-        except IntegrityError:
-            # Not called in task context just pass
-            pass
+        set_task_progress(task, current, total)
 
     @classmethod
     def create(cls, payload, **kwargs):
@@ -190,7 +188,7 @@ class MultipleTaskDownload(DownloadBase):
         result = GroupResult.restore(self.task_id)
         return result
 
-    def set_task(self, task_group, timeout=60 * 60 * 24):
+    def set_task(self, task_group, timeout=ONE_DAY):
         task_group.save()
         self.get_cache().set(self._task_key(), task_group.id, timeout)
 

@@ -7,7 +7,7 @@ from django.core.management import call_command
 from django.db import migrations
 
 from corehq.privileges import LOGIN_AS
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _grandfather_login_as(apps, schema_editor):
@@ -18,6 +18,7 @@ def _grandfather_login_as(apps, schema_editor):
         noinput=True,
     )
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -25,5 +26,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_grandfather_login_as),
+        migrations.RunPython(_grandfather_login_as),
     ]

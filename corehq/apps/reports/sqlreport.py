@@ -20,10 +20,13 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 from six.moves import zip
 from functools import reduce
 from six.moves import range
+
+from corehq.util.soft_assert import soft_assert
 
 
 class SqlReportException(Exception):
@@ -240,6 +243,7 @@ class SqlData(ReportDataSource):
     def wrapped_filters(self):
         def _wrap_if_necessary(string_or_filter):
             if isinstance(string_or_filter, six.string_types):
+                soft_assert_type_text(string_or_filter)
                 filter = RawFilter(string_or_filter)
             else:
                 filter = string_or_filter
@@ -252,10 +256,13 @@ class SqlData(ReportDataSource):
             return []
 
     def query_context(self, start=None, limit=None):
-        return sqlagg.QueryContext(
+        qc = sqlagg.QueryContext(
             self.table_name, self.wrapped_filters, self.group_by, self.order_by,
             start=start, limit=limit
         )
+        for c in self.columns:
+            qc.append_column(c.view)
+        return qc
 
     def get_data(self, start=None, limit=None):
         data = self._get_data(start=start, limit=limit)
@@ -274,10 +281,26 @@ class SqlData(ReportDataSource):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
-        qc = self.query_context(start=start, limit=limit)
-        for c in self.columns:
-            qc.append_column(c.view)
+        if not self.group_by and any(isinstance(c.view, SimpleColumn) for c in self.columns):
+            query_meta = []
+            try:
+                sql = self.get_sql_queries()
+            except NotImplementedError:
+                sql = 'unknown'
+                query_meta = [
+                    cls.__class__.__name__
+                    for cls in self.query_context().query_meta.values()
+                ]
 
+            soft_assert(
+                to='{}@{}'.format('skelly', 'dimagi.com'),
+                exponential_backoff=True,
+            )(False, "sql-agg with simple columns called without group_by", {
+                'queries': sql,
+                'custom_meta': query_meta
+            })
+
+        qc = self.query_context(start=start, limit=limit)
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             return qc.resolve(session.connection(), self.filter_values)
@@ -288,9 +311,6 @@ class SqlData(ReportDataSource):
 
     def get_sql_queries(self):
         qc = self.query_context()
-        for c in self.columns:
-            qc.append_column(c.view)
-
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             return qc.get_query_strings(session.connection())

@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand
 from six.moves import range
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from corehq.apps.app_manager.util import all_apps_by_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.util.log import with_progress_bar
@@ -154,7 +154,7 @@ class Command(BaseCommand):
 
     def _generate_sample_app(self, domain):
         name = 'Case Fixtures App'
-        for app in all_apps_by_domain(domain):
+        for app in get_apps_in_domain(domain):
             if app.name == name:
                 return False
 

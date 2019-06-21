@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import numbers
+import warnings
 from datetime import datetime, date
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V2_NAMESPACE
@@ -27,6 +28,10 @@ class CaseBlock(object):
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
                  close=False, index=None, strict=True):
+        if isinstance(case_id, bytes):
+            case_id = case_id.decode('utf-8')
+        if isinstance(user_id, bytes):
+            user_id = user_id.decode('utf-8')
         # todo: can we use None instead of CaseBlock.undefined, throughout?
         owner_id = CaseBlock.undefined if owner_id is None else owner_id
         self.update = copy.copy(update) if update else {}
@@ -160,8 +165,18 @@ class CaseBlock(object):
             **fields
         )
 
-    def as_string(self):
+    def as_text(self):
+        return self.as_bytes().decode('utf-8')
+
+    def as_bytes(self):
         return ElementTree.tostring(self.as_xml())
+
+    def as_string(self):
+        warnings.warn(
+            "CaseBlock.as_string is deprecated. Use CaseBlock.as_bytes or CaseBlock.as_text instead.",
+            DeprecationWarning,
+        )
+        return self.as_bytes()
 
 
 class CaseBlockError(Exception):
@@ -203,7 +218,11 @@ class _DictToXML(object):
             return ''
         if isinstance(value, datetime):
             return six.text_type(json_format_datetime(value))
-        elif isinstance(value, six.string_types + (numbers.Number, date)):
+        elif isinstance(value, bytes):
+            return value.decode('utf-8')
+        elif isinstance(value, six.text_type):
+            return value
+        elif isinstance(value, (numbers.Number, date)):
             return six.text_type(value)
         else:
             raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))

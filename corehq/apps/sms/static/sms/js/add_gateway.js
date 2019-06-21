@@ -3,7 +3,7 @@ hqDefine('sms/js/add_gateway',[
     "underscore",
     "hqwebapp/js/initial_page_data",
     "sms/js/add_gateway_form_handler",
-], function ($, _, initialPageData,AddGatewayFormHandler) {
+], function ($, _, initialPageData,addGatewayFormHandler) {
     function addParam($widget, count, nm, val) {
         $widget.append('<tr> \
                 <td><input type="text" class="form-control" name="additional_params.' + count + '.name" value="' + nm + '" /></td> \
@@ -18,7 +18,7 @@ hqDefine('sms/js/add_gateway',[
     }
 
     $(function () {
-        var gatewayFormHandler = AddGatewayFormHandler.AddGatewayFormHandler({
+        var gatewayFormHandler = addGatewayFormHandler.addGatewayFormHandler({
             share_backend: initialPageData.get('give_other_domains_access'),
             use_load_balancing: initialPageData.get('use_load_balancing'),
             phone_numbers: initialPageData.get('phone_numbers'),

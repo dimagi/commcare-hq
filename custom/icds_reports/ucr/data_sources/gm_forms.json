@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,9 +18,19 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-gm_forms",
@@ -30,6 +48,24 @@
       "type": "boolean_expression",
       "property_value": "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "AWC ID",
@@ -56,9 +92,9 @@
           "location_type": "supervisor",
           "location_property": "_id"
         },
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
-        "is_nullable": true,
+        "is_nullable": false,
         "type": "expression",
         "column_id": "supervisor_id"
       },
@@ -451,15 +487,13 @@
         "property_value": "F"
       }
     },
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-non-dashboard",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "last_date_gmp",
-          "subtype": "date",
-          "constraint": "month"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {

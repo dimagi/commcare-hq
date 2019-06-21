@@ -4,14 +4,14 @@
   <legend><i class="fa fa-exclamation-warning-sign"></i> {% trans "Issue with registration" %}</legend>
   <p>
     {% blocktrans %}
-    Please check that you have JavaScript enabled to use this site!
-    We found the following issues:
+      Please check that you have JavaScript enabled to use this site!
+      We found the following issues:
     {% endblocktrans %}
   </p>
   <ul data-bind="foreach: submitErrors">
     <li><span data-bind="text:errors"></span></li>
   </ul>
   <button type="button"
-          class="btn btn-lg btn-primary-dark"
+          class="btn btn-lg btn-primary"
           data-bind="click: previousStep">{% trans "Go Back & Fix Form" %}</button>
 </fieldset>

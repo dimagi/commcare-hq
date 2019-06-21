@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from architect.commands import partition
 from django.db import migrations, models
-from corehq.sql_db.operations import HqRunPython, HqRunSQL
+
 from corehq.util.django_migrations import add_if_not_exists_raw
 
 
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 [('domain', 'device_id'), ('domain', 'date'), ('domain', 'type'), ('domain', 'username')]
             ),
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             add_if_not_exists_raw(
                 """
                 CREATE INDEX devicereportentry_domain_device_id_pattern_ops
@@ -62,5 +62,5 @@ class Migration(migrations.Migration):
             DROP INDEX IF EXISTS devicereportentry_domain_device_id_pattern_ops
             """,
         ),
-        HqRunPython(add_partitions),
+        migrations.RunPython(add_partitions),
     ]

@@ -4,26 +4,26 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
-    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
+  <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
+  <script src="{% static "case/js/case_hierarchy.js" %}"></script>
 {% endblock %}
 
 {% block reportcontent %}
-    {% block patient_header %}
-            <div>
-                {% block patient_hat %}
-                    <h2>
-                    {{ patient_doc.name}}
-                    </h2>
-                {% endblock patient_hat %}
-            </div>
-    {% endblock patient_header %}
+  {% block patient_header %}
+    <div>
+      {% block patient_hat %}
+        <h2>
+          {{ patient_doc.name}}
+        </h2>
+      {% endblock patient_hat %}
+    </div>
+  {% endblock patient_header %}
 
-    {% block patient_content %}
-        <div class="col-sm-11">
-            <div class="row">
-                {% include "case/partials/case_hierarchy.html" %}
-            </div>
-        </div>
-    {% endblock patient_content %}
+  {% block patient_content %}
+    <div class="col-sm-11">
+      <div class="row">
+        {% include "case/partials/case_hierarchy.html" %}
+      </div>
+    </div>
+  {% endblock patient_content %}
 {% endblock reportcontent %}

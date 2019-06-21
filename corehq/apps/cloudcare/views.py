@@ -40,12 +40,6 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotF
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.cloudcare.api import (
-    api_closed_to_status,
-    CaseAPIResult,
-    get_filtered_cases,
-    get_filters_from_request_params,
-)
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
@@ -438,7 +432,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         }
 
     def put(self, request, *args, **kwargs):
-        j = json.loads(request.body)
+        j = json.loads(request.body.decode('utf-8'))
         old = ApplicationAccess.get_by_domain(self.domain)
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict

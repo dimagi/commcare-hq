@@ -1,0 +1,73 @@
+DROP TABLE IF EXISTS "icds_db_aww_incentive_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_aww_incentive_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_aww_incentive" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_aww_incentive")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_aww_incentive_7a197ee47818209780c23ed9" (
+            state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name,
+            supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
+            wer_eligible, awc_num_open, valid_visits, expected_visits, is_launched,
+            visit_denominator, awh_eligible, incentive_eligible
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            awcm.district_id,
+            %(month)s AS month,
+            awcm.awc_id,
+            awcm.block_id,
+            awcm.supervisor_id,
+            awcm.state_name,
+            awcm.district_name,
+            awcm.block_name,
+            awcm.supervisor_name,
+            awcm.awc_name,
+            awcm.aww_name,
+            awcm.contact_phone_number,
+            awcm.wer_weighed_0_2,
+            awcm.wer_eligible_0_2,
+            awcm.awc_days_open,
+            sum(ccsm.valid_visits),
+            sum(ccsm.expected_visits),
+            awcm.is_launched = 'yes',
+            round(sum(ccsm.expected_visits)),
+            awcm.awc_days_open >= 21,
+            (ROUND(awcm.wer_weighed_0_2 / GREATEST(awcm.wer_eligible_0_2, 1)::NUMERIC, 4) >= 0.6
+                    OR COALESCE(awcm.wer_eligible_0_2, 0) = 0)
+                AND (ROUND(sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)::NUMERIC, 4) >= 0.6
+                    OR round(COALESCE(sum(ccsm.expected_visits), 0)) = 0)
+          FROM agg_awc_monthly as awcm
+          INNER JOIN agg_ccs_record_monthly AS ccsm
+          ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level
+          WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
+          GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name,
+                awcm.district_name, awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
+                awcm.contact_phone_number, awcm.wer_weighed_0_2, awcm.wer_eligible_0_2,
+                awcm.awc_days_open, awcm.is_launched
+        );
+        /* update visits for cf cases (not in agg_ccs_record) */
+        CREATE TEMPORARY TABLE "tmp_ccs_cf" AS SELECT
+            SUM(0.39) AS expected,
+            SUM(COALESCE(agg_cf.valid_visits, 0)) as valid,
+            ucr.awc_id
+            FROM "ucr_icds-cas_static-ccs_record_cases_cedcca39" ucr
+            LEFT OUTER JOIN "icds_dashboard_ccs_record_cf_forms" agg_cf ON ucr.doc_id = agg_cf.case_id
+                AND agg_cf.month = %(month)s AND agg_cf.supervisor_id = ucr.supervisor_id
+            WHERE %(month)s - add BETWEEN 184 AND 548
+                AND (
+                    closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s
+                )
+                AND date_trunc('month', opened_on) <= %(month)s
+            GROUP BY ucr.awc_id, ucr.supervisor_id;
+        UPDATE "icds_db_aww_incentive_7a197ee47818209780c23ed9" perf
+        SET expected_visits = expected_visits + cf_data.expected,
+            valid_visits = valid_visits + cf_data.valid
+        FROM "tmp_ccs_cf" cf_data
+        WHERE cf_data.awc_id = perf.awc_id;
+        DROP TABLE "tmp_ccs_cf";
+        
+{"month": "2019-01-01", "state_id": "st1"}

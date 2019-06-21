@@ -1,0 +1,256 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_11_visitor_book_forms",
+  "data_source_table": "static-visitorbook_forms",
+  "config": {
+    "title": "MPR - 11 - Visitor Book forms (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "slug": "submitted_on",
+        "field": "submitted_on",
+        "type": "date",
+        "display": "Submission Date"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        },
+        "required": false,
+        "display": "Filter by AWW",
+        "field": "awc_id",
+        "type": "dynamic_choice_list",
+        "slug": "awc_id"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Block",
+        "field": "block_id",
+        "type": "dynamic_choice_list",
+        "slug": "block_id"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by District",
+        "field": "district_id",
+        "type": "dynamic_choice_list",
+        "slug": "district_id"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by State",
+        "field": "state_id",
+        "type": "dynamic_choice_list",
+        "slug": "state_id"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "submitted_on",
+        "field": "submitted_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "submitted_on"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_icds_sup",
+        "field": "visitor_icds_sup",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_icds_sup"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_anm",
+        "field": "visitor_anm",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_anm"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_health_sup",
+        "field": "visitor_health_sup",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_health_sup"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_cdpo",
+        "field": "visitor_cdpo",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_cdpo"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_med_officer",
+        "field": "visitor_med_officer",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_med_officer"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_dpo",
+        "field": "visitor_dpo",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_dpo"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_officer_state",
+        "field": "visitor_officer_state",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_officer_state"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_officer_central",
+        "field": "visitor_officer_central",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_officer_central"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "max",
+        "column_id": "visitor_other",
+        "field": "visitor_other",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "visitor_other"
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

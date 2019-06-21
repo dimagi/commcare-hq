@@ -1,49 +1,61 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import json
 import re
 from base64 import b64encode
-from django.views.decorators.debug import sensitive_post_parameters
-from pygooglechart import QRChart
-from corehq.apps.hqwebapp.utils import sign, update_session_language
-from corehq.apps.settings.forms import (
-    HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
-    HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
-)
-from corehq.apps.settings.utils import get_temp_file
-from corehq.apps.hqwebapp.decorators import use_select2_v4
-from corehq.apps.users.forms import AddPhoneNumberForm
+from io import BytesIO
+
+import qrcode
+import six
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404
-from django.views.decorators.http import require_POST
-from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
-from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS
-import langcodes
-
-from django.http import HttpResponseRedirect, HttpResponse
-from django.utils.decorators import method_decorator
-from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy)
-from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
-                                           login_required, two_factor_exempt)
-from django.urls import reverse
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.util.quickcache import quickcache
-from memoized import memoized
-from dimagi.utils.web import json_response
-from dimagi.utils.couch import CriticalSection
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
-
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.http import require_POST
+from memoized import memoized
 from tastypie.models import ApiKey
 from two_factor.models import PhoneDevice
 from two_factor.utils import default_device
 from two_factor.views import (
-    ProfileView, SetupView, SetupCompleteView,
-    BackupTokensView, DisableView, PhoneSetupView, PhoneDeleteView
+    BackupTokensView,
+    DisableView,
+    PhoneDeleteView,
+    PhoneSetupView,
+    ProfileView,
+    SetupCompleteView,
+    SetupView,
 )
-import six
-from io import open
+
+import langcodes
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_required,
+    require_superuser,
+    two_factor_exempt,
+)
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.utils import sign, update_session_language
+from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.settings.forms import (
+    HQDeviceValidationForm,
+    HQEmptyForm,
+    HQPasswordChangeForm,
+    HQPhoneNumberForm,
+    HQPhoneNumberMethodForm,
+    HQTOTPDeviceForm,
+    HQTwoFactorMethodForm,
+)
+from corehq.apps.users.forms import AddPhoneNumberForm
+from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS, MULTIPLE_APPS_UNLIMITED
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.quickcache import quickcache
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 
 
 @login_and_domain_required
@@ -113,7 +125,6 @@ class MyAccountSettingsView(BaseMyAccountView):
     api_key = None
     template_name = 'settings/edit_my_account.html'
 
-    @use_select2_v4
     @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -165,9 +176,11 @@ class MyAccountSettingsView(BaseMyAccountView):
         }
 
     def phone_number_is_valid(self):
+        if isinstance(self.phone_number, six.string_types):
+            soft_assert_type_text(self.phone_number)
         return (
             isinstance(self.phone_number, six.string_types) and
-            re.compile('^\d+$').match(self.phone_number) is not None
+            re.compile(r'^\d+$').match(self.phone_number) is not None
         )
 
     def process_add_phone_number(self):
@@ -402,6 +415,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         kwargs.update(self.storage.validated_step_data.get('method', {}))
         return PhoneDevice(key=self.get_key(), **kwargs)
 
+
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 
     def get_success_url(self):
@@ -453,15 +467,10 @@ def get_qrcode(data):
     """
     Return a QR Code PNG (binary data)
     """
-    height = width = 250
-    code = QRChart(height, width)
-    code.set_ec('L', 0)  # "Level L" error correction with a 0 pixel margin
-    code.add_data(data)
-    with get_temp_file() as (__, fname):
-        code.download(fname)
-        with open(fname, "rb") as f:
-            png_data = f.read()
-    return png_data
+    image = qrcode.make(data)
+    output = BytesIO()
+    image.save(output, "PNG")
+    return output.getvalue()
 
 
 class EnableMobilePrivilegesView(BaseMyAccountView):

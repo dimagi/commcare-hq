@@ -30,7 +30,7 @@ class ProjectReport(GenericReportView):
 
     @property
     def default_report_url(self):
-        return reverse('reports_home', args=[self.request.project])
+        return reverse('reports_home', args=[self.request.project.name])
 
     @property
     def template_context(self):
@@ -41,6 +41,11 @@ class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
     emailable = True
     is_public = False
+    languages = None
+
+    @classmethod
+    def get_supports_translations(cls):
+        return bool(cls.languages)
 
 
 class CommCareUserMemoizer(object):

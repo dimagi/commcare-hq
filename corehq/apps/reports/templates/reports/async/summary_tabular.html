@@ -3,23 +3,23 @@
 {% load report_tags %}
 {% load i18n %}
 {% block reportcontent %}
-{% block pretable %}{% endblock %}
-{% block reporttable %}
+  {% block pretable %}{% endblock %}
+  {% block reporttable %}
     <table class="table table-striped summary" >
-        {% for header, value in summary_values %}
+      {% for header, value in summary_values %}
         <tr>
-            <th {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+          <th {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
             {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
             {% if header.help_text %}
-                <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
+              <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
             {% endif %}
-            </th>
-            <td class="{% if not value or value.html != None and not value.html %}null-entry{% endif %}">
-                {% if value.html != None %}{{ value.html|safe }}{% else %}{{ value|safe }}{% endif %}
-            </td>
+          </th>
+          <td class="{% if not value or value.html != None and not value.html %}null-entry{% endif %}">
+            {% if value.html != None %}{{ value.html|safe }}{% else %}{{ value|safe }}{% endif %}
+          </td>
         </tr>
-        {% endfor %}
+      {% endfor %}
     </table>
-{% endblock %}
-{% block posttable %}{% endblock %}
+  {% endblock %}
+  {% block posttable %}{% endblock %}
 {% endblock %}

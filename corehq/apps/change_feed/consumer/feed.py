@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 from copy import copy
 
+import six
 from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import TopicPartition
@@ -19,6 +20,7 @@ from six.moves import range
 MIN_TIMEOUT = 500
 
 
+@six.python_2_unicode_compatible
 class KafkaChangeFeed(ChangeFeed):
     """
     Kafka-based implementation of a ChangeFeed
@@ -39,7 +41,7 @@ class KafkaChangeFeed(ChangeFeed):
         self.process_num = process_num
         self._consumer = None
 
-    def __unicode__(self):
+    def __str__(self):
         return 'KafkaChangeFeed: topics: {}, client: {}'.format(self._topics, self._client_id)
 
     @property
@@ -183,7 +185,8 @@ def change_from_kafka_message(message):
         document_store = get_document_store(
             data_source_type=change_meta.data_source_type,
             data_source_name=change_meta.data_source_name,
-            domain=change_meta.domain
+            domain=change_meta.domain,
+            load_source="change_feed",
         )
     except UnknownDocumentStore:
         document_store = None

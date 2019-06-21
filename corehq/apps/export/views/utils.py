@@ -1,69 +1,26 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 from datetime import datetime, timedelta
 
-from django.contrib import messages
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
-
-from corehq.blobs.exceptions import NotFound
-from corehq.util.download import get_download_response
-from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.apps.export.models.new import DataFile, DatePeriod
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-from django.utils.decorators import method_decorator
-from django.views.generic import View
-
-
 import pytz
+from couchexport.models import Format
+from dimagi.utils.web import json_response, get_url_base
+from django.contrib import messages
+from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.generic import View
+from soil import DownloadBase
+from soil.progress import get_task_status
+
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
-)
-from corehq.apps.export.exceptions import (
-    ExportAppException,
-    BadExportConfiguration,
-)
-from corehq.apps.export.forms import (
-    EmwfFilterFormExport,
-    FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
-)
-from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    SMSExportDataSchema,
-    FormExportInstance,
-    CaseExportInstance,
-    SMSExportInstance,
-    ExportInstance,
-)
-from corehq.apps.export.const import (
-    FORM_EXPORT,
-    CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
-    MAX_DATA_FILE_SIZE,
-    MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
-)
-from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
-    get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import get_permission_name
@@ -75,12 +32,15 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
+from corehq.blobs.exceptions import NotFound
+from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
+from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.models import Format
-from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.web import json_response, get_url_base
-from soil import DownloadBase
-from soil.progress import get_task_status
+
+from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, MAX_DATA_FILE_SIZE, MAX_DATA_FILE_SIZE_TOTAL
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
+from corehq.apps.export.models.new import DataFile, DatePeriod
+from corehq.apps.export.tasks import generate_schema_for_all_builds
 
 
 def get_timezone(domain, couch_user):
@@ -137,7 +97,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_view_permissions(self):
-        if self.form_or_case is None:
+        if not self.form_or_case:
             return self.has_form_export_permissions or self.has_case_export_permissions
         elif self.form_or_case == "form":
             return self.has_form_export_permissions
@@ -151,12 +111,12 @@ class ExportsPermissionsManager(object):
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
     def access_list_exports_or_404(self, is_deid=False):
-        if not (self.has_edit_permissions or self.has_view_permissions
+        if not (self.has_view_permissions
                 or (is_deid and self.has_deid_view_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
-        if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
+        if not (self.has_view_permissions or self.has_deid_view_permissions):
             raise Http404()
 
 
@@ -351,3 +311,11 @@ class DataFileDownloadDetail(BaseProjectDataView):
             raise Http404
         data_file.delete()
         return HttpResponse(status=204)
+
+
+def can_view_form_exports(couch_user, domain):
+    return ExportsPermissionsManager('form', domain, couch_user).has_form_export_permissions
+
+
+def can_view_case_exports(couch_user, domain):
+    return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions

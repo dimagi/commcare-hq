@@ -1,4 +1,3 @@
-/*globals $, hqImport, _, ko, django */
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
@@ -11,7 +10,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         // Set up details
         if (moduleBrief.case_type) {
             var state = hqImport('app_manager/js/details/screen_config').state;
-            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').DetailScreenConfig;
+            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').detailScreenConfig;
             state.requires_case_details(moduleBrief.requires_case_details);
 
             var details = initial_page_data('details');
@@ -56,25 +55,53 @@ hqDefine("app_manager/js/modules/module_view", function () {
         }
 
         var originalCaseType = initial_page_data('case_type');
+        var casesExist = false;
+        // If this async request is slow or fails, we will default to hiding the case type changed warning.
+        $.ajax({
+            method: 'GET',
+            url: hqImport('hqwebapp/js/initial_page_data').reverse('existing_case_types'),
+            success: function (data) {
+                casesExist = data.existing_case_types.includes(originalCaseType);
+            },
+        });
 
         // Validation for case type
         var showCaseTypeError = function (message) {
             var $caseTypeError = $('#case_type_error');
-            $caseTypeError.css('display', 'block');
+            $caseTypeError.css('display', 'block').removeClass('hide');
             $caseTypeError.text(message);
         };
         var hideCaseTypeError = function () {
-            $('#case_type_error').css('display', 'none');
+            $('#case_type_error').addClass('hide');
         };
 
         var showCaseTypeChangedWarning = function () {
-            $('#case_type_changed_warning').css('display', 'block');
-            $('#case_type_form_group').addClass('has-error');
+            if (casesExist) {
+                $('#case_type_changed_warning').css('display', 'block').removeClass('hide');
+                $('#case_type_form_group').addClass('has-error');
+            }
         };
         var hideCaseTypeChangedWarning = function () {
-            $('#case_type_changed_warning').css('display', 'none');
+            $('#case_type_changed_warning').addClass('hide');
             $('#case_type_form_group').removeClass('has-error');
         };
+
+        var $nameEnumContainer = $('#name-enum-mapping');
+        if ($nameEnumContainer.length) {
+            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping({
+                lang: moduleBrief.lang,
+                langs: moduleBrief.langs,
+                items: moduleBrief.name_enum,
+                property_name: 'name',
+                values_are_icons: false,
+                keys_are_conditions: true,
+            });
+            nameMapping.on("change", function () {
+                $nameEnumContainer.find("[name='name_enum']").val(JSON.stringify(this.getItems()));
+                $nameEnumContainer.find("[name='name_enum']").trigger('change');    // trigger save button
+            });
+            $nameEnumContainer.append(nameMapping.ui);
+        }
 
         $('#case_type').on('textchange', function () {
             var $el = $(this),
@@ -115,6 +142,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
             }
         });
 
+        $('#module-settings-form').on('saved-app-manager-form', function () {
+            hideCaseTypeChangedWarning();
+        });
+
         // Module filter
         var $moduleFilter = $('#module-filter');
         if ($moduleFilter.length) {
@@ -129,8 +160,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 self.caseListForm = ko.observable(originalFormId);
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
                 self.endOfRegistrationOptions = [
-                    {value: 'case_list', label: gettext('Go back to case list')},
-                    {value: 'default', label: gettext('Proceed with registered case')},
+                    {id: 'case_list', text: gettext('Go back to case list')},
+                    {id: 'default', text: gettext('Proceed with registered case')},
                 ];
 
                 self.formMissing = ko.computed(function () {
@@ -179,7 +210,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {
                 var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
-                var visitScheduler = new VisitScheduler.ModuleScheduler({
+                var visitScheduler = VisitScheduler.moduleScheduler({
                     home: $('#module-scheduler'),
                     saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_schedule_phases'),
                     hasSchedule: moduleBrief.has_schedule,

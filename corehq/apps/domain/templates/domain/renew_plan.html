@@ -7,26 +7,26 @@
 
 {% block form_content %}
   <p>
-      {% blocktrans %}
-          You are renewing your CommCare {{ plan_edition }} plan.
-      {% endblocktrans %}
+    {% blocktrans %}
+      You are renewing your CommCare {{ plan_edition }} plan.
+    {% endblocktrans %}
   </p>
 
   <form class="form"
         method="post"
         action="{% url 'domain_subscription_renewal_confirmation' domain %}">
-      {% csrf_token %}
+    {% csrf_token %}
 
-      <input type="hidden" name="from_plan_page" value="true" />
-      <input type="hidden" name="plan_edition" data-bind="{{ plan_edition }}">
+    <input type="hidden" name="from_plan_page" value="true" />
+    <input type="hidden" name="plan_edition" data-bind="{{ plan_edition }}">
 
-      <div class="form-actions">
-          <div class="col-xs-offset-2">
-              <button type="submit"
-                      class="btn btn-primary btn-lg">
-                {% trans 'Next' %}
-              </button>
-          </div>
+    <div class="form-actions">
+      <div class="col-xs-offset-2">
+        <button type="submit"
+                class="btn btn-primary btn-lg">
+          {% trans 'Next' %}
+        </button>
       </div>
+    </div>
   </form>
 {% endblock %}

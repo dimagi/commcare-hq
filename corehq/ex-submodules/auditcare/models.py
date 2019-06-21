@@ -35,6 +35,7 @@ except:
 
 from auditcare.signals import user_login_failed
 
+
 def make_uuid():
     return uuid.uuid4().hex
 
@@ -52,6 +53,7 @@ STANDARD_HEADER_KEYS = ['X_FORWARDED_FOR', 'X_FORWARDED_HOST', 'X_FORWARDED_SERV
    'HTTP_ACCEPT', 'REMOTE_ADDR', 'HTTP_ACCEPT_LANGUAGE', 'CONTENT_TYPE', 'HTTP_ACCEPT_ENCODING']
 
 
+@six.python_2_unicode_compatible
 class AuditEvent(Document):
     user = StringProperty() #the user committing the action
     base_type = StringProperty(default="AuditEvent") #for subclassing this needs to stay consistent
@@ -71,10 +73,8 @@ class AuditEvent(Document):
     class Meta(object):
         app_label = 'auditcare'
 
-
-    def __unicode__(self):
+    def __str__(self):
         return "[%s] %s" % (self.doc_type, self.description)
-
 
     @classmethod
     def create_audit(cls, model_class, user):
@@ -370,6 +370,7 @@ ACCESS_CHOICES = (
     (ACCESS_PASSWORD, "Password Change"),
     )
 
+
 class AccessAudit(AuditEvent):
     access_type = StringProperty(choices=ACCESS_CHOICES)
     ip_address = StringProperty()
@@ -501,11 +502,13 @@ def audit_login(sender, **kwargs):
 if user_logged_in:
     user_logged_in.connect(audit_login)
 
+
 def audit_logout(sender, **kwargs):
     AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
 
 if user_logged_out:
     user_logged_out.connect(audit_logout)
+
 
 def audit_login_failed(sender, **kwargs):
     AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])

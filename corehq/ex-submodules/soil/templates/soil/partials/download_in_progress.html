@@ -1,36 +1,36 @@
 {% load i18n %}
 {% if not is_alive and not progress.percent %}
-    <p class="alert alert-danger">
+  <p class="alert alert-danger">
     {% blocktrans %}
-        Task processor not detected.
-        There may be something wrong with your system.
-        If the download takes longer than normal to complete,
-        please contact support for help.
+      Task processor not detected.
+      There may be something wrong with your system.
+      If the download takes longer than normal to complete,
+      please contact support for help.
     {% endblocktrans %}
-    </p>
+  </p>
 {% else %}
-    {% if progress.error %}
-        <p class="alert alert-danger">
-            {% trans "Something went wrong! " %} {{ progress.error_message }}
-        </p>
+  {% if progress.error %}
+    <p class="alert alert-danger">
+      {% trans "Something went wrong! " %} {{ progress.error_message }}
+    </p>
+  {% else %}
+    <div class="progress progress-striped active">
+      <div class="progress-bar"
+           role="progressbar"
+           aria-valuenow="{{ progress.percent }}"
+           aria-valuemin="0"
+           aria-valuemax="100"
+           style="width: {{ progress.percent }}%;">
+        <span class="sr-only">{{ progress.percent }}% {% trans 'Complete' %}</span>
+      </div>
+    </div>
+    {% if progress.total %}
+      <p class="help-inline">
+        {% trans "Processed" %} {{ progress.percent }}%
+        ( {{ progress.current|floatformat:"0" }} {% trans 'of' %} {{ progress.total }} )
+      </p>
     {% else %}
-        <div class="progress progress-striped active">
-            <div class="progress-bar"
-                 role="progressbar"
-                 aria-valuenow="{{ progress.percent }}"
-                 aria-valuemin="0"
-                 aria-valuemax="100"
-                 style="width: {{ progress.percent }}%;">
-                <span class="sr-only">{{ progress.percent }}% {% trans 'Complete' %}</span>
-            </div>
-        </div>
-        {% if progress.total %}
-            <p class="help-inline">
-                {% trans "Processed" %} {{ progress.percent }}%
-                ( {{ progress.current|floatformat:"0" }} {% trans 'of' %} {{ progress.total }} )
-            </p>
-        {% else %}
-        {% endif %}
     {% endif %}
+  {% endif %}
 
 {% endif %}

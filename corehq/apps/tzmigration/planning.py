@@ -56,18 +56,18 @@ class PlanningDiff(Base):
 
     @property
     def json_diff(self):
-        from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+        from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
 
-        def json_loads_or_ellipsis(val):
+        def json_loads_or_missing(val):
             if val is None:
-                return Ellipsis
+                return MISSING
             else:
                 return json.loads(val)
 
         return FormJsonDiff(
             self.diff_type, json.loads(self.path),
-            json_loads_or_ellipsis(self.old_value),
-            json_loads_or_ellipsis(self.new_value)
+            json_loads_or_missing(self.old_value),
+            json_loads_or_missing(self.new_value)
         )
 
 
@@ -107,10 +107,11 @@ class BaseDB(object):
 
 class DiffDB(BaseDB):
     def add_diffs(self, kind, doc_id, doc_diffs):
+        from corehq.apps.tzmigration.timezonemigration import MISSING
         session = self.Session()
 
         def json_dumps_or_none(val):
-            if val is Ellipsis:
+            if val is MISSING:
                 return None
             else:
                 return json.dumps(val, cls=LazyEncoder)

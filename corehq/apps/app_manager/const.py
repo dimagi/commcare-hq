@@ -46,13 +46,6 @@ STOCK_QUESTION_TAG_NAMES = [
     'transfer',
 ]
 
-DEFAULT_FETCH_LIMIT = 5
-
-APP_TRANSLATION_UPLOAD_FAIL_MESSAGE = (
-    "Translation Upload Failed! "
-    "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
-    "Error details: {}."
-)
 
 MOBILE_UCR_VERSION_1 = '1.0'
 MOBILE_UCR_MIGRATING_TO_2 = '1.5'
@@ -71,3 +64,26 @@ SYNC_FLAT_FIXTURES = ('both_fixtures', 'only_flat_fixture')
 
 TARGET_COMMCARE = 'commcare'
 TARGET_COMMCARE_LTS = 'commcare_lts'
+
+WORKFLOW_DEFAULT = 'default'  # go to the app main screen
+WORKFLOW_ROOT = 'root'  # go to the module select screen
+WORKFLOW_PARENT_MODULE = 'parent_module'  # go to the parent module's screen
+WORKFLOW_MODULE = 'module'  # go to the current module's screen
+WORKFLOW_PREVIOUS = 'previous_screen'  # go to the previous screen (prior to entering the form)
+WORKFLOW_FORM = 'form'  # go straight to another form
+ALL_WORKFLOWS = [
+    WORKFLOW_DEFAULT,
+    WORKFLOW_ROOT,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
+    WORKFLOW_FORM,
+]
+# allow all options as fallback except the one for form linking
+WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
+
+WORKFLOW_CASE_LIST = 'case_list'  # Return back to the caselist after registering a case
+REGISTRATION_FORM_WORFLOWS = [
+    WORKFLOW_DEFAULT,
+    WORKFLOW_CASE_LIST,
+]

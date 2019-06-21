@@ -26,23 +26,24 @@ from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, Messaging
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker, use_nvd3
-from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.decorators import reminders_framework_permission
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
     ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
     ConditionalAlertScheduleForm,
+    ContentForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    TimedSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
+    SMSContent,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
@@ -50,10 +51,23 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.messaging.scheduling.view_helpers import (
+    get_conditional_alert_headers,
+    get_conditional_alert_rows,
+    get_conditional_alerts_queryset_by_domain,
+    TranslatedConditionalAlertUploader,
+    UntranslatedConditionalAlertUploader,
+    upload_conditional_alert_workbook,
+)
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from dimagi.utils.couch import CriticalSection
+import io
 import six
 from six.moves import range
 from six.moves.urllib.parse import quote_plus
@@ -131,17 +145,18 @@ class MessagingDashboardView(BaseMessagingSectionView):
     def add_sms_status_info(self, result):
         if len(self.domain_object.restricted_sms_times) > 0:
             result['uses_restricted_time_windows'] = True
-            result['within_allowed_sms_times'] = time_within_windows(
+            sms_allowed = result['within_allowed_sms_times'] = time_within_windows(
                 self.domain_now,
                 self.domain_object.restricted_sms_times
             )
-            if not result['within_allowed_sms_times']:
-                for i in range(1, 7 * 24 * 60):
-                    # This is a very fast check so it's ok to iterate this many times.
-                    resume_time = self.domain_now + timedelta(minutes=i)
-                    if time_within_windows(resume_time, self.domain_object.restricted_sms_times):
-                        result['sms_resume_time'] = resume_time.strftime('%Y-%m-%d %H:%M')
-                        break
+            # find next restricted window transition
+            for i in range(1, 7 * 24 * 60):
+                # This is a very fast check so it's ok to iterate this many times.
+                future_time = self.domain_now + timedelta(minutes=i)
+                future_allowed = time_within_windows(future_time, self.domain_object.restricted_sms_times)
+                if sms_allowed != future_allowed:
+                    result['sms_resume_time'] = future_time.strftime('%Y-%m-%d %H:%M')
+                    break
         else:
             result['uses_restricted_time_windows'] = False
             result['within_allowed_sms_times'] = True
@@ -268,7 +283,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         return super(MessagingDashboardView, self).get(request, *args, **kwargs)
 
 
-class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+class BroadcastListView(BaseMessagingSectionView):
     template_name = 'scheduling/broadcasts_list.html'
     urlname = 'new_list_broadcasts'
     page_title = ugettext_lazy('Broadcasts')
@@ -279,7 +294,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     ACTION_DEACTIVATE_SCHEDULED_BROADCAST = 'deactivate_scheduled_broadcast'
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
@@ -303,18 +318,25 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         )
         total_records = query.count()
         query = query.select_related('schedule')
-        broadcasts = query[self.display_start:self.display_start + self.display_length]
+        limit = int(self.request.GET.get('limit', 10))
+        page = int(self.request.GET.get('page', 1))
+        skip = (page - 1) * limit
 
-        data = []
-        for broadcast in broadcasts:
-            data.append({
-                'name': broadcast.name,
-                'last_sent': self._format_time(broadcast.last_sent_timestamp),
-                'active': broadcast.schedule.active,
-                'editable': self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
-                'id': broadcast.id,
-            })
-        return self.datatables_ajax_response(data, total_records)
+        broadcasts = [self._fmt_scheduled_broadcast(broadcast) for broadcast in query[skip:skip + limit]]
+        return JsonResponse({
+            'broadcasts': broadcasts,
+            'total': total_records,
+        })
+
+    def _fmt_scheduled_broadcast(self, broadcast):
+        return {
+            'name': broadcast.name,
+            'last_sent': self._format_time(broadcast.last_sent_timestamp),
+            'active': broadcast.schedule.active,
+            'editable': self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
+            'id': broadcast.id,
+            'deleted': broadcast.deleted,
+        }
 
     def get_immediate_ajax_response(self):
         query = (
@@ -323,16 +345,20 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             .order_by('-last_sent_timestamp', 'id')
         )
         total_records = query.count()
-        broadcasts = query[self.display_start:self.display_start + self.display_length]
+        limit = int(self.request.GET.get('limit', 10))
+        page = int(self.request.GET.get('page', 1))
+        skip = (page - 1) * limit
 
-        data = []
-        for broadcast in broadcasts:
-            data.append({
-                'name': broadcast.name,
-                'last_sent': self._format_time(broadcast.last_sent_timestamp),
-                'id': broadcast.id,
-            })
-        return self.datatables_ajax_response(data, total_records)
+        broadcasts = [{
+            'name': broadcast.name,
+            'last_sent': self._format_time(broadcast.last_sent_timestamp),
+            'id': broadcast.id,
+        } for broadcast in query[skip:skip + limit]]
+
+        return JsonResponse({
+            'broadcasts': broadcasts,
+            'total': total_records,
+        })
 
     def get_scheduled_broadcast(self, broadcast_id):
         try:
@@ -355,12 +381,18 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             start_date=broadcast.start_date
         )
 
-        return HttpResponse()
+        return JsonResponse({
+            'success': True,
+            'broadcast': self._fmt_scheduled_broadcast(broadcast),
+        })
 
     def get_scheduled_broadcast_delete_ajax_response(self, broadcast_id):
         broadcast = self.get_scheduled_broadcast(broadcast_id)
         broadcast.soft_delete()
-        return HttpResponse()
+        return JsonResponse({
+            'success': True,
+            'broadcast': self._fmt_scheduled_broadcast(broadcast),
+        })
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')
@@ -393,10 +425,9 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
 
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
     @use_timepicker
-    @use_select2
     def dispatch(self, *args, **kwargs):
         return super(CreateScheduleView, self).dispatch(*args, **kwargs)
 
@@ -532,7 +563,16 @@ class EditScheduleView(CreateScheduleView):
             return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
-class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+class ConditionalAlertBaseView(BaseMessagingSectionView):
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
+    def dispatch(self, *args, **kwargs):
+        return super(ConditionalAlertBaseView, self).dispatch(*args, **kwargs)
+
+    def get_conditional_alerts_queryset(self, query_string=''):
+        return get_conditional_alerts_queryset_by_domain(self.domain, query_string=query_string)
+
+
+class ConditionalAlertListView(ConditionalAlertBaseView):
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
     page_title = ugettext_lazy('Conditional Alerts')
@@ -544,7 +584,6 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     ACTION_RESTART = 'restart'
     ACTION_COPY = 'copy'
 
-    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
@@ -570,14 +609,6 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         context['allow_copy'] = self.allow_copy
         return context
 
-    def get_conditional_alerts_queryset(self):
-        return (
-            AutomaticUpdateRule
-            .objects
-            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
-            .order_by('case_type', 'name', 'id')
-        )
-
     def schedule_is_editable(self, schedule):
         return (
             (self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey) and
@@ -585,30 +616,38 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             not schedule.memoized_uses_sms_callback
         )
 
-    def get_conditional_alerts_ajax_response(self):
-        query = self.get_conditional_alerts_queryset()
+    def _format_rule_for_json(self, rule):
+        schedule = rule.get_messaging_rule_schedule()
+        return {
+            'name': rule.name,
+            'case_type': rule.case_type,
+            'active': schedule.active,
+            'editable': self.schedule_is_editable(schedule),
+            'locked_for_editing': rule.locked_for_editing,
+            'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
+            'id': rule.pk,
+        }
+
+    def get_conditional_alerts_ajax_response(self, request):
+        query = self.get_conditional_alerts_queryset(query_string=request.GET.get('query', ''))
         total_records = query.count()
 
-        rules = query[self.display_start:self.display_start + self.display_length]
-        data = []
-        for rule in rules:
-            schedule = rule.get_messaging_rule_schedule()
-            data.append({
-                'name': rule.name,
-                'case_type': rule.case_type,
-                'active': schedule.active,
-                'editable': self.schedule_is_editable(schedule),
-                'locked_for_editing': rule.locked_for_editing,
-                'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
-                'id': rule.pk,
-            })
+        limit = int(request.GET.get('limit'))
+        page = int(request.GET.get('page', 1))
+        skip = (page - 1) * limit
 
-        return self.datatables_ajax_response(data, total_records)
+        rules = query[skip:skip + limit]
+        data = [self._format_rule_for_json(rule) for rule in rules]
+
+        return JsonResponse({
+            'rules': data,
+            'total': total_records,
+        })
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')
         if action == self.LIST_CONDITIONAL_ALERTS:
-            return self.get_conditional_alerts_ajax_response()
+            return self.get_conditional_alerts_ajax_response(request)
 
         return super(ConditionalAlertListView, self).get(*args, **kwargs)
 
@@ -653,13 +692,19 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
 
             schedule.active = active_flag
             schedule.save()
-            initiate_messaging_rule_run(self.domain, rule.pk)
+            initiate_messaging_rule_run(rule)
 
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_delete_ajax_response(self, rule):
         rule.soft_delete()
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_restart_ajax_response(self, rule):
         helper = MessagingRuleProgressHelper(rule.pk)
@@ -667,8 +712,11 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             minutes_remaining = helper.rule_initiation_key_minutes_remaining()
             return JsonResponse({'status': 'error', 'minutes_remaining': minutes_remaining})
 
-        initiate_messaging_rule_run(rule.domain, rule.pk)
-        return JsonResponse({'status': 'success'})
+        initiate_messaging_rule_run(rule)
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_copy_ajax_response(self, rule, copy_to_project_name):
         if not self.allow_copy:
@@ -698,8 +746,11 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 'error_msg': _("This rule includes references that cannot be copied."),
             })
 
-        initiate_messaging_rule_run(copied_rule.domain, copied_rule.pk)
-        return JsonResponse({'status': 'success'})
+        initiate_messaging_rule_run(copied_rule)
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
@@ -732,10 +783,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
     @use_timepicker
-    @use_select2
     def dispatch(self, *args, **kwargs):
         return super(CreateConditionalAlertView, self).dispatch(*args, **kwargs)
 
@@ -756,21 +806,20 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
             'is_system_admin': self.is_system_admin,
-            'criteria_form_active': True,
+            'criteria_form_active': False,
             'schedule_form_active': False,
+            'new_rule': not bool(self.rule),
+            'rule_name': self.rule.name if self.rule else '',
         }
 
         if self.request.method == 'POST':
             context.update({
                 'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
                 'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
+                'rule_name': self.basic_info_form.rule_name,
             })
 
         return context
-
-    @cached_property
-    def new_reminders_migrator(self):
-        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
 
     @cached_property
     def schedule_form(self):
@@ -787,7 +836,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         return ConditionalAlertScheduleForm(
             *args,
-            new_reminders_migrator=self.new_reminders_migrator,
             is_system_admin=self.is_system_admin
         )
 
@@ -860,11 +908,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            if not (
-                self.new_reminders_migrator and
-                self.schedule_form.cleaned_data['skip_running_rule_post_save']
-            ):
-                initiate_messaging_rule_run(rule.domain, rule.pk)
+            initiate_messaging_rule_run(rule)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
@@ -965,3 +1009,71 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                       "properties in this alert.")
                 )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
+
+
+class DownloadConditionalAlertView(ConditionalAlertBaseView):
+    urlname = 'download_conditional_alert'
+    http_method_names = ['get']
+
+    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
+
+    def get(self, request, domain):
+        headers = get_conditional_alert_headers(self.domain)
+        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain)
+
+        temp = io.BytesIO()
+        export_raw(
+            headers, [
+                (TranslatedConditionalAlertUploader.sheet_name, translated_rows),
+                (UntranslatedConditionalAlertUploader.sheet_name, untranslated_rows),
+            ], temp)
+        filename = 'Conditional Alerts - {domain}'.format(domain=domain)
+        return export_response(temp, Format.XLS_2007, filename)
+
+
+class UploadConditionalAlertView(BaseMessagingSectionView):
+    urlname = 'upload_conditional_alert'
+    page_title = ugettext_lazy("Upload Conditional Alerts")
+    template_name = 'hqwebapp/bulk_upload.html'
+
+    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
+    def dispatch(self, *args, **kwargs):
+        return super(UploadConditionalAlertView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = {
+            'bulk_upload': {
+                "download_url": reverse("download_conditional_alert", args=(self.domain,)),
+                "adjective": _("conditional alert"),
+                "plural_noun": _("conditional alerts"),
+                "help_link": "https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts", # noqa
+            },
+        }
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': BroadcastListView.page_title,
+            'url': reverse(BroadcastListView.urlname, args=[self.domain]),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            workbook = get_workbook(request.FILES['bulk_upload_file'])
+        except WorkbookJSONError as e:
+            messages.error(request, six.text_type(e))
+            return self.get(request, *args, **kwargs)
+
+        msgs = upload_conditional_alert_workbook(self.domain, workbook)
+        for msg in msgs:
+            msg[0](request, msg[1])
+
+        return self.get(request, *args, **kwargs)

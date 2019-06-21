@@ -137,8 +137,8 @@ hqDefine('hqwebapp/js/main', [
                     $retry: $('<div/>').text(SaveButton.message.RETRY).click(function () {
                         button.fire('save');
                     }).addClass(cssClass),
-                    $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
-                    $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
+                    $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-primary disabled'),
+                    $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-primary disabled'),
                     ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
                     setStateWhenReady: function (state) {
                         if (this.state === 'saving') {
@@ -262,7 +262,7 @@ hqDefine('hqwebapp/js/main', [
         SAVED: django.gettext("Saved"),
         RETRY: django.gettext("Try Again"),
         ERROR_SAVING: django.gettext("There was an error saving"),
-    }, 'btn btn-success');
+    }, 'btn btn-primary');
 
     var DeleteButton = makeSaveButton({
         SAVE: django.gettext("Delete"),
@@ -370,9 +370,8 @@ hqDefine('hqwebapp/js/main', [
         if ($maintenance.length) {
             var id = $maintenance.data("id"),
                 alertCookie = "alert_maintenance";
-            if ($.cookie(alertCookie) == id) {  // eslint-disable-line eqeqeq
-                $maintenance.addClass('hide');
-            } else {
+            if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
+                $maintenance.removeClass('hide');
                 $maintenance.on('click', '.close', function () {
                     $.cookie(alertCookie, id, { expires: 7, path: '/' });
                 });

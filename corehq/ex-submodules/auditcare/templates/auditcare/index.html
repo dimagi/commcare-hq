@@ -2,21 +2,21 @@
 {% load i18n %}
 
 {% block title %}
-    {% trans "Audit Viewer" %}
+  {% trans "Audit Viewer" %}
 {% endblock %}
 
 {% block content %}
-    <div class="module">
-        <div class="span-6 last">
-        <h2>Website Usage</h2>
-        </div>
-		<div class="toolbar noprint">
-		    <a href="{% url 'export_all_audits' %}" class="add">Export to Excel</a>
-		</div>
-        <div class="span-24 last">
-			{% block toolbar %}
-		    {% endblock %}
-			{{ audit_table.as_html }}
-        </div>
+  <div class="module">
+    <div class="span-6 last">
+      <h2>Website Usage</h2>
     </div>
+    <div class="toolbar noprint">
+      <a href="{% url 'export_all_audits' %}" class="add">Export to Excel</a>
+    </div>
+    <div class="span-24 last">
+      {% block toolbar %}
+      {% endblock %}
+      {{ audit_table.as_html }}
+    </div>
+  </div>
 {% endblock %}

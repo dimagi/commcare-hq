@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
+import mock
 from django.test import SimpleTestCase
 from django.conf import settings
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_MAPPING
-
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
+from corehq.pillows.utils import UNKNOWN_USER_TYPE
 
 CONCEPT_XFORM = {
    "_id": "concept_xform",
@@ -122,6 +123,7 @@ CONCEPT_XFORM = {
 }
 
 
+@mock.patch('corehq.pillows.xform.get_user_type', new=lambda user_id: UNKNOWN_USER_TYPE)
 class TestReportXFormProcessing(SimpleTestCase):
 
     def testConvertAndRestoreReportXFormDicts(self):

@@ -1,9 +1,10 @@
 {% extends 'hqwebapp/base_section.html' %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "locations/js/widgets_main_v3.js" %}"></script>
+    <script src="{% static "locations/js/widgets.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}

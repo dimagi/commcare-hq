@@ -4,12 +4,6 @@ from couchdbkit.exceptions import ResourceConflict
 from django.utils.functional import wraps
 from six.moves import range
 
-def repeat(fn, n):
-    for _ in range(n):
-        try:
-            return fn()
-        except ResourceConflict:
-            pass
 
 class RetryResourceError(Exception):
     def __init__(self, fn, attempts):
@@ -17,6 +11,7 @@ class RetryResourceError(Exception):
         self.attempts = attempts
     def __str__(self):
         return repr("Tried function `%s` %s time(s) and conflicted every time." % (self.fn.__name__, self.attempts))
+
 
 def retry_resource(n):
     def decorator(fn):

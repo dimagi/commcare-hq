@@ -64,11 +64,28 @@ hqDefine("app_manager/js/forms/form_view", function () {
         setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
 
         // Analytics for renaming form
-        $(".appmanager-edit-title").on('click', '.btn-success', function () {
+        $(".appmanager-edit-title").on('click', '.btn-primary', function () {
             hqImport('analytix/js/kissmetrix').track.event("Renamed form from form settings page");
         });
 
         // Settings > Logic
+        var $nameEnumContainer = $('#name-enum-mapping');
+        if ($nameEnumContainer.length) {
+            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping({
+                lang: initialPageData('current_language'),
+                langs: initialPageData('langs'),
+                items: initialPageData('name_enum'),
+                property_name: 'name',
+                values_are_icons: false,
+                keys_are_conditions: true,
+            });
+            nameMapping.on("change", function () {
+                $nameEnumContainer.find("[name='name_enum']").val(JSON.stringify(this.getItems()));
+                $nameEnumContainer.find("[name='name_enum']").trigger('change');    // trigger save button
+            });
+            $nameEnumContainer.append(nameMapping.ui);
+        }
+
         var $formFilter = $('#form-filter');
         if ($formFilter.length && initialPageData('allow_form_filtering')) {
             $('#form-filter').koApplyBindings(formFilterModel());

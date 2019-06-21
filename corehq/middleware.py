@@ -117,10 +117,9 @@ class TimeoutMiddleware(MiddlewareMixin):
     def _session_expired(timeout, activity, time):
         if activity is None:
             return False
-        if time - string_to_utc_datetime(activity) > datetime.timedelta(minutes=timeout):
-            return True
-        else:
-            return False
+
+        time_since_activity = time - string_to_utc_datetime(activity)
+        return time_since_activity > datetime.timedelta(minutes=timeout)
 
     @staticmethod
     def _user_requires_secure_session(couch_user):
@@ -132,28 +131,30 @@ class TimeoutMiddleware(MiddlewareMixin):
             return
 
         secure_session = request.session.get('secure_session')
+        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
         domain = getattr(request, "domain", None)
         now = datetime.datetime.utcnow()
 
-        if not secure_session and (
-                (domain and Domain.is_secure_session_required(domain)) or
-                self._user_requires_secure_session(request.couch_user)):
-            if self._session_expired(settings.SECURE_TIMEOUT, request.user.last_login, now):
+        # figure out if we want to switch to secure_sessions
+        change_to_secure_session = (
+            not secure_session
+            and (
+                (domain and Domain.is_secure_session_required(domain))
+                or self._user_requires_secure_session(request.couch_user)))
+
+        if change_to_secure_session:
+            timeout = settings.SECURE_TIMEOUT
+            # force re-authentication if the user has been logged in longer than the secure timeout
+            if self._session_expired(timeout, request.user.last_login, now):
                 django_logout(request, template_name=settings.BASE_TEMPLATE)
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
+                request.session.set_expiry(timeout * 60)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
-            else:
-                request.session['secure_session'] = True
-                request.session['last_request'] = json_format_datetime(now)
-                return
-        else:
-            last_request = request.session.get('last_request')
-            timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
-            if self._session_expired(timeout, last_request, now):
-                django_logout(request, template_name=settings.BASE_TEMPLATE)
-                return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
-            request.session['last_request'] = json_format_datetime(now)
+
+            request.session['secure_session'] = True
+
+        request.session.set_expiry(timeout * 60)
 
 
 def always_allow_browser_caching(fn):

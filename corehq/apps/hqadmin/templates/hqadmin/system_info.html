@@ -6,344 +6,330 @@
 {% requirejs_main 'hqadmin/js/system_info' %}
 
 {% block reportcontent %}
-    {% initial_page_data "celery_update" celery_update %}
-    {% initial_page_data "couch_update" couch_update %}
-    {% initial_page_data "is_bigcouch" is_bigcouch %}
-    {% registerurl "pillow_operation_api" %}
-    {% registerurl "system_ajax" %}
-    <div class="row" style="margin-top: 15px;">
-        <div class="col-sm-12">
-            {% with deploy_history|first as last_deploy %}
-            <div class="alert alert-info clearfix">
-                <a href="{% url 'check_services' %}" target="_blank" class="btn btn-default pull-right">Check services</a>
-                Last deployed on {{ last_deploy.date|date:"d M Y" }}
-                at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}
-            </div>
-            {% endwith %}
+  {% initial_page_data "celery_update" celery_update %}
+  {% initial_page_data "couch_update" couch_update %}
+  {% initial_page_data "is_bigcouch" is_bigcouch %}
+  {% registerurl "pillow_operation_api" %}
+  {% registerurl "system_ajax" %}
+  <div class="row" style="margin-top: 15px;">
+    <div class="col-sm-12">
+      {% with deploy_history|first as last_deploy %}
+        <div class="alert alert-info clearfix">
+          <a href="{% url 'check_services' %}" target="_blank" class="btn btn-default pull-right">Check services</a>
+          Last deployed on {{ last_deploy.date|date:"d M Y" }}
+          at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}
         </div>
+      {% endwith %}
     </div>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <a data-toggle="collapse" href="#general-panel">General Status</a>
-            </h2>
-        </div>
-        <div class="panel-collapse collapse in" id="general-panel">
-            <div class="panel-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Quick Links</th>
-                            <th>Current Worker</th>
-                            <th>Redis Status</th>
-                            <th>Celery Status</th>
-                            <th>Elasticsearch Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td><img src="{% static 'hqwebapp/images/dm.jpg' %}" alt="dan's legacy"></td>
-                        <td>
-                            <ul>
-                                <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>
-                                <li>
-                                    <div id="autorefresh">
-                                        Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <a href="{% url "raw_couch" %}">Look for a doc in couch</a>
-                                </li>
-                            </ul>
-                        </td>
-                        <td><strong>{{ current_system }}</strong></td>
-                        <td>
-                            {{ redis.success|yesno:"Online,Offline" }}
-                            <br>
-                            {{ redis.msg }}
-                        </td>
-                        <td>
-                            {{ rabbitmq.msg }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
-                            <hr>
-                            {% trans "Celery Heartbeat " %}
-                            {% if heartbeat.success %}
-                                <span class="label label-success">OK</span>
-                            {% else %}
-                                <span class="label label-danger">DOWN</span>
-                            {% endif %}
-                            <hr>
-                            {{ celery_stats|safe }}<br>
-                        </td>
-                        <td>
-                            <dl class="dl-horizontal">
-                            <dt>Cluster Status</dt>
-                                <dd>
-                                    {% if cluster_health == "green" %}
-                                        <span class="label label-success">Great</span>
-                                    {% endif %}
-                                    {% if cluster_health == "yellow" %}
-                                        <span class="label label-warning">A node is possibly down</span>
-                                    {% endif %}
-                                    {% if cluster_health == "red" %}
-                                        <span class="label label-danger">Bad</span>
-                                    {% endif %}
-                                </dd>
-                                <dt>Index Status</dt>
-                                <dd>
-                                    <a href="{% url "system_ajax" %}?api=stale_pillows" target="_blank">Check (slow!)</a>
-                                </dd>
-                                <dt>Check ES doc</dt>
-                                <dd>
-                                    <a href="{% url "doc_in_es" %}">Look for a doc in ES</a>
-                                </dd>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h2 class="panel-title">
+        <a data-toggle="collapse" href="#general-panel">General Status</a>
+      </h2>
+    </div>
+    <div class="panel-collapse collapse in" id="general-panel">
+      <div class="panel-body">
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th></th>
+            <th>Quick Links</th>
+            <th>Current Worker</th>
+            <th>Redis Status</th>
+            <th>Celery Status</th>
+            <th>Elasticsearch Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td><img src="{% static 'hqwebapp/images/dm.jpg' %}" alt="dan's legacy"></td>
+            <td>
+              <ul>
+                <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>
+                <li>
+                  <div id="autorefresh">
+                    Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
+                  </div>
+                </li>
+                <li>
+                  <a href="{% url "raw_doc" %}">Look for a doc in the db</a>
+                </li>
+              </ul>
+            </td>
+            <td><strong>{{ current_system }}</strong></td>
+            <td>
+              {{ redis.success|yesno:"Online,Offline" }}
+              <br>
+              {{ redis.msg }}
+            </td>
+            <td>
+              {{ rabbitmq.msg }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
+              <hr>
+              {% trans "Celery Heartbeat " %}
+              {% if heartbeat.success %}
+                <span class="label label-success">OK</span>
+              {% else %}
+                <span class="label label-danger">DOWN</span>
+              {% endif %}
+              <hr>
+              {{ celery_stats|safe }}<br>
+            </td>
+            <td>
+              <dl class="dl-horizontal">
+                <dt>Cluster Status</dt>
+                <dd>
+                  {% if cluster_health == "green" %}
+                    <span class="label label-success">Great</span>
+                  {% endif %}
+                  {% if cluster_health == "yellow" %}
+                    <span class="label label-warning">A node is possibly down</span>
+                  {% endif %}
+                  {% if cluster_health == "red" %}
+                    <span class="label label-danger">Bad</span>
+                  {% endif %}
+                </dd>
+                <dt>Index Status</dt>
+                <dd>
+                  <a href="{% url "system_ajax" %}?api=stale_pillows" target="_blank">Check (slow!)</a>
+                </dd>
+                <dt>Check ES doc</dt>
+                <dd>
+                  <a href="{% url "doc_in_es" %}">Look for a doc in ES</a>
+                </dd>
 
-                            {% for es_status in es_index_status %}
-                                {% for k, v in es_status.items %}
-                                    <dt>{{ k }}</dt>
-                                    <dd>
-                                        {% if v.status %}
-                                            <span class="label label-success">OK</span>
-                                        {% else %}
-                                            <span class="label label-danger">Bad</span>
-                                        {% endif %}
-                                        {{ v.message }}
-                                    </dd>
-                                {% endfor %}
-                            {% endfor %}
-                            </dl>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                {% for es_status in es_index_status %}
+                  {% for k, v in es_status.items %}
+                    <dt>{{ k }}</dt>
+                    <dd>
+                      {% if v.status %}
+                        <span class="label label-success">OK</span>
+                      {% else %}
+                        <span class="label label-danger">Bad</span>
+                      {% endif %}
+                      {{ v.message }}
+                    </dd>
+                  {% endfor %}
+                {% endfor %}
+              </dl>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="panel panel-default" id="pillowtop-status">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <a data-toggle="collapse" href="#pillowtop-panel">Pillowtop Status</a>
-                <small data-bind="if: loading()">
-                    <i class="fa fa-refresh fa-spin"></i>
-                </small>
-                <small data-bind="if: !loading() && !autoRefresh()">
-                    <a class="btn btn-default btn-xs" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
-                </small>
-            </h2>
-        </div>
-        <div class="panel-collapse collapse in" id="pillowtop-panel">
-            <div class="panel-body">
-                <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
-                <table class="table table-striped" data-bind="visible: !error()">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Supervisor Status</th>
-                            <th>Time since last checkpoint</th>
-                            <th>Checkpoint Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: models">
-                        <tr data-bind="css: overallStatus, attr: {id: name}">
-                            <td><code data-bind="text: name"></code></td>
-                            <td>
-                                    <label data-bind="text: supervisorState, css: supervisorStateCss" class="label"></label>
-                                    <span data-bind="makeHqHelp: { name: 'Info', description: supervisorMessage, format: 'html'}, visible: supervisorMessage"></span>
-                            </td>
-                            <td><label data-bind="text: timeSinceLast, css: checkpointStatusCss" class="label"></label></td>
-                            <td class="col-md-6" data-bind="foreach: progress">
-                                <div class="row">
-                                  <div class="col-sm-4">
-                                      <div class="progress">
-                                            <div class="progress-bar progress-bar-striped" data-bind="style: {width: width() + '%'}, css: status()"></div>
-                                        </div>
-                                  </div>
-                                  <div class="col-sm-4">
-                                      <span data-bind="text: seq"></span>
-                                            / <span data-bind="text: dbOffset"></span>
-                                          (<span data-bind="text: changesBehind()"></span>)
-                                  </div>
-                                  <div class="col-sm-4" data-bind="text: name">
-                                  </div>
-                                </div>
-                            </td>
-                            <td>
-                                {% if user_is_support %}
-                                <button class="btn btn-default" type="button" data-bind="
-                                    click: resetCheckpoint,
-                                    disable: disabled">{% trans "Reset" %}</button>
-                                <button class="btn btn-default" type="button" data-bind="
-                                    click: startStop,
-                                    text: startStopText,
-                                    disable: disabled"></button>
-                                {% endif %}
-                                <button class="btn btn-default" type="button" data-bind="
-                                    click: refresh">
-                                    <i class="fa fa-refresh" data-bind="css: {'fa-spin': operationInProgress}"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  </div>
+  <div class="panel panel-default" id="pillowtop-status">
+    <div class="panel-heading">
+      <h2 class="panel-title">
+        <a data-toggle="collapse" href="#pillowtop-panel">Pillowtop Status</a>
+        <small data-bind="if: loading()">
+          <i class="fa fa-refresh fa-spin"></i>
+        </small>
+        <small data-bind="if: !loading() && !autoRefresh()">
+          <a class="btn btn-default btn-xs" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+        </small>
+      </h2>
     </div>
-    {% if is_bigcouch %}
-    <div class="panel panel-default" id="couchblock">
-            <h2 class="panel-title">
-                <a data-toggle="collapse" href="#couch-panel">Couch Tasks</a>
-                <small data-bind="if: loading()">
-                    <i class="fa fa-refresh fa-spin"></i>
-                </small>
-                <small data-bind="if: !loading() && !autoRefresh()">
-                    <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
-                </small>
-            </h2>
-        </div>
-        <div class="panel-collapse collapse in" id="couch-panel">
-            <div class="panel-body">
-                <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
-                <div class="row" data-bind="visible: !error(), foreach: models">
-                    <strong data-bind="text: designDocument"></strong>
-                     (<span data-bind="text: tasks().length"></span>)
-                    <a href="#" data-bind="click: showDetails"> <i class="fa fa-plus-circle"></i></a>
-                    <div class="progress" data-bind="foreach: tasks">
-                      <div class="progress-bar"  data-bind="style: { width: progressContribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
-                    </div>
-                    <div class="well" data-bind="attr: {id: detailsId}, foreach: tasks" style="display: none">
-                        <table class="table">
-                            <tbody>
-                            <tr>
-                                <td>
-                                    <div class="progress">
-                                      <div class="progress-bar"  data-bind="style: { width: progress() + '%'}"></div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="help-inline">
-                                        <span data-bind="text: changesDone"></span> of
-                                        <span data-bind="text: totalChanges"></span>
-                                    </p>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                        <em data-bind="text: database"></em>
-                    </div>
+    <div class="panel-collapse collapse in" id="pillowtop-panel">
+      <div class="panel-body">
+        <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+        <table class="table table-striped" data-bind="visible: !error()">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Time since last checkpoint</th>
+            <th>Checkpoint Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: models">
+          <tr data-bind="css: overallStatus, attr: {id: name}">
+            <td><code data-bind="text: name"></code></td>
+            <td><label data-bind="text: timeSinceLast, css: checkpointStatusCss" class="label"></label></td>
+            <td class="col-md-6" data-bind="foreach: progress">
+              <div class="row">
+                <div class="col-sm-4">
+                  <div class="progress">
+                    <div class="progress-bar progress-bar-striped" data-bind="style: {width: width() + '%'}, css: status()"></div>
+                  </div>
                 </div>
-            </div>
-        </div>
+                <div class="col-sm-4">
+                  <span data-bind="text: seq"></span>
+                  / <span data-bind="text: dbOffset"></span>
+                  (<span data-bind="text: changesBehind()"></span>)
+                </div>
+                <div class="col-sm-4" data-bind="text: name">
+                </div>
+              </div>
+            </td>
+            <td>
+              <button class="btn btn-default" type="button" data-bind="
+                                    click: refresh">
+                <i class="fa fa-refresh" data-bind="css: {'fa-spin': operationInProgress}"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    {% else %}
+  </div>
+  {% if is_bigcouch %}
     <div class="panel panel-default" id="couchblock">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <a data-toggle="collapse" href="#couch-panel">Couch Tasks</a> 
-                <small data-bind="if: loading()">
-                    <i class="fa fa-refresh fa-spin"></i>
-                </small>
-                <small data-bind="if: !loading() && !autoRefresh()">
-                    <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
-                </small>
-            </h2>
-        </div>
-        <div class="panel-collapse collapse in" id="couch-panel">
-            <div class="panel-body">
-                <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
-                <table class="table table-striped" data-bind="visible: !error()">
-                    <thead>
-                    <tr>
-                        <th>PID</th>
-                        <th>Type</th>
-                        <th>DB</th>
-                        <th>Design Doc</th>
-                        <th>Started</th>
-                        <th>Updated</th>
-                        <th class="col-sm-2">Progress</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody data-bind="foreach: models">
-                    <tr>
-                        <td data-bind="text: pid"></td>
-                        <td data-bind="text: name"></td>
-                        <td data-bind="text: database"></td>
-                        <td data-bind="text: designDocument"></td>
-                        <td data-bind="text: startedOn"></td>
-                        <td data-bind="text: updatedOn"></td>
-                        <td>
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-striped active" data-bind="style: {width: progress()}"></div>
-                            </div>
-                        </td>
-                        <td>
-                            <p class="help-inline" data-bind="text: totalChanges"></p>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      <h2 class="panel-title">
+        <a data-toggle="collapse" href="#couch-panel">Couch Tasks</a>
+        <small data-bind="if: loading()">
+          <i class="fa fa-refresh fa-spin"></i>
+        </small>
+        <small data-bind="if: !loading() && !autoRefresh()">
+          <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+        </small>
+      </h2>
     </div>
-    {% endif %}
-
-    <div class="panel panel-default" id="celeryblock">
-        <div class="panel-heading">
-            <h2 class="panel-title">
-                <a data-toggle="collapse" href="#celery-panel">Celery Monitor</a>
-                <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
-                <small data-bind="if: loading()">
-                    <i class="fa fa-refresh fa-spin"></i>
-                </small>
-                <small data-bind="if: !loading() && !autoRefresh()">
-                    <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
-                </small>
-            </h2>
+    <div class="panel-collapse collapse in" id="couch-panel">
+      <div class="panel-body">
+        <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+        <div class="row" data-bind="visible: !error(), foreach: models">
+          <strong data-bind="text: designDocument"></strong>
+          (<span data-bind="text: tasks().length"></span>)
+          <a href="#" data-bind="click: showDetails"> <i class="fa fa-plus-circle"></i></a>
+          <div class="progress" data-bind="foreach: tasks">
+            <div class="progress-bar"  data-bind="style: { width: progressContribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
+          </div>
+          <div class="well" data-bind="attr: {id: detailsId}, foreach: tasks" style="display: none">
+            <table class="table">
+              <tbody>
+              <tr>
+                <td>
+                  <div class="progress">
+                    <div class="progress-bar"  data-bind="style: { width: progress() + '%'}"></div>
+                  </div>
+                </td>
+                <td>
+                  <p class="help-inline">
+                    <span data-bind="text: changesDone"></span> of
+                    <span data-bind="text: totalChanges"></span>
+                  </p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+            <em data-bind="text: database"></em>
+          </div>
         </div>
-        <div class="panel-collapse collapse in" id="celery-panel">
-            <div class="panel-body">
-                <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
-                <table class="table table-striped" data-bind="visible: !error()">
-                    <thead>
-                    <tr>
-                        <th>Task Name</th>
-                        <th>State</th>
-                        <th>Retries</th>
-                        <th>Received</th>
-                        <th>Started</th>
-                        <th>Succeeded</th>
-                        <th>Runtime</th>
-                        <th>Args</th>
-                    </tr>
-                    </thead>
-                    <tbody data-bind="foreach: models">
-                    <tr>
-                        <td data-bind="text: name"></td>
-                        <td data-bind="text: state"></td>
-                        <td data-bind="text: retries"></td>
-                        <td data-bind="text: received"></td>
-                        <td data-bind="text: started"></td>
-                        <td data-bind="text: succeeded"></td>
-                        <td data-bind="text: runtime"></td>
-                        <td>
-                            <a href="#" data-bind="click: toggleArgs">Show / Hide args</a>
-                            <div data-bind="attr: {id: uuid}" style="display: none">
-                                args: <pre><span data-bind="text: args"></span></pre><br>
-                                kwargs:<pre><span data-bind="text: kwargs"></span></pre>
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      </div>
     </div>
+    </div>
+  {% else %}
+    <div class="panel panel-default" id="couchblock">
+      <div class="panel-heading">
+        <h2 class="panel-title">
+          <a data-toggle="collapse" href="#couch-panel">Couch Tasks</a>
+          <small data-bind="if: loading()">
+            <i class="fa fa-refresh fa-spin"></i>
+          </small>
+          <small data-bind="if: !loading() && !autoRefresh()">
+            <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+          </small>
+        </h2>
+      </div>
+      <div class="panel-collapse collapse in" id="couch-panel">
+        <div class="panel-body">
+          <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+          <table class="table table-striped" data-bind="visible: !error()">
+            <thead>
+            <tr>
+              <th>PID</th>
+              <th>Type</th>
+              <th>DB</th>
+              <th>Design Doc</th>
+              <th>Started</th>
+              <th>Updated</th>
+              <th class="col-sm-2">Progress</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: models">
+            <tr>
+              <td data-bind="text: pid"></td>
+              <td data-bind="text: name"></td>
+              <td data-bind="text: database"></td>
+              <td data-bind="text: designDocument"></td>
+              <td data-bind="text: startedOn"></td>
+              <td data-bind="text: updatedOn"></td>
+              <td>
+                <div class="progress">
+                  <div class="progress-bar progress-bar-striped active" data-bind="style: {width: progress()}"></div>
+                </div>
+              </td>
+              <td>
+                <p class="help-inline" data-bind="text: totalChanges"></p>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
-    {% include "hqadmin/partials/deploy_history.html" %}
+  <div class="panel panel-default" id="celeryblock">
+    <div class="panel-heading">
+      <h2 class="panel-title">
+        <a data-toggle="collapse" href="#celery-panel">Celery Monitor</a>
+        <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
+        <small data-bind="if: loading()">
+          <i class="fa fa-refresh fa-spin"></i>
+        </small>
+        <small data-bind="if: !loading() && !autoRefresh()">
+          <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+        </small>
+      </h2>
+    </div>
+    <div class="panel-collapse collapse in" id="celery-panel">
+      <div class="panel-body">
+        <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+        <table class="table table-striped" data-bind="visible: !error()">
+          <thead>
+          <tr>
+            <th>Task Name</th>
+            <th>State</th>
+            <th>Retries</th>
+            <th>Received</th>
+            <th>Started</th>
+            <th>Succeeded</th>
+            <th>Runtime</th>
+            <th>Args</th>
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: models">
+          <tr>
+            <td data-bind="text: name"></td>
+            <td data-bind="text: state"></td>
+            <td data-bind="text: retries"></td>
+            <td data-bind="text: received"></td>
+            <td data-bind="text: started"></td>
+            <td data-bind="text: succeeded"></td>
+            <td data-bind="text: runtime"></td>
+            <td>
+              <a href="#" data-bind="click: toggleArgs">Show / Hide args</a>
+              <div data-bind="attr: {id: uuid}" style="display: none">
+                args: <pre><span data-bind="text: args"></span></pre><br>
+                kwargs:<pre><span data-bind="text: kwargs"></span></pre>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% include "hqadmin/partials/deploy_history.html" %}
 
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include "hqadmin/partials/pillow-operation-modal.html" %}
+  {% include "hqadmin/partials/pillow-operation-modal.html" %}
 {% endblock %}

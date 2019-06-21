@@ -5,187 +5,187 @@
 {% requirejs_main 'domain/js/snapshot_settings' %}
 
 {% block page_content %}
-    {% registerurl "cda_basic" %}
-    {% initial_page_data 'snapshots' snapshots %}
-<div>
+  {% registerurl "cda_basic" %}
+  {% initial_page_data 'snapshots' snapshots %}
+  <div>
     {% if published_snapshot %}
-        {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
+      {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
     {% else %}
-        <h3 style="display: inline">{% trans 'This project has not been published' %}</h3>
-        <span class="hq-help-template"
-                  data-content={% blocktrans %}
-                          "Share your applications with the world by publishing them to the CommCare Exchange.
+      <h3 style="display: inline">{% trans 'This project has not been published' %}</h3>
+      <span class="hq-help-template"
+            data-content={% blocktrans %}
+              "Share your applications with the world by publishing them to the CommCare Exchange.
                           For more information about the CommCare Exchange visit the CommCare Exchange Wiki <a href='https://wiki.commcarehq.org/display/commcarepublic/CommCare+Exchange'>[link]</a>"
-                    {% endblocktrans %}
-        ></span>
-        {% if snapshots %}
-            {% include 'domain/partials/project_version_display.html' with version=snapshots.0 published=0 %}
-        {% endif %}
+            {% endblocktrans %}
+      ></span>
+      {% if snapshots %}
+        {% include 'domain/partials/project_version_display.html' with version=snapshots.0 published=0 %}
+      {% endif %}
     {% endif %}
-</div>
-<button id="toggle-snapshots" class="btn btn-default">{% trans 'Show previous versions' %}</button>
-<div id="snapshots" style="display: none">
+  </div>
+  <button id="toggle-snapshots" class="btn btn-default">{% trans 'Show previous versions' %}</button>
+  <div id="snapshots" style="display: none">
     <h3>
-        {% blocktrans with snapshots|length as snap_length %}
+      {% blocktrans with snapshots|length as snap_length %}
         This project has {{ snap_length }} unpublished versions
-        {% endblocktrans %}
+      {% endblocktrans %}
     </h3>
     <table class="table table-striped" id="snapshot-list">
-        <thead>
+      <thead>
+      <tr>
+        <th></th>
+        <th>{% trans 'Date' %}</th>
+        <th>{% trans 'License' %}</th>
+        <th>{% trans 'In Exchange?' %}</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for snapshot in snapshots %}
         <tr>
-            <th></th>
-            <th>{% trans 'Date' %}</th>
-            <th>{% trans 'License' %}</th>
-            <th>{% trans 'In Exchange?' %}</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for snapshot in snapshots %}
-        <tr>
+          <td>
+            <a class="btn btn-primary"
+               href="{% url "project_info" snapshot.name %}"
+               id="view_{{ snapshot.name }}"
+            >
+              {% trans 'View' %}
+            </a>
+          </td>
+          <td>{{ snapshot.snapshot_time }}</td>
+          <td><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </td>
+          {% if snapshot.published %}
             <td>
-                <a class="btn btn-primary"
-                   href="{% url "project_info" snapshot.name %}"
-                   id="view_{{ snapshot.name }}"
-                >
-                    {% trans 'View' %}
-                </a>
-            </td>
-            <td>{{ snapshot.snapshot_time }}</td>
-            <td><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </td>
-            {% if snapshot.published %}
-            <td>
-                {% if snapshot.is_approved %}
-                    <span class="label label-success">{% trans 'Published & approved' %}</span>
-                {% else %}
-                    <span class="label label-warning">{% trans 'Not yet approved' %}</span>
-                {% endif %}
+              {% if snapshot.is_approved %}
+                <span class="label label-success">{% trans 'Published & approved' %}</span>
+              {% else %}
+                <span class="label label-warning">{% trans 'Not yet approved' %}</span>
+              {% endif %}
             </td>
             <td>
-                <form action="{% url "domain_clear_published" domain %}" method="POST">
-                    {% csrf_token %}
-                    <button class="btn btn-danger" type="submit">{% trans 'Unpublish' %}</button>
-                </form>
+              <form action="{% url "domain_clear_published" domain %}" method="POST">
+                {% csrf_token %}
+                <button class="btn btn-danger" type="submit">{% trans 'Unpublish' %}</button>
+              </form>
             </td>
-            {% else %}
+          {% else %}
             <td></td>
             <td>
-                <a class="btn btn-primary"
-                   data-action="{% url "domain_set_published" domain snapshot.name %}"
-                   data-toggle="modal"
-                   data-target="#contentDistributionAgreement"
-                   href="#contentDistributionAgreement"
-                   id="publish_{{ snapshot.name }}"
-                >
-                    {% trans 'Publish' %}
-                </a>
-                {% trans '(only one snapshot can be published at a time)' %}
+              <a class="btn btn-primary"
+                 data-action="{% url "domain_set_published" domain snapshot.name %}"
+                 data-toggle="modal"
+                 data-target="#contentDistributionAgreement"
+                 href="#contentDistributionAgreement"
+                 id="publish_{{ snapshot.name }}"
+              >
+                {% trans 'Publish' %}
+              </a>
+              {% trans '(only one snapshot can be published at a time)' %}
             </td>
-            {% endif %}
+          {% endif %}
         </tr>
-        {% endfor %}
+      {% endfor %}
     </table>
-</div>
-{% if error_message %}
-<div class="alert alert-danger">{{ error_message }}</div>
-{% endif %}
-<form class="form-horizontal" method="get" action="{% url "domain_create_snapshot" domain %}">
+  </div>
+  {% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+  {% endif %}
+  <form class="form-horizontal" method="get" action="{% url "domain_create_snapshot" domain %}">
     {% csrf_token %}
     <fieldset style="margin-top: 1em">
-        <legend>
-            {% trans 'Publish a new version' %}
-        </legend>
-        <div class="alert alert-info">
-            <a href="#" class="close" data-dismiss="alert">×</a>
-            <h3>{% trans "You can publish your project using any of the following builds:" %}</h3>
-            <p>{% trans "Your project can be published using the latest starred builds, or, if no builds are starred, from the latest build overall." %}</p>
-        </div>
-        <div>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>
-                        {% trans 'Name' %}
-                    </th>
-                    <th>
-                        {% trans 'Build source' %}
-                    </th>
-                    <th>
-                        {% trans 'Version' %}
-                    </th>
-                    <th>
-                        {% trans 'Build comment' %}
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for app in request.project.applications %}
-                <tr>
+      <legend>
+        {% trans 'Publish a new version' %}
+      </legend>
+      <div class="alert alert-info">
+        <a href="#" class="close" data-dismiss="alert">×</a>
+        <h3>{% trans "You can publish your project using any of the following builds:" %}</h3>
+        <p>{% trans "Your project can be published using the latest starred builds, or, if no builds are starred, from the latest build overall." %}</p>
+      </div>
+      <div>
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th>
+              {% trans 'Name' %}
+            </th>
+            <th>
+              {% trans 'Build source' %}
+            </th>
+            <th>
+              {% trans 'Version' %}
+            </th>
+            <th>
+              {% trans 'Build comment' %}
+            </th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for app in request.project.applications %}
+            <tr>
 
-                    {% if app.get_latest_saved %}
-                    <td><a href="{% url "app_form_summary" domain app.id %}">{{ app.get_latest_saved.name }}</a></td>
-                    <td>
-                        {% if app.get_latest_saved.is_released %}
-                        {% trans 'Latest starred build' %}
-                        {% else %}
-                        {% trans 'No starred builds - From latest build' %}
-                        {% endif %}
-                    </td>
-                    <td>{{ app.get_latest_saved.version }}</td>
-                    <td>
-                        {{ app.get_latest_saved.build_comment }}
-                    </td>
-                    {% else %}
-                    <td><a href="{% url "app_form_summary" domain app.id %}">{{ app.name }}</a></td>
-                    <td>
-                        {% trans 'No builds - from current copy' %}
-                    </td>
-                    <td>
-                        {{ app.version }}
-                    </td>
-                    <td></td>
-                    {% endif %}
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+              {% if app.get_latest_saved %}
+                <td><a href="{% url "app_form_summary" domain app.id %}">{{ app.get_latest_saved.name }}</a></td>
+                <td>
+                  {% if app.get_latest_saved.is_released %}
+                    {% trans 'Latest starred build' %}
+                  {% else %}
+                    {% trans 'No starred builds - From latest build' %}
+                  {% endif %}
+                </td>
+                <td>{{ app.get_latest_saved.version }}</td>
+                <td>
+                  {{ app.get_latest_saved.build_comment }}
+                </td>
+              {% else %}
+                <td><a href="{% url "app_form_summary" domain app.id %}">{{ app.name }}</a></td>
+                <td>
+                  {% trans 'No builds - from current copy' %}
+                </td>
+                <td>
+                  {{ app.version }}
+                </td>
+                <td></td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </fieldset>
 
     <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Create a new version of your project to publish" %}</button></div>
 
     {% if project.is_copy %}
-        <div class="alert alert-info">
-            <a href="#" class="close" data-dismiss="alert">×</a>
-            <h4>{% trans "This project was originally copied from " %}<a href="{% url "project_info" project.copied_from.name %}">{{ project.copied_from.title }}</a></h4>
-        </div>
+      <div class="alert alert-info">
+        <a href="#" class="close" data-dismiss="alert">×</a>
+        <h4>{% trans "This project was originally copied from " %}<a href="{% url "project_info" project.copied_from.name %}">{{ project.copied_from.title }}</a></h4>
+      </div>
     {% endif %}
-</form>
+  </form>
 {% endblock %}>
 
 {% block modals %}{{ block.super }}
-    <div class="modal fade" id="contentDistributionAgreement">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <a class="close" data-dismiss="modal">&times;</a>
-                    <h4>{% trans 'CommCare HQ Content Distribution Agreement' %}</h4>
-                </div>
-                <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
-                    {% trans 'Loading Terms of Service...' %}
-                </div>
-                <div class="modal-footer">
-                    <div style="text-align: left; line-height: 2em;">
-                        {% trans 'To publish this project, you must agree to our Content Distribution Agreement' %}
-                    </div>
-                    <form id="cda-agree" action="" method="POST">
-                        {% csrf_token %}
-                        <button type="submit" href="#" class="btn btn-primary disable-on-submit">{% trans 'Agree' %}</button>
-                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Disagree' %}</a>
-                    </form>
-                </div>
-            </div>
-
+  <div class="modal fade" id="contentDistributionAgreement">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">&times;</a>
+          <h4>{% trans 'CommCare HQ Content Distribution Agreement' %}</h4>
         </div>
+        <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
+          {% trans 'Loading Terms of Service...' %}
+        </div>
+        <div class="modal-footer">
+          <div style="text-align: left; line-height: 2em;">
+            {% trans 'To publish this project, you must agree to our Content Distribution Agreement' %}
+          </div>
+          <form id="cda-agree" action="" method="POST">
+            {% csrf_token %}
+            <button type="submit" href="#" class="btn btn-primary disable-on-submit">{% trans 'Agree' %}</button>
+            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Disagree' %}</a>
+          </form>
+        </div>
+      </div>
+
     </div>
+  </div>
 {% endblock %}

@@ -39,10 +39,6 @@ from dimagi.utils.couch import (
 import six
 from six.moves import filter
 
-CASE_STATUS_OPEN = 'open'
-CASE_STATUS_CLOSED = 'closed'
-CASE_STATUS_ALL = 'all'
-
 INDEX_RELATIONSHIP_CHILD = 'child'
 INDEX_RELATIONSHIP_EXTENSION = 'extension'
 
@@ -149,6 +145,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         )
 
 
+@six.python_2_unicode_compatible
 class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
                    ComputedDocumentMixin, CouchDocLockableMixIn,
                    AbstractCommCareCase, MessagingCaseContactMixin):
@@ -182,7 +179,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     server_modified_on = DateTimeProperty()
     _blobdb_type_code = CODES._default
 
-    def __unicode__(self):
+    def __str__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
 
     def __setattr__(self, key, value):
@@ -329,24 +326,11 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return ret
 
     @classmethod
-    def get(cls, id, strip_history=False, **kwargs):
+    def get(cls, id, **kwargs):
         try:
-            if strip_history:
-                return cls.get_lite(id)
             return super(CommCareCase, cls).get(id, **kwargs)
         except ResourceNotFound:
             raise CaseNotFound
-
-    @classmethod
-    def get_lite(cls, id, wrap=True):
-        from corehq.apps.hqcase.dbaccessors import get_lite_case_json
-        results = get_lite_case_json(id)
-        if results is None:
-            raise ResourceNotFound('no case with id %s exists' % id)
-        if wrap:
-            return cls.wrap(results['value'])
-        else:
-            return results['value']
 
     @classmethod
     def get_wrap_class(cls, data):
@@ -360,13 +344,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         if CASE_WRAPPER:
             return CASE_WRAPPER(data) or cls
         return cls
-
-    @classmethod
-    def bulk_get_lite(cls, ids, wrap=True, chunksize=100):
-        from corehq.apps.hqcase.dbaccessors import iter_lite_cases_json
-        wrapper = lambda doc: cls.get_wrap_class(doc).wrap(doc) if wrap else doc
-        for lite_case_json in iter_lite_cases_json(ids, chunksize=chunksize):
-            yield wrapper(lite_case_json)
 
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp

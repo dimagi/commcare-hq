@@ -38,7 +38,12 @@ class TestESQuery(ElasticTestMixin, TestCase):
                     'query': {'match_all': {}}}},
             'size': 1000000
         }
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_basic_query(self):
         json_output = {
@@ -96,7 +101,12 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": SIZE_LIMIT
         }
         query = forms.FormES()
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_user_query(self):
         json_output = {
@@ -114,7 +124,12 @@ class TestESQuery(ElasticTestMixin, TestCase):
             "size": SIZE_LIMIT
         }
         query = users.UserES()
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_filtered_forms(self):
         json_output = {
@@ -141,7 +156,12 @@ class TestESQuery(ElasticTestMixin, TestCase):
         query = forms.FormES()\
                 .filter(filters.domain("zombocom"))\
                 .xmlns('banana')
-        self.checkQuery(query, json_output)
+        raw_query = query.raw_query
+        self.assertItemsEqual(
+            raw_query['query']['filtered']['filter'].pop('and'),
+            json_output['query']['filtered']['filter'].pop('and')
+        )
+        self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_users_at_locations(self):
         location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']

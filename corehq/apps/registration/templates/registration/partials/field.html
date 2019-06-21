@@ -1,26 +1,26 @@
 {% load field_tags %}
 
 <div class="form-group{% if field.errors %} has-error{% endif %}">
-    <label class="col-sm-4 control-label" for="{{ field.id }}">{{ field.label }}</label>
-    <div class="col-sm-4{% if field|is_checkbox %} checkbox{% endif %}">
-        {% if field|is_checkbox %}
-            <label>
-                {{ field }} {{ field.help_text }}
-            </label>
-            {% for error in field.errors %}
-                <span class="help-block">{{ error }}</span>
-            {% endfor %}
-        {% else %}
-            {{ field }}
-            {% for error in field.errors %}
-                <span class="help-block">{{ error }}</span>
-            {% endfor %}
-            {% if field.help_text %}
-                <p class="help-block">
-                    {{ field.help_text }}
-                </p>
-            {% endif %}
-        {% endif %}
-    </div>
+  <label class="col-sm-4 control-label" for="{{ field.id }}">{{ field.label }}</label>
+  <div class="col-sm-4{% if field|is_checkbox %} checkbox{% endif %}">
+    {% if field|is_checkbox %}
+      <label>
+        {{ field }} {{ field.help_text }}
+      </label>
+      {% for error in field.errors %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+    {% else %}
+      {{ field }}
+      {% for error in field.errors %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+      {% if field.help_text %}
+        <p class="help-block">
+          {{ field.help_text }}
+        </p>
+      {% endif %}
+    {% endif %}
+  </div>
 </div>
 

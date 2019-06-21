@@ -1,7 +1,10 @@
+# coding=utf-8
 from __future__ import absolute_import, unicode_literals
 
+from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
+
 from memoized import memoized
 from six.moves import range
 
@@ -12,6 +15,7 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -153,6 +157,12 @@ class CaseListExplorer(CaseListReport):
     @property
     def rows(self):
         track_workflow(self.request.couch_user.username, "Case List Explorer: Search Performed")
+        send_email_to_dev_more(
+            self.domain,
+            self.request.couch_user.username,
+            XpathCaseSearchFilter.get_value(self.request, self.domain),
+            self.es_results['hits'].get('total', 0)
+        )
         data = (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
 
@@ -180,3 +190,29 @@ class CaseListExplorer(CaseListReport):
         self._is_exporting = True
         track_workflow(self.request.couch_user.username, "Case List Explorer: Export button clicked")
         return super(CaseListExplorer, self).export_table
+
+
+def send_email_to_dev_more(domain, user, query, total_results):
+    """Dev wanted an email with every query that is performed on the CLE.
+
+    ¯\_(ツ)_/¯
+    """
+
+    message = """
+    Hi Dev! Someone just performed a query with the case list explorer. Cool!
+
+    Domain: {}
+    User: {}
+    Query: {}
+    Total Results: {}
+
+    Yours truly,
+    CLEBOT
+    """.format(domain, user, query if query else "Empty Query", total_results)
+
+    send_mail_async.delay(
+        subject="Case List Explorer Query Performed",
+        message=message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=["@".join(['dmore', 'dimagi.com'])],
+    )

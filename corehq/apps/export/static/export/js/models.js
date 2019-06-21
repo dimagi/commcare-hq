@@ -223,8 +223,6 @@ hqDefine('export/js/models', [
             $btn.removeSpinnerFromButton();
             $btn.removeClass('disabled');
             $btn.attr('disabled', false);
-            $btn.removeClass('btn-primary');
-            $btn.addClass('btn-success');
             self.schemaProgressText(gettext('Refresh page'));
         };
 
@@ -498,7 +496,6 @@ hqDefine('export/js/models', [
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
         self.showDeleted = ko.observable(false);
-        self.displayType = ko.observable("labels");
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
@@ -552,7 +549,6 @@ hqDefine('export/js/models', [
                 column.label(column.item.label() || column.label());
             }
         });
-        table.displayType('labels');
     };
 
     /**
@@ -568,7 +564,6 @@ hqDefine('export/js/models', [
                 column.label(column.item.readablePath() || column.label());
             }
         });
-        table.displayType('ids');
     };
 
     TableConfiguration.prototype.getColumn = function (path) {
@@ -889,7 +884,7 @@ hqDefine('export/js/models', [
     };
 
     ExportItem.prototype.readablePath = function () {
-        return utils.readablePath(this.path());
+        return readablePath(this.path());
     };
 
     ExportItem.mapping = {

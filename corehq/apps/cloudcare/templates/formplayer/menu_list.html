@@ -12,73 +12,95 @@
   </div>
 </script>
 
+<script type="text/template" id="maybe-custom-badge-template">
+  <% /*
+  Ensure backwards compatibility with formplayer backend
+  before it added the badgeText field.
+  typeof x !== 'undefined' means "the variable hasn't been defined",
+  and is different from x === undefined.
+  */ %>
+  <% if (typeof badgeText !== 'undefined' && badgeText) { %>
+  <span class="badge"><%- badgeText %></span>
+  <% } %>
+
+</script>
+
 <script type="text/template" id="menu-view-row-audio-template">
-    <td class="module-column module-column-icon">
-        <% if (imageUrl) { %>
-          <div class="module-icon-image" style="background-image: url('<%- imageUrl %>');"></div>
-        <% } else { %>
-          <div class="module-icon-container">
-            <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
-          </div>
-        <% } %>
-    </td>
-    <td class="module-column module-column-name module-column-name-audio">
-        <h3><%- displayText ? displayText : "" %></h3>
-        <div class="module-audio-controls-container">
-          <audio class="js-module-audio">
-              <source src="<%- audioUrl %>" type="audio/mpeg">
-          </audio>
-          <div class="module-audio-control module-audio-play js-module-audio-play"><i class="fa fa-volume-up module-audio-icon js-module-audio-icon"></i></div>
-          <div class="module-audio-control module-audio-pause js-module-audio-pause hide"><i class="fa fa-pause module-audio-icon js-module-audio-icon"></i></div>
-        </div>
-    </td>
+  <td class="module-column module-column-icon">
+    <% if (imageUrl) { %>
+    <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
+      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+    </div>
+    <% } else { %>
+    <div class="module-icon-container badge-container">
+      <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+    </div>
+    <% } %>
+  </td>
+  <td class="module-column module-column-name module-column-name-audio">
+    <h3><%- displayText ? displayText : "" %></h3>
+    <div class="module-audio-controls-container">
+      <audio class="js-module-audio">
+        <source src="<%- audioUrl %>" type="audio/mpeg">
+      </audio>
+      <div class="module-audio-control module-audio-play js-module-audio-play"><i class="fa fa-volume-up module-audio-icon js-module-audio-icon"></i></div>
+      <div class="module-audio-control module-audio-pause js-module-audio-pause hide"><i class="fa fa-pause module-audio-icon js-module-audio-icon"></i></div>
+    </div>
+  </td>
 </script>
 
 <script type="text/template" id="menu-view-row-template">
-    <td class="module-column module-column-icon">
-        <% if (imageUrl) { %>
-        <div class="module-icon-image" style="background-image: url('<%- imageUrl %>');"></div>
-        <% } else { %>
-          <div class="module-icon-container">
-            <% if (navState === "JUMP") { %>
-                <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
-            <% } else { %>
-                <i class="fa fa-folder module-icon" aria-hidden="true"></i>
-            <% } %>
-          </div>
-        <% } %>
-    </td>
-    <td class="module-column module-column-name">
-        <h3><%- displayText ? displayText : "" %></h3>
-    </td>
+  <td class="module-column module-column-icon">
+    <% if (imageUrl) { %>
+    <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
+      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+    </div>
+    <% } else { %>
+    <div class="module-icon-container badge-container">
+      <% if (navState === "JUMP") { %>
+      <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+      <% } else { %>
+      <i class="fa fa-folder module-icon" aria-hidden="true"></i>
+      <% } %>
+      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+    </div>
+    <% } %>
+  </td>
+  <td class="module-column module-column-name">
+    <h3><%- displayText ? displayText : "" %></h3>
+  </td>
 </script>
 
 <script type="text/template" id="menu-view-grid-item-template">
-    <div class="col-xs-6 col-sm-4 col-lg-3">
-        <% if (imageUrl) { %>
-          <div class="gridicon" style="background-image: url('<%- imageUrl %>');"></div>
-        <% } else { %>
-          <div class="gridicon gridicon-circle">
-            <% if (navState === "JUMP") { %>
-                <i class="fa fa-pencil gridicon-icon" aria-hidden="true"></i>
-            <% } else { %>
-                <i class="fa fa-folder gridicon-icon" aria-hidden="true"></i>
-            <% } %>
-          </div>
-        <% } %>
-        <div class="module-column-name text-center">
-            <h3><%- displayText ? displayText : "" %></h3>
-        </div>
+  <div class="col-xs-6 col-sm-4 col-lg-3">
+    <% if (imageUrl) { %>
+    <div class="gridicon badge-container" style="background-image: url('<%- imageUrl %>');">
+      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
     </div>
-    <% if (menuIndex % 2 === 1) { %>
-      <div class="clearfix visible-xs"></div>
+    <% } else { %>
+    <div class="gridicon gridicon-circle badge-container">
+      <% if (navState === "JUMP") { %>
+      <i class="fa fa-pencil gridicon-icon" aria-hidden="true"></i>
+      <% } else { %>
+      <i class="fa fa-folder gridicon-icon" aria-hidden="true"></i>
+      <% } %>
+      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+    </div>
     <% } %>
-    <% if (menuIndex % 3 === 2) { %>
-      <div class="clearfix visible-sm"></div>
-    <% } %>
-    <% if (menuIndex % 4 === 3) { %>
-      <div class="clearfix visible-lg"></div>
-    <% } %>
+    <div class="module-column-name text-center">
+      <h3><%- displayText ? displayText : "" %></h3>
+    </div>
+  </div>
+  <% if (menuIndex % 2 === 1) { %>
+  <div class="clearfix visible-xs"></div>
+  <% } %>
+  <% if (menuIndex % 3 === 2) { %>
+  <div class="clearfix visible-sm"></div>
+  <% } %>
+  <% if (menuIndex % 4 === 3) { %>
+  <div class="clearfix visible-lg"></div>
+  <% } %>
 </script>
 
 <script type="text/template" id="menu-view-grid-template">
@@ -93,11 +115,11 @@
 </script>
 
 <script type="text/template" id="breadcrumb-item-template">
-    <%= data %>
+  <%= data %>
 </script>
 
 <script type="text/template" id="breadcrumb-list-template">
-    <ol class="breadcrumb">
-      <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
-    </ol>
+  <ol class="breadcrumb">
+    <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
+  </ol>
 </script>

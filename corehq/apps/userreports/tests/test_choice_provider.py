@@ -171,6 +171,18 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
             set(self.static_choice_provider.choices)
         )
 
+    def test_location_type(self):
+        self.choice_provider.configure({'location_type': 'county'})
+
+        def clean():
+            self.choice_provider.configure({'location_type': None})
+        self.addCleanup(clean)
+
+        self.assertEqual(
+            {c.value for c in self.choice_provider.query(self.choice_query_context('', page=0))},
+            {self.locations['Suffolke'].location_id, self.locations['Middlesex'].location_id}
+        )
+
     def test_scoped_to_location_search(self):
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
         self.restrict_user_to_assigned_locations(self.web_user)

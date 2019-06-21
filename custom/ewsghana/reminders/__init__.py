@@ -12,6 +12,8 @@ NO_SUPPLY_POINT_MESSAGE = _("You are not associated with a facility. Please cont
 REQ_SUBMITTED = _("Thank you for confirming you have submitted your RRIRV this month.")
 REQ_NOT_SUBMITTED = _("Please submit your RRIRV as soon as possible.")
 PRODUCTS_NOT_SUBMITTED = _("You have not submitted any product reports yet.")
+SOH_HELP_MESSAGE = _("Please send in your stock on hand information in the format"
+                     " 'soh <product> <amount> <product> <amount>...'")
 
 DOMAIN = 'ews-ghana-test'
 STOCK_ON_HAND_RESPONSIBILITY = 'reporter'

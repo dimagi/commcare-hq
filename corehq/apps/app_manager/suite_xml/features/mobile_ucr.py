@@ -10,6 +10,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, 
     SessionDatum, Detail, Header, Field, Template, GraphTemplate, Xpath, XpathVariable
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 import six
 
@@ -33,8 +34,11 @@ def _load_reports(report_module):
     if not report_module._loaded:
         # load reports in bulk to avoid hitting the database for each one
         try:
-            for i, report in enumerate(report_module.reports):
-                report_module.report_configs[i]._report = report
+            all_report_configs = report_module.reports
+            # generate id mapping to not rely on reports to be returned in the same order
+            id_mappings = {report_config._id: report_config for report_config in all_report_configs}
+            for report_config in report_module.report_configs:
+                report_config._report = id_mappings[report_config.report_id]
             report_module._loaded = True
         except ReportConfigurationNotFoundError:
             pass
@@ -329,6 +333,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
                     if isinstance(translations, six.string_types):
+                        soft_assert_type_text(translations)
                         # This is a flat mapping, not per-language translations
                         word_eval = "'{}'".format(translations)
                     else:
@@ -382,7 +387,10 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[_column_to_field(c) for c in config.report(domain).report_columns if c.type != 'expanded']
+        fields=[
+            _column_to_field(c) for c in config.report(domain).report_columns
+            if c.type != 'expanded' and c.visible
+        ]
     )
 
 

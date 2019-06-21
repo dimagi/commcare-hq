@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
             field=models.TextField(),
             preserve_default=False,
         ),
-        # HqRunPython(
+        # migrations.RunPython(
         #     code=corehq.apps.data_analytics.migrations.0003_auto_20150810_1710.fill_in_user_type,
         #     reverse_code=corehq.apps.data_analytics.migrations.0003_auto_20150810_1710.reverse_fill_in,
         #     atomic=True,

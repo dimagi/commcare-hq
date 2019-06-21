@@ -9,6 +9,7 @@ from django.test.utils import override_settings
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 from django.test.client import Client
 from django.urls import reverse
@@ -74,7 +75,7 @@ class SubmissionTest(TestCase):
                 del foo[key]
 
         # normalize the json
-        foo = json.loads(json.dumps(foo))
+        foo = json.loads(json.dumps(foo, cls=CommCareJSONEncoder))
         expected = self._get_expected_json(xform_id, xmlns)
         self.assertEqual(foo, expected)
 
@@ -166,7 +167,9 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
         form_xml = self.get_xml('case_ledger_form')
         result = submit_form_locally(form_xml, domain=self.domain)
 
-        transaction = result.cases[0].get_transaction_by_form_id(result.xform.form_id)
+        # use tuple unpacking to verify single closed case
+        closed_case, = [case for case in result.cases if case.closed]
+        transaction = closed_case.get_transaction_by_form_id(result.xform.form_id)
         self.assertTrue(transaction.is_form_transaction)
         self.assertTrue(transaction.is_case_create)
         self.assertTrue(transaction.is_case_close)

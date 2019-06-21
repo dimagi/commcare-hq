@@ -7,29 +7,29 @@
 {% requirejs_main 'accounting/js/enterprise_dashboard' %}
 
 {% block page_content %}
-    {% registerurl "enterprise_dashboard_email" domain "---" %}
-    {% registerurl "enterprise_dashboard_total" domain "---" %}
+  {% registerurl "enterprise_dashboard_email" domain "---" %}
+  {% registerurl "enterprise_dashboard_total" domain "---" %}
 
-    <div class="row">
+  <div class="row">
     {% for report in reports %}
-        <div class="col-sm-6 col-md-6 col-lg-3">
-            <div class="panel panel-default text-center report-panel" data-slug="{{ report.slug }}">
-                <div class="panel-heading">
-                    <h3 class="panel-title">{{ report.title }}</h3>
-                    <small>{{ report.subtitle|default:"&nbsp;" }}</small>
-                </div>
-                <div class="panel-body">
-                    <h1 class="total">
-                        <i class="fa fa-spin fa-spinner"></i>
-                    </h1>
-                    <br>
-                    <a class="btn btn-success btn-lg">
-                        <i class="fa fa-envelope"></i>
-                        {% trans "Email Report" %}
-                    </a>
-                </div>
-            </div>
+      <div class="col-sm-6 col-md-6 col-lg-3">
+        <div class="panel panel-default text-center report-panel" data-slug="{{ report.slug }}">
+          <div class="panel-heading">
+            <h3 class="panel-title">{{ report.title }}</h3>
+            <small>{{ report.subtitle|default:"&nbsp;" }}</small>
+          </div>
+          <div class="panel-body">
+            <h1 class="total">
+              <i class="fa fa-spin fa-spinner"></i>
+            </h1>
+            <br>
+            <a class="btn btn-primary btn-lg">
+              <i class="fa fa-envelope"></i>
+              {% trans "Email Report" %}
+            </a>
+          </div>
         </div>
+      </div>
     {% endfor %}
-    </div>
+  </div>
 {% endblock %}

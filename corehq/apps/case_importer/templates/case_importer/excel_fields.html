@@ -6,57 +6,50 @@
 {% requirejs_main "case_importer/js/main" %}
 
 {% block page_content %}
-    {% include 'case_importer/partials/help_message.html' %}
+  {% include 'case_importer/partials/help_message.html' %}
 
-    {% initial_page_data 'excel_fields' excel_fields %}
-    {% initial_page_data 'case_field_specs' case_field_specs %}
+  {% initial_page_data 'excel_fields' excel_fields %}
+  {% initial_page_data 'case_field_specs' case_field_specs %}
 
-    <form action="{% url "excel_commit" domain %}"
-          method="post"
-          id="field_form"
-          class="form-horizontal">
-          {% csrf_token %}
-        <input type="hidden" name="case_type" value="{{case_type}}" />
-        <input type="hidden" name="search_column" value="{{search_column}}" />
-        <input type="hidden" name="search_field" value="{{search_field}}" />
-        <input type="hidden" name="create_new_cases" value="{{create_new_cases}}" />
+  <form action="{% url "excel_commit" domain %}"
+        method="post"
+        id="field_form"
+        class="form-horizontal">
+    {% csrf_token %}
+    <input type="hidden" name="case_type" value="{{case_type}}" />
+    <input type="hidden" name="search_column" value="{{search_column}}" />
+    <input type="hidden" name="search_field" value="{{search_field}}" />
+    <input type="hidden" name="create_new_cases" value="{{create_new_cases}}" />
 
-        <fieldset>
-            <legend>{% trans "Match Excel Columns to Case Properties" %}</legend>
-            <table class="table table-condensed" id="fieldlist">
-                <thead>
-                    <th class="span1"></th>
-                    <th>{% trans "Excel Field" %}</th>
-                    <th></th>
-                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary btn-xs pull-right" id="autofill">{% trans "Set to default" %}</button></th>
-                    <th></th>
-                </thead>
-                <tbody id="excel-field-rows" class="ko-template">
-                    {% include "case_importer/partials/excel_field_rows.html" %}
-                </tbody>
-            </table>
-            <div class="form-group">
-                <label class="control-label col-sm-3">
-                    {% trans "Modify" %}
-                </label>
-                <div class="col-sm-6">
-                    <a id="js-add-mapping" class="btn btn-default" href="#">
-                        <i class="fa fa-plus"></i> {% trans "Add another matching" %}
-                    </a>
-                </div>
-            </div>
-        </fieldset>
+    <fieldset>
+      <legend>{% trans "Match Excel Columns to Case Properties" %}</legend>
+      <table class="table table-condensed" id="fieldlist">
+        <thead>
+        <th class="span1"></th>
+        <th>{% trans "Excel Field" %}</th>
+        <th></th>
+        <th>{% trans "Case Property" %}<button type="button" class="btn btn-default btn-xs pull-right" id="autofill">{% trans "Set to default" %}</button></th>
+        <th></th>
+        </thead>
+        <tbody id="excel-field-rows" class="ko-template">
+        {% include "case_importer/partials/excel_field_rows.html" %}
+        </tbody>
+      </table>
+      <a id="js-add-mapping" class="btn btn-default" href="#">
+        <i class="fa fa-plus"></i> {% trans "Add another matching" %}
+      </a>
+    </fieldset>
 
-        <div class="form-actions">
-            <div class="col-sm-offset-3">
-                <button type="button" class="btn btn-primary" id="back_button">
-                    <i class="fa fa-backward"></i> {% trans "Back" %}
-                </button>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa fa-forward"></i>
-                    {% trans "Confirm Import" %}
-                </button>
-            </div>
-        </div>
-    </form>
+    <div class="form-actions">
+      <div class="col-sm-offset-3">
+        <button type="button" class="btn btn-primary" id="back_button">
+          <i class="fa fa-backward"></i> {% trans "Back" %}
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa fa-forward"></i>
+          {% trans "Confirm Import" %}
+        </button>
+      </div>
+    </div>
+  </form>
 {% endblock %}

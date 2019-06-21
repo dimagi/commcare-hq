@@ -1,0 +1,124 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-ls_children_weighed",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "LS - Count Children Weighed (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "slug": "dob",
+        "field": "dob",
+        "type": "date",
+        "display": "Date of Birth"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "slug": "last_date_gmp",
+        "field": "last_date_gmp",
+        "type": "date",
+        "display": "Last Date Weighed"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      },
+	  {  
+        "required": false,
+		"type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated"
+        },
+        {
+        "required": false,
+		"type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "owner_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_weighed",
+        "field": "open_weighed",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "open_weighed"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_count",
+        "field": "open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "open_count"
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

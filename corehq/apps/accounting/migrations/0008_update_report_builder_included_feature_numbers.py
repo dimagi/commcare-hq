@@ -7,7 +7,7 @@ from django.db import migrations
 
 from corehq.apps.accounting.bootstrap.config.report_builder_v0 import BOOTSTRAP_CONFIG as report_builder_config
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _cchq_software_plan_update(apps, schema_editor):
@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_cchq_software_plan_update),
+        migrations.RunPython(_cchq_software_plan_update),
     ]

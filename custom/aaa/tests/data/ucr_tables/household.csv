@@ -1,0 +1,4 @@
+doc_id,inserted_at,awc_owner_id,village_owner_id,opened_on,closed_on,modified_on,hh_address,hh_religion,hh_bpl_apl,hh_caste
+household_case_1,2019-01-01,awc_1,village_1,2018-08-01,,2019-01-01,super cool house,hindu,apl,sc
+household_case_2,2019-01-01,awc_2,village_1,2018-07-01,,2019-01-01,,,,
+household_case_3,2019-01-01,awc_1,village_2,2018-07-01,,2019-01-01,,,,

@@ -8,187 +8,190 @@
 {% initial_page_data 'criteria_constants' form.constants %}
 
 <script type="text/html" id="case-filters">
-    {% if form.errors %}
-        <div class="alert alert-block alert-danger">
-            <span class="help-block"><strong>{% trans "Error:" %}</strong></span>
-            {% for field, errors in form.errors.items %}
-                {% for error in errors %}
-                    <span class="help-block">{{ error }}</span>
-                {% endfor %}
-            {% endfor %}
-        </div>
-    {% endif %}
-    {% crispy criteria_form criteria_form.case_type_helper %}
-    <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
-    <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
-        <div class="col-xs-5 col-xs-offset-3">
-            <div class="btn-group">
-                <button class="btn btn-default" type="button" data-toggle="dropdown">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Select a filter" %}
-                </button>
-                <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                    {% if form.allow_case_modified_filter %}
-                    <li data-bind="click: function() { addFilter('case-modified-filter'); }"><a>{% trans "Case not modified since" %}</a></li>
-                    {% endif %}
-                    {% if form.allow_case_property_filter %}
-                    <li data-bind="click: function() { addFilter('case-property-filter'); }"><a>{% trans "Case property" %}</a></li>
-                    {% endif %}
-                    {% if form.allow_date_case_property_filter %}
-                    <li data-bind="click: function() { addFilter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
-                    <li data-bind="click: function() { addFilter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
-                    {% endif %}
-                    {% if form.allow_parent_case_references %}
-                    <li data-bind="click: function() { addFilter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
-                    {% endif %}
-                    {% if form.is_system_admin %}
-                    <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
+  {% if form.errors %}
+    <div class="alert alert-block alert-danger">
+      <span class="help-block"><strong>{% trans "Error:" %}</strong></span>
+      {% for field, errors in form.errors.items %}
+        {% for error in errors %}
+          <span class="help-block">{{ error }}</span>
+        {% endfor %}
+      {% endfor %}
     </div>
+  {% endif %}
+  {% crispy criteria_form criteria_form.case_type_helper %}
+  <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
+  <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
+    <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
+      {% trans "Add Filter" %}
+    </label>
+    <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls ">
+      <div class="btn-group">
+        <button class="btn btn-default" type="button" data-toggle="dropdown">
+          <i class="fa fa-plus"></i>
+          {% trans "Select a filter" %}
+        </button>
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          {% if form.allow_case_modified_filter %}
+            <li data-bind="click: function() { addFilter('case-modified-filter'); }"><a>{% trans "Case not modified since" %}</a></li>
+          {% endif %}
+          {% if form.allow_case_property_filter %}
+            <li data-bind="click: function() { addFilter('case-property-filter'); }"><a>{% trans "Case property" %}</a></li>
+          {% endif %}
+          {% if form.allow_date_case_property_filter %}
+            <li data-bind="click: function() { addFilter('date-case-property-filter'); }"><a>{% trans "Date case property" %}</a></li>
+            <li data-bind="click: function() { addFilter('advanced-date-case-property-filter'); }"><a>{% trans "Date case property (advanced)" %}</a></li>
+          {% endif %}
+          {% if form.allow_parent_case_references %}
+            <li data-bind="click: function() { addFilter('parent-closed-filter'); }"><a>{% trans "Parent case is closed" %}</a></li>
+          {% endif %}
+          {% if form.is_system_admin %}
+            <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
 </script>
 
 {# Template for the button that removes a filter #}
 
 <script type="text/html" id="remove-filter">
-    <div class="col-xs-1">
-        <div class="row">
-            <div class="col-xs-6 text-center">
-                <button type="button" class="btn btn-danger" data-bind="click: $parent.removeFilter"><i class="fa fa-close"></i></button>
-            </div>
-            <div class="col-xs-6 text-center">
-                <label class="control-label">{% trans "AND" %}</label>
-            </div>
-        </div>
+  <div class="col-xs-1">
+    <div class="row">
+      <div class="col-xs-6 text-center">
+        <button type="button" class="btn btn-danger" data-bind="click: $parent.removeFilter"><i class="fa fa-close"></i></button>
+      </div>
+      <div class="col-xs-6 text-center">
+        <label class="control-label">{% trans "AND" %}</label>
+      </div>
     </div>
+  </div>
 </script>
 
 {# Template for case not modified since filter #}
 {# An instance of this template is bound to an instance of the js object NotModifiedSinceDefinition #}
 
 <script type="text/html" id="case-modified-filter">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-filter'}"></div>
-        <label class="control-label col-xs-2">{% trans "Case not modified in" %}</label>
-        <div class="controls col-xs-1">
-            <input required type="number" min="0" step="1" data-bind="value: days" class="textinput form-control" />
-        </div>
-        <div class="controls col-xs-1">
-            <label class="control-label">{% trans "days" %}</label>
-        </div>
+  <div class="form-group">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Case not modified in" %}</label>
+    <div class="controls col-xs-1">
+      <input required type="number" min="0" step="1" data-bind="value: days" class="textinput form-control" />
     </div>
+    <div class="controls col-xs-1">
+      <label class="control-label">{% trans "days" %}</label>
+    </div>
+  </div>
 </script>
 
 {# Template for case property filter #}
 {# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
 
 <script type="text/html" id="case-property-filter">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-filter'}"></div>
-        <label class="control-label col-xs-2">{% trans "Case property" %}</label>
-        <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
-        </div>
-        <div class="controls col-xs-2">
-            <select class="select form-control" data-bind="value: match_type">
-                <option value="{{ form.constants.MATCH_EQUAL }}">{% trans "equals" %}</option>
-                <option value="{{ form.constants.MATCH_NOT_EQUAL }}">{% trans "does not equal" %}</option>
-                <option value="{{ form.constants.MATCH_HAS_VALUE }}">{% trans "has a value" %}</option>
-                <option value="{{ form.constants.MATCH_HAS_NO_VALUE }}">{% trans "does not have a value" %}</option>
-                {% if form.allow_regex_case_property_match %}
-                <option value="{{ form.constants.MATCH_REGEX }}">{% trans "matches the regular expression" %}</option>
-                {% endif %}
-            </select>
-        </div>
-        <div class="controls col-xs-2" data-bind="visible: showPropertyValueInput()">
-            <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': showPropertyValueInput()}" />
-        </div>
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Case property" %}</label>
+    <div class="controls col-xs-2">
+      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
     </div>
+    <div class="controls col-xs-2">
+      <select class="select form-control" data-bind="value: match_type">
+        <option value="{{ form.constants.MATCH_EQUAL }}">{% trans "equals" %}</option>
+        <option value="{{ form.constants.MATCH_NOT_EQUAL }}">{% trans "does not equal" %}</option>
+        <option value="{{ form.constants.MATCH_HAS_VALUE }}">{% trans "has a value" %}</option>
+        <option value="{{ form.constants.MATCH_HAS_NO_VALUE }}">{% trans "does not have a value" %}</option>
+        {% if form.allow_regex_case_property_match %}
+          <option value="{{ form.constants.MATCH_REGEX }}">{% trans "matches the regular expression" %}</option>
+        {% endif %}
+      </select>
+    </div>
+    <div class="controls col-xs-2" data-bind="visible: showPropertyValueInput()">
+      <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': showPropertyValueInput()}" />
+    </div>
+  </div>
 </script>
 
 {# Template for date case property filter #}
 {# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
 
 <script type="text/html" id="date-case-property-filter">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-filter'}"></div>
-        <label class="control-label col-xs-2">{% trans "When the current date is" %}</label>
-        <div class="controls col-xs-2">
-            <select class="select form-control" data-bind="value: match_type">
-                <option value="{{ form.constants.MATCH_DAYS_AFTER }}">{% trans "greater than" %}</option>
-                <option value="{{ form.constants.MATCH_DAYS_BEFORE }}">{% trans "less than" %}</option>
-            </select>
-        </div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "the date in case property" %}</label>
-        </div>
-        <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
-        </div>
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "When the current date is" %}</label>
+    <div class="controls col-xs-2">
+      <select class="select form-control" data-bind="value: match_type">
+        <option value="{{ form.constants.MATCH_DAYS_AFTER }}">{% trans "greater than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_BEFORE }}">{% trans "less than" %}</option>
+      </select>
     </div>
+    <div class="col-xs-2">
+      <label class="control-label">{% trans "the date in case property" %}</label>
+    </div>
+    <div class="controls col-xs-2">
+      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+    </div>
+  </div>
 </script>
 
 {# Template for advanced date case property filter #}
 {# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
 
 <script type="text/html" id="advanced-date-case-property-filter">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-filter'}"></div>
-        <label class="control-label col-xs-2">{% trans "When the current date is" %}</label>
-        <div class="controls col-xs-2">
-            <select class="select form-control" data-bind="value: match_type">
-                <option value="{{ form.constants.MATCH_DAYS_AFTER }}">{% trans "greater than" %}</option>
-                <option value="{{ form.constants.MATCH_DAYS_BEFORE }}">{% trans "less than" %}</option>
-            </select>
-        </div>
-        <div class="col-xs-2">
-            <label class="control-label">{% trans "the date in case property" %}</label>
-        </div>
-        <div class="controls col-xs-2">
-            <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
-        </div>
-        <div class="controls col-xs-1">
-            <select class="select form-control" data-bind="value: plus_minus">
-                <option value="+">{% trans "plus" %}</option>
-                <option value="-">{% trans "minus" %}</option>
-            </select>
-        </div>
-        <div class="controls col-xs-1">
-            <input type="number" min="0" step="1" class="textinput form-control" data-bind="value: property_value" required placeholder="{% trans 'days' %}" />
-        </div>
-        <div class="controls col-xs-1">
-            <label class="control-label">{% trans "days" %}</label>
-        </div>
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "When the current date is" %}</label>
+    <div class="controls col-xs-2">
+      <select class="select form-control" data-bind="value: match_type">
+        <option value="{{ form.constants.MATCH_DAYS_AFTER }}">{% trans "greater than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_BEFORE }}">{% trans "less than" %}</option>
+      </select>
     </div>
+    <div class="col-xs-2">
+      <label class="control-label">{% trans "the date in case property" %}</label>
+    </div>
+    <div class="controls col-xs-2">
+      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+    </div>
+    <div class="controls col-xs-1">
+      <select class="select form-control" data-bind="value: plus_minus">
+        <option value="+">{% trans "plus" %}</option>
+        <option value="-">{% trans "minus" %}</option>
+      </select>
+    </div>
+    <div class="controls col-xs-1">
+      <input type="number" min="0" step="1" class="textinput form-control" data-bind="value: property_value" required placeholder="{% trans 'days' %}" />
+    </div>
+    <div class="controls col-xs-1">
+      <label class="control-label">{% trans "days" %}</label>
+    </div>
+  </div>
 </script>
 
 {# Template for parent case is closed filter #}
 {# An instance of this template is bound to an instance of the js object ClosedParentDefinition #}
 
 <script type="text/html" id="parent-closed-filter">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-filter'}"></div>
-        <label class="control-label col-xs-2">{% trans "The parent case is closed" %}</label>
-    </div>
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "The parent case is closed" %}</label>
+  </div>
 </script>
 
 {# Template for custom filter #}
 {# An instance of this template is bound to an instance of the js object CustomMatchDefinition #}
 
 <script type="text/html" id="custom-filter">
-    <div class="form-group">
-        <div data-bind="template: {name: 'remove-filter'}"></div>
-        <label class="control-label col-xs-2">{% trans "Custom filter ID" %}</label>
-        <div class="controls col-xs-4">
-            <input type="text" data-bind="value: name" required class="textinput form-control" placeholder="{% trans 'custom filter id' %}" />
-        </div>
-        <label class="col-xs-1 control-label">
-            <span class="label label-primary">Requires System Admin</span>
-        </label>
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Custom filter ID" %}</label>
+    <div class="controls col-xs-4">
+      <input type="text" data-bind="value: name" required class="textinput form-control" placeholder="{% trans 'custom filter id' %}" />
     </div>
+    <label class="col-xs-1 control-label">
+      <span class="label label-primary">Requires System Admin</span>
+    </label>
+  </div>
 </script>

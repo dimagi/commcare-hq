@@ -22,7 +22,7 @@ All pillows inherit from `ConstructedPillow` class. A pillow consists of a few p
 Change Feed
 -----------
 
-Change feeds are documented `here <Change Feeds>`_.
+Change feeds are documented in the Changes Feed section available on the left.
 
 The 10,000 foot view is a change feed publishes changes which you can subscribe to.
 

@@ -10,6 +10,8 @@ from couchexport.deid import (
 )
 from corehq.apps.export.transforms import (
     case_id_to_case_name,
+    case_id_to_link,
+    form_id_to_link,
     user_id_to_username,
     owner_id_to_display,
     workflow_transform,
@@ -30,6 +32,8 @@ DEID_TRANSFORM_FUNCTIONS = {
     DEID_DATE_TRANSFORM: deid_date,
 }
 CASE_NAME_TRANSFORM = "case_name_transform"
+CASE_ID_TO_LINK = "case_link_transform"
+FORM_ID_TO_LINK = "form_link_transform"
 USERNAME_TRANSFORM = "username_transform"
 OWNER_ID_TRANSFORM = "owner_id_transform"
 WORKFLOW_TRANSFORM = "workflow_transform"
@@ -38,6 +42,8 @@ CASE_OR_USER_ID_TRANSFORM = "case_or_user_id_transform"
 CASE_CLOSE_TO_BOOLEAN = "case_close_to_boolean"
 TRANSFORM_FUNCTIONS = {
     CASE_NAME_TRANSFORM: case_id_to_case_name,
+    CASE_ID_TO_LINK: case_id_to_link,
+    FORM_ID_TO_LINK: form_id_to_link,
     USERNAME_TRANSFORM: user_id_to_username,
     OWNER_ID_TRANSFORM: owner_id_to_display,
     WORKFLOW_TRANSFORM: workflow_transform,

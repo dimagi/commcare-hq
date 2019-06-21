@@ -7,7 +7,7 @@ from django.db import migrations, models
 from django.db.models import Count
 
 from corehq.apps.accounting.utils import get_account_name_from_default_name
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _make_existing_billing_account_names_unique(apps, schema_editor):
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_make_existing_billing_account_names_unique),
+        migrations.RunPython(_make_existing_billing_account_names_unique),
         migrations.AlterField(
             model_name='billingaccount',
             name='name',

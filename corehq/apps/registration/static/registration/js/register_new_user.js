@@ -2,6 +2,42 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
+    $('#js-start-trial').click(function (e) {
+        e.preventDefault();
+        $('#registration-start-container').hide();
+        $('#registration-form-container').fadeIn();
+
+        $('#back-to-start-btn').removeClass('hide');
+    });
+
+    $('#back-to-start-btn').click(function () {
+        $('#registration-form-container').hide();
+        $('#registration-start-container').fadeIn();
+    });
+
+    $('.view-features').click(function (e) {
+        e.preventDefault();
+
+        $('.tile-wrapper').addClass('show-features');
+    });
+
+    var kissmetrics = hqImport('analytix/js/kissmetrix');
+    kissmetrics.whenReadyAlways(function () {
+
+        $('#js-start-trial').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start trial");
+        });
+
+        $('#js-get-tour').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked get a tour");
+            kissmetrics.track.event("Demo Workflow - Get A Tour Button Clicked (new UX)");
+        });
+
+        $('#start-chat-cta-btn').click(function () {
+            kissmetrics.track.event("Signup alt ux dec2018 - clicked start chat");
+        });
+    });
+
     // Link up with registration form ko model
     var reg = hqImport('registration/js/new_user.ko');
     reg.onModuleLoad = function () {
@@ -43,6 +79,16 @@ $(function () {
     $number.intlTelInput({
         separateDialCode: true,
         utilsScript: initial_page_data('number_utils_script'),
+        initialCountry: "auto",
+        geoIpLookup: function (success) {
+            $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
+                var countryCode = (resp && resp.country) ? resp.country : "";
+                if (!countryCode) {
+                    countryCode = "us";
+                }
+                success(countryCode);
+            });
+        },
     });
     $number.keydown(function (e) {
         // prevents non-numeric numbers from being entered.

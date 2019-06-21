@@ -3,37 +3,37 @@
 
 <script type="text/template" id="settings-template">
   <div class="module-menu-container module-menu-bar-offset">
-      <div class="page-header menu-header">
-          <h1 class="page-title">Settings</h1>
-      </div>
-      <table class="table module-table">
-          <tbody>
-          </tbody>
-      </table>
-      <div class="page-footer">
-          <button class="btn btn-success js-done">
-              <i class="fa fa-check"></i>&nbsp;Done
-          </button>
-      </div>
+    <div class="page-header menu-header">
+      <h1 class="page-title">Settings</h1>
+    </div>
+    <table class="table module-table">
+      <tbody>
+      </tbody>
+    </table>
+    <div class="page-footer">
+      <button class="btn btn-primary js-done">
+        <i class="fa"></i> {% trans "Save" %}
+      </button>
+    </div>
   </div>
 </script>
 <script type="text/template" id="display-setting-template">
-    <th>Use one question per screen</th>
-    <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>
+  <th>{% trans "Use one question per screen" %}</th>
+  <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>
 </script>
 <script type="text/template" id="lang-setting-template">
-    <th>Set the application language</th>
-    <td>
-      <select class="form-control js-lang">
-        <% _.each(langs, function(lang) { %>
-        <option <% if (lang === currentLang) { %>selected<% } %>>
-          <%= lang %>
-        </option>
-        <% }) %>
-      </select>
-    </td>
+  <th>{% trans "Set the application language" %}</th>
+  <td>
+    <select class="form-control js-lang">
+      <% _.each(langs, function(lang) { %>
+      <option <% if (lang === currentLang) { %>selected<% } %>>
+      <%= lang %>
+      </option>
+      <% }) %>
+    </select>
+  </td>
 </script>
 <script type="text/template" id="clear-user-data-setting-template">
-    <th>Clear user data</th>
-    <td><button class="js-clear-user-data btn btn-sm btn-warning">Clear</button></td>
+  <th>{% trans "Clear user data" %}</th>
+  <td><button class="js-clear-user-data btn btn-sm btn-danger">{% trans "Clear" %}</button></td>
 </script>

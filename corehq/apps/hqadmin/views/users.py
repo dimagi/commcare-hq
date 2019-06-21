@@ -37,7 +37,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
     check_lockout, domain_admin_required, login_or_basic, require_superuser)
-from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.apps.hqmedia.tasks import build_application_zip_v2
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username
@@ -187,17 +187,21 @@ class AdminRestoreView(TemplateView):
     @staticmethod
     def _parse_reports(xpath, xml_payload):
         reports = xml_payload.findall(xpath)
-        report_row_counts = {
-            report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
-            for report in reports
-            if 'report_id' in report.attrib
-        }
+        report_row_counts = {}
+        for report in reports:
+            if 'report_id' in report.attrib:
+                report_id = report.attrib['report_id']
+                if 'id' in report.attrib:
+                    report_id = '--'.join([report.attrib['id'], report_id])
+                report_row_count = len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+                report_row_counts[report_id] = report_row_count
         return len(reports), report_row_counts
 
     @staticmethod
     def get_stats_from_xml(xml_payload):
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-        restore_id = restore_id_element.text if restore_id_element else None
+        # note: restore_id_element is ALWAYS falsy, so check explicitly for `None`
+        restore_id = restore_id_element.text if restore_id_element is not None else None
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 
@@ -540,10 +544,11 @@ class AppBuildTimingsView(TemplateView):
             assert not errors, errors
 
             with app.timing_context("build_zip"):
-                build_application_zip(
+                build_application_zip_v2(
                     include_multimedia_files=True,
                     include_index_files=True,
-                    app=app,
+                    domain=app.domain,
+                    app_id=app.id,
                     download_id=None,
                     compress_zip=True,
                     filename='app-profile-test.ccz',

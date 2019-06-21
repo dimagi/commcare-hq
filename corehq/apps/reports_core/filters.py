@@ -146,7 +146,7 @@ class DatespanFilter(BaseFilter):
             startdate = date_or_nothing(startdate)
             enddate = date_or_nothing(enddate)
         except (ValueError, TypeError) as e:
-            raise FilterValueException('Error parsing date parameters: {}'.format(e.message))
+            raise FilterValueException('Error parsing date parameters: {}'.format(six.text_type(e)))
 
         if startdate or enddate:
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
@@ -257,7 +257,7 @@ class NumericFilter(BaseFilter):
             assert operator in ["=", "!=", "<", "<=", ">", ">="]
             assert isinstance(operand, float) or isinstance(operand, int)
         except AssertionError as e:
-            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(e.message))
+            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(six.text_type(e)))
 
         return {"operator": operator, "operand": operand}
 

@@ -4,106 +4,116 @@
 {% requirejs_main "groups/js/all_groups" %}
 
 {% block page_title %}
-    {% trans "Groups" %}
+  {% trans "Groups" %}
 {% endblock %}
 
 {% block page_content %}
-{% if needs_to_downgrade_locations %}
+  {% if needs_to_downgrade_locations %}
     <div>
-        <p>
-            {% trans "This project no longer has access to the Organization feature." %}
-            <a href="{% url "downgrade_locations" domain %}">
-                {% trans "Click here to fix this." %}
-            </a>
-        </p>
+      <p>
+        {% trans "This project no longer has access to the Organization feature." %}
+        <a href="{% url "downgrade_locations" domain %}">
+          {% trans "Click here to fix this." %}
+        </a>
+      </p>
     </div>
-{% else %}
+  {% else %}
     <p>
-        {% blocktrans %}
-            Groups are a useful way of combining multiple <strong>Mobile Workers</strong>
-            into one entity that can be managed in the following ways:
-        {% endblocktrans %}
+      {% blocktrans %}
+        Groups are a useful way of combining multiple <strong>Mobile Workers</strong>
+        into one entity that can be managed in the following ways:
+      {% endblocktrans %}
     </p>
     <ul>
-        <li>
-            {% blocktrans %}
-            <strong>Reporting Groups</strong> are used in reports to filter and view data.
-            {% endblocktrans %}
-        </li>
-        <li>
-            {% blocktrans %}
-            <strong>Case Sharing Groups</strong> allow their members to share a case list in a case-sharing app.
-            {% endblocktrans %}
-        </li>
+      <li>
+        {% blocktrans %}
+          <strong>Reporting Groups</strong> are used in reports to filter and view data.
+        {% endblocktrans %}
+      </li>
+      <li>
+        {% blocktrans %}
+          <strong>Case Sharing Groups</strong> allow their members to share a case list in a case-sharing app.
+        {% endblocktrans %}
+      </li>
     </ul>
-    <form class="well well-sm form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
+    {% if not request.is_view_only %}
+      <form class="well well-sm form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
         {% csrf_token %}
         <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
-        <button class="btn btn-success" type="submit">
-            <i class="fa fa-plus"></i>
-            {% trans "Create Group" %}
+        <button class="btn btn-primary" type="submit">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Group" %}
         </button>
-    </form>
+      </form>
+    {% endif %}
 
     <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">{% trans "Project Groups" %}</h3>
-        </div>
-        <div class="panel-body">
-            {% if all_groups %}
-                <table class="table table-striped">
-                    <thead>
-                        <th>{% trans "Group Name" %}</th>
-                        <th>
-                            {% trans "Reporting Group" %}
-                            <span class="hq-help-template"
-                                data-title="{% trans 'Reporting Groups' %}"
-                                data-content="{% blocktrans %}
+      <div class="panel-heading">
+        <h3 class="panel-title">{% trans "Project Groups" %}</h3>
+      </div>
+      <div class="panel-body">
+        {% if all_groups %}
+          <table class="table table-striped">
+            <thead>
+            <th>{% trans "Group Name" %}</th>
+            <th>
+              {% trans "Reporting Group" %}
+              <span class="hq-help-template"
+                    data-title="{% trans 'Reporting Groups' %}"
+                    data-content="{% blocktrans %}
                                     Reporting groups are used in reports to filter and view
-                                    data. You can remove this group from reports by
-                                    editing this group's settings.
-                                    {% endblocktrans %}">
+                                    data.{% endblocktrans %}{% if not request.is_view_only %}
+                                    {% blocktrans %}You can remove this group from reports by
+                                    editing this group's settings.{% endblocktrans %}{% endif %}">
                             </span>
-                        </th>
-                        <th>
-                            {% trans "Case Sharing Groups" %}
-                            <span class="hq-help-template"
-                                data-title="{% trans 'Case Sharing Groups' %}"
-                                data-content="{% blocktrans %}
+            </th>
+            <th>
+              {% trans "Case Sharing Groups" %}
+              <span class="hq-help-template"
+                    data-title="{% trans 'Case Sharing Groups' %}"
+                    data-content="{% blocktrans %}
                                     Case sharing groups allow their members to share a
-                                    case list in a case-sharing app. You can change this
-                                    by editing this group's settings.
-                                    {% endblocktrans %}">
+                                    case list in a case-sharing app.{% endblocktrans %}
+                                    {% if not request.is_view_only %}
+                                    {% blocktrans %} You can change this by editing this
+                                    group's settings.{% endblocktrans %}{% endif %}">
                             </span>
-                        </th>
-                    </thead>
-                    <tbody>
-                    {% for group in all_groups %}
-                        <tr>
-                            <td>
-                                <a href="{% url "group_members" domain group.get_id %}">
-                                    {{ group.display_name }}
-                                </a>
-                            </td>
-                            <td>
-                                {% if group.reporting %}<i class="fa fa-check"></i>{% endif %}
-                            </td>
-                            <td>
-                                {% if group.case_sharing %}<i class="fa fa-check"></i>{% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+            </th>
+            </thead>
+            <tbody>
+            {% for group in all_groups %}
+              <tr>
+                <td>
+                  <a href="{% url "group_members" domain group.get_id %}">
+                    {{ group.display_name }}
+                  </a>
+                </td>
+                <td>
+                  {% if group.reporting %}<i class="fa fa-check"></i>{% endif %}
+                </td>
+                <td>
+                  {% if group.case_sharing %}<i class="fa fa-check"></i>{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info">
+            {% if request.is_view_only %}
+              {% blocktrans %}
+                There are no groups currently visible to you. If you think this is
+                incorrect, please contact your project's administrator.
+              {% endblocktrans %}
             {% else %}
-                <div class="alert alert-info">
-                    {% blocktrans %}
-                    You don't have any groups yet, please create a Group to get started.
-                    {% endblocktrans %}
-                </div>
+              {% blocktrans %}
+                You don't have any groups yet, please create a Group to get started.
+              {% endblocktrans %}
             {% endif %}
-        </div>
+          </div>
+        {% endif %}
+      </div>
     </div>
-{% endif %}
+  {% endif %}
 {% endblock %}
 

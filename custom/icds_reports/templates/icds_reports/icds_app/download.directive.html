@@ -1,10 +1,11 @@
 <div class="download-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row fixes-filters">
+    <div class="row fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-11">
             <span class="breadcrump-element">Export Program Area Indicators: </span>
         </div>
     </div>
-    <div class="report-content">
+    <info-message></info-message>
+    <div class="report-content report-content-without-message">
         <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
@@ -25,7 +26,17 @@
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isIncentiveReportSelected() && $ctrl.hasErrors()">
           <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="!$ctrl.isBlockSelected()" style="padding: 5px;">Select a block-level location</li>
+                <li ng-if="!$ctrl.isStateSelected()" style="padding: 5px;">
+                    Select a at least state-level location
+                </li>
+            </ul>
+        </div>
+        <div class="alert alert-info col-md-12" ng-if="$ctrl.isLadySupervisorSelected() && $ctrl.hasErrors()">
+          <strong>Please make the following selections before you can export:</strong>
+            <ul>
+                <li ng-if="!$ctrl.isStateSelected()" style="padding: 5px;">
+                    Select a at least state-level location
+                </li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -223,10 +234,11 @@
                     </form>
                 </div>
             </div>
-            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask) && !$ctrl.downloaded">
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask || $ctrl.previousTaskFailed) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask" class="fa fa-circle-o-notch fa-spin"></i>
                 <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask">Preparing your report...</span>
                 <span ng-if="$ctrl.readyToDownload()">Your report is ready to be downloaded</span>
+                <span ng-if="$ctrl.previousTaskFailed">Generation of your report has failed</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>

@@ -6,6 +6,7 @@ import os
 import itertools
 import logging
 
+
 def shell_exec(cmd, cwd=None):
     """helper function to execute a command. returns stdout a la readlines().
     if any error occurs (exception, error return code), error is logged and
@@ -20,6 +21,7 @@ def shell_exec(cmd, cwd=None):
     except ShellCommandError as e:
         logging.exception('error executing command [%s]' % cmd)
         return None
+
 
 def shell_exec_checked(cmd, cwd=None):
     """execute a command, raising a ShellCommandError if any error occurs.
@@ -38,6 +40,7 @@ def shell_exec_checked(cmd, cwd=None):
         logging.warn('command [%s] returned error output %s (return code OK)' % (cmd, str(err)))
     return out
 
+
 def shell_exec_raw(cmd, cwd):
     """execute a command at a low level. returns (returncode, stdout, stderr).
     re-raises any exceptions"""
@@ -50,6 +53,7 @@ def shell_exec_raw(cmd, cwd):
     p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, cwd=cwd, env=make_env())
     out, err = [process_output(data) for data in p.communicate()]
     return (p.returncode, out, err)
+
 
 class ShellCommandError(Exception):
     """trap all the data resulting from running a shell process, in case there's an error"""
@@ -67,10 +71,12 @@ class ShellCommandError(Exception):
     def __repr__(self):
         return '<ShellCommandError: %s>' % str(self)
 
+
 def make_env():
     env = os.environ
     env['PATH'] = fix_path(env.get('PATH', ''))
     return env
+
 
 def fix_path(path, pathext=[]):
     """add common directories to the syspath if missing. return path

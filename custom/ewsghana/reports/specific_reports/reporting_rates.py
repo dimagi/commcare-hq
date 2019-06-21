@@ -20,8 +20,7 @@ from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, \
     InventoryManagementData, InputStock, UsersData
 from custom.ewsghana.utils import ews_date_format
-from custom.ilsgateway.tanzania import make_url
-from custom.ilsgateway.tanzania.reports.utils import link_format
+from custom.ewsghana.reports.utils import link_format, make_url
 from django.utils.translation import ugettext as _, ugettext_lazy
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date

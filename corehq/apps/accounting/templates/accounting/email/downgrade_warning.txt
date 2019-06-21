@@ -1,8 +1,8 @@
 {% load i18n %}
 {% blocktrans %}
-Dear {{ domain }} administrator,
+Dear {{ domain_or_account }} administrator,
 
-Your CommCare subscription for {{ domain }} will be downgraded after tomorrow because your CommCare Billing Statements are more than 60 days overdue. If you do not make a payment before tomorrow, you will automatically be subscribed to the CommCare Community plan and lose access to all pay-only features and direct email support!
+Your CommCare {{ subscriptions_to_downgrade }} will be downgraded after tomorrow because your CommCare Billing Statements are more than 60 days overdue. If you do not make a payment before tomorrow, you will automatically be subscribed to the CommCare Community plan and lose access to all pay-only features and direct email support!
 
 To see the full list of unpaid invoices you can follow this link: {{ statements_url }}
 As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment

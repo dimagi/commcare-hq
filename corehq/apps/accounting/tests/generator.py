@@ -133,18 +133,15 @@ def arbitrary_commcare_user(domain, is_active=True):
     username = unique_name()
     commcare_user = CommCareUser.create(domain, username, 'test123')
     commcare_user.is_active = is_active
-    commcare_user.save()
     return commcare_user
 
 
 @unit_testing_only
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
-    count = 0
-    for _ in range(0, num_users):
-        count += 1
-        commcare_user = None
-        while commcare_user is None:
-            commcare_user = arbitrary_commcare_user(domain, is_active=is_active)
+    CommCareUser.bulk_save([
+        arbitrary_commcare_user(domain, is_active=is_active)
+        for _ in range(0, num_users)
+    ])
     return num_users
 
 

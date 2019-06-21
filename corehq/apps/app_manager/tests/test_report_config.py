@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
+from collections import OrderedDict
 from xml.etree import cElementTree as ElementTree
 from django.test import SimpleTestCase, TestCase
 import mock
@@ -31,7 +32,7 @@ class ReportAppConfigTest(SimpleTestCase):
     def test_new_uuid(self):
         report_app_config = ReportAppConfig(report_id='report_id')
         self.assertTrue(report_app_config.uuid)
-        self.assertIsInstance(report_app_config.uuid, six.string_types)
+        self.assertIsInstance(report_app_config.uuid, six.text_type)
 
     def test_different_uuids(self):
         report_app_config_1 = ReportAppConfig(report_id='report_id')
@@ -49,40 +50,48 @@ class ReportAppConfigTest(SimpleTestCase):
         )
 
 
-MAKE_REPORT_CONFIG = lambda domain, report_id: ReportConfiguration(
-    _id=report_id,
-    title="Entry Report",
-    aggregation_columns=["color_94ec39e6"],
-    config_id="516c494736e95b023cc7845b557de0f5",
-    domain=domain,
-    report_meta=ReportMeta(builder_report_type="chart", created_by_builder=True),
-    columns=[
-        FieldColumn(type='field', aggregation="simple", column_id="color_94ec39e6", display="color", field="color_94ec39e6").to_json(),
-    ],
-    configured_charts=[
-        MultibarChartSpec(type='multibar', chart_id="7451243209119342931", x_axis_column="color_94ec39e6",
-                          y_axis_columns=[GraphDisplayColumn(column_id="count", display="count")]).to_json()
-    ],
-    filters=[
-        DynamicChoiceListFilterSpec(
-            type='dynamic_choice_list',
-            display="owner name",
-            field="computed_owner_name_40cc88a0",
-            slug="computed_owner_name_40cc88a0_1"
+def MAKE_REPORT_CONFIG(domain, report_id, columns=None):
+    columns = columns or [
+        FieldColumn(
+            type='field',
+            aggregation="simple",
+            column_id="color_94ec39e6",
+            display="color",
+            field="color_94ec39e6"
         ).to_json(),
-        ChoiceListFilterSpec(
-            type='choice_list',
-            display="fav color",
-            field="fav_fruit_abc123",
-            slug="fav_fruit_abc123_1",
-            choices=[
-                FilterChoice(value='a', display='apple'),
-                FilterChoice(value='b', display='banana'),
-                FilterChoice(value='c', display='clementine'),
-            ]
-        ).to_json()
-    ],
-)
+    ]
+    return ReportConfiguration(
+        _id=report_id,
+        title="Entry Report",
+        aggregation_columns=["color_94ec39e6"],
+        config_id="516c494736e95b023cc7845b557de0f5",
+        domain=domain,
+        report_meta=ReportMeta(builder_report_type="chart", created_by_builder=True),
+        columns=columns,
+        configured_charts=[
+            MultibarChartSpec(type='multibar', chart_id="7451243209119342931", x_axis_column="color_94ec39e6",
+                              y_axis_columns=[GraphDisplayColumn(column_id="count", display="count")]).to_json()
+        ],
+        filters=[
+            DynamicChoiceListFilterSpec(
+                type='dynamic_choice_list',
+                display="owner name",
+                field="computed_owner_name_40cc88a0",
+                slug="computed_owner_name_40cc88a0_1"
+            ).to_json(),
+            ChoiceListFilterSpec(
+                type='choice_list',
+                display="fav color",
+                field="fav_fruit_abc123",
+                slug="fav_fruit_abc123_1",
+                choices=[
+                    FilterChoice(value='a', display='apple'),
+                    FilterChoice(value='b', display='banana'),
+                    FilterChoice(value='c', display='clementine'),
+                ]
+            ).to_json()
+        ],
+    )
 
 
 class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
@@ -110,8 +119,9 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         super(ReportFiltersSuiteTest, cls).setUpClass()
         delete_all_users()
         cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
-        cls.report_config_uuid = 'a98c812873986df34fd1b4ceb45e6164ae9cc664'
+        cls.report_config_mobile_id = 'a98c812873986df34fd1b4ceb45e6164ae9cc664'
         cls.domain = 'report-filter-test-domain'
+        create_domain(cls.domain)
         cls.user = create_restore_user(
             domain=cls.domain,
             username='ralph',
@@ -119,8 +129,34 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
 
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
+
+        # also make a report with a hidden column
+        cls.hidden_column_report_id = 'bd2a43018ad9463682165c1bc16347ac'
+        cls.hidden_column_mobile_id = '45152061d8dc4d2a8d987a0568abe1ae'
+        report_configuration_with_hidden_column = MAKE_REPORT_CONFIG(
+            cls.domain,
+            cls.hidden_column_report_id,
+            columns=[
+                FieldColumn(
+                    type='field',
+                    aggregation="simple",
+                    column_id="color_94ec39e6",
+                    display="color",
+                    field="color_94ec39e6"
+                ).to_json(),
+                FieldColumn(
+                    type='field',
+                    aggregation="simple",
+                    column_id="hidden_color_94ec39e6",
+                    display="color",
+                    field="color_94ec39e6",
+                    visible=False,
+                ).to_json(),
+            ]
+        )
         cls.report_configs_by_id = {
-            cls.report_id: report_configuration
+            cls.report_id: report_configuration,
+            cls.hidden_column_report_id: report_configuration_with_hidden_column
         }
         cls.app = Application.new_app(cls.domain, "Report Filter Test App")
         module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
@@ -141,11 +177,21 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                         )],
                     )
                 },
-                filters={
-                    'computed_owner_name_40cc88a0_1': MobileSelectFilter(),
-                    'fav_fruit_abc123_1': MobileSelectFilter()
-                },
-                uuid=cls.report_config_uuid,
+                filters=OrderedDict([
+                    ('fav_fruit_abc123_1', MobileSelectFilter()),
+                    ('computed_owner_name_40cc88a0_1', MobileSelectFilter()),
+                ]),
+                uuid=cls.report_config_mobile_id,
+            )
+        )
+        module.report_configs.append(
+            ReportAppConfig(
+                report_id=cls.hidden_column_report_id,
+                header={},
+                description="",
+                complete_graph_configs={},
+                filters={},
+                uuid=cls.hidden_column_mobile_id,
             )
         )
         with mock_report_configurations(cls.report_configs_by_id):
@@ -178,6 +224,17 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='fav_fruit_abc123_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_fruit_abc123_1" />
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
               <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
+            </session>
+          </entry>
+          <entry>
+            <command id="reports.45152061d8dc4d2a8d987a0568abe1ae">
+              <text>
+                <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.name"/>
+              </text>
+            </command>
+            <instance id="reports" src="jr://fixture/commcare:reports"/>
+            <session>
+              <datum autoselect="true" detail-confirm="reports.45152061d8dc4d2a8d987a0568abe1ae.summary" detail-select="reports.45152061d8dc4d2a8d987a0568abe1ae.select" id="report_id_45152061d8dc4d2a8d987a0568abe1ae" nodeset="instance('reports')/reports/report[@id='45152061d8dc4d2a8d987a0568abe1ae']" value="./@id"/>
             </session>
           </entry>
         </partial>
@@ -269,7 +326,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             </row>
           </rows>
         </partial>
-        """, self.fixture, "reports/report/rows")
+        """, self.fixture, "reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows")
 
     def test_fixture_filters(self):
         self.assertXmlPartialEqual("""
@@ -286,7 +343,32 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             </filter>
           </filters>
         </partial>
-        """, self.fixture, "reports/report/filters")
+        """, self.fixture, "reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters")
+
+    def test_hidden_columns_data_detail(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <detail id="reports.45152061d8dc4d2a8d987a0568abe1ae.data" nodeset="rows/row">
+            <title>
+              <text>
+                <locale id="cchq.report_data_table"/>
+              </text>
+            </title>
+            <field>
+              <header>
+                <text>
+                  <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.headers.color_94ec39e6"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="column[@id='color_94ec39e6']"/>
+                </text>
+              </template>
+            </field>
+          </detail>
+        </partial>
+        """, self.suite, "detail/detail[@id='reports.45152061d8dc4d2a8d987a0568abe1ae.data']")
 
 
 class TestReportAutoFilters(SimpleTestCase):

@@ -13,7 +13,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 
-from memoized import memoized
 from django.views.generic import View
 
 from corehq import toggles
@@ -115,14 +114,14 @@ def _export_data_dictionary(domain):
     )
     export_data = {}
     for case_type in queryset:
-        export_data[case_type.name] = [{
-            'Case Property': prop.name,
-            'Group': prop.group,
-            'Data Type': prop.data_type,
-            'Description': prop.description,
-            'Deprecated': prop.deprecated
+        export_data[case_type.name or _("No Name")] = [{
+            _('Case Property'): prop.name,
+            _('Group'): prop.group,
+            _('Data Type'): prop.data_type,
+            _('Description'): prop.description,
+            _('Deprecated'): prop.deprecated
         } for prop in case_type.properties.all()]
-    headers = ('Case Property', 'Group', 'Data Type', 'Description', 'Deprecated')
+    headers = (_('Case Property'), _('Group'), _('Data Type'), _('Description'), _('Deprecated'))
     outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
     header_table = [(tab_name, [headers]) for tab_name in export_data]
@@ -173,7 +172,7 @@ class DataDictionaryView(BaseProjectDataView):
 
 class UploadDataDictionaryView(BaseProjectDataView):
     page_title = _("Upload Data Dictionary")
-    template_name = "data_dictionary/import_data_dict.html"
+    template_name = "hqwebapp/bulk_upload.html"
     urlname = 'upload_data_dict'
 
     @method_decorator(login_and_domain_required)

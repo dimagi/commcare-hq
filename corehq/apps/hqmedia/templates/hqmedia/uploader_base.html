@@ -1,7 +1,11 @@
-{% extends "hqwebapp/base_page.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 
+{% block page_navigation %}
+  {% include 'hqwebapp/partials/navigation_left_sidebar.html' with sections=navigation_sections %}
+{% endblock page_navigation %}
+
 {% block js %} {{ block.super }}
-    {% include 'hqmedia/partials/multimedia_js.html' %}
-    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+  {% include 'hqmedia/partials/multimedia_js.html' %}
+  <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 {% endblock %}

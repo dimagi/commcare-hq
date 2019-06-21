@@ -88,9 +88,17 @@ EntryArrayAnswer.prototype.onPreProcess = function (newValue) {
 EntrySingleAnswer = function (question, options) {
     var self = this;
 
+    var getRawAnswer = function (answer) {
+        // Zero is a perfectly valid answer
+        if (answer !== 0 && !answer) {
+            return Formplayer.Const.NO_ANSWER;
+        }
+        return answer;
+    };
+
     Entry.call(self, question, options);
     self.valueUpdate = undefined;
-    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER);
+    self.rawAnswer = ko.observable(getRawAnswer(question.answer()));
     self.placeholderText = '';
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
@@ -104,6 +112,7 @@ EntrySingleAnswer = function (question, options) {
             },
         });
     }
+
 };
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
 EntrySingleAnswer.prototype.constructor = Entry;
@@ -195,10 +204,15 @@ function IntEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
     self.templateType = 'str';
-    self.lengthLimit = options.lengthLimit || 9;
+    self.lengthLimit = options.lengthLimit || Formplayer.Const.INT_LENGTH_LIMIT;
+    var valueLimit = options.valueLimit || Formplayer.Const.INT_VALUE_LIMIT;
 
     self.getErrorMessage = function (rawAnswer) {
-        return (isNaN(+rawAnswer) || +rawAnswer != Math.floor(+rawAnswer) ? "Not a valid whole number" : null);
+        if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer))
+            return gettext("Not a valid whole number");
+        if (+rawAnswer > valueLimit)
+            return gettext("Number is too large");
+        return null;
     };
 
     self.helpText = function () {
@@ -248,9 +262,15 @@ PhoneEntry.prototype.constructor = FreeTextEntry;
 function FloatEntry(question, options) {
     IntEntry.call(this, question, options);
     this.templateType = 'str';
+    this.lengthLimit = options.lengthLimit || Formplayer.Const.FLOAT_LENGTH_LIMIT;
+    var valueLimit = options.valueLimit || Formplayer.Const.FLOAT_VALUE_LIMIT;
 
     this.getErrorMessage = function (rawAnswer) {
-        return (isNaN(+rawAnswer) ? "Not a valid number" : null);
+        if (isNaN(+rawAnswer))
+            return gettext("Not a valid number");
+        if (+rawAnswer > valueLimit)
+            return gettext("Number is too large");
+        return null;
     };
 
     this.helpText = function () {
@@ -640,6 +660,10 @@ function GeoPointEntry(question, options) {
             self.map.setZoom(self.DEFAULT.anszoom);
         }
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
+        var marker = new google.maps.Marker({
+            map: self.map,
+        });
+        marker.bindTo('position', self.map, 'center');
     };
 
     self.afterRender = function () {
@@ -732,7 +756,8 @@ function getEntry(question) {
             break;
         case Formplayer.Const.LONGINT:
             entry = new IntEntry(question, {
-                lengthLimit: 15,
+                lengthLimit: Formplayer.Const.LONGINT_LENGTH_LIMIT,
+                valueLimit: Formplayer.Const.LONGINT_VALUE_LIMIT,
                 enableAutoUpdate: isPhoneMode,
             });
             break;

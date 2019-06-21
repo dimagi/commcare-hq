@@ -1,52 +1,108 @@
 {% extends "app_manager/source_files.html" %}
 {% load hq_shared_tags %}
 {% load compress %}
+{% load i18n %}
 {% requirejs_main 'app_manager/js/download_index_main' %}
 
 
 {% block page_title %}
-    {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
+  {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
 {% endblock page_title %}
 
-{% block downloads %}
-    <h2>Downloads</h2>
+{% block app_profiles %}
+  {% if app.is_released and request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+    <h2>App Profiles</h2>
     <table class="table table-condensed">
-        {% if supports_j2me %}
+      <thead>
+      <tr>
+        <th class="col-sm-2">Name</th>
+        <th class="col-sm-2">Languages</th>
+        <th class="col-sm-2">Latest Enabled Version</th>
+        <th class="col-sm-2">Action</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for build_profile_id, build_profile in app.build_profiles.items %}
         <tr>
-            <td>{% url "download_jad" app.domain app.id as url %}<a href="{{ url }}">CommCare.jad</a></td>
+          <td class="col-sm-2">{{ build_profile.name }}</td>
+          <td class="col-sm-2">{{ build_profile.langs|join:", " }}</td>
+          <td class="col-sm-2">
+            {% for id, version in latest_enabled_build_profiles.items %}
+              {% if id == build_profile_id %}
+                {{ version }}
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td class="col-sm-2">
+            {% if build_profile_id in enabled_build_profiles %}
+              <a class="btn btn-default" href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=disable'>
+                <i class="fa fa-chain-broken"></i>
+                {% trans 'Revoke restriction' %}
+              </a>
+            {% else %}
+              <a class="btn btn-default" href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=enable'>
+                <i class="fa fa-ban"></i>
+                {% trans 'Restrict to this version' %}
+              </a>
+            {% endif %}
+          </td>
         </tr>
-        <tr>
-            <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">CommCare.jar</a></td>
-        </tr>
-        {% endif %}
-        <tr>
-            <td>
-                <a href="#download_ccz" data-toggle="modal"  class='download-zip'>CommCare.ccz</a>
-            </td>
-        </tr>
+      {% endfor %}
+      </tbody>
     </table>
+  {% endif %}
+{% endblock %}
+
+{% block downloads %}
+  <h2>Downloads</h2>
+  <table class="table table-condensed">
+    {% if supports_j2me %}
+      <tr>
+        <td>{% url "download_jad" app.domain app.id as url %}<a href="{{ url }}">CommCare.jad</a></td>
+      </tr>
+      <tr>
+        <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">CommCare.jar</a></td>
+      </tr>
+    {% endif %}
+    <tr>
+      <td>
+        <a href="#download_ccz" data-toggle="modal"  class='download-zip'>
+          <i class="fa fa-file-zip-o"></i>
+          CommCare.ccz
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href="{% url "download_bulk_app_translations" app.domain app.id %}">
+          <i class="fa fa-file-excel-o"></i>
+          {% trans "Bulk application translations" %}
+        </a>
+      </td>
+    </tr>
+  </table>
 {% endblock downloads %}
 
 {% block file_description %}
-    <a href="{{ file.name }}" target="_blank"><i class="fa fa-external-link"></i></a>
+  <a href="{{ file.name }}" target="_blank"><i class="fa fa-external-link"></i></a>
 {% endblock file_description %}
 
 {% block file_source %}
-    <pre class="prettyprint" data-filename="{{ file.name }}">{{ file.source|force_escape }}</pre>
+  <pre class="prettyprint" data-filename="{{ file.name }}">{{ file.source|force_escape }}</pre>
 {% endblock file_source %}
 
 {% block post_files %}
-    {% if app.copy_of and not files %}
-        <div class="alert alert-info">
-            This build was made before I knew how to save the files for a specific build.
-            To see this view for the current not-yet-built version of this app,
-            <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
-        </div>
-    {% endif %}
+  {% if app.copy_of and not files %}
+    <div class="alert alert-info">
+      This build was made before I knew how to save the files for a specific build.
+      To see this view for the current not-yet-built version of this app,
+      <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
+    </div>
+  {% endif %}
 {% endblock post_files %}
 
 {% block modals %}
-    {{ block.super }}
-    {% url "download_ccz" app.domain app.id as ccz_url %}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
+  {{ block.super }}
+  {% url "download_ccz" app.domain app.id as ccz_url %}
+  {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
 {% endblock %}

@@ -3,6 +3,19 @@ Setting up CommCare HQ for Developers
 
 Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
 
+### (Optional) Copying data from an existing HQ install
+
+If you're setting up HQ on a new computer, you may have an old, functional environment around.  If you don't want to start from scratch, back up your postgres and couch data.
+
+* PostgreSQL
+  * Create a pg dump.  You'll need to verify the host IP address:
+    `pg_dump -h 0.0.0.0 -U commcarehq commcare_hq > /path/to/backup_hq_db.sql`
+* Couchdb
+  * From a non-docker install: Copy `/var/lib/couchdb2/`
+  * From a docker install: Copy `~/.local/share/dockerhq/couchdb2`.
+
+Save those backups to somewhere you'll be able to access from the new environment.
+
 ### Downloading and configuring CommCare HQ
 
 #### Prerequisites
@@ -24,7 +37,8 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 
 - Additional requirements:
   - [Homebrew](https://brew.sh)
-  - [libmagic](https://macappstore.org/libmagic)
+  - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
+  - [pango](https://www.pango.org/) (available via homebrew)
 
 #### Setup virtualenv
 
@@ -41,19 +55,38 @@ Once all the dependencies are in order, please do the following:
     $ cd commcare-hq
     $ git submodule update --init --recursive
     $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
-    $ pip install -r requirements/requirements.txt
+    $ setvirtualenvproject  # optional - sets this directory as the project root
 
-(If the last command fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
+Next, install the appropriate requirements (only one is necessary).
 
-There is also a separate collection of Dimagi dev oriented tools that you can install:
+* Recommended for those developing CommCareHQ
+  * `$ pip install -r requirements/dev-requirements.txt`
+* For production environments
+  * `$ pip install -r requirements/prod-requirements.txt`
+* Minimum required packages
+  * `$ pip install -r requirements/requirements.txt`
 
-    $ pip install -r requirements/dev-requirements.txt
-
-And for production environments you may want:
-
-    $ pip install -r requirements/prod-requirements.txt
+(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207) or pango.)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
+
+#### Setup for Python 3 (beta)
+
+- Install [Python 3.6](https://www.python.org/downloads/)
+    - For OSX, you can [install using Homebrew](http://osxdaily.com/2018/06/13/how-install-update-python-3x-mac/)
+    - For Ubuntu 18.04:
+
+          $ sudo apt install python3.6 python3.6-dev
+
+    - For Ubuntu < 18.04:
+
+          $ sudo add-apt-repository ppa:deadsnakes/ppa
+          $ sudo apt-get update
+          $ sudo apt-get install python3.6
+
+- [Create and activate virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments)
+- Install HQ requirements for Python 3.6
+    - `$ pip install -r requirements-python3/dev-requirements.txt`
 
 #### Setup localsettings
 
@@ -64,24 +97,36 @@ First create your `localsettings.py` file:
 
 Enter `localsettings.py` and do the following:
 - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist and are writeable. If they do not exist, create them.
-- Find the `LOCAL_APPS` section and un-comment the line that starts with `'kombu.transport.django'`
 - You may also want to add the line `from dev_settings import *` at the top of the file, which includes some useful default settings.
 
 Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then run:
 
     $ mkdir sharedfiles
 
+### Set up docker services
+
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
-Note that if you want to run everything except for riakcs (which you often do not need for a development environment),
-the command to run is
 
-    $ ./scripts/docker up -d postgres couch redis elasticsearch kafka
+### (Optional) Copying data from an existing HQ install
+
+If you previously created backups of another HQ install's data, you can now copy that to the new install.
+
+* Postgres
+  * Make sure postgres is running: `./scripts/docker ps`
+  * Make sure `psql` is installed
+    * Ubuntu: `$ sudo apt install postgresql postgresql-contrib`
+  * Restore the backup: `psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql`
+* Couchdb
+  * Stop couch `./scripts/docker stop couch`
+  * Copy the `couchdb2/` dir to `~/.local/share/dockerhq/couchdb2`.
+  * Start couch `./scripts/docker start couch`
+  * Fire up fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
 
 ### Set up your django environment
 
 Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
-The easiest way to do this is using the docker instructions below.
+The easiest way to do this is using the docker instructions above.
 
 Populate your database:
 
@@ -206,6 +251,12 @@ Formplayer is a Java service that allows us to use applications on the web inste
 In `localsettings.py`:
 ```
 FORMPLAYER_URL = 'http://localhost:8010'
+LOCAL_APPS += ('django_extensions',)
+```
+
+When running HQ, be sure to use `runserver_plus`:
+```
+python manage.py runserver_plus
 ```
 
 Then you need to have formplayer running. There are a few options as described below.
@@ -265,11 +316,8 @@ Then run the following separately:
     # Keeps elasticsearch index in sync
     $ ./manage.py run_ptop --all
 
-    # Setting up the asynchronous task scheduler (only required if you have CELERY_ALWAYS_EAGER=False in settings)
-    # For Mac / Linux
-    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
-    # Windows
-    > manage.py celeryd --settings=settings
+    # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
+    $ celery -A corehq worker -l info
 
 Create a superuser for your local environment
 
@@ -284,7 +332,7 @@ By default, HQ uses vellum minified build files to render form-designer. To use 
 VELLUM_DEBUG = "dev"
 ```
 
-    # simlink your Vellum code to submodules/formdesigner
+    # symlink your Vellum code to submodules/formdesigner
     $ ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
 
 Running Tests

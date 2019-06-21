@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,9 +18,19 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-child_delivery_forms",
@@ -37,6 +55,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "AWC ID",
@@ -57,16 +93,18 @@
         "datatype": "string",
         "type": "expression",
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "supervisor_id",
         "create_index": true,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "type": "named",
             "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -78,23 +116,13 @@
         "is_primary_key": false,
         "column_id": "block_id",
         "expression": {
-          "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "related_doc",
-            "related_doc_type": "Location",
-            "doc_id_expression": {
-              "location_id_expression": {
-                "type": "named",
-                "name": "user_location_id"
-              },
-              "type": "location_parent_id"
-            }
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -106,35 +134,13 @@
         "is_primary_key": false,
         "column_id": "district_id",
         "expression": {
-          "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "related_doc",
-            "related_doc_type": "Location",
-            "doc_id_expression": {
-              "location_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "_id"
-                },
-                "type": "related_doc",
-                "related_doc_type": "Location",
-                "doc_id_expression": {
-                  "location_id_expression": {
-                    "type": "named",
-                    "name": "user_location_id"
-                  },
-                  "type": "location_parent_id"
-                }
-              },
-              "type": "location_parent_id"
-            }
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -146,47 +152,13 @@
         "is_primary_key": false,
         "column_id": "state_id",
         "expression": {
-          "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "related_doc",
-            "related_doc_type": "Location",
-            "doc_id_expression": {
-              "location_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "_id"
-                },
-                "type": "related_doc",
-                "related_doc_type": "Location",
-                "doc_id_expression": {
-                  "location_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "_id"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                      "location_id_expression": {
-                        "type": "named",
-                        "name": "user_location_id"
-                      },
-                      "type": "location_parent_id"
-                    }
-                  },
-                  "type": "location_parent_id"
-                }
-              },
-              "type": "location_parent_id"
-            }
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -823,6 +795,13 @@
       }
     },
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
+    }
   }
 }

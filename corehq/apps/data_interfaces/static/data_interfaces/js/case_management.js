@@ -176,14 +176,14 @@ hqDefine("data_interfaces/js/case_management",[
                     placeholder: gettext("Search for users or groups"),
                     ajax: {
                         url: initialPageData.reverse("reassign_case_options"),
-                        data: function (term) {
+                        data: function (params) {
                             return {
-                                q: term,
+                                q: params.term,
                             };
                         },
                         dataType: 'json',
                         quietMillis: 250,
-                        results: function (data) {
+                        processResults: function (data) {
                             return {
                                 total: data.total,
                                 results: data.results,

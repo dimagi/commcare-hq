@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>{{ form_name }}</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/{{ xmlns_uuid }}" uiVersion="1" version="1" name="{{ form_name }}">
+					<name />
+                    <simprintsEnrol />
+                    <simprintsId />
+                    <rightIndex />
+                    <rightThumb />
+                    <leftIndex />
+                    <leftThumb />
+				</data>
+			</instance>
+			<bind vellum:nodeset="#form/name" nodeset="/data/name" type="xsd:string" required="true()" />
+			<bind vellum:nodeset="#form/simprintsEnrol" nodeset="/data/simprintsEnrol" type="intent" required="true()" />
+			<bind vellum:nodeset="#form/simprintsId" nodeset="/data/simprintsId" />
+			<bind vellum:nodeset="#form/rightIndex" nodeset="/data/rightIndex" />
+			<bind vellum:nodeset="#form/rightThumb" nodeset="/data/rightThumb" />
+			<bind vellum:nodeset="#form/leftIndex" nodeset="/data/leftIndex" />
+			<bind vellum:nodeset="#form/leftThumb" nodeset="/data/leftThumb" />
+			<itext>
+				<translation lang="{{ lang }}" default="">
+                    <text id="name-label">
+                        <value>{{ name_label }}</value>
+                    </text>
+                    <text id="simprintsEnrol-label">
+                        <value>{{ simprints_enrol_label }}</value>
+                    </text>
+				</translation>
+			</itext>
+		</model>
+        <odkx:intent xmlns:odkx="http://opendatakit.org/xforms" id="simprintsEnrol" class="com.simprints.id.REGISTER">
+            <extra key="projectId" ref="'{{ projectId }}'" />
+            <extra key="packageName" ref="'{{ packageName }}'" />
+            <extra key="userId" ref="'{{ userId }}'" />
+            <extra key="moduleId" ref="'{{ moduleId }}'" />
+            <response key="guid" vellum:ref="#form/simprintsId" ref="/data/simprintsId" />
+        </odkx:intent>
+	</h:head>
+	<h:body>
+		<input vellum:ref="#form/name" ref="/data/name">
+            <label ref="jr:itext('name-label')" />
+        </input>
+		<input vellum:ref="#form/simprintsEnrol" ref="/data/simprintsEnrol" appearance="intent:simprintsEnrol">
+            <label ref="jr:itext('simprintsEnrol-label')" />
+        </input>
+	</h:body>
+</h:html>

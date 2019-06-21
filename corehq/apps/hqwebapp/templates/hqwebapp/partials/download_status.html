@@ -1,23 +1,23 @@
 {% load i18n %}
 {% if is_ready %}
-    <div id="ready_{{ download_id }}">
-        <legend>{{ on_complete_short }}</legend>
-{% block results %}
-        <div class="alert alert-success">
-            <h3>{{ on_complete_long }}</h3>
-            {% for r in result %}
-            <p>{{ r }}</p>
-            {% endfor %}
-        </div>
-{% endblock results %}
-    </div>
+  <div id="ready_{{ download_id }}">
+    <legend>{{ on_complete_short }}</legend>
+    {% block results %}
+      <div class="alert alert-success">
+        <h3>{{ on_complete_long }}</h3>
+        {% for r in result %}
+          <p>{{ r }}</p>
+        {% endfor %}
+      </div>
+    {% endblock results %}
+  </div>
 {% else %}
-    <legend>
+  <legend>
     {%  if custom_message %}
-        {{ custom_message }}
+      {{ custom_message }}
     {% else %}
-        {% trans "Importing your data. This may take some time..." %}
+      {% trans "Importing your data. This may take some time..." %}
     {% endif %}
-    </legend>
-    {% include 'soil/partials/download_in_progress.html' %}
+  </legend>
+  {% include 'soil/partials/download_in_progress.html' %}
 {% endif %}

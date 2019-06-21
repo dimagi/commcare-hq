@@ -467,7 +467,12 @@ class ESQuery(object):
             return self.run().hits
 
     def values_list(self, *fields, **kwargs):
-        return values_list(self.fields(fields).run().hits, *fields, **kwargs)
+        if kwargs.pop('scroll', False):
+            hits = self.fields(fields).scroll()
+        else:
+            hits = self.fields(fields).run().hits
+
+        return values_list(hits, *fields, **kwargs)
 
     def count(self):
         """Performs a minimal query to get the count of matching documents"""

@@ -1,0 +1,207 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-ccs_record_cases",
+    "display_name": "Cases - CCS Record (REACH Dashboard Backend)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "property_value": "ccs_record"
+    },
+    "validations": [
+      {
+        "name": "directly_owned",
+        "error_message": "This case has an owner_id and does not default to ownership by extension",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "property_value": "-"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "name": "parent_id",
+          "type": "named"
+        }
+      },
+      {
+        "column_id": "opened_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "column_id": "closed_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
+      },
+      {
+        "column_id": "edd",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "edd"
+      },
+      {
+        "column_id": "add",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "add"
+      },
+      {
+        "column_id": "lmp",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "lmp"
+      },
+      {
+        "column_id": "preg_reg_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "preg_reg_date"
+      },
+      {
+        "column_id": "woman_weight_at_preg_reg",
+        "datatype": "decimal",
+        "type": "raw",
+        "property_name": "woman_weight_at_preg_reg"
+      },
+      {
+        "column_id": "hrp",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "hrp"
+      },
+      {
+        "column_id": "ifa_tablets_issued_pre",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "ifa_tablets_issued_pre"
+      },
+      {
+        "column_id": "ifa_tablets_issued_post",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "ifa_tablets_issued_post"
+      },
+      {
+        "column_id": "date_abortion",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "date_abortion"
+      },
+      {
+        "column_id": "abortion_type",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "abortion_type"
+      },
+      {
+        "column_id": "pnc1_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "pnc1_date"
+      },
+      {
+        "column_id": "pnc2_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "pnc2_date"
+      },
+      {
+        "column_id": "pnc3_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "pnc3_date"
+      },
+      {
+        "column_id": "pnc4_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "pnc4_date"
+      },
+      {
+        "column_id": "child_birth_location",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "child_birth_location"
+      },
+      {
+        "column_id": "complication_type",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "complication_type"
+      }
+    ],
+    "named_expressions": {
+      "parent_id": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "referenced_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "array_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "identifier"
+              },
+              "type": "boolean_expression",
+              "property_value": "parent"
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              },
+              "type": "root_doc"
+            }
+          },
+          "type": "array_index",
+          "index_expression": {
+            "constant": 0,
+            "type": "constant"
+          }
+        }
+      }
+    },
+    "named_filters": {},
+    "engine_id": "aaa-data"
+  }
+}

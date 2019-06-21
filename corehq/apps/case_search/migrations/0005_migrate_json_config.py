@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from __future__ import absolute_import
 from collections import defaultdict
-from corehq.sql_db.operations import HqRunPython
+
 from django.db import migrations
 import six
 
@@ -38,5 +38,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(migrate_json_config_to_model)
+        migrations.RunPython(migrate_json_config_to_model)
     ]

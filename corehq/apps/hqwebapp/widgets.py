@@ -18,6 +18,7 @@ from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
 import six
 from six.moves import range
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -68,31 +69,12 @@ class _Select2AjaxMixin():
             return {"id": val, "text": val}
 
 
-class Select2AjaxV3(_Select2AjaxMixin, forms.TextInput):
+class Select2Ajax(_Select2AjaxMixin, forms.Select):
     def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
         self.multiple = multiple
         self._initial = None
-        super(Select2AjaxV3, self).__init__(attrs)
-
-    def render(self, name, value, attrs=None):
-        attrs.update({
-            'class': 'form-control hqwebapp-select2-ajax-v3',
-            'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
-            'data-endpoint': self.url,
-            'data-page-size': self.page_size,
-            'data-multiple': '1' if self.multiple else '0',
-        })
-        output = super(Select2AjaxV3, self).render(name, value, attrs)
-        return mark_safe(output)
-
-
-class Select2AjaxV4(_Select2AjaxMixin, forms.Select):
-    def __init__(self, attrs=None, page_size=20, multiple=False):
-        self.page_size = page_size
-        self.multiple = multiple
-        self._initial = None
-        super(Select2AjaxV4, self).__init__(attrs)
+        super(Select2Ajax, self).__init__(attrs)
 
     def render(self, name, value, attrs=None):
         attrs.update({
@@ -102,7 +84,7 @@ class Select2AjaxV4(_Select2AjaxMixin, forms.Select):
             'data-page-size': self.page_size,
             'data-multiple': '1' if self.multiple else '0',
         })
-        output = super(Select2AjaxV4, self).render(name, value, attrs)
+        output = super(Select2Ajax, self).render(name, value, attrs)
         return mark_safe(output)
 
 
@@ -159,3 +141,26 @@ class DateRangePickerWidget(Input):
                 {}
             </div>
         """.format(output))
+
+
+class SelectToggle(forms.Select):
+
+    def __init__(self, choices=None, attrs=None, apply_bindings=False):
+        self.apply_bindings = apply_bindings
+        self.params = {}
+        attrs = attrs or {}
+        self.params['value'] = attrs.get('ko_value', '')
+        super(SelectToggle, self).__init__(choices=choices, attrs=attrs)
+
+    def render(self, name, value, attrs=None):
+        return '''
+            <select-toggle data-apply-bindings="{apply_bindings}"
+                           params="name: '{name}',
+                                   id: '{id}',
+                                   value: {value},
+                                   options: {options}"></select-toggle>
+        '''.format(apply_bindings="true" if self.apply_bindings else "false",
+                   name=name,
+                   id=html_attr(attrs.get('id', '')),
+                   value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
+                   options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])))

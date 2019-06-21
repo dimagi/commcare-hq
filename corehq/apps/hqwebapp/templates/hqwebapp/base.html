@@ -5,514 +5,558 @@
 <!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
 <!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
 <!--[if gt IE 8]><!--><html lang="{{ LANGUAGE_CODE }}"><!--<![endif]-->
-    <head>
-        {% if ANALYTICS_IDS.GTM_ID %}
-            {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-            <!-- Google Tag Manager -->
-            <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','{{ ANALYTICS_IDS.GTM_ID }}');</script>
-            <!-- End Google Tag Manager -->
-        {% endif %}
+  <head>
+    {% if ANALYTICS_IDS.GTM_ID %}
+      {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
+      <!-- Google Tag Manager -->
+      <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','{{ ANALYTICS_IDS.GTM_ID }}');
+      </script>
+      <!-- End Google Tag Manager -->
+    {% endif %}
 
-        {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
-        {% captureas title_context_block %}{% block title_context %}{% endblock title_context %}{% endcaptureas %}
-        <title>
-            {% if title_block %}{{ title_block }}{% endif %}
-            {% if title_block %}{% if title_context_block.strip or not title_context_block %}- {{ title_context_block }}{% endif %}{% endif %}
-            {% if not title_context_block %}CommCare HQ{% endif %}
-        </title>
+    {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
+    {% captureas title_context_block %}{% block title_context %}{% endblock title_context %}{% endcaptureas %}
+    <title>
+      {% if title_block %}{{ title_block }}{% endif %}
+      {% if title_block %}{% if title_context_block.strip or not title_context_block %}- {{ title_context_block }}{% endif %}{% endif %}
+      {% if not title_context_block %}CommCare HQ{% endif %}
+    </title>
 
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
 
-        {# link tags #}
-        <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />
-        <link type="application/opensearchdescription+xml"
-              rel="search"
-              href="{% url 'osdd' %}"
-              title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
+    {# link tags #}
+    <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />
+    <link type="application/opensearchdescription+xml"
+          rel="search"
+          href="{% url 'osdd' %}"
+          title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
-        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-        {% block stylesheets %}{% endblock stylesheets %}
-        {% block csrf_token_block %}
-          <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
-        {% endblock %}
-        {% if request.use_select2 %}
-        {% compress css %}
-            <link type="text/css"
-                   rel="stylesheet"
-                   media="all"
-                   href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
-            <link type="text/css"
-                   rel="stylesheet"
-                   media="all"
-                   href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
-        {% endcompress %}
-        {% endif %}
+    {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
-        {% if request.use_select2_v4 %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'select2/dist/css/select2.min.css' %}" />
-        {% endcompress %}
-        {% endif %}
+    {% if CUSTOM_LOGO_URL %}
+      <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
+    {% else %}
+      <link rel="apple-touch-icon" sizes="57x57" href="{% static 'hqstyle/images/commcare-icon-57x57.png' %}"/>
+      <link rel="apple-touch-icon" sizes="76x76" href="{% static 'hqstyle/images/commcare-icon-76x76.png' %}"/>
+      <link rel="apple-touch-icon" sizes="120x120" href="{% static 'hqstyle/images/commcare-icon-120x120.png' %}"/>
+      <link rel="apple-touch-icon" sizes="152x152" href="{% static 'hqstyle/images/commcare-icon-152x152.png' %}"/>
+      <link rel="apple-touch-icon" sizes="167x167" href="{% static 'hqstyle/images/commcare-icon-167x167.png' %}"/>
+      <link rel="apple-touch-icon" sizes="180x180" href="{% static 'hqstyle/images/commcare-icon-180x180.png' %}"/>
+    {% endif %}
 
-        {% if request.use_nvd3 or request.use_nvd3_v3 %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'nvd3/src/nv.d3.css' %}" />
-        {% endcompress %}
-        {% endif %}
+    {% block stylesheets %}{% endblock stylesheets %}
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
 
-        {% if request.use_daterangepicker %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
-        {% endcompress %}
-        {% endif %}
+    {% compress css %}
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'select2/dist/css/select2.min.css' %}" />
+    {% endcompress %}
 
-        {% if request.use_timepicker %}
-        {% compress css %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "bootstrap-timepicker/less/timepicker.less" %}" />
-        {% endcompress %}
-        {% endif %}
+    {% if request.use_nvd3 or request.use_nvd3_v3 %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'nvd3/src/nv.d3.css' %}" />
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_jquery_ui %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
-        {% endcompress %}
-        {% endif %}
+    {% if request.use_daterangepicker %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_datatables %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
-        {% endcompress %}
-        {% endif %}
+    {% if request.use_timepicker %}
+      {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "bootstrap-timepicker/less/timepicker.less" %}" />
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_multiselect %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "multiselect/css/multi-select.css" %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
-        {% endcompress %}
-        {% endif %}
+    {% if request.use_jquery_ui %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_datatables %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_multiselect %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "multiselect/css/multi-select.css" %}" />
+        <link type="text/less"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
+      {% endcompress %}
+    {% endif %}
 
 
-        {% if request.use_maps %}
-        {% compress css %}
+    {% if request.use_maps %}
+      {% compress css %}
         <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
         <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if not requirejs_main %}
-            {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
-        {% endif %}
+    {% if not requirejs_main %}
+      {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
+    {% endif %}
 
-        {# Up here because if daterangepicker is called from within a form widget, #}
-        {# the javascript requiring the config file is run before js-inline #}
-        {% if request.use_daterangepicker and not requirejs_main %}
-        {% compress js %}
+    {# Up here because if daterangepicker is called from within a form widget, #}
+    {# the javascript requiring the config file is run before js-inline #}
+    {% if request.use_daterangepicker and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
         <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% block head %}
-        {% endblock %}
+    {% block head %}
+    {% endblock %}
 
-        {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
-        <script>
-            // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
-            // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
-            window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
-        </script>
+    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+    <script>
+      // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
+      // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
+      window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
+    </script>
 
-        {% if less_debug %}
-            {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-            <script>
-                less = {
-                    env: "development",
-                    useFileCache: true,
-                    logLevel: 2,
-                    errorReporting: 'console',
-                    async: false,
-                    fileAsync: false,
-                    poll: 1000,
-                    functions: {},
-                    dumpLineNumbers: "comments",
-                    relativeUrls: false
-                };
-            </script>
-            <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-        {% endif %}
-    </head>
-    <body>
-        {% if ANALYTICS_IDS.GTM_ID %}
-        <!-- Google Tag Manager (noscript) -->
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ ANALYTICS_IDS.GTM_ID }}"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-        <!-- End Google Tag Manager (noscript) -->
-        {% endif %}
-        {% block background_content %}{% endblock %}
-        {% maintenance_alert %}
-        {% if request.user.is_authenticated and is_demo_visible %}
-          {% include "hqwebapp/partials/get_demo_banner.html" %}
-        {% endif %}
-        <!-- .hide used for A/B test of account creation page -->
-        <div class="hq-container{% if is_register_user %} molly{% endif %}">
-            {% block navigation %}
-            <div id="hq-navigation"
-                 class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
-                <div class="container-fluid">
+    {% if less_debug %}
+      {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
+      <script>
+        less = {
+          env: "development",
+          useFileCache: true,
+          logLevel: 2,
+          errorReporting: 'console',
+          async: false,
+          fileAsync: false,
+          poll: 1000,
+          functions: {},
+          dumpLineNumbers: "comments",
+          relativeUrls: false
+        };
+      </script>
+      <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
+    {% endif %}
+  </head>
+  <body>
+    {% if ANALYTICS_IDS.GTM_ID %}
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ ANALYTICS_IDS.GTM_ID }}"
+                        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+    {% endif %}
+    {% block background_content %}{% endblock %}
+    {% maintenance_alert request %}
+    {% if request.user.is_authenticated and is_demo_visible %}
+      {% include "hqwebapp/partials/get_demo_banner.html" %}
+    {% endif %}
+    <div class="hq-container">
+      {% block navigation %}
+        <div id="hq-navigation"
+             class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
+          <div class="container-fluid">
 
-                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated  %}
-                        <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
-                            <li>
-                                <a href="#hq-full-menu" data-toggle="collapse">
-                                    <i class="fa fa-bars"></i>
-                                    {% trans "Menu" %}
-                                </a>
-                            </li>
-                        </ul>
-                    {% endif %}
-
-                    {% if not request.user.is_authenticated %}
-                      <nav class="navbar-menus navbar-signin" role="navigation">
-
-                        <div class="nav-settings-bar pull-right">
-                          <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
-
-                              {% if demo_workflow_ab.version == 'hubspot' %}
-                              <a href="#cta-form-get-demo"
-                                 data-toggle="modal"
-                                 id="cta-form-get-demo-button-header"
-                                 class="btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
-                              {% endif %}
-
-                              {% if demo_workflow_ab.version == 'drift' %}
-                              <button id="cta-form-get-demo-button-header"
-                                      class="btn btn-purple navbar-btn schedule-demo-drift-cta">
-                                {% trans 'Schedule a Demo' %}</button>
-                              {% endif %}
-
-                          {% endif %}
-                        </div>
-                      </nav>
-                    {% endif %}
-
-                    <div class="navbar-header hq-header">
-                        <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
-                            {% if CUSTOM_LOGO_URL %}
-                                <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
-                            {% else %}
-                                <!-- navbar.less supplies the default logo -->
-                                <div></div>
-                            {% endif %}
-                        </a>
-                    </div>
-
-                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
-                      <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
-                          <li>
-                              <a href="#hq-main-tabs" data-toggle="collapse">
-                                  <i class="fa fa-bars"></i>
-                                  {% trans "Menu" %}
-                              </a>
-                          </li>
-                      </ul>
-
-                      <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
-                          <div class="nav-settings-bar pull-right">
-                            {% include 'hqwebapp/includes/global_navigation_bar.html' %}
-                          </div>
-                          {% block tabs %}
-                              {% format_main_menu %}
-                          {% endblock %}
-                      </nav>
-                    {% endif %}
-
-                </div>
-            </div>
-            {% endblock navigation %}
-            {% if request.project.is_snapshot %}
-                <div class="alert alert-info">
-                    {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
-                </div>
+            {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated  %}
+              <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
+                <li>
+                  <a href="#hq-full-menu" data-toggle="collapse">
+                    <i class="fa fa-bars"></i>
+                    {% trans "Menu" %}
+                  </a>
+                </li>
+              </ul>
             {% endif %}
 
-            <!--[if IE]>
-                <div id="unsupported-browser" class="alert alert-danger alert-block alert-full">
-                    <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
-                    <p>
-                        {% blocktrans %}
-                        We recommend
-                        <a href="https://www.google.com/chrome">Chrome</a>
-                        or <a href="http://www.mozilla.org/">Firefox</a>.
-                        {% endblocktrans %}
-                    </p>
+            {% if not request.user.is_authenticated %}
+              <nav class="navbar-menus navbar-signin" role="navigation">
+                <div class="nav-settings-bar pull-right">
+                  <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+                  {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+                    <a href="#cta-form-get-demo"
+                       data-toggle="modal"
+                       id="cta-form-get-demo-button-header"
+                       class="btn btn-purple navbar-btn">
+                      {% trans 'Schedule a Demo' %}
+                    </a>
+                  {% endif %}
                 </div>
-            <![endif]-->
-            {% block messages %}
-            <div id="hq-messages-container" class="container-fluid messages-container">
-                <div class="row">
-                    <div class="col-sm-12">
-                       {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                                    <a class="close" data-dismiss="alert" href="#">&times;</a>
-                                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                        <div id="message-alerts" class="ko-template" data-bind="foreach: alerts">
-                            <div data-bind="attr: {'class': alert_class}">
-                                <a class="close" data-dismiss="alert" href="#">&times;</a>
-                                <span data-bind="html: message"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              </nav>
+            {% endif %}
+
+            <div class="navbar-header hq-header">
+              <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
+                {% if CUSTOM_LOGO_URL %}
+                  <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+                {% else %}
+                  <!-- navbar.less supplies the default logo -->
+                  <div></div>
+                {% endif %}
+              </a>
             </div>
-            {% endblock messages %}
-            {% block content %}{% endblock content %}
+
+            {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
+              <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
+                <li>
+                  <a href="#hq-main-tabs" data-toggle="collapse">
+                    <i class="fa fa-bars"></i>
+                    {% trans "Menu" %}
+                  </a>
+                </li>
+              </ul>
+
+              <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
+                <div class="nav-settings-bar pull-right">
+                  {% include 'hqwebapp/includes/global_navigation_bar.html' %}
+                </div>
+                {% block tabs %}
+                  {% format_main_menu %}
+                {% endblock %}
+              </nav>
+            {% endif %}
+
+          </div>
         </div>
-        {% if not enterprise_mode %}
-        {% block footer %}
+      {% endblock navigation %}
+      {% if request.project.is_snapshot %}
+        <div class="alert alert-info">
+          {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
+        </div>
+      {% endif %}
+
+      <!--[if IE]>
+        <div id="unsupported-browser"
+             class="alert alert-danger alert-block alert-full">
+          <p>
+            <i class="fa fa-warning-sign"></i>
+            <strong>
+              {% trans 'CommCare HQ does not work well with Internet Explorer.'%}
+            </strong>
+          </p>
+          <p>
+            {% blocktrans %}
+              We recommend
+              <a href="https://www.google.com/chrome">Chrome</a>
+              or <a href="http://www.mozilla.org/">Firefox</a>.
+            {% endblocktrans %}
+          </p>
+        </div>
+      <![endif]-->
+      {% block messages %}
+        <div id="hq-messages-container"
+             class="container-fluid messages-container">
+          <div class="row">
+            <div class="col-sm-12">
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                    <a class="close" data-dismiss="alert" href="#">&times;</a>
+                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                  </div>
+                {% endfor %}
+              {% endif %}
+              <div id="message-alerts"
+                   class="ko-template"
+                   data-bind="foreach: alerts">
+                <div data-bind="attr: {'class': alert_class}">
+                  <a class="close"
+                     data-dismiss="alert" href="#">&times;</a>
+                  <span data-bind="html: message"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endblock messages %}
+      {% block content %}{% endblock content %}
+    </div>
+
+    {# footer #}
+    {% if not enterprise_mode %}
+      {% block footer %}
         {% include 'hqwebapp/partials/footer.html' %}
-        {% endblock %}
+      {% endblock %}
+    {% endif %}
+
+    {# modals #}
+    {% block modals %}
+      {% if domain and not enterprise_mode %}
+        {% if show_overdue_invoice_modal %}
+          {% include 'hqwebapp/downgrade_modal.html' %}
+        {% elif show_prepaid_modal %}
+          {% include 'hqwebapp/prepaid_modal.html' %}
         {% endif %}
-        {# modals #}
-        {% block modals %}{% endblock modals %}
+      {% endif %}
+    {% endblock modals %}
 
-        {% if show_mobile_ux_warning %}
-          {% include "hqwebapp/partials/mobile_ux_warning.html" %}
-        {% endif %}
+    {% if show_mobile_ux_warning %}
+      {% include "hqwebapp/partials/mobile_ux_warning.html" %}
+    {% endif %}
 
-        {# Report Issue #}
-        {% include 'hqwebapp/includes/modal_report_issue.html' %}
+    {# Report Issue #}
+    {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
+      {% include 'hqwebapp/includes/modal_report_issue.html' %}
+    {% else %}
+      <style>
+        a[href='#modalReportIssue'] {
+          pointer-events: none;
+          cursor: text;
+          text-decoration: none;
+          color: inherit;
+        }
+      </style>
+    {% endif %}
 
-        {% if EULA_COMPLIANCE %}
-            {% if request.couch_user and not request.couch_user.is_eula_signed %}
-                {% registerurl 'agree_to_eula' %}
-                {% include 'hqwebapp/includes/modal_eula.html' %}
-            {% endif %}
-        {% endif %}
+    {% if EULA_COMPLIANCE %}
+      {% if request.couch_user and not request.couch_user.is_eula_signed %}
+        {% registerurl 'agree_to_eula' %}
+        {% include 'hqwebapp/includes/modal_eula.html' %}
+      {% endif %}
+    {% endif %}
 
-        {# 30 Day Trial #}
-        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
+    {# 30 Day Trial #}
+    {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
 
-        {% block additional_initial_page_data %}
-            {% comment %}
-                fallback place to put initial page data for templates where it's
-                awkward or impossible to include it in another block
-            {% endcomment %}
-        {% endblock %}
-        {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
-        {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
-        {% initial_page_data 'toggles_dict' toggles_dict %}
-        {% initial_page_data 'previews_dict' previews_dict %}
-        <div class="initial-page-data" class="hide">
-        {% block initial_page_data %}
-            {# do not override this block, use initial_page_data template tag to populate #}
-        {% endblock %}
-        </div>
-        {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
-        {% registerurl 'send_mobile_reminder' %}  {# used by mobile reminder popup below #}
-        <div class="commcarehq-urls" class="hide">
-        {% block registered_urls %}
-            {# do not override this block, use registerurl template tag to populate #}
-        {% endblock %}
-        </div>
-        {% include 'analytics/initial/all.html' %}
-        {% include 'analytics/initial/drift.html' %}
-        <div class="initial-analytics-data hide">
-        {% block initial_analytics_data %}
-            {# do not override this block, use initial_analytics_data template tag to populate #}
-        {% endblock %}
-        </div>
-        <div class="analytics-ab-tests hide">
-        {% block analytics_ab_test %}
-            {# do not override this block, use analytics_ab_test template tag to populate #}
-        {% endblock %}
-        </div>
+    {% block additional_initial_page_data %}
+      {% comment %}
+                    fallback place to put initial page data for templates where it's
+                    awkward or impossible to include it in another block
+                {% endcomment %}
+    {% endblock %}
+    {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
+    {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
+    {% initial_page_data 'toggles_dict' toggles_dict %}
+    {% initial_page_data 'previews_dict' previews_dict %}
 
-        {# javascript below this line #}
+    {% if demo_workflow_ab_v2 %}
+      {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
+      {% initial_analytics_data 'hubspot.demoABv2' demo_workflow_ab_v2 %}
+    {% endif %}
 
-        {% if requirejs_main %}
-            <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-            <script src="{% static 'requirejs/require.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-            <script>
-                requirejs.config({
-                    deps: ['knockout', 'ko.mapping'],
-                    callback: function (ko, mapping) {
-                        ko.mapping = mapping;
-                    },
-                });
-                requirejs([
-                    'hqwebapp/js/common',
-                ], function() {
-                    requirejs([
-                        'hqwebapp/js/base_main',
-                    ], function () {
-                        requirejs(['{{ requirejs_main }}']);
-                    });
-                });
-            </script>
-        {% endif %}
+    <div class="initial-page-data hide">
+      {% block initial_page_data %}
+        {# do not override this block, use initial_page_data template tag to populate #}
+      {% endblock %}
+    </div>
 
-        {# HQ Specific Libraries #}
-        {% if not requirejs_main %}
-            <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+    {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
+    {% registerurl 'send_mobile_reminder' %}  {# used by mobile reminder popup below #}
+    {% if domain %}
+      {% registerurl 'submit_feedback' domain %}   {# used by feedback knockout widget #}
+    {% endif %}
 
-            {% compress js %}
-                <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
-            {% endcompress %}
-        {% endif %}
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
 
-        {# JavaScript Display Logic Libaries #}
+    {% include 'analytics/initial/all.html' %}
+    {% include 'analytics/initial/drift.html' %}
 
-        {% if request.couch_user and not requirejs_main %}
-            <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-            <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
-        {% endif %}
+    <div class="initial-analytics-data hide">
+      {% block initial_analytics_data %}
+        {# do not override this block, use initial_analytics_data template tag to populate #}
+      {% endblock %}
+    </div>
 
-        {% if request.use_angular_js and not requirejs_main %}
-        {% compress js %}
+    <div class="analytics-ab-tests hide">
+      {% block analytics_ab_test %}
+        {# do not override this block, use analytics_ab_test template tag to populate #}
+      {% endblock %}
+    </div>
+
+    {# javascript below this line #}
+
+    {% if requirejs_main %}
+      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+      <script src="{% static 'requirejs/require.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
+      <script>
+        requirejs.config({
+          deps: ['knockout', 'ko.mapping'],
+          callback: function (ko, mapping) {
+            ko.mapping = mapping;
+          },
+        });
+        requirejs([
+          'hqwebapp/js/common',
+        ], function() {
+          requirejs([
+            'hqwebapp/js/base_main',
+          ], function () {
+            requirejs(['{{ requirejs_main }}'], function () {
+              console.log("Loaded requirejs main module: {{ requirejs_main }}");
+            });
+          });
+        });
+      </script>
+    {% endif %}
+
+    {# HQ Specific Libraries #}
+    {% if not requirejs_main %}
+      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+
+      {% compress js %}
+        <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+      {% endcompress %}
+    {% endif %}
+
+    {# JavaScript Display Logic Libaries #}
+
+    {% if request.couch_user and not requirejs_main %}
+      <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
+      <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
+    {% endif %}
+
+    {% if request.use_angular_js and not requirejs_main %}
+      {% compress js %}
         {% include "hqwebapp/includes/angular.html" %}
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_select2 and not requirejs_main %}
-        {% compress js %}
-        <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_select2_v4 and not requirejs_main %}
-        {% compress js %}
+    {% if not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_nvd3 and not requirejs_main %}
-        {% compress js %}
+    {% if request.use_nvd3 and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
         <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
         <script src="{% static 'd3/d3.min.js' %}"></script>
         <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_nvd3_v3 and not requirejs_main %}
-        {% compress js %}
+    {% if request.use_nvd3_v3 and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
         <script src="{% static 'd3/d3.min.js' %}"></script>
         <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_datatables and not requirejs_main %}
-        {% compress js %}
+    {% if request.use_datatables and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
         <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_typeahead and not requirejs_main %}
-        {% compress js %}
+    {% if request.use_typeahead and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_timepicker and not requirejs_main %}
-        {% compress js %}
+    {% if request.use_timepicker and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if not requirejs_main %}
-        {% if request.use_maps %}
+    {% if not requirejs_main %}
+      {% if request.use_maps %}
         {% compress js %}
-        <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
-        <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+          <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
+          <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-        {% endif %}
+      {% endif %}
+    {% endif %}
 
-        {% if request.use_maps and not requirejs_main %}
-        {% compress js %}
+    {% if request.use_maps and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'reports/js/maps_utils.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_timeago and not requirejs_main %}
-        <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
-        {% endif %}
+    {% if request.use_timeago and not requirejs_main %}
+      <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
+    {% endif %}
 
-        {% if request.use_multiselect and not requirejs_main %}
-        {% compress js %}
+    {% if request.use_multiselect and not requirejs_main %}
+      {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
+      {% endcompress %}
+    {% endif %}
 
-        {% if request.use_ko_validation and not requirejs_main %}
-          <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
-        {% endif %}
+    {% if request.use_ko_validation and not requirejs_main %}
+      <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
+    {% endif %}
 
-        {% if is_demo_visible %}
-          {% include "hqwebapp/partials/get_demo_modals.html" %}
-        {% endif %}
+    {% if is_demo_visible %}
+      {% include "hqwebapp/partials/get_demo_modals.html" %}
+    {% endif %}
 
-        {# Knockout component templates #}
-        {% include 'hqwebapp/ko_pagination.html' %}
-        {% include 'hqwebapp/partials/ko_inline_edit.html' %}
+    {# Knockout component templates #}
+    {% include 'hqwebapp/ko_pagination.html' %}
+    {% include 'hqwebapp/partials/ko_inline_edit.html' %}
+    {% include 'hqwebapp/partials/ko_search_box.html' %}
+    {% include 'hqwebapp/partials/ko_select_toggle.html' %}
+    {% include 'hqwebapp/partials/ko_feedback.html' %}
 
-        {% block js %}{% endblock js %}
+    {% if show_overdue_invoice_modal and not requirejs_main %}
+      <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
+    {% endif %}
 
-        {% block js-inline %}{% endblock js-inline %}
+    {% if show_prepaid_modal and not requirejs_main %}
+      <script src="{% static 'hqwebapp/js/prepaid_modal.js' %}"></script>
+    {% endif %}
 
-    </body>
+    {% block js %}{% endblock js %}
+
+    {% block js-inline %}{% endblock js-inline %}
+
+  </body>
 </html>

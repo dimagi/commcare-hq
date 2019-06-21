@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 
+import six
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
@@ -106,14 +107,19 @@ class BulkUploadForm(forms.Form):
 
 
 class AppTranslationsBulkUploadForm(BulkUploadForm):
+    language = forms.CharField(widget=forms.HiddenInput)
     validate = forms.BooleanField(label="Just validate and not update translations", required=False,
                                   initial=False)
 
     def crispy_form_fields(self, context):
         crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        if context.get('can_select_language'):
+            crispy_form_fields.extend([
+                InlineField('language', data_bind="value: lang")
+            ])
         if context.get('can_validate_app_translations'):
             crispy_form_fields.extend([
-                InlineField('validate')
+                crispy.Div(InlineField('validate'))
             ])
         return crispy_form_fields
 
@@ -197,7 +203,7 @@ class FormListForm(object):
                 rows = json.loads(self.data.get('child_form_data', ""))
             except ValueError as e:
                 raise ValidationError("POST request poorly formatted. {}"
-                                      .format(e.message))
+                                      .format(six.text_type(e)))
         else:
             rows = self.data
         return [

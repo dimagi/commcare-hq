@@ -1,90 +1,54 @@
 from __future__ import absolute_import
-
-from __future__ import division
 from __future__ import unicode_literals
+
+import json
+import six
 from datetime import date
 
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
+from django.http import HttpResponseBadRequest, Http404, HttpResponse, \
+    HttpResponseServerError, JsonResponse
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_GET, require_POST
+from memoized import memoized
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import get_download_context, process_email_request
 
-from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
-from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
+from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, track_workflow
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.exceptions import ExportFormValidationException
-from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import EmailExportWhenDoneRequest
-from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
-from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
-from django.utils.decorators import method_decorator
-import json
-
-from couchexport.writers import XlsLengthException
-
-from djangular.views.mixins import allow_remote_invocation
+from corehq.apps.reports.util import datespan_from_beginning
+from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.users.models import CouchUser
 from corehq.couchapps.dbaccessors import forms_have_multimedia
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.tasks import (
-    generate_schema_for_all_builds,
-    get_saved_export_task_status,
-    rebuild_saved_export,
-)
-from corehq.apps.export.exceptions import (
-    ExportAppException,
-    BadExportConfiguration,
-    ExportAsyncException,
-)
+from corehq.toggles import PAGINATED_EXPORTS
+
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.exceptions import ExportFormValidationException, ExportAsyncException
+from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
-    FilterSmsESExportDownloadForm,
-    CreateExportTagForm,
-    DashboardFeedFilterForm,
+    FilterSmsESExportDownloadForm
 )
 from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    SMSExportDataSchema,
     FormExportInstance,
-    CaseExportInstance,
-    SMSExportInstance,
     ExportInstance,
 )
-from corehq.apps.export.const import (
-    FORM_EXPORT,
-    CASE_EXPORT,
-    MAX_EXPORTABLE_ROWS,
-    MAX_DATA_FILE_SIZE,
-    MAX_DATA_FILE_SIZE_TOTAL,
-    SharingOption,
-    UNKNOWN_EXPORT_OWNER,
-)
-from corehq.apps.export.dbaccessors import (
-    get_form_export_instances,
-    get_properly_wrapped_export_instance,
-    get_case_exports_by_domain,
-    get_form_exports_by_domain,
-)
-from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.hqwebapp.decorators import use_select2, use_daterangepicker
-from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
-from corehq.apps.users.models import CouchUser
-from corehq.apps.analytics.tasks import track_workflow
-from memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, process_email_request
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest
+from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
+from corehq.apps.export.utils import get_export
 
 
 class DownloadExportViewHelper(object):
@@ -136,27 +100,24 @@ class FormDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'form'
     filter_form_class = EmwfFilterFormExport
 
-    def get_export(self, id=None):
-        return FormExportInstance.get(id)
+    def get_export(self, export_id=None):
+        return get_export(self.model, self.domain, export_id)
 
 
 class CaseDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'case'
     filter_form_class = FilterCaseESExportDownloadForm
 
-    def get_export(self, id=None):
-        return CaseExportInstance.get(id)
+    def get_export(self, export_id=None):
+        return get_export(self.model, self.domain, export_id)
 
 
 class SMSDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'sms'
     filter_form_class = FilterSmsESExportDownloadForm
 
-    def get_export(self, id=None):
-        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
-        return SMSExportInstance._new_from_schema(
-            SMSExportDataSchema.get_latest_export_schema(self.domain, include_metadata)
-        )
+    def get_export(self, export_id=None):
+        return get_export(self.model, self.domain, export_id, self.request.couch_user.username)
 
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
@@ -169,7 +130,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     export_filter_class = None
 
     @use_daterangepicker
-    @use_select2
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
@@ -308,6 +268,7 @@ def _check_deid_permissions(permissions, export_instances):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def prepare_custom_export(request, domain):
     """Uses the current exports download framework (with some nasty filters)
     to return the current download id to POLL for the download status.
@@ -333,14 +294,15 @@ def prepare_custom_export(request, domain):
     export_filters = filter_form.get_export_filters(request, filter_form_data)
 
     export_specs = json.loads(request.POST.get('exports'))
-    export_instances = [view_helper.get_export(spec['export_id']) for spec in export_specs]
+    export_ids = [spec['export_id'] for spec in export_specs]
+    export_instances = [view_helper.get_export(export_id) for export_id in export_ids]
 
     try:
         _check_deid_permissions(permissions, export_instances)
         _check_export_size(domain, export_instances, export_filters)
     except ExportAsyncException as e:
         return json_response({
-            'error': str(e),
+            'error': six.text_type(e),
         })
 
     # Generate filename
@@ -349,17 +311,14 @@ def prepare_custom_export(request, domain):
     else:
         filename = "{} {}".format(export_instances[0].name, date.today().isoformat())
 
-    try:
-        download = get_export_download(
-            export_instances=export_instances,
-            filters=export_filters,
-            filename=filename,
-        )
-    except XlsLengthException:
-        return json_response({
-            'error': _('This file has more than 256 columns, which is not supported by xls. '
-                       'Please change the output type to csv or xlsx to export this file.')
-        })
+    download = get_export_download(
+        domain,
+        export_ids,
+        view_helper.model,
+        request.couch_user.username,
+        filters=export_filters,
+        filename=filename,
+    )
 
     view_helper.send_preparation_analytics(export_instances, export_filters)
 
@@ -371,6 +330,7 @@ def prepare_custom_export(request, domain):
 
 @require_GET
 @login_and_domain_required
+@location_safe
 def poll_custom_export_download(request, domain):
     """Polls celery to see how the export download task is going.
     :return: final response: {
@@ -386,12 +346,23 @@ def poll_custom_export_download(request, domain):
     download_id = request.GET.get('download_id')
     try:
         context = get_download_context(download_id)
-    except TaskFailedError:
-        notify_exception(request, "Export download failed",
-                         details={'download_id': download_id})
-        return json_response({
-            'error': _("Download task failed to start."),
-        })
+    except TaskFailedError as e:
+        if e.exception_name == 'XlsLengthException':
+            return JsonResponse({
+                'error': _(
+                    'This file has more than 256 columns, which is not supported by xls. '
+                    'Please change the output type to csv or xlsx to export this file.')
+            })
+        else:
+            notify_exception(
+                request, "Export download failed",
+                details={'download_id': download_id, 'errors': e.errors,
+                         'exception_name': e.exception_name})
+
+            return JsonResponse({
+                'error': _("Download task failed to start."),
+            })
+
     if context.get('is_ready', False):
         context.update({
             'dropbox_url': reverse('dropbox_upload', args=(download_id,)),

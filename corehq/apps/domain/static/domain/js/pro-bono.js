@@ -1,6 +1,6 @@
 hqDefine('domain/js/pro-bono', [
     'jquery',
-    'select2-3.5.2-legacy/select2',
+    'select2/dist/js/select2.full.min',
 ], function (
     $
 ) {
@@ -12,21 +12,26 @@ hqDefine('domain/js/pro-bono', [
 
     $(function () {
         $('#id_contact_email').select2({
-            createSearchChoice: function (term, data) {
+            tags: true,
+            createTag: function (params) {
+                var term = params.term,
+                    data = this.$element.select2("data");
+
+                // Prevent duplicates
                 var matchedData = $(data).filter(function () {
                     return this.text.localeCompare(term) === 0;
                 });
 
-                var isEmailValid = _validateEmail(term);
-
-                if (matchedData.length === 0 && isEmailValid) {
+                if (matchedData.length === 0 && _validateEmail(term)) {
                     return { id: term, text: term };
                 }
             },
             multiple: true,
             data: [],
-            formatNoMatches: function () {
-                return gettext("Please enter a valid email.");
+            language: {
+                noResults: function () {
+                    return gettext("Please enter a valid email.");
+                },
             },
         });
     });

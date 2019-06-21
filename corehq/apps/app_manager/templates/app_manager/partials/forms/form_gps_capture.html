@@ -1,27 +1,27 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <label class="control-label col-sm-2">
-    {% trans "Auto Capture Location" %}
-    <span class="hq-help-template"
-          data-title="{% trans "Auto Capture Location" %}"
-          data-content="{% blocktrans %}On CommCare Android, have this form automatically capture the user's current geo-location.{% endblocktrans %}"
-    ></span>
+  {% trans "Auto Capture Location" %}
+  <span class="hq-help-template"
+        data-title="{% trans "Auto Capture Location" %}"
+        data-content="{% blocktrans %}On CommCare Android, have this form automatically capture the user's current geo-location.{% endblocktrans %}"
+  ></span>
 </label>
 <div id="auto-gps-capture" class="col-sm-8 commcare-feature" data-since-version="2.14">
-    {% if app.auto_gps_capture %}
-        <input type="checkbox" value="true" disabled="disabled"
-               data-bind="checked: true"/>
-        <div class="help-block">
-            {% blocktrans %}
-                This application is configured to auto capture location for all forms.
-                <br>
-                This can be changed in the application's settings, in the <strong>Advanced Settings</strong> tab,
-                <strong>Android Settings</strong> section.
-            {% endblocktrans %}
-        </div>
-    {% else %}
-         <input type="checkbox" value="true"
-                data-bind="checked: auto_gps_capture"/>
-    {% endif %}
-    <input type="hidden" name="auto_gps_capture" data-bind="value: auto_gps_capture"/>
+  {% if app.auto_gps_capture %}
+    <input type="checkbox" value="true" disabled="disabled"
+           data-bind="checked: true"/>
+    <div class="help-block">
+      {% blocktrans %}
+        This application is configured to auto capture location for all forms.
+        <br>
+        This can be changed in the application's settings, in the <strong>Advanced Settings</strong> tab,
+        <strong>Android Settings</strong> section.
+      {% endblocktrans %}
+    </div>
+  {% else %}
+    <input type="checkbox" value="true"
+           data-bind="checked: auto_gps_capture"/>
+  {% endif %}
+  <input type="hidden" name="auto_gps_capture" data-bind="value: auto_gps_capture"/>
 </div>

@@ -7,7 +7,7 @@ See the [MOTECH README](../README.md#repeaters) for a brief introduction to repe
 How Do They Work?
 -----------------
 
-A good place to start is [signals.py](TODO). From the bottom of the file you can see that a repeat record is created when a form is received, or after a case or user or location is saved.
+A good place to start is [signals.py](./signals.py). From the bottom of the file you can see that a repeat record is created when a form is received, or after a case or user or location is saved.
 
 The `create_repeat_records()` function will iterate through the [`Repeater`](./models.py) instances of a given class type that are configured for the domain. For example, after a case has been saved, `create_repeat_records()` is called with `CaseRepeater`, then `CreateCaseRepeater` and then `UpdateCaseRepeater`. A domain can have many CaseRepeaters configured to forward case changes to different URLs (or the same URL with different credentials). The `register()` method of each of the domain's CaseRepeaters will be called with the case as its payload.
 

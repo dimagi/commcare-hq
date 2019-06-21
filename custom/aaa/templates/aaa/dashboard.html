@@ -1,0 +1,93 @@
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'aaa/css/reach_dashboard.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}" />
+
+    {% javascript_libraries underscore=True hq=True %}
+    <script src="{% static 'moment/moment.js' %}"></script>
+    <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
+    <script src="{% static 'datatables-buttons/js/dataTables.buttons.js' %}"></script>
+    <script src="{% static 'datatables-buttons/js/buttons.bootstrap.js' %}"></script>
+    <script src="{% static 'datatables-buttons/js/buttons.html5.js' %}"></script>
+    <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+
+    <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'nvd3/nv.d3.js' %}"></script>
+
+    <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+    <script src="{% static 'aaa/js/utils/reach_utils.js' %}"></script>
+    <script src="{% static 'aaa/js/filters/month_year_filter.js' %}"></script>
+    <script src="{% static 'aaa/js/filters/filters_modal.js' %}"></script>
+    <script src="{% static 'aaa/js/filters/location_model.js' %}"></script>
+    <script src="{% static 'aaa/js/filters/location_filter.js' %}"></script>
+    <script src="{% static 'aaa/js/filters/beneficiary_type_filter.js' %}"></script>
+    <script src="{% static 'aaa/js/dashboard.js' %}"></script>
+
+    {% block js %}
+    {% endblock %}
+  </head>
+  <body>
+
+    <div id="aaa-dashboard" class="wrapper">
+      {% include 'aaa/menus/left_menu.html' %}
+      <div class="col-xs-10 col-md-10 main-container" >
+        {% include 'aaa/menus/top_menu.html' %}
+
+        <div class="row no-margin">
+          {% if not is_details %}
+            {% include 'aaa/menus/selected_filters.html' %}
+          {% endif %}
+          {% block content %}
+
+          {% endblock %}
+        </div>
+        {% registerurl 'program_overview_api' domain %}
+        {% registerurl 'unified_beneficiary_api' domain %}
+        {% registerurl 'unified_beneficiary_details' domain 'details_type' 'beneficiary_id' %}
+        {% registerurl 'unified_beneficiary_details_api' domain %}
+        {% registerurl 'location_api' domain %}
+        {% registerurl 'aaa_export_data' domain %}
+        {% registerurl 'aaa_check_task_status' domain 'task_id' %}
+        {% registerurl 'aaa_download_file' domain 'file_id' %}
+        {% initial_page_data 'user_role_type' user_role_type %}
+        {% initial_page_data 'user_location_id' user_location_id %}
+        {% initial_page_data 'user_location_ids' user_location_ids %}
+        {% initial_page_data 'selected_location_ids' selected_location_ids %}
+        {% initial_page_data 'is_web_user' is_web_user %}
+        {% initial_page_data 'is_details' is_details %}
+      </div>
+    </div>
+
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+
+    {% include 'analytics/initial/global.html' %}
+    {% include 'analytics/initial/google.html' %}
+    <div class="initial-analytics-data hide">
+      {% block initial_analytics_data %}
+        do not override this block, use initial_analytics_data template tag to populate
+      {% endblock %}
+
+      <div class="initial-page-data hide">
+        {% block initial_page_data %}
+          {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+      </div>
+
+    </div>
+  </body>
+</html>

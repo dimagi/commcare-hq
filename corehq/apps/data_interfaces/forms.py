@@ -11,6 +11,7 @@ from corehq.apps.data_interfaces.models import (
     UpdateCaseDefinition,
     CustomActionDefinition,
 )
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
@@ -26,6 +27,7 @@ from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.django.fields import TrimmedCharField
 import six
 
@@ -41,10 +43,22 @@ def true_or_false(value):
 
 def remove_quotes(value):
     if isinstance(value, six.string_types) and len(value) >= 2:
+        soft_assert_type_text(value)
         for q in ("'", '"'):
             if value.startswith(q) and value.endswith(q):
                 return value[1:-1]
     return value
+
+
+def is_valid_case_property_name(value):
+    if not isinstance(value, six.string_types):
+        return False
+    soft_assert_type_text(value)
+    try:
+        validate_case_property_characters(value)
+        return True
+    except ValidationError:
+        return False
 
 
 def validate_case_property_characters(value):
@@ -57,6 +71,7 @@ def validate_case_property_characters(value):
 def validate_case_property_name(value, allow_parent_case_references=True):
     if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property name."))
+    soft_assert_type_text(value)
 
     value = value.strip()
 
@@ -97,6 +112,7 @@ def hidden_bound_field(field_name, data_value):
 def validate_case_property_value(value):
     if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property value."))
+    soft_assert_type_text(value)
 
     value = remove_quotes(value.strip()).strip()
     if not value:
@@ -128,8 +144,8 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Create Group")),
-                css_class='btn-success',
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Group")),
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -198,7 +214,7 @@ class AddCaseToGroupForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
-                css_class='btn-success',
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -232,9 +248,7 @@ class CaseUpdateRuleForm(forms.Form):
         super(CaseUpdateRuleForm, self).__init__(*args, **kwargs)
 
         self.domain = domain
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = Layout(
@@ -269,6 +283,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'custom_match_definitions': json.loads(self['custom_match_definitions'].value()),
             'property_match_definitions': json.loads(self['property_match_definitions'].value()),
             'filter_on_closed_parent': self['filter_on_closed_parent'].value(),
+            'case_type': self['case_type'].value(),
         }
 
     @property
@@ -359,15 +374,13 @@ class CaseRuleCriteriaForm(forms.Form):
         self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset(
                 _("Case Filters") if self.show_fieldset_title else "",
                 HTML(
-                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
+                    '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
                 hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
                 hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
@@ -375,15 +388,18 @@ class CaseRuleCriteriaForm(forms.Form):
                 hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
                 hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
                 Div(data_bind="template: {name: 'case-filters'}"),
-                css_id="rule-criteria",
+                css_id="rule-criteria-panel",
             ),
         )
 
-        self.case_type_helper = FormHelper()
-        self.case_type_helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.case_type_helper.field_class = 'col-xs-2'
+        self.case_type_helper = HQFormHelper()
         self.case_type_helper.form_tag = False
-        self.case_type_helper.layout = Layout(Field('case_type'))
+        self.case_type_helper.layout = Layout(
+            Fieldset(
+                _("Rule Criteria"),
+                Field('case_type', data_bind="value: caseType")
+            )
+        )
 
     @property
     @memoized
@@ -624,9 +640,7 @@ class CaseRuleActionsForm(forms.Form):
 
         self.domain = domain
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
         self.helper.form_show_errors = False
         self.helper.layout = Layout(

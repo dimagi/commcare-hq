@@ -14,7 +14,6 @@ UPDATE awc_location SET aggregation_level=1 WHERE state_id != 'All' and district
 
 ALTER TABLE agg_child_health ADD COLUMN aggregation_level integer;
 ALTER TABLE agg_ccs_record ADD COLUMN aggregation_level integer;
-ALTER TABLE agg_thr_data ADD COLUMN aggregation_level integer;
 ALTER TABLE agg_awc ADD COLUMN aggregation_level integer;
 
 -- Iterate and add new indexes on the tables
@@ -85,46 +84,6 @@ $BODY$
 LANGUAGE plpgsql;
 SELECT agg_ccs_record_update8();
 DROP FUNCTION agg_ccs_record_update8();
-
-CREATE OR REPLACE FUNCTION agg_thr_data_update8() RETURNS VOID AS
-$BODY$
-DECLARE
-	_tablename text;
-BEGIN
-	-- Iterate through partioned tables
-	FOR _tablename IN
-		SELECT
-			child.relname AS child
-		FROM pg_inherits
-			JOIN pg_class parent	ON pg_inherits.inhparent = parent.oid
-			JOIN pg_class child	ON pg_inherits.inhrelid   = child.oid
-			JOIN pg_namespace nmsp_parent	ON nmsp_parent.oid  = parent.relnamespace
-			JOIN pg_namespace nmsp_child	ON nmsp_child.oid   = child.relnamespace
-		WHERE parent.relname='agg_thr_data' LOOP
-
-		EXECUTE 'DROP INDEX IF EXISTS' || quote_ident(_tablename || '_indx8');
-		EXECUTE 'DROP INDEX IF EXISTS' || quote_ident(_tablename || '_indx9');
-		EXECUTE 'DROP INDEX IF EXISTS' || quote_ident(_tablename || '_indx10');
-		EXECUTE 'DROP INDEX IF EXISTS' || quote_ident(_tablename || '_indx11');
-		EXECUTE 'DROP INDEX IF EXISTS' || quote_ident(_tablename || '_indx12');
-		EXECUTE 'DROP INDEX IF EXISTS' || quote_ident(_tablename || '_indx13');
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(block_id)';
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(district_id)';
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx12') || ' ON ' || quote_ident(_tablename) || '(state_id)';
-		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx13') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
-	END LOOP;
-	UPDATE agg_thr_data SET aggregation_level=5 WHERE awc_id != 'All';
-	UPDATE agg_thr_data SET aggregation_level=4 WHERE supervisor_id != 'All' and awc_id = 'All';
-	UPDATE agg_thr_data SET aggregation_level=3 WHERE block_id != 'All' and supervisor_id = 'All' and awc_id = 'All';
-	UPDATE agg_thr_data SET aggregation_level=2 WHERE district_id != 'All' and block_id = 'All' and supervisor_id = 'All' and awc_id = 'All';
-	UPDATE agg_thr_data SET aggregation_level=1 WHERE state_id != 'All' and district_id = 'All' and block_id = 'All' and supervisor_id = 'All' and awc_id = 'All';
-END;
-$BODY$
-LANGUAGE plpgsql;
-SELECT agg_thr_data_update8();
-DROP FUNCTION agg_thr_data_update8();
 
 CREATE OR REPLACE FUNCTION agg_awc_update8() RETURNS VOID AS
 $BODY$

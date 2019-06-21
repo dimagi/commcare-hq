@@ -26,7 +26,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
 def get_registration_xml(restore_user):
-    return xml.tostring(xml.get_registration_element(restore_user))
+    return xml.tostring(xml.get_registration_element(restore_user)).decode('utf-8')
 
 
 class SimpleOtaRestoreTest(TestCase):
@@ -266,7 +266,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         )
 
         # apply an update
-        xml_data = self.get_xml('update_short')
+        xml_data = self.get_xml('update_short').decode('utf-8')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 
@@ -306,7 +306,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])
         restore_payload = deprecated_generate_restore_payload(
-            self.project, self.restore_user)
+            self.project, self.restore_user).decode('utf-8')
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)

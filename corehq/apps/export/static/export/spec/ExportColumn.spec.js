@@ -9,23 +9,34 @@ describe('ExportColumn', function () {
         viewModels = hqImport('export/js/models');
 
     beforeEach(function () {
+        var mockObservable = function () { return 'foo'; };
+
         selectedColumn = {
             selected: true,
             is_advanced: true,
             is_deleted: true,
             deid_transform: null,
+            item: { label: mockObservable },
+            label: mockObservable,
+            tags: [],
         };
         advancedColumn = {
             selected: false,
             is_advanced: true,
             is_deleted: false,
             deid_transform: null,
+            item: { label: mockObservable },
+            label: mockObservable,
+            tags: [],
         };
         deletedColumn = {
             selected: false,
             is_advanced: false,
             is_deleted: true,
             deid_transform: null,
+            item: { label: mockObservable },
+            label: mockObservable,
+            tags: [],
         };
         table = {
             name: 'table',

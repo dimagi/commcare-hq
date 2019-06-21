@@ -1,0 +1,420 @@
+
+        INSERT INTO "agg_awc_2019-01-01_5"
+        (
+            state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
+            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe
+        )
+        (
+            SELECT
+            awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id AS awc_id,
+            %(start_date)s,
+            1,
+            'no',
+            5,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END
+            FROM "ucr_icds-cas_static-awc_location_88b3f9c3" awc_location
+            LEFT JOIN "ucr_icds-cas_static-cbe_form_f7988a04" cbe_table on  awc_location.doc_id = cbe_table.awc_id
+            LEFT JOIN "ucr_icds-cas_static-vhnd_form_28e7fd58" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            group by awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id
+        )
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            awc_days_open = ut.awc_days_open,
+            awc_num_open = ut.awc_num_open,
+            awc_days_pse_conducted = ut.awc_days_pse_conducted
+        FROM (
+            SELECT
+                awc_id,
+                month,
+                sum(awc_open_count) AS awc_days_open,
+                CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open,
+                sum(pse_conducted) as awc_days_pse_conducted
+            FROM "daily_attendance_2019-01-01"
+            WHERE month = %(start_date)s GROUP BY awc_id, month
+        ) ut
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            cases_child_health = ut.cases_child_health,
+            cases_child_health_all = ut.cases_child_health_all,
+            wer_weighed = ut.wer_weighed,
+            wer_eligible = ut.wer_eligible,
+            cases_person_beneficiary_v2 = ut.cases_child_health,
+            wer_eligible_0_2 = ut.wer_eligible_0_2,
+            wer_weighed_0_2 = ut.wer_weighed_0_2
+        FROM (
+            SELECT
+                awc_id,
+                month,
+                sum(valid_in_month) AS cases_child_health,
+                sum(valid_all_registered_in_month) AS cases_child_health_all,
+                sum(nutrition_status_weighed) AS wer_weighed,
+                sum(wer_eligible) AS wer_eligible,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2
+            FROM agg_child_health
+            WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
+        ) ut
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            cases_ccs_pregnant = ut.cases_ccs_pregnant,
+            cases_ccs_lactating = ut.cases_ccs_lactating,
+            cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
+            cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
+            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
+            valid_visits = ut.valid_visits,
+            expected_visits = CASE WHEN ut.valid_visits>ut.expected_visits THEN ut.valid_visits ELSE ut.expected_visits END
+        FROM (
+            SELECT
+                agg_ccs_record_monthly.awc_id,
+                agg_ccs_record_monthly.month,
+                sum(agg_ccs_record_monthly.pregnant) AS cases_ccs_pregnant,
+                sum(agg_ccs_record_monthly.lactating) AS cases_ccs_lactating,
+                sum(agg_ccs_record_monthly.pregnant_all) AS cases_ccs_pregnant_all,
+                sum(agg_ccs_record_monthly.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record_monthly.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
+                sum(agg_ccs_record_monthly.expected_visits) +
+                COALESCE(home_visit.expected_visits, 0) AS expected_visits
+            FROM agg_ccs_record_monthly
+            LEFT OUTER JOIN (
+                    SELECT
+                        ucr.awc_id,
+                        %(start_date)s AS month,
+                        SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
+                        sum(0.39) AS expected_visits
+                        FROM  "ucr_icds-cas_static-ccs_record_cases_cedcca39" ucr
+                        LEFT OUTER JOIN "icds_dashboard_ccs_record_cf_forms" agg_cf ON (
+                            ucr.case_id = agg_cf.case_id AND
+                            agg_cf.month = %(start_date)s
+                        )
+                        WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
+                            date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
+                            date_trunc('month', ucr.opened_on) <= %(start_date)s
+                        GROUP BY ucr.awc_id
+                    )  home_visit ON (
+                                        agg_ccs_record_monthly.awc_id = home_visit.awc_id AND
+                                        home_visit.month=agg_ccs_record_monthly.month
+                                        )
+            WHERE agg_ccs_record_monthly.month = %(start_date)s AND aggregation_level = 5
+            GROUP BY agg_ccs_record_monthly.awc_id,home_visit.valid_visits,
+                     home_visit.expected_visits, agg_ccs_record_monthly.month
+        ) ut
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+           cases_household = ut.cases_household
+        FROM (
+            SELECT
+                owner_id,
+                sum(open_count) AS cases_household
+            FROM "ucr_icds-cas_static-household_cases_eadc276d"
+            WHERE opened_on<= %(end_date)s
+            GROUP BY owner_id
+       ) ut
+        WHERE ut.owner_id = agg_awc.awc_id
+        
+{"end_date": "2019-01-31T23:59:59"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+           cases_person = ut.cases_person,
+           cases_person_all = ut.cases_person_all,
+           cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14,
+           cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all,
+           cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18,
+           cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all,
+           cases_person_referred = ut.cases_person_referred
+        FROM (
+            SELECT
+                awc_id,
+                sum((CASE WHEN registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END)) AS cases_person,
+                count(*) AS cases_person_all,
+                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN ((CASE WHEN registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END)) ELSE 0 END) as cases_person_adolescent_girls_11_14,
+                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all,
+                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN ((CASE WHEN registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END)) ELSE 0 END) as cases_person_adolescent_girls_15_18,
+                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all,
+                sum(CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) as cases_person_referred
+            FROM "ucr_icds-cas_static-person_cases_v3_2ae0879a"
+            WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s ))
+            GROUP BY awc_id
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id;
+        
+{"end_date": "2019-01-31T23:59:59", "month_end_11yr": "2008-01-31T23:59:59", "month_end_15yr": "2004-01-31T23:59:59", "month_start_15yr": "2004-01-01T00:00:00", "month_start_18yr": "2001-01-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            cases_person_has_aadhaar_v2 = ut.child_has_aadhar,
+            num_children_immunized = ut.num_children_immunized
+        FROM (
+            SELECT
+                awc_id,
+                sum(has_aadhar_id) as child_has_aadhar,
+                sum(immunization_in_month) AS num_children_immunized
+            FROM "child_health_monthly_2019-01-01 00:00:00"
+            WHERE valid_in_month = 1
+            GROUP BY awc_id
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id;
+        
+{}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            num_anc_visits = ut.num_anc_visits,
+            cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar
+        FROM (
+            SELECT
+                awc_id,
+                sum(anc_in_month) AS num_anc_visits,
+                sum(has_aadhar_id) AS ccs_has_aadhar
+            FROM "ccs_record_monthly_2019-01-01 00:00:00"
+            WHERE pregnant = 1 OR lactating = 1
+            GROUP BY awc_id
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id;
+        
+{}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            usage_num_pse = ut.usage_num_pse,
+            usage_num_gmp = ut.usage_num_gmp,
+            usage_num_thr = ut.usage_num_thr,
+            usage_num_hh_reg = ut.usage_num_hh_reg,
+            is_launched = ut.is_launched,
+            num_launched_states = ut.num_launched_awcs,
+            num_launched_districts = ut.num_launched_awcs,
+            num_launched_blocks = ut.num_launched_awcs,
+            num_launched_supervisors = ut.num_launched_awcs,
+            num_launched_awcs = ut.num_launched_awcs,
+            usage_num_add_person = ut.usage_num_add_person,
+            usage_num_add_pregnancy = ut.usage_num_add_pregnancy,
+            usage_num_home_visit = ut.usage_num_home_visit,
+            usage_num_bp_tri1 = ut.usage_num_bp_tri1,
+            usage_num_bp_tri2 = ut.usage_num_bp_tri2,
+            usage_num_bp_tri3 = ut.usage_num_bp_tri3,
+            usage_num_pnc = ut.usage_num_pnc,
+            usage_num_ebf = ut.usage_num_ebf,
+            usage_num_cf = ut.usage_num_cf,
+            usage_num_delivery = ut.usage_num_delivery,
+            usage_awc_num_active = ut.usage_awc_num_active,
+            usage_num_due_list_ccs = ut.usage_num_due_list_ccs,
+            usage_num_due_list_child_health = ut.usage_num_due_list_child_health
+        FROM (
+            SELECT
+                awc_id,
+                month,
+                sum(pse) AS usage_num_pse,
+                sum(gmp) AS usage_num_gmp,
+                sum(thr) AS usage_num_thr,
+                sum(add_household) AS usage_num_hh_reg,
+                CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
+                CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
+                sum(add_person) AS usage_num_add_person,
+                sum(add_pregnancy) AS usage_num_add_pregnancy,
+                sum(home_visit) AS usage_num_home_visit,
+                sum(bp_tri1) AS usage_num_bp_tri1,
+                sum(bp_tri2) AS usage_num_bp_tri2,
+                sum(bp_tri3) AS usage_num_bp_tri3,
+                sum(pnc) AS usage_num_pnc,
+                sum(ebf) AS usage_num_ebf,
+                sum(cf) AS usage_num_cf,
+                sum(delivery) AS usage_num_delivery,
+                CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active,
+                sum(due_list_ccs) AS usage_num_due_list_ccs,
+                sum(due_list_child) AS usage_num_due_list_child_health
+            FROM "ucr_icds-cas_static-usage_forms_92fbe2aa"
+            WHERE month = %(start_date)s AND form_date >= %(start_date)s AND form_date < %(next_month)s
+            GROUP BY awc_id, month
+        ) ut
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
+        
+{"next_month": "2019-02-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            is_launched = 'yes',
+            num_launched_awcs = 1
+        FROM (
+            SELECT DISTINCT(awc_id)
+            FROM agg_awc
+            WHERE month = %(prev_month)s AND num_launched_awcs > 0 AND aggregation_level=5
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id;
+        
+{"prev_month": "2018-12-01T00:00:00"}
+
+        UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+            infra_last_update_date = ut.infra_last_update_date,
+            infra_type_of_building = ut.infra_type_of_building,
+            infra_clean_water = ut.infra_clean_water,
+            infra_functional_toilet = ut.infra_functional_toilet,
+            infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
+            infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
+            infra_infant_weighing_scale = ut.infra_infant_weighing_scale,
+            infra_cooking_utensils = ut.infra_cooking_utensils,
+            infra_medicine_kits = ut.infra_medicine_kits,
+            infra_adequate_space_pse = ut.infra_adequate_space_pse,
+            electricity_awc = ut.electricity_awc,
+            infantometer = ut.infantometer,
+            stadiometer = ut.stadiometer
+        FROM (
+            SELECT
+                awc_id,
+                month,
+                latest_time_end_processed::date AS infra_last_update_date,
+                CASE
+                  WHEN awc_building = 1 THEN 'pucca'
+                  WHEN awc_building = 2 THEN 'semi_pucca'
+                  WHEN awc_building = 3 THEN 'kuccha'
+                  WHEN awc_building = 4 THEN 'partial_covered_space'
+                ELSE NULL END AS infra_type_of_building,
+                CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water,
+                toilet_functional AS infra_functional_toilet,
+                baby_scale_usable AS infra_baby_weighing_scale,
+                GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale,
+                GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable, 0) AS infra_infant_weighing_scale,
+                cooking_utensils_usable AS infra_cooking_utensils,
+                medicine_kits_usable AS infra_medicine_kits,
+                CASE WHEN adequate_space_pse = 1 THEN 1 ELSE 0 END AS infra_adequate_space_pse,
+                electricity_awc AS electricity_awc,
+                infantometer_usable AS infantometer,
+                stadiometer_usable AS stadiometer
+            FROM icds_dashboard_infrastructure_forms
+            WHERE month = %(start_date)s
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id;
+            -- could possibly add multicol indexes to make order by faster?
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+         UPDATE "agg_awc_2019-01-01_5" agg_awc SET num_awc_infra_last_update =
+          CASE WHEN infra_last_update_date IS NOT NULL AND
+             %(month_start_6m)s < infra_last_update_date THEN 1 ELSE 0 END
+        
+{"month_start_6m": "2018-07-01T00:00:00"}
+
+            UPDATE "agg_awc_2019-01-01_5" agg_awc SET
+              state_is_test = ut.state_is_test,
+              district_is_test = ut.district_is_test,
+              block_is_test = ut.block_is_test,
+              supervisor_is_test = ut.supervisor_is_test,
+              awc_is_test = ut.awc_is_test
+            FROM (
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "awc_location"
+              GROUP BY awc_id
+            ) ut
+            WHERE ut.awc_id = agg_awc.awc_id AND (
+                (
+                  agg_awc.state_is_test IS NULL OR
+                  agg_awc.district_is_test IS NULL OR
+                  agg_awc.block_is_test IS NULL OR
+                  agg_awc.supervisor_is_test IS NULL OR
+                  agg_awc.awc_is_test IS NULL
+                ) OR (
+                  ut.state_is_test != agg_awc.state_is_test OR
+                  ut.district_is_test != agg_awc.district_is_test OR
+                  ut.block_is_test != agg_awc.block_is_test OR
+                  ut.supervisor_is_test != agg_awc.supervisor_is_test OR
+                  ut.awc_is_test != agg_awc.awc_is_test
+                )
+            )
+        
+{}
+
+            INSERT INTO "agg_awc_2019-01-01_4" (
+                state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, awc_days_open, awc_num_open, wer_weighed, wer_eligible, wer_eligible_0_2, wer_weighed_0_2, cases_ccs_pregnant, cases_ccs_lactating, cases_child_health, valid_visits, expected_visits, usage_num_pse, usage_num_gmp, usage_num_thr, usage_num_home_visit, usage_num_bp_tri1, usage_num_bp_tri2, usage_num_bp_tri3, usage_num_pnc, usage_num_ebf, usage_num_cf, usage_num_delivery, usage_num_due_list_ccs, usage_num_due_list_child_health, usage_awc_num_active, infra_last_update_date, infra_type_of_building, infra_clean_water, infra_functional_toilet, infra_baby_weighing_scale, infra_adult_weighing_scale, infra_cooking_utensils, infra_medicine_kits, infra_adequate_space_pse, usage_num_hh_reg, usage_num_add_person, usage_num_add_pregnancy, is_launched, aggregation_level, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, num_awcs_conducted_vhnd, num_awcs_conducted_cbe, cases_household, cases_person, cases_person_all, cases_ccs_pregnant_all, cases_ccs_lactating_all, cases_child_health_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, infra_infant_weighing_scale, cases_person_referred, awc_days_pse_conducted, num_awc_infra_last_update, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, electricity_awc, infantometer, stadiometer, num_anc_visits, num_children_immunized, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+            ) (
+                SELECT state_id, district_id, block_id, supervisor_id, 'All', month, SUM(num_awcs), SUM(awc_days_open), SUM(awc_num_open), SUM(wer_weighed), SUM(wer_eligible), SUM(wer_eligible_0_2), SUM(wer_weighed_0_2), SUM(cases_ccs_pregnant), SUM(cases_ccs_lactating), SUM(cases_child_health), SUM(valid_visits), SUM(expected_visits), SUM(usage_num_pse), SUM(usage_num_gmp), SUM(usage_num_thr), SUM(usage_num_home_visit), SUM(usage_num_bp_tri1), SUM(usage_num_bp_tri2), SUM(usage_num_bp_tri3), SUM(usage_num_pnc), SUM(usage_num_ebf), SUM(usage_num_cf), SUM(usage_num_delivery), SUM(usage_num_due_list_ccs), SUM(usage_num_due_list_child_health), SUM(usage_awc_num_active), NULL, NULL, SUM(infra_clean_water), SUM(infra_functional_toilet), SUM(infra_baby_weighing_scale), SUM(infra_adult_weighing_scale), SUM(infra_cooking_utensils), SUM(infra_medicine_kits), SUM(infra_adequate_space_pse), SUM(usage_num_hh_reg), SUM(usage_num_add_person), SUM(usage_num_add_pregnancy), 'yes', 4, CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, sum(num_launched_awcs), SUM(num_awcs_conducted_vhnd), SUM(num_awcs_conducted_cbe), SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating_all), SUM(cases_child_health_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(infra_infant_weighing_scale), NULL, NULL, SUM(num_awc_infra_last_update), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), COALESCE(sum(electricity_awc), 0), COALESCE(sum(infantometer), 0), COALESCE(sum(stadiometer), 0), COALESCE(sum(num_anc_visits), 0), COALESCE(sum(num_children_immunized), 0), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), MAX(supervisor_is_test), 0
+                FROM "agg_awc_2019-01-01_5"
+                WHERE awc_is_test = 0
+                GROUP BY state_id, district_id, block_id, supervisor_id, month
+            )
+        
+{}
+
+            INSERT INTO "agg_awc_2019-01-01_3" (
+                state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, awc_days_open, awc_num_open, wer_weighed, wer_eligible, wer_eligible_0_2, wer_weighed_0_2, cases_ccs_pregnant, cases_ccs_lactating, cases_child_health, valid_visits, expected_visits, usage_num_pse, usage_num_gmp, usage_num_thr, usage_num_home_visit, usage_num_bp_tri1, usage_num_bp_tri2, usage_num_bp_tri3, usage_num_pnc, usage_num_ebf, usage_num_cf, usage_num_delivery, usage_num_due_list_ccs, usage_num_due_list_child_health, usage_awc_num_active, infra_last_update_date, infra_type_of_building, infra_clean_water, infra_functional_toilet, infra_baby_weighing_scale, infra_adult_weighing_scale, infra_cooking_utensils, infra_medicine_kits, infra_adequate_space_pse, usage_num_hh_reg, usage_num_add_person, usage_num_add_pregnancy, is_launched, aggregation_level, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, num_awcs_conducted_vhnd, num_awcs_conducted_cbe, cases_household, cases_person, cases_person_all, cases_ccs_pregnant_all, cases_ccs_lactating_all, cases_child_health_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, infra_infant_weighing_scale, cases_person_referred, awc_days_pse_conducted, num_awc_infra_last_update, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, electricity_awc, infantometer, stadiometer, num_anc_visits, num_children_immunized, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+            ) (
+                SELECT state_id, district_id, block_id, 'All', 'All', month, SUM(num_awcs), SUM(awc_days_open), SUM(awc_num_open), SUM(wer_weighed), SUM(wer_eligible), SUM(wer_eligible_0_2), SUM(wer_weighed_0_2), SUM(cases_ccs_pregnant), SUM(cases_ccs_lactating), SUM(cases_child_health), SUM(valid_visits), SUM(expected_visits), SUM(usage_num_pse), SUM(usage_num_gmp), SUM(usage_num_thr), SUM(usage_num_home_visit), SUM(usage_num_bp_tri1), SUM(usage_num_bp_tri2), SUM(usage_num_bp_tri3), SUM(usage_num_pnc), SUM(usage_num_ebf), SUM(usage_num_cf), SUM(usage_num_delivery), SUM(usage_num_due_list_ccs), SUM(usage_num_due_list_child_health), SUM(usage_awc_num_active), NULL, NULL, SUM(infra_clean_water), SUM(infra_functional_toilet), SUM(infra_baby_weighing_scale), SUM(infra_adult_weighing_scale), SUM(infra_cooking_utensils), SUM(infra_medicine_kits), SUM(infra_adequate_space_pse), SUM(usage_num_hh_reg), SUM(usage_num_add_person), SUM(usage_num_add_pregnancy), 'yes', 3, CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, sum(num_launched_supervisors), sum(num_launched_awcs), SUM(num_awcs_conducted_vhnd), SUM(num_awcs_conducted_cbe), SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating_all), SUM(cases_child_health_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(infra_infant_weighing_scale), NULL, NULL, SUM(num_awc_infra_last_update), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), COALESCE(sum(electricity_awc), 0), COALESCE(sum(infantometer), 0), COALESCE(sum(stadiometer), 0), COALESCE(sum(num_anc_visits), 0), COALESCE(sum(num_children_immunized), 0), MAX(state_is_test), MAX(district_is_test), MAX(block_is_test), 0, 0
+                FROM "agg_awc_2019-01-01_4"
+                WHERE supervisor_is_test = 0
+                GROUP BY state_id, district_id, block_id, month
+            )
+        
+{}
+
+            INSERT INTO "agg_awc_2019-01-01_2" (
+                state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, awc_days_open, awc_num_open, wer_weighed, wer_eligible, wer_eligible_0_2, wer_weighed_0_2, cases_ccs_pregnant, cases_ccs_lactating, cases_child_health, valid_visits, expected_visits, usage_num_pse, usage_num_gmp, usage_num_thr, usage_num_home_visit, usage_num_bp_tri1, usage_num_bp_tri2, usage_num_bp_tri3, usage_num_pnc, usage_num_ebf, usage_num_cf, usage_num_delivery, usage_num_due_list_ccs, usage_num_due_list_child_health, usage_awc_num_active, infra_last_update_date, infra_type_of_building, infra_clean_water, infra_functional_toilet, infra_baby_weighing_scale, infra_adult_weighing_scale, infra_cooking_utensils, infra_medicine_kits, infra_adequate_space_pse, usage_num_hh_reg, usage_num_add_person, usage_num_add_pregnancy, is_launched, aggregation_level, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, num_awcs_conducted_vhnd, num_awcs_conducted_cbe, cases_household, cases_person, cases_person_all, cases_ccs_pregnant_all, cases_ccs_lactating_all, cases_child_health_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, infra_infant_weighing_scale, cases_person_referred, awc_days_pse_conducted, num_awc_infra_last_update, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, electricity_awc, infantometer, stadiometer, num_anc_visits, num_children_immunized, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+            ) (
+                SELECT state_id, district_id, 'All', 'All', 'All', month, SUM(num_awcs), SUM(awc_days_open), SUM(awc_num_open), SUM(wer_weighed), SUM(wer_eligible), SUM(wer_eligible_0_2), SUM(wer_weighed_0_2), SUM(cases_ccs_pregnant), SUM(cases_ccs_lactating), SUM(cases_child_health), SUM(valid_visits), SUM(expected_visits), SUM(usage_num_pse), SUM(usage_num_gmp), SUM(usage_num_thr), SUM(usage_num_home_visit), SUM(usage_num_bp_tri1), SUM(usage_num_bp_tri2), SUM(usage_num_bp_tri3), SUM(usage_num_pnc), SUM(usage_num_ebf), SUM(usage_num_cf), SUM(usage_num_delivery), SUM(usage_num_due_list_ccs), SUM(usage_num_due_list_child_health), SUM(usage_awc_num_active), NULL, NULL, SUM(infra_clean_water), SUM(infra_functional_toilet), SUM(infra_baby_weighing_scale), SUM(infra_adult_weighing_scale), SUM(infra_cooking_utensils), SUM(infra_medicine_kits), SUM(infra_adequate_space_pse), SUM(usage_num_hh_reg), SUM(usage_num_add_person), SUM(usage_num_add_pregnancy), 'yes', 2, CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, sum(num_launched_blocks), sum(num_launched_supervisors), sum(num_launched_awcs), SUM(num_awcs_conducted_vhnd), SUM(num_awcs_conducted_cbe), SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating_all), SUM(cases_child_health_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(infra_infant_weighing_scale), NULL, NULL, SUM(num_awc_infra_last_update), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), COALESCE(sum(electricity_awc), 0), COALESCE(sum(infantometer), 0), COALESCE(sum(stadiometer), 0), COALESCE(sum(num_anc_visits), 0), COALESCE(sum(num_children_immunized), 0), MAX(state_is_test), MAX(district_is_test), 0, 0, 0
+                FROM "agg_awc_2019-01-01_3"
+                WHERE block_is_test = 0
+                GROUP BY state_id, district_id, month
+            )
+        
+{}
+
+            INSERT INTO "agg_awc_2019-01-01_1" (
+                state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, awc_days_open, awc_num_open, wer_weighed, wer_eligible, wer_eligible_0_2, wer_weighed_0_2, cases_ccs_pregnant, cases_ccs_lactating, cases_child_health, valid_visits, expected_visits, usage_num_pse, usage_num_gmp, usage_num_thr, usage_num_home_visit, usage_num_bp_tri1, usage_num_bp_tri2, usage_num_bp_tri3, usage_num_pnc, usage_num_ebf, usage_num_cf, usage_num_delivery, usage_num_due_list_ccs, usage_num_due_list_child_health, usage_awc_num_active, infra_last_update_date, infra_type_of_building, infra_clean_water, infra_functional_toilet, infra_baby_weighing_scale, infra_adult_weighing_scale, infra_cooking_utensils, infra_medicine_kits, infra_adequate_space_pse, usage_num_hh_reg, usage_num_add_person, usage_num_add_pregnancy, is_launched, aggregation_level, num_launched_states, num_launched_districts, num_launched_blocks, num_launched_supervisors, num_launched_awcs, num_awcs_conducted_vhnd, num_awcs_conducted_cbe, cases_household, cases_person, cases_person_all, cases_ccs_pregnant_all, cases_ccs_lactating_all, cases_child_health_all, cases_person_adolescent_girls_11_14, cases_person_adolescent_girls_15_18, cases_person_adolescent_girls_11_14_all, cases_person_adolescent_girls_15_18_all, infra_infant_weighing_scale, cases_person_referred, awc_days_pse_conducted, num_awc_infra_last_update, cases_person_has_aadhaar_v2, cases_person_beneficiary_v2, electricity_awc, infantometer, stadiometer, num_anc_visits, num_children_immunized, state_is_test, district_is_test, block_is_test, supervisor_is_test, awc_is_test
+            ) (
+                SELECT state_id, 'All', 'All', 'All', 'All', month, SUM(num_awcs), SUM(awc_days_open), SUM(awc_num_open), SUM(wer_weighed), SUM(wer_eligible), SUM(wer_eligible_0_2), SUM(wer_weighed_0_2), SUM(cases_ccs_pregnant), SUM(cases_ccs_lactating), SUM(cases_child_health), SUM(valid_visits), SUM(expected_visits), SUM(usage_num_pse), SUM(usage_num_gmp), SUM(usage_num_thr), SUM(usage_num_home_visit), SUM(usage_num_bp_tri1), SUM(usage_num_bp_tri2), SUM(usage_num_bp_tri3), SUM(usage_num_pnc), SUM(usage_num_ebf), SUM(usage_num_cf), SUM(usage_num_delivery), SUM(usage_num_due_list_ccs), SUM(usage_num_due_list_child_health), SUM(usage_awc_num_active), NULL, NULL, SUM(infra_clean_water), SUM(infra_functional_toilet), SUM(infra_baby_weighing_scale), SUM(infra_adult_weighing_scale), SUM(infra_cooking_utensils), SUM(infra_medicine_kits), SUM(infra_adequate_space_pse), SUM(usage_num_hh_reg), SUM(usage_num_add_person), SUM(usage_num_add_pregnancy), 'yes', 1, CASE WHEN (sum(num_launched_districts) > 0) THEN 1 ELSE 0 END, sum(num_launched_districts), sum(num_launched_blocks), sum(num_launched_supervisors), sum(num_launched_awcs), SUM(num_awcs_conducted_vhnd), SUM(num_awcs_conducted_cbe), SUM(cases_household), SUM(cases_person), SUM(cases_person_all), SUM(cases_ccs_pregnant_all), SUM(cases_ccs_lactating_all), SUM(cases_child_health_all), SUM(cases_person_adolescent_girls_11_14), SUM(cases_person_adolescent_girls_15_18), SUM(cases_person_adolescent_girls_11_14_all), SUM(cases_person_adolescent_girls_15_18_all), SUM(infra_infant_weighing_scale), NULL, NULL, SUM(num_awc_infra_last_update), SUM(cases_person_has_aadhaar_v2), SUM(cases_person_beneficiary_v2), COALESCE(sum(electricity_awc), 0), COALESCE(sum(infantometer), 0), COALESCE(sum(stadiometer), 0), COALESCE(sum(num_anc_visits), 0), COALESCE(sum(num_children_immunized), 0), MAX(state_is_test), 0, 0, 0, 0
+                FROM "agg_awc_2019-01-01_2"
+                WHERE district_is_test = 0
+                GROUP BY state_id, month
+            )
+        
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (supervisor_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (awc_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id, block_id, supervisor_id, awc_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (supervisor_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (awc_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id, block_id, supervisor_id, awc_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (block_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id, block_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (district_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id)
+{}
+CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id)
+{}

@@ -2,13 +2,17 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import timedelta
+from six.moves import zip_longest
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
 from redis.exceptions import RedisError, LockError
 import json
+import re
 import six
 import sys
+
+from corehq.util.datadog.lockmeter import MeteredLock
 
 LOCK_EXPIRATION = timedelta(hours=1)
 
@@ -74,17 +78,44 @@ class ReleaseOnError(object):
             release_lock(self.lock, degrade_gracefully=True)
 
 
+def get_redis_lock(key, timeout=None, name=None, track_unreleased=True, **kw):
+    """Get redis lock with datadog timing metrics
+
+    :param key: Redis lock name.
+    :param timeout: Timeout passed through to redis lock.
+    :param name: Datadog "lock_name" tag value. This should be just
+    specific enough to identify the area of code that acquired the lock,
+    but not so specific that it will multiply the number of tags in
+    datadog unnecessarily.
+    :param track_unreleased: When true (the default), increase the count
+    of unreleased locks if a lock object is garbage-collected before it
+    is released.
+    :param **kw: Keyword arguments to be passed through to redis when
+    creating the new lock.
+    """
+    if name is None:
+        raise ValueError("'name' (DataDog 'name' tag value) is required")
+    lock = get_redis_client().lock(key, timeout=timeout, **kw)
+    return MeteredLock(lock, name, track_unreleased)
+
+
 def acquire_lock(lock, degrade_gracefully, **kwargs):
     acquired = False
     try:
         acquired = lock.acquire(**kwargs)
     except RedisError:
         if degrade_gracefully:
+            if hasattr(lock, "degraded"):
+                lock.degraded()
             lock = None
         else:
             raise
-    if lock and not acquired and not degrade_gracefully:
-        raise RedisError("Unable to acquire lock")
+    if lock and not acquired:
+        if degrade_gracefully:
+            if hasattr(lock, "degraded"):
+                lock.degraded()
+        else:
+            raise RedisError("Unable to acquire lock")
     return lock
 
 
@@ -107,7 +138,10 @@ def release_lock(lock, degrade_gracefully):
                     pass
                 six.reraise(*exc)
         except RedisError:
-            if not degrade_gracefully:
+            if degrade_gracefully:
+                if hasattr(lock, "release_failed"):
+                    lock.release_failed()
+            else:
                 raise
 
 
@@ -167,17 +201,16 @@ class RedisLockableMixIn(object):
     @classmethod
     def get_obj_lock(cls, obj, timeout_seconds=120):
         obj_id = cls.get_obj_id(obj)
-        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds)
+        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds, obj_id)
 
     @classmethod
     def get_obj_lock_by_id(cls, obj_id, timeout_seconds=120):
-        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds)
+        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds, obj_id)
 
     @classmethod
-    def get_redis_lock(cls, key, timeout_seconds):
-        client = get_redis_client()
-        lock = client.lock(key, timeout=timeout_seconds)
-        return lock
+    def get_redis_lock(cls, key, timeout_seconds, obj_id=None):
+        name = "%s_%s" % (cls.__name__, ("cls" if obj_id is None else "obj"))
+        return get_redis_lock(key, timeout=timeout_seconds, name=name)
 
     @classmethod
     def get_class_lock(cls, timeout_seconds=120):
@@ -344,15 +377,18 @@ class CriticalSection(object):
 
     def __enter__(self):
         try:
-            client = get_redis_client()
             for key in self.keys:
-                lock = client.lock(key, timeout=self.timeout)
+                name = "_".join(re.split(r"_|-", key, 2)[:2])
+                lock = get_redis_lock(key, timeout=self.timeout, name=name)
                 self.locks.append(lock)
             for lock in self.locks:
                 self.status.append(lock.acquire(blocking=self.block))
         except Exception:
             if self.fail_hard:
                 raise
+        for lock, status in zip_longest(self.locks, self.status):
+            if not status and hasattr(lock, "degraded"):
+                lock.degraded()
         return self
 
     def success(self):
@@ -374,11 +410,17 @@ class LooselyEqualDocumentSchema(DocumentSchema):
         if isinstance(other, self.__class__):
             return self._doc == other._doc
 
+    # TODO - remove this in Python 3
+    def __ne__(self, other):
+        return not (self == other)
+
     def __hash__(self):
         return hash(json.dumps(self._doc, sort_keys=True))
 
+
 class IncompatibleDocument(Exception):
     pass
+
 
 def get_cached_property(couch_cls, obj_id, prop_name, expiry=12*60*60):
     """

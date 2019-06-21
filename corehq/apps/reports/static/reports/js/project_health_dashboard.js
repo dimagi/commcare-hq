@@ -40,7 +40,7 @@ hqDefine("reports/js/project_health_dashboard", function () {
             ;
 
             chart.yAxis.tickFormat(d3.format(',.0f'));
-            chart.color(["#004ebc", "#e53e30"]);
+            chart.color(["#004ebc", "#e73c27"]);
             chart.tooltipContent(function (key, x, y, e) {
                 var d = e.series.values[e.pointIndex];
                 var chevron = chevronIcon(d.z);

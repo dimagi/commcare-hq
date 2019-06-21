@@ -1,34 +1,37 @@
 """
 A collection of functions which test the most basic operations of various services.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from io import BytesIO
-import attr
+from __future__ import absolute_import, unicode_literals
+
 import datetime
 import logging
-import gevent
+import time
+import uuid
+from io import BytesIO
 
-from django.core import cache
+import attr
+import gevent
+import requests
+from celery import Celery
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core import cache
 from django.db import connections
 from django.db.utils import OperationalError
-from celery import Celery
-import requests
+from six.moves import range
 
-from corehq.util.timer import TimingContext
-from soil import heartbeat
-
-from corehq.apps.hqadmin.escheck import check_es_cluster_health
-from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.es import GroupES
+from corehq.apps.formplayer_api.utils import get_formplayer_url
+from corehq.apps.hqadmin.escheck import check_es_cluster_health
+from corehq.apps.hqadmin.utils import parse_celery_pings, parse_celery_workers
 from corehq.blobs import CODES, get_blob_db
-from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
+from corehq.celery_monitoring.heartbeat import HeartbeatNeverRecorded, Heartbeat
+from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
 from corehq.util.decorators import change_log_level
-from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
+from corehq.util.timer import TimingContext
+from soil import heartbeat
 
 
 @attr.s
@@ -90,18 +93,21 @@ def check_kafka():
 @change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
     cluster_health = check_es_cluster_health()
-    if cluster_health != 'green':
+    if cluster_health == 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check',
+    doc = {'_id': 'elasticsearch-service-check-{}'.format(uuid.uuid4().hex[:7]),
            'date': datetime.datetime.now().isoformat()}
-    send_to_elasticsearch('groups', doc)
-    refresh_elasticsearch_index('groups')
-    hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
-    send_to_elasticsearch('groups', doc, delete=True)  # clean up
-    if doc in hits:
-        return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
-    return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    try:
+        send_to_elasticsearch('groups', doc)
+        refresh_elasticsearch_index('groups')
+        hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
+        if doc in hits:
+            return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
+        else:
+            return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    finally:
+        send_to_elasticsearch('groups', doc, delete=True)  # clean up
 
 
 def check_blobdb():
@@ -123,47 +129,29 @@ def check_blobdb():
 
 
 def check_celery():
-    from celery import Celery
-    from django.conf import settings
-    celery = Celery()
-    celery.config_from_object(settings)
-    worker_responses = celery.control.ping(timeout=10)
-    if not worker_responses:
-        return ServiceStatus(False, 'No running Celery workers were found.')
+    blocked_queues = []
+
+    for queue, threshold in settings.CELERY_HEARTBEAT_THRESHOLDS.items():
+        if threshold:
+            threshold = datetime.timedelta(seconds=threshold)
+            try:
+                blockage_duration = Heartbeat(queue).get_and_report_blockage_duration()
+            except HeartbeatNeverRecorded:
+                blocked_queues.append((queue, 'as long as we can see', threshold))
+            else:
+                if blockage_duration > threshold:
+                    blocked_queues.append((queue, blockage_duration, threshold))
+
+    if blocked_queues:
+        return ServiceStatus(False, '\n'.join(
+            "{} has been blocked for {} (max allowed is {})".format(
+                queue, blockage_duration, threshold
+            ) for queue, blockage_duration, threshold in blocked_queues))
     else:
-        msg = 'Successfully pinged {} workers'.format(len(worker_responses))
-        return ServiceStatus(True, msg)
+        return ServiceStatus(True, "OK")
 
 
 def check_heartbeat():
-    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
-    if celery_monitoring:
-        all_workers = requests.get(
-            celery_monitoring + '/api/workers',
-            params={'status': True},
-            timeout=3,
-        ).json()
-        bad_workers = []
-        expected_running, expected_stopped = parse_celery_workers(all_workers)
-
-        celery = Celery()
-        celery.config_from_object(settings)
-        worker_responses = celery.control.ping(timeout=10)
-        pings = parse_celery_pings(worker_responses)
-
-        for hostname in expected_running:
-            if hostname not in pings or not pings[hostname]:
-                bad_workers.append('* {} celery worker down'.format(hostname))
-
-        for hostname in expected_stopped:
-            if hostname in pings:
-                bad_workers.append(
-                    '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
-                )
-
-        if bad_workers:
-            return ServiceStatus(False, '\n'.join(bad_workers))
-
     is_alive = heartbeat.is_alive()
     return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
 
@@ -255,7 +243,7 @@ CHECKS = {
         "check_func": check_couch,
     },
     'celery': {
-        "always_check": True,
+        "always_check": False,
         "check_func": check_celery,
     },
     'heartbeat': {

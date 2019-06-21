@@ -8,21 +8,15 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_handler
 import six
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 def force_tag_to_list(export_tag):
     if isinstance(export_tag, six.string_types):
+        soft_assert_type_text(export_tag)
         export_tag = [export_tag]
     assert isinstance(export_tag, list)
     return export_tag
-
-
-def get_schema_index_view_keys(export_tag):
-    """
-    Get the view start and end keys to query the schema_index view
-    """
-    export_tag = force_tag_to_list(export_tag)
-    return {'startkey': export_tag,
-            'endkey': export_tag + [{}]}
 
 
 def intersect_functions(*functions):

@@ -1,27 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import json
 import os
 import uuid
-
 from collections import OrderedDict
+from io import open
+
 from django.test import SimpleTestCase
-import yaml
 from django.test.testcases import TestCase
+
+import six
+import yaml
 from mock import patch
 
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    FormQuestionResponse,
+)
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
-    FormQuestionResponse,
     get_data_cleaning_data,
     get_questions_from_xform_node,
+    get_readable_data_for_submission,
     get_readable_form_data,
-    get_readable_data_for_submission)
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
-from io import open
 
 
 class ReadableFormdataTest(SimpleTestCase):
@@ -92,6 +100,8 @@ class ReadableFormdataTest(SimpleTestCase):
                 'required': False,
                 'relevant': None,
                 'setvalue': 'default',
+                "options": [],
+                "children": [],
             }])
         )
 
@@ -260,21 +270,22 @@ class ReadableFormdataTest(SimpleTestCase):
             'readable_forms', '{}.submission.json'.format(slug))
         result_file = os.path.join(
             os.path.dirname(__file__),
-            'readable_forms', '{}.result.yaml'.format(slug))
+            'readable_forms', '{}.{}.result.yaml'.format(slug, 'py3' if six.PY3 else 'py2'))
         with open(xform_file) as f:
             xform = f.read()
         with open(submission_file) as f:
             data = json.load(f)
         with open(result_file) as f:
-            result = yaml.load(f)
+            result = yaml.safe_load(f)
         questions = get_questions_from_xform_node(XForm(xform), langs=['en'])
         questions = get_readable_form_data(data, questions)
 
         # Search for 'READABLE FORMS TEST' for more info
         # to bootstrap a test and have it print out your yaml result
-        # uncomment this line. Ghetto but it works.
-        # print yaml.safe_dump([json.loads(json.dumps(x.to_json()))
-        #                       for x in questions])
+        # uncomment this line. Unconventional, but it works.
+        # BE SURE TO UPDATE BOTH THE PYTHON 2 AND 3 RESULT FILES!
+        # print(yaml.safe_dump([json.loads(json.dumps(x.to_json()))
+        #                       for x in questions]))
 
         self.assertJSONEqual(json.dumps([x.to_json() for x in questions]),
                              json.dumps(result),

@@ -4,63 +4,59 @@
 {% load compress %}
 
 {% block page_content %}
-    {% registerurl 'diff' app.domain app.id '---' %}
-    {% initial_page_data 'built_versions' built_versions %}
-    {% initial_page_data 'current_version' app.built_with.build_number %}
+  {% registerurl 'diff' app.domain app.id '---' %}
+  {% registerurl 'paginate_releases' app.domain app.copy_of %}
+  {% initial_page_data 'current_version' app.built_with.build_number %}
 
-    <p class="form-inline" id="compare-form">
-      See
-      <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
-        current app
-      </a> for the latest work in progress.
+  <p class="form-inline" id="compare-form">
+    See
+    <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
+      current app
+    </a> for the latest work in progress.
 
     {% if not other_app %}
-        Or compare with another version:
-        <input type="text" class="form-control input-sm" placeholder="version" />
-        <button class="btn btn-default btn-sm">Compare</button>
+      Or compare with another version:
+      <select class="app-manager-version-dropdown form-control"></select>
+      <button class="btn btn-primary btn-sm">Compare</button>
     {% endif %}
-    </p>
+  </p>
 
-    {% block downloads %}{% endblock %}
+  {% block app_profiles %}{% endblock %}
+  {% block downloads %}{% endblock %}
 
-    <h2>Resource Files</h2>
+  <h2>Resource Files</h2>
 
-    <table class="table table-condensed">
-        {% for section, files in files.items %}
-            {% if section %}<tr><th>{{ section }}</th></tr>{% endif %}
-            {% for file in files %}
-                <tr>
-                    <td class="col-sm-3">
-                        {% if file.source %}
-                            <a class="toggle-next" href="#">{{ file.name }}</a>
-                        {% else %}
-                            {{ file.name }}
-                        {% endif %}
-                        {% if file.readable_name != file.name and file.readable_name%}
-                            {{ file.readable_name }}
-                        {% endif %}
-                    </td>
-                    <td class="col-sm-9">
-                        {% block file_description %}{% endblock %}
-                    </td>
-                </tr>
+  <table class="table table-condensed">
+    {% for section, files in files.items %}
+      {% if section %}<tr><th>{{ section }}</th></tr>{% endif %}
+      {% for file in files %}
+        <tr>
+          <td class="col-sm-3">
+            {% if file.source %}
+              <a class="toggle-next" href="#">{{ file.name }}</a>
+            {% else %}
+              {{ file.name }}
+            {% endif %}
+            {% if file.readable_name != file.name and file.readable_name%}
+              {{ file.readable_name }}
+            {% endif %}
+          </td>
+          <td class="col-sm-9">
+            {% block file_description %}{% endblock %}
+          </td>
+        </tr>
 
-                {% if file.source %}
-                    <tr class="hide">
-                        <td colspan="2">
-                            {% block file_source %}{% endblock %}
-                        </td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-        {% empty %}
-            <tr><th>No Files</th></tr>
-        {% endfor %}
-    </table>
-    {% block post_files %}{% endblock %}
+        {% if file.source %}
+          <tr class="hide">
+            <td colspan="2">
+              {% block file_source %}{% endblock %}
+            </td>
+          </tr>
+        {% endif %}
+      {% endfor %}
+    {% empty %}
+      <tr><th>No Files</th></tr>
+    {% endfor %}
+  </table>
+  {% block post_files %}{% endblock %}
 {% endblock page_content %}
-
-
-{% block stylesheets %}{{ block.super }}
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
-{% endblock %}

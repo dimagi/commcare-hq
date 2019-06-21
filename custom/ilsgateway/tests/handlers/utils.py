@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import six
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
@@ -80,13 +81,13 @@ class ILSTestScript(TestScript):
         for x in range(1, 4):
             bootstrap_user(
                 cls.facility3,
-                username='person{}'.format(x), domain=domain.name, phone_number=str(32346 + x),
+                username='person{}'.format(x), domain=domain.name, phone_number=six.text_type(32346 + x),
                 first_name='Person {}'.format(x), last_name='Person {}'. format(x), home_loc='d31049',
                 language='sw'
             )
             bootstrap_user(
                 cls.district2,
-                username='dperson{}'.format(x), domain=domain.name, phone_number=str(32349 + x),
+                username='dperson{}'.format(x), domain=domain.name, phone_number=six.text_type(32349 + x),
                 first_name='dPerson {}'.format(x), last_name='dPerson {}'. format(x), home_loc='d10101',
                 language='sw'
             )

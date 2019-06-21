@@ -9,11 +9,14 @@ import six
 from tastypie.fields import ApiField, CharField
 import dimagi.utils.modules
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 def get_referenced_class(class_or_str):
     # Simplified from https://github.com/toastdriven/django-tastypie/blob/master/tastypie/fields.py#L519
 
     if isinstance(class_or_str, six.string_types):
+        soft_assert_type_text(class_or_str)
         return dimagi.utils.modules.to_function(class_or_str)
     else:
         return class_or_str
@@ -26,6 +29,7 @@ class AttributeOrCallable(object):
 
     def __call__(self, v):
         if isinstance(self.attribute, six.string_types):
+            soft_assert_type_text(self.attribute)
             accessor = lambda v: getattr(v, self.attribute)
         else:
             accessor = self.attribute
@@ -49,6 +53,8 @@ class UseIfRequested(object):
         return bundle.request.GET.get(full_name, 'false').lower() == 'true'
 
     def __getattr__(self, attr):
+        if attr == 'underlying_field':
+            return None
         return getattr(self.underlying_field, attr)
 
 

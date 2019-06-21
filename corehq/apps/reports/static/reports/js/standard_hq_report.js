@@ -28,7 +28,7 @@ hqDefine("reports/js/standard_hq_report", [
         }
 
         if (typeof standardHQReport !== 'undefined') {
-            // Custom reports, notably ewsghana and ilsgateway
+            // Custom reports, notably ewsghana
             standardReport = standardHQReport;
         } else {
             var ucr = "userreports/js/configurable_report";

@@ -3,65 +3,102 @@
 {% load crispy_forms_tags %}
 
 {% block page_content %}
-    {% if read_only %}
-        <div class="alert alert-info">
-          {% trans "This datasource is read only, any changes made can not be saved." %}
-        </div>
-    {% endif %}
-    {% crispy form %}
-{% if data_source.get_id %}
-    {% if data_source.disable_destructive_rebuild %}
+  {% if read_only %}
     <div class="alert alert-info">
-       {% trans "Fully rebuilding has been disabled for this data source, please use the in place rebuild if necessary" %}</p>
+      {% trans "This datasource is read only, any changes made can not be saved." %}
     </div>
+  {% endif %}
+  {% crispy form %}
+  {% if data_source.get_id %}
+    {% if data_source.disable_destructive_rebuild %}
+      <div class="alert alert-info">
+        {% trans "Fully rebuilding has been disabled for this data source, please use the in place rebuild if necessary" %}</p>
+      </div>
     {% endif %}
-  <hr />
-  {% if not read_only %}
-  <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
+    <hr />
+    {% if not read_only %}
+      {% if not used_by_reports  %}
+        <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
+          {% csrf_token %}
+          <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit pull-right">
+        </form>
+      {% else %}
+        <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
+          {% trans 'Delete Data Source'%}
+        </a>
+        <div id="confirm_delete" class="modal fade" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">{% trans 'Are you sure you want to delete this data source'%}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <fieldset>
+                  <legend>{% trans 'Deleting this will break below reports that refer the data source' %}</legend>
+                  <ul>
+                    {% for report in used_by_reports %}
+                      <li><a href="{% url 'edit_configurable_report' domain report.get_id %}">{{report}}</a></li>
+                    {% endfor %}
+                  </ul>
+                </fieldset>
+              </div>
+              <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
+                {% csrf_token %}
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">
+                    {% trans "Cancel" %}
+                  </button>
+                  <button type="submit" value="{% trans 'Delete Data Source'%}" class="disable-on-submit btn btn-danger btn-secondary">{% trans 'Delete Data Source'%}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+    <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
       {% csrf_token %}
-      <input type="submit" value="{% trans 'Delete Data Source'%}" class="btn btn-danger disable-on-submit pull-right">
-  </form>
-  {% endif %}
-  <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
-    {% csrf_token %}
-    {% if not data_source.disable_destructive_rebuild %}
-    <button type="submit" class="btn btn-default disable-on-submit pull-right">
-      {% trans 'Rebuild Data Source'%}
-    </button>
+      {% if not data_source.disable_destructive_rebuild %}
+        <button type="submit" class="btn btn-default disable-on-submit pull-right">
+          {% trans 'Rebuild Data Source'%}
+        </button>
+      {% endif %}
+      <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
+      <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
+      <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Source (Advanced)' %}</a>
+    </form>
+    {% if not data_source.is_deactivated %}
+      <hr />
+      <form method='post' action="{% url 'resume_build' domain data_source.get_id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-default disable-on-submit">
+          {% trans 'Resume Build (Advanced)' %}
+        </button>
+      </form>
+      <form method='post' action="{% url 'build_in_place' domain data_source.get_id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-default disable-on-submit">
+          {% trans 'Rebuild Tables In Place (Advanced)' %}
+        </button>
+      </form>
     {% endif %}
-    <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
-    <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
-    <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Source (Advanced)' %}</a>
-  </form>
-  {% if not data_source.is_deactivated %}
-  <hr />
-  <form method='post' action="{% url 'resume_build' domain data_source.get_id %}">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-default disable-on-submit">
-      {% trans 'Resume Build (Advanced)' %}
-    </button>
-  </form>
-  <form method='post' action="{% url 'build_in_place' domain data_source.get_id %}">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-default disable-on-submit">
-      {% trans 'Rebuild Tables In Place (Advanced)' %}
-    </button>
-  </form>
   {% endif %}
-{% endif %}
 
-{% if not used_by_reports  %}
+  {% if not used_by_reports  %}
     <label class="label label-danger">Datasource currently unused</label>
-{% else %}
+  {% else %}
     <fieldset>
-        <legend>Reports dependent on this datasource</legend>
-        <ul>
-            {% for report in used_by_reports %}
-                <li>{{report}}</li>
-            {% endfor %}
-        </ul>
+      <legend>Reports dependent on this datasource</legend>
+      <ul>
+        {% for report in used_by_reports %}
+          <li><a href="{% url 'edit_configurable_report' domain report.get_id %}">{{report}}</a></li>
+        {% endfor %}
+      </ul>
     </fieldset>
-{% endif %}
+  {% endif %}
 
 
 {% endblock %}

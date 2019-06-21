@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import doctest
+import six
 from django.test import SimpleTestCase
 import corehq.motech.utils
-from corehq.motech.utils import pad
+from corehq.motech.utils import pad, pformat_json
 
 
 class PadTests(SimpleTestCase):
@@ -23,6 +24,36 @@ class PadTests(SimpleTestCase):
         padded = pad(b'xy\xc5\xba\xc5\xbay', 8, b'*')
         self.assertEqual(padded, b'xy\xc5\xba\xc5\xbay*')
 
+
+class PFormatJSONTests(SimpleTestCase):
+
+    def test_valid_json(self):
+        self.assertEqual(
+            pformat_json('{"ham": "spam", "eggs": "spam"}'),
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
+        )
+        self.assertEqual(
+            pformat_json({'ham': 'spam', 'eggs': 'spam'}),
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
+        )
+
+    def test_invalid_json(self):
+        self.assertEqual(
+            pformat_json('ham spam eggs spam'),
+            'ham spam eggs spam'
+        )
+
+    def test_empty_string(self):
+        self.assertEqual(
+            pformat_json(''),
+            ''
+        )
+
+    def test_none(self):
+        self.assertEqual(
+            pformat_json(None),
+            ''
+        )
 
 class DocTests(SimpleTestCase):
 

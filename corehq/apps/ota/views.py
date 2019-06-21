@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
+import six
 
 from couchdbkit import ResourceConflict
 from distutils.version import LooseVersion
@@ -24,7 +25,7 @@ from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 
 from corehq import toggles
-from corehq.const import OPENROSA_VERSION_MAP
+from corehq.const import OPENROSA_VERSION_MAP, ONE_DAY
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.builds.utils import get_default_build_spec
@@ -100,7 +101,7 @@ def search(request, domain):
 
 
 def _handle_query_merge_exception(request, exception):
-    notify_exception(request, exception.message, details=dict(
+    notify_exception(request, six.text_type(exception), details=dict(
         exception_type=type(exception),
         original_query=getattr(exception, "original_query", None),
         query_addition=getattr(exception, "query_addition", None)
@@ -109,7 +110,7 @@ def _handle_query_merge_exception(request, exception):
 
 
 def _handle_es_exception(request, exception, query_addition_debug_details):
-    notify_exception(request, exception, details=dict(
+    notify_exception(request, six.text_type(exception), details=dict(
         exception_type=type(exception),
         **query_addition_debug_details
     ))
@@ -158,6 +159,8 @@ def get_restore_params(request):
         openrosa_version = openrosa_headers[OPENROSA_VERSION_HEADER]
     except KeyError:
         openrosa_version = request.GET.get('openrosa_version', None)
+    if isinstance(openrosa_version, bytes):
+        openrosa_version = openrosa_version.decode('utf-8')
 
     return {
         'since': request.GET.get('since'),
@@ -359,7 +362,7 @@ def get_next_id(request, domain):
     return HttpResponse(SerialIdBucket.get_next(domain, bucket_id, session_id))
 
 
-@quickcache(['domain', 'app_id'], timeout=60 * 60 * 24)
+@quickcache(['domain', 'app_id'], timeout=ONE_DAY)
 def get_recovery_measures_cached(domain, app_id):
     return [measure.to_mobile_json() for measure in
             MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]

@@ -3,20 +3,20 @@
 {% load hq_shared_tags %}
 {% block title %}App no longer supported{% endblock %}
 {% block breadcrumbs %}
-    {% if app %}
+  {% if app %}
     <li>
-        <a href="{% url "view_app" domain app.id %}">
-            <span>{{ app.name|html_name }}</span>
-        </a>
+      <a href="{% url "view_app" domain app.id %}">
+        <span>{{ app.name|html_name }}</span>
+      </a>
     </li>
-    {% endif %}
+  {% endif %}
 {% endblock %}
 {% block page_navigation %}
-<nav class="appmanager-content">
+  <nav class="appmanager-content">
     <ul class="nav nav-hq-sidebar"></ul>
-</nav>
+  </nav>
 {% endblock %}
 {% block app-content %}
-    <h1>This app is no longer supported</h1>
-    <p>If you believe this to be in error, please contact support.</p>
+  <h1>This app is no longer supported</h1>
+  <p>If you believe this to be in error, please contact support.</p>
 {% endblock %}

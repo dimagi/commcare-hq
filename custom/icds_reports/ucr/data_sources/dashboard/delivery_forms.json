@@ -1,15 +1,32 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-dashboard_delivery_forms",
@@ -27,29 +44,55 @@
       },
       "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "state_id",
         "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
-              "type": "named",
-              "name": "user_location_id"
-            },
-            "location_type": {
-              "type": "constant",
-              "constant": "state"
-            }
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          }
+          "location_type": "state",
+          "location_property": "_id"
         }
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "column_id": "supervisor_id",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+      	  "location_property": "_id"
+        },
+        "is_primary_key": true,
+        "is_nullable": false
       },
       {
         "column_id": "case_load_ccs_record0",
@@ -151,7 +194,7 @@
                 "type": "filter_items",
                 "items_expression": {
                   "type": "property_path",
-                  "property_path": ["form", "child", "breastfed_at_birth"],
+                  "property_path": ["form", "child", "breastfed_within_first_hour"],
                   "datatype": "array"
                 },
                 "filter_expression": {
@@ -224,6 +267,13 @@
       }
     },
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    }
   }
 }

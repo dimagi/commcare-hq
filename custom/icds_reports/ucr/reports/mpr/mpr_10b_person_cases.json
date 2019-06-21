@@ -1,0 +1,230 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_10b_person_cases",
+  "data_source_table": "static-person_cases_v3",
+  "config": {
+    "title": "MPR - 10b - Person cases (Static)",
+    "description": "This is used in apps for report modules",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "display": "Last Referral Date",
+        "slug": "last_referral_date",
+        "type": "date",
+        "field": "last_referral_date",
+        "datatype": "date"
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        }
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      }
+    ],
+    "columns": [
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "referred_bleeding",
+        "column_id": "referred_bleeding",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ybleeding\\y'": 1
+        }
+      },
+      {
+        "display": "referred_convulsions",
+        "column_id": "referred_convulsions",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yconvulsions\\y'": 1
+        }
+      },
+      {
+        "display": "referred_prolonged_labor",
+        "column_id": "referred_prolonged_labor",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yprolonged_labor\\y'": 1
+        }
+      },
+      {
+        "display": "referred_abortion_complications",
+        "column_id": "referred_abortion_complications",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yabortion_complications\\y'": 1
+        }
+      },
+      {
+        "display": "referred_fever_discharge",
+        "column_id": "referred_fever_discharge",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y'": 1
+        }
+      },
+      {
+        "display": "referred_other",
+        "column_id": "referred_other",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y' OR referral_health_problem ~ '\\yother\\y'": 1
+        }
+      },
+      {
+        "display": "bleeding_reached_count",
+        "column_id": "bleeding_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ybleeding\\y'": 1
+        }
+      },
+      {
+        "display": "convulsions_reached_count",
+        "column_id": "convulsions_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yconvulsions\\y'": 1
+        }
+      },
+      {
+        "display": "prolonged_labor_reached_count",
+        "column_id": "prolonged_labor_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yprolonged_labor\\y'": 1
+        }
+      },
+      {
+        "display": "abort_comp_reached_count",
+        "column_id": "abort_comp_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yabortion_complications\\y'": 1
+        }
+      },
+      {
+        "display": "fever_discharge_reached_count",
+        "column_id": "fever_discharge_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND (referral_health_problem ~ '\\yfever\\y' OR referral_health_problem ~ '\\yoffensive_discharge\\y')": 1
+        }
+      },
+      {
+        "display": "other_reached_count",
+        "column_id": "other_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND (referral_health_problem ~ '\\yother\\y' OR referral_health_problem ~ '\\yswelling\\y' OR referral_health_problem ~ '\\yblurred_vision\\y')": 1
+        }
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

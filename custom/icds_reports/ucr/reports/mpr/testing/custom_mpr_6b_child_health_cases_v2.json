@@ -1,0 +1,177 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "cas-lab"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-custom_sql_mpr_6b_child_health_cases_v2",
+  "data_source_table": "static-child_cases_monthly_v2",
+  "config": {
+    "title": "MPR - 6b - Child Health cases (Custom SQL) (Static) v2",
+    "custom_query_provider": "custom.icds_reports.reports.ucr.MPR6bChildHealth",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "slug": "age_in_months",
+        "field": "age_in_months",
+        "type": "numeric",
+        "display": "Age in Months Low Bound"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "slug": "age_in_months1",
+        "field": "age_in_months",
+        "type": "numeric",
+        "display": "Age in Months High Bound"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Month for Data",
+        "field": "month",
+        "type": "date",
+        "slug": "month"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "block_id",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Block"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "district_id",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by District"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "state_id",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by State"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "pse_daily_attendance_male",
+        "field": "pse_daily_attendance_male",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "pse_daily_attendance_male"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "pse_daily_attendance_female",
+        "field": "pse_daily_attendance_female",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "pse_daily_attendance_female"
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import tempfile
+from io import BytesIO
+
+from django.test import SimpleTestCase, TestCase
+
+import openpyxl
 
 from couchexport.export import export_raw
 from couchexport.models import Format
-from django.test import SimpleTestCase, TestCase
-from io import BytesIO
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.exceptions import FixtureUploadError
@@ -14,22 +17,29 @@ from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.run_upload import _run_fixture_upload
 from corehq.apps.fixtures.upload.workbook import get_workbook
-from corehq.util.test_utils import make_make_path
-from corehq.util.test_utils import generate_cases
-
+from corehq.util.test_utils import generate_cases, make_make_path
 
 _make_path = make_make_path(__file__)
 
 
+# (slug (or filename), [expected errors], file contents (None if excel file exists in repository))
 validation_test_cases = [
     ('duplicate_tag', [
         "Lookup-tables should have unique 'table_id'. "
         "There are two rows with table_id 'things' in 'types' sheet.",
-
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'),
+            ('N', 'things', 'yes', 'name'), ('N', 'things', 'yes', 'name')
+        ]
+    }),
     ("invalid_table_id", [
         "table_id 'invalid table_id' should not contain spaces or special characters, or start with a number."
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'invalid table_id', 'yes', 'name')]
+    }),
     ('multiple_errors', [
         "Excel worksheet 'level_1' does not contain the column "
         "'field: fun_fact' as specified in its 'types' definition",
@@ -39,87 +49,210 @@ validation_test_cases = [
         "'field: other' as specified in its 'types' definition",
         "There's no sheet for type 'level_3' in 'types' sheet. "
         "There must be one sheet per row in the 'types' sheet.",
-    ]),
+    ], {
+        'level_names': [
+            ('UID', 'Delete(Y/N)', 'field: level_1', 'field: level_2'),
+            (None, 'N', 'State', 'County')
+        ],
+        'level_2': [
+            ('UID', 'Delete(Y/N)', 'field: id', 'name: lang 1', 'field: name 1', 'name: lang 2', 'field: name 2', 'field: level_1'),
+            (None, 'N', 'barnstable', 'en', 'Barnstable', 'fra', 'Barnstable', 'MA'),
+            (None, 'N', 'berkshire', 'en', 'Berkshire', 'fra', 'Berkshire', 'MA'),
+            (None, 'N', 'bristol', 'en', 'Bristol', 'fra', 'Bristol', 'MA'),
+            (None, 'N', 'dukes', 'en', 'Dukes', 'fra', 'Dukes', 'MA')
+        ],
+        'level_1': [
+            ('UID', 'Delete(Y/N)', 'field: id', 'name: lang 1', 'field: name 1', 'name: lang 2', 'field: name 2', 'field: country'),
+            (None, 'N', 'MA', 'en', 'Massachusetts', 'fra', 'Massachusetts', 'USA')
+        ],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 2', 'field 3', 'field 4', 'field 5', 'field 2 : property 1'),
+            ('N', 'level_1', 'yes', 'id', 'name', 'country', 'other', 'fun_fact', 'lang'),
+            ('N', 'level_2', 'yes', 'id', 'name', 'level_1', 'other', None, 'lang'),
+            ('N', 'level_3', 'yes', 'id', 'name', 'level_2', 'other', None, 'lang')
+        ]
+    }),
     ('type_has_no_sheet', [
         "There's no sheet for type 'things' in 'types' sheet. "
         "There must be one sheet per row in the 'types' sheet.",
-    ]),
+    ], {
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name')]
+    }),
     ('has_no_field_column', [
         "Excel worksheet 'things' does not contain the column 'field: name' "
         "as specified in its 'types' definition",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)'), (None, 'N')],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name')]
+    }),
     ('has_no_field_column_extra_rows', [
         "Excel worksheet 'things' does not contain the column 'field: name' "
         "as specified in its 'types' definition",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)'), (None, 'N')],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name')]
+    }),
     ('has_extra_column', [
         "Excel worksheet 'things' has an extra column"
         "'field: fun_fact' that's not defined in its 'types' definition",
-    ]),
+    ], {
+        'things': [
+            ('UID', 'Delete(Y/N)', 'field: name', 'field: fun_fact'),
+            (None, 'N', 'apple', 'a day keeps the doctor away')
+        ],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name')]
+    }),
     ('sheet_has_no_property', [
         "Excel worksheet 'things' does not contain property "
         "'lang' of the field 'name' as specified in its 'types' definition",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name 1'), (None, 'N', 'apple')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('sheet_has_extra_property', [
         "Excel worksheet 'things' has an extra property "
         "'style' for the field 'name' that's not defined in its 'types' definition. "
         "Re-check the formatting",
-    ]),
+    ], {
+        'things': [
+            ('UID', 'Delete(Y/N)', 'field: name 1', 'name: lang 1', 'name: style 1'),
+            (None, 'N', 'apple', 'en', 'lowercase')
+        ],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('invalid_field_with_property', [
         "Fields with attributes should be numbered as 'field: name integer'",
         # also triggers wrong_field_property_combos
         "Number of values for field 'name' and attribute 'lang' should be same",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name', 'name: lang 1'), (None, 'N', 'apple', 'en')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('invalid_property', [
         "Attribute should be written as 'name: lang integer'",
         # also triggers wrong_field_property_combos
         "Number of values for field 'name' and attribute 'lang' should be same",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name 1', 'name: lang'), (None, 'N', 'apple', 'en')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('wrong_field_property_combos', [
         "Number of values for field 'name' and attribute 'lang' should be same",
-    ]),
+    ], {
+        'things': [
+            ('UID', 'Delete(Y/N)', 'field: name 1', 'name: lang 1', 'field: name 2'),
+            (None, 'N', 'apple', 'en', 'malum')
+        ],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('has_no_column', [
         "Workbook 'types' has no column 'table_id'.",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
+        'types': [('Delete(Y/N)', 'is_global?', 'field 1'), ('N', 'yes', 'name')]}),
     ('neither_fields_nor_attributes', [
         "Lookup-tables can not have empty fields and empty properties on items. "
         "table_id 'things' has no fields and no properties",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)'), (None, 'N')],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?'), ('N', 'things', 'yes')]}),
     ('invalid_field_syntax', [
         "In Excel worksheet 'things', field 'name' should be numbered as 'field: name integer",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name', 'name'), (None, 'N', 'apple', 'en')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('wrong_property_syntax', [
         "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
         "'field 1' is not correctly formatted"
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('invalid_field_name_numerical', [
         "Error in 'types' sheet for 'field 1', '100'. "
         "Field names should be strings, not numbers",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 100)]
+    }),
     ('not_excel_file', [
-        "Invalid file-format. Please upload a valid xlsx file.",
-    ]),
+        "Upload failed! Please make sure you are using a valid Excel 2007 or later (.xlsx) file. " \
+        "Error details: \"There is no item named '[Content_Types].xml' in the archive\".",
+    ], None),
     ('no_types_sheet', [
         "Workbook does not contain a sheet called types",
-    ]),
+    ], {'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')]}),
     ('wrong_index_syntax', [
         "'field 1' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
         "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'.",
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name', 'name'), (None, 'N', 'apple', 'en')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1', 'field 1: is_indexed'),
+            ('N', 'things', 'yes', 'name', 'lang', 'a')
+        ]
+    }),
     ('field_type_error', [
         "Fields with attributes should be numbered as 'field: name integer'"
-    ]),
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name', 'name: lang 1'), (None, 'N', 1, 1)],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    }),
     ('property_type_error', [
         "Attribute should be written as 'name: lang integer'"
-    ])
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name 1', 'name: lang'), (None, 'N', 1, 1)],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
+            ('N', 'things', 'yes', 'name', 'lang')
+        ]
+    })
 ]
 
 
 @generate_cases(
     validation_test_cases
 )
-def test_validation(self, filename, error_messages):
-    upload_file = _make_path('test_upload', '{}.xlsx'.format(filename))
+def test_validation(self, filename, error_messages, file_contents):
+    if file_contents:
+        workbook = openpyxl.Workbook()
+        for title, rows in file_contents.items():
+            if title == 'types':
+                sheet = workbook.create_sheet(title, 0)
+            else:
+                sheet = workbook.create_sheet(title)
+            for row in rows:
+                sheet.append(row)
+        upload_file = tempfile.TemporaryFile()
+        workbook.save(upload_file)
+        upload_file.seek(0)
+    else:
+        upload_file = _make_path('test_upload', '{}.xlsx'.format(filename))
     if error_messages:
         with self.assertRaises(FixtureUploadError) as context:
             validate_fixture_file_format(upload_file)
@@ -134,7 +267,7 @@ class TestValidationComprehensiveness(SimpleTestCase):
 
     def test_comprehensiveness(self):
         to_test = set(FAILURE_MESSAGES.keys())
-        tested = set([validation for validation, _ in validation_test_cases])
+        tested = set([validation for validation, _, _ in validation_test_cases])
         untested = to_test - tested
         self.assert_(
             not untested,
@@ -189,6 +322,7 @@ class TestFixtureUpload(TestCase):
         export_raw(headers, rows, file, format=Format.XLS_2007)
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
+            f.seek(0)
             return get_workbook(f)
 
     def get_fixture_items(self, attribute):

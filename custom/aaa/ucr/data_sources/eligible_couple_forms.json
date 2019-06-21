@@ -1,0 +1,135 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-eligible_couple_forms",
+    "display_name": "Forms - Eligible Couple Forms (REACH Dashboard Backend)",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {
+      "type": "conditional",
+      "test": {
+        "type": "named",
+        "name": "eligible_couple_case_exists"
+      },
+      "expression_if_true": {
+        "type": "property_path",
+        "property_path": ["form", "update_eligible_couple", "update_eligible_couple", "case"]
+      },
+      "expression_if_false": {
+        "type": "property_path",
+        "property_path": ["form", "create_eligible_couple", "create_eligible_couple", "case"]
+      }
+    },
+    "configured_filter": {
+      "operator": "in",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": [
+        "http://openrosa.org/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647"
+      ]
+    },
+    "configured_indicators": [
+      {
+        "column_id": "user_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "userID"]
+        }
+      },
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "datatype": "datetime",
+            "property_name": "received_on"
+          }
+        }
+      },
+      {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "person_case_id"]
+          }
+        }
+      },
+      {
+        "column_id": "eligible_couple_case_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "@case_id"
+      },
+      {
+        "column_id": "fp_current_method",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["update", "fp_current_method"]
+        }
+      },
+      {
+        "column_id": "fp_preferred_method",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["update", "fp_preferred_method"]
+        }
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {
+      "eligible_couple_case_exists": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "existing_eligible_couple", "eligible_couple_case_exists"]
+          }
+        },
+        "property_value": "yes"
+      }
+    },
+    "engine_id": "aaa-data"
+  }
+}

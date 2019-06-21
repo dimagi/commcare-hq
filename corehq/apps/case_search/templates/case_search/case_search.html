@@ -6,165 +6,165 @@
 {% requirejs_main 'case_search/js/case_search' %}
 
 {% block page_content %}
-    {% registerurl 'case_data' request.domain '___' %}
+  {% registerurl 'case_data' request.domain '___' %}
 
-    <div id="case-search">
-        <h3>{% trans "Search Parameters" %}</h3>
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="controls">
-                    <form class="form-inline" data-bind="submit: submit" id="case-search-form">
-                        {% csrf_token %}
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <strong>{% trans "Case Metadata" %}</strong>
-                            </div>
-                            <div class="panel-body">
-                                <label>
-                                    {% trans "Case Type:" %}
-                                    <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type" class="form-control"/>
-                                </label>
-                                <label>
-                                    {% trans "Owner ID:" %}
-                                    <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id" class="form-control"/>
-                                </label>
-                                <label>
-                                    {% trans "Include Closed:" %}
-                                    <input name="type" type="checkbox" data-bind="checked: includeClosed"/>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <strong>{% trans "Case Properties" %}</strong>
-                            </div>
-                            <div class="panel-body">
-                                <table class="table table-striped" >
-                                    <thead>
-                                        <th>{% trans "Property name" %}</th>
-                                        <th>{% trans "Property value" %}</th>
-                                        <th>{% trans "Clause" %}</th>
-                                        <th>{% trans "Fuzzy" %}</th>
-                                        <th>{% trans "Remove Characters" %}</th>
-                                        <th></th>
-                                    </thead>
-                                    <tbody data-bind="foreach: parameters" >
-                                        <tr>
-                                            <td>
-                                                <input name="key" type="text" placeholder="e.g. name" data-bind="value: key" class="form-control"/>
-                                            </td>
-                                            <td>
-                                                <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value" class="form-control"/> </td>
-                                            <td>
-                                                <select name="clause" data-bind="value: clause" class="form-control">
-                                                    <option value="must">must</option>
-                                                    <option value="should">should</option>
-                                                    <option value="must_not">must_not</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
-                                            </td>
-                                            <td>
-                                                <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression" class="form-control"/>
-                                            </td>
-                                            <td>
+  <div id="case-search">
+    <h3>{% trans "Search Parameters" %}</h3>
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="controls">
+          <form class="form-inline" data-bind="submit: submit" id="case-search-form">
+            {% csrf_token %}
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <strong>{% trans "Case Metadata" %}</strong>
+              </div>
+              <div class="panel-body">
+                <label>
+                  {% trans "Case Type:" %}
+                  <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type" class="form-control"/>
+                </label>
+                <label>
+                  {% trans "Owner ID:" %}
+                  <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id" class="form-control"/>
+                </label>
+                <label>
+                  {% trans "Include Closed:" %}
+                  <input name="type" type="checkbox" data-bind="checked: includeClosed"/>
+                </label>
+              </div>
+            </div>
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <strong>{% trans "Case Properties" %}</strong>
+              </div>
+              <div class="panel-body">
+                <table class="table table-striped" >
+                  <thead>
+                  <th>{% trans "Property name" %}</th>
+                  <th>{% trans "Property value" %}</th>
+                  <th>{% trans "Clause" %}</th>
+                  <th>{% trans "Fuzzy" %}</th>
+                  <th>{% trans "Remove Characters" %}</th>
+                  <th></th>
+                  </thead>
+                  <tbody data-bind="foreach: parameters" >
+                  <tr>
+                    <td>
+                      <input name="key" type="text" placeholder="e.g. name" data-bind="value: key" class="form-control"/>
+                    </td>
+                    <td>
+                      <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value" class="form-control"/> </td>
+                    <td>
+                      <select name="clause" data-bind="value: clause" class="form-control">
+                        <option value="must">must</option>
+                        <option value="should">should</option>
+                        <option value="must_not">must_not</option>
+                      </select>
+                    </td>
+                    <td>
+                      <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
+                    </td>
+                    <td>
+                      <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression" class="form-control"/>
+                    </td>
+                    <td>
                                                 <span class='btn btn-danger' data-bind="click: $parent.removeParameter">
                                                     <i class="fa fa-trash"></i> {% trans "Delete" %}
                                                 </span>
-                                            </td>
+                    </td>
 
-                                        </tr>
+                  </tr>
 
-                                    </tbody>
-                                </table>
-                                <span class="btn btn-primary" id="add-input" data-bind="click: addParameter"><i class="fa fa-plus"></i> Add input</span>
-                            </div>
-                        </div>
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <strong>XPath Expression</strong>
-                            </div>
-                            <div class="panel-body">
-                                <div class="form-group" style="width:100%">
-                                    <textarea style="min-width: 50%" spellcheck="false" class="form-control" name="xpath" type="text" placeholder="e.g: name = 'tyrion' or nickname='the imp'" data-bind="value: xpath"> </textarea>
-                                </div>
-                            </div>
-                        </div>
-                        {% if query_additions %}
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <strong>{% trans "Custom Query Addition" %}</strong>
-                            </div>
-                            <div class="panel-body">
-                                <select data-bind="value: customQueryAddition">
-                                    <option></option>
-                                    {% for query_addition in query_additions %}
-                                        <option value="{{ query_addition.id }}">{{ query_addition.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        {% endif %}
-                        <button type="submit" class="btn btn-success"><i class="fa fa-search"></i> {% trans "Search" %}</button>
-                    </form>
+                  </tbody>
+                </table>
+                <span class="btn btn-primary" id="add-input" data-bind="click: addParameter"><i class="fa fa-plus"></i> Add input</span>
+              </div>
+            </div>
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <strong>XPath Expression</strong>
+              </div>
+              <div class="panel-body">
+                <div class="form-group" style="width:100%">
+                  <textarea style="min-width: 50%" spellcheck="false" class="form-control" name="xpath" type="text" placeholder="e.g: name = 'tyrion' or nickname='the imp'" data-bind="value: xpath"> </textarea>
                 </div>
+              </div>
             </div>
+            {% if query_additions %}
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <strong>{% trans "Custom Query Addition" %}</strong>
+                </div>
+                <div class="panel-body">
+                  <select data-bind="value: customQueryAddition">
+                    <option></option>
+                    {% for query_addition in query_additions %}
+                      <option value="{{ query_addition.id }}">{{ query_addition.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> {% trans "Search" %}</button>
+          </form>
         </div>
+      </div>
+    </div>
 
-        <div class="row">
-            <div class="col-sm-12">
-                <h3>{% trans "Results" %}
-                    <small data-bind="visible: count">
-                        <span data-bind="text: count"></span> results
-                        <span data-bind="visible: took">in <span data-bind="text: took"></span>ms</span>
-                    </small>
-                </h3>
-            </div>
-            <div class="col-sm-12" data-bind="visible: query">
-                <a role="button" data-toggle="collapse" data-target="#query">Show Query</a>
-                <pre id="query" class="collapse" data-bind="text: query"></pre>
-            </div>
-            <div class="col-sm-12">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>{% trans "Name" %}</th>
-                            <th>{% trans "Case Type" %}</th>
-                            <th>{% trans "Closed" %}</th>
-                            <th>{% trans "Properties" %}</th>
-                            <th>{% trans "Indices" %}</th>
-                            <th>{% trans "Score" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: {data: results, as: 'result' }">
-                        <tr>
-                            <td>
-                                <a data-bind="attr: {href: $parent.case_data_url.replace('___', $data._id)}, text: result['_source']['name']"></a>
-                            </td>
-                            <td data-bind="text: result['_source']['type']"></td>
-                            <td data-bind="text: result['_source']['closed']"></td>
-                            <td>
-                                <div data-bind="foreach: result['_source']['case_properties']">
-                                    <small data-bind="text:$data['key']"></small>:
-                                    <strong data-bind="text:$data['value']"></strong><br />
-                                </div>
-                            </td>
-                            <td>
-                                <ul data-bind="foreach: result['_source']['indices']">
-                                    <li>
+    <div class="row">
+      <div class="col-sm-12">
+        <h3>{% trans "Results" %}
+          <small data-bind="visible: count">
+            <span data-bind="text: count"></span> results
+            <span data-bind="visible: took">in <span data-bind="text: took"></span>ms</span>
+          </small>
+        </h3>
+      </div>
+      <div class="col-sm-12" data-bind="visible: query">
+        <a role="button" data-toggle="collapse" data-target="#query">Show Query</a>
+        <pre id="query" class="collapse" data-bind="text: query"></pre>
+      </div>
+      <div class="col-sm-12">
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Case Type" %}</th>
+            <th>{% trans "Closed" %}</th>
+            <th>{% trans "Properties" %}</th>
+            <th>{% trans "Indices" %}</th>
+            <th>{% trans "Score" %}</th>
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: {data: results, as: 'result' }">
+          <tr>
+            <td>
+              <a data-bind="attr: {href: $parent.case_data_url.replace('___', $data._id)}, text: result['_source']['name']"></a>
+            </td>
+            <td data-bind="text: result['_source']['type']"></td>
+            <td data-bind="text: result['_source']['closed']"></td>
+            <td>
+              <div data-bind="foreach: result['_source']['case_properties']">
+                <small data-bind="text:$data['key']"></small>:
+                <strong data-bind="text:$data['value']"></strong><br />
+              </div>
+            </td>
+            <td>
+              <ul data-bind="foreach: result['_source']['indices']">
+                <li>
                                         <span class="label label-default"
                                               data-bind="text: relationship"></span>
-                                        <a data-bind="attr: {href: $parents[1].case_data_url.replace('___', $data.referenced_id)},
+                  <a data-bind="attr: {href: $parents[1].case_data_url.replace('___', $data.referenced_id)},
                                                       text: identifier"></a>
-                                    </li>
-                                </ul>
-                            </td>
-                            <td data-bind="text: result['_score']"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                </li>
+              </ul>
+            </td>
+            <td data-bind="text: result['_score']"></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 {% endblock %}

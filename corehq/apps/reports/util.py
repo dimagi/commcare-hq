@@ -17,6 +17,7 @@ from django.utils import html, safestring
 
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.util.log import send_HTML_email
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 
@@ -166,6 +167,7 @@ def namedtupledict(name, fields):
 
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
+            soft_assert_type_text(item)
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,
@@ -375,7 +377,7 @@ def get_possible_reports(domain_name):
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
                   CustomProjectReportDispatcher().get_reports(domain_name))
     reports = []
-    domain = Domain.get_by_name(domain_name)
+    domain_obj = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
             if getattr(model, 'parent_report_class', None):
@@ -383,15 +385,21 @@ def get_possible_reports(domain_name):
             else:
                 report_to_check_if_viewable = model
 
-            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain):
+            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain_obj):
+                path = model.__module__ + '.' + model.__name__
                 reports.append({
-                    'path': model.__module__ + '.' + model.__name__,
-                    'name': model.name
+                    'path': path,
+                    'name': model.name,
+                    'slug': path.replace('.', '_'),
                 })
 
     for slug, name, is_visible in get_extra_permissions():
-        if is_visible(domain):
-            reports.append({'path': slug, 'name': name})
+        if is_visible(domain_obj):
+            reports.append({
+                'path': slug,
+                'name': name,
+                'slug': slug.replace('.', '_'),
+            })
     return reports
 
 
@@ -477,6 +485,16 @@ def validate_xform_for_edit(xform):
     return None
 
 
+def get_report_timezone(request, domain):
+    if not domain:
+        return pytz.utc
+    else:
+        try:
+            return get_timezone_for_user(request.couch_user, domain)
+        except AttributeError:
+            return get_timezone_for_user(None, domain)
+
+
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
 def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -489,14 +507,15 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link):
-    subject = "%s: Requested export excel data"
+def send_report_download_email(title, recipient, link, subject=None):
+    if subject is None:
+        subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
 
     send_HTML_email(
-        _(subject) % title,
+        subject,
         recipient,
         _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
         email_from=settings.DEFAULT_FROM_EMAIL

@@ -2,76 +2,76 @@
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'hqadmin/js/couch_changes.js' %}"></script>
+  <script src="{% static 'hqadmin/js/couch_changes.js' %}"></script>
 {% endblock %}
 
 {% block reportcontent %}
-    {% initial_page_data "domain_data" domain_data %}
-    {% initial_page_data "doc_type_data" doc_type_data %}
-    <div class="well well-sm">
-        <form class="form-inline">
-            Showing the last <input type="text" class="form-control" name="changes" value="{{ count }}"> couch changes.
-                <input type="submit" class="btn btn-primary" value="Update">
-        </form>
-    </div>
+  {% initial_page_data "domain_data" domain_data %}
+  {% initial_page_data "doc_type_data" doc_type_data %}
+  <div class="well well-sm">
+    <form class="form-inline">
+      Showing the last <input type="text" class="form-control" name="changes" value="{{ count }}"> couch changes.
+      <input type="submit" class="btn btn-primary" value="Update">
+    </form>
+  </div>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                Recent changes by domain
-            </h3>
-        </div>
-        <div class="panel-body">
-            <div id="domain-info">
-                <svg style='height:200px'> </svg>
-            </div>
-        </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        Recent changes by domain
+      </h3>
     </div>
+    <div class="panel-body">
+      <div id="domain-info">
+        <svg style='height:200px'> </svg>
+      </div>
+    </div>
+  </div>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                Recent changes by doc type
-            </h3>
-        </div>
-        <div class="panel-body">
-            <div id="doc-type-info">
-                <svg style='height:200px'> </svg>
-            </div>
-        </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        Recent changes by doc type
+      </h3>
     </div>
+    <div class="panel-body">
+      <div id="doc-type-info">
+        <svg style='height:200px'> </svg>
+      </div>
+    </div>
+  </div>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                Full change list
-                <a class="btn btn-xs btn-default"
-                   href="{% url 'download_recent_changes' %}?changes={{ count }}">download</a>
-            </h3>
-        </div>
-        <div class="panel-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Domain</th>
-                        <th>Doc Type</th>
-                        <th>Date modified (guess)</th>
-                        <th>id</th>
-                        <th>rev</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for change in recent_changes %}
-                        <tr>
-                            <td>{{ change.domain }}</td>
-                            <td>{{ change.doc_type }}</td>
-                            <td>{{ change.date }}</td>
-                            <td>{{ change.id }}</td>
-                            <td>{{ change.rev }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        Full change list
+        <a class="btn btn-xs btn-default"
+           href="{% url 'download_recent_changes' %}?changes={{ count }}">download</a>
+      </h3>
     </div>
+    <div class="panel-body">
+      <table class="table table-striped">
+        <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Doc Type</th>
+          <th>Date modified (guess)</th>
+          <th>id</th>
+          <th>rev</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for change in recent_changes %}
+          <tr>
+            <td>{{ change.domain }}</td>
+            <td>{{ change.doc_type }}</td>
+            <td>{{ change.date }}</td>
+            <td>{{ change.id }}</td>
+            <td>{{ change.rev }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 {% endblock %}

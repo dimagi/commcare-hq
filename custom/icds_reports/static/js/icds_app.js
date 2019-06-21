@@ -20,21 +20,6 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         }
     }
 
-    $scope.showInfoMessage = function() {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        if (!$location.path().startsWith("/fact_sheets") && !$location.path().startsWith("/download") &&
-            selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2)) {
-            $scope.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-            $scope.currentMonth = moment().format("MMMM");
-            return true;
-        }
-        return false;
-    };
-
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
             $window.location.href = reportAnIssueUrl;
@@ -45,6 +30,16 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
             ariaDescribedBy: 'modal-body',
             templateUrl: 'reportIssueModal.html',
         });
+    };
+
+    $scope.updateCssClasses = function () {
+        if (window.angular.element('.alert-maintenance').children().length === 1) {
+            var elementsToUpdate = ['left-menu', 'fixed-title', 'fixes-filters', 'main-container'];
+
+            _.each(elementsToUpdate, function (element) {
+                window.angular.element('.' + element).addClass(element + '-with-alert');
+            });
+        }
     };
 
     $scope.checkAccessToLocation = function() {
@@ -298,6 +293,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_reports", {
                 redirectTo: "/awc_reports/pse",
             })
+            .when("/service_delivery_dashboard", {
+                template: "<service-delivery-dashboard></service-delivery-dashboard>",
+            })
             .when("/awc_reports/:step", {
                 template: "<awc-reports></awc-reports>",
             })
@@ -312,6 +310,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/fact_sheets/:report", {
                 template: "<progress-report></progress-report>",
+            })
+            .when("/cas_export", {
+                template: "<cas-export></cas-export>",
             })
             .when("/access_denied", {
                 template: "<access-denied></access-denied>",

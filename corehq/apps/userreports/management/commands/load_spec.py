@@ -22,6 +22,10 @@ class Command(BaseCommand):
             default=False,
             help='Also rebuild indicator tables (has no affect for reports).',
         )
+        parser.add_argument(
+            '--initiated-by', required=True, action='store',
+            dest='initiated', help='Who initiated the action'
+        )
 
     @log_exception()
     def handle(self, filename, **options):
@@ -47,5 +51,5 @@ class Command(BaseCommand):
             print('updated {}: "{}"'.format(to_save.doc_type, to_save))
             if options['rebuild'] and isinstance(to_save, DataSourceConfiguration):
                 print('rebuilding table...')
-                rebuild_indicators(to_save._id)
+                rebuild_indicators(to_save._id, initiated_by=options['initiated'], source='load_spec')
                 print('...done!')

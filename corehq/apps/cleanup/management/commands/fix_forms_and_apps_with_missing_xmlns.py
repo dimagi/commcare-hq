@@ -105,8 +105,8 @@ class Command(BaseCommand):
                 try:
                     unique_id = get_form_unique_id(xform_instance)
                 except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
-                    log_file.write(e.message)
-                    print(e.message)
+                    log_file.write(six.text_type(e))
+                    print(six.text_type(e))
                     continue
 
                 if unique_id:
@@ -199,7 +199,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
-    old_xml = xform_instance.get_xml()
+    old_xml = xform_instance.get_xml().decode('utf-8')
     assert old_xml.count('xmlns="undefined"') == 1
     new_xml = old_xml.replace('xmlns="undefined"', 'xmlns="{}"'.format(xmlns))
     if not dry_run:

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -15,5 +15,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL("DROP FUNCTION IF EXISTS get_reverse_indexed_cases(TEXT, TEXT[]);"),
+        migrations.RunSQL("DROP FUNCTION IF EXISTS get_reverse_indexed_cases(TEXT, TEXT[]);"),
     ]

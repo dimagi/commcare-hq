@@ -6,7 +6,7 @@ Normal Access
 -------------
 
 Location Types - Users who can edit apps on the domain can edit location types.
-Locations - There is an "edit_locations" permission.
+Locations - There is an "edit_locations" and a "view_locations" permission.
 
 
 Restricted Access and Whitelist
@@ -76,6 +76,7 @@ from functools import wraps
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.http import Http404
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
@@ -115,6 +116,15 @@ def require_can_edit_locations(view_fn):
     """Decorator verifying that the user has permission to edit individual locations."""
     return locations_access_required(
         require_permission('edit_locations')(view_fn)
+    )
+
+
+def require_can_edit_or_view_locations(view_fn):
+    """Decorator verifying that the user has permission to edit and view
+    individual locations."""
+    return locations_access_required(
+        require_permission('edit_locations',
+                           view_only_permission='view_locations')(view_fn)
     )
 
 
@@ -160,11 +170,7 @@ def location_safe(view):
 
         # Django class-based views
         if issubclass(view, View):
-            # `View.as_view()` preserves stuff set on `dispatch`
-            if six.PY3:
-                view.dispatch.is_location_safe = True
-            else:
-                view.dispatch.__func__.is_location_safe = True
+            view = method_decorator(location_safe, 'dispatch')(view)
 
         # tastypie resources
         if issubclass(view, Resource):
@@ -188,10 +194,7 @@ def conditionally_location_safe(conditional_function):
 
             # Django class-based views
             if issubclass(view_fn, View):
-                if six.PY3:
-                    view_fn.dispatch._conditionally_location_safe_function = conditional_function
-                else:
-                    view_fn.dispatch.__func__._conditionally_location_safe_function = conditional_function
+                view_fn = method_decorator(_inner, 'dispatch')(view_fn)
 
             # HQ report classes
             if issubclass(view_fn, GenericReportView):
@@ -297,3 +300,17 @@ def can_edit_location(view_fn):
         return location_restricted_response(request)
 
     return require_can_edit_locations(_inner)
+
+
+def can_edit_or_view_location(view_fn):
+    """
+    Decorator controlling a user's access to edit or VIEW a specific location.
+    The decorated function must be passed a loc_id arg (eg: from urls.py)
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, loc_id, *args, **kwargs):
+        if user_can_access_location_id(domain, request.couch_user, loc_id):
+            return view_fn(request, domain, loc_id, *args, **kwargs)
+        return location_restricted_response(request)
+
+    return require_can_edit_or_view_locations(_inner)

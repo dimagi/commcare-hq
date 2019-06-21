@@ -1,22 +1,23 @@
 -r test-requirements.txt
 
-django-debug-toolbar==1.8
+django-debug-toolbar
 line_profiler==1.0
--e git+git://github.com/dimagi/couchdbkit-debugpanel.git#egg=couchdbkit-debugpanel
-Sphinx==1.3.1
-sphinx-rtd-theme==0.1.9
 jenkinsapi==0.2.28
 fixture==1.5.11
 sniffer==0.4.0
 psutil==5.1.3  # for memory profiling
-django-extensions==1.7.7
+django-extensions
 ipython==5.2.2
 ipdb==0.11
 wheel==0.29.0
 graphviz==0.7
--e git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver#egg=django-package-monitor
 transifex-client==0.12.4
-modernize==0.6
-Fabric==1.14.0
+modernize
 gnureadline==6.3.8
-pip-tools==2.0.2
+
+# documentation
+Sphinx~=1.8
+sphinx-rtd-theme~=0.3
+docutils==0.14
+sphinxcontrib-django~=0.3
+recommonmark

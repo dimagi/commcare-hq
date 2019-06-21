@@ -18,6 +18,9 @@ from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.utils.utils import clean_IN_filter_value
 import six
 
+NUM_LAUNCHED_AWCS = 'Number of launched AWCs (ever submitted at least one HH reg form)'
+NUM_OF_DAYS_AWC_WAS_OPEN = 'Number of days AWC was open in the given month'
+
 FILTER_BY_LIST = {
     'unweighed': 'Data not Entered for weight (Unweighed)',
     'umeasured': 'Data not Entered for height (Unmeasured)',
@@ -34,7 +37,7 @@ FILTER_BY_LIST = {
 
 
 class ExportableMixin(object):
-    engine_id = 'icds-test-ucr'
+    engine_id = 'icds-ucr'
 
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         self.config = config
@@ -77,6 +80,7 @@ class ExportableMixin(object):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     def to_export(self, format, location):
@@ -86,7 +90,8 @@ class ExportableMixin(object):
         export_from_tables(excel_data, export_file, format)
         return export_response(export_file, format, self.title)
 
-    def get_excel_data(self, location):
+    def get_excel_data(self, location, system_usage_num_launched_awcs_formatting_at_awc_level=False,
+                       system_usage_num_of_days_awc_was_open_formatting=False):
         excel_rows = []
         headers = []
         for column in self.columns:
@@ -124,6 +129,21 @@ class ExportableMixin(object):
             for filter_by in self.config['filters']:
                 filter_values.append(FILTER_BY_LIST[filter_by])
             filters.append(['Filtered By', ', '.join(filter_values)])
+        # as DatabaseColumn from corehq.apps.reports.sqlreport doesn't format None
+        if system_usage_num_launched_awcs_formatting_at_awc_level and NUM_LAUNCHED_AWCS in excel_rows[0]:
+            num_launched_awcs_column = excel_rows[0].index(NUM_LAUNCHED_AWCS)
+            for record in excel_rows[1:]:
+                if record[num_launched_awcs_column] == DATA_NOT_ENTERED:
+                    record[num_launched_awcs_column] = 'Not Launched'
+                else:
+                    record[num_launched_awcs_column] = \
+                        'Launched' if record[num_launched_awcs_column] else 'Not Launched'
+        if system_usage_num_of_days_awc_was_open_formatting and \
+                self.loc_level <= 4 and NUM_OF_DAYS_AWC_WAS_OPEN in excel_rows[0]:
+            num_of_days_awc_was_open_column = excel_rows[0].index(NUM_OF_DAYS_AWC_WAS_OPEN)
+            for record in excel_rows[1:]:
+                if record[num_of_days_awc_was_open_column] == DATA_NOT_ENTERED:
+                    record[num_of_days_awc_was_open_column] = 'Applicable at only AWC level'
         return [
             [
                 self.title,

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 from corehq.util.django_migrations import add_if_not_exists_raw
 
 
@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             add_if_not_exists_raw(
                 """
                 CREATE INDEX phonelog_devicereportentry_domain_device_id_pattern_ops

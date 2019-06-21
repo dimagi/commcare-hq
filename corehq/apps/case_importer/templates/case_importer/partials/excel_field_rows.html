@@ -1,26 +1,27 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 <!--ko foreach: mappingRows-->
 <tr>
 
-<td>
+  <td>
     <!-- ko if: $parent.mappingRows().length > 1 -->
-        <a class="remove_row" href="#" data-bind="click: $root.removeRow"><i class="fa fa-remove"></i></a>
+    <a class="remove_row" href="#" data-bind="click: $root.removeRow"><i class="fa fa-remove"></i></a>
     <!--/ko-->
-</td>
+  </td>
 
-<td class="col-sm-3">
+  <td class="col-sm-3">
     <select class="form-control excel_field" name="excel_field[]" data-bind="
         options: $root.excelFields,
-        optionsCaption: django.gettext('Select field from excel...'),
+        optionsCaption: '{% trans_html_attr 'Select field from excel' %}',
         value: excelField
     "></select>
-</td>
+  </td>
 
-<td>
+  <td class="text-center">
     <i class="fa fa-arrow-right"></i>
-</td>
+  </td>
 
-<td class="col-sm-3">
+  <td class="col-sm-3">
     <input type="text" name="custom_field[]"
            class="custom_field form-control"
            placeholder="Enter new property name"
@@ -32,7 +33,7 @@
     <select class="form-control case_field" name="case_field[]" data-bind="
         visible: !isCustom(),
         options: $root.caseFieldSpecsInMenu,
-        optionsCaption: django.gettext('Select property name...'),
+        optionsCaption: '{% trans_html_attr 'Select property name' %}',
         optionsText: 'field',
         optionsValue: 'field',
         value: selectedCaseFieldOrBlank
@@ -44,35 +45,35 @@
             'has-error': hasNonDiscoverableField,
         }
     ">
-        <p class="help-block">
-            <!--ko if: hasDiscoverableSpecialField-->
-            <i class="fa fa-check"></i>
-            <!--/ko-->
-            <!--ko if: hasNonDiscoverableField-->
-            <i class="fa fa-warning"></i>
-            <!--/ko-->
-            <span data-bind="text: caseFieldSpec().description"></span>
-        </p>
+      <p class="help-block">
+        <!--ko if: hasDiscoverableSpecialField-->
+        <i class="fa fa-check"></i>
+        <!--/ko-->
+        <!--ko if: hasNonDiscoverableField-->
+        <i class="fa fa-warning"></i>
+        <!--/ko-->
+        <span data-bind="text: caseFieldSpec().description"></span>
+      </p>
     </div>
     <!--ko if: caseFieldSuggestions().length-->
     <div class="has-warning">
-        <p class="help-block">
-            {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
-                Did you mean {{ suggestion }}?
-            {% endblocktrans %}
-        </p>
+      <p class="help-block">
+        {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
+          Did you mean {{ suggestion }}?
+        {% endblocktrans %}
+      </p>
     </div>
     <!--/ko-->
-</td>
+  </td>
 
-<td>
+  <td>
     <div class="checkbox">
-        <label>
-            <input type="checkbox" class="new_property" data-bind="checked: isCustom"/>
-            {% trans "Create a new property instead" %}
-        </label>
+      <label>
+        <input type="checkbox" class="new_property" data-bind="checked: isCustom"/>
+        {% trans "Create a new property instead" %}
+      </label>
     </div>
-</td>
+  </td>
 
 </tr>
 <!--/ko-->

@@ -3,52 +3,93 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block reportcontent %}
-{% block pretable %}
-    {% if not report.needs_filters %}
-        {% if rendered_as == 'print' %}
-        <div class="row">
-            <div class="col-md-10">{% now "d M Y" %}</div>
-        </div>
-        <div class="row">
-            <div class="col-md-10">
-                <h3 class="media-heading">{{ title }}<br/></h3>
-            </div>
-        </div>
-        {% else %}
-        <div class="media">
-          <div class="media-body" style="height: 64px">
-            <h3 class="media-heading">{{ title }}<br/></h3>
-          </div>
-        </div>
-        {% endif %}
-    {% endif %}{{ block.super }}
+
+{% block js-inline %} {{ block.super }}
+{% if parallel_render %}
+<!-- This is added inline because it needs django template vars that can'e be loaded
+using initial_page_data as this html is not scanned by initial_page_data module -->
+<script>
+    $(function () {
+        var progressCount = 0;
+        var dataProviders = hqImport("hqwebapp/js/initial_page_data").get("data_providers_json");
+
+        var subReportModal = function(options){
+            var self = {};
+
+            self.providerSlug = options.providerSlug;
+            self.queryUrl = "{{ request.get_full_path }}";
+            self.loadingFailed = ko.observable(false);
+
+            self.init = function(){
+                var $element = $("#" + self.providerSlug);
+                $.ajax({
+                    url: self.queryUrl + "&provider_slug=" + self.providerSlug,
+                    success: function(data) {
+                        $element.html(data.report);
+                        progressCount++;
+                        var progressHtml = "<span>" + progressCount + " / "+ dataProviders.length + " reports loaded</span>";
+                        $("#progressCount").html(progressHtml);
+                    },
+                    error: function(){
+                        self.loadingFailed(true);
+                    }
+                });
+            };
+            return self;
+        };
+
+        for (var i = 0; i < dataProviders.length; i++) {
+            var provider = dataProviders[i];
+            var modal = subReportModal({
+                    providerSlug: provider.provider_slug,
+                });
+            var element = document.getElementById(provider.provider_slug);
+            if (element !== null) {
+                // skip doing this on initial report load
+                ko.applyBindings(
+                    modal,
+                    document.getElementById(provider.provider_slug)
+                );
+                modal.init();
+            }
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}
 
+{% block page_content %}
+{% block reportcontent %}
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/partials/description.html' %}
-{% else %}
+{% elif not parallel_render %}
     {% for thisreport in reports %}
+        {% include 'icds_reports/partials/subreport.html' with report=thisreport%}
+    {% endfor %}
+{% else %}
+    <div id="progressCount" style="text-align: right;">
+        <span>0 / {{ data_providers|length }} reports loaded</span>
+    </div>
+    {% for provider in data_providers %}
+        <div id="{{ provider.provider_slug }}">
         <br/>
         <br/>
         <br/>
-        <h2 class="media-heading">{{ thisreport.report_table.title }}</h2><br/>
-            {% for subtitle in thisreport.report_table.subtitle %}
-                <h4>{{ subtitle }}</h4>
-            {% endfor %}
-        {% if thisreport.has_sections %}
-            {% include 'icds_reports/partials/sections_report_table.html' with report_table=thisreport.report_table%}
-        {%  else %}
-        {% include 'icds_reports/partials/report_table.html' with report_table=thisreport.report_table%}
-        {% endif %}
+            <h2 class="media-heading">{{ provider.title }}</h2><br/>
+            <div style="text-align: center;" data-bind="visible: !loadingFailed()">
+                <h4>{% trans "Loading Report" %}</h4>
+                <i class="fa fa-spin fa-spinner fa-3x"></i>
+            </div>
+            <div class="alert alert-danger" data-bind="visible: loadingFailed()">
+                Error loading this report
+            </div>
         <br/>
-        {% if thisreport.posttitlte %}
-            {{ thisreport.posttitle }}
-        <br/>
-        {% endif %}
+        </div>
     {% endfor %}
 {% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
+{% endblock%}
+

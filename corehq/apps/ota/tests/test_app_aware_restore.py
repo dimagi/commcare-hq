@@ -144,7 +144,7 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
                 device = MockDevice(self.domain_obj, self.user)
-                restore = device.sync(version=V3).payload
+                restore = device.sync(version=V3).payload.decode('utf-8')
                 self.assertIn('<fixture id="commcare:reports"', restore)
                 self.assertIn('report_id="{id}"'.format(id=self.report_config1._id), restore)
                 self.assertIn('report_id="{id}"'.format(id=self.report_config2._id), restore)

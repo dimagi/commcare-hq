@@ -21,7 +21,7 @@ import xlwt
 from couchexport.models import Format
 import six
 from openpyxl.styles import numbers
-from openpyxl.worksheet.write_only import WriteOnlyCell
+from openpyxl.cell import WriteOnlyCell
 from six.moves import zip
 from six.moves import map
 
@@ -167,7 +167,7 @@ class ExportWriter(object):
     max_table_name_size = 500
     target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
-    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=b''):
+    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
         """
         Create any initial files, headings, etc necessary.
         :param header_table: tuple of one of the following formats
@@ -189,7 +189,7 @@ class ExportWriter(object):
         for table_index, table in header_table:
             self.add_table(
                 table_index,
-                table[0],
+                list(table)[0],
                 table_title=table_titles.get(table_index)
             )
 
@@ -239,13 +239,13 @@ class ExportWriter(object):
 
         self._current_primary_id += 1
 
-    def write_row(self, table_index, headers):
+    def write_row(self, table_index, row):
         """
         Currently just calls the subclass's implementation
         but if we were to add a universal validation step,
         such a thing would happen here.
         """
-        return self._write_row(table_index, headers)
+        return self._write_row(table_index, row)
 
     def close(self):
         """
@@ -326,23 +326,23 @@ class ZippedExportWriter(OnDiskExportWriter):
     """
     Writer that creates a zip file containing a csv for each table.
     """
-    table_file_extension = b".csv"
+    table_file_extension = ".csv"
 
     def _write_final_result(self):
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
-            if isinstance(name, six.text_type):
-                name = name.encode('utf-8')
+            if isinstance(name, bytes):
+                name = name.decode('utf-8')
             path = self.tables[index].get_path()
-            archive.write(path, self._get_archive_filename(name))
+            archive_filename = self._get_archive_filename(name)
+            if six.PY2:
+                archive_filename = archive_filename.encode('utf-8')
+            archive.write(path, archive_filename)
         archive.close()
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        path = self.archive_basepath
-        if isinstance(path, six.text_type):
-            path = path.encode('utf-8')
-        return os.path.join(path, b'{}{}'.format(name, self.table_file_extension))
+        return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):
@@ -387,6 +387,7 @@ class Excel2007ExportWriter(ExportWriter):
         self.table_indices[table_index] = 0
 
     def _write_row(self, sheet_index, row):
+        from couchexport.export import FormattedRow
         sheet = self.tables[sheet_index]
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
@@ -398,17 +399,22 @@ class Excel2007ExportWriter(ExportWriter):
             if isinstance(value, six.integer_types + (float,)):
                 return value
             if isinstance(value, bytes):
-                value = six.text_type(value, encoding="utf-8")
+                value = value.decode('utf-8')
             elif value is not None:
                 value = six.text_type(value)
             else:
                 value = ''
             return dirty_chars.sub('?', value)
 
-        cells = [WriteOnlyCell(sheet, get_write_value(val)) for val in row]
+        write_values = [get_write_value(val) for val in row]
+        cells = [WriteOnlyCell(sheet, val) for val in write_values]
         if self.format_as_text:
             for cell in cells:
                 cell.number_format = numbers.FORMAT_TEXT
+        if isinstance(row, FormattedRow):
+            for hyperlink_column_index in row.hyperlink_column_indices:
+                cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
+                cells[hyperlink_column_index].style = 'Hyperlink'
         sheet.append(cells)
 
     def _close(self):
@@ -436,11 +442,10 @@ class Excel2003ExportWriter(ExportWriter):
         row_index = self.table_indices[sheet_index]
         sheet = self.tables[sheet_index]
 
-        if hasattr(row, 'data') and len(row.data) >= MAX_XLS_COLUMNS:
-            raise XlsLengthException
-
         # have to deal with primary ids
         for i, val in enumerate(row):
+            if i >= MAX_XLS_COLUMNS:
+                raise XlsLengthException()
             sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 

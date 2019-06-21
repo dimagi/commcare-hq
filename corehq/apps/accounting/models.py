@@ -393,7 +393,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     # Settings visible to external users
     restrict_domain_creation = models.BooleanField(default=False)
     restrict_signup = models.BooleanField(default=False, db_index=True)
-    restrict_signup_message = models.CharField(max_length=128, null=True, blank=True)
+    restrict_signup_message = models.CharField(max_length=512, null=True, blank=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -401,6 +401,28 @@ class BillingAccount(ValidateModelMixin, models.Model):
     @property
     def auto_pay_enabled(self):
         return self.auto_pay_user is not None
+
+    @classmethod
+    def create_account_for_domain(cls, domain,
+                                  created_by=None, account_type=None,
+                                  entry_point=None, last_payment_method=None,
+                                  pre_or_post_pay=None):
+        account_type = account_type or BillingAccountType.INVOICE_GENERATED
+        entry_point = entry_point or EntryPoint.NOT_SET
+        last_payment_method = last_payment_method or LastPayment.NONE
+        pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
+        default_name = DEFAULT_ACCOUNT_FORMAT % domain
+        name = get_account_name_from_default_name(default_name)
+        return BillingAccount.objects.create(
+            name=name,
+            created_by=created_by,
+            created_by_domain=domain,
+            currency=Currency.get_default(),
+            account_type=account_type,
+            entry_point=entry_point,
+            last_payment_method=last_payment_method,
+            pre_or_post_pay=pre_or_post_pay
+        )
 
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
@@ -411,28 +433,17 @@ class BillingAccount(ValidateModelMixin, models.Model):
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
         """
-        is_new = False
         account = cls.get_account_by_domain(domain)
-        if account is None:
-            is_new = True
-            account_type = account_type or BillingAccountType.INVOICE_GENERATED
-            entry_point = entry_point or EntryPoint.NOT_SET
-            last_payment_method = last_payment_method or LastPayment.NONE
-            pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
-            default_name = DEFAULT_ACCOUNT_FORMAT % domain
-            name = get_account_name_from_default_name(default_name)
-            account = BillingAccount(
-                name=name,
-                created_by=created_by,
-                created_by_domain=domain,
-                currency=Currency.get_default(),
-                account_type=account_type,
-                entry_point=entry_point,
-                last_payment_method=last_payment_method,
-                pre_or_post_pay=pre_or_post_pay
-            )
-            account.save()
-        return account, is_new
+        if account:
+            return account, False
+        return cls.create_account_for_domain(
+            domain,
+            created_by=created_by,
+            account_type=account_type,
+            entry_point=entry_point,
+            last_payment_method=last_payment_method,
+            pre_or_post_pay=pre_or_post_pay,
+        ), True
 
     @classmethod
     def get_account_by_domain(cls, domain):
@@ -604,6 +615,7 @@ class BillingContactInfo(models.Model):
             return "%s %s" % (self.first_name, self.last_name)
 
 
+@six.python_2_unicode_compatible
 class SoftwareProductRate(models.Model):
     """
     Represents the monthly fixed fee for a software product.
@@ -628,6 +640,9 @@ class SoftwareProductRate(models.Model):
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
@@ -659,6 +674,7 @@ class Feature(models.Model):
             return FeatureRate() if default_instance else None  # the defaults
 
 
+@six.python_2_unicode_compatible
 class FeatureRate(models.Model):
     """
     Links a feature to a monthly fee, monthly limit, and a per-excess fee for exceeding the monthly limit.
@@ -691,6 +707,9 @@ class FeatureRate(models.Model):
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -799,6 +818,7 @@ class DefaultProductPlan(models.Model):
         return None if return_plan else SoftwarePlanEdition.ENTERPRISE
 
 
+@six.python_2_unicode_compatible
 class SoftwarePlanVersion(models.Model):
     """
     Links a plan to its rates and provides versioning information.
@@ -821,6 +841,10 @@ class SoftwarePlanVersion(models.Model):
             'plan_name': self.plan.name,
             'version_num': self.version,
         }
+
+    def save(self, *args, **kwargs):
+        super(SoftwarePlanVersion, self).save(*args, **kwargs)
+        SoftwarePlan.get_version.clear(self.plan)
 
     @property
     def version(self):
@@ -886,16 +910,15 @@ class SoftwarePlanVersion(models.Model):
         if self.user_feature is not None:
             return "USD %d" % self.user_feature.per_excess_fee
 
-    def feature_charges_exist_for_domain(self, domain,
-                                         start_date=None, end_date=None):
-        domain = ensure_domain_instance(domain)
-        if domain is None:
+    def feature_charges_exist_for_domain(self, domain, start_date=None, end_date=None):
+        domain_obj = ensure_domain_instance(domain)
+        if domain_obj is None:
             return False
         from corehq.apps.accounting.usage import FeatureUsageCalculator
         for feature_rate in self.feature_rates.all():
             if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE:
                 calc = FeatureUsageCalculator(
-                    feature_rate, domain.name, start_date=start_date,
+                    feature_rate, domain_obj.name, start_date=start_date,
                     end_date=end_date
                 )
                 if calc.get_usage() > feature_rate.monthly_limit:
@@ -912,6 +935,7 @@ class SubscriberManager(models.Manager):
             return None
 
 
+@six.python_2_unicode_compatible
 class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
@@ -924,7 +948,7 @@ class Subscriber(models.Model):
     class Meta(object):
         app_label = 'accounting'
 
-    def __unicode__(self):
+    def __str__(self):
         return "DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
@@ -979,7 +1003,8 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
+        _soft_assert_domain_not_loaded(
+            isinstance(self.domain, six.text_type), "domain type is %s" % type(self.domain))  # TODO remove April 1
 
 
         if new_plan_version is None:
@@ -1106,12 +1131,19 @@ class Subscription(models.Model):
             and other.account.pk == self.account.pk
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def save(self, *args, **kwargs):
         """
         Overloaded to update domain pillow with subscription information
         """
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        from corehq.apps.accounting.mixins import get_overdue_invoice
+
         super(Subscription, self).save(*args, **kwargs)
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        get_overdue_invoice.clear(self.subscriber.domain)
+
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
@@ -1120,8 +1152,8 @@ class Subscription(models.Model):
             pass
 
     def delete(self, *args, **kwargs):
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
         super(Subscription, self).delete(*args, **kwargs)
+        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
 
     @property
     def allowed_attr_changes(self):
@@ -1983,6 +2015,12 @@ class Invoice(InvoiceBase):
     class Meta(object):
         app_label = 'accounting'
 
+    def save(self, *args, **kwargs):
+        from corehq.apps.accounting.mixins import get_overdue_invoice
+
+        super(Invoice, self).save(*args, **kwargs)
+        get_overdue_invoice.clear(self.subscription.subscriber.domain)
+
     @property
     def email_recipients(self):
         if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
@@ -2119,6 +2157,10 @@ class CustomerInvoice(InvoiceBase):
         except BillingContactInfo.DoesNotExist:
             contact_emails = []
         return contact_emails
+
+    @property
+    def contact_emails(self):
+        return self.account.enterprise_admin_emails
 
     @property
     def subtotal(self):
@@ -3104,6 +3146,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
+@six.python_2_unicode_compatible
 class CreditLine(models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
@@ -3132,9 +3175,22 @@ class CreditLine(models.Model):
                     'feature': (' for Feature %s' % self.feature_type
                                 if self.feature_type is not None else ""),
                     'product': (' for Product'
-                                if self.is_product is not None else ""),
+                                if self.is_product else ""),
                     'balance': self.balance,
                 })
+
+    def save(self, *args, **kwargs):
+        from corehq.apps.accounting.mixins import (
+            get_credits_available_for_product_in_account,
+            get_credits_available_for_product_in_subscription,
+        )
+
+        super(CreditLine, self).save(*args, **kwargs)
+        if self.account:
+            get_credits_available_for_product_in_account.clear(self.account)
+        if self.subscription:
+            get_credits_available_for_product_in_subscription.clear(self.subscription)
+
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
                               line_item=None, invoice=None, customer_invoice=None,
@@ -3269,7 +3325,7 @@ class CreditLine(models.Model):
     def get_credits_for_account(cls, account, feature_type=None, is_product=False):
         assert not (feature_type and is_product)
         return cls.objects.filter(
-            account=account, subscription__exact=None
+            account=account, subscription__exact=None, is_active=True
         ).filter(
             is_product=is_product, feature_type__exact=feature_type
         ).all()
@@ -3283,11 +3339,12 @@ class CreditLine(models.Model):
             subscription=subscription,
             feature_type__exact=feature_type,
             is_product=is_product,
+            is_active=True
         ).all()
 
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
-        return cls.objects.filter(subscription=subscription).filter(
+        return cls.objects.filter(subscription=subscription, is_active=True).filter(
             Q(is_product=True) |
             Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
@@ -3313,11 +3370,12 @@ class CreditLine(models.Model):
                 subscription__exact=subscription,
                 is_product=is_product,
                 feature_type__exact=feature_type,
+                is_active=True
             )
             if not permit_inactive and not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
-                    "inactive." % credit_line.__str__()
+                    "inactive." % six.text_type(credit_line)
                 )
             is_new = False
         except cls.MultipleObjectsReturned as e:
@@ -3331,7 +3389,7 @@ class CreditLine(models.Model):
                     'feature': (" | Feature %s" % feature_type
                                 if feature_type is not None else ""),
                     'product': (" | Product" if is_product else ""),
-                    'error': e.message,
+                    'error': six.text_type(e),
                 }
             )
         except cls.DoesNotExist:
@@ -3632,12 +3690,7 @@ class DomainUserHistory(models.Model):
     """
     domain = models.CharField(max_length=256)
     record_date = models.DateField()
-    num_users = models.IntegerField(default=0, null=True)
+    num_users = models.IntegerField(default=0)
 
-    @classmethod
-    def create(cls, domain, num_users, record_date):
-        return cls(
-            domain=domain,
-            num_users=num_users,
-            record_date=record_date
-        )
+    class Meta:
+        unique_together = ('domain', 'record_date')

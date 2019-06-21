@@ -1,15 +1,32 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-dashboard_birth_preparedness_forms",
@@ -26,6 +43,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "timeend",
@@ -47,21 +82,32 @@
         "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "nested",
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
-              "type": "named",
-              "name": "user_location_id"
-            },
-            "location_type": "state"
-          }
+          "location_type": "state",
+          "location_property": "_id"
         },
         "create_index": true
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "column_id": "supervisor_id",
+        "is_primary_key": true,
+        "is_nullable": false,
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        }
       },
       {
         "column_id": "received_on",
@@ -480,8 +526,23 @@
         "argument_expression": {
           "type": "array_index",
           "array_expression": {
-	        "type": "property_path",
-	        "property_path": ["form", "bp1", "iteration", "item"]
+            "type": "filter_items",
+            "items_expression": {
+	          "type": "property_path",
+	          "property_path": ["form", "bp1", "iteration", "item"]
+            },
+            "filter_expression": {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "property_path",
+                  "property_path": ["filter", "anc_details"]
+                },
+                "operator": "in",
+                "property_value": ["", null]
+              }
+            }
           },
           "index_expression": {
             "type": "constant",
@@ -494,16 +555,14 @@
         }
       }
     },
-    "named_filters": { },
+    "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "timeend",
-          "subtype": "date",
-          "constraint": "month"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "disable_destructive_rebuild": true
   }

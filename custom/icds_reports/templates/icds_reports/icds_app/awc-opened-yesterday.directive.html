@@ -1,5 +1,5 @@
 <div class="awc-opened-yesterday-directive">
-    <div class="row no-margin fixes-filters">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-5">
             <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
             <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
@@ -19,7 +19,8 @@
             </div>
         </div>
     </div>
-    <div class="report-content">
+    <info-message></info-message>
+    <div class="report-content report-content-without-message">
         <div class="row" ng-if="$ctrl.step === 'map'">
             <div class="row">
                 <h2 class="dashboard-title">Percentage of AWCs Opened Yesterday</h2>

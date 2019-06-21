@@ -7,6 +7,7 @@
  *  - value: Text to display and edit
  *  - name: HTML name of input
  *  - id: HTML id of input
+ *  - disallow_edit: Whether the edit mode should be disabled, optional, default is false
  *  - placeholder: Text to display when in read-only mode if value is blank
  *  - lang: Display this language code in a badge next to the widget.
  *  - nodeName: 'textarea' or 'input'. Defaults to 'textarea'.
@@ -42,6 +43,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
             self.serverValue = self.readOnlyValue;
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.readOnlyValue);
             self.lang = params.lang || '';
+            self.disallow_edit = (params.disallow_edit === undefined) ? false : params.disallow_edit;
 
             // Styling
             self.nodeName = params.nodeName || 'textarea';
@@ -69,7 +71,9 @@ hqDefine('hqwebapp/js/components/inline_edit', [
 
             // On edit, set editing mode, which controls visibility of inner components
             self.edit = function () {
-                self.isEditing(true);
+                if (!self.disallow_edit) {
+                    self.isEditing(true);
+                }
             };
 
             self.beforeUnload = function () {

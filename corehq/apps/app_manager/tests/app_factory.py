@@ -1,11 +1,29 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import uuid
-from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
-    FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase, CaseIndex, PreloadAction, ShadowModule
+
 import six
+
+from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Module,
+    UpdateCaseAction,
+    LoadUpdateAction,
+    FormActionCondition,
+    OpenSubCaseAction,
+    OpenCaseAction,
+    AdvancedOpenCaseAction,
+    Application,
+    AdvancedForm,
+    AutoSelectCase,
+    CaseIndex,
+    PreloadAction,
+    ReportModule,
+    ShadowModule,
+    DetailColumn,
+)
 
 
 class AppFactory(object):
@@ -45,7 +63,7 @@ class AppFactory(object):
         module.case_type = case_type
 
         def get_unique_id(module_or_form):
-            return module_or_form if isinstance(module_or_form, six.string_types) else module_or_form.unique_id
+            return module_or_form if isinstance(module_or_form, six.text_type) else module_or_form.unique_id
 
         if parent_module:
             module.root_module_id = get_unique_id(parent_module)
@@ -69,6 +87,9 @@ class AppFactory(object):
         module.source_module_id = source_module.unique_id
         self.slugs[module.unique_id] = slug
         return (module, self.new_form(module)) if with_form else module
+
+    def new_report_module(self, slug, parent_module=None):
+        return self.new_module(ReportModule, slug, None, with_form=False, parent_module=parent_module)
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
@@ -194,4 +215,15 @@ class AppFactory(object):
                 value_source=value_source,
                 value_key=value_key
             )
+        ))
+
+    @staticmethod
+    def add_module_case_detail_column(module, display, field, trans, lang='en'):
+        assert display in ('short', 'long')
+        details = module.case_details.long if display == 'long' else module.case_details.short
+        details.columns.append(DetailColumn(
+            format='plain',
+            field=field,
+            header={lang: trans},
+            model='case',
         ))

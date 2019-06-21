@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,9 +18,19 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "engine_id": "icds-ucr",
@@ -29,6 +47,15 @@
             "property_name": "is_archived"
           },
           "property_value": "False"
+        },
+        {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "location_type"
+          },
+          "property_value": "awc"
         }
       ]
     },
@@ -594,32 +621,40 @@
         "property_name": "_id"
       },
       "supervisor_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
           "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "supervisor",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "block_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "supervisor_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "block",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "district_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "block_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "district",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "state_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "district_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "state",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "is_test": {
         "type": "conditional",

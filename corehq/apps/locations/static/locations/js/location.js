@@ -7,9 +7,9 @@ hqDefine("locations/js/location", [
     'hqwebapp/js/alert_user',
     'analytix/js/google',
     'locations/js/location_drilldown',
-    'hqwebapp/js/select_2_ajax_widget_v4',
-    'hqwebapp/js/widgets_v4',       // custom data fields use a .ko-select2
-    'locations/js/widgets_main_v4',
+    'hqwebapp/js/select_2_ajax_widget',
+    'hqwebapp/js/widgets',       // custom data fields use a .hqwebapp-select2
+    'locations/js/widgets',
 ], function (
     $,
     ko,

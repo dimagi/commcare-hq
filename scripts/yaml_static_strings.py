@@ -49,7 +49,7 @@ if __name__ == "__main__":
     output = []
 
     with open(yaml_filename, 'r', encoding='utf-8') as f:
-        doc = yaml.load(f)
+        doc = yaml.safe_load(f)
 
     for entry in doc:
         for key, value in six.iteritems(entry):

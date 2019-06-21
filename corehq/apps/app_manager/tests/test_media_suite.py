@@ -1,26 +1,37 @@
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import uuid
+from collections import OrderedDict
 from copy import deepcopy
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 from lxml import etree
 from mock import patch
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.models import Application, Module, GraphConfiguration, \
-    GraphSeries, ReportModule, ReportAppConfig, CustomIcon
+    GraphSeries, ReportModule, ReportAppConfig, CustomIcon, BuildProfile
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import parse_normalize
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, softer_assert
 
 import commcare_translations
 
 
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
+
+    def _assertMediaSuiteResourcesEqual(self, expectedXml, actualXml):
+        parsedExpected = parse_normalize(expectedXml, to_string=False)
+        expectedResources = {node.text for node in parsedExpected.findall("media/resource/location")}
+        parsedActual = parse_normalize(actualXml, to_string=False)
+        actualResources = {node.text for node in parsedActual.findall("media/resource/location")}
+        self.assertSetEqual(expectedResources, actualResources)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths(self, mock):
@@ -79,6 +90,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
+    @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
     def test_case_list_media(self):
         app = Application.wrap(self.get_json('app'))
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
@@ -91,11 +103,59 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareAudio(_id='456'), audo_path, save=False)
 
-        app.set_media_versions(previous_version=None)
+        app.set_media_versions()
 
-        self.assertXmlEqual(self.get_xml('media_suite'), app.create_media_suite())
+        self._assertMediaSuiteResourcesEqual(self.get_xml('case_list_media_suite'), app.create_media_suite())
 
-    def test_update_image_id(self):
+    @patch('corehq.apps.hqmedia.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @override_settings(BASE_ADDRESS='192.cc.hq.1')
+    def test_form_media_with_app_profile(self, *args):
+        # Test that media for languages not in the profile are removed from the media suite
+
+        app = Application.wrap(self.get_json('app'))
+        app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'hin': BuildProfile(langs=['hin'], name='hin-profile'),
+            'all': BuildProfile(langs=['en', 'hin'], name='all-profile'),
+        })
+        app.langs = ['en', 'hin']
+
+        image_path = 'jr://file/commcare/module0_en.png'
+        audio_path = 'jr://file/commcare/module0_{}.mp3'
+        app.get_module(0).set_icon('en', image_path)
+        app.get_module(0).set_audio('en', audio_path.format('en'))
+        app.get_module(0).set_audio('hin', audio_path.format('hin'))
+
+        app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
+        app.create_mapping(CommCareAudio(_id='456'), audio_path.format('en'), save=False)
+        app.create_mapping(CommCareAudio(_id='789'), audio_path.format('hin'), save=False)
+
+        form_xml = self.get_xml('form_with_media_refs').decode('utf-8')
+        form = app.get_module(0).new_form('form_with_media', 'en', attachment=form_xml)
+        xform = form.wrapped_xform()
+        for i, path in enumerate(reversed(sorted(xform.media_references(form="audio")))):
+            app.create_mapping(CommCareAudio(_id='form_audio_{}'.format(i)), path, save=False)
+        for i, path in enumerate(sorted(xform.media_references(form="image"))):
+            app.create_mapping(CommCareImage(_id='form_image_{}'.format(i)), path, save=False)
+
+        app.set_media_versions()
+        app.remove_unused_mappings()
+
+        # includes all media
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite'), app.create_media_suite())
+
+        # generate all suites at once to mimic create_build_files_for_all_app_profiles
+        suites = {id: app.create_media_suite(build_profile_id=id) for id in app.build_profiles.keys()}
+
+        # include all app media and only language-specific form media
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_en'), suites['en'])
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_hin'), suites['hin'])
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_all'), suites['all'])
+
+    @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version')
+    def test_update_image_id(self, get_previous_version):
         """
         When an image is updated, change only version number, not resource id
         """
@@ -105,12 +165,14 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         app.version = 1
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
-        app.set_media_versions(previous_version=None)
+        get_previous_version.return_value = None
+        app.set_media_versions()
         old_app = deepcopy(app)
 
         app.version = 2
         app.create_mapping(CommCareImage(_id='456'), image_path, save=False)
-        app.set_media_versions(previous_version=old_app)
+        get_previous_version.return_value = old_app
+        app.set_media_versions()
 
         old_image = old_app.multimedia_map[image_path]
         new_image = app.multimedia_map[image_path]
@@ -149,6 +211,65 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         self.assertTrue(app.get_module(0).uses_media())
         self.assertEqual(len(app.all_media()), 2)
+
+
+class TestRemoveMedia(TestCase, TestXmlMixin):
+    file_path = ('data', 'suite')
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestRemoveMedia, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+
+    @softer_assert()
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_unused_media_removed(self, mock):
+        image_path = 'jr://file/commcare/image{}_{}.jpg'
+        audio_path = 'jr://file/commcare/audio{}_{}.mp3'
+        app = Application.wrap(self.get_json('app'))
+        app.domain = self.domain
+        app.save()
+
+        for lang in ['en', 'hin']:
+            for num in ['1', '2', '3', '4']:
+                app.create_mapping(CommCareImage(_id=num), image_path.format(num, lang), save=False)
+                app.create_mapping(CommCareAudio(_id=num), audio_path.format(num, lang), save=False)
+        app.get_module(0).case_list.show = True
+        app.get_module(0).case_list.set_icon('en', image_path.format('4', 'en'))
+        app.get_module(0).case_list.set_audio('en', audio_path.format('4', 'en'))
+
+        app.get_module(0).set_icon('en', image_path.format('1', 'en'))
+        app.get_module(0).set_audio('en', audio_path.format('1', 'en'))
+
+        app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
+        app.get_module(0).case_list_form.set_icon('en', image_path.format('2', 'en'))
+        app.get_module(0).case_list_form.set_audio('en', audio_path.format('2', 'en'))
+
+        app.get_module(0).get_form(0).set_icon('en', image_path.format('3', 'en'))
+        app.get_module(0).get_form(0).set_audio('en', audio_path.format('3', 'en'))
+
+        app.save()
+
+        should_contain_media = [image_path.format(num, 'en') for num in [1, 2, 3, 4]] + \
+                               [audio_path.format(num, 'en') for num in [1, 2, 3, 4]]
+        media_for_removal = [image_path.format(num, 'hin') for num in [1, 2, 3, 4]] + \
+                            [audio_path.format(num, 'hin') for num in [1, 2, 3, 4]]
+        self.assertTrue(app.get_module(0).uses_media())
+        self.assertEqual(app.all_media_paths(), set(should_contain_media))
+        self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media + media_for_removal))
+        app.remove_unused_mappings()
+        self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media))
+
+        # test multimedia removed
+        app.get_module(0).case_list.set_icon('en', '')
+        app.get_module(0).case_list.set_audio('en', '')
+        app.get_module(0).set_icon('en', '')
+        app.get_module(0).set_audio('en', '')
+        app.get_module(0).case_list_form.set_icon('en', '')
+        app.get_module(0).case_list_form.set_audio('en', '')
+        app.get_module(0).get_form(0).set_icon('en', '')
+        app.get_module(0).get_form(0).set_audio('en', '')
+        self.assertFalse(list(app.multimedia_map.keys()))
 
 
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
@@ -312,6 +433,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_audio_translations(self.app, self.module.case_list, audio_locale)
 
     def test_use_default_media(self):
+        self.app.langs = ['en', 'hin']
+
         self.module.use_default_image_for_all = True
         self.module.use_default_audio_for_all = True
 
@@ -320,11 +443,87 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.module.set_icon('hin', 'jr://file/commcare/case_list_image_hin.jpg')
         self.module.set_audio('hin', 'jr://file/commcare/case_list_audio_hin.mp3')
 
-        with flag_enabled('LANGUAGE_LINKED_MULTIMEDIA'):
-            en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
-            hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
+        en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+        hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
         self.assertEqual(en_app_strings['modules.m0.icon'], hin_app_strings['modules.m0.icon'])
         self.assertEqual(en_app_strings['modules.m0.audio'], hin_app_strings['modules.m0.audio'])
+
+    def test_use_default_media_ignore_lang(self):
+        # When use_default_media is true and there's media in a non-default language but not the default language
+        self.app.langs = ['en', 'hin']
+
+        self.form.use_default_image_for_all = True
+        self.form.use_default_audio_for_all = True
+
+        self.form.set_icon('en', '')
+        self.form.set_audio('en', '')
+        self.form.set_icon('hin', 'jr://file/commcare/case_list_image_hin.jpg')
+        self.form.set_audio('hin', 'jr://file/commcare/case_list_audio_hin.mp3')
+
+        en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+        hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
+
+        self.assertFalse('forms.m0f0.icon' in en_app_strings)
+        self.assertFalse('forms.m0f0.icon' in hin_app_strings)
+        self.assertFalse('forms.m0f0.audio' in en_app_strings)
+        self.assertFalse('forms.m0f0.audio' in hin_app_strings)
+
+        self.assertXmlPartialEqual(
+            self.XML_without_media("forms.m0f0"),
+            self.app.create_suite(),
+            "./entry/command[@id='m0-f0']/"
+        )
+
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_suite_media_with_app_profile(self, *args):
+        # Test that suite includes only media relevant to the profile
+
+        app = Application.new_app('domain', "my app")
+        app.add_module(Module.new_module("Module 1", None))
+        app.new_form(0, "Form 1", None)
+        app.build_spec = BuildSpec.from_string('2.21.0/latest')
+        app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'hin': BuildProfile(langs=['hin'], name='hin-profile'),
+            'all': BuildProfile(langs=['en', 'hin'], name='all-profile'),
+        })
+        app.langs = ['en', 'hin']
+
+        image_path = 'jr://file/commcare/module0_en.png'
+        audio_path = 'jr://file/commcare/module0_en.mp3'
+        app.get_module(0).set_icon('en', image_path)
+        app.get_module(0).set_audio('en', audio_path)
+
+        # Generate suites and default app strings for each profile
+        suites = {}
+        locale_ids = {}
+        for build_profile_id in app.build_profiles.keys():
+            suites[build_profile_id] = app.create_suite(build_profile_id=build_profile_id)
+            default_app_strings = app.create_app_strings('default', build_profile_id)
+            locale_ids[build_profile_id] = {line.split('=')[0] for line in default_app_strings.splitlines()}
+
+        # Suite should have only the relevant images
+        media_xml = self.makeXML("modules.m0", "modules.m0.icon", "modules.m0.audio")
+        self.assertXmlPartialEqual(media_xml, suites['all'], "././menu[@id='m0']/display")
+
+        no_media_xml = self.XML_without_media("modules.m0")
+        self.assertXmlPartialEqual(media_xml, suites['en'], "././menu[@id='m0']/display")
+
+        no_media_xml = self.XML_without_media("modules.m0")
+        self.assertXmlPartialEqual(no_media_xml, suites['hin'], "././menu[@id='m0']/text")
+
+        # Default app strings should have only the relevant locales
+        self.assertIn('modules.m0', locale_ids['all'])
+        self.assertIn('modules.m0.icon', locale_ids['all'])
+        self.assertIn('modules.m0.audio', locale_ids['all'])
+
+        self.assertIn('modules.m0', locale_ids['en'])
+        self.assertIn('modules.m0.icon', locale_ids['en'])
+        self.assertIn('modules.m0.audio', locale_ids['en'])
+
+        self.assertIn('modules.m0', locale_ids['hin'])
+        self.assertNotIn('modules.m0.icon', locale_ids['hin'])
+        self.assertNotIn('modules.m0.audio', locale_ids['hin'])
 
     def _assert_app_strings_available(self, app, lang):
         et = etree.XML(app.create_suite())

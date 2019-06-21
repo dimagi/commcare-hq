@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,9 +18,19 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-child_health_cases",
@@ -30,6 +48,24 @@
       "type": "boolean_expression",
       "property_value": "child_health"
     },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "Person name",
@@ -172,11 +208,11 @@
         "display_name": null,
         "datatype": "string",
         "type": "expression",
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
-        "is_nullable": true,
+        "is_nullable": false,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
@@ -184,7 +220,9 @@
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "supervisor_id"
       },
@@ -196,18 +234,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "block_id"
       },
@@ -219,21 +256,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "district_id"
       },
@@ -245,24 +278,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "state_id"
       },
@@ -1612,13 +1638,11 @@
     },
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+     "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {

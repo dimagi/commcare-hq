@@ -47,6 +47,7 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."home_visit_date" AS "home_visit_date",
         "ccs_record_monthly"."ifa_consumed_last_seven_days" AS "ifa_consumed_last_seven_days",
         "ccs_record_monthly"."institutional_delivery_in_month" AS "institutional_delivery_in_month",
+        "ccs_record_monthly"."institutional_delivery" AS "institutional_delivery",
         "ccs_record_monthly"."is_ebf" AS "is_ebf",
         "ccs_record_monthly"."last_date_thr" AS "last_date_thr",
         "ccs_record_monthly"."mobile_number" AS "mobile_number",
@@ -57,6 +58,7 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."person_name" AS "person_name",
         "ccs_record_monthly"."preg_order" AS "preg_order",
         "ccs_record_monthly"."pregnant" AS "pregnant",
+        "ccs_record_monthly"."pregnant_all" AS "pregnant_all",
         "ccs_record_monthly"."rupture" AS "rupture",
         "ccs_record_monthly"."swelling" AS "swelling",
         "ccs_record_monthly"."trimester" AS "trimester",
@@ -66,9 +68,18 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."lactating" AS "lactating",
         "ccs_record_monthly"."dob" AS "dob",
         "ccs_record_monthly"."open_in_month" AS "open_in_month",
-        "ccs_record_monthly"."closed" AS "closed"
+        "ccs_record_monthly"."closed" AS "closed",
+        "ccs_record_monthly"."anc_abnormalities" AS "anc_abnormalities",
+        "ccs_record_monthly"."date_death" AS "date_death",
+        "ccs_record_monthly"."eating_extra" AS "eating_extra",
+        "ccs_record_monthly"."resting" AS "resting",
+        "ccs_record_monthly"."immediate_breastfeeding" AS "immediate_breastfeeding",
+        "ccs_record_monthly"."caste" AS "caste",
+        "ccs_record_monthly"."disabled" AS "disabled",
+        "ccs_record_monthly"."minority" AS "minority",
+        "ccs_record_monthly"."resident" AS "resident"
     FROM "public"."awc_location_months" "awc_location_months"
-    LEFT JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON (
+    JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON (
         ("awc_location_months"."month" = "ccs_record_monthly"."month") AND
         ("awc_location_months"."awc_id" = "ccs_record_monthly"."awc_id")
     );

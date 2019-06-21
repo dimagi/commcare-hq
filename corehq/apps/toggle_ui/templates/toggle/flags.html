@@ -2,80 +2,89 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
-{% load compress %}
 
 {% requirejs_main 'toggle_ui/js/flags' %}
 
 {% block stylesheets %}{{ block.super }}
-<style>
+  <style>
     .dataTables_scroll {
-        padding: 1px;
+      padding: 1px;
     }
     .dataTables_filter {
-        text-align: right;
-        padding-bottom: 10px;
+      text-align: right;
+      padding-bottom: 10px;
     }
     .dataTables_filter input.search-query {
-        width: 30%;
+      width: 30%;
     }
-</style>
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    <div id="table-filters" class="btn-group" data-toggle="buttons-radio">
-        <button class="btn btn-default active" data-bind="click: function (){ tagFilter(null) }">{% trans "All" %}</button>
-        {% for tag in tags %}
-            <button class="btn btn-default" data-bind="click: function (){ tagFilter('{{ tag.name }}') }">{{ tag.name }}</button>
-        {% endfor %}
-    </div>
-    {% if not show_usage %}
-        <a href="{{ page_url }}?show_usage=true" class="btn btn-info">
-            <i class="fa fa-info-circle"></i>
-            {% trans "Show usage metrics" %}
-        </a>
-    {% endif %}
+  {% if not show_usage %}
+    <a href="{{ page_url }}?show_usage=true" class="btn btn-default btn-xs pull-right">
+      <i class="fa fa-info-circle"></i>
+      {% trans "Show usage metrics" %}
+    </a>
+  {% endif %}
+  <div id="table-filters">
+    <select-toggle data-apply-bindings="false"
+                   params="options: [
+                                   {
+                                       id: 'all',
+                                       text: '{% trans_html_attr 'All' %}',
+                                   },
+                                   {% for tag in tags %}
+                                       {
+                                           id: '{{ tag.name }}',
+                                           text: '{{ tag.name }}',
+                                       },
+                                   {% endfor %}
+                               ],
+                               value: tagFilter"></select-toggle>
     <table class="table table-striped datatable">
-        <thead>
-            <th>{% trans "Tag" %}</th>
-            <th>{% trans "Name" %}</th>
-            {% if show_usage %}
-                <th>{% trans "Domains" %}</th>
-                <th>{% trans "Active Domains" %}</th>
-                <th>{% trans "Users" %}</th>
-                <th>{% trans "Last Modified" %}</th>
-                <th>{% trans "Last Usage" %}</th>
+      <thead>
+      <th>{% trans "Tag" %}</th>
+      <th>{% trans "Name" %}</th>
+      {% if show_usage %}
+        <th>{% trans "Domains" %}</th>
+        <th>{% trans "Active Domains" %}</th>
+        <th>{% trans "Users" %}</th>
+        <th>{% trans "Last Modified" %}</th>
+        <th>{% trans "Last Usage" %}</th>
+      {% endif %}
+      <th></th>
+      </thead>
+      <tbody>
+      {% for toggle in toggles %}
+        <tr>
+          <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
+          <td>
+            {% if toggle.randomness %}
+              <i class="fa fa-random" title="Also applied randomly under certain conditions"></i>
             {% endif %}
-            <th></th>
-        </thead>
-        <tbody>
-            {% for toggle in toggles %}
-            <tr>
-                <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
-                <td>
-                    {% if toggle.randomness %}
-                        <i class="fa fa-random" title="Also applied randomly under certain conditions"></i>
-                    {% endif %}
-                    {{ toggle.label }}
-                    {% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}
-                </td>
-                {% if show_usage %}
-                    <td>{{ domain_counts|dict_lookup:toggle.slug }}</td>
-                    <td>{{ active_domain_count|dict_lookup:toggle.slug }}</td>
-                    <td>{{ user_counts|dict_lookup:toggle.slug }}</td>
-                    <td>{{ last_modified|dict_lookup:toggle.slug }}</td>
-                    {% with lu=last_used|dict_lookup:toggle.slug %}
-                        {% if lu %}
-                            <td>{{ lu|dict_lookup:'date' }}: {{ lu|dict_lookup:'name'}}</td>
-                        {% else %}
-                            <td></td>
-                        {% endif %}
-                    {% endwith %}
-                {% endif %}
-                <td>
-                    <a href="{% url "edit_toggle" toggle.slug %}" role="button" class="btn btn-primary">{% trans "Edit" %}</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+            {{ toggle.label }}
+            {% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}
+          </td>
+          {% if show_usage %}
+            <td>{{ domain_counts|dict_lookup:toggle.slug }}</td>
+            <td>{{ active_domain_count|dict_lookup:toggle.slug }}</td>
+            <td>{{ user_counts|dict_lookup:toggle.slug }}</td>
+            <td>{{ last_modified|dict_lookup:toggle.slug }}</td>
+            {% with lu=last_used|dict_lookup:toggle.slug %}
+              {% if lu %}
+                <td>{{ lu|dict_lookup:'date' }}: {{ lu|dict_lookup:'name'}}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+          <td>
+            <a href="{% url "edit_toggle" toggle.slug %}" role="button" class="btn btn-primary">{% trans "Edit" %}</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
     </table>
+  </div>
 {% endblock %}

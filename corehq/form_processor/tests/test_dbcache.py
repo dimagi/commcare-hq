@@ -36,39 +36,6 @@ class CaseDbCacheCouchOnlyTest(TestCase):
         except IllegalCaseId:
             pass
 
-    def testStripHistory(self):
-        case_ids = _make_some_cases(3)
-
-        history_cache = self.interface.casedb_cache()
-        for i, id in enumerate(case_ids):
-            self.assertFalse(history_cache.in_cache(id))
-            case = history_cache.get(id)
-            self.assertEqual(str(i), case.my_index)
-            self.assertTrue(len(case.actions) > 0)
-
-        nohistory_cache = self.interface.casedb_cache(strip_history=True)
-        for i, id in enumerate(case_ids):
-            self.assertFalse(nohistory_cache.in_cache(id))
-            case = nohistory_cache.get(id)
-            self.assertEqual(str(i), case.my_index)
-            self.assertTrue(len(case.actions) == 0)
-
-        more_case_ids = _make_some_cases(3)
-        history_cache.populate(more_case_ids)
-        nohistory_cache.populate(more_case_ids)
-
-        for i, id in enumerate(more_case_ids):
-            self.assertTrue(history_cache.in_cache(id))
-            case = history_cache.get(id)
-            self.assertEqual(str(i), case.my_index)
-            self.assertTrue(len(case.actions) > 0)
-
-        for i, id in enumerate(more_case_ids):
-            self.assertTrue(nohistory_cache.in_cache(id))
-            case = nohistory_cache.get(id)
-            self.assertEqual(str(i), case.my_index)
-            self.assertTrue(len(case.actions) == 0)
-
     def test_nowrap(self):
         case_ids = _make_some_cases(1)
         cache = self.interface.casedb_cache(wrap=False)

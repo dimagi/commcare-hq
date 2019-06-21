@@ -3,12 +3,13 @@ from __future__ import unicode_literals
 from shutil import rmtree
 from tempfile import mkdtemp
 from uuid import uuid4
+from contextlib import contextmanager
 
 from django.conf import settings
 
 import corehq.blobs as blobs
 from corehq.blobs.fsdb import FilesystemBlobDB
-from corehq.blobs.models import BlobMeta
+from corehq.blobs.models import BlobMeta, DeletedBlobMeta
 from corehq.blobs.s3db import S3BlobDB
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.util import random_url_id
@@ -29,10 +30,27 @@ def new_meta(**kw):
     return BlobMeta(**kw)
 
 
-def get_meta(meta):
+def get_meta(meta, deleted=False):
     """Fetch a new copy of the given metadata from the database"""
     db = get_db_alias_for_partitioned_doc(meta.parent_id)
+    if deleted:
+        return DeletedBlobMeta.objects.using(db).get(id=meta.id)
     return BlobMeta.objects.using(db).get(id=meta.id)
+
+
+@contextmanager
+def temporary_blob_db(db):
+    """Temporarily install the given blob db globally
+
+    `get_blob_db()` will return the given blob db until the context
+    manager exits.
+    """
+    blobs._db.append(db)
+    try:
+        assert blobs.get_blob_db() is db, 'got wrong blob db'
+        yield
+    finally:
+        blobs._db.remove(db)
 
 
 class TemporaryBlobDBMixin(object):

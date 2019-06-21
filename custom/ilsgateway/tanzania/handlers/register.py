@@ -29,7 +29,7 @@ def generate_username(domain, first_name, last_name):
     else:
         username = 'user_' + uuid.uuid4().hex[:8]
 
-    username = re.sub('[^\w]', '', username)
+    username = re.sub(r'[^\w]', '', username)
     username = username[:40]
 
     if CouchUser.username_exists(format_username(username, domain)):
@@ -84,7 +84,7 @@ class RegisterHandler(KeywordHandler):
         else:
             names = []
             msd_codes = []
-            location_regex = '^({prefs})\d+'.format(prefs='|'.join(p.lower() for p in DISTRICT_PREFIXES))
+            location_regex = r'^({prefs})\d+'.format(prefs='|'.join(p.lower() for p in DISTRICT_PREFIXES))
             for the_string in self.args:
                 if re.match(location_regex, the_string.strip().lower()):
                     msd_codes.append(the_string.strip().lower())

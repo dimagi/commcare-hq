@@ -19,7 +19,6 @@ from memoized import memoized
 from django_prbac.utils import has_privilege
 
 from corehq.motech.utils import pformat_json
-from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
@@ -45,7 +44,7 @@ def JSON(obj):
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
-               "{}".format(e.message))
+               "{}".format(six.text_type(e)))
         soft_assert(notify_admins=True)(False, msg)
         raise e
 
@@ -134,9 +133,9 @@ def cachebuster(url):
 def _get_domain_list(couch_user):
     domains = Domain.active_for_user(couch_user)
     return [{
-        'url': reverse('domain_homepage', args=[domain.name]),
-        'name': domain.long_display_name(),
-    } for domain in domains]
+        'url': reverse('domain_homepage', args=[domain_obj.name]),
+        'name': domain_obj.long_display_name(),
+    } for domain_obj in domains]
 
 
 @register.simple_tag(takes_context=True)
@@ -212,6 +211,8 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
+    if isinstance(name_or_instance, bytes):
+        name_or_instance = name_or_instance.decode('utf-8')
     if isinstance(name_or_instance, six.string_types):
         obj = getattr(module, name_or_instance)
     else:
@@ -466,13 +467,16 @@ def reverse_chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert():
+def maintenance_alert(request, dismissable=True):
     alert = MaintenanceAlert.get_latest_alert()
-    if alert:
+    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
+            ' hide' if dismissable else '',
             alert.id,
-            mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
+            mark_safe('''
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            ''') if dismissable else '',
             mark_safe(alert.html),
         )
     else:
@@ -641,7 +645,18 @@ def registerurl(parser, token):
 
 
 @register.simple_tag
+def trans_html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    if not isinstance(value, six.string_types):
+        value = JSON(value)
+    return escape(_(value))
+
+
+@register.simple_tag
 def html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
     if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(value)
@@ -745,3 +760,25 @@ def javascript_libraries(context, **kwargs):
         'hq': kwargs.pop('hq', False),
         'helpers': kwargs.pop('helpers', False),
     }
+
+
+@register.simple_tag
+def breadcrumbs(page, section, parents=None):
+    """
+    Generates breadcrumbs given a page, section,
+    and (optional) list of parent pages.
+
+    :param page: PageInfoContext or what is returned in
+                 `current_page` of `BasePageView`'s `main_context`
+    :param section: PageInfoContext or what is returned in
+                    `section` of `BaseSectionPageView`'s `main_context`
+    :param parents: list of PageInfoContext or what is returned in
+                    `parent_pages` of `BasePageView`'s `main_context`
+    :return:
+    """
+
+    return mark_safe(render_to_string('hqwebapp/partials/breadcrumbs.html', {
+        'page': page,
+        'section': section,
+        'parents': parents or [],
+    }))

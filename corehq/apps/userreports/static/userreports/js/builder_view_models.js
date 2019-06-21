@@ -20,8 +20,8 @@ hqDefine('userreports/js/builder_view_models', function () {
      * @param {Boolean} hasDisplayText - whether this list has a Display Text column.
      * @constructor
      */
-    var PropertyListItem = function (getDefaultDisplayText, getPropertyObject, hasDisplayText) {
-        var self = this;
+    var propertyListItem = function (getDefaultDisplayText, getPropertyObject, hasDisplayText) {
+        var self = {};
 
         self.property = ko.observable("");
         self.getPropertyObject = getPropertyObject;
@@ -92,7 +92,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             return constants.DEFAULT_CALCULATION_OPTIONS;
         });
 
-        this.getDefaultCalculation = function () {
+        self.getDefaultCalculation = function () {
             if (_.contains(self.calculationOptions(), constants.SUM)) {
                 return constants.SUM;
             } else {
@@ -103,12 +103,12 @@ hqDefine('userreports/js/builder_view_models', function () {
         // The aggregation type for this column. This field is not used if
         // the PropertyListItem represents columns in a non-aggregated report
         // or a filter
-        this.calculation = ko.observable(this.getDefaultCalculation());
+        self.calculation = ko.observable(self.getDefaultCalculation());
 
         // A proxy for calculation that will let us know when calculation has been modified by the user.
         // This is useful because sometimes the calculation is changed programatically.
         // This implementation is a simple mirror of calculation, but subclasses may alter it.
-        this.inputBoundCalculation = ko.computed({
+        self.inputBoundCalculation = ko.computed({
             read: function () {
                 return self.calculation();
             },
@@ -135,52 +135,39 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.isValid = ko.computed(function () {
             return Boolean(self.property() && self.existsInCurrentVersion() && self.displayTextIsValid());
         });
-    };
-    /**
-     * Return a "plain" javascript object representing this view model
-     * suitable for sending to the server.
-     */
-    PropertyListItem.prototype.toJS = function () {
-        var self = this;
-        return {
-            property: self.property(),
-            display_text: self.displayText(),
-            format: self.format(),
-            calculation: self.calculation(),
-            pre_value: self.filterValue(),
-            pre_operator: self.filterOperator(),
-        };
-    };
-    /**
-     *  Return True if the item is valid, and start showing warnings if
-     *  we weren't already.
-     */
-    PropertyListItem.prototype.validate = function () {
-        var self = this;
-        self.showWarnings(true);
-        return self.isValid();
-    };
 
+        /**
+         * Return a "plain" javascript object representing this view model
+         * suitable for sending to the server.
+         */
+        self.toJS = function () {
+            return {
+                property: self.property(),
+                display_text: self.displayText(),
+                format: self.format(),
+                calculation: self.calculation(),
+                pre_value: self.filterValue(),
+                pre_operator: self.filterOperator(),
+            };
+        };
+        /**
+         *  Return True if the item is valid, and start showing warnings if
+         *  we weren't already.
+         */
+        self.validate = function () {
+            self.showWarnings(true);
+            return self.isValid();
+        };
+
+        return self;
+    };
 
     /**
      * Knockout view model controlling the filter property list.
      */
-    var PropertyList = function (options) {
-        var self = this;
+    var propertyList = function (options) {
+        var self = {};
         options = options || {};
-
-        var wrapListItem = function (item) {
-            var i = self._createListItem();
-            i.existsInCurrentVersion(item.exists_in_current_version);
-            i.property(getOrDefault(item, 'property', ""));
-            i.dataSourceField(getOrDefault(item, 'data_source_field', null));
-            i.displayText(item.display_text);
-            i.calculation(item.calculation);
-            i.format(item.format);
-            i.filterValue(item.pre_value);
-            i.filterOperator(item.pre_operator);
-            return i;
-        };
 
         // A list of objects representing the properties that can be chosen from
         // for this list. Objects are js versions of ColumnOption or
@@ -206,7 +193,7 @@ hqDefine('userreports/js/builder_view_models', function () {
 
         // For analytics
         self.analyticsAction = getOrDefault(options, 'analyticsAction', null);
-        self.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType());
+        self.analyticsLabel = getOrDefault(options, 'analyticsLabel', self.reportType());
         self.addItemCallback = getOrDefault(options, 'addItemCallback', null);
         self.removeItemCallback = getOrDefault(options, 'removeItemCallback', null);
         self.reorderItemCallback = getOrDefault(options, 'reorderItemCallback', null);
@@ -216,18 +203,6 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
         self.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
         self.hasFilterValueCol = getOrDefault(options, 'hasFilterValueCol', false);
-
-        self.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function (i) {
-            return wrapListItem(i);
-        }));
-        self.serializedProperties = ko.computed(function () {
-            return JSON.stringify(
-                _.map(
-                    _.filter(self.columns(), function (c) {return c.existsInCurrentVersion();}),
-                    function (c) {return c.toJS();})
-            );
-        });
-        self.showWarnings = ko.observable(false);
 
         self.removeColumn = function (col) {
             self.columns.remove(col);
@@ -247,65 +222,98 @@ hqDefine('userreports/js/builder_view_models', function () {
                 self.afterRenderCallback(elem, col);
             }
         };
-    };
-    PropertyList.prototype._createListItem = function () {
-        return new PropertyListItem(
-            this.getDefaultDisplayText.bind(this),
-            this.getPropertyObject.bind(this),
-            this.hasDisplayCol
-        );
-    };
-    PropertyList.prototype.validate = function () {
-        this.showWarnings(true);
-        var columnsValid = !_.contains(
-            _.map(
-                this.columns(),
-                function (c) {return c.validate();}
-            ),
-            false
-        );
-        var columnLengthValid = !(this.requireColumns && !this.columns().length);
-        if (this.noColumnsValidationCallback && !columnLengthValid) {
-            this.noColumnsValidationCallback();
-        }
-        return columnsValid && columnLengthValid;
-    };
-    PropertyList.prototype.buttonHandler = function () {
-        this.columns.push(this._createListItem());
-        if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)) {
-            hqImport('userreports/js/report_analytix').track.event(this.analyticsAction, this.analyticsLabel);
-            hqImport('analytix/js/kissmetrix').track.event("Clicked " + this.analyticsAction + " in Report Builder");
-        }
-        if (_.isFunction(this.addItemCallback)) {
-            this.addItemCallback();
-        }
-    };
-    /**
-     * Return the default display text for this property. For questions, it is
-     * the question label.
-     * @param {string} property_id
-     * @returns {string}
-     */
-    PropertyList.prototype.getDefaultDisplayText = function (property_id) {
-        var property = this.getPropertyObject(property_id);
-        if (property !== undefined) {
-            // property.display will exist if the property is a ColumnOption
-            // property.text will exist if the property is a DataSourceProperty
-            return property.display || property.text || property_id;
-        }
-        return property_id;
-    };
-    /**
-     * Return the object representing the property corresponding to the given
-     * property_id.
-     * @param {string} property_id
-     * @returns {object}
-     */
-    PropertyList.prototype.getPropertyObject = function (property_id) {
-        return _.find(this.propertyOptions, function (opt) {return opt.id === property_id;});
+
+        self._createListItem = function () {
+            return propertyListItem(
+                self.getDefaultDisplayText.bind(self),
+                self.getPropertyObject.bind(self),
+                self.hasDisplayCol
+            );
+        };
+
+        self.validate = function () {
+            self.showWarnings(true);
+            var columnsValid = !_.contains(
+                _.map(
+                    self.columns(),
+                    function (c) {return c.validate();}
+                ),
+                false
+            );
+            var columnLengthValid = !(self.requireColumns && !self.columns().length);
+            if (self.noColumnsValidationCallback && !columnLengthValid) {
+                self.noColumnsValidationCallback();
+            }
+            return columnsValid && columnLengthValid;
+        };
+
+        self.buttonHandler = function () {
+            self.columns.push(self._createListItem());
+            if (!_.isEmpty(self.analyticsAction) && !_.isEmpty(self.analyticsLabel)) {
+                hqImport('userreports/js/report_analytix').track.event(self.analyticsAction, self.analyticsLabel);
+                hqImport('analytix/js/kissmetrix').track.event("Clicked " + self.analyticsAction + " in Report Builder");
+            }
+            if (_.isFunction(self.addItemCallback)) {
+                self.addItemCallback();
+            }
+        };
+
+        /**
+         * Return the default display text for this property. For questions, it is
+         * the question label.
+         * @param {string} propertyId
+         * @returns {string}
+         */
+        self.getDefaultDisplayText = function (propertyId) {
+            var property = self.getPropertyObject(propertyId);
+            if (property !== undefined) {
+                // property.display will exist if the property is a ColumnOption
+                // property.text will exist if the property is a DataSourceProperty
+                return property.display || property.text || propertyId;
+            }
+            return propertyId;
+        };
+
+        /**
+         * Return the object representing the property corresponding to the given
+         * property_id.
+         * @param {string} propertyId
+         * @returns {object}
+         */
+        self.getPropertyObject = function (propertyId) {
+            return _.find(self.propertyOptions, function (opt) {return opt.id === propertyId;});
+        };
+
+        var wrapListItem = function (item) {
+            var i = self._createListItem();
+            i.existsInCurrentVersion(item.exists_in_current_version);
+            i.property(getOrDefault(item, 'property', ""));
+            i.dataSourceField(getOrDefault(item, 'data_source_field', null));
+            i.displayText(item.display_text);
+            i.calculation(item.calculation);
+            i.format(item.format);
+            i.filterValue(item.pre_value);
+            i.filterOperator(item.pre_operator);
+            return i;
+        };
+
+        self.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function (i) {
+            return wrapListItem(i);
+        }));
+
+        self.serializedProperties = ko.computed(function () {
+            return JSON.stringify(
+                _.map(
+                    _.filter(self.columns(), function (c) {return c.existsInCurrentVersion();}),
+                    function (c) {return c.toJS();})
+            );
+        });
+        self.showWarnings = ko.observable(false);
+
+        return self;
     };
 
-    var ConfigForm = function (
+    var configForm = function (
         reportType,
         sourceType,
         columns,
@@ -317,7 +325,7 @@ hqDefine('userreports/js/builder_view_models', function () {
         isGroupByRequired,
         groupByInitialValue
     ) {
-        var self = this;
+        var self = {};
         var constants = hqImport('userreports/js/constants');
 
         self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
@@ -351,7 +359,7 @@ hqDefine('userreports/js/builder_view_models', function () {
         }
         self.dateRangeOptions = dateRangeOptions;
 
-        self.userFiltersList = new PropertyList({
+        self.userFiltersList = propertyList({
             hasFormatCol: sourceType === "case",
             hasCalculationCol: false,
             initialCols: userFilters,
@@ -364,7 +372,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             propertyOptions: self.dataSourceIndicators,
             selectablePropertyOptions: self.selectableDataSourceIndicators,
         });
-        self.defaultFiltersList = new PropertyList({
+        self.defaultFiltersList = propertyList({
             hasFormatCol: true,
             hasCalculationCol: false,
             hasDisplayCol: false,
@@ -379,7 +387,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             propertyOptions: self.dataSourceIndicators,
             selectablePropertyOptions: self.selectableDataSourceIndicators,
         });
-        self.columnsList = new PropertyList({
+        self.columnsList = propertyList({
             hasFormatCol: false,
             hasCalculationCol: reportType === constants.REPORT_TYPE_TABLE,
             initialCols: columns,
@@ -422,11 +430,12 @@ hqDefine('userreports/js/builder_view_models', function () {
             }
             return isValid;
         };
+        return self;
     };
 
     return {
-        ConfigForm: ConfigForm,
-        PropertyList: PropertyList,
-        PropertyListItem: PropertyListItem,
+        configForm: configForm,
+        propertyList: propertyList,
+        propertyListItem: propertyListItem,
     };
 });

@@ -2,37 +2,37 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="usercase-config:case-transaction">
-    <div class="row top-spacer">
-        <div class="panel panel-appmanager">
-            <div class="panel-heading">
-                <h4 class="panel-title panel-title-nolink">
-                    <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
-                    {% trans "Load the following case properties into the form" %}
-                </h4>
-            </div>
-            <div class="panel-body">
-                <p>{% trans "User properties can now be loaded in the form builer with easy references" %}</p>
-                <p><img src="{% static 'app_manager/images/user-properties-loading-moved.png' %}"></p>
-            </div>
-        </div>
-        <div class="panel panel-appmanager"
-             data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+  <div class="row top-spacer">
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+          <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
+          {% trans "Load the following case properties into the form" %}
+        </h4>
+      </div>
+      <div class="panel-body">
+        <p>{% trans "User properties can now be loaded in the form builer with easy references" %}</p>
+        <p><img src="{% static 'app_manager/images/user-properties-loading-moved.png' %}"></p>
+      </div>
     </div>
+    <div class="panel panel-appmanager"
+         data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+  </div>
 </script>
 
 <div id="usercase-config-ko">
-    <div class="clearfix">
-        {% if allow_usercase %}
-            <div class="refresh-form-questions-container" data-bind="template: 'case-config:refresh-form-questions'"></div>
-            <div data-bind="saveButton: saveUsercaseButton"></div>
-        {% endif %}
-    </div>
-    <p class="lead">
-        {% blocktrans %}
-        <strong>User Properties</strong> allow you to store data about the user and use that data in forms.
-        {% endblocktrans %}
-    </p>
-    <div data-bind="with: caseConfigViewModel" class="container-fluid">
-        <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
-    </div>
+  <div class="clearfix">
+    {% if allow_usercase %}
+      <div class="refresh-form-questions-container" data-bind="template: 'case-config:refresh-form-questions'"></div>
+      <div data-bind="saveButton: saveUsercaseButton"></div>
+    {% endif %}
+  </div>
+  <p class="lead">
+    {% blocktrans %}
+      <strong>User Properties</strong> allow you to store data about the user and use that data in forms.
+    {% endblocktrans %}
+  </p>
+  <div data-bind="with: caseConfigViewModel" class="container-fluid">
+    <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
+  </div>
 </div>

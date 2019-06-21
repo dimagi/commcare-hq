@@ -194,7 +194,7 @@ class SumoLogicLog(object):
         environment = 'test-env'
         if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
             environment = 'cas'
-        if settings.SERVER_ENVIRONMENT == 'softlayer':
+        if settings.SERVER_ENVIRONMENT == 'india':
             environment = 'india'
         if settings.SERVER_ENVIRONMENT == 'production':
             environment = 'prod'

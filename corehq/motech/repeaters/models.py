@@ -8,7 +8,7 @@ import six
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
@@ -46,7 +46,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 from .const import (
@@ -94,7 +93,7 @@ DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 
 
-class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
@@ -174,6 +173,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             payload_id=payload.get_id
         )
         repeat_record.save()
+        if next_check is None:
+            repeat_record.attempt_forward_now()
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -250,6 +251,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['doc_type'] += DELETED
         if DELETED not in self['base_doc']:
             self['base_doc'] += DELETED
+        self.paused = False
         self.save()
 
     def pause(self):
@@ -337,6 +339,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return self.__class__.__name__
 
 
+@six.python_2_unicode_compatible
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
@@ -388,10 +391,11 @@ class FormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding forms to: %s" % self.url
 
 
+@six.python_2_unicode_compatible
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -436,7 +440,7 @@ class CaseRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding cases to: %s" % self.url
 
 
@@ -463,6 +467,7 @@ class UpdateCaseRepeater(CaseRepeater):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
+@six.python_2_unicode_compatible
 class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
@@ -488,7 +493,7 @@ class ShortFormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding short form to: %s" % self.url
 
 
@@ -501,6 +506,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
+@six.python_2_unicode_compatible
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
@@ -510,10 +516,11 @@ class UserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding users to: %s" % self.url
 
 
+@six.python_2_unicode_compatible
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
@@ -523,7 +530,7 @@ class LocationRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding locations to: %s" % self.url
 
 
@@ -553,7 +560,7 @@ class RepeatRecord(Document):
     payload_id = StringProperty()
 
     overall_tries = IntegerProperty(default=0)
-    max_possible_tries = IntegerProperty(default=3)
+    max_possible_tries = IntegerProperty(default=5)
 
     attempts = ListProperty(RepeatRecordAttempt)
 
@@ -654,16 +661,17 @@ class RepeatRecord(Document):
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
+        now = datetime.utcnow()
         window = timedelta(minutes=0)
         if self.last_checked:
-            window = self.next_check - self.last_checked
-            window += (window // 2)  # window *= 1.5
+            window = now - self.last_checked
+            window *= 3
         if window < MIN_RETRY_WAIT:
             window = MIN_RETRY_WAIT
         elif window > MAX_RETRY_WAIT:
             window = MAX_RETRY_WAIT
+        # Retries will typically be after 1h, 3h, 9h, 27h, 81h -- 5d 3h total
 
-        now = datetime.utcnow()
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
@@ -767,6 +775,33 @@ class RepeatRecord(Document):
     def cancel(self):
         self.next_check = None
         self.cancelled = True
+
+    def attempt_forward_now(self):
+        from corehq.motech.repeaters.tasks import process_repeat_record
+
+        def is_ready():
+            return self.next_check < datetime.utcnow()
+
+        def already_processed():
+            return self.succeeded or self.cancelled or self.next_check is None
+
+        if already_processed() or not is_ready():
+            return
+
+        # Set the next check to happen an arbitrarily long time from now so
+        # if something goes horribly wrong with the delayed task it will not
+        # be lost forever. A check at this time is expected to occur rarely,
+        # if ever, because `process_repeat_record` will usually succeed or
+        # reset the next check to sometime sooner.
+        self.next_check = datetime.utcnow() + timedelta(hours=48)
+        try:
+            self.save()
+        except ResourceConflict:
+            # Another process beat us to the punch. This takes advantage
+            # of Couch DB's optimistic locking, which prevents a process
+            # with stale data from overwriting the work of another.
+            return
+        process_repeat_record.delay(self)
 
     def requeue(self):
         self.cancelled = False

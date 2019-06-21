@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import (
     Module,
     PreloadAction,
 )
-from corehq.apps.app_manager.models import WORKFLOW_PREVIOUS
+from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 DOMAIN = 'domain'
@@ -60,7 +60,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
           </menu>
           <menu id="m0">
             <text>
-              <locale id="modules.m1"/>
+              <locale id="modules.m0"/>
             </text>
             <command id="m1-f0"/>
           </menu>
@@ -68,8 +68,9 @@ class ModuleAsChildTestBase(TestXmlMixin):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
+    @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_deleted_parent(self, mock):
+    def test_deleted_parent(self, *args):
         self.module_1.root_module_id = "unknownmodule"
 
         cycle_error = {
@@ -78,8 +79,9 @@ class ModuleAsChildTestBase(TestXmlMixin):
         errors = self.app.validate_app()
         self.assertIn(cycle_error, errors)
 
+    @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_circular_relation(self, mock):
+    def test_circular_relation(self, *args):
         self.module_0.root_module_id = self.module_1.unique_id
         cycle_error = {
             'type': 'root cycle',

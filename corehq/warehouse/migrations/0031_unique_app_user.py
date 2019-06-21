@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             name='applicationstatusfact',
             unique_together=set([]),
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             """
             CREATE UNIQUE INDEX applicationstatusfact_unique_app_user
             ON warehouse_applicationstatusfact (user_dim_id, COALESCE(app_dim_id, -1))

@@ -1,0 +1,79 @@
+<div class="cas-export-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+    <div class="row fixes-filters" ng-init="updateCssClasses()">
+        <div class="col-md-11">
+            <span class="breadcrump-element">Export CAS Data: </span>
+        </div>
+    </div>
+    <info-message></info-message>
+    <div class="report-content report-content-without-message">
+        <div class="alert alert-info" ng-show="!$ctrl.allFiltersSelected()">
+            <strong>Info!</strong> Please select all filters!
+        </div>
+        <div class="form-horizontal black">
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="indicator">Data Type: <i class="fa fa-info-circle" uib-popover="Select the data type for which you want to download a CAS Export."
+                       popover-placement="top-right"
+                       popover-trigger="'mouseenter'"></i></label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedIndicator" theme="bootstrap">
+                        <ui-select-match placeholder="Data Type"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="indicator.id as indicator in $ctrl.indicators | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="indicator.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="indicator">State: <i class="fa fa-info-circle" uib-popover="Select the location."
+                       popover-placement="top-right"
+                       popover-trigger="'mouseenter'"></i></label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedLocation" theme="bootstrap">
+                        <ui-select-match placeholder="State"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="indicator.location_id as indicator in $ctrl.locations | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="indicator.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="month">Month: <i class="fa fa-info-circle" uib-popover="Select the calendar month for which you want to download a CAS Export."
+                       popover-placement="top-right"
+                       popover-trigger="'mouseenter'"></i></label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap">
+                        <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="month.name | highlight: $select.search"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="year">Year: <i class="fa fa-info-circle" uib-popover="Select the year for which you want to download a CAS Export."
+                       popover-placement="top-right"
+                       popover-trigger="'mouseenter'"></i></label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
+                        <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
+                            <div ng-bind-html="year.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-6">
+                    <button type="button" ng-click="$ctrl.submitForm('{{ csrf_token }}')"
+                            class="btn btn-default normalButton orangeButton"
+                            ng-disabled=!$ctrl.allFiltersSelected()>
+                        Export
+                    </button>
+                </div>
+            </div>
+            <div class="alert alert-danger" ng-show="$ctrl.message">
+                <strong>Info!</strong> File which you want download does not exist. Files are stored only 3 months on the server.
+            </div>
+        </div>
+    </div>
+</div>

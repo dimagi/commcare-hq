@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from django import template
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -59,7 +61,7 @@ def get_all_tabs(request, domain, couch_user, project):
 
     if instantiation_errors:
         messages = (
-            '- {}: {}'.format(e.__class__.__name__, e.message)
+            '- {}: {}'.format(e.__class__.__name__, six.text_type(e))
             for e in instantiation_errors
         )
         summary_message = 'Summary of Tab Class Errors:\n{}'.format('\n'.join(messages))

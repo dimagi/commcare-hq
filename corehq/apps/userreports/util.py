@@ -5,11 +5,17 @@ import hashlib
 
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util.couch import DocumentNotFound
+from corehq.util.datadog.utils import ucr_load_counter
+
+UCR_TABLE_PREFIX = 'ucr_'
+LEGACY_UCR_TABLE_PREFIX = 'config_report_'
 
 
 def localize(value, lang):
@@ -124,14 +130,28 @@ def number_of_ucr_reports(domain):
     return len(ucr_reports)
 
 
-def get_indicator_adapter(config, raise_errors=False):
-    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
-    if raise_errors:
-        return ErrorRaisingIndicatorSqlAdapter(config)
-    return IndicatorSqlAdapter(config)
+def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
+    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter, \
+        MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
+    requires_mirroring = config.mirrored_engine_ids
+    if requires_mirroring and ENABLE_UCR_MIRRORS.enabled(config.domain):
+        adapter_cls = ErrorRaisingMultiDBAdapter if raise_errors else MultiDBSqlAdapter
+    else:
+        adapter_cls = ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
+    adapter = adapter_cls(config)
+    track_load = ucr_load_counter(config.engine_id, load_source, config.domain)
+    return IndicatorAdapterLoadTracker(adapter, track_load)
 
 
-def get_table_name(domain, table_id):
+def get_table_name(domain, table_id, max_length=50, prefix=UCR_TABLE_PREFIX):
+    """
+    :param domain:
+    :param table_id:
+    :param max_length: Max allowable length of table. Default of 50 to prevent long table
+                       name issues with CitusDB. PostgreSQL max is 63.
+    :param prefix: Table prefix. Configurable to allow migration from old to new prefix.
+    :return:
+    """
     def _hash(domain, table_id):
         return hashlib.sha1(
             '{}_{}'.format(
@@ -143,13 +163,14 @@ def get_table_name(domain, table_id):
     domain = domain.encode('unicode-escape').decode('utf-8')
     table_id = table_id.encode('unicode-escape').decode('utf-8')
     return truncate_value(
-        'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
+        '{}{}_{}_{}'.format(prefix, domain, table_id, _hash(domain, table_id)),
+        max_length=max_length,
         from_left=False
     )
 
 
 def is_ucr_table(table_name):
-    return table_name.startswith('config_report_')
+    return table_name.startswith(UCR_TABLE_PREFIX)
 
 
 def truncate_value(value, max_length=63, from_left=True):

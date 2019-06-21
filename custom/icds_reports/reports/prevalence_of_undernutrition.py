@@ -10,15 +10,15 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations
+    get_child_locations, format_decimal
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -113,7 +113,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % average,
+            "average": format_decimal(average),
             "info": underweight_children_help_text(age_label=age_label, html=True),
             "extended_info": [
                 {
@@ -142,7 +142,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -208,10 +208,15 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         data['red'][date_in_miliseconds]['unweighed'] += (total - weighed)
         data['red'][date_in_miliseconds]['weighed'] += weighed
 
-    top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['percent']
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': value
+        }
+        for key, value in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
 
     return {
         "chart_data": [
@@ -258,14 +263,14 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "color": ChartColors.RED
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -328,7 +333,10 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         if sql_location.name not in result_set:
             chart_data['blue'].append([sql_location.name, 0])
 
-    chart_data['blue'] = sorted(chart_data['blue'])
+    chart_data['blue'] = sorted(
+        chart_data['blue'],
+        key=lambda loc_and_value: (loc_and_value[0] is not None, loc_and_value)
+    )
 
     return {
         "tooltips_data": dict(tooltips_data),

@@ -12,6 +12,7 @@ from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -200,11 +201,12 @@ def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
     if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
+        soft_assert_type_text(data)
         try:
             parent[key] = six.text_type(json_format_datetime(
                 adjust_text_to_datetime(data, process_timezones=process_timezones)
             ))
-        except iso8601.ParseError:
+        except (iso8601.ParseError, ValueError):
             pass
     elif isinstance(data, dict):
         for key, value in data.items():

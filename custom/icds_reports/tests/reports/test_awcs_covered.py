@@ -159,17 +159,17 @@ class TestAWCSCovered(TestCase):
                 "location_type": "State",
                 "bottom_five": [
                     {'loc_name': 'st7', 'value': 1.0},
+                    {'loc_name': 'st3', 'value': 0.0},
                     {'loc_name': 'st4', 'value': 0.0},
                     {'loc_name': 'st5', 'value': 0.0},
                     {'loc_name': 'st6', 'value': 0.0},
-                    {'loc_name': 'st3', 'value': 0.0}
                 ],
                 "top_five": [
                     {'loc_name': 'st2', 'value': 11.0},
                     {'loc_name': 'st1', 'value': 9.0},
                     {'loc_name': 'st7', 'value': 1.0},
+                    {'loc_name': 'st3', 'value': 0.0},
                     {'loc_name': 'st4', 'value': 0.0},
-                    {'loc_name': 'st5', 'value': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -205,10 +205,10 @@ class TestAWCSCovered(TestCase):
                     {'loc_name': 'st2', 'value': 11.0},
                     {'loc_name': 'st1', 'value': 9.0},
                     {'loc_name': 'st7', 'value': 1.0},
+                    {'loc_name': 'st3', 'value': 0.0},
                     {'loc_name': 'st4', 'value': 0.0},
                     {'loc_name': 'st5', 'value': 0.0},
                     {'loc_name': 'st6', 'value': 0.0},
-                    {'loc_name': 'st3', 'value': 0.0}
                 ]
             }
         )

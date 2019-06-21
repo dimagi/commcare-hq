@@ -8,6 +8,7 @@ import six
 from Crypto.Cipher import AES
 from django.conf import settings
 
+from corehq.util.python_compatibility import soft_assert_type_text
 
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
@@ -78,22 +79,12 @@ def pformat_json(data):
     value if it can't be parsed as JSON.
 
     :return: A 2-space-indented string with sorted keys.
-
-    >>> print(pformat_json('{"ham": "spam", "eggs": "spam"}'))
-    {
-      "eggs": "spam", 
-      "ham": "spam"
-    }
-    >>> print(pformat_json({'ham': 'spam', 'eggs': 'spam'}))
-    {
-      "eggs": "spam", 
-      "ham": "spam"
-    }
-    >>> print(pformat_json('ham spam eggs spam'))
-    ham spam eggs spam
-
     """
+    if data is None:
+        return ''
     try:
+        if isinstance(data, six.string_types):
+            soft_assert_type_text(data)
         json_data = json.loads(data) if isinstance(data, six.string_types) else data
         return json.dumps(json_data, indent=2, sort_keys=True)
     except ValueError:

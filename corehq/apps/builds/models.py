@@ -63,7 +63,11 @@ class CommCareBuild(BlobMixin, Document):
     def fetch_file(self, path, filename=None):
         if filename:
             path = '/'.join([path, filename])
-        return self.fetch_attachment(path)
+        attachment = self.fetch_attachment(path)
+        try:
+            return attachment.decode('utf-8')
+        except UnicodeDecodeError:
+            return attachment
 
     def get_jadjar(self, path, use_j2me_endpoint):
         """
@@ -282,7 +286,6 @@ class CommCareBuildConfig(Document):
 
     @classmethod
     @quickcache([], timeout=5 * 60)
-    #This seems to be not working.
     def j2me_enabled_configs(cls):
         return [build for build in cls.fetch().menu if build.j2me_enabled]
 
@@ -293,6 +296,7 @@ class CommCareBuildConfig(Document):
     @classmethod
     def latest_j2me_enabled_config(cls):
         return cls.j2me_enabled_configs()[-1]
+
 
 class BuildRecord(BuildSpec):
     signed = BooleanProperty(default=True)

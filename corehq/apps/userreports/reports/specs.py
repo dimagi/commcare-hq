@@ -40,9 +40,9 @@ from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_co
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
+from corehq.util.python_compatibility import soft_assert_type_text
 from memoized import memoized
 import six
-
 
 SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_AVG: MeanColumn,
@@ -518,6 +518,7 @@ class MultibarChartSpec(ChartSpec):
         def _convert_columns_to_properly_dicts(cols):
             for column in cols:
                 if isinstance(column, six.string_types):
+                    soft_assert_type_text(column)
                     yield {'column_id': column, 'display': column}
                 else:
                     yield column

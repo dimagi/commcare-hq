@@ -4,7 +4,7 @@ from django.db import migrations
 
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.utils import migrate_repeater
-from corehq.sql_db.operations import HqRunPython
+
 from corehq.util.couch import iter_update, DocUpdate
 
 
@@ -27,5 +27,5 @@ class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
-        HqRunPython(migrate_auth_field),
+        migrations.RunPython(migrate_auth_field),
     ]

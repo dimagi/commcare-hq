@@ -2,50 +2,61 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<h2>
+{% if not no_header %}
+  <h2>
     {% blocktrans with verb=bulk_upload.verb|default:"Upload"|title %}
-        {{ verb }}
+      {{ verb }}
     {% endblocktrans %}
     {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
-        {{ plural_noun }} Using Excel
+      {{ plural_noun }} Using Excel
     {% endblocktrans %}
-</h2>
+  </h2>
+{% endif %}
+
 <p>
-    <ol>
-        <li id="download_block">
-            <p>
-                {% blocktrans with adjective=bulk_upload.adjective %}
-                    Download your current {{ adjective }} Excel file.
-                {% endblocktrans %}
-            </p>
-            {% block download_file %}
-            <p>
-                <a id="download_link" href="{{ bulk_upload.download_url }}" data-bind="attr: {href: url}">
-                    <button class="btn btn-success">
-                        <i class="fa fa-cloud-download"></i>
-                        {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
-                            Download {{ plural_noun }}
-                        {% endblocktrans %}
-                    </button>
-                </a>
-            </p>
-            {% endblock %}
-        </li>
-        <li>
-            <p>
-                {% trans "Update the downloaded file." %}
-                {% if bulk_upload.help_site %}
-                    {% blocktrans with address=bulk_upload.help_site.address name=bulk_upload.help_site.name %}
-                        Check the <a href="{{ address }}">{{ name }}</a> for instructions.
-                    {% endblocktrans %}
-                {% endif %}
-            </p>
-        </li>
-        <li>
-            <p>
-                {% trans "Upload your updated file." %}
-            </p>
-            {% crispy bulk_upload_form %}
-        </li>
-    </ol>
+  {% if bulk_upload.help_link %}
+    <p class="help-block">
+      {% blocktrans with link=bulk_upload.help_link %}
+        Read more on the <a target='_blank' href='{{ link }}'>Help Site</a>.
+      {% endblocktrans %}
+    </p>
+  {% endif %}
+  <ol>
+    {% block prerequisites %}{% endblock %}
+    <li id="download_block">
+      <p>
+        {% blocktrans with adjective=bulk_upload.adjective %}
+          Download your current {{ adjective }} Excel file.
+        {% endblocktrans %}
+      </p>
+      {% block download_file %}
+        <p>
+          <a id="download_link" href="{{ bulk_upload.download_url }}" data-bind="attr: {href: url}">
+            <button class="btn btn-primary">
+              <i class="fa fa-cloud-download"></i>
+              {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+                Download {{ plural_noun }}
+              {% endblocktrans %}
+            </button>
+          </a>
+        </p>
+      {% endblock %}
+    </li>
+    <li>
+      <p>
+        {% trans "Update the downloaded file." %}
+        {% if bulk_upload.help_site %}
+          {% blocktrans with address=bulk_upload.help_site.address name=bulk_upload.help_site.name %}
+            Check the <a href="{{ address }}">{{ name }}</a> for instructions.
+          {% endblocktrans %}
+        {% endif %}
+      </p>
+    </li>
+    <li>
+      <p>
+        {% trans "Upload your updated file." %}
+      </p>
+      {% crispy bulk_upload_form %}
+    </li>
+  </ol>
 </p>

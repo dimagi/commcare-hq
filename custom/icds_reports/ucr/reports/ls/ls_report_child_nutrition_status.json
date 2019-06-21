@@ -1,0 +1,177 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-ls_report_child_nutrition_status",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "LS Report - Child Nutrition Status (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": true,
+        "datatype": "string",
+        "required": false,
+        "display": "Modified Date",
+        "field": "modified_on",
+        "type": "date",
+        "slug": "modified_on"
+      },
+      {
+        "compare_as_string": false,
+        "display": "WFA ZScore Grading",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Severely Malnourished",
+            "value": "red"
+          },
+          {
+            "display": "Moderately Malnourished",
+            "value": "yellow"
+          },
+          {
+            "display": "Normal",
+            "value": "green"
+          },
+          {
+            "display": "Overweight",
+            "value": "white"
+          }
+        ],
+        "field": "zscore_grading_wfa",
+        "type": "choice_list",
+        "slug": "zscore_grading_wfa"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "display": "Date of Birth",
+        "field": "dob",
+        "type": "date",
+        "slug": "dob"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "owner"
+        },
+        "required": false,
+        "display": "Owner Name",
+        "field": "owner_id",
+        "type": "dynamic_choice_list",
+        "slug": "owner_id"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "person_name",
+        "field": "person_name",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "mar": "मूल",
+          "tel": "పిల్లలు",
+          "hin": "नाम",
+          "en": "Child Name",
+          "tam": "குழந்தை",
+          "guj": "બાળકનુ નામ",
+          "asm": "শিশু",
+          "pan": "ਬੱਚੇ ਦਾ ਨਾਮ",
+          "kan": "ಮಗುವಿನ ಹೆಸರು"
+        }
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "dob",
+        "field": "dob",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "mar": "जन्म तारीख",
+          "tel": "పుట్టిన తేదీ",
+          "hin": "जन्म तिथि",
+          "en": "Date of Birth",
+          "tam": "பிறந்த தேதி",
+          "guj": "જન્મ તારીખ",
+          "asm": "জন্মৰ তাৰিখ",
+          "pan": "ਜਨਮ ਮਿਤੀ",
+          "kan": "ಜನ್ಮ ದಿನಾಂಕ"
+        }
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "sex",
+        "field": "sex",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "mar": "लिंग",
+          "tel": "పలింగం",
+          "hin": "लिंग",
+          "en": "Sex",
+          "tam": "பாலினம்",
+          "guj": "જાતી",
+          "asm": "লিংগ",
+          "pan": "ਲਿੰਗ",
+          "kan": "ಲಿಂಗ"
+        }
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

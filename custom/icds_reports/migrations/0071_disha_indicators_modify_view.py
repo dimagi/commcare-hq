@@ -20,7 +20,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        get_disha_migration(),
         migrations.RemoveField(
             model_name='dishaindicatorview',
             name='cases_ccs_pregnant_all',

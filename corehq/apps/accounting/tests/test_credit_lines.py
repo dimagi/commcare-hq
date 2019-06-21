@@ -22,6 +22,8 @@ from six.moves import range
 
 
 class TestCreditLines(BaseInvoiceTestCase):
+
+    is_using_test_plans = True
     min_subscription_length = 5
 
     @classmethod
@@ -128,6 +130,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         for month_num in range(2, 5):
             invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
+            tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 
@@ -228,6 +231,7 @@ class TestCreditLines(BaseInvoiceTestCase):
     def _test_final_invoice_balance(self):
         for month_num in range(2, 5):
             invoice_date = utils.months_from_date(self.subscription.date_start, month_num)
+            tasks.calculate_users_in_all_domains(invoice_date)
             tasks.generate_invoices(invoice_date)
             invoice = self.subscription.invoice_set.latest('date_end')
 
@@ -275,6 +279,102 @@ class TestCreditLines(BaseInvoiceTestCase):
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=account_credit).count(), 2)
         current_account_credit = CreditLine.objects.get(id=account_credit.id)
         self.assertEqual(current_account_credit.balance, self.product_rate.monthly_fee + self.monthly_user_fee)
+
+
+class TestDeactivatedCredits(BaseInvoiceTestCase):
+
+    def add_account_credit(self, amount):
+        account_credit = CreditLine.add_credit(amount, account=self.account)
+        self.assertEqual(CreditLine.get_credits_for_account(self.account).count(), 1)
+        self.assertEqual(account_credit, CreditLine.get_credits_for_account(self.account).first())
+        return account_credit
+
+    def add_product_credit(self, amount):
+        product_credit = CreditLine.add_credit(amount, subscription=self.subscription, is_product=True)
+        product_credits = CreditLine.get_credits_by_subscription_and_features(
+            subscription=self.subscription, is_product=True
+        )
+        self.assertEqual(1, product_credits.count())
+        self.assertEqual(product_credit, product_credits.first())
+        return product_credit
+
+    def add_sms_credit(self, amount):
+        sms_credit = CreditLine.add_credit(amount, subscription=self.subscription, feature_type=FeatureType.SMS)
+        sms_credits = CreditLine.get_credits_by_subscription_and_features(
+            subscription=self.subscription, feature_type=FeatureType.SMS
+        )
+        self.assertEqual(1, sms_credits.count())
+        self.assertEqual(sms_credit, sms_credits.first())
+        return sms_credit
+
+    def add_user_credit(self, amount):
+        user_credit = CreditLine.add_credit(amount, subscription=self.subscription, feature_type=FeatureType.USER)
+        user_credits = CreditLine.get_credits_by_subscription_and_features(
+            subscription=self.subscription, feature_type=FeatureType.USER
+        )
+        self.assertEqual(1, user_credits.count())
+        self.assertEqual(user_credit, user_credits.first())
+        return user_credit
+
+    def test_get_credits_for_account_only_returns_active_credit(self):
+        account_credit = self.add_account_credit(100.00)
+
+        # Deactivate credit line
+        account_credit.is_active = False
+        account_credit.save()
+
+        # Check that get_credits_for_account does not return deactivated credit line
+        self.assertEqual(CreditLine.get_credits_for_account(self.account).count(), 0)
+
+    def test_get_credits_by_subscription_and_features_only_returns_active_credits(self):
+        # Add credits to subscription
+        product_credit = self.add_product_credit(100.00)
+        sms_credit = self.add_sms_credit(200.00)
+        user_credit = self.add_user_credit(300.00)
+
+        # Deactivate one credit
+        sms_credit.is_active = False
+        sms_credit.save()
+
+        # Check that get_credits_by_subscription_and_features only returns active credit lines
+        product_credits = CreditLine.get_credits_by_subscription_and_features(
+            subscription=self.subscription, is_product=True
+        )
+        self.assertEqual(1, product_credits.count())
+        self.assertEqual(product_credit, product_credits.first())
+
+        user_credits = CreditLine.get_credits_by_subscription_and_features(
+            subscription=self.subscription, feature_type=FeatureType.USER
+        )
+        self.assertEqual(1, user_credits.count())
+        self.assertEqual(user_credit, user_credits.first())
+
+        sms_credits = CreditLine.get_credits_by_subscription_and_features(
+            subscription=self.subscription, feature_type=FeatureType.SMS
+        )
+        self.assertEqual(0, sms_credits.count())
+
+    def test_get_non_general_credits_by_subscription_only_returns_active_credits(self):
+        # Add credits to subscription
+        product_credit = self.add_product_credit(100.00)
+        sms_credit = self.add_sms_credit(200.00)
+        user_credit = self.add_user_credit(300.00)
+
+        non_general_credits = CreditLine.get_non_general_credits_by_subscription(subscription=self.subscription)
+        self.assertEqual(3, non_general_credits.count())
+        self.assertIn(product_credit, non_general_credits)
+        self.assertIn(sms_credit, non_general_credits)
+        self.assertIn(user_credit, non_general_credits)
+
+        # Deactivate one credit
+        sms_credit.is_active = False
+        sms_credit.save()
+
+        non_general_credits = CreditLine.get_non_general_credits_by_subscription(subscription=self.subscription)
+        self.assertEqual(2, non_general_credits.count())
+        self.assertIn(product_credit, non_general_credits)
+        self.assertNotIn(sms_credit, non_general_credits)
+        self.assertIn(user_credit, non_general_credits)
 
 
 class TestCreditTransfers(BaseAccountingTest):

@@ -30,7 +30,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', function () {
         var $modal_form = $('<form class="form-horizontal hq-enum-editor" action="" />'),
             $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
         $modal_body.append($('<fieldset />'));
-        $modal_body.append('<a href="#" class="btn btn-success" data-enum-action="add"><i class="fa fa-plus"></i> ' +
+        $modal_body.append('<a href="#" class="btn btn-primary" data-enum-action="add"><i class="fa fa-plus"></i> ' +
             django.gettext('Add Key &rarr; Value Mapping') + '</a>');
 
         $modal_form.append($modal_body);

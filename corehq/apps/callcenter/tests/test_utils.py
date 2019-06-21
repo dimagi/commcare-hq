@@ -8,17 +8,18 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case, sync_usercase
 from corehq.apps.callcenter.utils import (
-    sync_call_center_user_case,
     is_midnight_for_domain,
     get_call_center_cases,
     DomainLite,
-    sync_usercase,
     get_call_center_domains)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
+from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.bulkupload import create_or_update_users_and_groups
 from django.test import TestCase, SimpleTestCase, override_settings
 
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -29,8 +30,8 @@ from corehq.util.elastic import ensure_index_deleted
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.es_utils import initialize_index
 
-TEST_DOMAIN = 'cc_util_test'
-CASE_TYPE = 'cc_flw'
+TEST_DOMAIN = 'cc-util-test'
+CASE_TYPE = 'cc-flw'
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
@@ -328,6 +329,46 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.user.save()
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertEqual(1, len(user_case.xform_ids))
+
+    def test_bulk_upload_usercases(self):
+        self.user.username = format_username('bushy_top', TEST_DOMAIN)
+        self.user.save()
+        user_upload = [{
+            'username': self.user.raw_username,
+            'user_id': self.user.user_id,
+            'name': 'James McNulty',
+            'language': None,
+            'is_active': 'True',
+            'phone-number': self.user.phone_number,
+            'password': 123,
+            'email': None
+        }, {
+            'username': 'the_bunk',
+            'user_id': '',
+            'name': 'William Moreland',
+            'language': None,
+            'is_active': 'True',
+            'phone-number': '23424123',
+            'password': 123,
+            'email': None
+        }]
+        results = create_or_update_users_and_groups(
+            TEST_DOMAIN,
+            list(user_upload),
+            list([]),
+        )
+        self.assertEqual(results['errors'], [])
+
+        accessor = CaseAccessors(TEST_DOMAIN)
+        old_user_case = accessor.get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        self.assertEqual(old_user_case.owner_id, self.user.get_id)
+        self.assertEqual(2, len(old_user_case.xform_ids))
+
+        new_user = CommCareUser.get_by_username(format_username('the_bunk', TEST_DOMAIN))
+        self.addCleanup(new_user.delete)
+        new_user_case = accessor.get_case_by_domain_hq_user_id(new_user._id, USERCASE_TYPE)
+        self.assertEqual(new_user_case.owner_id, new_user.get_id)
+        self.assertEqual(1, len(new_user_case.xform_ids))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

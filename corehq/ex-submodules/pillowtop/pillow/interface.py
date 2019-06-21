@@ -2,7 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
+from collections import Counter
 from datetime import datetime
+
+from django.conf import settings
 from memoized import memoized
 
 import sys
@@ -287,25 +290,34 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
     def _record_datadog_metrics(self, changes_chunk, processing_time):
         tags = ["pillow_name:{}".format(self.get_name()), "mode:chunked"]
-        # Since success/fail count is tracked per processor, to get sense of
-        #   actual operations count, multiply by number of processors
-        count = len(changes_chunk) * len(self.processors)
-        datadog_counter('commcare.change_feed.changes.count', count, tags=tags)
+        change_count = len(changes_chunk)
+        if settings.ENTERPRISE_MODE:
+            type_counter = Counter([
+                change.metadata.document_subtype
+                for change in changes_chunk if change.metadata.document_type == 'CommCareCase'
+            ])
+            for case_type, type_count in type_counter.items():
+                tags_with_type = tags + ['case_type:{}'.format(case_type)]
+                datadog_counter('commcare.change_feed.changes.count', type_count, tags=tags_with_type)
+
+            remainder = change_count - sum(type_counter.values())
+            if remainder:
+                datadog_counter('commcare.change_feed.changes.count', remainder, tags=tags)
+        else:
+            datadog_counter('commcare.change_feed.changes.count', change_count, tags=tags)
 
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
         min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).total_seconds()
         datadog_gauge('commcare.change_feed.chunked.min_change_lag', min_change_lag, tags=tags)
         datadog_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
 
-        datadog_histogram('commcare.change_feed.chunked.processing_time_total', processing_time,
-            tags=tags + ["chunk_size:{}".format(str(len(changes_chunk)))])
+        # processing_time per change
+        datadog_histogram('commcare.change_feed.processing_time', processing_time / change_count, tags=tags)
 
-        if len(changes_chunk) == self.processor_chunk_size:
+        if change_count == self.processor_chunk_size:
             # don't report offset chunks to ease up datadog calculations
-            datadog_histogram(
-                'commcare.change_feed.processing_time',
-                processing_time / len(changes_chunk),
-                tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
+            datadog_histogram('commcare.change_feed.chunked.processing_time_total', processing_time,
+                              tags=tags + ["chunk_size:{}".format(str(change_count))])
 
     def _record_checkpoint_in_datadog(self):
         datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
@@ -319,7 +331,10 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             ])
 
     def _record_change_in_datadog(self, change, processing_time):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, processing_time=processing_time)
+        self.__record_change_metric_in_datadog(
+            'commcare.change_feed.changes.count', change,
+            processing_time=processing_time, add_case_type_tag=True
+        )
 
     def _record_batch_exception_in_datadog(self, processor):
         datadog_counter(
@@ -335,16 +350,21 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     def _record_change_exception_in_datadog(self, change, processor):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change, processor)
 
-    def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None):
+    def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None,
+                                          add_case_type_tag=False):
         if change.metadata is not None:
-            tags = [
+            common_tags = [
                 'datasource:{}'.format(change.metadata.data_source_name),
                 'is_deletion:{}'.format(change.metadata.is_deletion),
                 'pillow_name:{}'.format(self.get_name()),
                 'processor:{}'.format(processor.__class__.__name__ if processor else "all_processors"),
             ]
-            count = 1 if processor else len(self.processors)
-            datadog_counter(metric, value=count, tags=tags)
+
+            metric_tags = list(common_tags)
+            if add_case_type_tag and settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
+                metric_tags.append('case_type:{}'.format(change.metadata.document_subtype))
+
+            datadog_counter(metric, tags=metric_tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
             datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
@@ -353,7 +373,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             ])
 
             if processing_time:
-                datadog_histogram('commcare.change_feed.processing_time', processing_time, tags=tags)
+                datadog_histogram('commcare.change_feed.processing_time', processing_time, tags=common_tags)
 
     @staticmethod
     def _deduplicate_changes(changes_chunk):

@@ -1,29 +1,29 @@
 {% load i18n %}
 <fieldset class="hqm-sharing hide">
-    <legend>{% trans "Multimedia Sharing Options" %}</legend>
-    <div class="form-group">
-        <div class="control-label col-sm-3">{% trans "License" %}</div>
-        <div class="col-sm-9">
-            <select name="license">
-                <option value="cc-nc">{% trans "Creative Commons Attribution, Non-Commercial (CC BY-NC)" %}</option>
-                <option value="cc-nd">{% trans "Creative Commons Attribution, No Derivatives (CC BY-ND)" %}</option>
-                <option value="cc" selected="selected">{% trans "Creative Commons Attribution (CC BY)" %}</option>
-                <option value="cc-nc-sa">{% trans "Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-SA)" %}</option>
-                <option value="cc-nc-nd">{% trans "Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-NC-ND)" %}</option>
-                <option value="cc-sa">{% trans "Creative Commons Attribution, Share Alike (CC BY-SA)" %}</option>
-            </select>
-        </div>
+  <legend>{% trans "Multimedia Sharing Options" %}</legend>
+  <div class="form-group">
+    <div class="control-label col-sm-3">{% trans "License" %}</div>
+    <div class="col-sm-9">
+      <select name="license">
+        <option value="cc-nc">{% trans "Creative Commons Attribution, Non-Commercial (CC BY-NC)" %}</option>
+        <option value="cc-nd">{% trans "Creative Commons Attribution, No Derivatives (CC BY-ND)" %}</option>
+        <option value="cc" selected="selected">{% trans "Creative Commons Attribution (CC BY)" %}</option>
+        <option value="cc-nc-sa">{% trans "Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-SA)" %}</option>
+        <option value="cc-nc-nd">{% trans "Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-NC-ND)" %}</option>
+        <option value="cc-sa">{% trans "Creative Commons Attribution, Share Alike (CC BY-SA)" %}</option>
+      </select>
     </div>
-    <div class="form-group">
-        <div class="control-label col-sm-3">{% trans "Author" %}</div>
-        <div class="controls col-sm-9">
-            <input type="text" name="author" placeholder="{% trans "Enter the name of the author" %}" />
-        </div>
+  </div>
+  <div class="form-group">
+    <div class="control-label col-sm-3">{% trans "Author" %}</div>
+    <div class="controls col-sm-9">
+      <input type="text" name="author" placeholder="{% trans "Enter the name of the author" %}" />
     </div>
-    <div class="form-group">
-        <div class="control-label col-sm-3">{% trans "Attribution Notes" %}</div>
-        <div class="controls col-sm-9">
-            <textarea name="attribution-notes" rows="2"></textarea>
-        </div>
+  </div>
+  <div class="form-group">
+    <div class="control-label col-sm-3">{% trans "Attribution Notes" %}</div>
+    <div class="controls col-sm-9">
+      <textarea name="attribution-notes" rows="2"></textarea>
     </div>
+  </div>
 </fieldset>

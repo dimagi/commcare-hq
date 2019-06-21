@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+from copy import copy
+
 from django.urls import reverse
 from django.http import Http404
 import collections
@@ -20,9 +22,6 @@ from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_exports_by_form
 from memoized import memoized
 from six.moves import map
-
-
-_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
 ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
@@ -434,23 +433,27 @@ class ApplicationDataRMIHelper(object):
         forms_by_app_by_module = {}
         for form in self._all_forms:
             has_app = form.get('has_app', False)
-            app_langs = []
-            if self.user.language in form['app'].get('langs', {}):
-                app_langs.append(self.user.language)
 
-            app_langs.append(form['app']['langs'][0] if 'langs' in form['app'] else 'en')
+            app_langs = copy(form['app'].get('langs', []))
+
+            # Move user's language to the front (if applicable)
+            if self.user.language in app_langs:
+                app_langs.insert(0, self.user.language)
+
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
-            # Set module to None if it doesn't have an ID (FB 285678)
             module = None
+            module_id = None
             if 'module' in form:
-                if _assert(
-                        'id' in form['module'],
-                        "form['module'] has an unexpected value",
-                        form['module']
-                ):
-                    module = form['module']
-            module_id = (module['id'] if has_app and module is not None
-                         else self.UNKNOWN_SOURCE)
+                module = form['module']
+            if has_app and module is not None:
+                if 'id' in module:
+                    module_id = module['id']
+                elif hasattr(module, 'id'):
+                    # module is an instance, not a dictionary. id is a
+                    # property method, not a key. (FB 285678, HI-141)
+                    module_id = module.id
+                else:
+                    module_id = self.UNKNOWN_SOURCE
             module_name = self._get_item_name(
                 module, has_app, app_langs, _("Unknown Module")
             )

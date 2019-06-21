@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,9 +18,19 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-ccs_record_cases",
@@ -30,7 +48,42 @@
       },
       "property_value": "ccs_record"
     },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
+      {
+        "column_id": "institutional_delivery",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "hospital",
+          "expression": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_name",
+              "property_name": "child_birth_location"
+            }
+          }
+        },
+        "type": "boolean"
+      },
       {
         "display_name": null,
         "property_path": [],
@@ -81,11 +134,11 @@
         "datatype": "string",
         "type": "expression",
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "supervisor_id",
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
@@ -93,7 +146,9 @@
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -105,18 +160,17 @@
         "is_primary_key": false,
         "column_id": "block_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -128,21 +182,17 @@
         "is_primary_key": false,
         "column_id": "district_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -154,24 +204,17 @@
         "is_primary_key": false,
         "column_id": "state_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -502,6 +545,29 @@
             "name": "parent_id"
           }
         }
+      },
+      {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "parent_id",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "date",
+        "is_primary_key": false,
+        "column_id": "pnc1_date",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "pnc1_date"
       },
       {
         "filter": {
@@ -1023,77 +1089,77 @@
           }
         }
       },
-	  {
-		"expression": {
-			"type": "conditional",
-			"test": {
-			  "operator": "eq", 
-			  "expression": {
-				"value_expression": {
-				  "datatype": null, 
-				  "type": "property_name", 
-				  "property_name": "migration_status"
-				}, 
-				"type": "related_doc", 
-				"related_doc_type": "CommCareCase", 
-				"doc_id_expression": {
-				  "type": "named", 
-				  "name": "parent_id"
-				}
-			  }, 
-			  "type": "boolean_expression", 
-			  "property_value": "migrated"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		}, 
-		"type": "expression", 
-		"column_id": "is_migrated",
-		"is_nullable": true,
-		"datatype": "integer"
-	 },
-	 {
-	    "expression": {
-			"type": "conditional",
-			"test": {
-				"operator": "not_eq",
-				"expression": {
-					"value_expression": {
-						"datatype": null,
-						"type": "property_name",
-						"property_name": "registered_status"
-					},
-					"type": "related_doc",
-					"related_doc_type": "CommCareCase",
-					"doc_id_expression": {
-						"type": "named",
-						"name": "parent_id"
-					}
-				},
-				"type": "boolean_expression",
-				"property_value": "not_registered"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		},
-		"type": "expression",
-		"column_id": "is_availing",
-		"is_nullable": true,
-		"datatype": "integer"
-	 },
-     {
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "migration_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "migrated"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_migrated",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "not_eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "registered_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "not_registered"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_availing",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
         "column_id": "delivery_nature",
         "datatype": "small_integer",
         "type": "expression",
@@ -1101,7 +1167,7 @@
           "type": "switch",
           "switch_on": {
             "type": "property_name",
-            "property_name": "delivery_type"
+            "property_name": "delivery_nature"
           },
           "cases": {
             "vaginal": {
@@ -1122,8 +1188,8 @@
             "constant": 0
           }
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
@@ -1134,8 +1200,8 @@
           "type": "property_name",
           "property_name": "preg_order"
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "string",
         "type": "expression",
@@ -1146,8 +1212,8 @@
           "type": "property_name",
           "property_name": "mobile_number"
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
@@ -1158,8 +1224,8 @@
           "type": "property_name",
           "property_name": "num_pnc_visits"
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
@@ -1170,7 +1236,19 @@
           "type": "property_name",
           "property_name": "num_anc_complete"
         }
-     }
+      },
+      {
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_nullable": true,
+        "column_id": "child_name",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "child_name"
+        }
+      }
     ],
     "named_expressions": {
       "parent_id": {
@@ -1904,13 +1982,11 @@
     },
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {
@@ -1923,6 +1999,30 @@
         "column_ids": [
           "awc_id",
           "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "add"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "add"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "add"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "add"
         ]
       }
     ],

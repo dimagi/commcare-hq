@@ -1,16 +1,21 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import requests
+import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests import ConnectionError
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
+from django.utils.translation import ugettext as _
 
 
 def get_toggles_previews(domain_link):
@@ -56,6 +61,16 @@ def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
+    if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
+        def _format_missing_media(media):
+            return {m[0]: m[1].to_json() for m in media}
+
+        still_missing_media = _get_missing_multimedia(app)
+        if still_missing_media:
+            raise MultimediaMissingError(_(
+                'Application has missing multimedia even after an attempt to re-pull them. '
+                'Please try re-pulling the app. If this persists, report an issue.'
+            ))
 
 
 def _get_missing_multimedia(app):
@@ -67,11 +82,11 @@ def _get_missing_multimedia(app):
             filename = path.split('/')[-1]
             missing.append((filename, media_info))
         else:
-            _check_domain_access(app.domain, local_media)
+            _add_domain_access(app.domain, local_media)
     return missing
 
 
-def _check_domain_access(domain, media):
+def _add_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
 

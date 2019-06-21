@@ -1,93 +1,93 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <div id="{{ chart_name }}-chart-tabs" class="chart-tab-container">
-    <form data-chart="{{ chart_name }}" style="margin: 0;"
-          class="form-inline reload-graph-form">
-        <span class="pull-right">
-            {% if date_field_opts %}
-                <label for="{{ chart_name }}-datefield">{% trans 'Date Field' %}</label>
-                <select id="{{ chart_name }}-datefield" name="datefield" class="form-control">
-                {% for opt in date_field_opts %}
-                    <option value="{{ opt.value }}"{% if opt.selected %} selected{% endif %}>{{ opt.name }}</option>
-                {% endfor %}
-                </select>
-            {% endif %}
-            <label for="{{ chart_name }}-interval" class="sub-label">{% trans 'Interval' %}</label>
-            <select id="{{ chart_name }}-interval" name="interval" class="interval-input form-control">
-                <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
-                <option {% if interval == 'week' %}selected {% endif %}value="week">{% trans 'Week' %}</option>
-                <option {% if interval == 'month' %}selected {% endif %}value="month">{% trans 'Month' %}</option>
-                <option {% if interval == 'year' %}selected {% endif %}value="year">{% trans 'Year' %}</option>
-            </select>
-            <label for="{{ chart_name }}-startdate" class="sub-label">{% trans 'From' %}</label>
-            <input type="text" id="{{ chart_name }}-startdate" name="startdate" value="{{ startdate }}" class="startdate-input date-picker form-control">
-            <label for="{{ chart_name }}-enddate" class="sub-label">{% trans 'To' %}</label>
-            <input type="text" id="{{ chart_name }}-enddate" name="enddate" value="{{ enddate }}" class="enddate-input date-picker form-control">
-            <button type="submit" class="btn btn-info">{% trans "Apply" %}</button>
-        </span>
-    </form>
+  <form data-chart="{{ chart_name }}" style="margin: 0;"
+        class="form-inline reload-graph-form">
+    <span class="pull-right">
+      {% if date_field_opts %}
+        <label for="{{ chart_name }}-datefield">{% trans 'Date Field' %}</label>
+        <select id="{{ chart_name }}-datefield" name="datefield" class="form-control">
+          {% for opt in date_field_opts %}
+            <option value="{{ opt.value }}"{% if opt.selected %} selected{% endif %}>{{ opt.name }}</option>
+          {% endfor %}
+          </select>
+      {% endif %}
+      <label for="{{ chart_name }}-interval" class="sub-label">{% trans 'Interval' %}</label>
+        <select id="{{ chart_name }}-interval" name="interval" class="interval-input form-control">
+            <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
+            <option {% if interval == 'week' %}selected {% endif %}value="week">{% trans 'Week' %}</option>
+            <option {% if interval == 'month' %}selected {% endif %}value="month">{% trans 'Month' %}</option>
+            <option {% if interval == 'year' %}selected {% endif %}value="year">{% trans 'Year' %}</option>
+        </select>
+        <label for="{{ chart_name }}-startdate" class="sub-label">{% trans 'From' %}</label>
+        <input type="text" id="{{ chart_name }}-startdate" name="startdate" value="{{ startdate }}" class="startdate-input date-picker form-control">
+        <label for="{{ chart_name }}-enddate" class="sub-label">{% trans 'To' %}</label>
+        <input type="text" id="{{ chart_name }}-enddate" name="enddate" value="{{ enddate }}" class="enddate-input date-picker form-control">
+        <button type="submit" class="btn btn-primary">{% trans "Apply" %}</button>
+    </span>
+  </form>
 
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#{{ chart_name }}-bar-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Bar Chart" %}</a></li>
-        {% if not hide_cumulative_charts %}
-        <li><a href="#{{ chart_name }}-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Cumulative Chart" %}</a></li>
-        <li><a href="#{{ chart_name }}-stacked-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Stacked Cumulative Chart" %}</a></li>
-        {% endif %}
-    </ul>
+  <ul class="nav nav-tabs">
+    <li class="active"><a href="#{{ chart_name }}-bar-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Bar Chart" %}</a></li>
+    {% if not hide_cumulative_charts %}
+      <li><a href="#{{ chart_name }}-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Cumulative Chart" %}</a></li>
+      <li><a href="#{{ chart_name }}-stacked-cumulative-chart" data-toggle="{% if hash_tab %}hash-{% endif %}tab">{% trans "Stacked Cumulative Chart" %}</a></li>
+    {% endif %}
+  </ul>
 
-    <div id="{{ chart_name }}-charts" class="tab-content">
-        <div class="tab-pane active" id="{{ chart_name }}-bar-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
-                <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
-                    <h4>{% trans "Loading Bar Chart" %}</h4>
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-            </div>
-            <div class="alert alert-warning no-data hidden">
-                <h4>{% trans "Your query returned no data" %}</h4>
-            </div>
-            <div class="alert alert-danger error hidden">
-                <h4>{% trans "There was an error retrieving the data" %}</h4>
-            </div>
-            <div class='nvd3-chart hidden'>
-                <svg style='height:320px'> </svg>
-            </div>
+  <div id="{{ chart_name }}-charts" class="tab-content">
+    <div class="tab-pane active" id="{{ chart_name }}-bar-chart">
+      <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
+        <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
+          <i class='fa fa-spin fa-spinner'></i>
+          <h4>{% trans "Loading Bar Chart" %}</h4>
         </div>
-        {% if not hide_cumulative_charts %}
-        <div class="tab-pane" id="{{ chart_name }}-cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
-                <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
-                    <h4>{% trans "Loading Cumulative Chart" %}</h4>
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-            </div>
-            <div class="alert alert-warning no-data hidden">
-                <h4>{% trans "Your query returned no data" %}</h4>
-            </div>
-            <div class="alert alert-danger error hidden">
-                <h4>{% trans "There was an error retrieving the data" %}</h4>
-            </div>
-            <div class='nvd3-chart hidden'>
-                <svg style='height:320px'> </svg>
-            </div>
-        </div>
-        <div class="tab-pane" id="{{ chart_name }}-stacked-cumulative-chart">
-            <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
-                <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
-                    <h4>{% trans "Loading Stacked Cumulative Chart" %}</h4>
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-            </div>
-            <div class="alert alert-warning no-data hidden">
-                <h4>{% trans "Your query returned no data" %}</h4>
-            </div>
-            <div class="alert alert-danger error hidden">
-                <h4>{% trans "There was an error retrieving the data" %}</h4>
-            </div>
-            <div class='nvd3-chart hidden'>
-                <svg style='height:320px'> </svg>
-            </div>
-        </div>
-        {% endif %}
+      </div>
+      <div class="alert alert-warning no-data hidden">
+        <h4>{% trans "Your query returned no data" %}</h4>
+      </div>
+      <div class="alert alert-danger error hidden">
+        <h4>{% trans "There was an error retrieving the data" %}</h4>
+      </div>
+      <div class='nvd3-chart hidden'>
+        <svg style='height:320px'> </svg>
+      </div>
     </div>
+    {% if not hide_cumulative_charts %}
+      <div class="tab-pane" id="{{ chart_name }}-cumulative-chart">
+        <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
+          <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
+            <i class='fa fa-spin fa-spinner'></i>
+            <h4>{% trans "Loading Cumulative Chart" %}</h4>
+          </div>
+        </div>
+        <div class="alert alert-warning no-data hidden">
+          <h4>{% trans "Your query returned no data" %}</h4>
+        </div>
+        <div class="alert alert-danger error hidden">
+          <h4>{% trans "There was an error retrieving the data" %}</h4>
+        </div>
+        <div class='nvd3-chart hidden'>
+          <svg style='height:320px'> </svg>
+        </div>
+      </div>
+      <div class="tab-pane" id="{{ chart_name }}-stacked-cumulative-chart">
+        <div style="height: 320px; min-height: 320px;" class="loading report-loading-container">
+          <div class="report-loading{% if hq_loading %} hq-loading{% endif %}">
+            <i class='fa fa-spin fa-spinner'></i>
+            <h4>{% trans "Loading Stacked Cumulative Chart" %}</h4>
+          </div>
+        </div>
+        <div class="alert alert-warning no-data hidden">
+          <h4>{% trans "Your query returned no data" %}</h4>
+        </div>
+        <div class="alert alert-danger error hidden">
+          <h4>{% trans "There was an error retrieving the data" %}</h4>
+        </div>
+        <div class='nvd3-chart hidden'>
+          <svg style='height:320px'> </svg>
+        </div>
+      </div>
+    {% endif %}
+  </div>
 </div>

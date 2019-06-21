@@ -10,18 +10,14 @@ import zipfile
 from collections import defaultdict
 from wsgiref.util import FileWrapper
 
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.http.request import QueryDict
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.decorators import method_decorator
 from django.utils.http import urlencode as django_urlencode
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
-from django.views import View
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 
@@ -36,11 +32,10 @@ from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layo
 from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
-    DEFAULT_FETCH_LIMIT,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps, no_conflict
+    require_can_edit_apps, require_deploy_apps
 from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -48,11 +43,9 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     Form,
-    FormNotFoundException,
     LinkedApplication,
     Module,
     ModuleNotFoundException,
-    ReportModule,
     app_template_dir,
     load_app_template,
 )
@@ -65,6 +58,7 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_and_assert_practice_user_in_domain,
+    get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, update_linked_app, clear_xmlns_app_id_cache
@@ -88,6 +82,7 @@ from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
@@ -142,6 +137,7 @@ def default_new_app(request, domain):
     annoying for the Dashboard.
     """
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
+    track_workflow(request.couch_user.username, "User created a new blank application")
 
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
@@ -178,6 +174,10 @@ def get_app_view_context(request, app):
             disable_if_true = setting.get('disable_if_true')
             if disable_if_true and getattr(app, setting['id']):
                 continue
+            if app.get_doc_type() == 'LinkedApplication':
+                if setting['id'] in app.SUPPORTED_SETTINGS:
+                    if setting['id'] not in app.linked_app_attrs:
+                        setting['is_inherited'] = True
             new_settings.append(setting)
         section['settings'] = new_settings
 
@@ -195,7 +195,9 @@ def get_app_view_context(request, app):
         'values': get_settings_values(app),
         'warning': _("This is not an allowed value for this field"),
     }
-    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in getattr(app, 'profile', {}):
+    if (app.get_doc_type() == 'Application'
+            and toggles.CUSTOM_PROPERTIES.enabled(request.domain)
+            and 'custom_properties' in getattr(app, 'profile', {})):
         custom_properties_array = [{'key': p[0], 'value': p[1]} for p in app.profile.get('custom_properties').items()]
         app_view_options.update({'customProperties': custom_properties_array})
     context.update({
@@ -259,36 +261,50 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
-            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
+            'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
+            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
     })
     context.update({
         'bulk_ui_translation_form': get_bulk_upload_form(
             context,
-            context_key="bulk_ui_translation_upload"
+            context_key="bulk_ui_translation_upload",
         ),
         'bulk_app_translation_form': get_bulk_upload_form(
             context,
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
-        )
+        ),
     })
     context.update({
         'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False)
     })
     # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
-    try:
-        context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
-    except ValueError:
-        context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
+        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             context['master_version'] = app.get_master_version()
         except RemoteRequestError:
             pass
     return context
+
+
+def _get_upstream_url(app, request_user):
+    """Get the upstream url if the user has access"""
+    if (
+            app.domain_link and (
+                request_user.is_superuser or (
+                    not app.domain_link.is_remote
+                    and request_user.is_member_of(app.domain_link.master_domain)
+                )
+            )
+    ):
+        url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
+        if app.domain_link.is_remote:
+            url = '{}{}'.format(app.domain_link.remote_base_url, url)
+        return url
 
 
 def clear_app_cache(request, domain):
@@ -329,6 +345,11 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
 
+        show_biometric = (
+            toggles.BIOMETRIC_INTEGRATION.enabled(domain)
+            and app.is_biometric_enabled
+        )
+
         disable_report_modules = (
             is_master_linked_domain(domain)
             and not toggles.MOBILE_UCR_LINKED_DOMAIN.enabled(domain)
@@ -342,14 +363,20 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
+        latest_version_for_build_profiles = {}
+        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            latest_version_for_build_profiles = get_latest_enabled_versions_per_profile(app.get_id)
+
         context.update({
             'show_advanced': show_advanced,
+            'show_biometric': show_biometric,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
+            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context
@@ -370,55 +397,66 @@ def copy_app(request, domain):
         domain, app, request.POST,
         export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
-    if form.is_valid():
-        gzip = request.FILES.get('gzip')
-        if gzip:
-            with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
-                source = z.read(z.filelist[0].filename)
-            app_id_or_source = source
-        else:
-            app_id_or_source = app_id
-
-        def _inner(request, link_domain, data, master_domain=domain):
-            clear_app_cache(request, link_domain)
-            if data['toggles']:
-                for slug in data['toggles'].split(","):
-                    set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
-            linked = data.get('linked')
-            if linked:
-                master_version = get_latest_released_app_version(app.domain, app_id)
-                if not master_version:
-                    messages.error(request, _("Creating linked app failed."
-                                              " Unable to get latest released version of your app."
-                                              " Make sure you have at least one released build."))
-                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-                linked_app = create_linked_app(master_domain, app_id, link_domain, data['name'])
-                try:
-                    update_linked_app(linked_app, request.couch_user.get_id)
-                except AppLinkError as e:
-                    linked_app.delete()
-                    messages.error(request, str(e))
-                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-                messages.success(request, _('Application successfully copied and linked.'))
-                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
-            else:
-                extra_properties = {'name': data['name']}
-                app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
-                return back_to_main(request, app_copy.domain, app_id=app_copy._id)
-
-        # having login_and_domain_required validates that the user
-        # has access to the domain we're copying the app to
-        return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
-    else:
+    if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
+
+    gzip = request.FILES.get('gzip')
+    if gzip:
+        with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
+            source = z.read(z.filelist[0].filename)
+        app_id_or_source = source
+    else:
+        app_id_or_source = app_id
+
+    def _inner(request, link_domain, data, master_domain=domain):
+        clear_app_cache(request, link_domain)
+        if data['toggles']:
+            for slug in data['toggles'].split(","):
+                set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+        linked = data.get('linked')
+        if linked:
+            return _create_linked_app(request, app, link_domain, data['name'])
+        else:
+            return _copy_app_helper(
+                request, master_domain, app_id_or_source, link_domain, data['name'], app_id)
+
+    # having login_and_domain_required validates that the user
+    # has access to the domain we're copying the app to
+    return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
+
+
+def _create_linked_app(request, master_app, link_domain, link_app_name):
+    master_domain = master_app.domain
+    master_version = get_latest_released_app_version(master_domain, master_app._id)
+    if not master_version:
+        messages.error(request, _("Creating linked app failed."
+                                  " Unable to get latest released version of your app."
+                                  " Make sure you have at least one released build."))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, master_app._id]))
+
+    linked_app = create_linked_app(master_domain, master_app._id, link_domain, link_app_name)
+    try:
+        update_linked_app(linked_app, request.couch_user.get_id)
+    except AppLinkError as e:
+        linked_app.delete()
+        messages.error(request, str(e))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, master_app._id]))
+
+    messages.success(request, _('Application successfully copied and linked.'))
+    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
+
+
+def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name, app_id):
+    extra_properties = {'name': copy_to_app_name}
+    app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties, request)
+    return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
+    track_workflow(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
@@ -655,7 +693,7 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-    app.smart_lang_display = json.loads(request.body)['smart_lang_display']
+    app.smart_lang_display = json.loads(request.body.decode('utf-8'))['smart_lang_display']
     app.save()
     return json_response(langs)
 
@@ -674,13 +712,15 @@ def edit_app_ui_translations(request, domain, app_id):
     translations.pop('modules.m0', None)
 
     app.set_translations(lang, translations)
-    response = {}
-    app.save(response)
-    return json_response(response)
+    app.save(response_json={})  # Updates the app version without updating app properties
+    return json_response({})
 
 
 @require_GET
 def get_app_ui_translations(request, domain):
+    """
+    Retrieves translations from all domains
+    """
     params = json_request(request.GET)
     lang = params.get('lang', 'en')
     key = params.get('key', None)
@@ -704,7 +744,7 @@ def edit_app_attr(request, domain, app_id, attr):
     app = get_app(domain, app_id)
 
     try:
-        hq_settings = json.loads(request.body)['hq']
+        hq_settings = json.loads(request.body.decode('utf-8'))['hq']
     except ValueError:
         hq_settings = request.POST
 
@@ -769,6 +809,10 @@ def edit_app_attr(request, domain, app_id, attr):
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
+            if app.get_doc_type() == 'LinkedApplication' and attribute in app.SUPPORTED_SETTINGS:
+                app.linked_app_attrs.update({
+                    attribute: value,
+                })
 
     if should_edit("name"):
         clear_app_cache(request, domain)

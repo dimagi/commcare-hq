@@ -5,7 +5,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from django.conf import settings
 from django.db import models, migrations
-from corehq.sql_db.operations import HqRunPython
+
 
 
 class Migration(migrations.Migration):

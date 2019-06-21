@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import functools
 import json
 import logging
 import os
@@ -9,9 +11,10 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+
+from django.utils import html
 from six.moves.urllib.parse import urlparse
 
-import functools
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -80,11 +83,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.middleware import always_allow_browser_caching
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import reverse
 import six
 from six.moves import range
@@ -188,6 +192,8 @@ def redirect_to_default(req, domain=None):
             domains = Domain.active_for_user(req.user)
 
         if 0 == len(domains) and not req.user.is_superuser:
+            from corehq.apps.registration.views import track_domainless_new_user
+            track_domainless_new_user(req)
             return redirect('registration_domain')
         elif 1 == len(domains):
             from corehq.apps.dashboard.views import dashboard_default
@@ -222,10 +228,10 @@ def redirect_to_default(req, domain=None):
 
 def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
-    domain = Domain.get_by_name(domain_name)
-    if domain:
+    domain_obj = Domain.get_by_name(domain_name)
+    if domain_obj:
         return (
-            domain.two_factor_auth
+            domain_obj.two_factor_auth
             and not request.couch_user.two_factor_disabled
             and not request.user.is_verified()
         )
@@ -290,7 +296,7 @@ def server_up(req):
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
-            '{}: {}'.format(check, status.msg)
+            html.linebreaks('<strong>{}</strong>: {}'.format(check, html.escape(status.msg)).strip())
             for check, status in failed_checks
         ]
         create_datadog_event(
@@ -298,7 +304,7 @@ def server_up(req):
             alert_type='error', aggregation_key='serverup',
         )
         status_messages.insert(0, 'Failed Checks (%s):' % os.uname()[1])
-        return HttpResponse('<br>'.join(status_messages), status=500)
+        return HttpResponse(''.join(status_messages), status=500)
     else:
         return HttpResponse("success")
 
@@ -338,7 +344,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name, template_name):
+def _login(req, domain_name):
 
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
@@ -363,37 +369,45 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    custom_landing_page = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
+    template_name = 'login_and_password/login.html'
+    custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
-        template_name = custom_landing_page
+        if isinstance(custom_landing_page, six.string_types):
+            soft_assert_type_text(custom_landing_page)
+            template_name = custom_landing_page
+        else:
+            template_name = custom_landing_page.get(req.get_host())
+            if template_name is None:
+                template_name = custom_landing_page.get('default', template_name)
     elif domain_name:
-        domain = Domain.get_by_name(domain_name)
+        domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
             'domain': domain_name,
-            'hr_name': domain.display_name() if domain else domain_name,
-            'next': req_params.get('next', '/a/%s/' % domain),
-            'allow_domain_requests': domain.allow_domain_requests,
-            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+            'hr_name': domain_obj.display_name(),
+            'next': req_params.get('next', '/a/%s/' % domain_name),
+            'allow_domain_requests': domain_obj.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
         })
     else:
+        commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]
         context.update({
-            'current_page': {'page_name': _('Welcome back to %s!') % settings.COMMCARE_HQ_NAME}
+            'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
         })
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
     else:
         auth_view = HQLoginView if not domain_name else CloudCareLoginView
 
-    demo_workflow_ab = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, req)
+    demo_workflow_ab_v2 = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW_V2, req)
 
     if settings.IS_SAAS_ENVIRONMENT:
-        context['demo_workflow_ab'] = demo_workflow_ab.context
+        context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
 
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
     if settings.IS_SAAS_ENVIRONMENT:
-        demo_workflow_ab.update_response(response)
+        demo_workflow_ab_v2.update_response(response)
 
     return response
 
@@ -409,11 +423,11 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain, "login_and_password/login.html")
+    return _login(req, domain)
 
 
 @location_safe
-def domain_login(req, domain, template_name="login_and_password/login.html"):
+def domain_login(req, domain):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -423,7 +437,7 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     # necessary domain contexts:
     req.project = project
 
-    return _login(req, domain, template_name)
+    return _login(req, domain)
 
 
 class HQLoginView(LoginView):
@@ -664,7 +678,7 @@ class BugReportView(View):
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
             ).format(**debug_context)
-            traceback_info = cache.cache.get(report['500traceback'])
+            traceback_info = cache.cache.get(report['500traceback']) or 'No traceback info available'
             cache.cache.delete(report['500traceback'])
             message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
@@ -684,7 +698,7 @@ class BugReportView(View):
 
         # only fake the from email if it's an @dimagi.com account
         is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if re.search('@dimagi\.com$', report['username']) and not is_icds_env:
+        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
@@ -1080,7 +1094,7 @@ def quick_find(request):
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
         elif redirect and request.couch_user.is_superuser:
-            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
+            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), doc.get('_id')))
         else:
             return json_response(doc_info)
 
@@ -1148,6 +1162,7 @@ class MaintenanceAlertsView(BasePageView):
                 'active': alert.active,
                 'html': alert.html,
                 'id': alert.id,
+                'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
@@ -1161,7 +1176,8 @@ class MaintenanceAlertsView(BasePageView):
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     alert_text = request.POST.get('alert_text')
-    MaintenanceAlert(active=False, text=alert_text).save()
+    domains = request.POST.get('domains').split() or None
+    MaintenanceAlert(active=False, text=alert_text, domains=domains).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 
@@ -1185,33 +1201,6 @@ def deactivate_alert(request):
     return HttpResponseRedirect(reverse('alerts'))
 
 
-class DataTablesAJAXPaginationMixin(object):
-
-    @property
-    def echo(self):
-        return self.request.GET.get('sEcho')
-
-    @property
-    def display_start(self):
-        return int(self.request.GET.get('iDisplayStart'))
-
-    @property
-    def display_length(self):
-        return int(self.request.GET.get('iDisplayLength'))
-
-    @property
-    def search_phrase(self):
-        return self.request.GET.get('sSearch', '').strip()
-
-    def datatables_ajax_response(self, data, total_records, filtered_records=None):
-        return HttpResponse(json.dumps({
-            'sEcho': self.echo,
-            'aaData': data,
-            'iTotalRecords': total_records,
-            'iTotalDisplayRecords': filtered_records or total_records,
-        }))
-
-
 # Use instead of djangular's base JSONResponseMixin
 # Adds djng_current_rmi to view context
 class HQJSONResponseMixin(JSONResponseMixin):
@@ -1229,7 +1218,7 @@ def redirect_to_dimagi(endpoint):
     def _redirect(request, lang_code=None):
         if settings.SERVER_ENVIRONMENT in [
             'production',
-            'softlayer',
+            'india',
             'staging',
             'changeme',
             'localdev',

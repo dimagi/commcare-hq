@@ -1,0 +1,43 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main "hqwebapp/js/widgets" %}
+
+{% block page_content %}
+  <div id="blacklist-trans-form" class="tab-pane">
+    <table class="table table-striped table-hover">
+      <thead>
+        <th class="col-sm-2">{% trans "App" %}</th>
+        <th class="col-sm-2">{% trans "Module" %}</th>
+        <th class="col-sm-2">{% trans "Detail/List/UI" %}</th>
+        <th class="col-sm-2">{% trans "Field Name" %}</th>
+        <th class="col-sm-3">{% trans "Default Display Text" %}</th>
+        <th class="col-sm-1">{% trans "Delete" %}</th>
+      </thead>
+      <tbody>
+      {% for translation in blacklisted_translations %}
+        <tr>
+          <td>{{ translation.app_name }}</td>
+          <td>
+            {% if translation.module_id %}
+            <a href="{% url 'view_module' domain translation.app_id translation.module_id %}">{{ translation.module_name }}</a>
+            {% endif %}
+          </td>
+          <td>{{ translation.field_type }}</td>
+          <td>{{ translation.field_name }}</td>
+          <td>{{ translation.display_text }}</td>
+          <td>
+            <a href="{{ translation.delete_url }}" class="btn btn-danger">
+              <i class="fa fa-trash-o"></i>
+              {% trans "Delete" %}
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% crispy blacklist_form %}
+  </div>
+{% endblock %}

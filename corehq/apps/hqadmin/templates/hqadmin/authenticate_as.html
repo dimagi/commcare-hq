@@ -6,20 +6,20 @@
 {% requirejs_main 'hqadmin/js/authenticate_as' %}
 
 {% block page_content %}
-{% initial_page_data "url" root_page_url %}
-<div class="row">
+  {% initial_page_data "url" root_page_url %}
+  <div class="row">
     <div class="col-xs-12">
-        <h2>{{ current_page.title }}</h2>
-        <p class="help-block">
+      <h2>{{ current_page.title }}</h2>
+      <p class="help-block">
         {% blocktrans %}
-            Use this form to login as a mobile user.
-            You can fill out the fully qualified username of
-            a mobile worker in the username box
-            (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)
-            or fill the username and domain.
+          Use this form to login as a mobile user.
+          You can fill out the fully qualified username of
+          a mobile worker in the username box
+          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)
+          or fill the username and domain.
         {% endblocktrans %}
-        </p>
-        {% crispy form %}
+      </p>
+      {% crispy form %}
     </div>
-</div>
+  </div>
 {% endblock %}

@@ -20,6 +20,7 @@ from corehq.elastic import get_es_new
 from corehq.pillows.user import add_demo_user_to_user_index
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.log import get_traceback_string
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def get_reindex_commands(alias_name):
@@ -52,6 +53,7 @@ def do_reindex(alias_name, reset):
     reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
         if isinstance(reindex_command, six.string_types):
+            soft_assert_type_text(reindex_command)
             kwargs = {"reset": True} if reset else {}
             FACTORIES_BY_SLUG[reindex_command](**kwargs).build().reindex()
         else:

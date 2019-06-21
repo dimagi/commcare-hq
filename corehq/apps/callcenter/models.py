@@ -133,6 +133,3 @@ class CallCenterIndicatorConfig(JsonObject):
             indicator.enabled = True
             if parsed_indicator.date_range:
                 indicator.date_ranges.add(parsed_indicator.date_range)
-
-
-from .signals import *

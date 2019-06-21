@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,9 +18,19 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-ls_home_visit_forms_filled",
@@ -30,6 +48,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309"
     },
+    "validations": [
+      {
+        "name": "submitted_by_supervisor",
+        "error_message": "Form not submitted by supervisor",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "supervisor"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "User ID",
@@ -68,8 +104,8 @@
         "datatype": "string",
         "type": "expression",
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "location_id",
         "expression": {
           "type": "named",
@@ -80,11 +116,13 @@
         "display_name": "BLOCK ID",
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "type": "named",
             "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "is_primary_key": false,
         "transform": {},
@@ -174,6 +212,13 @@
     },
     "named_filters": {},
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "location_id"
+      },
+      "primary_key": ["location_id","doc_id"]
+    }
   }
 }

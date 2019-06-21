@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from __future__ import absolute_import
-from django.db import migrations, models
-from corehq.sql_db.operations import RawSQLMigration
+from django.db import migrations
 
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -15,5 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('setup_category_tables.sql'),
+        noop_migration(),
     ]

@@ -39,7 +39,6 @@ from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
 from casexml.apps.stock.models import StockTransaction
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
     PendingReportingDataRecalculation, OneOffTaskProgress
-from custom.ilsgateway.tasks import report_run
 
 
 @location_safe
@@ -296,13 +295,6 @@ class SupervisionDocumentDeleteView(TemplateView, DomainViewMixin):
         return HttpResponseRedirect(
             reverse(SupervisionDocumentListView.urlname, args=[self.domain])
         )
-
-
-@domain_admin_required
-@require_POST
-def run_warehouse_runner(request, domain):
-    report_run.delay(domain)
-    return HttpResponse('OK')
 
 
 @domain_admin_required

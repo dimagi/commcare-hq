@@ -206,15 +206,11 @@ FORMTRANSLATE_TIMEOUT = 5
 LOCAL_APPS = (
 #    'django_coverage', # Adds `python manage.py test_coverage` (settings below)
 #    'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
-#    'couchdebugpanel', # Adds couch info to said toolbar
 #    'devserver',       # Adds improved dev server that also prints SQL on the console (for AJAX, etc, when you cannot use debug_toolbar)
 #    'django_cpserver', # Another choice for a replacement server
 #    'dimagi.utils',
 #    'testapps.test_elasticsearch',
 #    'testapps.test_pillowtop',
-#    'django_fsm', # Adds the ability to generate state diagrams for models using django-fsm
-#    'kombu.transport.django', # required for celery
-#    'package_monitor',
 )
 
 LOCAL_MIDDLEWARE = [
@@ -233,7 +229,9 @@ REPORT_CACHE = 'default'  # or e.g. 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
-    'OPTIONS': {},
+    'OPTIONS': {
+        'PICKLE_VERSION': 2,  # After PY3 migration: remove
+    },
 }
 # example redis cluster setting
 redis_cluster_cache = {
@@ -244,7 +242,8 @@ redis_cluster_cache = {
         'CONNECTION_POOL_CLASS': 'rediscluster.connection.ClusterConnectionPool',
         'CONNECTION_POOL_KWARGS': {
             'skip_full_coverage_check': True
-        }
+        },
+        'PICKLE_VERSION': 2,  # After PY3 migration: remove
     }
 }
 CACHES = {
@@ -255,11 +254,6 @@ CACHES = {
 # on both a local and a distributed environment this should be localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
@@ -279,7 +273,7 @@ CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
-                           '^south', '^djcelery', '^debug_toolbar']
+                           '^south', '^debug_toolbar']
 
 INTERNAL_DATA = {
     "business_unit": [],

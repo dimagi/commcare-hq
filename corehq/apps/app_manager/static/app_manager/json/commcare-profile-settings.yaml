@@ -95,6 +95,14 @@
   supports_linked_app: true
   force: true
 
+- name: "Demo Logo"
+  description: "Upload a file to serve as a demo logo on Android phones"
+  id: "logo_android_demo"
+  widget: "image_uploader"
+  privilege: "commcare_logo_uploader"
+  supports_linked_app: true
+  force: true
+
 - disabled: true
   name: "Server User Registration"
   description: "Whether users registered on the phone need to be registered with the submission server."

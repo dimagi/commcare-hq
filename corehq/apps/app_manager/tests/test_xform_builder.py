@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import doctest
+from collections import OrderedDict
+
 from django.test import SimpleTestCase
 import re
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -70,15 +72,18 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_select_question(self):
-        self.xform.new_question('fav_colors', 'What are your favorite colors?', data_type='select', choices={
-            'r': 'Red',
-            'o': 'Orange',
-            'y': 'Yellow',
-            'g': 'Green',
-            'b': 'Blue',
-            'i': 'Indigo',
-            'v': 'Violet',
-        })
+        self.xform.new_question(
+            'fav_colors', 'What are your favorite colors?', data_type='select',
+            choices=OrderedDict([
+                ('r', 'Red'),
+                ('o', 'Orange'),
+                ('y', 'Yellow'),
+                ('g', 'Green'),
+                ('b', 'Blue'),
+                ('i', 'Indigo'),
+                ('v', 'Violet'),
+            ])
+        )
         self.assertXmlEqual(
             self.replace_xmlns(self.get_xml('select_question'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
@@ -116,7 +121,7 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
         self.xform.new_question('name', 'What is your name?')
         group = self.xform.new_group('personal', 'Personal Questions')
         group.new_question('fav_color', 'Quelle est ta couleur préférée?',
-                           choices={'r': 'Rot', 'g': 'Grün', 'b': 'Blau'})
+                           choices=OrderedDict([('r', 'Rot'), ('b', 'Blau'), ('g', 'Grün')]))
         self.assertXmlEqual(
             self.replace_xmlns(self.get_xml('xform_title'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)

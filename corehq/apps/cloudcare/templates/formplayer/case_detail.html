@@ -2,47 +2,49 @@
 {% load i18n %}
 
 <script type="text/template" id="detail-view-list-template">
-    <tbody>
-    </tbody>
+  <tbody>
+  </tbody>
 </script>
 
 <script type="text/template" id="detail-view-item-template">
-    <th><%- header %></th>
-    <% if (style.displayFormat === 'Graph') { %>
-        <td><iframe srcdoc="<%= data %>" height="300" width="300"></iframe></td>
-    <% } else if (style.displayFormat === 'Image') { %>
-        <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(data) %>"/></td>
-    <% } else { %>
-        <td><%- data %></td>
-    <% } %>
+  <th><%- header %></th>
+  <% if (style.displayFormat === 'Graph') { %>
+  <td><iframe srcdoc="<%= data %>" height="300" width="300"></iframe></td>
+  <% } else if (style.displayFormat === 'Image') { %>
+  <td class="module-caselist-column"><img class="module-icon" src="<%= resolveUri(data) %>"/></td>
+  <% } else if (style.displayFormat === 'Phone') { %>
+  <td><a href="tel:<%- data %>"><%- data %></a></td>
+  <% } else { %>
+  <td><%- data %></td>
+  <% } %>
 </script>
 
 <script type="text/template" id="detail-view-tab-list-template">
-    <ul class="nav nav-tabs" role="tablist">
-    </ul>
+  <ul class="nav nav-tabs" role="tablist">
+  </ul>
 </script>
 
 <script type="text/template" id="detail-view-tab-item-template">
-    <a href="#" role="tab" data-keyboard="true" data-toggle="tab"><%- title %></a>
+  <a href="#" role="tab" data-keyboard="true" data-toggle="tab"><%- title %></a>
 </script>
 
 <div id="case-detail-modal" class="modal fade module-casedetail-modal" role="dialog" tabindex='-1'>
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">{% trans "Case Detail" %}</h4>
-            </div>
-            <div class="modal-body">
-              <div class="js-detail-tabs module-casedetail-tabs"></div>
-              <div class="js-detail-content"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button"
-                        class="btn btn-success btn-lg module-casedetail-continue"
-                        id="select-case"
-                        data-dismiss="modal">{% trans "Continue" %}</button>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">{% trans "Case Detail" %}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="js-detail-tabs module-casedetail-tabs"></div>
+        <div class="js-detail-content"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-success btn-lg module-casedetail-continue"
+                id="select-case"
+                data-dismiss="modal">{% trans "Continue" %}</button>
+      </div>
     </div>
+  </div>
 </div>

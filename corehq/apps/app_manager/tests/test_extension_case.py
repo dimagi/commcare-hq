@@ -145,14 +145,19 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         self.app = Application.new_app('domain', 'New App')
         self.module = self.app.add_module(AdvancedModule.new_module('Fish Module', None))
         self.module.case_type = 'fish'
-        self.form = self.module.new_form('New Form', None)
+        self.form = self.module.new_form('Form', 'en', self.get_xml('original').decode('utf-8'))
+        self.other_module = self.app.add_module(AdvancedModule.new_module('Freshwater Module', lang='en'))
+        self.other_module.case_type = 'freshwater'
+        self.other_form = self.module.new_form('Other Form', 'en', self.get_xml('original').decode('utf-8'))
         self.case_index = CaseIndex(
             reference_id='host',
             relationship='extension',
         )
         self.subcase = AdvancedOpenCaseAction(
+            case_tag='open_freshwater_0',
             case_type='freshwater',
             case_name='Wanda',
+            name_path='/data/question1',
             open_condition=FormActionCondition(type='always'),
             case_properties={'name': '/data/question1'},
             case_indices=[self.case_index],
@@ -194,6 +199,15 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         )
         self.assertXmlEqual(self.get_xml('open_subcase'), str(self.xform))
 
+    def test_xform_case_block_index_supports_dynamic_relationship(self):
+        self.subcase.case_indices = [CaseIndex(
+            tag='open_freshwater_0',
+            reference_id='node',
+            relationship='question',
+            relationship_question='/data/question2',
+        )]
+        self.assertXmlEqual(self.get_xml('case_index_relationship_question'), self.form.render_xform())
+
     def test_xform_case_block_index_default_relationship(self):
         """
         CaseBlock index relationship should default to "child"
@@ -216,7 +230,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         CaseBlock index relationship should only allow valid values
         """
         with self.assertRaisesRegexp(CaseError,
-                                     'Valid values for an index relationship are "child" and "extension"'):
+                                     'Valid values for an index relationship are'):
             self.subcase_block.add_index_ref(
                 'host',
                 self.form.get_case_type(),
@@ -227,46 +241,32 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
 
 class ExtensionCasesCreateOwnerID(SimpleTestCase):
 
-    def test_advanced_xform_create_owner_id_with_without_extensions(self):
-        """ Owner id should be automatically set if there are any non-extension indices"""
+    def test_advanced_xform_autoset_owner_id(self):
+        """
+            Owner id should be automatically set if there are any non-extension indices.
+            It should never be set if there are any dynamically-specified indices.
+        """
+
+        def _test_relationships(relationships, expected):
+            advanced_open_action = AdvancedOpenCaseAction.wrap({'case_indices': [{
+                'tag': 'tag{}'.format(i),
+                'reference_id': 'case',
+                'relationship': r,
+            } for i, r in enumerate(relationships)]})
+            self.assertEquals(autoset_owner_id_for_advanced_action(advanced_open_action), expected)
 
         # Only extensions
-        advanced_open_action = AdvancedOpenCaseAction.wrap({
-            'case_indices': [
-                {
-                    'tag': 'mother',
-                    'reference_id': 'case',
-                    'relationship': 'extension',
-                },
-                {
-                    'tag': 'father',
-                    'reference_id': 'case',
-                    'relationship': 'extension',
-                }
-            ]
-        })
-        self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
+        _test_relationships(['extension', 'extension'], False)
 
         # Extension and children
-        advanced_open_action = AdvancedOpenCaseAction.wrap({
-            'case_indices': [
-                {
-                    'tag': 'mother',
-                    'reference_id': 'case',
-                    'relationship': 'extension',
-                },
-                {
-                    'tag': 'father',
-                    'reference_id': 'case',
-                    'relationship': 'child',
-                }
-            ]
-        })
-        self.assertTrue(autoset_owner_id_for_advanced_action(advanced_open_action))
+        _test_relationships(['extension', 'child'], True)
+
+        # Dynamically-determined relationship
+        _test_relationships(['extension', 'question'], False)
+        _test_relationships(['child', 'question'], False)
 
         # No indices
-        advanced_open_action = AdvancedOpenCaseAction()
-        self.assertTrue(autoset_owner_id_for_advanced_action(advanced_open_action))
+        _test_relationships([], True)
 
     def test_advanced_xform_create_owner_id_explicitly_set(self):
         """When owner_id is explicitly set, don't autoset"""
@@ -359,6 +359,7 @@ class CaseIndexTests(SimpleTestCase):
         """
         CaseIndex(tag='mother', relationship='child')
         CaseIndex(tag='mother', relationship='extension')
+        CaseIndex(tag='mother', relationship='question')
         with self.assertRaises(BadValueError):
             CaseIndex(tag='mother', relationship='parent')
         with self.assertRaises(BadValueError):

@@ -40,7 +40,7 @@ def turn_on_demo_mode(commcare_user, domain):
         reset_demo_user_restore(commcare_user, domain)
         return {'errors': []}
     except Exception as e:
-        notify_exception(None, message=e.message)
+        notify_exception(None, message=six.text_type(e))
         return {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}

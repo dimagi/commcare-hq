@@ -13,26 +13,26 @@
           <text id="fav_colors-label">
             <value>What are your favorite colors?</value>
           </text>
-          <text id="fav_colors-b-label">
-            <value>Blue</value>
-          </text>
-          <text id="fav_colors-g-label">
-            <value>Green</value>
-          </text>
-          <text id="fav_colors-i-label">
-            <value>Indigo</value>
+          <text id="fav_colors-r-label">
+            <value>Red</value>
           </text>
           <text id="fav_colors-o-label">
             <value>Orange</value>
           </text>
-          <text id="fav_colors-r-label">
-            <value>Red</value>
+          <text id="fav_colors-y-label">
+            <value>Yellow</value>
+          </text>
+          <text id="fav_colors-g-label">
+            <value>Green</value>
+          </text>
+          <text id="fav_colors-b-label">
+            <value>Blue</value>
+          </text>
+          <text id="fav_colors-i-label">
+            <value>Indigo</value>
           </text>
           <text id="fav_colors-v-label">
             <value>Violet</value>
-          </text>
-          <text id="fav_colors-y-label">
-            <value>Yellow</value>
           </text>
         </translation>
       </itext>
@@ -42,32 +42,32 @@
     <select ref="/data/fav_colors">
       <label ref="jr:itext('fav_colors-label')"/>
       <item>
-        <label ref="jr:itext('fav_colors-b-label')"/>
-        <value>b</value>
-      </item>
-      <item>
-        <label ref="jr:itext('fav_colors-g-label')"/>
-        <value>g</value>
-      </item>
-      <item>
-        <label ref="jr:itext('fav_colors-i-label')"/>
-        <value>i</value>
+        <label ref="jr:itext('fav_colors-r-label')"/>
+        <value>r</value>
       </item>
       <item>
         <label ref="jr:itext('fav_colors-o-label')"/>
         <value>o</value>
       </item>
       <item>
-        <label ref="jr:itext('fav_colors-r-label')"/>
-        <value>r</value>
+        <label ref="jr:itext('fav_colors-y-label')"/>
+        <value>y</value>
+      </item>
+      <item>
+        <label ref="jr:itext('fav_colors-g-label')"/>
+        <value>g</value>
+      </item>
+      <item>
+        <label ref="jr:itext('fav_colors-b-label')"/>
+        <value>b</value>
+      </item>
+      <item>
+        <label ref="jr:itext('fav_colors-i-label')"/>
+        <value>i</value>
       </item>
       <item>
         <label ref="jr:itext('fav_colors-v-label')"/>
         <value>v</value>
-      </item>
-      <item>
-        <label ref="jr:itext('fav_colors-y-label')"/>
-        <value>y</value>
       </item>
     </select>
   </h:body>

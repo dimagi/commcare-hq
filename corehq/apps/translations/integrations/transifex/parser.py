@@ -13,7 +13,7 @@ from corehq.apps.dump_reload.const import DATETIME_FORMAT
 
 CONTEXT_REGEXS = {
     # Module or Form: sheet name for module/form: unique id
-    'module_and_forms_sheet': r'^(Module|Form):(\w+):(\w+)$',
+    'module_and_forms_sheet': r'^(Module|Form):(\w+):(\w+)$',  # maintain legacy module usage instead of menu
     # case property: list/detail
     'module_sheet': r'^(.+):(list|detail)$',
 }
@@ -32,7 +32,7 @@ class TranslationsParser(object):
     @memoized
     def get_app(self):
         from corehq.apps.app_manager.dbaccessors import get_current_app
-        app_build_id = self.transifex.app_id_to_build
+        app_build_id = self.transifex.build_id
         return get_current_app(self.transifex.domain, app_build_id)
 
     def _add_sheet(self, ws, po_entries):
@@ -43,9 +43,9 @@ class TranslationsParser(object):
         sheet_name = ws.title
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
             self._add_module_and_form_sheet(ws, po_entries)
-        elif 'module' in sheet_name and 'form' not in sheet_name:
+        elif 'menu' in sheet_name and 'form' not in sheet_name:
             self._add_module_sheet(ws, po_entries)
-        elif 'module' in sheet_name and 'form' in sheet_name:
+        elif 'menu' in sheet_name and 'form' in sheet_name:
             self._add_form_sheet(ws, po_entries)
         else:
             raise Exception("Got unexpected sheet name %s" % sheet_name)
@@ -53,12 +53,15 @@ class TranslationsParser(object):
     def _add_module_and_form_sheet(self, ws, po_entries):
         context_regex = CONTEXT_REGEXS['module_and_forms_sheet']
         # add header
-        ws.append(["Type", "sheet_name", self.key_lang_str, self.source_lang_str, 'unique_id'])
+        ws.append(["Type", "menu_or_form", self.key_lang_str, self.source_lang_str, 'unique_id'])
         # add rows
         for po_entry in po_entries:
             context = po_entry.msgctxt
             _type, _sheet_name, _unique_id = re.match(context_regex, context).groups()
-            ws.append([_type, _sheet_name, po_entry.msgid, po_entry.msgstr, _unique_id])
+            # replace the legacy module notation with new menu notation
+            ws.append([_type.replace('Module', 'Menu'),
+                       _sheet_name.replace('module', 'menu'),
+                       po_entry.msgid, po_entry.msgstr, _unique_id])
 
     @staticmethod
     def _get_rows_for_module_sheet(consolidated_po_entries):
@@ -117,7 +120,7 @@ class TranslationsParser(object):
         _module = form.get_module()
         module_index = self.get_app.get_module_index(_module.unique_id) + 1
         form_index = _module.get_form_index(form_unique_id) + 1
-        return "module%s_form%s" % (module_index, form_index)
+        return "menu%s_form%s" % (module_index, form_index)
 
     def _get_sheet_name_with_indexes(self, resource_slug):
         """
@@ -133,7 +136,7 @@ class TranslationsParser(object):
         if module_sheet_name_match:
             module_unique_id = module_sheet_name_match.groups()[0]
             module_index = self.get_app.get_module_index(module_unique_id) + 1
-            return "module%s" % module_index
+            return "menu%s" % module_index
         form_sheet_name_match = TRANSIFEX_FORM_RESOURCE_NAME.match(resource_slug)
         if form_sheet_name_match:
             form_unique_id = form_sheet_name_match.groups()[0]
@@ -145,7 +148,7 @@ class TranslationsParser(object):
         receives resource slug and converts to excel sheet name as expected by HQ
 
         :param resource_slug: like module_moduleUniqueID_v15 or form_formUniqueID
-        :return: name like module1 or module1_form1
+        :return: name like menu1 or menu1_form1
         """
         resource_slug = resource_slug.split("_v%s" % self.transifex.version)[0]
         return self._get_sheet_name_with_indexes(resource_slug)

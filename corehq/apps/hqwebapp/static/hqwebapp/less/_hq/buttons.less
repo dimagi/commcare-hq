@@ -1,5 +1,22 @@
+.btn-primary {
+  .button-variant(#ffffff; @call-to-action-mid; @call-to-action-mid);
+  font-weight: bold;
+}
+
+.btn-default {
+  .button-variant(@call-to-action-mid; #ffffff; @call-to-action-mid);
+}
+
+.btn.active {
+    .button-variant(#ffffff; @call-to-action-low; @call-to-action-low);
+}
+
 .btn-primary-dark {
   .button-variant(#ffffff; @cc-brand-low; @cc-brand-low);
+}
+
+.btn-danger {
+  .button-variant(@cc-att-neg-mid; #ffffff; @cc-att-neg-mid);
 }
 
 .btn-purple {
@@ -8,4 +25,30 @@
 
 .btn-full-width {
   width: 100%;
+}
+
+// Separated button groups in toolbars need more space between them,
+// since the buttons within the group have space between them
+.btn-toolbar > .btn-group-separated:not(:first-child) {
+    margin-left: 20px;
+}
+
+.btn-group-separated {
+    > button, > .btn {
+        // Styled similarly to .btn-default
+        border-radius: 20px !important;     // force override bootstrap's per-corner styles for leftmost/rightmost buttons
+        padding: 3px 15px;
+        background-color: white;
+        border: 1px solid @call-to-action-mid;
+        color: @call-to-action-mid;
+        margin-right: 5px;
+        margin-bottom: 5px;
+
+        &.active, &.active:focus, &.active:hover {
+            // Styled similarly to .btn-primary
+            // Don't bold font because .active often toggles on and off, and we don't want the size to change
+            background-color: @call-to-action-mid;
+            color: white;
+        }
+    }
 }

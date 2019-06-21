@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -10,9 +18,18 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-tech_issue_cases",
@@ -74,33 +91,13 @@
         "is_nullable": true,
         "column_id": "block_id",
         "expression": {
-          "location_id_expression": {
-            "test": {
-              "operator": "eq",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "aww_or_ls"
-              },
-              "type": "boolean_expression",
-              "property_value": "aww"
-            },
-            "expression_if_true": {
-              "location_id_expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "aww_id"
-              },
-              "type": "location_parent_id"
-            },
-            "type": "conditional",
-            "expression_if_false": {
-              "datatype": "string",
-              "type": "property_name",
-              "property_name": "ls_id"
-            }
+          "location_id": {
+            "type": "named",
+            "name": "aww_or_ls_id"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -112,36 +109,13 @@
         "is_nullable": true,
         "column_id": "district_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "test": {
-                "operator": "eq",
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "aww_or_ls"
-                },
-                "type": "boolean_expression",
-                "property_value": "aww"
-              },
-              "expression_if_true": {
-                "location_id_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "aww_id"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "conditional",
-              "expression_if_false": {
-                "datatype": "string",
-                "type": "property_name",
-                "property_name": "ls_id"
-              }
-            },
-            "type": "location_parent_id"
+          "location_id": {
+            "type": "named",
+            "name": "aww_or_ls_id"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -153,39 +127,13 @@
         "is_nullable": true,
         "column_id": "state_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "test": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "aww_or_ls"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "aww"
-                },
-                "expression_if_true": {
-                  "location_id_expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "aww_id"
-                  },
-                  "type": "location_parent_id"
-                },
-                "type": "conditional",
-                "expression_if_false": {
-                  "datatype": "string",
-                  "type": "property_name",
-                  "property_name": "ls_id"
-                }
-              },
-              "type": "location_parent_id"
-            },
-            "type": "location_parent_id"
+          "location_id": {
+            "type": "named",
+            "name": "aww_or_ls_id"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -353,30 +301,49 @@
         "type": "property_name",
         "property_name": "aww_or_ls"
       },
-      "supervisor_id": {
+      "aww_or_ls_id": {
+        "type": "conditional",
         "test": {
           "operator": "eq",
-          "type": "boolean_expression",
           "expression": {
-            "datatype": null,
             "type": "property_name",
             "property_name": "aww_or_ls"
           },
+          "type": "boolean_expression",
           "property_value": "aww"
         },
         "expression_if_true": {
-          "location_id_expression": {
-            "datatype": null,
             "type": "property_name",
             "property_name": "aww_id"
-          },
-          "type": "location_parent_id"
         },
-        "type": "conditional",
         "expression_if_false": {
-          "datatype": "string",
-          "type": "property_name",
-          "property_name": "ls_id"
+            "type": "property_name",
+            "property_name": "ls_id"
+        }
+      },
+      "supervisor_id": {
+        "type": "conditional",
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "aww_or_ls"
+          },
+          "type": "boolean_expression",
+          "property_value": "aww"
+        },
+        "expression_if_true": {
+          "type": "ancestor_location",
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "location_id": {
+            "type": "property_name",
+            "property_name": "aww_id"
+          }
+        },
+        "expression_if_false": {
+            "type": "property_name",
+            "property_name": "ls_id"
         }
       }
     },
@@ -422,7 +389,7 @@
         "property_value": "ls"
       }
     },
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-non-dashboard",
     "disable_destructive_rebuild": true
   }
 }

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import collections
 import os
 from copy import deepcopy
+from itertools import chain
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -18,7 +19,9 @@ from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.python_compatibility import soft_assert_type_text
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -37,6 +40,8 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
 
 
 def _json_diff(obj1, obj2, path, track_list_indices=True):
+    obj1 = eval_lazy(obj1)
+    obj2 = eval_lazy(obj2)
     if isinstance(obj1, str):
         obj1 = six.text_type(obj1)
     if isinstance(obj2, str):
@@ -44,34 +49,37 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
 
     if obj1 == obj2:
         return
-    elif Ellipsis in (obj1, obj2):
+    elif MISSING in (obj1, obj2):
         yield FormJsonDiff('missing', path, obj1, obj2)
+    elif isinstance(obj1, dict):
+        if not isinstance(obj2, dict):
+            # special case to deal with OrderedDicts
+            yield FormJsonDiff('type', path, obj1, obj2)
+        else:
+
+            def value_or_missing(obj, key):
+                return obj.get(key, MISSING)
+
+            for key in chain(obj1, (key for key in obj2 if key not in obj1)):
+                for result in _json_diff(value_or_missing(obj1, key),
+                                         value_or_missing(obj2, key),
+                                         path=path + (key,),
+                                         track_list_indices=track_list_indices):
+                    yield result
     elif type(obj1) != type(obj2):
         yield FormJsonDiff('type', path, obj1, obj2)
-    elif isinstance(obj1, dict):
-        keys = set(obj1.keys()) | set(obj2.keys())
-
-        def value_or_ellipsis(obj, key):
-            return obj.get(key, Ellipsis)
-
-        for key in keys:
-            for result in _json_diff(value_or_ellipsis(obj1, key),
-                                     value_or_ellipsis(obj2, key),
-                                     path=path + (key,),
-                                     track_list_indices=track_list_indices):
-                yield result
     elif isinstance(obj1, list):
 
-        def value_or_ellipsis(obj, i):
+        def value_or_missing(obj, i):
             try:
                 return obj[i]
             except IndexError:
-                return Ellipsis
+                return MISSING
 
         for i in range(max(len(obj1), len(obj2))):
             list_index = i if track_list_indices else '[*]'
-            for result in _json_diff(value_or_ellipsis(obj1, i),
-                                     value_or_ellipsis(obj2, i),
+            for result in _json_diff(value_or_missing(obj1, i),
+                                     value_or_missing(obj2, i),
                                      path=path + (list_index,),
                                      track_list_indices=track_list_indices):
                 yield result
@@ -99,10 +107,7 @@ def commit_plan(domain, planning_db):
 
 
 def _get_submission_xml(xform, db):
-    xml = BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml')
-    if isinstance(xml, six.text_type):
-        xml = xml.encode('utf-8')
-    return xml
+    return BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml')
 
 
 def _get_new_form_json(xml, xform_id):
@@ -204,9 +209,19 @@ def prepare_case_json(planning_db):
 def is_datetime_string(string):
     if not isinstance(string, six.string_types):
         return False
+    soft_assert_type_text(string)
     try:
         iso_string_to_datetime(string, strict=True)
     except (ValueError, OverflowError, TypeError):
         return False
     else:
         return True
+
+
+class MissingType(object):
+
+    def __repr__(self):
+        return "MISSING"
+
+
+MISSING = MissingType()

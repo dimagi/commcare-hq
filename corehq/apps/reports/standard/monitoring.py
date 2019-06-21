@@ -1,69 +1,71 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 import datetime
 import math
 from collections import defaultdict, namedtuple
+import six
+from six.moves import map, range
+from six.moves.urllib.parse import urlencode
 
-from django.conf import settings
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
-from pygooglechart import ScatterChart
 import pytz
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+from memoized import memoized
+from pygooglechart import ScatterChart
 
 from corehq import toggles
-from corehq.apps.es import filters
-from corehq.apps.es import cases as case_es
-from corehq.apps.es.aggregations import (
-    TermsAggregation,
-    FilterAggregation,
-    MissingAggregation,
-)
+from corehq.elastic import ES_DEFAULT_INSTANCE
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.es import cases as case_es, filters
+from corehq.apps.es.aggregations import FilterAggregation, MissingAggregation, TermsAggregation
 from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
-from corehq.apps.reports import util
-from corehq.apps.reports.analytics.esaccessors import (
-    get_last_submission_time_for_users,
-    get_submission_counts_by_user,
-    get_completed_counts_by_user,
-    get_submission_counts_by_date,
-    get_completed_counts_by_date,
-    get_case_counts_closed_by_user,
-    get_case_counts_opened_by_user,
-    get_active_case_counts_by_owner,
-    get_total_case_counts_by_owner,
-    get_forms,
-    get_form_duration_stats_by_user,
-    get_form_duration_stats_for_users)
-from corehq.apps.reports.exceptions import TooMuchDataError
-from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import (
-    ExpandedMobileWorkerFilter as EMWF
-)
-from corehq.apps.reports.standard import ProjectReportParametersMixin, \
-    DatespanMixin, ProjectReport
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
-from corehq.apps.reports.filters.select import CaseTypeFilter
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
-from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import friendly_timedelta, format_datatables_data
-from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
-from corehq.util.timezones.conversions import ServerTime, PhoneTime
+from corehq.util.context_processors import commcare_hq_names
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
-from memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
+from dimagi.utils.chunked import chunked
 
-import six
-from six.moves import range
-from six.moves import map
-from six.moves.urllib.parse import urlencode
-
+from corehq.apps.reports import util
+from corehq.apps.reports.analytics.esaccessors import (
+    get_active_case_counts_by_owner,
+    get_case_counts_closed_by_user,
+    get_case_counts_opened_by_user,
+    get_completed_counts_by_date,
+    get_completed_counts_by_user,
+    get_form_counts_by_user_xmlns,
+    get_form_duration_stats_by_user,
+    get_form_duration_stats_for_users,
+    get_forms,
+    get_last_submission_time_for_users,
+    get_submission_counts_by_date,
+    get_submission_counts_by_user,
+    get_total_case_counts_by_owner,
+)
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesColumnGroup,
+    DataTablesHeader,
+    DTSortType,
+)
+from corehq.apps.reports.exceptions import BadRequestError, TooMuchDataError
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.forms import (
+    CompletionOrSubmissionTimeFilter,
+    FormsByApplicationFilter,
+)
+from corehq.apps.reports.filters.select import CaseTypeFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
 
 TOO_MUCH_DATA = ugettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -689,14 +691,14 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     def rows(self):
+        export = self.rendered_as in ('email', 'export')
         if util.is_query_too_big(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
-        ):
+        ) and not export:
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
 
-        rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
         for simplified_user in self.selected_simplified_users:
             row = []
@@ -713,12 +715,12 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 )
                 totals = [totals[i] + col.get('sort_key')
                           for i, col in enumerate(row[1:])]
-                rows.append(row)
+                yield row
             else:
-                rows.append([self.get_user_link(simplified_user), '--'])
+                yield [self.get_user_link(simplified_user), '--']
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
-        return rows
+        yield self.total_row
 
     @property
     @memoized
@@ -736,6 +738,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             user_ids=user_ids,
             xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
             by_submission_time=self.by_submission_time,
+            export=self.rendered_as == 'export'
         )
 
 
@@ -1075,7 +1078,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to {}.".format(settings.COMMCARE_HQ_NAME))
+                                "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -1178,8 +1181,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         if isinstance(td, int):
             td = datetime.timedelta(seconds=td)
         if isinstance(td, datetime.timedelta):
-            hours = td.seconds//3600
-            minutes = (td.seconds//60)%60
+            hours = td.seconds // 3600
+            minutes = (td.seconds // 60) % 60
             vals = [td.days, hours, minutes, (td.seconds - hours*3600 - minutes*60)]
             names = [_("day"), _("hour"), _("minute"), _("second")]
             status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
@@ -1348,6 +1351,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     fix_left_col = True
     emailable = True
+    exportable_all = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
 
@@ -1375,10 +1379,16 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return [_f for _f in self.request.GET.getlist('case_type') if _f]
 
     @property
+    @memoized
     def view_by_groups(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            track_workflow(self.request.couch_user.username,
+                           "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
             return False
-        return self.request.GET.get('view_by', None) == 'groups'
+        view_by_groups = self.request.GET.get('view_by', None) == 'groups'
+        track_workflow(self.request.couch_user.username,
+                       "Worker Activity Report: view_by_groups == {}".format(view_by_groups))
+        return view_by_groups
 
     @property
     def headers(self):
@@ -1474,11 +1484,16 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def user_ids(self):
         return [u["user_id"] for u in self.users_to_iterate]
 
-    def es_last_submissions(self):
+    def es_last_submissions(self, user_ids):
         """
         Creates a dict of userid => date of last submission
         """
-        return get_last_submission_time_for_users(self.domain, self.user_ids, self.datespan)
+        if self.exporting_as_excel:
+            es_instance_alias = 'export'
+        else:
+            es_instance_alias = ES_DEFAULT_INSTANCE
+        return get_last_submission_time_for_users(self.domain, user_ids,
+                                                  self.datespan, es_instance_alias=es_instance_alias)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):
@@ -1661,10 +1676,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ])
         return rows
 
-    def _rows_by_user(self, report_data):
+    def _rows_by_user(self, report_data, users):
         rows = []
-        last_form_by_user = self.es_last_submissions()
-        for user in self.users_to_iterate:
+        last_form_by_user = self.es_last_submissions([a.user_id for a in users])
+        for user in users:
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
@@ -1731,34 +1746,36 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
         return avg_datespan
 
-    def _report_data(self):
+    def _report_data(self, users_to_iterate):
+        user_ids = [a.user_id for a in users_to_iterate]
+        export = self.rendered_as == 'export'
         avg_datespan = self.avg_datespan
 
-        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
-        user_ids = self.user_ids
+        case_owners = _get_owner_ids_from_users(users_to_iterate)
+        user_ids = user_ids
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
-                self.domain, avg_datespan, user_ids=user_ids
+                self.domain, avg_datespan, user_ids=user_ids, export=export
             ),
             submissions_by_user=get_submission_counts_by_user(
-                self.domain, self.datespan, user_ids=user_ids
+                self.domain, self.datespan, user_ids=user_ids, export=export
             ),
             active_cases_by_owner=get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
             total_cases_by_owner=get_total_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
             cases_closed_by_user=get_case_counts_closed_by_user(
-                self.domain, self.datespan, self.case_types, user_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids, export=export
             ),
             cases_opened_by_user=get_case_counts_opened_by_user(
-                self.domain, self.datespan, self.case_types, user_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids, export=export
             ),
         )
 
-    def _total_row(self, rows, report_data):
+    def _total_row(self, rows, report_data, users):
         total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5]
 
@@ -1768,9 +1785,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     sum([x for x in [row[col].get('sort_key', 0) for row in rows] if not math.isnan(x)])
                 )
             else:
-                total_row.append('---')
+                total_row.append(None)
         num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
-        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
+        case_owners = _get_owner_ids_from_users(users)
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
              for id in case_owners])
@@ -1785,22 +1802,78 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     if report_data.submissions_by_user.get(user['user_id'], False):
                         active_users.add(user['user_id'])
                     all_users.add(user['user_id'])
-            total_row[3] = '%s / %s' % (len(active_users), len(all_users))
+            total_row[3] = {'numerator': len(active_users), 'denominator': len(all_users)}
         else:
-            total_row[3] = '%s / %s' % (num, len(rows))
+            total_row[3] = {'numerator': num, 'denominator': len(rows)}
         return total_row
 
     @property
-    def rows(self):
-        report_data = self._report_data()
+    def get_all_rows(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return self.user_rows()
+        else:
+            return self.rows
 
-        rows = []
+    def user_rows(self):
+        user_es_query = EMWF.user_es_query(
+            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+        )
+        chunk_size = 50000
+        from corehq.elastic import iter_es_docs_from_query
+        user_iterator = iter_es_docs_from_query(user_es_query)
+        for user_chunk in chunked(user_iterator, chunk_size):
+            users = [util._report_user_dict(user) for user in user_chunk]
+            formatted_data = self._report_data(users_to_iterate=users)
+            if self.view_by_groups:
+                rows = self._rows_by_group(formatted_data)
+            else:
+                rows = self._rows_by_user(formatted_data, users)
+            partial_total_row = self._total_row(rows, formatted_data, users)
+            self.total_row = self._sum_rows_together(self.total_row, partial_total_row)
+            for row in rows:
+                yield row
+        self.total_row = self._format_total_row(self.total_row)
+        yield self.total_row
+
+    @staticmethod
+    def _format_total_row(unformatted_total_row):
+        formatted_total_row = []
+        for entry in unformatted_total_row:
+            if isinstance(entry, dict):
+                formatted_total_row.append("{} / {}".format(entry['numerator'], entry['denominator']))
+            elif not entry:
+                formatted_total_row.append("---")
+            else:
+                formatted_total_row.append(entry)
+        return formatted_total_row
+
+    @staticmethod
+    def _sum_rows_together(original_row, row_to_add):
+        if not original_row:
+            new_row = row_to_add
+        else:
+            new_row = []
+            for index, entry in enumerate(row_to_add):
+                if isinstance(entry, int):
+                    new_row.append(original_row[index] + entry)
+                elif isinstance(entry, dict):
+                    new_row.append({'numerator': original_row[index]['numerator'] + entry['numerator'],
+                                    'denominator': original_row[index]['denominator'] + entry['denominator']})
+                else:
+                    new_row.append(original_row[index])
+
+        return new_row
+
+    @property
+    def rows(self):
+        report_data = self._report_data(self.users_to_iterate)
+
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
-            rows = self._rows_by_user(report_data)
+            rows = self._rows_by_user(report_data, self.users_to_iterate)
 
-        self.total_row = self._total_row(rows, report_data)
+        self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
         return rows
 
 

@@ -75,9 +75,8 @@ class CODES:
     commcarebuild = 7   # CommCareBuild
     data_import = 8     # case_importer
 
-    # FormExportInstance, CaseExportInstance, SavedBasicExport
-    data_export = 9
-    basic_export = 10   # SavedBasicExport
+    data_export = 9     # FormExportInstance, CaseExportInstance
+    basic_export = 10   # SavedBasicExport (obsolete)
 
     invoice = 11        # InvoicePdf
     restore = 12

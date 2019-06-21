@@ -2,12 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 import dateutil
-from corehq.apps.app_manager.dbaccessors import get_latest_build_id
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.dbaccessors import get_latest_build_id, get_latest_released_build_id
 from corehq.apps.domain.models import Domain
 from datetime import timedelta
 from pytz import timezone
 import six
+
+from corehq.util.python_compatibility import soft_assert_type_text
 
 EMPTY_FIELD = "---"
 SUCCEED_DOMAIN = 'succeed'
@@ -61,10 +62,9 @@ def has_any_role(user):
 def get_app_build(app_dict):
     domain = Domain.get_by_name(app_dict['domain'])
     if domain.use_cloudcare_releases:
-        return ApplicationBase.get(app_dict['_id']).get_latest_app()['_id']
+        return get_latest_released_build_id(app_dict['domain'], app_dict['_id'])
     else:
         return get_latest_build_id(app_dict['domain'], app_dict['_id'])
-    return None
 
 
 def get_form_dict(case, form_xmlns):
@@ -82,6 +82,7 @@ def format_date(date_string, OUTPUT_FORMAT, localize=None):
         return ''
 
     if isinstance(date_string, six.string_types):
+        soft_assert_type_text(date_string)
         try:
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):

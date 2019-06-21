@@ -1,4 +1,5 @@
 language: python
+python: 2.7
 sudo: required
 group: edge
 branches:
@@ -10,8 +11,9 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
-    - TEST=python-sharded-and-javascript JS_SETUP=yes TEST_MAKE_REQUIREMENTS=yes
+    - TEST=python-sharded-and-javascript JS_SETUP=yes
   global:
+    - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
     # TRAVIS_HQ_USERNAME
     - secure: "LuT0vvsY6RjlEX8Gje74Xl0jcuEfaiN/fOOXpfZd1tf8zC3Xd9E8mNn5vlup/3PBBBv1yIAUmw9LTc03ifWBGzaazqIVAgTfgBoW7XAd8G/lx0/eeZFqheSdpP8wSZwn72Z/XrIhQczFCreZRJHlZA9GopRv7Lfs1SfNEbnMoac="
     # TRAVIS_HQ_PASSWORD
@@ -20,7 +22,7 @@ env:
     - secure: "IDSCI7WXoTowmqcPM6Ip5I8iNu+utvLgzhpuI55Imi0kT6DEgqhYmRzHGY2AfSNKlhClYiGSGzWfqub3/0KyxXSkJB7VcqPQR6CToRfR9zgnu92e9yqmOwMsi5wXxQ0ZRt8l2Oh+WiTtLjGwkD3bvUAHDq2fk9bU7aE03562MTE="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
-  - curl -L https://github.com/docker/compose/releases/download/1.13.0/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv -v docker-compose /usr/local/bin/
 install:
@@ -33,12 +35,7 @@ script:
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
   - export DATADOG_API_KEY=$DATADOG_API_KEY
-  - |
-    if [[ "$TEST_MAKE_REQUIREMENTS" == "yes" ]]
-    then
-      bash scripts/test-make-requirements.sh
-    fi
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
+  - scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro

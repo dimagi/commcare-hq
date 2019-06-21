@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
+from django_prbac.models import Role
 
 from stripe import Charge
 from stripe.resource import StripeObject
@@ -10,7 +11,8 @@ from django.core import mail
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import utils, tasks
-from corehq.apps.accounting.models import Invoice, StripePaymentMethod, PaymentRecord
+from corehq.apps.accounting.models import Invoice, StripePaymentMethod, PaymentRecord, SoftwarePlanVersion, \
+    SoftwareProductRate, SoftwarePlan
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.generator import FakeStripeCard, FakeStripeCustomer
@@ -55,9 +57,17 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         )
         cls.non_autopay_domain = generator.arbitrary_domain()
         # Non-autopay subscription has same parameters as the autopayable subscription
+        cheap_plan = SoftwarePlan.objects.create(name='cheap')
+        cheap_product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cheap_plan.name)
+        cheap_plan_version = SoftwarePlanVersion.objects.create(
+            plan=cheap_plan,
+            product_rate=cheap_product_rate,
+            role=Role.objects.first(),
+        )
         cls.non_autopay_subscription = generator.generate_domain_subscription(
             cls.non_autopay_account,
             cls.non_autopay_domain,
+            plan_version=cheap_plan_version,
             date_start=cls.subscription.date_start,
             date_end=add_months_to_date(cls.subscription.date_start, cls.subscription_length),
         )
@@ -69,6 +79,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         """
         # invoice date is 2 months before the end of the subscription (this is arbitrary)
         invoice_date = utils.months_from_date(cls.subscription.date_start, cls.subscription_length - 2)
+        tasks.calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
 
     @mock.patch.object(StripePaymentMethod, 'customer')

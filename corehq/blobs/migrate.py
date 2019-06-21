@@ -53,13 +53,13 @@ models' attachments to the blob database:
    Then modify the new migration, adding an operation:
    ```
    operations = [
-       HqRunPython(*assert_migration_complete("<your_slug>"))
+       migrations.RunPython(*assert_migration_complete("<your_slug>"))
    ]
    ```
    Don't forget to put
    ```
    from corehq.blobs.migrate import assert_migration_complete
-   from corehq.sql_db.operations import HqRunPython
+   
    ```
    at the top of the file.
 
@@ -73,13 +73,18 @@ from __future__ import unicode_literals
 import json
 import os
 import traceback
-from abc import abstractmethod
 from base64 import b64encode
+from contextlib import contextmanager
+from datetime import timedelta
 from tempfile import mkdtemp
 from io import open
 
+import gevent
 import six
 from django.conf import settings
+from gevent.pool import Pool
+from gevent.queue import LifoQueue
+from django.db.models import Q
 
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import get_blob_db
@@ -88,17 +93,15 @@ from corehq.blobs.migrate_metadata import migrate_metadata
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMeta, BlobMigrationState
-from corehq.blobs.zipdb import get_export_filename
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.doc_processor.couch import (
     CouchDocumentProvider, doc_type_tuples_to_dict
 )
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from corehq.util.doc_processor.interface import (
-    BaseDocProcessor, DOCS_SKIPPED_WARNING,
-    DocumentProcessorController
-)
+from corehq.util.doc_processor.progress import DOCS_SKIPPED_WARNING, ProgressManager
+from corehq.util.pagination import TooManyRetries
 from couchdbkit import ResourceConflict
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
 
@@ -142,12 +145,11 @@ def encode_content(data):
     return b64encode(data)
 
 
-class BaseDocMigrator(BaseDocProcessor):
+class BaseDocMigrator(object):
 
-    def __init__(self, slug, couchdb, filename=None, blob_helper=BlobHelper,
+    def __init__(self, couchdb, filename=None, blob_helper=BlobHelper,
                  get_type_code=lambda doc: None):
         super(BaseDocMigrator, self).__init__()
-        self.slug = slug
         self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
@@ -160,49 +162,39 @@ class BaseDocMigrator(BaseDocProcessor):
     def __enter__(self):
         print("Migration log: {}".format(self.filename))
         self.backup_file = open(self.filename, 'wb')
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.backup_file.close()
+        self.processing_complete()
 
-    def handle_skip(self, doc):
-        return True  # ignore
-
-    def _prepare_doc(self, doc):
-        pass
-
-    def _backup_doc(self, doc):
+    def write_backup(self, doc):
         self.backup_file.write('{}\n'.format(json.dumps(doc)).encode('utf-8'))
         self.backup_file.flush()
 
-    def process_doc(self, doc):
+    def migrate(self, doc):
         """Migrate a single document
 
         :param doc: The document dict to be migrated.
         :returns: True if doc was migrated else False. If this returns False
         the document migration will be retried later.
         """
-        self._prepare_doc(doc)
-        self._backup_doc(doc)
-        return self._do_migration(doc)
-
-    @abstractmethod
-    def _do_migration(self, doc):
         raise NotImplementedError
 
-    def processing_complete(self, skipped):
+    def processing_complete(self):
         if self.dirpath is not None:
             os.remove(self.filename)
             os.rmdir(self.dirpath)
-
-        if not skipped:
-            BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
 
 
 class CouchAttachmentMigrator(BaseDocMigrator):
 
     shared_domain = False
 
-    def _do_migration(self, doc):
+    def migrate(self, doc):
+        self._prepare_doc(doc)
+        self._backup_doc(doc)
+
         attachments = doc.pop("_attachments")
         external_blobs = doc.setdefault("external_blobs", {})
         obj = self.blob_helper(doc, self.couchdb, self.get_type_code(doc))
@@ -246,7 +238,7 @@ class CouchAttachmentMigrator(BaseDocMigrator):
             }
             for name, meta in doc["_attachments"].items()
         }
-        super(CouchAttachmentMigrator, self)._backup_doc(backup_doc)
+        self.write_backup(backup_doc)
 
 
 class SharedCouchAttachmentMigrator(CouchAttachmentMigrator):
@@ -270,32 +262,33 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
 
-    def _backup_doc(self, doc):
-        pass
-
-    def _do_migration(self, doc):
+    def migrate(self, doc):
         meta = doc["_obj_not_json"]
         self.total_blobs += 1
         try:
             content = self.db.old_db.get(key=meta.key)
         except NotFound:
             if not self.db.new_db.exists(key=meta.key):
-                super(BlobDbBackendMigrator, self)._backup_doc({
-                    "blobmeta_id": meta.id,
-                    "domain": meta.domain,
-                    "type_code": meta.type_code,
-                    "parent_id": meta.parent_id,
-                    "blob_key": meta.key,
-                    "error": "not found",
-                })
-                self.not_found += 1
+                self.save_backup(doc)
         else:
             with content:
                 self.db.copy_blob(content, key=meta.key)
         return True
 
-    def processing_complete(self, skipped):
-        super(BlobDbBackendMigrator, self).processing_complete(skipped)
+    def save_backup(self, doc, error="not found"):
+        meta = doc["_obj_not_json"]
+        self.write_backup({
+            "blobmeta_id": meta.id,
+            "domain": meta.domain,
+            "type_code": meta.type_code,
+            "parent_id": meta.parent_id,
+            "blob_key": meta.key,
+            "error": error,
+        })
+        self.not_found += 1
+
+    def processing_complete(self):
+        super(BlobDbBackendMigrator, self).processing_complete()
         if self.not_found:
             print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
             if self.dirpath is None:
@@ -303,40 +296,26 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                 print(self.filename)
 
 
-class BlobDbBackendExporter(BaseDocProcessor):
-
-    def __init__(self, slug, domain):
-        from corehq.blobs.zipdb import ZipBlobDB
-        self.slug = slug
-        self.db = ZipBlobDB(self.slug, domain)
-        self.total_blobs = 0
-        self.not_found = 0
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.db.close()
-        self.processing_complete()
-
-    def process_object(self, meta):
-        from_db = get_blob_db()
+class BlobDbBackendCheckMigrator(BlobDbBackendMigrator):
+    def migrate(self, doc):
+        meta = doc["_obj_not_json"]
         self.total_blobs += 1
-        try:
-            content = from_db.get(key=meta.key)
-        except NotFound:
-            self.not_found += 1
-        else:
-            with content:
-                self.db.copy_blob(content, key=meta.key)
+        if not self.db.new_db.exists(key=meta.key):
+            try:
+                content = self.db.old_db.get(key=meta.key)
+            except NotFound:
+                self.save_backup(doc)
+            else:
+                with content:
+                    self.db.copy_blob(content, key=meta.key)
         return True
-
-    def processing_complete(self):
-        if self.not_found:
-            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
 
 class BlobMetaReindexAccessor(ReindexAccessor):
 
     model_class = BlobMeta
     id_field = 'id'
+    date_range = None
 
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
@@ -345,8 +324,33 @@ class BlobMetaReindexAccessor(ReindexAccessor):
     def doc_to_json(self, obj):
         return {"_id": obj.id, "_obj_not_json": obj}
 
+    def get_key(self, doc):
+        obj = doc["_obj_not_json"]
+        assert isinstance(obj.id, six.integer_types), (type(obj.id), obj.id)
+        # would use a tuple, but JsonObject.to_string requires dict keys to be strings
+        return "%s %s" % (obj.parent_id, obj.id)
+
+    def extra_filters(self, for_count=False):
+        filters = list(super(BlobMetaReindexAccessor, self).extra_filters(for_count))
+        if self.date_range is not None:
+            start_date, end_date = self.date_range
+            if start_date is not None:
+                filters.append(Q(created_on__gte=start_date))
+            if end_date is not None:
+                one_day = timedelta(days=1)
+                filters.append(Q(created_on__lt=end_date + one_day))
+        return filters
+
+    def load(self, key):
+        parent_id, doc_id = key.rsplit(" ", 1)
+        dbname = get_db_alias_for_partitioned_doc(parent_id)
+        obj = self.model_class.objects.using(dbname).get(id=int(doc_id))
+        return self.doc_to_json(obj)
+
 
 class Migrator(object):
+
+    has_worker_pool = False
 
     def __init__(self, slug, doc_types, doc_migrator_class):
         self.slug = slug
@@ -366,83 +370,146 @@ class Migrator(object):
             return None
         self.get_type_code = get_type_code
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        processor = DocumentProcessorController(
-            self._get_document_provider(),
-            self._get_doc_migrator(filename),
-            reset,
-            max_retry,
-            chunk_size,
-            progress_logger=self._get_progress_logger()
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **kw):
+        if 'date_range' in kw:
+            doc_provider = self.get_document_provider(date_range=kw['date_range'])
+        else:
+            doc_provider = self.get_document_provider()
+        iterable = doc_provider.get_document_iterator(chunk_size)
+        progress = ProgressManager(
+            iterable,
+            total=doc_provider.get_total_document_count(),
+            reset=reset,
+            chunk_size=chunk_size,
+            logger=CouchProcessorProgressLogger(self.doc_types),
         )
-        return processor.run()
+        if self.has_worker_pool:
+            assert "iterable" not in kw, kw
+            kw.update(iterable=iterable, max_retry=max_retry)
 
-    def _get_doc_migrator(self, filename):
+        with self.get_doc_migrator(filename, **kw) as migrator, progress:
+            for doc in iterable:
+                success = migrator.migrate(doc)
+                if success:
+                    progress.add()
+                else:
+                    try:
+                        iterable.retry(doc, max_retry)
+                    except TooManyRetries:
+                        progress.skip(doc)
+
+        if not progress.skipped:
+            self.write_migration_completed_state()
+
+        return progress.total, progress.skipped
+
+    def write_migration_completed_state(self):
+        BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
+
+    def get_doc_migrator(self, filename):
         return self.doc_migrator_class(
-            self.slug,
             self.couchdb,
             filename,
             get_type_code=self.get_type_code,
         )
 
-    def _get_document_provider(self):
+    def get_document_provider(self):
         return CouchDocumentProvider(self.iteration_key, self.doc_types)
-
-    def _get_progress_logger(self):
-        return CouchProcessorProgressLogger(self.doc_types)
 
 
 class BackendMigrator(Migrator):
 
-    def __init__(self, slug):
+    has_worker_pool = True
+
+    def __init__(self, slug, doc_migrator_class):
         reindexer = BlobMetaReindexAccessor()
         types = [reindexer.model_class]
         assert not hasattr(types[0], "get_db"), types[0]  # not a couch model
-        super(BackendMigrator, self).__init__(slug, types, BlobDbBackendMigrator)
+        super(BackendMigrator, self).__init__(slug, types, doc_migrator_class)
         self.reindexer = reindexer
 
-    def _get_document_provider(self):
-        return SqlDocumentProvider(self.iteration_key, self.reindexer)
+    def get_doc_migrator(self, filename, date_range=None, **kw):
+        migrator = super(BackendMigrator, self).get_doc_migrator(filename)
+        return _migrator_with_worker_pool(migrator, self.reindexer, **kw)
+
+    def get_document_provider(self, date_range=None):
+        iteration_key = self.iteration_key
+        if date_range:
+            (start, end) = date_range
+            self.reindexer.date_range = date_range
+            iteration_key = '{}-{}-{}'.format(self.iteration_key, start, end)
+        return SqlDocumentProvider(iteration_key, self.reindexer)
 
 
-class ExportByDomain(object):
+@contextmanager
+def _migrator_with_worker_pool(migrator, reindexer, iterable, max_retry, num_workers):
+    """Migrate in parallel with worker pool
 
-    def __init__(self, slug):
-        self.slug = slug
-        self.domain = None
+    When running in steady state, failed doc will be retried up to the
+    max retry limit. Documents awaiting retry and all documents that
+    started the migration process but did not finish will be saved and
+    retried on the next run if the migration is stopped before it
+    completes.
+    """
+    def work_on(doc, key, retry_count):
+        try:
+            ok = migrator.migrate(doc)
+            assert ok, "run_with_worker_pool expects success!"
+        except Exception:
+            err = traceback.format_exc().strip()
+            print("Error processing blob:\n{}".format(err))
+            if retry_count < max_retry:
+                print("will retry {}".format(key))
+                retry_blobs[key] += 1
+                queue.put(doc)
+                return
+            migrator.save_backup(doc, "too many retries")
+            print("too many retries {}".format(key))
+        retry_blobs.pop(key, None)
 
-    def by_domain(self, domain):
-        self.domain = domain
+    def retry_loop():
+        for doc in queue:
+            enqueue_doc(doc)
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, limit_to_db=None):
-        from corehq.apps.dump_reload.sql.dump import get_all_model_iterators_builders_for_domain
+    def enqueue_doc(doc):
+        key = reindexer.get_key(doc)
+        retry_count = retry_blobs.setdefault(key, 0)
+        # pool.spawn will block until a worker is available
+        pool.spawn(work_on, doc, key, retry_count)
+        # Returning True here means the underlying iterator will think
+        # this doc has been processed successfully. Therefore we must
+        # process this doc before the process exits or save it to be
+        # processed on the next run.
+        return True
 
-        if not self.domain:
-            raise MigrationError("Must specify domain")
+    queue = LifoQueue()
+    loop = gevent.spawn(retry_loop)
+    pool = Pool(size=num_workers)
 
-        if os.path.exists(get_export_filename(self.slug, self.domain)):
-            raise MigrationError(
-                "{} exporter doesn't support resume. "
-                "To re-run the export use 'reset'".format(self.slug)
-            )
+    class gmigrator:
+        migrate = staticmethod(enqueue_doc)
 
-        migrator = BlobDbBackendExporter(self.slug, self.domain)
-
-        with migrator:
-            builders = get_all_model_iterators_builders_for_domain(
-                BlobMeta, self.domain, limit_to_db)
-            for model_class, builder in builders:
-                for iterator in builder.iterators():
-                    for obj in iterator:
-                        migrator.process_object(obj)
-                        if migrator.total_blobs % chunk_size == 0:
-                            print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
-
-        return migrator.total_blobs, 0
+    with migrator:
+        retry_blobs = iterable.get_iterator_detail("retry_blobs") or {}
+        for key in list(retry_blobs):
+            queue.put(reindexer.load(key))
+        try:
+            yield gmigrator
+        finally:
+            try:
+                print("waiting for workers to stop... (Ctrl+C to abort)")
+                queue.put(StopIteration)
+                loop.join()
+                while not pool.join(timeout=10):
+                    print("waiting for {} workers to stop...".format(len(pool)))
+            finally:
+                iterable.set_iterator_detail("retry_blobs", retry_blobs)
+                print("done.")
 
 
 MIGRATIONS = {m.slug: m for m in [
-    BackendMigrator("migrate_backend"),
+    BackendMigrator("migrate_backend", BlobDbBackendMigrator),
+    BackendMigrator("migrate_backend_check", BlobDbBackendCheckMigrator),
     migrate_metadata,
     # Kept for reference when writing new migrations.
     # Migrator("applications", [
@@ -451,10 +518,6 @@ MIGRATIONS = {m.slug: m for m in [
     #    ("Application-Deleted", apps.Application),
     #    ("RemoteApp-Deleted", apps.RemoteApp),
     # ], CouchAttachmentMigrator),
-]}
-
-EXPORTERS = {m.slug: m for m in [
-    ExportByDomain("all_blobs"),
 ]}
 
 

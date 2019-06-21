@@ -10,7 +10,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, UCR_PROCESSING_CHUNK_SIZE
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -20,6 +20,7 @@ from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
@@ -71,7 +72,7 @@ def get_case_pillow(
         pillow_id='case-pillow', ucr_division=None,
         include_ucrs=None, exclude_ucrs=None,
         num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
-        processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
+        processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, **kwargs):
     """
     Return a pillow that processes cases. The processors include, UCR and elastic processors
         Args:
@@ -84,7 +85,7 @@ def get_case_pillow(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        data_source_providers=[DynamicDataSourceProvider('CommCareCase'), StaticDataSourceProvider('CommCareCase')],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,

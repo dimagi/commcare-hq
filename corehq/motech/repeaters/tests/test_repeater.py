@@ -1,39 +1,45 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import json
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
-import json
-from mock import patch
 
-from django.test import override_settings, TestCase
+from django.test import TestCase, override_settings
+
+from mock import patch
+from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
-from casexml.apps.case.xform import cases_referenced_by_xform
+from casexml.apps.case.xform import get_case_ids_from_form
+from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.motech.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, RegisterGenerator, \
-    BasePayloadGenerator
-from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.motech.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT, RECORD_SUCCESS_STATE
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     FormRepeater,
-    UserRepeater,
     LocationRepeater,
     RepeatRecord,
-    ShortFormRepeater)
-from corehq.motech.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT, RECORD_SUCCESS_STATE
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.utils.parsing import json_format_datetime
-from corehq.util.test_utils import flag_enabled
+    ShortFormRepeater,
+    UserRepeater,
+)
+from corehq.motech.repeaters.repeater_generators import (
+    BasePayloadGenerator,
+    FormRepeaterXMLPayloadGenerator,
+    RegisterGenerator,
+)
+from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -94,7 +100,9 @@ class BaseRepeaterTest(TestCase):
 
     @classmethod
     def repeat_records(cls, domain_name):
-        return RepeatRecord.all(domain=domain_name, due_before=datetime.utcnow())
+        # Enqueued repeat records have next_check set 48 hours in the future.
+        later = datetime.utcnow() + timedelta(hours=48 + 1)
+        return RepeatRecord.all(domain=domain_name, due_before=later)
 
 
 class RepeaterTest(BaseRepeaterTest):
@@ -114,7 +122,11 @@ class RepeaterTest(BaseRepeaterTest):
         )
         self.form_repeater.save()
         self.log = []
-        self.post_xml(self.xform_xml, self.domain)
+
+        with patch('corehq.motech.repeaters.models.simple_post',
+                   return_value=MockResponse(status_code=500, reason="Borked")) as mock_fire:
+            self.post_xml(self.xform_xml, self.domain)
+            self.initial_fire_call_count = mock_fire.call_count
 
     def tearDown(self):
         self.case_repeater.delete()
@@ -123,12 +135,14 @@ class RepeaterTest(BaseRepeaterTest):
         delete_all_repeat_records()
         super(RepeaterTest, self).tearDown()
 
+    def repeat_records(self):
+        return super(RepeaterTest, self).repeat_records(self.domain)
+
     @run_with_all_backends
     def test_skip_device_logs(self):
         devicelog_xml = XFORM_XML_TEMPLATE.format(DEVICE_LOG_XMLNS, USER_ID, '1234', '')
         self.post_xml(devicelog_xml, self.domain)
-        repeat_records = RepeatRecord.all(domain=self.domain)
-        for repeat_record in repeat_records:
+        for repeat_record in self.repeat_records():
             self.assertNotEqual(repeat_record.payload_id, '1234')
 
     @run_with_all_backends
@@ -136,11 +150,11 @@ class RepeaterTest(BaseRepeaterTest):
         """
         Ensure that submitting a duplicate form does not create extra RepeatRecords
         """
-        self.assertEqual(len(RepeatRecord.all()), 2)
+        self.assertEqual(len(self.repeat_records()), 2)
         # this form is already submitted during setUp so a second submission should be a duplicate
         form = self.post_xml(self.xform_xml, self.domain).xform
         self.assertTrue(form.is_duplicate)
-        self.assertEqual(len(RepeatRecord.all()), 2)
+        self.assertEqual(len(self.repeat_records()), 2)
 
     @run_with_all_backends
     def test_repeater_failed_sends(self):
@@ -150,7 +164,7 @@ class RepeaterTest(BaseRepeaterTest):
         def now():
             return datetime.utcnow()
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
+        repeat_records = self.repeat_records()
         self.assertEqual(len(repeat_records), 2)
 
         for repeat_record in repeat_records:
@@ -160,7 +174,8 @@ class RepeaterTest(BaseRepeaterTest):
                 repeat_record.fire()
                 self.assertEqual(mock_post.call_count, 1)
 
-        next_check_time = now() + timedelta(minutes=60)
+        # Enqueued repeat records have next_check incremented by 48 hours
+        next_check_time = now() + timedelta(minutes=60) + timedelta(hours=48)
 
         repeat_records = RepeatRecord.all(
             domain=self.domain,
@@ -188,7 +203,7 @@ class RepeaterTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_repeater_successful_send(self):
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+        repeat_records = self.repeat_records()
 
         for repeat_record in repeat_records:
             with patch(
@@ -210,26 +225,20 @@ class RepeaterTest(BaseRepeaterTest):
         #   - casexml.apps.case.signals
         # gets loaded first.
         # This is deterministic but easily affected by minor code changes
-        repeat_records = RepeatRecord.all(
-            domain=self.domain,
-            due_before=datetime.utcnow(),
-        )
+        repeat_records = self.repeat_records()
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)
 
-        self.assertEqual(len(self.repeat_records(self.domain)), 0)
+        self.assertEqual(len(self.repeat_records()), 0)
 
         self.post_xml(self.update_xform_xml, self.domain)
-        self.assertEqual(len(self.repeat_records(self.domain)), 2)
+        self.assertEqual(len(self.repeat_records()), 2)
 
     @run_with_all_backends
     def test_check_repeat_records(self):
-        self.assertEqual(len(RepeatRecord.all()), 2)
-
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
-            check_repeaters()
-            self.assertEqual(mock_fire.call_count, 2)
+        self.assertEqual(len(self.repeat_records()), 2)
+        self.assertEqual(self.initial_fire_call_count, 2)
 
         with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
             check_repeaters()
@@ -237,10 +246,10 @@ class RepeaterTest(BaseRepeaterTest):
 
     @run_with_all_backends
     def test_repeat_record_status_check(self):
-        self.assertEqual(len(RepeatRecord.all()), 2)
+        self.assertEqual(len(self.repeat_records()), 2)
 
         # Do not trigger cancelled records
-        for repeat_record in RepeatRecord.all():
+        for repeat_record in self.repeat_records():
             repeat_record.cancelled = True
             repeat_record.save()
         with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
@@ -248,7 +257,7 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(mock_fire.call_count, 0)
 
         # trigger force send records if not cancelled and tries not exhausted
-        for repeat_record in RepeatRecord.all():
+        for repeat_record in self.repeat_records():
             with patch('corehq.motech.repeaters.models.simple_post',
                        return_value=MockResponse(status_code=200, reason='')
                        ) as mock_fire:
@@ -256,7 +265,7 @@ class RepeaterTest(BaseRepeaterTest):
                 self.assertEqual(mock_fire.call_count, 1)
 
         # all records should be in SUCCESS state after force try
-        for repeat_record in RepeatRecord.all():
+        for repeat_record in self.repeat_records():
                 self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
                 self.assertEqual(repeat_record.overall_tries, 1)
 
@@ -264,24 +273,20 @@ class RepeaterTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.models.simple_post') as mock_fire:
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 0)
-            for repeat_record in RepeatRecord.all():
+            for repeat_record in self.repeat_records():
                 self.assertEqual(repeat_record.state, RECORD_SUCCESS_STATE)
 
     @run_with_all_backends
     def test_process_repeat_record_locking(self):
-        self.assertEqual(len(RepeatRecord.all()), 2)
-
-        with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process:
-            check_repeaters()
-            self.assertEqual(mock_process.delay.call_count, 2)
+        self.assertEqual(len(self.repeat_records()), 2)
 
         with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process:
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 0)
 
-        records = RepeatRecord.all()
-        # Saving should unlock them again by changing the rev
-        for record in records:
+        for record in self.repeat_records():
+            # Resetting next_check should allow them to be requeued
+            record.next_check = datetime.utcnow()
             record.save()
 
         with patch('corehq.motech.repeaters.tasks.process_repeat_record') as mock_process:
@@ -291,12 +296,10 @@ class RepeaterTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_automatic_cancel_repeat_record(self):
         repeat_record = self.case_repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
-        repeat_record.overall_tries = 1
+        self.assertEqual(1, repeat_record.overall_tries)
         with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
-            repeat_record.fire()
-        self.assertEqual(2, repeat_record.overall_tries)
-        with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
-            repeat_record.fire()
+            for __ in range(repeat_record.max_possible_tries - repeat_record.overall_tries):
+                repeat_record.fire()
         self.assertEqual(True, repeat_record.cancelled)
         repeat_record.requeue()
         self.assertEqual(0, repeat_record.overall_tries)
@@ -367,7 +370,8 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     @run_with_all_backends
     def test_payload(self):
         self.post_xml(self.xform_xml, self.domain_name)
-        payload = self.repeat_records(self.domain_name).all()[0].get_payload()
+        repeat_records = self.repeat_records(self.domain_name).all()
+        payload = repeat_records[0].get_payload().decode('utf-8')
         self.assertXMLEqual(self.xform_xml, payload)
 
 
@@ -399,12 +403,12 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     @run_with_all_backends
     def test_payload(self):
         form = self.post_xml(self.xform_xml, self.domain_name).xform
-        payload = self.repeat_records(self.domain_name).all()[0].get_payload()
-        cases = cases_referenced_by_xform(form)
+        repeat_records = self.repeat_records(self.domain_name).all()
+        payload = repeat_records[0].get_payload()
         self.assertEqual(json.loads(payload), {
             'received_on': json_format_datetime(form.received_on),
             'form_id': form.form_id,
-            'case_ids': [case.case_id for case in cases]
+            'case_ids': list(get_case_ids_from_form(form))
         })
 
 
@@ -437,7 +441,8 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     def test_case_close_format(self):
         # create a case
         self.post_xml(self.xform_xml, self.domain_name)
-        payload = self.repeat_records(self.domain_name).all()[0].get_payload()
+        repeat_records = self.repeat_records(self.domain_name).all()
+        payload = repeat_records[0].get_payload()
         self.assertXmlHasXpath(payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(payload, '//*[local-name()="create"]')
 
@@ -700,6 +705,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+            mock_post.return_value.status_code = 200
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
             mock_post.assert_called_with(
@@ -737,7 +743,9 @@ class UserRepeaterTest(TestCase):
         delete_all_repeaters()
 
     def repeat_records(self):
-        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+        # Enqueued repeat records have next_check set 48 hours in the future.
+        later = datetime.utcnow() + timedelta(hours=48 + 1)
+        return RepeatRecord.all(domain=self.domain, due_before=later)
 
     def make_user(self, username):
         user = CommCareUser.create(
@@ -795,7 +803,9 @@ class LocationRepeaterTest(TestCase):
         self.domain_obj.delete()
 
     def repeat_records(self):
-        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+        # Enqueued repeat records have next_check set 48 hours in the future.
+        later = datetime.utcnow() + timedelta(hours=48 + 1)
+        return RepeatRecord.all(domain=self.domain, due_before=later)
 
     def make_location(self, name):
         location = SQLLocation.objects.create(
@@ -848,14 +858,14 @@ class TestRepeaterPause(BaseRepeaterTest):
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain_name)
-        self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
 
     @run_with_all_backends
     def test_trigger_when_paused(self):
         # not paused
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
-                process_repeat_record(self.repeat_record)
+                # calls process_repeat_record():
+                self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
                 self.assertEqual(mock_fire.call_count, 1)
                 self.assertEqual(mock_postpone_fire.call_count, 0)
 
@@ -882,3 +892,44 @@ class TestRepeaterPause(BaseRepeaterTest):
         self.repeater.delete()
         delete_all_repeat_records()
         super(TestRepeaterPause, self).tearDown()
+
+
+class TestRepeaterDeleted(BaseRepeaterTest):
+    def setUp(self):
+        super(TestRepeaterDeleted, self).setUp()
+        self.domain_name = "test-domain"
+        self.domain = create_domain(self.domain_name)
+
+        self.repeater = CaseRepeater(
+            domain=self.domain_name,
+            url='case-repeater-url',
+        )
+        self.repeater.save()
+        self.post_xml(self.xform_xml, self.domain_name)
+
+    def tearDown(self):
+        self.domain.delete()
+        self.repeater.delete()
+        delete_all_repeat_records()
+        super(TestRepeaterDeleted, self).tearDown()
+
+    @run_with_all_backends
+    def test_trigger_when_deleted(self):
+        self.repeater.retire()
+
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+            process_repeat_record(self.repeat_record)
+            self.assertEqual(mock_fire.call_count, 0)
+            self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
+
+    @run_with_all_backends
+    def test_paused_then_deleted(self):
+        self.repeater.pause()
+        self.repeater.retire()
+
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+            process_repeat_record(self.repeat_record)
+            self.assertEqual(mock_fire.call_count, 0)
+            self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")

@@ -1,0 +1,8 @@
+doc_id,inserted_at,household_case_id,opened_on,closed_on,modified_on,name,sex,dob,marital_status,age_marriage,aadhar_number,husband_name,contact_phone_number,num_male_children_died,num_female_children_died,blood_group,female_death_type,date_death,site_death,death_informed_authorities,is_pregnant,migration_status
+pregnant_woman,2019-01-01,household_case_1,2018-08-01,,2019-01-01,Pregnant Lady,F,2000-01-01,married,,,,,,,,,,,,,
+3_yo_male_child,2019-01-01,household_case_1,2018-04-01,,2019-02-01,3 Year Old Male Child,M,2016-02-01,,,,,,,,,,,,,,
+eligible_couple,2019-01-01,household_case_2,2018-07-01,,2019-01-01,Eligible Couple,F,1984-06-04,married,,,,,,,,,,,,,
+high_risk_pregnant_woman,2019-01-01,household_case_3,2017-07-01,,2019-01-01,High Risk Pregnant Woman,F,1992-07-04,,,numero uno,,,,,,,,,,,
+institutional_delivery,2019-01-01,household_case_1,2018-10-01,,2019-01-01,Institutional Delivery,F,2000-01-01,married,19,,,,,2,,,,,,,
+non_institutional_delivery,2019-01-01,household_case_1,2018-07-01,,2019-01-01,Non Institutional Delivery,F,2000-01-01,married,,,husband guy,,,,,,,,,,
+ec_using_condoms,2019-01-01,household_case_2,2019-01-01,,2019-01-01,Eligible Couple using Condoms,F,2000-01-01,married,,,,8675309,1,,,,,,,,

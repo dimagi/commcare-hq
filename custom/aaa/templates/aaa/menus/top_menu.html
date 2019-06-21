@@ -1,0 +1,75 @@
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{# Knockout component templates #}
+{% include 'aaa/filters/month_year_filter.html' %}
+{% include 'aaa/filters/location_filter.html' %}
+{% include 'aaa/filters/beneficiary_type_filter.html' %}
+{% include 'aaa/filters/filters_modal.html' %}
+
+<div class="row fixed-title">
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <span class="navbar-brand" data-bind="text: title"></span>
+      </div>
+      <ul class="nav navbar-nav navbar-right">
+        {% if not is_details %}
+          <li>
+            <filters-modal params="
+                                  postData: postData,
+                                  callback: callback,
+                                  filters: filters,
+                                  localStorage: localStorage"
+            ></filters-modal>
+          </li>
+        {% endif %}
+        <li>
+          <span class="pointer light-grey icon-bar" data-toggle="dropdown">
+            <i class="fa fa-cog fa-2x" uib-popover-html="'Settings'"
+               popover-placement="left"
+               popover-trigger="'mouseenter'"></i>
+          </span>
+          <ul class="dropdown-menu dropdown-menu-right padding-15" role="menu">
+            <li>{% trans 'Logged in As' %}</li>
+            <li class="nav-login-header">
+              <div class="login-container">
+                <p>
+                  {% if user.first_name %}
+                    {{ user.first_name }} {{ user.last_name }}
+                    <br/>{{ user.username }}
+                  {% else %}
+                    {{ user.username }}
+                  {% endif %}
+                </p>
+                {% with request.couch_user.role_label.strip as role %}
+                  {% if role %}
+                    <div class="label label-default">
+                      {{ role }}
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            </li>
+            <li class="nav-divider divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
+            <li>
+              <a href="{% url "my_account_settings" %}"
+                 id="menuitem-accountsettings">
+                <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
+              </a>
+            </li>
+            <li>
+              <a href="{% url "logout" %}" id="menuitem-signout">
+                <i class="icon-signout fa fa-sign-out"></i>
+                {% trans 'Sign Out' %}
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</div>

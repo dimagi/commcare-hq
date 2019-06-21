@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 from django.core.management import call_command
-from corehq.sql_db.operations import HqRunPython
+
 from corehq.privileges import RESTRICT_ACCESS_BY_LOCATION
 
 
@@ -25,5 +25,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_grandfather_location),
+        migrations.RunPython(_grandfather_location),
     ]

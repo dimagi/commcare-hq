@@ -1,88 +1,88 @@
 {% load i18n %}
 <% if (unknowns.length > 0) { %>
 <div class="well well-small">
-    <h4>{% trans 'No Matches' %} <span class="badge badge-important"><%= unknowns.length %></span></h4>
-    <ul>
-        <% for (var u=0; u < unknowns.length; u++) {
-        var unknown = unknowns[u]; %>
-        <li><p>
-            <%= unknown.reason %>
-            <code class="hqm-path"><span><%= unknown.path %></span></code>
-        </p></li>
-        <% } %>
-    </ul>
+  <h4>{% trans 'No Matches' %} <span class="badge badge-important"><%= unknowns.length %></span></h4>
+  <ul>
+    <% for (var u=0; u < unknowns.length; u++) {
+    var unknown = unknowns[u]; %>
+    <li><p>
+      <%= unknown.reason %>
+      <code class="hqm-path"><span><%= unknown.path %></span></code>
+    </p></li>
+    <% } %>
+  </ul>
 </div>
 <% } %>
 <% var m = 0; %>
 <% if (images.length > 0) { %>
-    <div class="well well-small">
-        <h4>{% trans 'Matched Images' %} <span class="badge badge-success"><%= images.length %></span></h4>
-        <ul>
-            <% for (var i=0; i < images.length; i++) {
-                var image = images[i]; %>
-                <li>
-                    <p>
-                        <img src="<%= image.url %>?thumb=50" style="height: 50px;" alt="<%= image.path %>" />
-                        <a href="<%= image.url %>"
-                           target="_blank"
-                           class="btn btn-primary match-info"
-                           data-content="<img src='<%= image.url %>?thumb=220' width='220' alt='<%= image.path %>' />">
-                            <i class="<%= image.icon_class %>"></i> {% trans 'View Full Image' %}</a>
-                        <% if (image.updated) { %>
-                        <span class="label label-info">{% trans 'Updated' %}</span>
-                        <% } %>
-                    </p>
-                    <p><code class="hqm-path"><span><%= image.path %></span></code></p>
-                </li>
-            <% } %>
-        </ul>
-    </div>
+<div class="well well-small">
+  <h4>{% trans 'Matched Images' %} <span class="badge badge-success"><%= images.length %></span></h4>
+  <ul>
+    <% for (var i=0; i < images.length; i++) {
+    var image = images[i]; %>
+    <li>
+      <p>
+        <img src="<%= image.url %>?thumb=50" style="height: 50px;" alt="<%= image.path %>" />
+        <a href="<%= image.url %>"
+           target="_blank"
+           class="btn btn-primary match-info"
+           data-content="<img src='<%= image.url %>?thumb=220' width='220' alt='<%= image.path %>' />">
+          <i class="<%= image.icon_class %>"></i> {% trans 'View Full Image' %}</a>
+        <% if (image.updated) { %>
+        <span class="label label-info">{% trans 'Updated' %}</span>
+        <% } %>
+      </p>
+      <p><code class="hqm-path"><span><%= image.path %></span></code></p>
+    </li>
+    <% } %>
+  </ul>
+</div>
 <% } %>
 <% if (audio.length > 0) { %>
 <div class="well well-small">
-    <h4>{% trans 'Matched Audio' %} <span class="badge badge-success"><%= audio.length %></span></h4>
-    <ul>
-        <% for (var a=0; a < audio.length; a++) {
-        var sound = audio[a]; %>
-        <li>
-            <p><a href="<%= sound.url %>"
-                      target="_blank"
-                      class="btn btn-primary match-info"
-                      data-content="{% trans 'Playing audio directly on this page is currently not supported.' %}">
-                    <i class="<%= sound.icon_class %>"></i> {% trans 'Hear Audio' %}</a>
-                <% if (sound.updated) { %>
-                <span class="label label-info">{% trans 'Updated' %}</span>
-                <% } %>
-            </p>
-            <p>
-                <code class="hqm-path"><span><%= sound.path %></span></code>
-            </p>
-        </li>
+  <h4>{% trans 'Matched Audio' %} <span class="badge badge-success"><%= audio.length %></span></h4>
+  <ul>
+    <% for (var a=0; a < audio.length; a++) {
+    var sound = audio[a]; %>
+    <li>
+      <p><a href="<%= sound.url %>"
+            target="_blank"
+            class="btn btn-primary match-info"
+            data-content="{% trans 'Playing audio directly on this page is currently not supported.' %}">
+        <i class="<%= sound.icon_class %>"></i> {% trans 'Hear Audio' %}</a>
+        <% if (sound.updated) { %>
+        <span class="label label-info">{% trans 'Updated' %}</span>
         <% } %>
-    </ul>
+      </p>
+      <p>
+        <code class="hqm-path"><span><%= sound.path %></span></code>
+      </p>
+    </li>
+    <% } %>
+  </ul>
 </div>
 <% } %>
 <% if (video.length > 0) { %>
 <div class="well well-small">
-    <h4>{% trans 'Matched Videos' %} <span class="badge badge-success"><%= video.length %></span></h4>
-    <ul>
-        <% for (var v=0; v < video.length; v++) {
-        var vid = video[v]; %>
-        <li>
-            <p><a href="<%= vid.url %>"
-                      target="_blank"
-                      class="btn btn-primary match-info"
-                      data-content="{% trans 'Watching video directly on this page is not supported. Opens a new tab.' %}">
-                    <i class="<%= vid.icon_class %>"></i> {% trans 'Watch Video' %}</a>
-                <% if (vid.updated) { %>
-                <span class="label label-info">{% trans 'Updated' %}</span>
-                <% } %>
-            </p>
-            <p>
-                <code class="hqm-path"><span><%= vid.path %></span></code>
-            </p>
-        </li>
+  <h4>{% trans 'Matched Videos' %} <span class="badge badge-success"><%= video.length %></span></h4>
+  <ul>
+    <% for (var v=0; v < video.length; v++) {
+    var vid = video[v]; %>
+    <li>
+      <p><a href="<%= vid.url %>"
+            target="_blank"
+            class="btn btn-primary match-info"
+            data-content="{% trans 'Watching video directly on this page is not supported. Opens a new tab.' %}">
+        <i class="<%= vid.icon_class %>"></i> {% trans 'Watch Video' %}</a>
+        <% if (vid.updated) { %>
+        <span class="label label-info">{% trans 'Updated' %}</span>
         <% } %>
-    </ul>
+      </p>
+      <p>
+        <code class="hqm-path"><span><%= vid.path %></span></code>
+      </p>
+    </li>
+    <% } %>
+  </ul>
 </div>
 <% } %>

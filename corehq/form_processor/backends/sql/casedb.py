@@ -11,9 +11,8 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
     case_model_classes = (CommCareCaseSQL,)
     case_update_strategy = SqlCaseUpdateStrategy
 
-    def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, wrap=True, initial=None, xforms=None):
-        super(CaseDbCacheSQL, self).__init__(domain, strip_history, deleted_ok, lock, wrap, initial, xforms)
+    def __init__(self, *args, **kw):
+        super(CaseDbCacheSQL, self).__init__(*args, **kw)
         if not self.wrap:
             raise ValueError('CaseDbCacheSQL does not support unwrapped models')
 

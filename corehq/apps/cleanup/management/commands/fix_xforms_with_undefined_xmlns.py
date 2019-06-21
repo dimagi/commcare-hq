@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from itertools import chain
 
+import six
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -92,7 +93,7 @@ class Command(BaseCommand):
                 except MultiplePreviouslyFixedForms as e:
                     if xform_instance.build_id not in unfixable_builds:
                         unfixable_builds.add(xform_instance.build_id)
-                        print(e.message)
+                        print(six.text_type(e))
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
                 except CantMatchAForm as e:
@@ -135,7 +136,7 @@ def _log(stream, level, event, xform=None, xform_id=None):
 
 
 def parse_log_message(line):
-    match = re.match('^\[(.*)\] ([^,]*), (.*)', line)
+    match = re.match(r'^\[(.*)\] ([^,]*), (.*)', line)
     level, event, extras = match.groups()
     extras_dict = {}
     for pair in extras.split(", "):
@@ -185,7 +186,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
-    old_xml = xform_instance.get_xml()
+    old_xml = xform_instance.get_xml().decode('utf-8')
     assert old_xml.count('xmlns="undefined"') == 1
     new_xml = old_xml.replace('xmlns="undefined"', 'xmlns="{}"'.format(xmlns))
     if not dry_run:

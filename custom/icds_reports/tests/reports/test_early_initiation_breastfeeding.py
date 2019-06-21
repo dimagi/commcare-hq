@@ -58,7 +58,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                 'st5': {'in_month': 0, 'original_name': ['st5'], 'birth': 0, 'fillKey': '0%-20%'},
                 'st6': {'in_month': 0, 'original_name': ['st6'], 'birth': 0, 'fillKey': '0%-20%'},
                 'st7': {'in_month': 0, 'original_name': ['st7'], 'birth': 0, 'fillKey': '0%-20%'},
-                'st1': {'in_month': 4, 'original_name': ['st1'], 'birth': 3, 'fillKey': '60%-100%'},
+                'st1': {'in_month': 2, 'original_name': ['st1'], 'birth': 1, 'fillKey': '20%-60%'},
                 'st2': {'in_month': 3, 'original_name': ['st2'], 'birth': 1, 'fillKey': '20%-60%'},
                 'st3': {'in_month': 0, 'original_name': ['st3'], 'birth': 0, 'fillKey': '0%-20%'}
             }
@@ -85,7 +85,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 57.142857142857146)
+        self.assertEquals(data['rightLegend']['average'], 40.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_early_initiation_breastfeeding_map(
@@ -99,16 +99,16 @@ class TestEarlyInitiationBreastFeeding(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Number of Children born in the given month:', 'value': "7"},
+                {'indicator': 'Total Number of Children born in the given month:', 'value': "5"},
                 {
                     'indicator': (
                         'Total Number of Children who were put to the breast within one hour of birth:'
                     ),
-                    'value': "4"
+                    'value': "2"
                 },
                 {
                     'indicator': '% children who were put to the breast within one hour of birth:',
-                    'value': '57.14%'
+                    'value': '40.00%'
                 }
             ]
         )
@@ -161,20 +161,13 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                 'month': (2017, 5, 1),
                 'state_id': 'st1',
                 'district_id': 'd1',
-                'aggregation_level': 3
+                'aggregation_level': 1
             },
             loc_level='block',
         )
         self.assertDictEqual(
             data['data'],
-            {
-                'block_map': {
-                    'in_month': 4,
-                    'original_name': ['b1', 'b2'],
-                    'birth': 3,
-                    'fillKey': '60%-100%'
-                }
-            }
+            {}
         )
 
     def test_average_with_two_locations_represent_by_one_topojson(self):
@@ -188,7 +181,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 75.0)
+        self.assertEquals(data['rightLegend']['average'], 50.0)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -203,18 +196,18 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
+                    {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
                     {'loc_name': 'st6', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
-                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {'loc_name': 'st1', 'percent': 75.0},
+                    {'loc_name': 'st1', 'percent': 50.0},
                     {'loc_name': 'st2', 'percent': 33.333333333333336},
+                    {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
-                    {'loc_name': 'st6', 'percent': 0.0},
                 ],
                 "chart_data": [
                     {
@@ -235,29 +228,29 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                                 "birth": 0
                             },
                             {
-                                "y": 0.25,
+                                "y": 0.3333333333333333,
                                 "x": 1491004800000,
-                                "all": 8,
+                                "all": 6,
                                 "birth": 2
                             },
                             {
-                                "y": 0.5714285714285714,
+                                "y": 0.4,
                                 "x": 1493596800000,
-                                "all": 7,
-                                "birth": 4
+                                "all": 5,
+                                "birth": 2
                             }
                         ],
                         "key": "% Early Initiation of Breastfeeding"
                     }
                 ],
                 "all_locations": [
-                    {'loc_name': 'st1', 'percent': 75.0},
+                    {'loc_name': 'st1', 'percent': 50.0},
                     {'loc_name': 'st2', 'percent': 33.333333333333336},
+                    {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
                     {'loc_name': 'st6', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
-                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
 

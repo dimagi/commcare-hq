@@ -1,0 +1,225 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "cas-lab"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-hardware_district",
+  "data_source_table": "static-hardware_cases",
+  "config": {
+    "title": "Hardware - Per District",
+    "description": "",
+    "visible": true,
+    "aggregation_columns": [
+      "state_id",
+      "district_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "slug": "opened_on",
+        "field": "opened_on",
+        "type": "date",
+        "display": "Date Registered"
+      },
+      {
+        "compare_as_string": false,
+        "required": false,
+        "datatype": "string",
+        "display": "Filter by State",
+        "field": "state_id",
+        "type": "location_drilldown",
+        "slug": "state_id",
+        "max_drilldown_levels": 1
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "state_id",
+        "field": "state_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "State",
+          "hin": "State"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "district_id",
+        "field": "district_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "District",
+          "hin": "District"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "hardware_type_mobile",
+        "field": "hardware_type_mobile",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Number of Mobile Phones"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "hardware_type_tablet",
+        "field": "hardware_type_tablet",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Number of Tablets"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "mobile_hardware_status_in_stock",
+        "field": "mobile_hardware_status_in_stock",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Phones - In Stock"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "mobile_hardware_status_distributed",
+        "field": "mobile_hardware_status_distributed",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Phones - Distributed"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "mobile_hardware_status_out_of_order",
+        "field": "mobile_hardware_status_out_of_order",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Phones - Out of Order"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "mobile_hardware_status_lost",
+        "field": "mobile_hardware_status_lost",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Phones - Lost"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "tablet_hardware_status_in_stock",
+        "field": "tablet_hardware_status_in_stock",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Tablets - In Stock"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "tablet_hardware_status_distributed",
+        "field": "tablet_hardware_status_distributed",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Tablets - Distributed"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "tablet_hardware_status_out_of_order",
+        "field": "tablet_hardware_status_out_of_order",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Tablets - Out of Order"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "tablet_hardware_status_lost",
+        "field": "tablet_hardware_status_lost",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "Tablets - Lost"
+      }
+    ],
+    "sort_expression": [
+      {
+        "field": "state_id",
+        "order": "DESC"
+      },
+      {
+        "field": "district_id",
+        "order": "DESC"
+      }
+    ],
+    "configured_charts": []
+  }
+}

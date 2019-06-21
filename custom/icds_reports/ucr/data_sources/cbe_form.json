@@ -1,0 +1,172 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-sql",
+    "icds-test",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds-new",
+    "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
+  "config": {
+    "table_id": "static-cbe_form",
+    "display_name": "Forms - Community Based Events",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "in",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "property_value": [
+        "http://openrosa.org/formdesigner/61238C23-7059-446D-8A9C-34107642CBB2"
+      ]
+    },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "display_name": "AWC ID",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "awc_id",
+        "create_index": true,
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        }
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
+        "display_name": "State ID",
+        "datatype": "string",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_property": "_id"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "state_id"
+      },
+      {
+        "display_name": null,
+        "datatype": "date",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "cbe_info",
+            "date_cbe_organise"
+          ]
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "date_cbe_organise"
+      },
+      {
+        "display_name": "Submission Date",
+        "transform": {},
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "submitted_on",
+        "expression": {
+          "datatype": "datetime",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        },
+        "type": "expression"
+      }
+    ],
+    "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "userID"]
+        }
+      }
+    },
+    "named_filters": {},
+    "engine_id": "icds-ucr",
+    "disable_destructive_rebuild": true
+  }
+}

@@ -10,8 +10,11 @@ from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore
 from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
 from corehq.form_processor.document_stores import (
-    ReadonlyFormDocumentStore, ReadonlyCaseDocumentStore, ReadonlyLedgerV2DocumentStore,
-    LedgerV1DocumentStore
+    DocStoreLoadTracker,
+    LedgerV1DocumentStore,
+    ReadonlyCaseDocumentStore,
+    ReadonlyFormDocumentStore,
+    ReadonlyLedgerV2DocumentStore,
 )
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
@@ -52,4 +55,6 @@ class DocumentStoreTests(SimpleTestCase):
 def test_get_document_store(self, source_type, source_name, expected, sql_domain=False):
     with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=sql_domain):
         store = get_document_store(source_type, source_name, 'domain')
+    if isinstance(store, DocStoreLoadTracker):
+        store = store.store
     self.assertEqual(store.__class__, expected)

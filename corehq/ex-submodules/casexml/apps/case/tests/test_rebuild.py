@@ -1,17 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import uuid
-from couchdbkit.exceptions import ResourceNotFound
-from django.test import TestCase, SimpleTestCase
+from copy import deepcopy
+from datetime import datetime, timedelta
+
+from django.test import SimpleTestCase, TestCase
+from six.moves import range, zip
+
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.exceptions import MissingServerDate
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from datetime import datetime, timedelta
-from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import primary_actions, post_case_blocks
+from casexml.apps.case.util import post_case_blocks, primary_actions
 from corehq.apps.change_feed import topics
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy, _action_sort_key_function
 from corehq.form_processor.exceptions import CaseNotFound
@@ -19,10 +22,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
-from couchforms.models import XFormInstance
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
-from six.moves import zip
-from six.moves import range
 
 REBUILD_TEST_DOMAIN = 'rebuild-test'
 
@@ -85,8 +85,8 @@ class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
         self.assertTrue(case.actions[0] != case.actions[1])
         self.assertTrue(case.actions[1] == case.actions[1])
 
-        orig = case.actions[1]
-        copy = CommCareCaseAction.wrap(orig._doc.copy())
+        orig = case.actions[2]
+        copy = CommCareCaseAction.wrap(deepcopy(orig._doc))
         self.assertTrue(copy != case.actions[0])
         self.assertTrue(copy == orig)
 
@@ -101,6 +101,12 @@ class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
         self.assertTrue(copy == orig)
         copy.updated_unknown_properties['pnew'] = ''
         self.assertTrue(copy != orig)
+
+    def test_couch_action_not_equals(self):
+        orig = CommCareCaseAction()
+        copy = CommCareCaseAction.wrap(deepcopy(orig._doc))
+        self.assertTrue(orig == copy)
+        self.assertFalse(orig != copy)
 
     def test_couch_soft_rebuild(self):
         user_id = 'test-basic-rebuild-user'
@@ -253,6 +259,40 @@ class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
         case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
+
+    def test_couch_reconcile_actions_different_ordering(self):
+        created_at = datetime(2017, 12, 2, 10, 23, 14)
+        case_id = _post_util(create=True, form_extras={'received_on': created_at})
+
+        # this case update is processed much later than the created date,
+        # but the time on the phone (date_modified) is much before the time the server received it
+        _post_util(
+            case_id=case_id,
+            p1='p1-1',
+            date_modifed=datetime(2018, 1, 26, 20, 22, 20),
+            form_extras={'received_on': datetime(2018, 2, 2, 8, 41, 53)}
+        )
+
+        # this case update was received by the server before the previous update
+        # however the date_modified is after the previous updates
+        _post_util(
+            case_id=case_id,
+            p2='p2-2',
+            date_modifed=datetime(2018, 2, 2, 8, 40, 43),
+            form_extras={'received_on': datetime(2018, 2, 2, 8, 41, 0)}
+        )
+        case = CommCareCase.get(case_id)
+
+        update_strategy = CouchCaseUpdateStrategy(case)
+        original_actions = [deepcopy(a) for a in case.actions]
+        self._assertListEqual(original_actions, case.actions)
+
+        # assert that the actions should not be reorder
+        self.assertTrue(update_strategy.check_action_order())
+
+        # assert that if a re-ordering is attempted, it results in the same output
+        update_strategy.reconcile_actions()
+        self._assertListEqual(original_actions, case.actions)
 
 
 class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
@@ -500,37 +540,22 @@ class CaseRebuildTestSQL(CaseRebuildTest):
 
 class TestCheckActionOrder(SimpleTestCase):
 
+    def _action(self, datetime_):
+        return CommCareCaseAction(server_date=datetime_, date=datetime_, action_type='update')
+
     def test_already_sorted(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
+            self._action(datetime(2001, 1, 1, 0, 0, 0)),
+            self._action(datetime(2001, 1, 2, 0, 0, 0)),
+            self._action(datetime(2001, 1, 3, 0, 0, 0)),
         ])
         self.assertTrue(CouchCaseUpdateStrategy(case).check_action_order())
 
     def test_out_of_order(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-        ])
-        self.assertFalse(CouchCaseUpdateStrategy(case).check_action_order())
-
-    def test_sorted_with_none(self):
-        case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=None),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
-        ])
-        self.assertTrue(CouchCaseUpdateStrategy(case).check_action_order())
-
-    def test_out_of_order_with_none(self):
-        case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
-            CommCareCaseAction(server_date=None),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            self._action(datetime(2001, 1, 1, 0, 0, 0)),
+            self._action(datetime(2001, 1, 3, 0, 0, 0)),
+            self._action(datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertFalse(CouchCaseUpdateStrategy(case).check_action_order())
 

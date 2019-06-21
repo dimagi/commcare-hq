@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+
+
 def safe_index(object, keys):
     """Safely index a document, returning None if the value isn't found."""
     if len(keys) == 1:

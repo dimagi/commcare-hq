@@ -1,7 +1,7 @@
 {% load static %}
 
 <div class="progress-report-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-5">
             <div class="row">
                 <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
@@ -21,7 +21,8 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="report-content">
+    <info-message></info-message>
+    <div class="report-content report-content-without-message">
         <div ng-if="$ctrl.data === void(0)">
             <h2>No Data</h2>
         </div>
@@ -34,7 +35,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-offset-2 col-md-8" style="background-color: #f9c700;" ng-click="$ctrl.goToReport('interventions')">
+                    <div class="nav-block pointer col-sm-4 col-md-offset-2 col-md-8" style="background-color: #eec200;" ng-click="$ctrl.goToReport('interventions')">
                         <img src="{% static 'img/interventions.png' %}"/>
                         <div class="caption">Interventions</div>
                     </div>
@@ -48,7 +49,7 @@
             </div>
             <div class="row" style="margin-top: 20px;">
                 <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #47b700;"  ng-click="$ctrl.goToReport('water_sanitation_and_hygiene')">
+                    <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #4aba32;"  ng-click="$ctrl.goToReport('water_sanitation_and_hygiene')">
                         <img src="{% static 'img/water_sanitation_hygiene.png' %}"/>
                         <div class="caption">Water, Sanitation and Hygiene</div>
                     </div>
@@ -79,7 +80,7 @@
                 <button class="btn btn-info btn-sm right" ng-click="$ctrl.goBack()">Back</button>
             </div>
             <div class="row no-margin headers-overflow-unset" ng-repeat="section in $ctrl.data"  style="margin-bottom: 50px !important;">
-                <table datatable="ng" dt-column-defs="$ctrl.dtColumnDefs" dt-options="$ctrl.dtOptions" class="table black">
+                <table datatable="ng" dt-column-defs="$ctrl.dtColumnDefs" dt-options="$ctrl.dtOptions" class="table black factSheetTable">
                     <thead>
                     <tr>
                         <th class="col-md-6"><span ng-bind-html="section.section_title"></span></th>
@@ -90,7 +91,7 @@
                             <span class="pointer" uib-popover="National average of ICDS-CAS data is calculated using the previous calendar month's data."
                                popover-placement="top"
                                popover-trigger="'mouseenter'">
-                                <span>National Average </span>
+                                <span>CAS National Average </span>
                                 <i class="fa fa-info-circle"></i>
                             </span>
                         </th>

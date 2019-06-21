@@ -71,6 +71,21 @@ class Command(BaseCommand):
         self.state_code_to_name[state.site_code] = state.name
         return state.site_code
 
+    def get_district_code(self, location):
+        if not location:
+            return 'unknown'
+
+        if location.location_id in self.location_id_to_district_code:
+            return self.location_id_to_district_code[location.location_id]
+
+        district = location.get_ancestors().filter(location_type__code='district').first()
+        if not district:
+            return 'unknown'
+
+        self.location_id_to_district_code[location.location_id] = district.site_code
+        self.district_code_to_name[district.site_code] = district.name
+        return district.site_code
+
     def get_indicator_slug(self, sms):
         if not isinstance(sms.custom_metadata, dict):
             return 'unknown'
@@ -100,9 +115,12 @@ class Command(BaseCommand):
         self.recipient_id_to_location_id = {}
         self.location_id_to_location = {}
         self.location_id_to_state_code = {}
+        self.location_id_to_district_code = {}
         self.state_code_to_name = {'unknown': 'Unknown'}
+        self.district_code_to_name = {'unknown': 'Unknown'}
 
-        data = {}
+        state_level_data = {}
+        district_level_data = {}
 
         filename = 'icds-sms-usage--%s--%s.xlsx' % (
             start_date.strftime('%Y-%m-%d'),
@@ -119,25 +137,63 @@ class Command(BaseCommand):
         ):
             location = self.get_location(sms)
             state_code = self.get_state_code(location)
-            if state_code not in data:
-                data[state_code] = {}
+            district_code = self.get_district_code(location)
+            if state_code not in district_level_data:
+                state_level_data[state_code] = {}
+                district_level_data[state_code] = {}
+            if district_code not in district_level_data[state_code]:
+                district_level_data[state_code][district_code] = {}
 
             indicator_slug = self.get_indicator_slug(sms)
-            if indicator_slug not in data[state_code]:
-                data[state_code][indicator_slug] = 0
+            if indicator_slug not in state_level_data[state_code]:
+                state_level_data[state_code][indicator_slug] = 0
+            if indicator_slug not in district_level_data[state_code][district_code]:
+                district_level_data[state_code][district_code][indicator_slug] = 0
 
-            data[state_code][indicator_slug] += 1
+            district_level_data[state_code][district_code][indicator_slug] += 1
+            state_level_data[state_code][indicator_slug] += 1
 
-        with open(filename, 'wb') as f:
-            headers = ('State Code', 'State Name', 'Indicator', 'SMS Count')
-            excel_data = []
+        with open(filename, 'wb') as excel_file:
+            state_headers = ('State Code', 'State Name', 'Indicator', 'SMS Count')
+            district_headers = (
+                'State Code', 'State Name', 'District Code', 'District Name', 'Indicator', 'SMS Count'
+            )
+            excel_state_data = []
+            excel_district_data = []
 
-            for state_code, state_data in data.items():
-                for indicator_slug, count in state_data.items():
-                    excel_data.append((state_code, self.state_code_to_name[state_code], indicator_slug, count))
+            for state_code, state_data in sorted(state_level_data.items()):
+                for indicator_slug, count in sorted(state_data.items()):
+                    excel_state_data.append(
+                        (
+                            state_code,
+                            self.state_code_to_name[state_code],
+                            indicator_slug,
+                            count
+                        )
+                    )
+
+            for state_code, state_data in sorted(district_level_data.items()):
+                for district_code, district_data in sorted(state_data.items()):
+                    for indicator_slug, count in sorted(district_data.items()):
+                        excel_district_data.append(
+                            (
+                                state_code,
+                                self.state_code_to_name[state_code],
+                                district_code,
+                                self.district_code_to_name[district_code],
+                                indicator_slug,
+                                count
+                            )
+                        )
 
             export_raw(
-                (('icds-sms-usage', headers), ),
-                (('icds-sms-usage', excel_data), ),
-                f
+                (
+                    ('icds-sms-usage', state_headers),
+                    ('icds-sms-usage-by-district', district_headers)
+                ),
+                (
+                    ('icds-sms-usage', excel_state_data),
+                    ('icds-sms-usage-by-district', excel_district_data)
+                ),
+                excel_file
             )

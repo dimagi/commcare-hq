@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
-import logging
+from datetime import timedelta
 from functools import wraps
 
-from corehq.util.datadog import statsd, COMMON_TAGS, datadog_logger
 from datadog import api
+from django.conf import settings
 
+from corehq.util.datadog import statsd, COMMON_TAGS, datadog_logger
 from corehq.util.datadog.const import ALERT_INFO
 
 WILDCARD = '*'
@@ -86,6 +87,21 @@ def update_datadog_metrics(metrics):
         statsd.gauge(metric, value)
 
 
+def make_buckets_from_timedeltas(*timedeltas):
+    return [td.total_seconds() for td in timedeltas]
+
+
+DAY_SCALE_TIME_BUCKETS = make_buckets_from_timedeltas(
+    timedelta(seconds=1),
+    timedelta(seconds=10),
+    timedelta(minutes=1),
+    timedelta(minutes=10),
+    timedelta(hours=1),
+    timedelta(hours=12),
+    timedelta(hours=24),
+)
+
+
 def bucket_value(value, buckets, unit=''):
     """Get value bucket for the given value
 
@@ -96,7 +112,79 @@ def bucket_value(value, buckets, unit=''):
     with tags. More details:
     https://help.datadoghq.com/hc/en-us/articles/211545826
     """
+    buckets = sorted(buckets)
+    number_length = max(len("{}".format(buckets[-1])), 3)
+    lt_template = "lt_{:0%s}{}" % number_length
+    over_template = "over_{:0%s}{}" % number_length
     for bucket in buckets:
         if value < bucket:
-            return "lt_{:03}{}".format(bucket, unit)
-    return "over_{:03}{}".format(buckets[-1], unit)
+            return lt_template.format(bucket, unit)
+    return over_template.format(buckets[-1], unit)
+
+
+def maybe_add_domain_tag(domain_name, tags):
+    """Conditionally add a domain tag to the given list of tags"""
+    if (settings.SERVER_ENVIRONMENT, domain_name) in settings.DATADOG_DOMAINS:
+        tags.append('domain:{}'.format(domain_name))
+
+
+def load_counter(load_type, source, domain_name, extra_tags=None):
+    """Make a function to track load by counting touched items
+
+    :param load_type: Load type (`"case"`, `"form"`, `"sms"`). Use one
+    of the convenience functions below (e.g., `case_load_counter`)
+    rather than passing a string literal.
+    :param source: Load source string. Example: `"form_submission"`.
+    :param domain_name: Domain name string.
+    :param extra_tags: Optional list of extra datadog tags.
+    :returns: Function that adds load when called: `add_load(value=1)`.
+    """
+    from corehq.util.datadog.gauges import datadog_counter
+    tags = ["src:%s" % source]
+    if extra_tags:
+        tags.extend(extra_tags)
+    maybe_add_domain_tag(domain_name, tags)
+    metric = "commcare.load.%s" % load_type
+
+    def track_load(value=1):
+        datadog_counter(metric, value, tags=tags)
+
+    return track_load
+
+
+def case_load_counter(*args, **kw):
+    # grep: commcare.load.case
+    return load_counter("case", *args, **kw)
+
+
+def form_load_counter(*args, **kw):
+    # grep: commcare.load.form
+    return load_counter("form", *args, **kw)
+
+
+def ledger_load_counter(*args, **kw):
+    """Make a ledger transaction load counter function
+
+    Each item counted is a ledger transaction (not a ledger value).
+    """
+    # grep: commcare.load.ledger
+    return load_counter("ledger", *args, **kw)
+
+
+def sms_load_counter(*args, **kw):
+    """Make a messaging load counter function
+
+    This is used to count all kinds of messaging load, including email
+    (not strictly SMS).
+    """
+    # grep: commcare.load.sms
+    return load_counter("sms", *args, **kw)
+
+
+def ucr_load_counter(engine_id, *args, **kw):
+    """Make a UCR load counter function
+
+    This is used to count all kinds of UCR load
+    """
+    # grep: commcare.load.ucr
+    return load_counter("ucr.{}".format(engine_id), *args, **kw)

@@ -11,6 +11,7 @@ from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
@@ -52,7 +53,7 @@ class PostTestMixin(TestFileMixin):
         expected = self.get_json(self._get_expected_name(name, tz_differs))
 
         xform = submit_form_locally(instance, 'test-domain').xform
-        xform_json = json.loads(json.dumps(xform.to_json()))
+        xform_json = json.loads(json.dumps(xform.to_json(), cls=CommCareJSONEncoder))
 
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             expected, xform_json = self._process_sql_json(expected, xform_json, any_id_ok)

@@ -7,8 +7,9 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Fieldset, Layout, Submit
 import datetime
+import json
 
-from corehq.apps.hqwebapp.widgets import Select2AjaxV4
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
@@ -27,6 +28,7 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.util.python_compatibility import soft_assert_type_text
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import format_username, cc_user_domain
@@ -173,7 +175,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             role = self.cleaned_data['role']
             try:
                 self.existing_user.set_role(self.domain, role)
-                self.existing_user.save()
+                if self.existing_user.is_commcare_user():
+                    self.existing_user.save(spawn_task=True)
+                else:
+                    self.existing_user.save()
                 is_update_successful = True
             except KeyError:
                 pass
@@ -465,7 +470,7 @@ class CommCareAccountForm(forms.Form):
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        phone_number = re.sub(r'\s|\+|\-', '', phone_number)
         if phone_number == '':
             return None
         elif not re.match(r'\d+$', phone_number):
@@ -571,11 +576,11 @@ class NewMobileWorkerForm(forms.Form):
             ))
 
         if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget(
-                require=not self.can_access_all_locations)
+            self.fields['location_id'].widget = forms.Select(choices=[('', '')])    # blank option for placeholder
             location_field = crispy.Field(
                 'location_id',
                 ng_model='mobileWorker.location_id',
+                ng_required="true" if self.fields['location_id'].required else "false",
             )
         else:
             location_field = crispy.Hidden(
@@ -650,7 +655,7 @@ class GroupMembershipForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Group Membership"),
         required=False,
-        widget=Select2AjaxV4(multiple=True),
+        widget=Select2Ajax(multiple=True),
     )
 
     def __init__(self, group_api_url, *args, **kwargs):
@@ -747,36 +752,12 @@ class MultipleSelectionForm(forms.Form):
         )
 
 
-class AngularLocationSelectWidget(forms.Widget):
-    """
-    Assumptions:
-        mobileWorker.location_id is model
-        scope has searchLocations function to search
-        scope uses availableLocations to search in
-    """
-
-    def __init__(self, require=False, attrs=None):
-        self.require = require
-        super(AngularLocationSelectWidget, self).__init__(attrs)
-
-    def render(self, name, value, attrs=None):
-        # The .format() means I have to use 4 braces to end up with {{$select.selected.name}}
-        return """
-          <ui-select {validator} ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
-            <ui-select-match placeholder="Select location...">{{{{$select.selected.name}}}}</ui-select-match>
-            <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
-              <div ng-bind-html="location.name | highlight: $select.search"></div>
-            </ui-select-choices>
-          </ui-select>
-        """.format(validator='validate-location=""' if self.require else '')
-
-
 class PrimaryLocationWidget(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
-    def __init__(self, css_id, source_css_id, attrs=None, select2_version=None):
+    def __init__(self, css_id, source_css_id, attrs=None):
         """
         args:
             css_id: css_id of primary_location field
@@ -785,21 +766,27 @@ class PrimaryLocationWidget(forms.Widget):
         super(PrimaryLocationWidget, self).__init__(attrs)
         self.css_id = css_id
         self.source_css_id = source_css_id
-
-        versioned_templates = {
-            'v3': 'locations/manage/partials/drilldown_location_widget_v3.html',
-            'v4': 'locations/manage/partials/drilldown_location_widget_v4.html',
-        }
-        if select2_version not in versioned_templates:
-            raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
-        self.template = versioned_templates[select2_version]
+        self.template = 'locations/manage/partials/drilldown_location_widget.html'
 
     def render(self, name, value, attrs=None):
+        initial_data = {}
+        if value:
+            try:
+                loc = SQLLocation.objects.get(location_id=value)
+                initial_data = {
+                    'id': loc.location_id,
+                    'text': loc.get_path_display(),
+                }
+            except SQLLocation.DoesNotExist:
+                pass
+
         return get_template(self.template).render({
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
-            'value': value or ''
+            'value': value,
+            'initial_data': initial_data,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -807,6 +794,7 @@ class CommtrackUserForm(forms.Form):
     assigned_locations = forms.CharField(
         label=ugettext_noop("Locations"),
         required=False,
+        widget=forms.SelectMultiple(choices=[]),
     )
     primary_location = forms.CharField(
         label=ugettext_noop("Primary Location"),
@@ -824,12 +812,11 @@ class CommtrackUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = LocationSelectWidget(
-            self.domain, multiselect=True, id='id_assigned_locations', select2_version='v3'
+            self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
-            select2_version='v3'
         )
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain, wrap=False)
@@ -890,16 +877,10 @@ class CommtrackUserForm(forms.Form):
                 user.reset_locations(self.domain, location_ids)
 
     def clean_assigned_locations(self):
-        # select2 (< 4.0) doesn't format multiselect for remote data as an array
-        #   but formats it as comma-seperated list, so we need to clean the returned data
         from corehq.apps.locations.models import SQLLocation
         from corehq.apps.locations.util import get_locations_from_ids
 
-        value = self.cleaned_data.get('assigned_locations')
-        if not isinstance(value, six.string_types) or value.strip() == '':
-            return []
-
-        location_ids = [location_id.strip() for location_id in value.split(',')]
+        location_ids = self.data.getlist('assigned_locations')
         try:
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
@@ -976,7 +957,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -987,7 +969,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, '')),
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
                 crispy.HTML(
@@ -1095,7 +1078,7 @@ class AddPhoneNumberForm(forms.Form):
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
-                twbscrispy.PrependedText('phone_number', '+', type='tel', pattern='\d+')
+                twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1156,7 +1139,7 @@ class CommCareUserFilterForm(forms.Form):
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
 
         roles = UserRole.by_domain(self.domain)
-        self.fields['role_id'].choices =  [('', _('All Roles'))] + [
+        self.fields['role_id'].choices = [('', _('All Roles'))] + [
             (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.helper = FormHelper()
@@ -1179,7 +1162,7 @@ class CommCareUserFilterForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Download All Users"),
                     type="submit",
-                    css_class="btn btn-success submit_button",
+                    css_class="btn btn-primary submit_button",
                 )
             ),
         )

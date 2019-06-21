@@ -1,0 +1,10 @@
+DELETE FROM "child_health_monthly" WHERE month=%(month)s
+{"month": "2019-01-01T00:00:00"}
+INSERT INTO "child_health_monthly" (SELECT * FROM "tmp_child_health_monthly_2019-01-01")
+{}
+CREATE INDEX IF NOT EXISTS chm_case_idx ON "child_health_monthly" (case_id)
+{}
+CREATE INDEX IF NOT EXISTS chm_awc_idx ON "child_health_monthly" (awc_id)
+{}
+CREATE INDEX IF NOT EXISTS chm_mother_dob ON "child_health_monthly" (mother_case_id, dob)
+{}

@@ -1,0 +1,42 @@
+{% load i18n %}
+<div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
+        <div class="col-md-5">
+            <div class="row">
+                <span id="reportTitle" class="breadcrump-element" ng-bind="$ctrl.label"></span>
+            </div>
+            <div class="row">
+                <span class="location-breadcump"
+                      ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">
+                    National
+                </span>
+                <span class="location-breadcump"
+                      ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)"
+                      ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
+                </span>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"
+                     is-open-modal="$ctrl.message"></filters>
+        </div>
+    </div>
+    <info-message></info-message>
+    <div class="report-content report-content-without-message">
+        <div ng-if="$ctrl.data">
+            <div class="row black">
+                <div ng-if="$ctrl.showTable" class="col-md-12">
+                    <table
+                            id="serviceDeliveryDashboardTable"
+                            datatable=""
+                            dt-options="$ctrl.dtOptions"
+                            dt-columns="$ctrl.dtColumns"
+                            class="table table-striped table-bordered"
+                    >
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

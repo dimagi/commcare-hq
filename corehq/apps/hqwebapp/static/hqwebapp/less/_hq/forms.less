@@ -37,125 +37,6 @@ legend .subtext {
   padding-bottom: 5px;
 }
 
-.daterangepickerwidget {
-  display: inline-block;
-
-  // Don't allow this input to get too wide, regardless of its container
-  width: auto;
-  max-width: 180px;
-}
-
-.daterangepicker {
-  .ranges li {
-    background-color: @cc-bg !important;
-    color: @cc-light-cool-accent-low !important;
-    border: none !important;
-    line-height: 30px;
-    &:hover {
-      background-color: @cc-light-cool-accent-mid !important;
-      color: #ffffff !important;
-    }
-  }
-
-  .ranges li.active {
-    background-color: @cc-light-cool-accent-low !important;
-    color: #ffffff !important;
-  }
-
-  .range_inputs {
-    button {
-      line-height: 25px;
-      font-size: 12px;
-    }
-  }
-  .applyBtn {
-    background-color: @cc-neutral-low;
-    color: #ffffff;
-    position: relative;
-    margin-bottom: 5px;
-    &:hover {
-      background-color: @cc-att-pos-mid;
-    }
-  }
-  .cancelBtn {
-    background-color: @cc-bg;
-  }
-}
-
-.ui-widget-header select{
-  color: @cc-text;
-}
-
-.controls-multiple {
-  .select2, .select2-container {
-    margin-left: 10px;
-    margin-bottom: 3px;
-  }
-
-  .form-group {
-    margin-bottom: 0;
-  }
-
-  .form-inline .form-group {
-    margin: 0 10px 5px 0;
-  }
-}
-
-// Static width for select2 widgets, which otherwise grow too large on form view's case management tab
-.case-config-select2s(@width) {
-    .select2-container {
-        width: @width;
-
-        // Fix firefox bug in select 2 v3.5.2
-        // https://github.com/select2/select2/issues/2078
-        display: inline-block !important;
-    }
-
-    // This needs a static width so that text-overflow: ellipsis will work in Firefox.
-    // Unusually specific selector to override select2's width: auto rule.
-    > .select2-choice > .select2-chosen {
-        width: @width - 35px;
-    }
-}
-
-.property-descriptions(@width) {
-    width: @width;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: inline-block;
-}
-
-#case-config-ko, #usercase-config-ko {
-    @select2Width: 210px;
-
-    .case-config-select2s(@select2Width);
-
-    .property-description {
-      .property-descriptions(@select2Width);
-    }
-
-    .wide-select2s {
-      @wideWidth: @select2Width * 1.5;
-      .case-config-select2s(@wideWidth);
-      .property-description {
-        .property-descriptions(@wideWidth);
-      }
-    }
-}
-
-// hack to fix issues with placeholder not showing up fully
-// !important is necessary because this is overriding an inline style set by select2 javascript
-.select2-container {
-    .select2-search-field {
-        width: 100% !important;
-    }
-    
-    .select2-input {
-        width: 100% !important;
-    }
-}
-
 .checkbox-table-cell {
   margin: 0;
   font-size: 20px;
@@ -211,8 +92,13 @@ legend .subtext {
   padding: 0;
 }
 
-.form-horizontal .date-range-picker {
-  margin-left: 0px;
+.form-horizontal .form-group > .controls-multiple .row {
+  select {
+    margin-left: 0px;
+  }
+  .ui-multiselect {
+    margin-left: 0px;
+  }
 }
 
 .langcode-container {
@@ -229,328 +115,10 @@ textarea.vertical-resize {
     resize: vertical;
 }
 
-.ko-inline-edit-with-help {
-    .hq-help {
-        vertical-align: middle;
-    }
-}
-
-.ko-inline-edit {
-    &.inline {
-        display: inline-block;
-    }
-
-    .hq-help {
-        margin: 3px 5px 0 5px;
-    }
-
-    .read-only {
-        padding: 8px;
-        .clearfix();
-
-        &:hover {
-            cursor: pointer;
-            background-color: @cc-bg;
-            border-radius: 4px;
-        }
-
-        i {
-            color: @cc-neutral-hi;
-            display: inline-block;
-            margin-left: 5px;
-            margin-top: 2px;
-        }
-
-        .text {
-            white-space: pre-wrap;
-        }
-    }
-
-    .read-write {
-        .form-group {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        .langcode-container.has-lang {
-            input, textarea {
-                padding-right: 45px;
-            }
-        }
-    }
-}
-
-table .ko-inline-edit .read-only:hover {
-    background-color: @cc-neutral-hi;
-}
-
-.select2-container.select2-container-active > .select2-choice {
-  .box-shadow(0 0 10px @cc-brand-mid);
-}
-
-.form-config-report {
-  fieldset {
-    padding-bottom: 20px;
-  }
-  .form-actions {
-    margin-top: 0;
-  }
-}
-
-.radio-select,
-.radio-select li,
-.radio-select_options {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-weight: normal;
-}
-
-.radio-select {
-  width: 100%;
-  cursor: pointer;
-  background-color: white;
-  border-radius: @input-border-radius;
-  position: relative;
-}
-
-.radio-select_expand {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.radio-select_expandLabel,
-.radio-select_label-placeholder,
-.radio-select_items {
-  position: absolute;
-  top: 0;
-  left: 0;
-  text-align: left;
-}
-
-.radio-select_items {
-  z-index: 1;
-}
-
-.radio-select_options {
-  background-color: white;
-  border-radius: @input-border-radius;
-}
-
-.radio-select {
-  &_expand {
-    width: 0;
-    margin: 0;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    outline: none !important;
-
-    &::after {
-      outline: none !important;
-      content: "\f078";
-      font-family: FontAwesome;
-      position: absolute;
-      top: 0;
-      line-height: @input-height-base;
-      right: 0;
-      color: @cc-neutral-mid;
-      font-size: @font-size-base;
-      transform: translate(-80%, -10%);
-      pointer-events: none;
-      z-index: 2;
-      transition: all 250ms cubic-bezier(.4, .25, .3, 1);
-      opacity: .6;
-      width: 10px;
-      padding-right: 8px;
-      margin: 0;
-    }
-
-    &:hover::after {
-      opacity: 1;
-    }
-
-    &:checked::after {
-      content: "\f077";
-    }
-
-    &:focus::after {
-      outline: none;
-    }
-  }
-  &_expandLabel {
-    display: block;
-    width: 100%;
-    cursor: pointer;
-    font-weight: normal;
-  }
-}
-
-.radio-select {
-  &_close {
-    display: none;
-  }
-  &_closeLabel {
-    width: 10px;
-    height: 10px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: none;
-    font-weight: normal;
-  }
-}
-
-.radio-select {
-  &_items {
-    width: 100%;
-    padding-top:  @input-height-base;
-  }
-  &_input {
-    display: none;
-  }
-  &_label {
-    font-weight: normal;
-    transition: all 250ms cubic-bezier(.4,.25,.3,1);
-    display: block;
-    height: 0;
-    line-height:  @input-height-base;
-    overflow: hidden;
-    color: @cc-text;
-    cursor: pointer;
-    padding-left: 10px;
-    margin-bottom: 0;
-
-    &-placeholder {
-      vertical-align: middle;
-      opacity: .6;
-      background-color: transparent;
-    }
-  }
-}
-
-.radio-select {
-  &_expand:checked {
-    + .radio-select_closeLabel {
-      display: block;
-      + .radio-select_options {
-        margin-top: @input-height-base - 2px;
-        padding-top: 5px;
-        padding-bottom: 5px;
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-
-        .radio-select_label {
-          height:  @input-height-base;
-          &:hover {
-            background-color: @cc-bg;
-          }
-        }
-        .radio-select_label:last-child {
-          &:hover {
-            border-bottom-left-radius: @input-border-radius;
-            border-bottom-right-radius: @input-border-radius;
-          }
-        }
-        + .radio-select_expandLabel {
-          display: none;
-        }
-      }
-    }
-  }
-  &_input:checked + .radio-select_label {
-    height:  @input-height-base;
-  }
-}
-
-.radio-select,
-.radio-select_expand,
-.radio-select_expandLabel,
-.radio-select_label-placeholder {
-  height: @input-height-base;
-}
-
-
-.hs-input {
-  display: block;
-  width: 100%;
-  height: @input-height-base; // Make inputs at least the height of their button counterpart (base line-height + padding + border)
-  padding: @padding-base-vertical @padding-base-horizontal;
-  font-size: @font-size-base;
-  line-height: @line-height-base;
-  color: @input-color;
-  background-color: @input-bg;
-  background-image: none; // Reset unusual Firefox-on-Android default style; see https://github.com/necolas/normalize.css/issues/214
-  border: 1px solid @input-border;
-  border-radius: @input-border-radius; // Note: This has no effect on <select>s in some browsers, due to the limited stylability of <select>s in CSS.
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-
-  // Unstyle the caret on `<select>`s in IE10+.
-  &::-ms-expand {
-    border: 0;
-    background-color: transparent;
-  }
-
-  // Disabled and read-only inputs
-  //
-  // HTML5 says that controls under a fieldset > legend:first-child won't be
-  // disabled if the fieldset is disabled. Due to implementation difficulty, we
-  // don't honor that edge case; we style them as disabled anyway.
-  &[disabled],
-  &[readonly] {
-    background-color: @input-bg-disabled;
-    opacity: 1; // iOS fix for unreadable disabled content; see https://github.com/twbs/bootstrap/issues/11655
-  }
-
-  &[disabled],
-  fieldset[disabled] & {
-    cursor: @cursor-disabled;
-  }
-
-  // Reset height for `textarea`s
-  textarea& {
-    height: auto;
-  }
-}
-
-.modal .hs-form fieldset {
-  max-width: 100%;
-}
-
-.modal .hs-form .form-columns-1 input {
-  width: 100% !important;
-}
-
-.hs-form-field {
-  padding-bottom: 10px;
-}
-
-.hs-button {
-  display: inline-block;
-  margin-bottom: 0; // For input.btn
-  font-weight: @btn-font-weight;
-  text-align: center;
-  vertical-align: middle;
-  touch-action: manipulation;
-  cursor: pointer;
-  background-image: none; // Reset unusual Firefox-on-Android default style; see https://github.com/necolas/normalize.css/issues/214
-  border: 1px solid transparent;
-  white-space: nowrap;
-  .button-size(@padding-base-vertical; @padding-base-horizontal; @font-size-base; @line-height-base; @btn-border-radius-base);
-}
-
-.hs-form .actions {
-  background-color: @cc-bg;
-  margin: 15px -15px -15px;
-  padding: 15px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  text-align: right;
-
-  .hs-button.primary {
-    .button-variant(white; @cc-brand-mid; darken(@cc-brand-mid, 5));
-  }
+// Input groups have buttons attached to text inputs.
+// Make the button border match the input border
+.input-group .btn-default {
+    border-color: @cc-neutral-hi;
 }
 
 .form-bubble {
@@ -559,8 +127,7 @@ table .ko-inline-edit .read-only:hover {
   .border-top-radius(5px);
   .border-bottom-radius(5px);
   box-sizing: content-box;
-  background-color: @cc-brand-mid;
-  color: white;
+  background-color: @call-to-action-extra-hi;
 
   fieldset {
     padding: 0.01em 0 0 0;
@@ -572,26 +139,33 @@ table .ko-inline-edit .read-only:hover {
     padding: 0;
     display: table;
     text-align: center;
-    color: white;
   }
 
   .help-block {
     text-align: left;
-    color: white;
   }
 
   a,
   a:visited,
   a:link {
-    color: @cc-brand-hi;
+    color: @cc-brand-mid;
+  }
+
+  .btn-default {
+    background-color: @call-to-action-extra-hi;
   }
 }
 
 .form-bubble-purple {
   background-color: @color-purple-dark;
   color: @color-purple-dark-inverse;
+  border: none;
 
-  a.btn-purple {
+  a, a:active, a:hover, a:link {
+    color: @color-purple-dark-inverse;
+  }
+
+  .btn-purple {
     background-color: @color-purple-dark;
     color: @component-active-color;
     border: 1px solid @color-purple-dark-inverse;
@@ -605,10 +179,6 @@ table .ko-inline-edit .read-only:hover {
 .form-bubble-actions {
   text-align: center;
   padding-bottom: 10px;
-
-  a.btn {
-    color: white;
-  }
 }
 
 .form-bubble-lg {
@@ -627,11 +197,6 @@ table .ko-inline-edit .read-only:hover {
     border-width: 2px;
   }
 
-  .has-success .control-label,
-  .text-success {
-    color: @cc-att-pos-hi;
-  }
-
   .has-success .form-control,
   .has-success .form-control:focus,
   .has-success input[type="text"],
@@ -640,7 +205,7 @@ table .ko-inline-edit .read-only:hover {
   .has-success input[type="number"]:focus,
   .has-success input[type="password"],
   .has-success input[type="password"]:focus {
-    border-color: #47b700;
+    border-color: @cc-att-pos-mid;
   }
   .has-success .form-control,
   .has-success input[type="text"],
@@ -655,13 +220,6 @@ table .ko-inline-edit .read-only:hover {
     .box-shadow(0px 0px 15px 1px rgba(175, 242, 133, .75));
   }
 
-  .has-error .control-label,
-  .has-error label,
-  .text-error,
-  .text-danger {
-    color: @cc-att-neg-hi;
-  }
-
   .has-error .form-control,
   .has-error .form-control:focus,
   .has-error input[type="text"],
@@ -670,7 +228,7 @@ table .ko-inline-edit .read-only:hover {
   .has-error input[type="number"]:focus,
   .has-error input[type="password"],
   .has-error input[type="password"]:focus {
-    border-color: #e53e30;
+    border-color: @cc-att-neg-mid;
   }
   .has-error .form-control,
   .has-error input[type="text"],
@@ -685,11 +243,6 @@ table .ko-inline-edit .read-only:hover {
     .box-shadow(0px 0px 15px 1px rgba(239, 207, 203, .75));
   }
 
-  .has-warning .control-label,
-  .text-warning {
-    color: @cc-light-warm-accent-hi;
-  }
-
   .has-warning .form-control,
   .has-warning .form-control:focus,
   .has-warning input[type="text"],
@@ -698,7 +251,7 @@ table .ko-inline-edit .read-only:hover {
   .has-warning input[type="number"]:focus,
   .has-warning input[type="password"],
   .has-warning input[type="password"]:focus {
-    border-color: #f9c700;
+    border-color: @cc-light-warm-accent-mid;
   }
   .has-warning .form-control,
   .has-warning input[type="text"],
@@ -718,4 +271,76 @@ table .ko-inline-edit .read-only:hover {
     margin-right: 7px;
     float: left;
   }
+}
+
+.form-check {
+  padding-left: 10px;
+}
+
+.form-check label{
+  cursor: pointer;
+  position: relative;
+  font-weight: normal;
+  margin-top: 7px;
+}
+
+.form-check label::before {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  left: 0;
+  border: 2px solid @checkbox-default-color;
+  border-radius: 3px;
+  background-color: white;
+  margin-left: -25px;
+}
+
+.form-check label::after {
+  display: inline-block;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 0;
+  top: 0;
+  margin-left: -25px;
+  padding-left: 3px;
+  padding-top: 1px;
+  font-size: 11px;
+  color: #555555;
+}
+
+.form-check input[type="checkbox"] {
+  opacity: 0;
+}
+.form-check input[type="checkbox"]:checked + label::before {
+  background-color: @checkbox-default-color;
+  border-color: @checkbox-default-color;
+}
+.form-check input[type="checkbox"]:checked + label::after {
+  font-family: 'FontAwesome';
+  content: "\f00c";
+  color: white;
+}
+.form-check input[type="checkbox"]:disabled + label {
+  opacity: 0.65;
+}
+.form-check-placeholder label {
+  font-weight: bold;
+  margin-top: 15px;
+  margin-left: 2px;
+  border-bottom: 2px solid @gray-light;
+  width: 13px;
+  height: 4px;
+  opacity: 0.65;
+  display: inline-block;
+}
+
+.controls-text {
+  padding-top: 7px;
+}
+
+.form-hide-actions .form-actions {
+  display: none;
 }

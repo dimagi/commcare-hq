@@ -17,6 +17,7 @@ import django
 import sys, os
 from mock import MagicMock
 import sphinx_rtd_theme
+from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath('..'))
 from ..manage import init_hq_python_path
@@ -33,6 +34,15 @@ MOCK_MODULES = ["PIL.Image", "PIL"]
 sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
 
+# Support including markdown files in the documentation
+source_parsers = {
+    '.md': CommonMarkParser,
+}
+
+# The suffix of source filenames.
+source_suffix = ['.rst', '.md']
+
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -44,9 +54,6 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinxcontrib_django
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
-
-# The suffix of source filenames.
-source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'

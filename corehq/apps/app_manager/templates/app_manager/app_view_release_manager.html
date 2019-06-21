@@ -7,17 +7,17 @@
 
 {% block title %}
   {% trans "Releases" %} -
-    {% if app.name %}
-        {{ app.name|html_name }}
-    {% else %}
-        {% trans 'Applications' %}
-    {% endif %}
+  {% if app.name %}
+    {{ app.name|html_name }}
+  {% else %}
+    {% trans 'Applications' %}
+  {% endif %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
-    {% endcompress %}
+  {% compress js %}
+    <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
+  {% endcompress %}
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
@@ -29,7 +29,7 @@
   {% initial_page_data 'app_version' app.version %}
   {% initial_page_data 'application_profile_url' application_profile_url %}
   {% initial_page_data 'build_profiles' app.build_profiles %}
-  {% initial_page_data 'fetch_limit' fetchLimit %}
+  {% initial_page_data 'latest_version_for_build_profiles' latest_version_for_build_profiles %}
   {% initial_page_data 'latestReleasedVersion' latest_released_version %}
   {% initial_page_data 'practice_users' practice_users %}
   {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
@@ -39,6 +39,7 @@
   {% initial_page_data 'sms_contacts' sms_contacts %}
   {% initial_page_data 'confirm' confirm %}
   {% registerurl "app_data_json" app.domain '---' %}
+  {% registerurl "app_form_summary_diff" domain '---' '---' %}
   {% registerurl "paginate_releases" domain app.id %}
   {% registerurl "delete_copy" domain app.id %}
   {% registerurl "download_jad" domain '---' %}

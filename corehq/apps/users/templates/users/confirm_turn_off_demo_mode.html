@@ -3,24 +3,24 @@
 {% load i18n %}
 
 {% block page_content %}
-	<div class="alert alert-warning">
-	    <p><i class="fa fa-exclamation-triangle"></i> {% trans 'Below applications use this mobile worker as practice mobile worker. If you turn off practice mode, this mobile worker will be automatically unassigned for these applications as practice mode mobile worker.' %}</p>
-	    <li>
-	    {% for app in practice_apps %}
-	    	<a href="{% url "view_app" domain app.id %}">{{ app.name }}</a>
-	    {% endfor %}
-	    </li>
-	</div>
-	<form class="form form-horizontal"
-		id="toggle-demo-mode"
-		action="{% url "toggle_demo_mode" domain commcare_user.user_id %}"
-		method="post">
-		<a class="btn btn-info" href="{% url "edit_commcare_user" domain commcare_user.user_id %}">{% trans 'No, go back' %}</a>
-		<input type="hidden" name="demo_mode" value="no" />
-		<input type="hidden" name="confirm_turn_off" value="yes" />
-		{% csrf_token %}
-		<button type="submit" class="btn btn-danger">
-		    {% trans 'Yes, continue' %}
-		</button>
-	</form>
+  <div class="alert alert-warning">
+    <p><i class="fa fa-exclamation-triangle"></i> {% trans 'Below applications use this mobile worker as practice mobile worker. If you turn off practice mode, this mobile worker will be automatically unassigned for these applications as practice mode mobile worker.' %}</p>
+    <li>
+      {% for app in practice_apps %}
+        <a href="{% url "view_app" domain app.id %}">{{ app.name }}</a>
+      {% endfor %}
+    </li>
+  </div>
+  <form class="form form-horizontal"
+        id="toggle-demo-mode"
+        action="{% url "toggle_demo_mode" domain commcare_user.user_id %}"
+        method="post">
+    <a class="btn btn-default" href="{% url "edit_commcare_user" domain commcare_user.user_id %}">{% trans 'No, go back' %}</a>
+    <input type="hidden" name="demo_mode" value="no" />
+    <input type="hidden" name="confirm_turn_off" value="yes" />
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">
+      {% trans 'Yes, continue' %}
+    </button>
+  </form>
 {% endblock %}

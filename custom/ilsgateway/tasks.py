@@ -14,15 +14,11 @@ from psycopg2._psycopg import DatabaseError
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.decorators import serial_task
 from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
-from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
-    REMINDER_MONTHLY_RANDR_SUMMARY
+from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
-from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
-    construct_delivery_summary, construct_randr_summary
-from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
+    construct_delivery_summary
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
-from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
@@ -34,162 +30,51 @@ from .oneoff import *
 import six
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="4", minute="00", day_of_week="*"),
-               queue='logistics_background_queue')
-def report_run_periodic_task():
-    report_run.delay('ils-gateway')
-
-
-@periodic_task(serializer='pickle', run_every=crontab(hour="8", minute="00", day_of_week="*"),
-               queue='logistics_background_queue')
-def test_domains_report_run_periodic_task():
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        if domain == 'ils-gateway':
-            # skip live domain
-            continue
-        report_run(domain)
-
-
 def get_start_date(last_successful_run):
     now = datetime.utcnow()
     first_day_of_current_month = datetime(now.year, now.month, 1)
     return first_day_of_current_month if not last_successful_run else last_successful_run.end
 
 
-@serial_task('{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
-def report_run(domain, strict=True):
-    last_successful_run = ReportRun.last_success(domain)
-
-    last_run = ReportRun.last_run(domain)
-
-    start_date = get_start_date(last_successful_run)
-    end_date = datetime.utcnow()
-
-    if last_run and last_run.has_error:
-        run = last_run
-        run.complete = False
-        run.save()
-    else:
-        if start_date == end_date:
-            return
-        # start new run
-        run = ReportRun.objects.create(start=start_date, end=end_date,
-                                       start_run=datetime.utcnow(), domain=domain)
-    has_error = True
-    try:
-        populate_report_data(run.start, run.end, domain, run, strict=strict)
-        has_error = False
-    except Exception as e:
-        # just in case something funky happened in the DB
-        if isinstance(e, DatabaseError):
-            try:
-                transaction.rollback()
-            except:
-                pass
-        has_error = True
-        raise
-    finally:
-        # complete run
-        run = ReportRun.objects.get(pk=run.id)
-        run.has_error = has_error
-        run.end_run = datetime.utcnow()
-        run.complete = True
-        run.save()
-        logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())
-        if not has_error:
-            recalculation_on_location_change.delay(domain, last_successful_run)
-
 facility_delivery_partial = partial(send_for_day, cutoff=15, reminder_class=DeliveryReminder)
 district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=DeliveryReminder,
                                     location_type='DISTRICT')
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="13-15", hour=11, minute=0),
+@periodic_task(run_every=crontab(day_of_month="13-15", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_facility_delivery_task():
     facility_delivery_partial(15)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="20-22", hour=11, minute=0),
+@periodic_task(run_every=crontab(day_of_month="20-22", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_facility_delivery_task():
     facility_delivery_partial(22)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-30", hour=11, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-30", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_facility_delivery_task():
     facility_delivery_partial(30)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="11-13", hour=5, minute=0),
+@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
                queue="logistics_reminder_queue")
 def first_district_delivery_task():
     district_delivery_partial(13)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="18-20", hour=11, minute=0),
+@periodic_task(run_every=crontab(day_of_month="18-20", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def second_district_delivery_task():
     district_delivery_partial(20)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-28", hour=11, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-28", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def third_district_delivery_task():
     district_delivery_partial(28)
-
-
-facility_randr_partial = partial(send_for_day, cutoff=5, reminder_class=RandrReminder, location_type='FACILITY')
-district_randr_partial = partial(send_for_day, cutoff=13, reminder_class=RandrReminder, location_type='DISTRICT')
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="3-5", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def first_facility():
-    """Last business day before or on 5th day of the Submission month, 8:00am"""
-    facility_randr_partial(5)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="8-10", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def second_facility():
-    """Last business day before or on 10th day of the submission month, 8:00am"""
-    facility_randr_partial(10)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="10-12", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def third_facility():
-    """Last business day before or on 12th day of the submission month, 8:00am"""
-    facility_randr_partial(12)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="11-13", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def first_district():
-    district_randr_partial(13)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="13-15", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def second_district():
-    district_randr_partial(15)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="15-17", hour=11, minute=0),
-               queue="logistics_reminder_queue")
-def third_district():
-    district_randr_partial(17)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-31", hour=11, minute=15),
-               queue="logistics_reminder_queue")
-def supervision_task():
-    now = datetime.utcnow()
-    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
-    if now.day == last_business_day.day:
-        send_for_all_domains(last_business_day, SupervisionReminder)
 
 
 def get_last_and_nth_business_day(date, n):
@@ -199,7 +84,7 @@ def get_last_and_nth_business_day(date, n):
     return last_month_last_day, nth_business_day
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-31", hour=11, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=0),
                queue="logistics_reminder_queue")
 def first_soh_task():
     now = datetime.utcnow()
@@ -208,7 +93,7 @@ def first_soh_task():
         send_for_all_domains(last_business_day, SOHReminder)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="1-3", hour=6, minute=0),
+@periodic_task(run_every=crontab(day_of_month="1-3", hour=6, minute=0),
                queue="logistics_reminder_queue")
 def second_soh_task():
     now = datetime.utcnow()
@@ -217,7 +102,7 @@ def second_soh_task():
         send_for_all_domains(last_month_last_day, SOHReminder)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="5-7", hour=5, minute=15),
+@periodic_task(run_every=crontab(day_of_month="5-7", hour=5, minute=15),
                queue="logistics_reminder_queue")
 def third_soh_task():
     now = datetime.utcnow()
@@ -226,7 +111,7 @@ def third_soh_task():
         send_for_all_domains(last_month_last_day, SOHReminder)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="6-8", hour=13, minute=0),
+@periodic_task(run_every=crontab(day_of_month="6-8", hour=13, minute=0),
                queue="logistics_reminder_queue")
 def soh_summary_task():
     """
@@ -242,7 +127,7 @@ def soh_summary_task():
             send_translated_message(user, REMINDER_MONTHLY_SOH_SUMMARY, **construct_soh_summary(user.location))
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="26-31", hour=13, minute=0),
+@periodic_task(run_every=crontab(day_of_month="26-31", hour=13, minute=0),
                queue="logistics_reminder_queue")
 def delivery_summary_task():
     """
@@ -260,42 +145,7 @@ def delivery_summary_task():
             )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="15-17", hour=13, minute=0),
-               queue="logistics_reminder_queue")
-def randr_summary_task():
-    """
-        on 17th day of month or before if it's not a business day @ 3pm Tanzania time
-    """
-
-    now = datetime.utcnow()
-    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=17)
-    if now.day != business_day.day:
-        return
-
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        for user in get_district_people(domain):
-            send_translated_message(
-                user, REMINDER_MONTHLY_RANDR_SUMMARY, **construct_randr_summary(user.location)
-            )
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="18-20", hour=14, minute=0),
-               queue="logistics_reminder_queue")
-def soh_thank_you_task():
-    """
-    Last business day before the 20th at 4:00 PM Tanzania time
-    """
-    now = datetime.utcnow()
-    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=20)
-    if now.day != business_day.day:
-        return
-
-    last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        SOHThankYouReminder(domain=domain, date=last_month).send()
-
-
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month="6-10", hour=8, minute=0),
+@periodic_task(run_every=crontab(day_of_month="6-10", hour=8, minute=0),
                queue="logistics_reminder_queue")
 def stockout_reminder_task():
     """

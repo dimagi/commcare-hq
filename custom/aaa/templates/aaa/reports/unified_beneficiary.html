@@ -1,0 +1,19 @@
+{% extends 'aaa/dashboard.html' %}
+{% load hq_shared_tags %}
+{% load menu_tags %}
+
+{% block js %}
+  {{ block.super }}
+  <script src="{% static 'aaa/js/models/child.js' %}"></script>
+  <script src="{% static 'aaa/js/models/pregnant_women.js' %}"></script>
+  <script src="{% static 'aaa/js/models/eligible_couple.js' %}"></script>
+  <script src="{% static 'aaa/js/reports/unified_beneficiary.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+  <div id="unified_beneficiary" class="report-content">
+    <div class="indicators">
+      <table id="datatable" class="table table-striped table-bordered"></table>
+    </div>
+  </div>
+{% endblock content %}

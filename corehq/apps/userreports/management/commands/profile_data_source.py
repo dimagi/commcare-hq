@@ -22,7 +22,8 @@ class Command(BaseCommand):
     def handle(self, domain, data_source_id, doc_id, **options):
         config, _ = get_datasource_config(data_source_id, domain)
         doc_type = config.referenced_doc_type
-        doc_store = get_document_store_for_doc_type(domain, doc_type)
+        doc_store = get_document_store_for_doc_type(
+            domain, doc_type, load_source="profile_data_source")
         doc = doc_store.get_document(doc_id)
         sort_by = options['sort']
         local_variables = {'config': config, 'doc': doc}
@@ -39,19 +40,19 @@ def print_profile_stats(filename, sort_by):
     p.print_stats(50)
 
     print("Specs timing\n")
-    p.print_stats('userreports.*specs.*\(__call__\)')
+    p.print_stats(r'userreports.*specs.*\(__call__\)')
 
     print("Socket recvs\n")
     p.print_stats('recv')
 
     print("Doc retrievals\n")
-    p.print_stats('document_store.*\(get_document\)')
+    p.print_stats(r'document_store.*\(get_document\)')
 
     print("Postgres queries\n")
     p.print_stats('execute.*psycopg')
 
     print("ES queries\n")
-    p.print_stats('es_query.py.*\(run\)')
+    p.print_stats(r'es_query.py.*\(run\)')
 
     print("""
     Note: Due to overhead in profiling, these times are much larger than the real times.

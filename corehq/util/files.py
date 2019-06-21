@@ -65,3 +65,10 @@ class TransientTempfile(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.remove(self.path)
+
+
+def read_workbook_content_as_file(wb):
+    with tempfile.TemporaryFile() as temp_file:
+        wb.save(temp_file)
+        temp_file.seek(0)
+        return temp_file.read()

@@ -133,7 +133,7 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = get_user_es_processor()
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        data_source_providers=[DynamicDataSourceProvider('CommCareUser'), StaticDataSourceProvider('CommCareUser')],
     )
     change_feed = KafkaChangeFeed(
         topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
@@ -147,6 +147,7 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
+
 
 def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, process_num=0, **kwargs):
     """

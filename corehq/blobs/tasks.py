@@ -15,7 +15,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 log = logging.getLogger(__name__)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour='0,12'))
+@periodic_task(run_every=crontab(minute=0, hour='0,12'))
 def delete_expired_blobs():
     run_again = False
     bytes_deleted = 0

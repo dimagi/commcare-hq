@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import json
 import logging
 
+import six
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
@@ -16,6 +17,7 @@ from django.contrib import messages
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
+from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
 from corehq.apps.domain.decorators import track_domain_request
 
 from dimagi.utils.logging import notify_exception
@@ -26,7 +28,8 @@ from corehq.apps.app_manager.views.notifications import get_facility_for_form, n
 from corehq.apps.app_manager.exceptions import AppManagerException, \
     FormNotFoundException
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail
+from corehq.apps.app_manager.views.utils import back_to_main, bail, form_has_submissions, \
+    set_lang_cookie
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
@@ -114,6 +117,14 @@ def _get_form_designer_view(request, domain, app, module, form):
         return back_to_main(request, domain, app_id=app.id,
                             form_unique_id=form.unique_id)
 
+    if app.doc_type == 'LinkedApplication':
+        messages.warning(request, _(
+            "You tried to edit this form in the Form Builder. "
+            "However, this is a linked application and you can only make changes to the "
+            "upstream version."
+        ))
+        return back_to_main(request, domain, app_id=app.id)
+
     send_hubspot_form(HUBSPOT_FORM_BUILDER_FORM_ID, request)
 
     def _form_too_large(_app, _form):
@@ -151,7 +162,9 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     notify_form_opened(domain, request.couch_user, app.id, form.unique_id)
 
-    return render(request, "app_manager/form_designer.html", context)
+    response = render(request, "app_manager/form_designer.html", context)
+    set_lang_cookie(response, context['lang'])
+    return response
 
 
 @require_GET
@@ -187,7 +200,7 @@ def get_form_data_schema(request, domain, form_unique_id):
             "Please fix the error to see case properties in this tree")
         )
     except Exception as e:
-        notify_exception(request, message=e.message)
+        notify_exception(request, message=six.text_type(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(
@@ -243,13 +256,16 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),
-        'formName': translate(form.name, lang, app.langs),
+        'formName': translate(form.name, app.langs[0], app.langs),
         'saveType': 'patch',
         'saveUrl': reverse('edit_form_attr',
                            args=[domain, app.id, form.get_unique_id(),
                                  'xform']),
         'patchUrl': reverse('patch_xform',
                             args=[domain, app.id, form.get_unique_id()]),
+        'hasSubmissions': form_has_submissions(domain, app.id, form.get_unique_id()),
+        'hasSubmissionsUrl': reverse(FormHasSubmissionsView.urlname,
+                                     args=[domain, app.id, form.get_unique_id()]),
         'allowedDataNodeReferences': [
             "meta/deviceID",
             "meta/instanceID",

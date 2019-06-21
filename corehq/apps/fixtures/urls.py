@@ -8,9 +8,12 @@ from corehq.apps.fixtures.views import (
     UploadItemLists, FixtureUploadStatusView,
     upload_fixture_api, fixture_metadata, tables, download_item_lists,
     download_file, update_tables, fixture_upload_job_poll,
+    fixture_api_upload_status,
 )
 
 urlpatterns = [
+    url(r'^fixapi/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        fixture_api_upload_status, name='fixture_api_status'),
     url(r'^fixapi/', upload_fixture_api),
     url(r'^metadata/$', fixture_metadata, name='fixture_metadata'),
     url(r'^$', RedirectView.as_view(url='edit_lookup_tables', permanent=True), name='edit_lookup_tables'),

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.userreports.sql import get_column_name
-from corehq.apps.userreports.util import get_table_name, truncate_value
+from corehq.apps.userreports.util import get_table_name, truncate_value, UCR_TABLE_PREFIX
 
 
 class UtilitiesTestCase(SimpleTestCase):
@@ -28,11 +28,11 @@ class UtilitiesTestCase(SimpleTestCase):
         self.assertEqual(truncated, '\\xe8 string_6be7bea3')
 
     def test_table_name(self):
-        self.assertEqual('config_report_domain_table_7a7a33ec', get_table_name('domain', 'table'))
+        self.assertEqual('{}domain_table_7a7a33ec'.format(UCR_TABLE_PREFIX), get_table_name('domain', 'table'))
 
     def test_table_name_unicode(self):
         self.assertEqual(
-            "config_report_domain_unicode\\\\xe8_8aece1af",
+            "{}domain_unicode\\\\xe8_8aece1af".format(UCR_TABLE_PREFIX),
             get_table_name('domain', 'unicode\u00e8')
         )
 
@@ -43,7 +43,7 @@ class UtilitiesTestCase(SimpleTestCase):
 
     def test_long_table_name(self):
         name = get_table_name('this_is_a_long_domain', 'and_a_long_table_name')
-        name_expected = 'config_report_this_is_a_long_domain_and_a_long_table_n_6ac28759'
+        name_expected = '{}this_is_a_long_domain_and_a_long_tabl_3509038f'.format(UCR_TABLE_PREFIX)
         self.assertEqual(name, name_expected)
 
     def test_column_unicode(self):

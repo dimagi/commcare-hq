@@ -1,47 +1,47 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import uuid
+
 import logging
+import uuid
 
-from django import forms
-from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
-from django.utils.translation import ugettext as _
-from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
-    alphanumeric_sort_key
-from dimagi.utils.parsing import string_to_boolean
-
+import six
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
     ResourceNotFound,
 )
-from couchexport.writers import Excel2007ExportWriter
-from soil import DownloadBase
+from django import forms
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.utils.translation import ugettext as _
+
+from corehq.util.python_compatibility import soft_assert_type_text
+from six.moves import map
+from six.moves import range
 
 from corehq import privileges
-from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-from corehq.apps.groups.models import Group
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_commcare_users_by_filters,
-    get_user_docs_by_username,
-)
+    get_existing_usernames)
 from corehq.apps.users.models import UserRole
+from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
+    alphanumeric_sort_key
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.chunked import chunked
+from dimagi.utils.parsing import string_to_boolean
+from soil import DownloadBase
 from soil.util import get_download_file_path, expose_download
-
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
-import six
-from six.moves import range
-from six.moves import map
 
 
 class UserUploadError(Exception):
@@ -116,7 +116,9 @@ def check_existing_usernames(user_specs, domain):
     if invalid_usernames:
         raise UserUploadError(_('The following usernames are invalid: ' + ', '.join(invalid_usernames)))
 
-    existing_usernames = [u.get('username') for u in get_user_docs_by_username(usernames_without_ids)]
+    existing_usernames = set()
+    for usernames in chunked(usernames_without_ids, 500):
+        existing_usernames.update(get_existing_usernames(usernames))
 
     if existing_usernames:
         raise UserUploadError(_("The following usernames already exist and must "
@@ -189,7 +191,8 @@ class GroupMemoizer(object):
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, six.string_types):
-        phone_number = str(int(phone_number))
+        phone_number = six.text_type(int(phone_number))
+    soft_assert_type_text(phone_number)
     return phone_number.lstrip("+")
 
 
@@ -232,7 +235,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
             loc_type.name for loc_type in Domain.get_by_name(domain).location_types
             if not loc_type.administrative
         ]
-        return super(SiteCodeToLocationCache, self).__init__(domain)
+        super(SiteCodeToLocationCache, self).__init__(domain)
 
     def lookup(self, site_code):
         """
@@ -299,6 +302,7 @@ def create_or_update_groups(domain, group_specs, log):
 
 def get_location_from_site_code(site_code, location_cache):
     if isinstance(site_code, six.string_types):
+        soft_assert_type_text(site_code)
         site_code = site_code.lower()
     elif isinstance(site_code, six.integer_types):
         site_code = str(site_code)
@@ -371,7 +375,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
     can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
-    project = Domain.get_by_name(domain)
+    domain_obj = Domain.get_by_name(domain)
     usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
 
     try:
@@ -416,6 +420,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
             is_active = row.get('is_active')
             if isinstance(is_active, six.string_types):
+                soft_assert_type_text(is_active)
                 try:
                     is_active = string_to_boolean(is_active) if is_active else None
                 except ValueError:
@@ -441,7 +446,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     else:
                         user = CommCareUser.get_by_username(username)
 
-                    if project.strong_mobile_passwords and is_password(password):
+                    if domain_obj.strong_mobile_passwords and is_password(password):
                         if raw_username(username) in usernames_with_dupe_passwords:
                             raise UserUploadError(_("Provide a unique password for each mobile worker"))
 
@@ -523,23 +528,24 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                                 "Role '%s' does not exist"
                             ) % role)
 
-                    # following blocks require user doc id, so it needs to be saved if new user
-                    user.save()
                     if can_assign_locations:
                         locations_updated = set(user.assigned_location_ids) != set(location_ids)
                         primary_location_removed = (user.location_id and not location_ids or
                                                     user.location_id not in location_ids)
 
                         if primary_location_removed:
-                            user.unset_location()
+                            user.unset_location(commit=False)
                         if locations_updated:
-                            user.reset_locations(location_ids)
+                            user.reset_locations(location_ids, commit=False)
+
+                    user.save()
 
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
-                        user.get_django_user().check_password(password)
+                        # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
+                        user.get_django_user(use_primary_db=True).check_password(password)
 
                     for group_id in Group.by_user(user, wrap=False):
                         group = group_memoizer.get(group_id)
@@ -595,7 +601,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
+def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters, task, total_count):
 
     def _get_group_names(user):
         return sorted([group_memoizer.get(id).name for id in Group.by_user(user, wrap=False)], key=alphanumeric_sort_key)
@@ -647,13 +653,14 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for user in get_commcare_users_by_filters(domain, user_filters):
+    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
         unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
         user_groups_length = max(user_groups_length, len(group_names))
         max_location_length = max(max_location_length, len(user_dict["location_code"]))
+        DownloadBase.set_progress(task, n, total_count)
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
@@ -711,7 +718,14 @@ def parse_groups(groups):
     return group_headers, _get_group_rows()
 
 
-def dump_users_and_groups(domain, download_id, user_filters):
+def count_users_and_groups(domain, user_filters, group_memoizer):
+    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    groups_count = len(group_memoizer.groups)
+
+    return users_count + groups_count
+
+
+def dump_users_and_groups(domain, download_id, user_filters, task):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
     def _load_memoizer(domain):
@@ -733,6 +747,9 @@ def dump_users_and_groups(domain, download_id, user_filters):
     group_memoizer = _load_memoizer(domain)
     location_cache = LocationIdToSiteCodeCache(domain)
 
+    users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
+    DownloadBase.set_progress(task, 0, users_groups_count)
+
     user_data_model = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
@@ -743,7 +760,9 @@ def dump_users_and_groups(domain, download_id, user_filters):
         domain,
         user_data_model,
         location_cache,
-        user_filters
+        user_filters,
+        task,
+        users_groups_count,
     )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
@@ -767,3 +786,4 @@ def dump_users_and_groups(domain, download_id, user_filters):
     writer.close()
 
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    DownloadBase.set_progress(task, users_groups_count, users_groups_count)

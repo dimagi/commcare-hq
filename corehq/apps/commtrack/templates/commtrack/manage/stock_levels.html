@@ -6,8 +6,8 @@
 {% requirejs_main 'commtrack/js/stock_levels' %}
 
 {% block page_content %}
-    {% initial_page_data 'form_context' stock_levels_form.get_context %}
+  {% initial_page_data 'form_context' stock_levels_form.get_context %}
 
-    <legend>{% trans "Configure Stock Levels Per Location Type" %}</legend>
-    {{ stock_levels_form.as_table }}
+  <legend>{% trans "Configure Stock Levels Per Location Type" %}</legend>
+  {{ stock_levels_form.as_table }}
 {% endblock %}

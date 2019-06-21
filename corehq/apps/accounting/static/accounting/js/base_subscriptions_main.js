@@ -56,6 +56,9 @@ hqDefine('accounting/js/base_subscriptions_main', [
         $("#id_end_date").datepicker({
             dateFormat: "yy-mm-dd",
         });
+        $("#id_new_date_end").datepicker({
+            dateFormat: "yy-mm-dd",
+        });
 
         var subscriptionInfoHandler = subscriptionInfoHandlerModel();
         subscriptionInfoHandler.init();

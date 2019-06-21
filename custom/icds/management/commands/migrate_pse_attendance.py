@@ -6,9 +6,10 @@ from django.core.management.base import BaseCommand
 
 from django.db import connections
 
+from corehq.apps.userreports.util import get_table_name
 
-new_table = 'config_report_icds-cas_static-child_cases_monthly_v2_198ccc06'
-old_table = 'config_report_icds-cas_static-child_cases_monthly_tabl_551fd064'
+new_table = get_table_name('icds-cas', 'static-child_cases_monthly_v2')
+old_table = get_table_name('icds-cas', 'static-child_cases_monthly_tableau_v2')
 
 migration_query = """
 UPDATE "{new_table}" B

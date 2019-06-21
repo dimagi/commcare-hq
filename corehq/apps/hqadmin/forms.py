@@ -18,6 +18,7 @@ class EmailForm(forms.Form):
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
+
 class AuthenticateAsForm(forms.Form):
     username = forms.CharField(max_length=255)
     domain = forms.CharField(label="Domain", max_length=255, required=False)
@@ -256,7 +257,7 @@ class DisableUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         action = _("Disable") if self.user.is_active else _("Enable")
-        css_class = 'btn-danger' if self.user.is_active else 'btn-success'
+        css_class = 'btn-danger' if self.user.is_active else 'btn-primary'
         self.helper.layout = crispy.Layout(
             crispy.Field('reason'),
             crispy.Field('reset_password'),

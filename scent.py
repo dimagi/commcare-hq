@@ -29,7 +29,7 @@ def python_test_files(filename):
 @select_runnable('javascript_tests')
 @file_validator
 def js_files(filename):
-     return filename.endswith('.js') and not os.path.basename(filename).startswith('.')
+    return filename.endswith('.js') and not os.path.basename(filename).startswith('.')
 
 
 def run_test(fn):

@@ -365,7 +365,7 @@ class HOPECase(CommCareCase):
     @property
     def _HOPE_mother_registration_date(self):
         if self.delivery_forms:
-            return  self.delivery_forms[-1].form.get('registration_date')
+            return self.delivery_forms[-1].form.get('registration_date')
         else:
             return None
 

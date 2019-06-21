@@ -1,7 +1,7 @@
 /* globals hqDefine */
 hqDefine('userreports/js/expression_evaluator', function () {
-    var ExpressionModel = function (editor, submitUrl, initialData) {
-        var self = this;
+    var expressionModel = function (editor, submitUrl, initialData) {
+        var self = {};
         initialData = initialData || {};
         self.editor = editor;
         self.submitUrl = submitUrl;
@@ -70,6 +70,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
                 });
             }
         };
+        return self;
     };
-    return {ExpressionModel: ExpressionModel};
+    return {expressionModel: expressionModel};
 });

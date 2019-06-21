@@ -2,14 +2,8 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import sys
-import os
-import mimetypes
-import six
-import requests
-import attr
 
-import django
+import attr
 
 
 @attr.s
@@ -36,6 +30,8 @@ def _set_source_root_parent(source_root_parent):
     then foo and bar would become top-level importable
 
     """
+    import os
+    import sys
     filedir = os.path.dirname(__file__)
     submodules_list = os.listdir(os.path.join(filedir, source_root_parent))
     for d in submodules_list:
@@ -47,6 +43,8 @@ def _set_source_root_parent(source_root_parent):
 
 
 def _set_source_root(source_root):
+    import os
+    import sys
     filedir = os.path.dirname(__file__)
     sys.path.insert(1, os.path.join(filedir, source_root))
 
@@ -58,17 +56,15 @@ def _setup_once(*args, **kw):
         _setup_once.setup(*args, **kw)
 
 
-_setup_once.setup = django.setup
-django.setup = _setup_once
-
-
 def init_hq_python_path():
+    import os
     _set_source_root_parent('submodules')
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
 
 def _should_patch_gevent(args, gevent_commands):
+    import requests
     should_patch = False
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
@@ -82,12 +78,47 @@ def _should_patch_gevent(args, gevent_commands):
 
 
 def set_default_settings_path(argv):
+    import os
     if len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1':
         os.environ.setdefault('CCHQ_TESTING', '1')
         module = 'testsettings'
     else:
         module = 'settings'
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
+
+
+def set_nosetests_verbosity(argv):
+    """Increase nose output verbosity with -v... argument
+
+        -v: print test names
+        -vv: do not capture stdout
+        -vvv: do not capture logging
+        -vvvv: enable nose internal logging
+    """
+    import logging
+
+    def set_verbosity(arg, i):
+        args = []
+        verbosity = sum(1 for c in arg if c == "v") + 1
+        if len(arg) > verbosity:
+            # preserve other single-letter arguments (ex: -xv)
+            args.append("".join(c for c in arg if c != "v"))
+        if verbosity > 2:
+            args.append("--nocapture")
+        if verbosity > 3:
+            verbosity -= 1
+            args.append("--nologcapture")
+            logging.basicConfig(level=logging.NOTSET)
+            logging.getLogger().info(
+                "Adjust logging with testsettings._set_logging_levels")
+        args.append("--nose-verbosity=%s" % verbosity)
+        argv[i:i + 1] = args
+
+    if len(argv) > 1 and argv[1] == 'test':
+        for i, arg in reversed(list(enumerate(argv))):
+            if arg[:1] == "-" and arg[1] != "-" and any(c == 'v' for c in arg):
+                set_verbosity(arg, i)
+                break
 
 
 def patch_jsonfield():
@@ -112,30 +143,53 @@ def patch_jsonfield():
 
 
 def patch_assertItemsEqual():
+    import six
     import unittest
     if six.PY3:
         unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
-if __name__ == "__main__":
-    init_hq_python_path()
+def patch_pickle_version():
+    # to avoid incompatibility between python 2 and 3
+    import pickle
+    pickle.HIGHEST_PROTOCOL = 2
 
+
+def run_patches():
+    # workaround for https://github.com/smore-inc/tinys3/issues/33
+    import mimetypes
+    mimetypes.init()
+
+    patch_jsonfield()
+
+    patch_assertItemsEqual()
+
+    # After PY3 migration: remove
+    patch_pickle_version()
+
+    import django
+    _setup_once.setup = django.setup
+    django.setup = _setup_once
+
+
+if __name__ == "__main__":
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues
     # but compressor doesn't like it
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
+    import sys
     GEVENT_COMMANDS = (
-        GeventCommand('mvp_force_update'),
         GeventCommand('run_gunicorn'),
         GeventCommand('run_sql'),
+        GeventCommand('run_blob_migration'),
+        GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
         GeventCommand('sync_prepare_couchdb_multi'),
         GeventCommand('sync_couch_views'),
-        GeventCommand('celery', contains='-P gevent'),
         GeventCommand('populate_form_date_modified'),
         GeventCommand('migrate_domain_from_couch_to_sql', http_adapter_pool_size=32),
         GeventCommand('migrate_multiple_domains_from_couch_to_sql', http_adapter_pool_size=32),
@@ -144,12 +198,10 @@ if __name__ == "__main__":
         from gevent.monkey import patch_all; patch_all(subprocess=True)
         from psycogreen.gevent import patch_psycopg; patch_psycopg()
 
-    # workaround for https://github.com/smore-inc/tinys3/issues/33
-    mimetypes.init()
-    patch_jsonfield()
-
-    patch_assertItemsEqual()
+    init_hq_python_path()
+    run_patches()
 
     set_default_settings_path(sys.argv)
+    set_nosetests_verbosity(sys.argv)
     from django.core.management import execute_from_command_line
     execute_from_command_line(sys.argv)

@@ -2,43 +2,132 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-
 {% requirejs_main "scheduling/js/conditional_alert_list" %}
 
-
 {% block stylesheets %}{{ block.super }}
-<style>
+  <style>
     .label {
-        font-size: 100%;
+      font-size: 100%;
     }
-</style>
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    {% registerurl 'conditional_alert_list' domain %}
-    {% registerurl 'edit_conditional_alert' domain '---' %}
-    {% initial_page_data 'limit_rule_restarts' limit_rule_restarts %}
-    {% initial_page_data 'allow_copy' allow_copy %}
+  {% registerurl 'conditional_alert_list' domain %}
+  {% registerurl 'edit_conditional_alert' domain '---' %}
+  {% initial_page_data 'limit_rule_restarts' limit_rule_restarts %}
+  {% initial_page_data 'allow_copy' allow_copy %}
 
-    <div class="btn-group">
-        <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-success">
+  <p class="lead">{% trans 'Conditional Alerts' %}</p>
+
+  <p>
+    {% blocktrans %}
+      Conditional alerts allow you to send messaging content on a specific schedule.
+      Read more about conditional alerts on the
+      <a href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts" target="_blank">Help Site</a>.
+    {% endblocktrans %}
+  </p>
+
+  <div id="conditional-alert-list" class="ko-template">
+    <div class="row">
+      <div class="col-sm-8 col-md-9">
+        <div class="btn-toolbar">
+          <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-primary">
             <i class="fa fa-plus"></i>
             {% trans "New Conditional Alert" %}
-        </a>
+          </a>
+
+          {% if request|toggle_enabled:'BULK_CONDITIONAL_ALERTS' %}
+            <a href="{% url 'upload_conditional_alert' domain %}" class="btn btn-info">
+              <i class="fa fa-cloud-upload"></i>
+              {% trans "Bulk Upload Conditional Alerts" %}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-sm-4 col-md-3">
+        <search-box data-apply-bindings="false"
+                    params="value: query,
+                                    action: function() { goToPage(1); }"></search-box>
+      </div>
     </div>
-    <h4>{% trans 'Conditional Alerts' %}</h4>
-    <div>
-        <table id="conditional-alert-list" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th class="col-md-1">{% trans 'Delete' %}</th>
-                    <th class="col-md-5">{% trans 'Name' %}</th>
-                    <th class="col-md-2">{% trans 'Case Type' %}</th>
-                    <th class="col-md-2">{% trans 'Status' %}</th>
-                    <th class="col-md-2">{% trans 'Action' %}</th>
-                    <th class="col-md-2">{% trans 'Copy To' %}</th>
-                </tr>
-            </thead>
-        </table>
+
+    <div class="spacer"></div>
+
+    <div class="alert alert-info" data-bind="visible: emptyTable()">
+      {% blocktrans %}
+        There are no alerts to display.
+      {% endblocktrans %}
     </div>
+    <table class="table table-striped table-bordered" data-bind="visible: !emptyTable()">
+      <thead>
+      <tr>
+        <th class="col-md-1">{% trans 'Delete' %}</th>
+        <th class="{% if allow_copy %}col-md-2{% else %}col-md-5{% endif %}">{% trans 'Name' %}</th>
+        <th class="col-md-2">{% trans 'Case Type' %}</th>
+        <th class="col-md-2">{% trans 'Status' %}</th>
+        <th class="col-md-2">{% trans 'Action' %}</th>
+        {% if allow_copy %}
+          <th class="col-md-3">{% trans 'Copy To' %}</th>
+        {% endif %}
+      </tr>
+      </thead>
+      <tbody data-bind="foreach: rules">
+      <tr>
+        <td class="text-center">
+          <button data-bind="disable: locked_for_editing() || requestInProgress(),
+                                           click: remove"
+                  class="btn btn-danger">
+            <i class="fa fa-remove"></i>
+          </button>
+        </td>
+        <td><a data-bind="attr: {href: editUrl}, text: name"></a></td>
+        <td data-bind="text: case_type"></td>
+        <td>
+          <span class="label label-success" data-bind="visible: active()">{% trans "Active" %}</span>
+          <span class="label label-danger" data-bind="visible: !active()">{% trans "Inactive" %}</span>
+          <span class="label label-default" data-bind="visible: locked_for_editing()">
+                            {% trans "Processing" %}: <span data-bind="text: progress_pct"></span>%
+                        </span>
+        </td>
+        <td>
+          <button class="btn btn-default"
+                  data-bind="disable: locked_for_editing() || !editable() || requestInProgress(),
+                                           click: toggleStatus">
+            <span data-bind="visible: active()">{% trans "Deactivate" %}</span>
+            <span data-bind="visible: !active()">{% trans "Activate" %}</span>
+          </button>
+          <div data-bind="visible: locked_for_editing">
+            <button class="btn btn-default" data-bind="click: restart">
+              <i class="fa fa-refresh"></i>
+              {% trans "Restart Rule" %}
+            </button>
+          </div>
+        </td>
+        {% if allow_copy %}
+          <td>
+            <div class="form-inline">
+              <input type="text"
+                     class="form-control"
+                     placeholder="{% trans_html_attr "Project" %}"
+                     data-bind="value: projectName, valueUpdate: 'afterkeydown'" />
+              <button class="btn btn-default"
+                      data-bind="disable: locked_for_editing() || !editable() || requestInProgress(),
+                                                  click: copy,">
+                <i class="fa fa-copy"></i>
+                {% trans "Copy" %}
+              </button>
+            </div>
+          </td>
+        {% endif %}
+      </tr>
+      </tbody>
+    </table>
+    <pagination data-apply-bindings="false"
+                data-bind="visible: !emptyTable()"
+                params="goToPage: goToPage,
+                            perPage: itemsPerPage,
+                            totalItems: totalItems,
+                            showSpinner: showPaginationSpinner"></pagination>
+  </div>
 {% endblock %}

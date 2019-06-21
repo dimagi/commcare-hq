@@ -18,6 +18,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface, P
 from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.util.datadog.utils import form_load_counter
 from dimagi.utils.couch import LockManager
 import six
 
@@ -69,7 +70,8 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
 def _perfom_post_save_actions(form, save=True):
     interface = FormProcessorInterface(form.domain)
     cache = interface.casedb_cache(
-        domain=form.domain, lock=False, deleted_ok=True, xforms=[form]
+        domain=form.domain, lock=False, deleted_ok=True, xforms=[form],
+        load_src="reprocess_form_post_save",
     )
     with cache as casedb:
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
@@ -118,6 +120,9 @@ def reprocess_xform_error_by_id(form_id, domain=None):
 
 
 def reprocess_form(form, save=True, lock_form=True):
+    if lock_form:
+        # track load if locking; otherise it will be tracked elsewhere
+        form_load_counter("reprocess_form", form.domain)()
     interface = FormProcessorInterface(form.domain)
     lock = interface.acquire_lock_for_xform(form.form_id) if lock_form else None
     with LockManager(form, lock):
@@ -129,7 +134,8 @@ def reprocess_form(form, save=True, lock_form=True):
             form.doc_type = 'XFormInstance'
 
         cache = interface.casedb_cache(
-            domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
+            domain=form.domain, lock=True, deleted_ok=True, xforms=[form],
+            load_src="reprocess_form",
         )
         with cache as casedb:
             try:

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from datetime import timedelta
+import six
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.messaging.scheduling.util import utcnow
@@ -18,6 +19,7 @@ XFORMS_SESSION_IVR = "IVR"
 XFORMS_SESSION_TYPES = [XFORMS_SESSION_SMS, XFORMS_SESSION_IVR]
 
 
+@six.python_2_unicode_compatible
 class SQLXFormsSession(models.Model):
     """
     Keeps information about an SMS XForm session.
@@ -86,7 +88,7 @@ class SQLXFormsSession(models.Model):
             ['session_is_open', 'connection_id'],
         ]
 
-    def __unicode__(self):
+    def __str__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
             {"form": self.form_xmlns,
              "domain": self.domain,

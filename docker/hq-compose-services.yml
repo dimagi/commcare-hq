@@ -1,65 +1,67 @@
-formplayer:
-  extends:
-    file: hq-compose.yml
-    service: formplayer
-  environment:
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
-    WEB_HOST: "dockerhost"
-  links:
-    - postgres
-    - couch
-    - redis
-  expose:
-    - 8010
-  ports:
-    - "8010:8010"
+version: '2.3'
 
-postgres:
-  extends:
-    file: hq-compose.yml
-    service: postgres
-  ports:
-    - "5432:5432"
+services:
+  formplayer:
+    extends:
+      file: hq-compose.yml
+      service: formplayer
+    environment:
+      WEB_HOST: "dockerhost"
+    links:
+      - postgres
+      - couch
+      - redis
+    expose:
+      - 8010
+    ports:
+      - "8010:8010"
 
-couch:
-  extends:
-    file: hq-compose.yml
-    service: couch
-  command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
-  ports:
-    - "5984:5984"
+  postgres:
+    extends:
+      file: hq-compose.yml
+      service: postgres
+    ports:
+      - "5432:5432"
 
-redis:
-  extends:
-    file: hq-compose.yml
-    service: redis
-  ports:
-    - "6379:6379"
+  couch:
+    extends:
+      file: hq-compose.yml
+      service: couch
+    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
+    ports:
+      - "5984:5984"
 
-elasticsearch:
-  extends:
-    file: hq-compose.yml
-    service: elasticsearch
-  command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
-  environment:
-    ES_CLUSTER_NAME: ES_CLUSTER_NAME
-    ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-  ports:
-    - "9200:9200"
+  redis:
+    extends:
+      file: hq-compose.yml
+      service: redis
+    ports:
+      - "6379:6379"
 
-kafka:
-  extends:
-    file: hq-compose.yml
-    service: kafka
-  environment:
-    ADVERTISED_HOST: ${KAFKA_ADVERTISED_HOST_NAME}
-  ports:
-    - "2181:2181"
-    - "9092:9092"
+  elasticsearch:
+    extends:
+      file: hq-compose.yml
+      service: elasticsearch
+    command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
+    environment:
+      ES_CLUSTER_NAME: ES_CLUSTER_NAME
+      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+    ports:
+      - "9200:9200"
 
-riakcs:
-  extends:
-    file: hq-compose.yml
-    service: riakcs
-  ports:
-    - "9980:9980"
+  kafka:
+    extends:
+      file: hq-compose.yml
+      service: kafka
+    environment:
+      ADVERTISED_HOST: ${KAFKA_ADVERTISED_HOST_NAME}
+    ports:
+      - "2181:2181"
+      - "9092:9092"
+
+  minio:
+    extends:
+      file: hq-compose.yml
+      service: minio
+    ports:
+      - "9980:9980"

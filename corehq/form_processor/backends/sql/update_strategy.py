@@ -1,40 +1,48 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import logging
 import sys
-import datetime
 from functools import cmp_to_key
 
+from django.utils.translation import ugettext as _
+
+import six
+from ddtrace import tracer
 from iso8601 import iso8601
+
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import (
+    CaseValueError,
+    MissingServerDate,
+    ReconciliationError,
     UsesReferrals,
     VersionNotSupported,
-    CaseValueError,
-    ReconciliationError,
-    MissingServerDate
 )
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
-from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+
+from corehq import toggles
+from corehq.apps.couch_sql_migration.progress import (
+    couch_sql_migration_in_progress,
+)
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.models import (
-    CommCareCaseSQL,
-    CommCareCaseIndexSQL,
-    CaseTransaction,
     CaseAttachmentSQL,
-    RebuildWithReason
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    RebuildWithReason,
 )
 from corehq.form_processor.update_strategy_base import UpdateStrategy
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL
-)
-from django.utils.translation import ugettext as _
-
-from corehq.util.soft_assert import soft_assert
+from corehq.util import cmp
 from corehq.util.datadog.gauges import datadog_counter
-reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
+from corehq.util.soft_assert import soft_assert
+
+reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']), include_breadcrumbs=True)
 
 
 def _validate_length(length):
@@ -155,7 +163,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def _update_known_properties(self, action):
         for name, value in action.get_known_properties().items():
-            if value:
+            if value is not None:
                 setattr(self.case, name, _convert_type_check_length(name, value))
 
     def _apply_create_action(self, case_update, create_action):
@@ -209,6 +217,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     self.case.track_create(index)
 
     def _apply_attachments_action(self, attachment_action, xform):
+        if not toggles.MM_CASE_PROPERTIES.enabled(self.case.domain):
+            return
 
         # NOTE `attachment_action` is a
         # `casexml.apps.case.xml.parser.CaseAttachmentAction` and
@@ -220,8 +230,13 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             if att.is_delete:
                 if name in current_attachments:
                     self.case.track_delete(current_attachments[name])
-            else:
+            elif att.attachment_src:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
+                if form_attachment is None:
+                    # Probably an improperly configured form. We need a way to
+                    # convey errors like this to domain admins.
+                    raise AttachmentNotFound(
+                        "%s: %r" % (xform.form_id, att.attachment_src))
                 if name in current_attachments:
                     existing_attachment = current_attachments[name]
                     existing_attachment.from_form_attachment(
@@ -310,14 +325,15 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def reconcile_transactions_if_necessary(self):
         if self.case.check_transaction_order():
             return False
-        datadog_counter("commcare.form_processor.sql.reconciling_transactions")
+        datadog_counter("commcare.form_processor.sql.reconcile_transactions")
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % e.message)
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
 
         return True
 
+    @tracer.wrap(name='form_processor.sql.reconcile_transactions')
     def reconcile_transactions(self):
         transactions = self.case.transactions
         sorted_transactions = sorted(
@@ -354,59 +370,48 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
 
 def _transaction_sort_key_function(case):
-    xform_ids = list(case.xform_ids)
-    fudge_factor = datetime.timedelta(hours=12)
 
-    def cc_cmp(first, second):
-        if first > second:
-            return 1
-        if first < second:
-            return -1
-        return 0
-
-    def _transaction_cmp(first_transaction, second_transaction):
-        # if the forms aren't submitted by the same user, just default to server dates
+    def transaction_cmp(first_transaction, second_transaction):
+        # compare server dates if the forms aren't submitted by the same user
         if first_transaction.user_id != second_transaction.user_id:
-            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+            return cmp(first_transaction.server_date, second_transaction.server_date)
 
         if first_transaction.form_id and first_transaction.form_id == second_transaction.form_id:
             # short circuit if they are from the same form
-            return cc_cmp(
-                _type_sort(first_transaction.type),
-                _type_sort(second_transaction.type)
+            return cmp(
+                type_index(first_transaction.type),
+                type_index(second_transaction.type)
             )
 
         if not (first_transaction.server_date and second_transaction.server_date):
             raise MissingServerDate()
 
-        # checks if the dates received are within a particular range
-        if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
-            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+        if abs(first_transaction.server_date - second_transaction.server_date) > const.SIGNIFICANT_TIME:
+            return cmp(first_transaction.server_date, second_transaction.server_date)
 
-        def _sortkey(transaction):
-            def form_index(form_id):
-                try:
-                    return xform_ids.index(form_id)
-                except ValueError:
-                    return sys.maxsize
+        return cmp(sort_key(first_transaction), sort_key(second_transaction))
 
-            # if the user is the same you should compare with the special logic below
-            return (
-                transaction.client_date,
-                form_index(transaction.form_id),
-                _type_sort(transaction.type),
-            )
+    def type_index(action_type):
+        """Consistent ordering for action types"""
+        for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
+            if action_type & type_action == action_type:
+                return idx
+        return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)
 
-        return cc_cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+    def sort_key(transaction):
+        # if the user is the same you should compare with the special logic below
+        return (
+            transaction.client_date,
+            form_index(transaction.form_id),
+            type_index(transaction.type),
+        )
 
-    return cmp_to_key(_transaction_cmp)
+    class cache(object):
+        ids = None
 
+    def form_index(form_id):
+        if cache.ids is None:
+            cache.ids = {form_id: i for i, form_id in enumerate(case.xform_ids)}
+        return cache.ids.get(form_id, sys.maxsize)
 
-def _type_sort(action_type):
-    """
-    Consistent ordering for action types
-    """
-    for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
-        if action_type & type_action == action_type:
-            return idx
-    return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)
+    return cmp_to_key(transaction_cmp)

@@ -5,6 +5,7 @@ import logging
 from django.conf import settings
 from django.utils.encoding import force_text
 
+import six
 from django_countries.data import COUNTRIES
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 from twilio.base.exceptions import TwilioRestException
@@ -49,4 +50,4 @@ def get_twilio_message(backend_instance, backend_message_id):
     try:
         return _get_twilio_client(backend_instance).messages.get(backend_message_id).fetch()
     except TwilioRestException as e:
-        raise RetryBillableTaskException(e.message)
+        raise RetryBillableTaskException(six.text_type(e))

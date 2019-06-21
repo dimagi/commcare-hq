@@ -18,7 +18,6 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from memoized import memoized
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case import const
@@ -99,10 +98,10 @@ class OTARestoreUser(object):
     def get_sql_locations(self, domain):
         return self._couch_user.get_sql_locations(domain)
 
-    def get_fixture_data_items(self):
-        raise NotImplementedError()
+    def get_location_ids(self, domain):
+        return self._couch_user.get_location_ids(domain)
 
-    def get_groups(self):
+    def get_fixture_data_items(self):
         raise NotImplementedError()
 
     def get_commtrack_location_id(self):
@@ -144,9 +143,6 @@ class OTARestoreWebUser(OTARestoreUser):
     def get_fixture_data_items(self):
         return []
 
-    def get_groups(self):
-        return []
-
     def get_commtrack_location_id(self):
         return None
 
@@ -181,11 +177,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import FixtureDataItem
 
         return FixtureDataItem.by_user(self._couch_user)
-
-    def get_groups(self):
-        # this call is only used by bihar custom code and can be removed when that project is inactive
-        from corehq.apps.groups.models import Group
-        return Group.by_user(self._couch_user)
 
     def get_commtrack_location_id(self):
         from corehq.apps.commtrack.util import get_commtrack_location_id
@@ -260,7 +251,7 @@ class UCRSyncLog(Document):
     datetime = DateTimeProperty()
 
 
-class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
+class AbstractSyncLog(SafeSaveDocument):
     date = DateTimeProperty()
     domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
     user_id = StringProperty()
@@ -419,7 +410,7 @@ def synclog_to_sql_object(synclog_json_object):
 @architect.install('partition', type='range', subtype='date', constraint='week', column='date')
 class SyncLogSQL(models.Model):
 
-    synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
+    synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -452,6 +443,7 @@ class SyncLogSQL(models.Model):
             )
 
 
+@six.python_2_unicode_compatible
 class SyncLog(AbstractSyncLog):
     """
     A log of a single sync operation.
@@ -679,7 +671,7 @@ class SyncLog(AbstractSyncLog):
                 return True
             return False
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
 
     def tests_only_get_cases_on_phone(self):
@@ -1112,7 +1104,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if case.case_id not in all_updates:
                 _get_logger().debug('initializing update for case {}'.format(case.case_id))
                 all_updates[case.case_id] = CaseUpdate(case_id=case.case_id,
-                                                   owner_ids_on_phone=self.owner_ids_on_phone)
+                                                       owner_ids_on_phone=self.owner_ids_on_phone)
 
             case_update = all_updates[case.case_id]
             case_update.was_live_previously = case.case_id in self.primary_case_ids

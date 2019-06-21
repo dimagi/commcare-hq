@@ -1,4 +1,7 @@
 from __future__ import absolute_import, unicode_literals
+
+import traceback
+
 from six import string_types
 from six.moves import filter
 import re
@@ -14,12 +17,15 @@ RATE_LIMITED_EXCEPTIONS = {
     'socketpool.pool.MaxTriesError': 'couchdb',
 
     'corehq.elastic.ESError': 'elastic',
+    'elasticsearch.exceptions.ConnectionTimeout': 'elastic',
 
-    # 'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
+    'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
 
     'socket.error': 'rabbitmq',
 
     'redis.exceptions.ConnectionError': 'redis',
+    'ClusterDownError': 'redis',
+
     'botocore.exceptions.ClientError': 'riak',
     'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
     'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
@@ -30,13 +36,30 @@ RATE_LIMITED_EXCEPTIONS = {
 }
 
 
+RATE_LIMIT_BY_PACKAGE = {
+    # exception: (python package prefix, rate limit key)
+    'requests.exceptions.ConnectionError': ('cloudant', 'couchdb'),
+    'requests.exceptions.HTTPError': ('cloudant', 'couchdb'),
+}
+
+
 def _get_rate_limit_key(exc_info):
-    exc_type = exc_info[0]
+    exc_type, value, tb = exc_info
     exc_name = '%s.%s' % (exc_type.__module__, exc_type.__name__)
     if exc_type.__name__ in RATE_LIMITED_EXCEPTIONS:
         return RATE_LIMITED_EXCEPTIONS[exc_type.__name__]
     elif exc_name in RATE_LIMITED_EXCEPTIONS:
         return RATE_LIMITED_EXCEPTIONS[exc_name]
+
+    if exc_name in RATE_LIMIT_BY_PACKAGE:
+        # not super happy with this approach but want to be able to
+        # rate limit exceptions based on where they come from rather than
+        # the specific exception
+        package, key = RATE_LIMIT_BY_PACKAGE[exc_name]
+        frame_summaries = traceback.extract_tb(tb)
+        for frame in frame_summaries:
+            if frame[0].startswith(package): # filename
+                return key
 
 
 class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):

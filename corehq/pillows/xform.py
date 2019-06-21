@@ -15,7 +15,7 @@ from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, UCR_PROCESSING_CHUNK_SIZE
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
@@ -29,6 +29,7 @@ from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
+from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.processors.elastic import ElasticProcessor
@@ -166,7 +167,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
                      include_ucrs=None, exclude_ucrs=None,
                      num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
-                     processor_chunk_size=UCR_PROCESSING_CHUNK_SIZE, topics=None, **kwargs):
+                     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, **kwargs):
     # avoid circular dependency
     from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
     from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -178,7 +179,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
 
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        data_source_providers=[DynamicDataSourceProvider('XFormInstance'), StaticDataSourceProvider('XFormInstance')],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,

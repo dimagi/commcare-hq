@@ -23,12 +23,6 @@ from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
 from corehq.toggles import any_toggle_enabled, SUPPORT
-from corehq.util.supervisord.api import (
-    PillowtopSupervisorApi,
-    SupervisorException,
-    all_pillows_supervisor_status,
-    pillow_supervisor_status
-)
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.web import json_response
@@ -124,9 +118,6 @@ def system_ajax(request):
         pass
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
-        supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
-        for meta in pillow_meta:
-            meta.update(supervisor_status[meta['name']])
         return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
@@ -199,45 +190,15 @@ def pillow_operation_api(request):
             'success': error is None,
             'message': error,
         }
-        response.update(pillow_supervisor_status(pillow_name))
         if pillow_config:
             response.update(get_pillow_json(pillow_config))
         return json_response(response)
 
-    @any_toggle_enabled(SUPPORT)
-    def reset_pillow(request):
-        pillow.reset_checkpoint()
-        if PillowtopSupervisorApi().restart_pillow(pillow_name):
-            return get_response()
-        else:
-            return get_response("Checkpoint reset but failed to restart pillow. "
-                                "Restart manually to complete reset.")
-
-    @any_toggle_enabled(SUPPORT)
-    def start_pillow(request):
-        if PillowtopSupervisorApi().start_pillow(pillow_name):
-            return get_response()
-        else:
-            return get_response('Unknown error')
-
-    @any_toggle_enabled(SUPPORT)
-    def stop_pillow(request):
-        if PillowtopSupervisorApi().stop_pillow(pillow_name):
-            return get_response()
-        else:
-            return get_response('Unknown error')
-
     if pillow:
         try:
-            if operation == 'reset_checkpoint':
-                reset_pillow(request)
-            if operation == 'start':
-                start_pillow(request)
-            if operation == 'stop':
-                stop_pillow(request)
             if operation == 'refresh':
                 return get_response()
-        except SupervisorException as e:
+        except Exception as e:
             return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 TABLE_NAME = 'form_processor_commcarecasesql'
 INDEX_NAME = 'form_processor_commcarecasesql_domain_type_05e599e0_idx'
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             sql=CREATE_INDEX_SQL,
             reverse_sql=DROP_INDEX_SQL,
             state_operations=[

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+
+import six
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
@@ -49,13 +51,13 @@ def bulk_upload_async(domain, user_specs, group_specs):
 @task(serializer='pickle', )
 def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
-    DownloadBase.set_progress(bulk_download_users_async, 0, 100)
     errors = []
     try:
         dump_users_and_groups(
             domain,
             download_id,
-            user_filters
+            user_filters,
+            bulk_download_users_async,
         )
     except GroupNameError as e:
         group_urls = [
@@ -84,7 +86,6 @@ def bulk_download_users_async(domain, download_id, user_filters):
     except BulkFetchException:
         errors.append(_('Error exporting data. Please try again later.'))
 
-    DownloadBase.set_progress(bulk_download_users_async, 100, 100)
     return {
         'errors': errors
     }
@@ -231,7 +232,7 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
             )
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour=23, minute=55),
     queue='background_queue',
 )
@@ -240,8 +241,8 @@ def resend_pending_invitations():
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
-    for domain in domains:
-        invitations = Invitation.by_domain(domain.name)
+    for domain_obj in domains:
+        invitations = Invitation.by_domain(domain_obj.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
@@ -276,7 +277,7 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
         reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
-        notify_exception(None, message=e.message)
+        notify_exception(None, message=six.text_type(e))
         results = {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
@@ -289,3 +290,15 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
+
+
+@task()
+def update_domain_date(user_id, domain):
+    from corehq.apps.users.models import WebUser
+    user = WebUser.get_by_user_id(user_id, domain)
+    domain_membership = user.get_domain_membership(domain)
+    if domain_membership:
+        domain_membership.last_accessed = datetime.today().date()
+        user.save()
+    else:
+        logger.error("DomainMembership does not exist for user %s in domain %s" % (user.name, domain))

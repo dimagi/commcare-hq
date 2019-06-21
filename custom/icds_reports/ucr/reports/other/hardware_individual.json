@@ -1,0 +1,247 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "cas-lab"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-hardware_individual",
+  "data_source_table": "static-hardware_cases",
+  "config": {
+    "title": "Hardware - Individual Hardware",
+    "description": "",
+    "visible": true,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date Registered",
+        "field": "opened_on",
+        "type": "date",
+        "slug": "opened_on"
+      },
+      {
+        "compare_as_string": false,
+        "required": false,
+        "datatype": "string",
+        "display": "Filter by Block",
+        "field": "block_id",
+        "type": "location_drilldown",
+        "slug": "block_id",
+        "include_descendants": true,
+        "max_drilldown_levels": 3
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "state_id",
+        "field": "state_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "State",
+          "hin": "State"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "district_id",
+        "field": "district_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "District",
+          "hin": "District"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "block_id",
+        "field": "block_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Block",
+          "hin": "Block"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "name",
+        "field": "name",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Device Code",
+          "hin": "Device Code"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "registered_user_name",
+        "field": "registered_user_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Registered User",
+          "hin": "Registered User"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "hardware_status",
+        "field": "hardware_status",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Hardware Status",
+          "hin": "Hardware Status"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "serial_number",
+        "field": "serial_number",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Serial Number",
+          "hin": "Serial Number"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "hardware_type",
+        "field": "hardware_type",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Device Type",
+          "hin": "Device Type"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "brand",
+        "field": "brand",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Brand",
+          "hin": "Brand"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "model",
+        "field": "model",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Model Number",
+          "hin": "Model Number"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "column_id": "hardware_history",
+        "field": "hardware_history",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Hardware History",
+          "hin": "Hardware History"
+        },
+        "aggregation": "simple"
+      }
+    ],
+    "sort_expression": [
+      {
+        "field": "state_id",
+        "order": "DESC"
+      },
+      {
+        "field": "district_id",
+        "order": "DESC"
+      },
+      {
+        "field": "block_id",
+        "order": "DESC"
+      }
+    ],
+    "configured_charts": []
+  }
+}

@@ -5,10 +5,10 @@
 
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'users/js/filtered_download.js' %}"></script>
+  <script src="{% static 'users/js/filtered_download.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'count_users_url' count_users_url %}
-	{% crispy form %}
+  {% initial_page_data 'count_users_url' count_users_url %}
+  {% crispy form %}
 {% endblock %}

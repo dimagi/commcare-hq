@@ -18,6 +18,7 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.parsing import json_format_datetime
 import six
 
@@ -59,6 +60,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     now = json_format_datetime(datetime.datetime.utcnow())
     if not isinstance(case_blocks, six.string_types):
         case_blocks = ''.join(case_blocks)
+    soft_assert_type_text(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
         'xmlns': xmlns or SYSTEM_FORM_XMLNS,
@@ -162,7 +164,7 @@ def get_case_by_identifier(domain, identifier):
 
 def _process_case_block(domain, case_block, attachments, old_case_id):
     def get_namespace(element):
-        m = re.match('\{.*\}', element.tag)
+        m = re.match(r'\{.*\}', element.tag)
         return m.group(0)[1:-1] if m else ''
 
     def local_attachment(attachment, old_case_id, tag):
@@ -199,7 +201,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None,
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
-    case_block = ElementTree.tostring(ElementTree.XML(case_block))
+    case_block = ElementTree.tostring(ElementTree.XML(case_block)).decode('utf-8')
 
     return submit_case_blocks(
         case_block,
@@ -236,7 +238,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     """
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close)
     return submit_case_blocks(
-        ElementTree.tostring(caseblock.as_xml()),
+        ElementTree.tostring(caseblock.as_xml()).decode('utf-8'),
         domain,
         user_id=SYSTEM_USER_ID,
         xmlns=xmlns,

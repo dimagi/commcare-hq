@@ -189,11 +189,11 @@
         <graph type="xy">
           <series nodeset="instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']">
             <configuration>
-              <text id="x-name">
-                <locale id="m0.case_long.case_xy_graph_config_6.graph.series_0.key.x-name"/>
-              </text>
               <text id="name">
                 <locale id="m0.case_long.case_xy_graph_config_6.graph.series_0.key.name"/>
+              </text>
+              <text id="x-name">
+                <locale id="m0.case_long.case_xy_graph_config_6.graph.series_0.key.x-name"/>
               </text>
             </configuration>
             <x function="x_num"/>

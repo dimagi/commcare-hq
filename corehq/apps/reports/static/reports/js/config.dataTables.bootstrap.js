@@ -20,8 +20,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         self.ajaxParams = options.ajaxParams || {};
         self.ajaxSource = options.ajaxSource;
         self.ajaxMethod = options.ajaxMethod || 'GET';
-        self.loadingText = options.loadingText || gettext("Loading") +
-                           " <img src='/static/hqwebapp/images/ajax-loader.gif' alt='loading indicator' />";
+        self.loadingText = options.loadingText || "<i class='fa fa-spin fa-spinner'></i> " + gettext("Loading");
         self.loadingTemplateSelector = options.loadingTemplateSelector;
         if (self.loadingTemplateSelector !== undefined) {
             var loadingTemplate = _.template($(self.loadingTemplateSelector).html() || self.loadingText);

@@ -2,17 +2,21 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 import io
+import json
 import logging
 import re
 import sys
 import uuid
+
+from crispy_forms.layout import Submit
 from six.moves.urllib.parse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
-from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.callcenter.views import CallCenterOwnerOptionsView, CallCenterOptionsController
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.users.models import CouchUser
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -27,15 +31,16 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
                                  ImageField, IntegerField, Field)
-from django.forms.widgets import  Select
+from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django.utils.functional import cached_property
+from django.core.exceptions import ValidationError
 from django_countries.data import COUNTRIES
 from PIL import Image
 from pyzxcvbn import zxcvbn
@@ -53,11 +58,8 @@ from corehq.apps.accounting.models import (
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
-    SoftwarePlanVersion,
     Subscription,
-    SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
-    SubscriptionAdjustmentReason,
     SubscriptionType,
     EntryPoint,
     FundingSource
@@ -67,26 +69,21 @@ from corehq.apps.accounting.utils import (
     cancel_future_subscriptions,
     domain_has_privilege,
     get_account_name_from_default_name,
-    get_privileges,
     log_accounting_error,
     is_downgrade
 )
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_version_build_id, get_brief_apps_in_domain
+from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, AppReleaseByLocation
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
-from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.fields import MultiCharField
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV3
 from corehq.apps.users.models import WebUser, CouchUser
-from corehq.privileges import (
-    REPORT_BUILDER_5,
-    REPORT_BUILDER_ADD_ON_PRIVS,
-    REPORT_BUILDER_TRIAL,
-)
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
@@ -498,13 +495,13 @@ USE_LOCATION_CHOICE = "user_location"
 USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
 
 
-class CallCenterOwnerWidget(Select2AjaxV3):
+class CallCenterOwnerWidget(Select2Ajax):
 
     def set_domain(self, domain):
         self.domain = domain
 
     def render(self, name, value, attrs=None):
-        value_to_render = CallCenterOwnerOptionsView.convert_owner_id_to_select_choice(value, self.domain)
+        value_to_render = CallCenterOptionsController.convert_owner_id_to_select_choice(value, self.domain)
         return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs)
 
 
@@ -1444,12 +1441,14 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     email_list = forms.CharField(
         label=BillingContactInfo._meta.get_field('email_list').verbose_name,
         help_text=BillingContactInfo._meta.get_field('email_list').help_text,
+        widget=forms.SelectMultiple(choices=[]),
     )
 
     class Meta(object):
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
+        widgets = {'country': forms.Select(choices=[])}
 
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         self.account = account
@@ -1466,7 +1465,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             kwargs['instance'] = self.account.billingcontactinfo
             kwargs['initial'] = {
-                'email_list': ','.join(self.account.billingcontactinfo.email_list),
+                'email_list': self.account.billingcontactinfo.email_list,
             }
 
         except BillingContactInfo.DoesNotExist:
@@ -1479,7 +1478,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                         data_initial=json.dumps(self.initial.get('email_list'))),
             'phone_number'
         ]
 
@@ -1489,7 +1489,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                     css_class='col-sm-3 col-md-2'
                 ),
                 crispy.Div(
-                    crispy.HTML(self.initial['email_list']),
+                    crispy.HTML(", ".join(self.initial.get('email_list'))),
                     css_class='col-sm-9 col-md-8 col-lg-6'
                 ),
                 css_id='emails-text',
@@ -1527,7 +1527,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, '')),
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1552,7 +1553,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
     def clean_email_list(self):
-        return self.cleaned_data['email_list'].split(',')
+        return self.data.getlist('email_list')
 
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
@@ -1591,7 +1592,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1602,7 +1604,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(_("Cancel"),
@@ -1612,7 +1615,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 StrictButton(_("Subscribe to Plan"),
                              type="submit",
                              id='btn-subscribe-to-plan',
-                             css_class='btn btn-success disable-on-submit-no-spinner '
+                             css_class='btn btn-primary disable-on-submit-no-spinner '
                                        'add-spinner-on-click'),
             ),
             crispy.Hidden(name="downgrade_email_note", value="", id="downgrade-email-note"),
@@ -1669,7 +1672,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
-                % (self.domain, self.plan_version.plan.name, e.message),
+                % (self.domain, self.plan_version.plan.name, six.text_type(e)),
                 show_stack_trace=True,
             )
             return False
@@ -1710,7 +1713,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1721,7 +1725,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, ''))
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
@@ -1732,7 +1737,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 StrictButton(
                     _("Renew Plan"),
                     type="submit",
-                    css_class='btn btn-success',
+                    css_class='btn btn-primary',
                 ),
             ),
         )
@@ -1765,7 +1770,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.CharField(label=ugettext_lazy("Email To"))
+    contact_email = MultiCharField(label=ugettext_lazy("Email To"), widget=forms.Select(choices=[]))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
@@ -1811,6 +1816,13 @@ class ProBonoForm(forms.Form):
                 )
             ),
         )
+
+    def clean_contact_email(self):
+        if 'contact_email' in self.cleaned_data:
+            copy = self.data.copy()
+            self.data = copy
+            copy.update({'contact_email': ", ".join(self.data.getlist('contact_email'))})
+            return self.data.get('contact_email')
 
     def process_submission(self, domain=None):
         try:
@@ -2360,3 +2372,84 @@ class SelectSubscriptionTypeForm(forms.Form):
                     css_class="disabled"
                 )
             )
+
+
+class ManageAppReleasesForm(forms.Form):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
+    location_id = forms.CharField(label=ugettext_lazy("Location"), widget=Select(choices=[]), required=False)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+
+    def __init__(self, request, domain, *args, **kwargs):
+        self.domain = domain
+        super(ManageAppReleasesForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].choices = self.app_id_choices()
+        if request.GET.get('app_id'):
+            self.fields['app_id'].initial = request.GET.get('app_id')
+        self.helper = HQFormHelper()
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
+            crispy.Field('location_id', id='location_search_select'),
+            crispy.Field('version', id='version-input'),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
+                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+                    Submit('submit', ugettext_lazy("Add Release Restriction"))
+                )
+            )
+        )
+
+    def app_id_choices(self):
+        choices = [(None, _('Select Application'))]
+        for app in get_brief_apps_in_domain(self.domain):
+            choices.append((app.id, app.name))
+        return choices
+
+    @cached_property
+    def version_build_id(self):
+        app_id = self.cleaned_data['app_id']
+        version = self.cleaned_data['version']
+        return get_version_build_id(self.domain, app_id, version)
+
+    def clean_app_id(self):
+        if not self.cleaned_data.get('app_id'):
+            self.add_error('app_id', _("Please select application"))
+        return self.cleaned_data.get('app_id')
+
+    @staticmethod
+    def extract_location_id(location_id_slug):
+        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+        selected_ids = ExpandedMobileWorkerFilter.selected_location_ids([location_id_slug])
+        return selected_ids[0] if selected_ids else None
+
+    def clean_location_id(self):
+        if not self.cleaned_data.get('location_id'):
+            self.add_error('location_id', _("Please select location"))
+        return self.cleaned_data.get('location_id')
+
+    def clean_version(self):
+        if not self.cleaned_data.get('version'):
+            self.add_error('version', _("Please enter version"))
+        return self.cleaned_data.get('version')
+
+    def clean(self):
+        app_id = self.cleaned_data.get('app_id')
+        version = self.cleaned_data.get('version')
+        if app_id and version:
+            try:
+                self.version_build_id
+            except BuildNotFoundException as e:
+                self.add_error('version', e)
+
+    def save(self):
+        location_id = self.extract_location_id(self.cleaned_data['location_id'])
+        version = self.cleaned_data['version']
+        app_id = self.cleaned_data['app_id']
+        try:
+            AppReleaseByLocation.update_status(self.domain, app_id, self.version_build_id, location_id,
+                                               version, active=True)
+        except ValidationError as e:
+            return False, ','.join(e.messages)
+        return True, None

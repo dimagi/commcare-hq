@@ -265,7 +265,7 @@ class NewProductView(BaseCommTrackManageView):
 class UploadProductView(BaseCommTrackManageView):
     urlname = 'commtrack_upload_products'
     page_title = ugettext_noop("Import Products")
-    template_name = 'products/manage/upload_products.html'
+    template_name = 'hqwebapp/bulk_upload.html'
 
     @property
     def page_context(self):

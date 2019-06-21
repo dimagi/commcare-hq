@@ -14,7 +14,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
-from corehq.apps.hqwebapp.widgets import Select2AjaxV4
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 
@@ -38,8 +38,7 @@ from six.moves import filter
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None,
-                 select2_version=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
@@ -48,50 +47,54 @@ class LocationSelectWidget(forms.Widget):
             self.query_url = query_url
         else:
             self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+        self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
-        versioned_templates = {
-            'v3': 'locations/manage/partials/autocomplete_select_widget_v3.html',
-            'v4': 'locations/manage/partials/autocomplete_select_widget_v4.html',
-        }
-        if select2_version not in versioned_templates:
-            raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
-        self.template = versioned_templates[select2_version]
-
-    def render(self, name, value, attrs=None):
-        location_ids = value.split(',') if value else []
+    def render(self, name, value, attrs=None, renderer=None):
+        location_ids = value or []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
+        initial_data = [{
+            'id': loc.location_id,
+            'text': loc.get_path_display(),
+        } for loc in locations]
 
         return get_template(self.template).render({
             'id': self.id,
             'name': name,
-            'value': ','.join(loc.location_id for loc in locations),
+            'value': [loc.location_id for loc in locations],
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
+
+    def value_from_datadict(self, data, files, name):
+        if self.multiselect:
+            return data.getlist(name)
+        return super(LocationSelectWidget, self).value_from_datadict(data, files, name)
 
 
 class ParentLocWidget(forms.Widget):
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return get_template(
             'locations/manage/partials/parent_loc_widget.html'
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
 class LocTypeWidget(forms.Widget):
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return get_template(
             'locations/manage/partials/loc_type_widget.html'
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -243,6 +246,11 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
+            slug_regex = re.compile(r'^[-_\w\d]+$')
+            if not slug_regex.match(site_code):
+                raise forms.ValidationError(_(
+                    'The site code cannot contain spaces or special characters.'
+                ))
             if (SQLLocation.objects.filter(domain=self.domain,
                                         site_code__iexact=site_code)
                                    .exclude(location_id=self.location.location_id)
@@ -532,7 +540,7 @@ class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Workers at Location"),
         required=False,
-        widget=Select2AjaxV4(multiple=True),
+        widget=Select2Ajax(multiple=True),
     )
 
     def __init__(self, domain_object, location, *args, **kwargs):
@@ -638,7 +646,7 @@ class LocationFixtureForm(forms.ModelForm):
 
 
 class RelatedLocationForm(forms.Form):
-    related_locations = forms.CharField(
+    related_locations = forms.Field(
         label=ugettext_lazy("Related Locations"),
         required=False,
     )
@@ -646,11 +654,11 @@ class RelatedLocationForm(forms.Form):
     def __init__(self, domain, location, *args, **kwargs):
         self.location = location
         self.related_location_ids = LocationRelation.from_locations([self.location])
-        kwargs['initial'] = {'related_locations': ','.join(self.related_location_ids)}
+        kwargs['initial'] = {'related_locations': self.related_location_ids}
         super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
         self.fields['related_locations'].widget = LocationSelectWidget(
-            domain, id='id_related_locations', multiselect=True, select2_version='v3'
+            domain, id='id_related_locations', multiselect=True
         )
 
         locations = (
@@ -683,7 +691,7 @@ class RelatedLocationForm(forms.Form):
                 raise forms.ValidationError("The distance cannot be a negative value")
 
     def save(self):
-        selected_location_ids = self.cleaned_data['related_locations'].split(',')
+        selected_location_ids = self.cleaned_data['related_locations']
         selected_location_ids = set(list(filter(None, selected_location_ids)))
 
         previous_location_ids = self.related_location_ids

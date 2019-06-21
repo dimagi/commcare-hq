@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def confirm_no_data_loss(apps, schema_editor):
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(confirm_no_data_loss),
+        migrations.RunPython(confirm_no_data_loss),
         migrations.RemoveField(
             model_name='smsbillable',
             name='api_response',

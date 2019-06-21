@@ -4,22 +4,22 @@
 {% load hq_shared_tags %}
 
 {% block page_content %}
-    <div class="row">
-        <div class="col-sm-6">
-                <p>
-                    {% blocktrans %}
-                        Use this page to edit the default monthly consumption
-                        values for your products. These will be used if there
-                        is not enough information to compute an accurate value.
-                    {% endblocktrans %}
-                </p>
-        </div>
+  <div class="row">
+    <div class="col-sm-6">
+      <p>
+        {% blocktrans %}
+          Use this page to edit the default monthly consumption
+          values for your products. These will be used if there
+          is not enough information to compute an accurate value.
+        {% endblocktrans %}
+      </p>
     </div>
-    <form class="form-horizontal" method="post">
-        {% csrf_token %}
-        <fieldset>
-            <legend>{% trans 'Edit Default Monthly Consumption' %}</legend>
-            {% crispy form %}
-        </fieldset>
-    </form>
+  </div>
+  <form class="form-horizontal" method="post">
+    {% csrf_token %}
+    <fieldset>
+      <legend>{% trans 'Edit Default Monthly Consumption' %}</legend>
+      {% crispy form %}
+    </fieldset>
+  </form>
 {% endblock %}

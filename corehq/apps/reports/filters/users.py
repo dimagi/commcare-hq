@@ -123,13 +123,15 @@ class EmwfUtils(object):
     def user_tuple(self, u):
         user = util._report_user_dict(u)
         uid = "u__%s" % user['user_id']
+        is_active = False
         if u['doc_type'] == 'WebUser':
             name = "%s [Web User]" % user['username_in_report']
         elif user['is_active']:
+            is_active = True
             name = "%s [Active Mobile Worker]" % user['username_in_report']
         else:
             name = "%s [Deactivated Mobile Worker]" % user['username_in_report']
-        return uid, name
+        return uid, name, is_active
 
     def reporting_group_tuple(self, g):
         return "g__%s" % g['_id'], '%s [group]' % g['name']
@@ -282,11 +284,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                     self._selected_user_entries(selected_ids) +
                     self._selected_group_entries(selected_ids) +
                     self._selected_location_entries(selected_ids))
-        known_ids = dict(selected)
         return [
-            {'id': id, 'text': known_ids[id]}
-            for id in selected_ids
-            if id in known_ids
+            {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
+            {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in selected
         ]
 
     def selected_static_options(self, mobile_user_and_group_slugs):
@@ -334,7 +334,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         # The queryset returned by this method is location-safe
         q = user_es.UserES().domain(domain)
         if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):
-            return q
+            return q.show_inactive()
 
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)

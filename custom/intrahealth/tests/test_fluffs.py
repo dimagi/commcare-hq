@@ -65,30 +65,27 @@ class TestFluffs(IntraHealthTestCase):
         )
         with self.engine.begin() as connection:
             results = list(connection.execute(query).fetchall())
-        self.assertEqual(len(results), 2)
 
-        self.assertListEqual(
+        self.assertItemsEqual(
             [
-                self.region.get_id,
-                self.district.get_id,
-                self.product2.get_id,
-                self.product2.name,
-                26,
-                23
+                [
+                    self.region.get_id,
+                    self.district.get_id,
+                    self.product.get_id,
+                    self.product.name,
+                    25,
+                    25
+                ],
+                [
+                    self.region.get_id,
+                    self.district.get_id,
+                    self.product2.get_id,
+                    self.product2.name,
+                    26,
+                    23
+                ],
             ],
-            list(results[0])
-        )
-
-        self.assertListEqual(
-            [
-                self.region.get_id,
-                self.district.get_id,
-                self.product.get_id,
-                self.product.name,
-                25,
-                25
-            ],
-            list(results[1])
+            [list(result) for result in results]
         )
 
     def test_couverture_fluff(self):

@@ -167,3 +167,11 @@ class AppLinkError(AppManagerException):
 
 class SavedAppBuildException(AppManagerException):
     pass
+
+
+class MultimediaMissingError(AppManagerException):
+    pass
+
+
+class BuildNotFoundException(AppManagerException):
+    pass

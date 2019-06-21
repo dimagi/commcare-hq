@@ -5,7 +5,6 @@ import logging
 from django.core.cache import cache
 
 from memoized import memoized
-from corehq.apps.accounting.models import Subscription
 
 
 logger = logging.getLogger(__name__)
@@ -46,6 +45,12 @@ class SessionAbTest(object):
         """
         self.config = config
         self.request = request
+
+        # If the session isn't manually saved, then incognito will cause the
+        # session_key to return None, making caching unique values per user not
+        # possible.
+        if not self.request.session.session_key:
+            self.request.session.save()
 
     @property
     def _cookie_id(self):
@@ -134,11 +139,11 @@ APPCUES_V3_APP = SessionAbTestConfig(
 )
 
 
-DEMO_WORKFLOW_HUBSPOT = 'hubspot'
-DEMO_WORKFLOW_DRIFT = 'drift'
+DEMO_WORKFLOW_V2_CONTROL = 'control'
+DEMO_WORKFLOW_V2_VARIANT = 'variant'
 
-DEMO_WORKFLOW = SessionAbTestConfig(
-    'Demo Workflow A/B',
-    'demo_workflow_dec2018',
-    (DEMO_WORKFLOW_HUBSPOT, DEMO_WORKFLOW_DRIFT)
+DEMO_WORKFLOW_V2 = SessionAbTestConfig(
+    'Demo Workflow A/B V2',
+    'demo_workflow_mar2019',
+    (DEMO_WORKFLOW_V2_CONTROL, DEMO_WORKFLOW_V2_VARIANT)
 )

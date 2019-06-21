@@ -1,36 +1,39 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import io
 from collections import namedtuple
 
-from django.urls import reverse
 from django.http import Http404
-from django.utils.translation import ugettext_noop, ugettext_lazy as _
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
-from dimagi.utils.web import json_response
 
-from corehq.apps.app_manager.util import get_form_data
-from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.views.utils import get_langs
-from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
-from corehq.apps.app_manager.xform import VELLUM_TYPES
-from corehq.apps.domain.views.base import LoginAndDomainMixin
-from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
 import six
 from six.moves import range
 
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.web import json_response
+
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    FormQuestionResponse,
+)
+from corehq.apps.app_manager.app_schemas.form_metadata import (
+    get_app_diff,
+    get_app_summary_formdata,
+)
+from corehq.apps.app_manager.const import WORKFLOW_FORM
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.utils import get_langs
+from corehq.apps.app_manager.xform import VELLUM_TYPES
+from corehq.apps.domain.views.base import LoginAndDomainMixin
+from corehq.apps.hqwebapp.views import BasePageView
+
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary'
-    page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property
     def main_context(self):
@@ -40,37 +43,27 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         })
         return context
 
+    def _app_dict(self, app):
+        lang, langs = get_langs(self.request, app)
+        return {
+            'VELLUM_TYPES': VELLUM_TYPES,
+            'form_name_map': _get_name_map(app),
+            'lang': lang,
+            'langs': langs,
+            'app_langs': app.langs,
+            'app_id': app.id,
+            'app_name': app.name,
+            'read_only': app.doc_type == 'LinkedApplication' or app.id != app.master_id,
+            'app_version': app.version,
+            'latest_app_id': app.master_id,
+        }
+
     @property
     def page_context(self):
         if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
-        lang, langs = get_langs(self.request, self.app)
-        return {
-            'VELLUM_TYPES': VELLUM_TYPES,
-            'form_name_map': _get_name_map(self.app),
-            'lang': lang,
-            'langs': langs,
-            'app_langs': self.app.langs,
-            'app_id': self.app.id,
-            'app_name': self.app.name,
-            'read_only': self.app.doc_type == 'LinkedApplication',
-            'app_version': self.app.version,
-            'latest_app_id': self.app.master_id,
-        }
-
-    @property
-    def parent_pages(self):
-        return [
-            {
-                'title': _("Applications"),
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            },
-            {
-                'title': self.app.name,
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            }
-        ]
+        return self._app_dict(self.app)
 
     @property
     def page_url(self):
@@ -79,34 +72,87 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    page_title = ugettext_noop("Case Summary")
     template_name = 'app_manager/case_summary.html'
 
     @property
     def page_context(self):
         context = super(AppCaseSummaryView, self).page_context
+        has_form_errors = False
+        try:
+            metadata = self.app.get_case_metadata().to_json()
+        except XFormException:
+            metadata = {}
+            has_form_errors = True
         context.update({
-            'is_case_summary': True,
-            'case_metadata': self.app.get_case_metadata().to_json(),
+            'page_type': 'case_summary',
+            'case_metadata': metadata,
+            'has_form_errors': has_form_errors,
         })
         return context
 
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    page_title = ugettext_noop("Form Summary")
     template_name = 'app_manager/form_summary.html'
 
     @property
     def page_context(self):
         context = super(AppFormSummaryView, self).page_context
-        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
+        modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
-            'is_form_summary': True,
+            'page_type': 'form_summary',
             'modules': modules,
             'errors': errors,
         })
         return context
+
+
+class FormSummaryDiffView(AppSummaryView):
+    urlname = "app_form_summary_diff"
+    template_name = 'app_manager/form_summary_diff.html'
+
+    @property
+    def app(self):
+        return self.get_app(self.first_app.master_id)
+
+    @property
+    def first_app(self):
+        return self.get_app(self.kwargs.get('first_app_id'))
+
+    @property
+    def second_app(self):
+        return self.get_app(self.kwargs.get('second_app_id'))
+
+    @property
+    def page_context(self):
+        context = super(FormSummaryDiffView, self).page_context
+
+        if self.first_app.master_id != self.second_app.master_id:
+            # This restriction is somewhat arbitrary, as you might want to
+            # compare versions between two different apps on the same domain.
+            # However, it breaks a bunch of assumptions in the UI
+            raise Http404()
+
+        first = self._app_dict(self.first_app)
+        second = self._app_dict(self.second_app)
+
+        first['modules'], second['modules'] = get_app_diff(self.first_app, self.second_app)
+
+        context.update({
+            'page_type': 'form_diff',
+            'app_id': self.app.master_id,
+            'first': first,
+            'second': second,
+        })
+        return context
+
+    @property
+    def parent_pages(self):
+        pass
+
+    @property
+    def page_url(self):
+        pass
 
 
 class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
@@ -114,7 +160,7 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
     urlname = 'app_data_json'
 
     def get(self, request, *args, **kwargs):
-        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
+        modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         return json_response({
             'response': {
                 'form_data': {
@@ -160,7 +206,7 @@ def _translate_name(names, language):
     if not names:
         return "[{}]".format(_("Unknown"))
     try:
-        return names[language]
+        return six.text_type(names[language])
     except KeyError:
         first_name = next(six.iteritems(names))
         return "{} [{}]".format(first_name[1], first_name[0])
@@ -307,6 +353,8 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "required",
     "comment",
     "default_value",
+    "load_properties",
+    "save_properties",
 ]
 FormSummaryRow = namedtuple('FormSummaryRow', FORM_SUMMARY_EXPORT_HEADER_NAMES)
 FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_NAMES)
@@ -319,7 +367,9 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
         modules = list(self.app.get_modules())
-        headers = [(_('All Forms'), ('module_name', 'form_name', 'comment'))]
+        case_meta = self.app.get_case_metadata()
+        headers = [(_('All Forms'),
+                    ('module_name', 'form_name', 'comment', 'module_display_condition', 'form_display_condition'))]
         headers += [
             (self._get_form_sheet_name(module, form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
             for module in modules for form in module.get_forms()
@@ -329,7 +379,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_all_forms_row(module, form, language)
         ) for module in modules for form in module.get_forms())
         data += list(
-            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language))
+            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language, case_meta))
             for module in modules for form in module.get_forms()
         )
         export_string = io.BytesIO()
@@ -344,7 +394,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             ),
         )
 
-    def _get_form_row(self, form, language):
+    def _get_form_row(self, form, language, case_meta):
         form_summary_rows = []
         for question in form.get_questions(
             self.app.langs,
@@ -371,6 +421,14 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
                     default_value=question_response.setvalue,
+                    load_properties="\n".join(
+                        ["{} - {}".format(prop.case_type, prop.property)
+                         for prop in case_meta.get_load_properties(form.unique_id, question['value'])]
+                    ),
+                    save_properties="\n".join(
+                        ["{} - {}".format(prop.case_type, prop.property)
+                         for prop in case_meta.get_save_properties(form.unique_id, question['value'])]
+                    ),
                 )
             )
         return tuple(form_summary_rows)
@@ -385,8 +443,11 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         return ((
             _get_translated_module_name(self.app, module.unique_id, language),
             _get_translated_form_name(self.app, form.get_unique_id(), language),
-            form.short_comment
+            form.short_comment,
+            module.module_filter,
+            form.form_filter,
         ),)
+
 
 CASE_SUMMARY_EXPORT_HEADER_NAMES = [
     'case_property_name',
@@ -416,18 +477,15 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
         )for case_type in case_metadata.case_types)
 
-        data = list((
+        data = [(
             _('All Case Properties'),
             self.get_case_property_rows(case_type)
-        ) for case_type in case_metadata.case_types)
-        data += list((
-            _('Case Types'),
-            self.get_case_type_rows(case_type, language)
-        ) for case_type in case_metadata.case_types)
-        data += list((
+        ) for case_type in case_metadata.case_types]
+        data += [self.get_case_type_rows(case_metadata.case_types, language)]
+        data += [(
             case_type.name,
             self.get_case_questions_rows(case_type, language)
-        ) for case_type in case_metadata.case_types)
+        ) for case_type in case_metadata.case_types]
 
         export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
@@ -444,7 +502,9 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get_case_property_rows(self, case_type):
         return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
 
-    def get_case_type_rows(self, case_type, language):
+    def get_case_type_rows(self, case_types, language):
+        rows = []
+
         form_names = {}
         form_case_types = {}
         for m in self.app.modules:
@@ -452,27 +512,29 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                 form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
                 form_case_types[f.unique_id] = m.case_type
 
-        case_types = [case_type.name] + list(case_type.relationships.values())
-        opened_by = {}
-        closed_by = {}
-        for t in case_types:
-            opened_by[t] = [fid for fid in case_type.opened_by.keys() if t == form_case_types[fid]]
-            closed_by[t] = [fid for fid in case_type.closed_by.keys() if t == form_case_types[fid]]
+        for case_type in case_types:
+            related_case_types = [case_type.name] + case_type.child_types
+            opened_by = {}
+            closed_by = {}
+            for t in related_case_types:
+                opened_by[t] = [fid for fid in case_type.opened_by.keys() if t == form_case_types[fid]]
+                closed_by[t] = [fid for fid in case_type.closed_by.keys() if t == form_case_types[fid]]
 
-        rows = []
-        relationships = case_type.relationships
-        relationships.update({'': case_type.name})
-        for relationship, type in six.iteritems(relationships):
-            if relationship and not opened_by[type] and not closed_by[type]:
-                rows.append((case_type.name, "[{}] {}".format(relationship, type)))
-            for i in range(max(len(opened_by[type]), len(closed_by[type]))):
-                row = [case_type.name]
-                row.append("[{}] {}".format(relationship, type) if relationship else '')
-                row.append(form_names[opened_by[type][i]] if i < len(opened_by[type]) else '')
-                row.append(form_names[closed_by[type][i]] if i < len(closed_by[type]) else '')
-                rows.append(tuple(row))
+            relationships = case_type.relationships
+            relationships.update({'': [case_type.name]})
+            for relationship, types in six.iteritems(relationships):
+                for type_ in types:
+                    if relationship and not opened_by[type_] and not closed_by[type_]:
+                        rows.append((case_type.name, "[{}] {}".format(relationship, type_)))
+                    for i in range(max(len(opened_by[type_]), len(closed_by[type_]))):
+                        rows.append((
+                            case_type.name,
+                            "[{}] {}".format(relationship, type_) if relationship else '',
+                            form_names[opened_by[type_][i]] if i < len(opened_by[type_]) else '',
+                            form_names[closed_by[type_][i]] if i < len(closed_by[type_]) else '',
+                        ))
 
-        return rows
+        return (_('Case Types'), rows)
 
     def get_case_questions_rows(self, case_type, language):
         rows = []

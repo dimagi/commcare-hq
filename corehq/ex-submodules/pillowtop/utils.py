@@ -4,13 +4,13 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
-import json
 import sys
 
-import simplejson
+import json
 from django.conf import settings
 from kafka import KafkaConsumer
 
+from corehq.util.json import CommCareJSONEncoder
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
 
@@ -18,7 +18,8 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
 import six
-from six.moves import map
+
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def _get_pillow_instance(full_class_str):
@@ -92,6 +93,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
     if isinstance(pillow_config_string_or_dict, six.string_types):
+        soft_assert_type_text(pillow_config_string_or_dict)
         return PillowConfig(
             section,
             pillow_config_string_or_dict.rsplit('.', 1)[1],
@@ -131,6 +133,7 @@ def force_seq_int(seq):
         # multi-topic checkpoints don't support a single sequence id
         return None
     elif isinstance(seq, six.string_types):
+        soft_assert_type_text(seq)
         return int(seq.split('-')[0])
     else:
         assert isinstance(seq, int)
@@ -260,7 +263,10 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
     payloads = [b'']
     for bulk_chunk in chunked(bulk_changes, chunk_size):
         current_payload = payloads[-1]
-        json_bulk_chunks = map(simplejson.dumps, bulk_chunk)
+        json_bulk_chunks = [
+            json.dumps(obj, cls=CommCareJSONEncoder)
+            for obj in bulk_chunk
+        ]
         if six.PY3:
             json_bulk_chunks = [chunk.encode('utf-8') for chunk in json_bulk_chunks]
         payload_chunk = b'\n'.join(json_bulk_chunks) + b'\n'

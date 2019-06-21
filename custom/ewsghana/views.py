@@ -137,7 +137,6 @@ class InputStockView(BaseDomainView):
 
 @location_safe
 class EWSUserExtensionView(BaseCommTrackManageView):
-
     template_name = 'ewsghana/user_extension.html'
 
     @property

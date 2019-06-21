@@ -9,15 +9,13 @@ from soil import DownloadBase
 from soil.progress import get_task_status
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
-from corehq.apps.reports.models import HQGroupExportConfiguration
+from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.quickcache import quickcache
-from couchexport.groupexports import export_for_group
 from couchexport.models import Format
 from soil.util import expose_blob_download, process_email_request
 
@@ -37,11 +35,13 @@ logger = logging.getLogger('export_migration')
 
 
 @task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60):
+def populate_export_download_task(domain, export_ids, exports_type, username, filters, download_id,
+                                  filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
-    domain = export_instances[0].domain
+    export_instances = [get_export(exports_type, domain, export_id, username)
+                        for export_id in export_ids]
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
@@ -89,7 +89,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
 def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, progress_tracker=_start_export_task)
@@ -112,16 +112,10 @@ def rebuild_saved_export(export_instance_id, manual=False):
     """
     download_data = _get_saved_export_download_data(export_instance_id)
     status = get_task_status(download_data.task)
-    if manual:
-        if status.not_started() or status.missing():
-            # cancel pending task before kicking off a new one
-            if download_data.task:
-                download_data.task.revoke()
-        if status.started():
-            return  # noop - make the user wait before starting a new one
-    else:
-        if status.not_started() or status.started():
-            return  # noop - one's already on the way
+    if manual and status.missing() and download_data.task:
+        download_data.task.revoke()
+    if status.not_started() or status.started():
+        return
 
     # associate task with the export instance
     download_data.set_task(
@@ -147,20 +141,9 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
     _cached_add_inferred_export_properties(sender, domain, case_type, properties)
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True, acks_late=True)
-def export_for_group_async(group_config_id):
-    # exclude exports not accessed within the last 7 days
-    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    group_config = HQGroupExportConfiguration.get(group_config_id)
-    export_for_group(group_config, last_access_cutoff=last_access_cutoff)
-
-
-@periodic_task(serializer='pickle', run_every=crontab(hour="23", minute="59", day_of_week="*"),
+@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def saved_exports():
-    for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
-        export_for_group_async.delay(group_config_id)
-
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     for daily_saved_export_id in get_daily_saved_export_ids_for_auto_rebuild(last_access_cutoff):
         rebuild_saved_export(daily_saved_export_id, manual=False)

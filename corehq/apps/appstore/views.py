@@ -29,6 +29,7 @@ from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 import six
 
@@ -180,7 +181,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                     message=(
                         "Fetched Exchange Snapshot Error: {}. "
                         "The problem snapshot id: {}".format(
-                            e.message, res['_source']['_id'])
+                            six.text_type(e), res['_source']['_id'])
                     )
                 )
 
@@ -277,13 +278,13 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time", 
 
 @require_superuser
 def approve_app(request, snapshot):
-    domain = Domain.get(snapshot)
+    domain_obj = Domain.get(snapshot)
     if request.GET.get('approve') == 'true':
-        domain.is_approved = True
-        domain.save()
+        domain_obj.is_approved = True
+        domain_obj.save()
     elif request.GET.get('approve') == 'false':
-        domain.is_approved = False
-        domain.save()
+        domain_obj.is_approved = False
+        domain_obj.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 
@@ -309,8 +310,16 @@ def import_app(request, snapshot):
 
         full_apps = from_project.full_applications(include_builds=False)
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
+        new_doc = None
         for app in full_apps:
-            new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+            try:
+                new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+            except ReportConfigurationNotFoundError:
+                messages.error(request, _("App was not imported as it "
+                                          "contains references to a user configurable report"))
+
+        if not new_doc:
+            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
         clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
@@ -330,9 +339,9 @@ def copy_snapshot(request, snapshot):
         messages.error(request, _('You must agree to our terms of service to download an app'))
         return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
-    dom = Domain.get(snapshot)
-    if request.method == "POST" and dom.is_snapshot:
-        assert dom.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
+    domain_obj = Domain.get(snapshot)
+    if request.method == "POST" and domain_obj.is_snapshot:
+        assert domain_obj.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
 
         from corehq.apps.registration.forms import DomainRegistrationForm
 
@@ -344,7 +353,7 @@ def copy_snapshot(request, snapshot):
         form = DomainRegistrationForm(args)
 
         if request.POST.get('new_project_name', ""):
-            if not dom.published:
+            if not domain_obj.published:
                 messages.error(request, _("This project is not published and can't be downloaded"))
                 return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
@@ -353,11 +362,11 @@ def copy_snapshot(request, snapshot):
                 return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
 
             new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
-            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
+            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(domain_obj.name, new_domain_name)]):
                 try:
-                    new_domain = dom.save_copy(new_domain_name,
-                                               new_hr_name=form.cleaned_data['hr_name'],
-                                               user=user)
+                    new_domain = domain_obj.save_copy(new_domain_name,
+                                                      new_hr_name=form.cleaned_data['hr_name'],
+                                                      user=user)
                     if new_domain.commtrack_enabled:
                         new_domain.convert_to_commtrack()
                     ensure_explicit_community_subscription(
@@ -371,7 +380,7 @@ def copy_snapshot(request, snapshot):
             def inc_downloads(d):
                 d.downloads += 1
 
-            apply_update(dom, inc_downloads)
+            apply_update(domain_obj, inc_downloads)
             messages.success(request, render_to_string("appstore/partials/view_wiki.html",
                                                        {"pre": _("Project copied successfully!")}),
                              extra_tags="html")

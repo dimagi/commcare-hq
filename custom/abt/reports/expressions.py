@@ -189,6 +189,10 @@ class AbtExpressionSpec(JsonObject):
         name = spec.get(flag_name_key_map[lang], None)
         return name if name else default
 
+    @classmethod
+    def _get_responsible_follow_up(self, spec):
+        return spec.get('responsible_follow_up', "")
+
     def __call__(self, item, context=None):
         """
         Given a document (item), return a list of documents representing each
@@ -214,6 +218,12 @@ class AbtExpressionSpec(JsonObject):
             # Iterate over the repeat items, or the single submission
             for partial in repeat_items:
 
+                if not names:
+                    # Update inspector names if don't find by _get_inspector_names because in
+                    # app for 2019 we have new place for this data there is already a string
+                    # with all names joined by ','
+                    names = self._get_val(item, ['supervisor_group', 'join_supervisor_name'])
+
                 form_value = self._get_val(partial, spec['question'])
                 warning_type = spec.get("warning_type", None)
 
@@ -238,7 +248,34 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
+                        })
+
+                elif warning_type == "unchecked_special" and form_value:
+                    # Don't raise flag if no answer given
+                    ignore = spec.get("ignore", [])
+                    section = spec.get("section", "data")
+                    master_value = self._get_val(item, ['insecticide_prep_grp', 'Q10', 'sop_full_ppe'])
+                    second_unchecked = self._get_unchecked(
+                        item,
+                        spec.get('base_path', []) + spec['question'],
+                        form_value,
+                        ignore,
+                        section
+                    )
+                    if not master_value and second_unchecked:
+                        # Raise a flag because master question is not answered but duplicate question is.
+                        docs.append({
+                            'flag': self._get_flag_name(item, spec),
+                            'warning': self._get_warning(spec, item).format(msg=", ".join(second_unchecked)),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
+                            'names': names,
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
 
                 elif warning_type == "q3_special" and form_value:
@@ -260,7 +297,8 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
                 elif warning_type == "not_selected" and form_value:
                     value = spec.get("velue", "")
@@ -276,7 +314,8 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
 
                 else:
@@ -296,7 +335,8 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
-                            'form_name': self._get_form_name(item)
+                            'form_name': self._get_form_name(item),
+                            'responsible_follow_up': self._get_responsible_follow_up(spec)
                         })
 
         return docs
@@ -317,7 +357,7 @@ class AbtSupervisorExpressionSpec(AbtExpressionSpec):
             file_name = 'flagspecs.yaml'
         path = os.path.join(os.path.dirname(__file__), file_name)
         with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+            return yaml.safe_load(f)
 
 
 class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
@@ -331,7 +371,21 @@ class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
         """
         path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2.yaml')
         with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+            return yaml.safe_load(f)
+
+
+class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor_v2019')
+    comment_from_root = True
+
+    @cached_property
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2019.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.safe_load(f)
 
 
 def abt_supervisor_expression(spec, context):
@@ -341,4 +395,9 @@ def abt_supervisor_expression(spec, context):
 
 def abt_supervisor_v2_expression(spec, context):
     wrapped = AbtSupervisorV2ExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def abt_supervisor_v2019_expression(spec, context):
+    wrapped = AbtSupervisorV2019ExpressionSpec.wrap(spec)
     return wrapped

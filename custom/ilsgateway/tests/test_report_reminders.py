@@ -8,9 +8,9 @@ from django.utils import translation
 
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from custom.ilsgateway.models import DeliveryGroups, SupplyPointStatus
-from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_CONFIRM, REMINDER_MONTHLY_RANDR_SUMMARY, \
+from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_CONFIRM, \
     REMINDER_MONTHLY_DELIVERY_SUMMARY, REMINDER_MONTHLY_SOH_SUMMARY
-from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_randr_summary, \
+from custom.ilsgateway.tanzania.reminders.reports import get_district_people, \
     construct_delivery_summary, construct_soh_summary
 from custom.ilsgateway.tests.handlers.utils import prepare_domain
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, create_products
@@ -42,6 +42,7 @@ class TestReportGroups(TestCase):
         delete_domain_phone_numbers(TEST_DOMAIN)
         cls.sms_backend.delete()
         cls.sms_backend_mapping.delete()
+        cls.user1.delete()
         cls.domain.delete()
         super(TestReportGroups, cls).tearDownClass()
 
@@ -127,102 +128,6 @@ class TestReportSummaryBase(TestScript):
     def tearDown(self):
         SupplyPointStatus.objects.all().delete()
         super(TestReportSummaryBase, self).tearDown()
-
-
-class TestRandRSummary(TestReportSummaryBase):
-
-    @classmethod
-    def relevant_group(cls):
-        return DeliveryGroups().current_submitting_group()
-
-    def test_basic_report_no_responses(self):
-        result = construct_randr_summary(self.district)
-        self.assertEqual(result["total"], 3)
-        self.assertEqual(result["not_responding"], 3)
-        self.assertEqual(result["not_submitted"], 0)
-        self.assertEqual(result["submitted"], 0)
-
-    def test_positive_responses(self):
-        script = """
-            1235 > nimetuma
-            1236 > nimetuma
-            1237 > nimetuma
-        """
-        self.run_script(script)
-        with mock.patch('custom.ilsgateway.tanzania.reminders.reports.get_business_day_of_month_before',
-                        return_value=datetime.utcnow() - timedelta(days=1)):
-            result = construct_randr_summary(self.district)
-        self.assertEqual(result["total"], 3)
-        self.assertEqual(result["not_responding"], 0)
-        self.assertEqual(result["not_submitted"], 0)
-        self.assertEqual(result["submitted"], 3)
-
-    def test_negative_responses(self):
-        script = """
-            1235 > sijatuma
-            1236 > sijatuma
-            1237 > sijatuma
-        """
-        self.run_script(script)
-        with mock.patch('custom.ilsgateway.tanzania.reminders.reports.get_business_day_of_month_before',
-                        return_value=datetime.utcnow() - timedelta(days=1)):
-            result = construct_randr_summary(self.district)
-        self.assertEqual(result["total"], 3)
-        self.assertEqual(result["not_responding"], 0)
-        self.assertEqual(result["not_submitted"], 3)
-        self.assertEqual(result["submitted"], 0)
-
-    def test_overrides(self):
-        script = """
-            1235 > nimetuma
-            1236 > nimetuma
-            1237 > nimetuma
-        """
-        self.run_script(script)
-
-        script = """
-            1235 > sijatuma
-        """
-        self.run_script(script)
-        with mock.patch('custom.ilsgateway.tanzania.reminders.reports.get_business_day_of_month_before',
-                        return_value=datetime.utcnow() - timedelta(days=1)):
-            result = construct_randr_summary(self.district)
-        self.assertEqual(result["total"], 3)
-        self.assertEqual(result["not_responding"], 0)
-        self.assertEqual(result["not_submitted"], 1)
-        self.assertEqual(result["submitted"], 2)
-
-    def test_message_initiation(self):
-        translation.activate('sw')
-        with mock.patch('custom.ilsgateway.tanzania.handlers.messageinitiator.get_business_day_of_month_before',
-                        return_value=datetime.utcnow() - timedelta(days=1)):
-            script = """
-                1234 > test randr_report TEST DISTRICT
-                1234 < %(test_handler_confirm)s
-                1234 < %(report_results)s
-            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
-                   "report_results": six.text_type(REMINDER_MONTHLY_RANDR_SUMMARY) % {"submitted": 0,
-                                                                                "total": 3,
-                                                                                "not_submitted": 0,
-                                                                                "not_responding": 3}}
-            self.run_script(script)
-
-            script = """
-                1235 > nimetuma
-                1236 > sijatuma
-            """
-            self.run_script(script)
-
-            script = """
-                1234 > test randr_report TEST DISTRICT
-                1234 < %(test_handler_confirm)s
-                1234 < %(report_results)s
-            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
-                   "report_results": six.text_type(REMINDER_MONTHLY_RANDR_SUMMARY) % {"submitted": 1,
-                                                                                "total": 3,
-                                                                                "not_submitted": 1,
-                                                                                "not_responding": 1}}
-            self.run_script(script)
 
 
 class TestDeliverySummary(TestReportSummaryBase):

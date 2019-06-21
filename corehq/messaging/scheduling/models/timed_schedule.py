@@ -634,7 +634,7 @@ class CasePropertyTimedEvent(AbstractTimedEvent):
         default_time = time(12, 0)
         event_time = case.dynamic_case_properties().get(self.case_property_name, '').strip()
 
-        if not re.match('^\d?\d:\d\d', event_time):
+        if not re.match(r'^\d?\d:\d\d', event_time):
             event_time = default_time
         else:
             try:

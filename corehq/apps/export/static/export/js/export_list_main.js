@@ -4,7 +4,7 @@ hqDefine("export/js/export_list_main", [
     'analytix/js/kissmetrix',
     'export/js/create_export',
     'export/js/export_list',
-    'hqwebapp/js/select_2_ajax_widget_v3',  // for case owner & user filters in DashboardFeedFilterForm
+    'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
 ], function (
     $,
     initialPageData,
@@ -34,11 +34,18 @@ hqDefine("export/js/export_list_main", [
 
         var modelType = initialPageData.get("model_type");
         $("#export-list").koApplyBindings(listModels.exportListModel({
-            exports: initialPageData.get("exports"),
             modelType: modelType,
             isDeid: initialPageData.get('is_deid'),
+            isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
+            isFeed: initialPageData.get('is_feed', true),
+            headers: {
+                my_export_type: initialPageData.get('my_export_type'),
+                shared_export_type: initialPageData.get('shared_export_type'),
+                export_type_caps_plural: initialPageData.get('export_type_caps_plural'),
+            },
             urls: {
                 commitFilters: initialPageData.reverse("commit_filters"),
+                getExportsPage: initialPageData.reverse("get_exports_page"),
                 poll: initialPageData.reverse("get_saved_export_progress"),
                 toggleEnabled: initialPageData.reverse("toggle_saved_export_enabled"),
                 update: initialPageData.reverse("update_emailed_export_data"),
@@ -50,5 +57,10 @@ hqDefine("export/js/export_list_main", [
         } else if (modelType === 'case') {
             kissmetricsAnalytics.track.event('Visited Export Cases Page');
         }
+
+        // Analytics: Send Kissmetrics event when user closes alert bubble
+        $('#alert-export-deep-links').on('click', function () {
+            kissmetricsAnalytics.track.event("Dismissed alert bubble - Deep links in exports");
+        });
     });
 });

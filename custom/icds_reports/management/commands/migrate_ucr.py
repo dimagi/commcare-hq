@@ -19,6 +19,8 @@ class Command(BaseCommand):
         parser.add_argument('old_data_source_id')
         parser.add_argument('new_data_source_id')
         parser.add_argument('--date-column', default='inserted_at')
+        parser.add_argument('--initiated-by', action='store', required=True, dest='initiated',
+                            help='Who initiated the rebuild')
 
     def handle(self, domain, old_data_source_id, new_data_source_id, **options):
         old_config, _ = get_datasource_config(old_data_source_id, domain)
@@ -39,7 +41,7 @@ class Command(BaseCommand):
 
         column = getattr(old_table.columns, options['date_column'])
 
-        new_adapter.build_table()
+        new_adapter.build_table(initiated_by=options['initiated'], source='migrate_ucr')
 
         end_date = date(2016, 1, 1)
         query = self.insert_query(old_table, new_table, column, end_date=end_date)

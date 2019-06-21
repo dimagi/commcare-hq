@@ -3,94 +3,94 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
+  <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
 {% endblock %}
 
 {% block page_navigation %}
-    <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
-    <ul class="nav nav-hq-sidebar">
-        {% with report as selected_report %}
-        {% for report in reports %}
+  <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
+  <ul class="nav nav-hq-sidebar">
+    {% with report as selected_report %}
+      {% for report in reports %}
         <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
-            <a href="{% url 'edit_configurable_report' domain report.get_id %}"  title="{{ report.title }}" class='report-nav'>
-                {{ report.title }}
-                {% if report.is_static %}
-                    <span class="label label-default">static</span>
-                {% endif %}
-            </a>
+          <a href="{% url 'edit_configurable_report' domain report.get_id %}"  title="{{ report.title }}" class='report-nav'>
+            {{ report.title }}
+            {% if report.is_static %}
+              <span class="label label-default">static</span>
+            {% endif %}
+          </a>
         </li>
-        {% endfor %}
-        {% endwith %}
-        <li>
-            <a href="{% url 'create_configurable_report' domain %}">
-                <i class="fa fa-plus"></i>
-                <span class="text-muted">{% trans "Add report" %}</span>
-            </a>
-            <a href="{% url 'import_configurable_report' domain %}">
-                <i class="fa fa-cloud-upload"></i>
-                <span class="text-muted">{% trans "Import report" %}</span>
-            </a>
-        </li>
-    </ul>
+      {% endfor %}
+    {% endwith %}
+    <li>
+      <a href="{% url 'create_configurable_report' domain %}">
+        <i class="fa fa-plus"></i>
+        <span class="text-muted">{% trans "Add report" %}</span>
+      </a>
+      <a href="{% url 'import_configurable_report' domain %}">
+        <i class="fa fa-cloud-upload"></i>
+        <span class="text-muted">{% trans "Import report" %}</span>
+      </a>
+    </li>
+  </ul>
 
-    <h2 class="text-hq-nav-header">{% trans "Edit Data Sources" %}</h2>
-    <ul class="nav nav-hq-sidebar">
-        {% with data_source as selected_data_source %}
-        {% for data_source in data_sources %}
+  <h2 class="text-hq-nav-header">{% trans "Edit Data Sources" %}</h2>
+  <ul class="nav nav-hq-sidebar">
+    {% with data_source as selected_data_source %}
+      {% for data_source in data_sources %}
         <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
-            <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">
-                {{ data_source.display_name }}
-                {% if data_source.is_static %}
-                    <span class="label label-default">static</span>
-                {% endif %}
-                {% if data_source.is_deactivated %}
-                    <span class="label label-default">deactivated</span>
-                {% endif %}
-            </a>
+          <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">
+            {{ data_source.display_name }}
+            {% if data_source.is_static %}
+              <span class="label label-default">static</span>
+            {% endif %}
+            {% if data_source.is_deactivated %}
+              <span class="label label-default">deactivated</span>
+            {% endif %}
+          </a>
         </li>
-        {% endfor %}
-        {% endwith %}
-        <li>
-            <a href="{% url 'create_configurable_data_source' domain %}">
-                <i class="fa fa-plus"></i>
-                <span class="text-muted">{% trans "Add data source" %}</span>
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'create_configurable_data_source_from_app' domain %}">
-                <i class="fa fa-copy"></i>
-                <span class="text-muted">{% trans "Data source from application" %}</span>
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'expression_debugger' domain %}">
-                <i class="fa fa-search"></i>
-                <span class="text-muted">{% trans "Expression Debugger" %}</span>
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'data_source_debugger' domain %}">
-                <i class="fa fa-search"></i>
-                <span class="text-muted">{% trans "Data Source Debugger" %}</span>
-            </a>
-        </li>
-    </ul>
-    {% if request|toggle_enabled:"AGGREGATE_UCRS" %}
+      {% endfor %}
+    {% endwith %}
+    <li>
+      <a href="{% url 'create_configurable_data_source' domain %}">
+        <i class="fa fa-plus"></i>
+        <span class="text-muted">{% trans "Add data source" %}</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'create_configurable_data_source_from_app' domain %}">
+        <i class="fa fa-copy"></i>
+        <span class="text-muted">{% trans "Data source from application" %}</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'expression_debugger' domain %}">
+        <i class="fa fa-search"></i>
+        <span class="text-muted">{% trans "Expression Debugger" %}</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'data_source_debugger' domain %}">
+        <i class="fa fa-search"></i>
+        <span class="text-muted">{% trans "Data Source Debugger" %}</span>
+      </a>
+    </li>
+  </ul>
+  {% if request|toggle_enabled:"AGGREGATE_UCRS" %}
     <h2 class="text-hq-nav-header">{% trans "Aggregate Data Sources" %}</h2>
-        <ul class="nav nav-hq-sidebar">
-        {% with aggregate_table as selected_aggregate_ucr %}
-            {% for aggregate_ucr in aggregate_data_sources %}
-                <li {% if aggregate_ucr.id == selected_aggregate_ucr.id %} class="active"{% endif %}>
-                    <a href="{% url 'aggregate_ucr' domain aggregate_ucr.table_id %}">
-                        {{ aggregate_ucr.display_name }}
-                    </a>
-                </li>
-            {% endfor %}
-        {% endwith %}
-        </ul>
-    {% endif %}
+    <ul class="nav nav-hq-sidebar">
+      {% with aggregate_table as selected_aggregate_ucr %}
+        {% for aggregate_ucr in aggregate_data_sources %}
+          <li {% if aggregate_ucr.id == selected_aggregate_ucr.id %} class="active"{% endif %}>
+            <a href="{% url 'aggregate_ucr' domain aggregate_ucr.table_id %}">
+              {{ aggregate_ucr.display_name }}
+            </a>
+          </li>
+        {% endfor %}
+      {% endwith %}
+    </ul>
+  {% endif %}
 {% endblock %}

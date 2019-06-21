@@ -6,6 +6,7 @@ from django.test import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import SQLLocation
@@ -302,4 +303,5 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.web_user1.delete()
         cls.domain.delete()
         cls.teardown_subscription()
+        clear_plan_version_cache()
         super(TestInputStockView, cls).tearDownClass()

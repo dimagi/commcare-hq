@@ -6,107 +6,107 @@
 {% requirejs_main 'data_interfaces/js/manage_case_groups' %}
 
 {% block pagination_header %}
-    <h3>
-        {% blocktrans %}
-            Cases in Group
-            <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="fa fa-edit"> Edit</i></small></a>
-        {% endblocktrans %}
-    </h3>
-    <div id="edit-group-name" class="hide">
-        {% crispy update_case_group_form %}
-    </div>
-    {% if bulk_upload_id %}
+  <h3>
+    {% blocktrans %}
+      Cases in Group
+      <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="fa fa-edit"> Edit</i></small></a>
+    {% endblocktrans %}
+  </h3>
+  <div id="edit-group-name" class="hide">
+    {% crispy update_case_group_form %}
+  </div>
+  {% if bulk_upload_id %}
     <script type="template/html" id="template-bulk-status">
-        <% if (success.length > 0) { %>
-        <div class="alert alert-success">
-            <h4>{% trans 'Cases were successfully added:' %}</h4>
-            <ul>
-            <% _.each(success, function (s) { %>
-                <li><%=s%></li>
-            <% }); %>
-            </ul>
-        </div>
-        <% } %>
+      <% if (success.length > 0) { %>
+      <div class="alert alert-success">
+        <h4>{% trans 'Cases were successfully added:' %}</h4>
+        <ul>
+          <% _.each(success, function (s) { %>
+          <li><%=s%></li>
+          <% }); %>
+        </ul>
+      </div>
+      <% } %>
 
-        <% if (errors.length > 0) { %>
-        <div class="alert alert-warning">
-            <h4>{% trans 'Issues encountered during bulk upload:' %}</h4>
-            <ul>
-            <% _.each(errors, function (error) { %>
-                <li><%=error%></li>
-            <% }); %>
-            </ul>
-        </div>
-        <% } %>
+      <% if (errors.length > 0) { %>
+      <div class="alert alert-warning">
+        <h4>{% trans 'Issues encountered during bulk upload:' %}</h4>
+        <ul>
+          <% _.each(errors, function (error) { %>
+          <li><%=error%></li>
+          <% }); %>
+        </ul>
+      </div>
+      <% } %>
     </script>
     <div id="upload-notice">
-        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading" />
-        {% trans 'Processing file...' %}
-        <hr />
+      <i class='fa fa-spin fa-spinner'></i>
+      {% trans 'Processing file...' %}
+      <hr />
     </div>
-    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block pagination_templates %}
-    {% initial_page_data 'bulk_upload_id' bulk_upload_id %}
+  {% initial_page_data 'bulk_upload_id' bulk_upload_id %}
 
-    <script type="text/html" id="existing-case-template">
-        <td class="col-sm-5">
-            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
-        </td>
-        <td class="col-sm-2" data-bind="text: phoneNumber"></td>
-        <td class="col-sm-3" data-bind="text: externalId"></td>
-        <td class="col-sm-2">
-            <button type="button"
-                    class="btn btn-danger delete-item-confirm"
-                    data-loading-text="{% trans 'Removing...' %}">
-                <i class="fa fa-remove"></i> {% trans 'Remove' %}
-            </button>
-        </td>
-    </script>
+  <script type="text/html" id="existing-case-template">
+    <td class="col-sm-5">
+      <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+    </td>
+    <td class="col-sm-2" data-bind="text: phoneNumber"></td>
+    <td class="col-sm-3" data-bind="text: externalId"></td>
+    <td class="col-sm-2">
+      <button type="button"
+              class="btn btn-danger delete-item-confirm"
+              data-loading-text="{% trans 'Removing...' %}">
+        <i class="fa fa-remove"></i> {% trans 'Remove' %}
+      </button>
+    </td>
+  </script>
 
-    <script type="text/html" id="new-case-template">
-        <td>
-            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
-        </td>
-        <td data-bind="text: phoneNumber"></td>
-        <td data-bind="text: externalId"></td>
-        <td data-bind="html: message"></td>
-    </script>
+  <script type="text/html" id="new-case-template">
+    <td>
+      <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+    </td>
+    <td data-bind="text: phoneNumber"></td>
+    <td data-bind="text: externalId"></td>
+    <td data-bind="html: message"></td>
+  </script>
 
-    <script type="text/html" id="case-message-template">
-        <td>
-            ID: <span class="label label-info"
-                  data-bind="text: identifier"></span>
-        </td>
-        <td colspan="{{ pagination.num_columns|add:'-1' }}"
-            data-bind="text: message"
-            class="warning"></td>
-    </script>
+  <script type="text/html" id="case-message-template">
+    <td>
+      ID: <span class="label label-info"
+                data-bind="text: identifier"></span>
+    </td>
+    <td colspan="{{ pagination.num_columns|add:'-1' }}"
+        data-bind="text: message"
+        class="warning"></td>
+  </script>
 
-    <script type="text/html" id="removed-case-template">
-        <td>
-            <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
-        </td>
-        <td data-bind="text: phoneNumber"></td>
-        <td data-bind="text: externalId"></td>
-        <td>
-            <span class="label label-danger">{% trans 'Case Removed' %}</span>
-        </td>
-    </script>
+  <script type="text/html" id="removed-case-template">
+    <td>
+      <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+    </td>
+    <td data-bind="text: phoneNumber"></td>
+    <td data-bind="text: externalId"></td>
+    <td>
+      <span class="label label-danger">{% trans 'Case Removed' %}</span>
+    </td>
+  </script>
 {% endblock %}
 
 {% block pagination_footer %}
-    <div class="accordion-group" style="margin-top:5px;">
-        <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" href="#bulk-upload-accordion">
-                {% trans 'Bulk upload cases to group' %}
-            </a>
-        </div>
-        <div id="bulk-upload-accordion" class="accordion-body collapse">
-            <div class="accordion-inner">
-                {% include "hqwebapp/partials/bulk_upload.html" %}
-            </div>
-        </div>
+  <div class="accordion-group" style="margin-top:5px;">
+    <div class="accordion-heading">
+      <a class="accordion-toggle" data-toggle="collapse" href="#bulk-upload-accordion">
+        {% trans 'Bulk upload cases to group' %}
+      </a>
     </div>
+    <div id="bulk-upload-accordion" class="accordion-body collapse">
+      <div class="accordion-inner">
+        {% include "hqwebapp/partials/bulk_upload.html" %}
+      </div>
+    </div>
+  </div>
 {% endblock %}

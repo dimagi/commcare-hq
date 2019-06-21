@@ -6,296 +6,289 @@
 {% requirejs_main 'custom_data_fields/js/custom_data_fields' %}
 
 {% block stylesheets %}
-{{ block.super }}
-    <style>
-        ul.validation-list > li {
-            padding-top: 5px;
-        }
-        .validation-options {
-            padding-bottom: 5px;
-        }
-    </style>
+  {{ block.super }}
+  <style>
+    ul.validation-list > li {
+      padding-top: 5px;
+    }
+    .validation-options {
+      padding-bottom: 5px;
+    }
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'custom_fields' custom_fields %}
-    <form id="custom-fields-form"
-          action="."
-          method="POST"
-          data-bind="submit: submitFields"
-          class="form form-horizontal">
-        {% csrf_token %}
-        <fieldset>
-            <legend>{{ view.page_name }}</legend>
-            {% if custom_fields_form.data_fields.errors %}
-                {% for error in custom_fields_form.data_fields.errors %}
-                    <div class="alert alert-danger">
-                        {{ error|safe }}
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+  {% initial_page_data 'custom_fields' custom_fields %}
+  <form id="custom-fields-form"
+        action="."
+        method="POST"
+        data-bind="submit: submitFields"
+        class="form form-horizontal">
+    {% csrf_token %}
+    <fieldset>
+      <legend>{{ view.page_name }}</legend>
+      {% if custom_fields_form.data_fields.errors %}
+        {% for error in custom_fields_form.data_fields.errors %}
+          <div class="alert alert-danger">
+            {{ error|safe }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      <div class="col-sm-12 form-group">
+        <p>
+          <button class="btn btn-primary" data-bind="click: addField" type="button">
+            <i class="fa fa-plus"></i>
+            Add a Field
+          </button>
+        </p>
+        <div class="panel panel-default">
+          <table class="table table-striped table-bordered">
+            <thead>
+            <tr>
+              <th class="col-sm-1"></th>
+              <th class="col-sm-3">
+                {% blocktrans with entity_string=view.entity_string %}
+                  {{ entity_string }} Property
+                {% endblocktrans %}
+                <span class="hq-help-template"
+                      data-title="
+                                              {% blocktrans with entity_string=view.entity_string %}
+                                                  {{ entity_string }} Property
+                                              {% endblocktrans %}"
+                      data-content="{% blocktrans %}
+                                              The unique ID you can use to reference this property
+                                              in the application builder. The property may not
+                                              contain spaces.
+                                          {% endblocktrans %}">
+                                    </span>
+              </th>
+              <th class="col-sm-3">
+                {% trans "Label" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Label" %}"
+                      data-content="{% blocktrans with entity_string=view.entity_string|lower %}
+                                              The field label that users will see when adding or editing
+                                              a {{ entity_string }} in CommCareHQ.
+                                          {% endblocktrans %}">
+                                    </span>
+              </th>
+              <th class="col-sm-1">
+                {% trans "Required" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Required" %}"
+                      data-content="{% blocktrans with entity_string=view.entity_string|lower %}
+                                              A value for this field must be provided when creating or
+                                              editing a {{ entity_string }}.  Bulk import will fail
+                                              unless this field is provided.
+                                          {% endblocktrans %}">
+                                    </span>
+              </th>
+              <th class="col-sm-3">
+                {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                  {% trans "Validation" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Validation" %}"
+                        data-content="{% blocktrans %}
+                                                Specify a means of validating user input to this field.
+                                                You can provide a drop-down list of choices or specify
+                                                a regular expression to be applied to the input. For
+                                                example, ^[1-9]{10}$ will match only 10 character
+                                                numeric input.
+                                            {% endblocktrans %}">
+                                        </span>
+                {% else %}
+                  {% trans "Choices" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Choices" %}"
+                        data-content="{% blocktrans %}
+                                                Provides a drop-down list of choices for this field
+                                                instead of free text entry.
+                                            {% endblocktrans %}">
+                                        </span>
+                {% endif %}
+              </th>
+              {% if show_index_in_fixture %}
+                <th class="col-sm-1">
+                  {% trans "Index in Restore" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Index in Restore" %}"
+                        data-content="{% blocktrans %}
+                                            Check this box to indicate that mobile should index this
+                                            field for faster filtering with large sets of locations.
+                                            To use this optimization, you'll need to reference the
+                                            field as a top-level attribute prefixed with 'data_'.
+                                            For example, reference a field called 'is_test' like:
+                                            instance('locations')/locations/location[data_is_test='1']
+                                          {% endblocktrans %}">
+                                    </span>
+                </th>
+              {% endif %}
+              <th class="col-sm-1">{% trans "Delete" %}</th>
+            </tr>
+            </thead>
+            <tbody data-bind="sortable: data_fields">
+            <tr data-bind="attr: {'data-order': _sortableOrder}">
+              <td>
+                <i class="fa fa-arrows-v sortable-handle"></i>
+              </td>
+              <td>
+                <input class="form-control" type="text" data-bind="value: slug"/>
+              </td>
+              <td>
+                <input class="form-control" type="text" data-bind="value: label"/>
+              </td>
+              <td>
+                <input type="checkbox" data-bind="checked: is_required"/>
+              </td>
+              <td>
+
+                {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                  <div class="btn-group btn-group-separated validation-options">
+                    <div data-bind="css: {active: !validationMode()},
+                                                        click: function () {validationMode(undefined)}"
+                         class="btn btn-default btn-xs">
+                      {% trans "None" %}
                     </div>
-                {% endfor %}
-            {% endif %}
-            <div class="col-sm-12 form-group">
-                <label class="col-sm-2 control-label">
-                    {% blocktrans with entity_string=view.entity_string %}
-                        {{ entity_string }} Fields
-                    {% endblocktrans %}
-                </label>
-                <div class="col-sm-10">
-                    <p>
-                        <button class="btn btn-success" data-bind="click: addField" type="button">
-                            <i class="fa fa-plus"></i>
-                            Add a Field
-                        </button>
-                    </p>
-                    <div class="panel panel-default">
-                        <table class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                    <th class="col-sm-1"></th>
-                                    <th class="col-sm-3">
-                                        {% blocktrans with entity_string=view.entity_string %}
-                                            {{ entity_string }} Property
-                                        {% endblocktrans %}
-                                        <span class="hq-help-template"
-                                              data-title="
-                                                  {% blocktrans with entity_string=view.entity_string %}
-                                                      {{ entity_string }} Property
-                                                  {% endblocktrans %}"
-                                              data-content="{% blocktrans %}
-                                                  The unique ID you can use to reference this property
-                                                  in the application builder. The property may not
-                                                  contain spaces.
-                                              {% endblocktrans %}">
-                                        </span>
-                                    </th>
-                                    <th class="col-sm-3">
-                                        {% trans "Label" %}
-                                        <span class="hq-help-template"
-                                              data-title="{% trans "Label" %}"
-                                              data-content="{% blocktrans with entity_string=view.entity_string|lower %}
-                                                  The field label that users will see when adding or editing
-                                                  a {{ entity_string }} in CommCareHQ.
-                                              {% endblocktrans %}">
-                                        </span>
-                                    </th>
-                                    <th class="col-sm-1">
-                                        {% trans "Required" %}
-                                        <span class="hq-help-template"
-                                              data-title="{% trans "Required" %}"
-                                              data-content="{% blocktrans with entity_string=view.entity_string|lower %}
-                                                  A value for this field must be provided when creating or
-                                                  editing a {{ entity_string }}.  Bulk import will fail
-                                                  unless this field is provided.
-                                              {% endblocktrans %}">
-                                        </span>
-                                    </th>
-                                    <th class="col-sm-3">
-                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
-                                            {% trans "Validation" %}
-                                            <span class="hq-help-template"
-                                                data-title="{% trans "Validation" %}"
-                                                data-content="{% blocktrans %}
-                                                    Specify a means of validating user input to this field.
-                                                    You can provide a drop-down list of choices or specify
-                                                    a regular expression to be applied to the input. For
-                                                    example, ^[1-9]{10}$ will match only 10 character
-                                                    numeric input.
-                                                {% endblocktrans %}">
-                                            </span>
-                                        {% else %}
-                                            {% trans "Choices" %}
-                                            <span class="hq-help-template"
-                                                data-title="{% trans "Choices" %}"
-                                                data-content="{% blocktrans %}
-                                                    Provides a drop-down list of choices for this field
-                                                    instead of free text entry.
-                                                {% endblocktrans %}">
-                                            </span>
-                                        {% endif %}
-                                    </th>
-                                    {% if show_index_in_fixture %}
-                                    <th class="col-sm-1">
-                                        {% trans "Index in Restore" %}
-                                        <span class="hq-help-template"
-                                              data-title="{% trans "Index in Restore" %}"
-                                              data-content="{% blocktrans %}
-                                                Check this box to indicate that mobile should index this
-                                                field for faster filtering with large sets of locations.
-                                                To use this optimization, you'll need to reference the
-                                                field as a top-level attribute prefixed with 'data_'.
-                                                For example, reference a field called 'is_test' like:
-                                                instance('locations')/locations/location[data_is_test='1']
-                                              {% endblocktrans %}">
-                                        </span>
-                                    </th>
-                                    {% endif %}
-                                    <th class="col-sm-1">{% trans "Delete" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody data-bind="sortable: data_fields">
-                                <tr data-bind="attr: {'data-order': _sortableOrder}">
-                                    <td>
-                                        <i class="fa fa-sort sortable-handle"></i>
-                                    </td>
-                                    <td>
-                                        <input class="form-control" type="text" data-bind="value: slug"/>
-                                    </td>
-                                    <td>
-                                        <input class="form-control" type="text" data-bind="value: label"/>
-                                    </td>
-                                    <td>
-                                        <input type="checkbox" data-bind="checked: is_required"/>
-                                    </td>
-                                    <td>
-
-                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
-                                        <div class="btn-group validation-options">
-                                            <div data-bind="css: {active: !validationMode()},
-                                                            click: function () {validationMode(undefined)}"
-                                                 class="btn btn-default">
-                                                {% trans "None" %}
-                                            </div>
-                                            <div data-bind="css: {active: validationMode() === 'choice'},
-                                                            click: function () {validationMode('choice')}"
-                                                 class="btn btn-default">
-                                                {% trans "Choices" %}
-                                            </div>
-                                            <div data-bind="css: {active: validationMode() === 'regex'},
-                                                            click: function () {validationMode('regex')}"
-                                                 class="btn btn-default">
-                                                {% trans "Regex" %}
-                                            </div>
-                                        </div>
-                                        {% endif %}
-
-                                        <div data-bind="visible: validationMode() === 'choice'">
-
-                                            <button data-bind="click: addChoice"
-                                                    type="button" class="btn btn-primary" >
-                                                <i class="fa fa-plus"></i> {% trans "Add Choice" %}
-                                            </button>
-
-                                            <ul data-bind="sortable: choices" class="list-unstyled validation-list">
-                                                <li data-bind="attr: {'data-order': _sortableOrder}">
-                                                    <div class="input-group">
-                                                        <span class="input-group-addon"><i class="fa fa-sort sortable-handle"></i></span>
-                                                        <input class="form-control" type="text" data-bind="value: value"/>
-                                                        <div class="input-group-btn">
-                                                            <a type="button"
-                                                               class="btn btn-danger"
-                                                               data-bind="click: $parent.removeChoice">
-                                                                <i class="fa fa-times"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </ul>
-
-                                        </div>
-
-                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
-                                        <ul data-bind="visible: validationMode() === 'regex'"
-                                            class="list-unstyled validation-list">
-                                            <li><input data-bind="value: regex" class="form-control" type="text"
-                                                       placeholder="{% trans "Regular Expression" %}"/></li>
-                                            <li><input data-bind="value: regex_msg" class="form-control" type="text"
-                                                       placeholder="{% trans "Validation Message" %}"/></li>
-                                        </ul>
-                                        {% endif %}
-
-                                        {% if request|toggle_enabled:"MULTIPLE_CHOICE_CUSTOM_FIELD" %}
-                                            <span data-bind="visible: choices().length !== 0">
-                                                <label style="display: inline" for="multipleChoice">{% trans 'Multiple choice' %}: </label>
-                                                <input data-bind="checked: multiple_choice" id="multipleChoice" type="checkbox"/>
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    {% if show_index_in_fixture %}
-                                    <td>
-                                        <input type="checkbox" data-bind="checked: index_in_fixture"/>
-                                    </td>
-                                    {% endif %}
-                                    <td>
-                                        <a type="button"
-                                           class="btn btn-danger"
-                                           data-toggle="modal"
-                                           href="#delete-confirm-modal"
-                                           data-bind="click: $root.setModalField"
-                                        >
-                                            <i class="fa fa-times"></i> {% trans "Delete" %}
-                                        </a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div data-bind="css: {active: validationMode() === 'choice'},
+                                                        click: function () {validationMode('choice')}"
+                         class="btn btn-default btn-xs">
+                      {% trans "Choices" %}
                     </div>
+                    <div data-bind="css: {active: validationMode() === 'regex'},
+                                                        click: function () {validationMode('regex')}"
+                         class="btn btn-default btn-xs">
+                      {% trans "Regex" %}
+                    </div>
+                  </div>
+                {% endif %}
+
+                <div data-bind="visible: validationMode() === 'choice'">
+
+                  <button data-bind="click: addChoice"
+                          type="button" class="btn btn-default btn-xs">
+                    <i class="fa fa-plus"></i> {% trans "Add Choice" %}
+                  </button>
+
+                  <ul data-bind="sortable: choices" class="list-unstyled validation-list">
+                    <li data-bind="attr: {'data-order': _sortableOrder}">
+                      <div class="input-group">
+                        <span class="input-group-addon"><i class="fa fa-arrows-v sortable-handle"></i></span>
+                        <input class="form-control" type="text" data-bind="value: value"/>
+                        <div class="input-group-btn">
+                          <a type="button"
+                             class="btn btn-danger"
+                             data-bind="click: $parent.removeChoice">
+                            <i class="fa fa-times"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+
                 </div>
-            </div>
-        </fieldset>
-        {% if show_purge_existing %}
-        <fieldset>
-            <div class="col-sm-10 col-sm-offset-2">
-                <div class="checkbox">
-                    <label>
-                        <input name="remove-existing" type="checkbox" data-bind="checked: purge_existing">{% trans "Remove unused fields from existing data."%}
-                        <span class="hq-help-template"
-                              data-title="{% trans "Remove Unused Fields" %}"
-                              data-content="{% blocktrans with entity_string=view.entity_string|lower %}
+
+                {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                  <ul data-bind="visible: validationMode() === 'regex'"
+                      class="list-unstyled validation-list">
+                    <li><input data-bind="value: regex" class="form-control" type="text"
+                               placeholder="{% trans "Regular Expression" %}"/></li>
+                    <li><input data-bind="value: regex_msg" class="form-control" type="text"
+                               placeholder="{% trans "Validation Message" %}"/></li>
+                  </ul>
+                {% endif %}
+
+                {% if request|toggle_enabled:"MULTIPLE_CHOICE_CUSTOM_FIELD" %}
+                  <span data-bind="visible: choices().length !== 0">
+                                            <label style="display: inline" for="multipleChoice">{% trans 'Multiple choice' %}: </label>
+                                            <input data-bind="checked: multiple_choice" id="multipleChoice" type="checkbox"/>
+                                        </span>
+                {% endif %}
+              </td>
+              {% if show_index_in_fixture %}
+                <td>
+                  <input type="checkbox" data-bind="checked: index_in_fixture"/>
+                </td>
+              {% endif %}
+              <td>
+                <a type="button"
+                   class="btn btn-danger"
+                   data-toggle="modal"
+                   href="#delete-confirm-modal"
+                   data-bind="click: $root.setModalField"
+                >
+                  <i class="fa fa-times"></i> {% trans "Delete" %}
+                </a>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </fieldset>
+    {% if show_purge_existing %}
+      <fieldset>
+        <div class="col-sm-12">
+          <div class="checkbox">
+            <label>
+              <input name="remove-existing" type="checkbox" data-bind="checked: purge_existing">{% trans "Remove unused fields from existing data."%}
+              <span class="hq-help-template"
+                    data-title="{% trans "Remove Unused Fields" %}"
+                    data-content="{% blocktrans with entity_string=view.entity_string|lower %}
                                   If checked, this will remove any other fields from every {{ entity_string }}.
                                   This could break existing applications if they rely on these other fields.
                               {% endblocktrans %}">
                         </span>
-                    </label>
-                </div>
-            </div>
-        </fieldset>
-        {% endif %}
-        <div class="form-actions">
-            <div class="col-sm-4 col-md-5 col-lg-3 col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
-                <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit" disabled>{% trans "Save Fields" %}</button>
-            </div>
+            </label>
+          </div>
         </div>
+      </fieldset>
+    {% endif %}
+    <div class="form-actions">
+      <div class="col-sm-12">
+        <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit" disabled>{% trans "Save Fields" %}</button>
+      </div>
+    </div>
 
-        <div
-            id="delete-confirm-modal"
-            class="modal fade"
-            tabindex="-1"
-            role="dialog"
-            aria-labelledby="delete-confirm-modal-label"
-            aria-hidden="true"
-        >
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 class="modal-title" id="delete-confirm-modal-label">{% trans "Are you sure you want to delete this field?" %}</h3>
-                    </div>
+    <div
+      id="delete-confirm-modal"
+      class="modal fade"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="delete-confirm-modal-label"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3 class="modal-title" id="delete-confirm-modal-label">{% trans "Are you sure you want to delete this field?" %}</h3>
+          </div>
 
-                    <div class="modal-body" style="line-height: 18px">
-                        {% blocktrans with entity_string=view.entity_string|lower %}
-                        <p>
-                            Deleting this field can cause you to lose data for any {{ entity_string }} with information stored in this field.
-                        </p>
-                        <p>
-                            Data will show up on the edit {{ entity_string }} page but
-                            will be removed the next time the {{ entity_string }} is saved.
-                        </p>
-                        {% endblocktrans %}
-                    </div>
+          <div class="modal-body" style="line-height: 18px">
+            {% blocktrans with entity_string=view.entity_string|lower %}
+              <p>
+                Deleting this field can cause you to lose data for any {{ entity_string }} with information stored in this field.
+              </p>
+              <p>
+                Data will show up on the edit {{ entity_string }} page but
+                will be removed the next time the {{ entity_string }} is saved.
+              </p>
+            {% endblocktrans %}
+          </div>
 
-                    <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn btn-default">Cancel</a>
-                        <button aria-hidden="true"
-                                data-dismiss="modal"
-                                data-bind="click: $root.confirmRemoveField"
-                                class="btn btn-danger">
-                            {% trans "Delete Field" %}
-                        </button>
-                    </div>
-                </div>
-            </div>
+          <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn btn-default">Cancel</a>
+            <button aria-hidden="true"
+                    data-dismiss="modal"
+                    data-bind="click: $root.confirmRemoveField"
+                    class="btn btn-danger">
+              {% trans "Delete Field" %}
+            </button>
+          </div>
         </div>
+      </div>
+    </div>
 
-    </form>
+  </form>
 {% endblock %}

@@ -1,47 +1,47 @@
 {% if section == "doc_begin" %}
-<!DOCTYPE HTML>
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Dashboard</title>
-</head>
-<body>
+  <!DOCTYPE HTML>
+  <html>
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>Dashboard</title>
+    </head>
+    <body>
 {% endif %}
 
 {% if section == "table_begin" %}
-    <table>
+      <table>
 {% endif %}
 
 {% if section == "first_row" %}
         <thead>
-        <tr>
+          <tr>
             {% for cell in row %}
-                <th>{{ cell }}</th>
+              <th>{{ cell }}</th>
             {% endfor %}
-        </tr>
+          </tr>
 
         </thead>
         <tbody>
 {% endif %}
 
 {% if section == "row" %}
-    <tr>
-        {% for cell in row %}
-            <td>{{ cell }}</td>
-        {% endfor %}
-    </tr>
+          <tr>
+            {% for cell in row %}
+              <td>{{ cell }}</td>
+            {% endfor %}
+          </tr>
 {% endif %}
 
 {% if section == "no_rows" %}
-    <tbody>
+        <tbody>
 {% endif %}
 
 {% if section == "table_end" %}
-</tbody>
-</table>
+        </tbody>
+      </table>
 {% endif %}
 
 {% if section == "doc_end" %}
-</body>
-</html>
+    </body>
+  </html>
 {% endif %}

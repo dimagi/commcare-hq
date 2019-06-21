@@ -2,14 +2,14 @@
 {% if multimedia_state.has_media %}
   <div class="panel panel-appmanager">
     <div class="panel-heading">
-      <h4 class="panel-title panel-title-nolink">{% trans 'Manage Multimedia' %}</h4>
+      <h4 class="panel-title panel-title-nolink">{% trans 'Multimedia Reference Checker' %}</h4>
     </div>
     <div class="panel-body">
-      <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
       <p>
-          <a id="open_checker" target="_blank" class="btn btn-primary" href="{% url "hqmedia_references" domain app.get_id %}">
-              <i class="fa fa-check"></i>
-              {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}
+        <a id="open_checker" target="_blank" href="{% url "hqmedia_references" domain app.get_id %}">
+          {% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}
+          <i class="fa fa-external-link"></i>
+        </a>
       </p>
     </div>
   </div>
@@ -19,10 +19,11 @@
       <h4 class="panel-title panel-title-nolink">{% trans 'Download Multimedia Zip' %}</h4>
     </div>
     <div class="panel-body">
+      <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
       {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
     </div>
   </div>
 
 {% else %}
-    <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
+  <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}

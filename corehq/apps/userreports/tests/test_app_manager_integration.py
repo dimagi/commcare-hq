@@ -164,6 +164,8 @@ class AppManagerDataSourceConfigTest(TestCase):
         data_source = data_sources[self.main_form.xmlns]
         form_properties = copy(self.case_properties)
         form_properties['state'] = 'string'
+        # prepend "form." on all form properties
+        form_properties = {'form.{}'.format(k): v for k, v in form_properties.items()}
         meta_properties = {
             'username': 'string',
             'userID': 'string',

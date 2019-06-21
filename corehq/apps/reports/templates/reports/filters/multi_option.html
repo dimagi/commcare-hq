@@ -1,28 +1,26 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-    {% if not endpoint %}
-        <select class="{{ css_class }} form-control report-filter-multi-option"
+  {% if not endpoint %}
+    <select class="{{ css_class }} form-control report-filter-multi-option"
             multiple="true"
             data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', selectedOptions: current_selection"
             data-options="{% html_attr select.options %}"
             data-selected="{% html_attr select.selected %}"
             placeholder="{{ select.placeholder }}"
             name="{{ slug }}"></select>
-    {% else %}
-        <input type="text"
-            data-ajax-select2="true"
-            data-endpoint="{% html_attr endpoint %}"
+  {% else %}
+    <select data-endpoint="{% html_attr endpoint %}"
             data-options="{% html_attr select.options %}"
             data-selected="{% html_attr select.selected %}"
             class="{{ css_class }} form-control report-filter-multi-option"
             placeholder="{{ select.placeholder }}"
-            name="{{ slug }}" />
-    {% endif %}
-    {% if filter_help_inline or search_help_inline %}
-        <span class="help-block">
-            <i class="fa fa-info-circle"></i>
-            {{ filter_help_inline }} {{ search_help_inline }}
-        </span>
-    {% endif %}
+            name="{{ slug }}"></select>
+  {% endif %}
+  {% if filter_help_inline or search_help_inline %}
+    <span class="help-block">
+      <i class="fa fa-info-circle"></i>
+      {{ filter_help_inline }} {{ search_help_inline }}
+    </span>
+  {% endif %}
 {% endblock %}

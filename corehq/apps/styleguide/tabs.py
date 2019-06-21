@@ -13,7 +13,7 @@ from corehq.apps.styleguide.examples.simple_crispy_form.views import (
 )
 from corehq.apps.styleguide.views import (
     MainStyleGuideView,
-    FormsStyleGuideView,
+    MoleculesStyleGuideView,
 )
 from corehq.apps.styleguide.views.docs import (
     FormsSimpleCrispyFormExampleView,
@@ -57,8 +57,8 @@ class SimpleCrispyFormSGExample(BaseSGTab):
             ]),
             (_("Style Guide"), [
                 {
-                    'title': _("Back to Form Anatomy"),
-                    'url': '%s#anatomy' % reverse(FormsStyleGuideView.urlname),
+                    'title': _("Back to Forms"),
+                    'url': '%s#molecules-forms' % reverse(MoleculesStyleGuideView.urlname),
                 },
             ]),
         ]

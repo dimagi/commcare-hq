@@ -1,57 +1,68 @@
 {% load i18n %}
-{% if multimedia_state.has_media %}
-    <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
-    {% if not include_modal and build_profile_access and not app.is_remote_app and app.build_profiles %}
-        <div class="form-inline">
-            <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
-            <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
-        </div>
-        <br/>
-    {% endif %}
-    <p>
-        <a class="btn {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}btn-warning{% else %}btn-primary{% endif %} {% if include_modal %}download-zip
-{% endif %}"
-            {% if include_modal %}
-                href="#multimedia-zip-modal" data-toggle="modal"
 
-            {% else %}
-                {# This happens when the template gets included in app_manager/partials/releases/releases.html #}
-                {# See app_manager/js/releases/releases.js #}
-                data-bind="click: function () {
+{% if multimedia_state.has_form_errors %}
+  <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
+    This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
+  {% endblocktrans %}</div>
+{% endif %}
+
+{% if multimedia_state.has_missing_refs %}
+  <div class="alert alert-warning">
+    <p>
+      {% blocktrans %}
+        <i class="fa fa-exclamation-triangle"></i>
+        This application is missing references, so this zip will be incomplete.
+      {% endblocktrans %}
+    </p>
+    {% if not is_multimedia_reference_checker %}
+      <p>
+        {% url "hqmedia_references" domain app.get_id as checker_url %}
+        {% blocktrans %}
+          Visit the <a href='{{ checker_url }}' target= '_blank'>
+          Multimedia Reference Checker
+          <i class='fa fa-external-link'></i>
+        </a>
+          to upload any missing multimedia.
+        {% endblocktrans %}
+      </p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if multimedia_state.has_media %}
+  {% if not include_modal and build_profile_access and not app.is_remote_app and app.build_profiles %}
+    <div class="form-inline">
+      <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
+      <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+    </div>
+    <br/>
+  {% endif %}
+  <p>
+    <a class="btn btn-info{% if include_modal %} download-zip{% endif %}"
+      {% if include_modal %}
+       href="#multimedia-zip-modal" data-toggle="modal"
+
+      {% else %}
+        {# This happens when the template gets included in app_manager/partials/releases/releases.html #}
+        {# See app_manager/js/releases/releases.js #}
+       data-bind="click: function () {
                     download_application_zip(true, build_profile());
                 }"
-            {% endif %}
-            id="download_zip"
-        >
-        {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
-            <i class="fa fa-bolt"></i> {% trans 'Download Incomplete ZIP' %}
-        {% else %}
-            <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
-        {% endif %}
-        </a>
-    </p>
+      {% endif %}
+       id="download_zip"
+    >
+      {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
+        <i class="fa fa-exclamation-triangle"></i> {% trans 'Download Incomplete ZIP' %}
+      {% else %}
+        <i class="fa fa-cloud-download"></i> {% trans 'Download ZIP' %}
+      {% endif %}
+    </a>
+  </p>
 {% else %}
-    <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
-{% endif %}
-{% if multimedia_state.has_form_errors %}
-    <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
-        This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
-    {% endblocktrans %}</div>
-{% endif %}
-{% if multimedia_state.has_missing_refs %}
-    <div class="alert alert-warning">
-        <p>
-            <i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Note:</strong> This application is
-            missing references, so this zip will be incomplete.
-        </p>
-        <p>
-            Please make sure all of your application's multimedia references are linked to media files before
-            starting your Application, or it might be unstable.
-        </p>
-    {% endblocktrans %}</div>
+  <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}
 
 {% if include_modal %}
-    {% url "download_multimedia_zip" domain app.get_id as multimedia_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=multimedia_url %}
+  {% url "download_multimedia_zip" domain app.get_id as multimedia_url %}
+  {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=multimedia_url %}
 {% endif %}

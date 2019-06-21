@@ -81,7 +81,7 @@ example](https://github.com/dimagi/commcare-hq/pull/19195):
 
     from django.db import migrations
 
-    from corehq.sql_db.operations import HqRunSQL
+    
 
 
     class Migration(migrations.Migration):
@@ -91,7 +91,7 @@ example](https://github.com/dimagi/commcare-hq/pull/19195):
         ]
 
         operations = [
-            HqRunSQL("DROP FUNCTION IF EXISTS get_reverse_indexed_cases(TEXT, TEXT[]);"),
+            migrations.RunSQL("DROP FUNCTION IF EXISTS get_reverse_indexed_cases(TEXT, TEXT[]);"),
         ]
     ```
 2. Delete the `.sql` files containing the old function definition.
@@ -101,6 +101,6 @@ example](https://github.com/dimagi/commcare-hq/pull/19195):
 4. Repeat the above for the pl_proxy function defined in `sql_proxy_accessors`
    if applicable.
 
-These `HqRunSQL` operations can later be replaced with `noop_migration`s, but
+These `migrations.RunSQL` operations can later be replaced with `noop_migration`s, but
 there's no urgency in that, so we can wait until someone goes through and
 squashes all these migrations.

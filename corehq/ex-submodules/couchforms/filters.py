@@ -4,6 +4,8 @@ Out of the box filters you can use to filter your exports
 
 
 from __future__ import unicode_literals
+
+
 def instances(doc):
     """
     Only return XFormInstances, not duplicates or errors

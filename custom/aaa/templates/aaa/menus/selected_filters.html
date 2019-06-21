@@ -1,0 +1,32 @@
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="selected-filters">
+  <div class="selected-filters-block">
+    <i class="fa fa-2x fa-calendar selected-filters-icon"></i>
+    <div class="selected-box pointer" data-bind="click: function () { localStorage.showModal(true); }">
+      <span data-bind="text: postData.selectedYear"></span>
+    </div>
+    <div class="selected-box pointer" data-bind="click: function () { localStorage.showModal(true); }">
+      <span data-bind="text: postData.selectedMonthName"></span>
+    </div>
+    <div class='vertical-line' data-bind="visible: postData.selectedBeneficiaryType() !== null">
+      <img style="width: 40px; height: 40px;" src="{% static 'aaa/images/noun_person.png' %}">
+      <div class="selected-box pointer" data-bind="click: function () { localStorage.showModal(true); }">
+        <span data-bind="text: reachUtils.toTitleCase(postData.selectedBeneficiaryType())"></span>
+        <button data-bind="click: function() { localStorage.showModal(true); filters['beneficiary-type-filter'].resetFilters(); }" type="button" class="close">&times;</button>
+      </div>
+    </div>
+  </div>
+  <div class="selected-filters-block">
+    <i class="fa fa-2x fa-map-marker selected-filters-icon"></i>
+    <!-- ko foreach: {data: localStorage.locationHierarchy, as: 'location'} -->
+    <div class="selected-box pointer" data-bind="css: { hide: location.hideName() }, click: function() { $parent.localStorage.showModal(true); }">
+      <span data-bind="text: location.locationName"></span>
+      <button data-bind="css: { hide: location.isDisabled() }, click: function() { event.stopPropagation(); location.setDefaultOption(true); }" type="button" class="close">&times;</button>
+    </div>
+    <!-- /ko -->
+  </div>
+</div>

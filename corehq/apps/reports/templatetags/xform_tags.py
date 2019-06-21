@@ -9,6 +9,7 @@ import six
 
 register = template.Library()
 
+
 @register.simple_tag
 def render_form_xml(form):
     xml = form.get_xml()

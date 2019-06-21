@@ -131,13 +131,19 @@
                 </ul>
             </li>
             <hr>
+            <li ng-class="{'active': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
+                <a class="row pointer" href="{$ goToStep('service_delivery_dashboard', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
+                    <div class="col-sm-1"><i class="fa fa-tasks" aria-hidden="true"></i></div>
+                    <div class="col-sm-9">{% trans "Service Delivery Dashboard" %}</div>
+                </a>
+            </li>
             <li ng-class="{'active': $location.path().indexOf('/awc_reports') !== -1}">
                 <a class="row pointer" href="{$ goToStep('awc_reports', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-tasks" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "AWC Report" %}</div>
                 </a>
             </li>
-            <li ng-if="haveAccessToFeatures" ng-class="{'active': $location.path().indexOf('/lady_supervisor') !== -1}">
+            <li ng-class="{'active': $location.path().indexOf('/lady_supervisor') !== -1}">
                 <a class="row pointer" href="{$ goToStep('lady_supervisor', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-tasks" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "LS Dashboard" %}</div>
@@ -153,6 +159,12 @@
                 <a class="row pointer" href="{$ goToStep('download', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-download" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "Tabular Reports" %}</div>
+                </a>
+            </li>
+            <li ng-class="{'active': $location.path().indexOf('/cas_export') !== -1}" ng-show="stateLevelAccess === true || haveAccessToAllLocations === true">
+                <a class="row pointer" href="{$ goToStep('cas_export', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
+                    <div class="col-sm-1"><i class="fa fa-download" aria-hidden="true"></i></div>
+                    <div class="col-sm-9">{% trans "CAS Data Exports" %}</div>
                 </a>
             </li>
             <li>

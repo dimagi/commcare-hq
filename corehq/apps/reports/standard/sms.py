@@ -1,76 +1,109 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from collections import namedtuple
-import cgi
-from django.db.models import Q, Count
-from django.urls import reverse
+from datetime import datetime
+
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count, F, Q
 from django.http import Http404, HttpResponseRedirect
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.urls import reverse
+from django.utils.functional import cached_property
+from django.utils.html import escape
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import six
 from couchdbkit import ResourceNotFound
+from memoized import memoized
+
+from casexml.apps.case.models import CommCareCase
+
 from corehq import toggles
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.doc_info import (
+    DomainMismatchException,
+    get_doc_info,
+    get_doc_info_by_id,
+    get_object_info,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import EditLocationView
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import OptionalAsyncLocationFilter
-from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
-from corehq.apps.sms.filters import (
-    MessageTypeFilter, EventTypeFilter, PhoneNumberFilter, EventStatusFilter,
-    PhoneNumberReportFilter
+from corehq.apps.reports.standard import (
+    DatespanMixin,
+    ProjectReport,
+    ProjectReportParametersMixin,
 )
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import absolute_reverse
-from memoized import memoized
-from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.groups.models import Group
+from corehq.apps.reports.standard.message_event_display import (
+    EventStub,
+    get_event_display,
+    get_sms_status_display,
+    get_status_display,
+)
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.dbaccessors import get_user_id_and_doc_type_by_domain
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-from casexml.apps.case.models import CommCareCase
-from datetime import datetime
-from django.conf import settings
-from django.utils.functional import cached_property
-from django.utils.html import escape
-from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
-    get_object_info, DomainMismatchException)
+from corehq.apps.sms.filters import (
+    EventStatusFilter,
+    EventTypeFilter,
+    MessageTypeFilter,
+    PhoneNumberFilter,
+    PhoneNumberReportFilter,
+)
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import (
-    WORKFLOWS_FOR_REPORTS,
-    WORKFLOW_FORWARD,
     INCOMING,
     OUTGOING,
+    SMS,
+    WORKFLOWS_FOR_REPORTS,
     MessagingEvent,
     MessagingSubEvent,
-    SMS,
     PhoneBlacklist,
-    Keyword,
     PhoneNumber,
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.users.dbaccessors import get_user_id_and_doc_type_by_domain
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.views import EditWebUserView
-from corehq.apps.users.views.mobile import EditCommCareUserView, EditGroupMembersView
+from corehq.apps.users.views.mobile import (
+    EditCommCareUserView,
+    EditGroupMembersView,
+)
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
-from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast, MigratedReminder
-from corehq.messaging.scheduling.views import EditScheduleView, EditConditionalAlertView
+from corehq.messaging.scheduling.models import (
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
-    TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
+    TimedScheduleInstance,
+)
+from corehq.messaging.scheduling.views import (
+    EditConditionalAlertView,
+    EditScheduleView,
 )
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from django.core.exceptions import ObjectDoesNotExist
-import six
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.timezones.conversions import ServerTime, UserTime
+from corehq.util.view_utils import absolute_reverse
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -97,7 +130,6 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s">%(username)s</a>'
-        from corehq.apps.users.views.mobile import EditCommCareUserView
         user_link = user_link_template % {
             "link": absolute_reverse(EditCommCareUserView.urlname,
                                      args=[self.domain, user._id]),
@@ -249,6 +281,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
     def export_table(self):
         result = super(BaseCommConnectLogReport, self).export_table
         table = result[0][1]
+        table = list(table)
         table[0].insert(0, _("Contact Id"))
         table[0].insert(0, _("Contact Type"))
         for row in table[1:]:
@@ -256,6 +289,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             row[self.contact_index_in_result] = contact_info[0]
             row.insert(0, contact_info[2])
             row.insert(0, contact_info[1])
+        result[0][1] = table
         return result
 
 
@@ -316,16 +350,22 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     def headers(self):
-        header = DataTablesHeader(
+        headers = DataTablesHeader(*[header for header in [
             DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("User Name")),
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
+            DataTablesColumn(_("Status")) if self.show_v2 else Ellipsis,
+            DataTablesColumn(_("Event"), sortable=False) if self.show_v2 else Ellipsis,
             DataTablesColumn(_("Type"), sortable=False),
-        )
-        header.custom_sort = [[0, 'desc']]
-        return header
+        ] if header != Ellipsis])
+        headers.custom_sort = [[0, 'desc']]
+        return headers
+
+    @cached_property
+    def show_v2(self):
+        return toggles.SMS_LOG_CHANGES.enabled_for_request(self.request)
 
     @property
     @memoized
@@ -376,26 +416,51 @@ class MessageLogReport(BaseCommConnectLogReport):
             return data.filter(location_id__in=location_ids)
 
         def order_by_col(data_):
-            col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
-            sort_col = self.request_params.get('iSortCol_0')
-            if sort_col is not None and sort_col < len(col_fields):
-                data_ = data_.order_by(col_fields[sort_col])
-                if self.request_params.get('sSortDir_0') == 'desc':
-                    data_ = data_.reverse()
+            data_ = data_.order_by(self._sort_column)
+            if self._sort_descending:
+                data_ = data_.reverse()
             return data_
 
         queryset = SMS.objects.filter(
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
-        ).exclude(
-            # Exclude outgoing messages that have not yet been processed
-            direction=OUTGOING,
-            processed=False
         )
+        if self.show_v2:
+            queryset = queryset.exclude(
+                direction=OUTGOING,
+                processed=False,
+                error=False,  # Don't exclude errored messages
+            )
+        else:
+            # Exclude outgoing messages that have not yet been processed
+            # Note that this also excludes errored messages
+            queryset = queryset.exclude(
+                direction=OUTGOING,
+                processed=False,
+            )
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
+        if self.show_v2:
+            return queryset.annotate(
+                event_source=F("messaging_subevent__parent__source"),
+                event_source_id=F("messaging_subevent__parent__source_id"),
+                event_content_type=F("messaging_subevent__parent__content_type"),
+                event_form_name=F("messaging_subevent__parent__form_name"),
+            )
         return queryset
+
+    @property
+    def _sort_column(self):
+        col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
+        sort_col = self.request_params.get('iSortCol_0')
+        if sort_col is None or sort_col < 0 or sort_col >= len(col_fields):
+            sort_col = 0
+        return col_fields[sort_col]
+
+    @property
+    def _sort_descending(self):
+        return self.request_params.get('sSortDir_0') == 'desc'
 
     def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
@@ -422,22 +487,21 @@ class MessageLogReport(BaseCommConnectLogReport):
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
-        data = self._get_queryset()
-        if paginate and self.pagination:
-            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
-
-        for message in data:
-            row = [
+        content_cache = {}
+        messages = self._get_data(paginate)
+        events = self._get_events_by_xforms_session(messages) if self.show_v2 else {}
+        for message in messages:
+            yield [val for val in [
                 get_timestamp(message.date),
                 get_contact_link(message.couch_recipient, message.couch_recipient_doc_type, raw=contact_info),
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
+                get_sms_status_display(message) if self.show_v2 else Ellipsis,
+                self._get_event_display(message, events, content_cache) if self.show_v2 else Ellipsis,
                 ', '.join(self._get_message_types(message)),
-            ]
-            if include_log_id and self.include_metadata:
-                row.append(message.couch_id)
-            yield row
+                message.couch_id if include_log_id and self.include_metadata else Ellipsis,
+            ] if val != Ellipsis]
 
     @property
     def rows(self):
@@ -467,9 +531,52 @@ class MessageLogReport(BaseCommConnectLogReport):
     def export_table(self):
         result = super(MessageLogReport, self).export_table
         if self.include_metadata:
-            table = result[0][1]
+            table = list(result[0][1])
             table[0].append(_("Message Log ID"))
+            result[0][1] = table
         return result
+
+    def _get_data(self, paginate):
+        """Returns the full set of data that will be shown to the user"""
+        queryset = self._get_queryset()
+
+        if paginate and self.pagination:
+            queryset = queryset[self.pagination.start:self.pagination.start + self.pagination.count]
+        return list(queryset)
+
+    def _get_events_by_xforms_session(self, messages):
+        session_ids = [
+            m.xforms_session_couch_id for m in messages
+            if m.xforms_session_couch_id and not m.messaging_subevent_id
+        ]
+        subevents = (MessagingSubEvent.objects
+                     .filter(parent__domain=self.domain,
+                             xforms_session__couch_id__in=session_ids)
+                     .values_list(
+                         'xforms_session__couch_id',
+                         'parent__source',
+                         'parent__source_id',
+                         'parent__content_type',
+                         'parent__form_name',
+                     ))
+        return {session_id: EventStub(source, source_id, content_type, form_name)
+                for session_id, source, source_id, content_type, form_name in subevents}
+
+    def _get_event_display(self, message, events, content_cache):
+        """Extract event data from a message annotated via _get_data optimizations"""
+        event = None
+        if message.messaging_subevent:
+            event = EventStub(
+                message.event_source,
+                message.event_source_id,
+                message.event_content_type,
+                message.event_form_name,
+            )
+        elif message.xforms_session_couch_id:
+            event = events.get(message.xforms_session_couch_id, None)
+        if event:
+            return get_event_display(self.domain, event, content_cache)
+        return "-"
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
@@ -495,207 +602,6 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             return result
         else:
             return self._fmt(result)
-
-    def get_status_display(self, event, sms=None):
-        """
-        event can be a MessagingEvent or MessagingSubEvent
-        """
-        # If sms without error, short circuit to the sms status display
-        if event.status != MessagingEvent.STATUS_ERROR and sms:
-            return self.get_sms_status_display(sms)
-
-        # If survey without error, short circuit to the survey status display
-        if (isinstance(event, MessagingSubEvent) and
-                event.status == MessagingEvent.STATUS_COMPLETED and
-                event.xforms_session_id):
-            return _(event.xforms_session.status)
-
-        status = event.status
-        error_code = event.error_code
-
-        # If we have a MessagingEvent with no error_code it means there's
-        # an error in the subevent
-        if status == MessagingEvent.STATUS_ERROR and not error_code:
-            error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
-
-        # If we have a MessagingEvent that's completed but it's tied to
-        # unfinished surveys, then mark it as being in progress
-        if (
-            isinstance(event, MessagingEvent) and
-            event.status == MessagingEvent.STATUS_COMPLETED and
-            MessagingSubEvent.objects.filter(
-                parent_id=event.pk,
-                content_type=MessagingEvent.CONTENT_SMS_SURVEY,
-                # without this line, django does a left join which is not what we want
-                xforms_session_id__isnull=False,
-                xforms_session__session_is_open=True
-            ).count() > 0
-        ):
-            status = MessagingEvent.STATUS_IN_PROGRESS
-
-        status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
-        error_message = (MessagingEvent.ERROR_MESSAGES.get(error_code, None)
-            if error_code else None)
-        error_message = _(error_message) if error_message else ''
-        if event.additional_error_text:
-            error_message += ' %s' % event.additional_error_text
-
-        # Sometimes the additional information from touchforms has < or >
-        # characters, so we need to escape them for display
-        if error_message:
-            return '%s - %s' % (_(status), cgi.escape(error_message))
-        else:
-            return _(status)
-
-    def get_sms_status_display(self, sms):
-        if sms.error:
-            error_message = (SMS.ERROR_MESSAGES.get(sms.system_error_message, None)
-                if sms.system_error_message else None)
-            if error_message:
-                return '%s - %s' % (_('Error'), _(error_message))
-            else:
-                return _('Error')
-        elif not sms.processed:
-            return _('Queued')
-        else:
-            if sms.direction == INCOMING:
-                return _('Received')
-            elif sms.direction == OUTGOING:
-                if sms.workflow == WORKFLOW_FORWARD:
-                    return _('Forwarded')
-                else:
-                    return _('Sent')
-            else:
-                return _('Unknown')
-
-    def get_keyword_display(self, keyword_id, content_cache):
-        from corehq.apps.reminders.views import (
-            EditStructuredKeywordView,
-            EditNormalKeywordView,
-        )
-        if keyword_id in content_cache:
-            return content_cache[keyword_id]
-
-        try:
-            keyword = Keyword.objects.get(couch_id=keyword_id)
-        except Keyword.DoesNotExist:
-            display = _('(Deleted Keyword)')
-        else:
-            urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
-                else EditNormalKeywordView.urlname)
-            display = '<a target="_blank" href="%s">%s</a>' % (
-                reverse(urlname, args=[keyword.domain, keyword_id]),
-                keyword.description,
-            )
-
-        content_cache[keyword_id] = display
-        return display
-
-    def get_reminder_display(self, handler_id, content_cache):
-        if handler_id in content_cache:
-            return content_cache[handler_id]
-
-        display = None
-
-        try:
-            info = MigratedReminder.objects.get(handler_id=handler_id)
-            if info.rule_id:
-                display = self.get_case_rule_display(info.rule_id, content_cache)
-        except MigratedReminder.DoesNotExist:
-            pass
-
-        if not display:
-            display = _("(Deleted Conditional Alert)")
-
-        content_cache[handler_id] = display
-        return display
-
-    def get_scheduled_broadcast_display(self, broadcast_id, content_cache):
-        cache_key = 'scheduled-broadcast-%s' % broadcast_id
-        if cache_key in content_cache:
-            return content_cache[cache_key]
-
-        try:
-            broadcast = ScheduledBroadcast.objects.get(domain=self.domain, pk=broadcast_id)
-        except ScheduledBroadcast.DoesNotExist:
-            result = '-'
-        else:
-            if broadcast.deleted:
-                result = _("(Deleted Broadcast)")
-            else:
-                result = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(EditScheduleView.urlname,
-                            args=[self.domain, EditScheduleView.SCHEDULED_BROADCAST, broadcast_id]),
-                    broadcast.name,
-                )
-
-        content_cache[cache_key] = result
-        return result
-
-    def get_immediate_broadcast_display(self, broadcast_id, content_cache):
-        cache_key = 'immediate-broadcast-%s' % broadcast_id
-        if cache_key in content_cache:
-            return content_cache[cache_key]
-
-        try:
-            broadcast = ImmediateBroadcast.objects.get(domain=self.domain, pk=broadcast_id)
-        except ImmediateBroadcast.DoesNotExist:
-            result = '-'
-        else:
-            if broadcast.deleted:
-                result = _("(Deleted Broadcast)")
-            else:
-                result = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(EditScheduleView.urlname,
-                            args=[self.domain, EditScheduleView.IMMEDIATE_BROADCAST, broadcast_id]),
-                    broadcast.name,
-                )
-
-        content_cache[cache_key] = result
-        return result
-
-    def get_case_rule_display(self, rule_id, content_cache):
-        cache_key = 'case-rule-%s' % rule_id
-        if cache_key in content_cache:
-            return content_cache[cache_key]
-
-        try:
-            rule = AutomaticUpdateRule.objects.get(domain=self.domain, pk=rule_id)
-        except AutomaticUpdateRule.DoesNotExist:
-            result = '-'
-        else:
-            if rule.deleted:
-                result = _("(Deleted Conditional Alert)")
-            else:
-                result = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(EditConditionalAlertView.urlname,
-                            args=[self.domain, rule_id]),
-                    rule.name,
-                )
-
-        content_cache[cache_key] = result
-        return result
-
-    def get_content_display(self, event, content_cache):
-        if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
-            return self.get_keyword_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
-            return self.get_reminder_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_SCHEDULED_BROADCAST and event.source_id:
-            return self.get_scheduled_broadcast_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_IMMEDIATE_BROADCAST and event.source_id:
-            return self.get_immediate_broadcast_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_CASE_RULE and event.source_id:
-            return self.get_case_rule_display(event.source_id, content_cache)
-        elif event.content_type in (
-            MessagingEvent.CONTENT_SMS_SURVEY,
-            MessagingEvent.CONTENT_IVR_SURVEY,
-        ):
-            return ('%s (%s)' % (_(dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)),
-                event.form_name or _('Unknown')))
-
-        content_choices = dict(MessagingEvent.CONTENT_CHOICES)
-        return _(content_choices.get(event.content_type, '-'))
 
     def get_event_detail_link(self, event):
         display_text = _('View Details')
@@ -754,6 +660,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def phone_number_filter(self):
         value = PhoneNumberFilter.get_value(self.request, self.domain)
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return value.strip()
 
         return None
@@ -897,10 +804,10 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 event.recipient_id, contact_cache)
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
-            status = self.get_status_display(event)
+            status = get_status_display(event)
             yield [
                 self._fmt_timestamp(timestamp)['html'],
-                self.get_content_display(event, content_cache),
+                get_event_display(self.domain, event, content_cache),
                 self.get_source_display(event, display_only=True),
                 self._fmt_recipient(event, doc_info)['html'],
                 status,
@@ -996,7 +903,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 messages = SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk)
                 if len(messages) == 0:
                     timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
-                    status = self.get_status_display(messaging_subevent)
+                    status = get_status_display(messaging_subevent)
                     result.append([
                         self._fmt_timestamp(timestamp),
                         self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -1009,7 +916,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 else:
                     for sms in messages:
                         timestamp = ServerTime(sms.date).user_time(self.timezone).done()
-                        status = self.get_status_display(messaging_subevent, sms)
+                        status = get_status_display(messaging_subevent, sms)
                         result.append([
                             self._fmt_timestamp(timestamp),
                             self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -1021,7 +928,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                         ])
             elif messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
                     MessagingEvent.CONTENT_IVR_SURVEY):
-                status = self.get_status_display(messaging_subevent)
+                status = get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = xforms_session.start_time if xforms_session else messaging_subevent.date
                 timestamp = ServerTime(timestamp).user_time(self.timezone).done()
@@ -1036,7 +943,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 ])
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_EMAIL:
                 timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
-                status = self.get_status_display(messaging_subevent)
+                status = get_status_display(messaging_subevent)
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -1105,7 +1012,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
         xforms_session = self.xforms_session
         for sms in SMS.objects.filter(xforms_session_couch_id=xforms_session.couch_id):
             timestamp = ServerTime(sms.date).user_time(self.timezone).done()
-            status = self.get_sms_status_display(sms)
+            status = get_sms_status_display(sms)
             result.append([
                 self._fmt_timestamp(timestamp),
                 self._fmt(sms.text),
@@ -1227,6 +1134,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def phone_number_filter(self):
         value = self._filter['phone_number_filter']
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return apply_leniency(value.strip())
 
         return None

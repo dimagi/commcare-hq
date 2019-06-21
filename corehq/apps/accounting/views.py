@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date
 import json
+import six
 
 from django.conf import settings
 from django.contrib import messages
@@ -41,7 +42,6 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
     use_jquery_ui,
     use_multiselect,
 )
@@ -62,6 +62,8 @@ from corehq.apps.accounting.forms import (
     EnterpriseSettingsForm,
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
+    HideInvoiceForm,
+    RemoveAutopayForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
@@ -85,6 +87,8 @@ from corehq.apps.accounting.async_handlers import (
     DomainFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
     SoftwarePlanAsyncHandler,
+    InvoiceNumberAsyncHandler,
+    InvoiceBalanceAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     Invoice, WireInvoice, CustomerInvoice, BillingAccount, CreditLine, Subscription, CustomerBillingRecord,
@@ -122,7 +126,6 @@ class AccountingSectionView(BaseSectionPageView):
 
     @method_decorator(require_superuser)
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -208,6 +211,13 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return CreditForm(self.account, None)
 
     @property
+    @memoized
+    def remove_autopay_form(self):
+        if self.request.method == 'POST' and 'remove_autopay' in self.request.POST:
+            return RemoveAutopayForm(self.account, self.request.POST)
+        return RemoveAutopayForm(self.account)
+
+    @property
     def page_context(self):
         return {
             'account': self.account,
@@ -216,9 +226,10 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                 if self.account.auto_pay_enabled else None
             ),
             'credit_form': self.credit_form,
-            'credit_list': CreditLine.objects.filter(account=self.account),
+            'credit_list': CreditLine.objects.filter(account=self.account, is_active=True),
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
+            'remove_autopay_form': self.remove_autopay_form,
             'subscription_list': [
                 (
                     sub,
@@ -260,6 +271,9 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                     % e
                 )
                 messages.error(request, "Issue adding credit: %s" % e)
+        elif 'remove_autopay' in self.request.POST:
+            self.remove_autopay_form.remove_autopay_user_from_account()
+            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
 
@@ -318,7 +332,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
-                errors.extend([e.message])
+                errors.extend([six.text_type(e)])
                 self.subscription_form._errors.setdefault(NON_FIELD_ERRORS, errors)
         return self.get(request, *args, **kwargs)
 
@@ -435,7 +449,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'credit_form': self.credit_form,
             'can_change_subscription': self.subscription.is_active,
             'change_subscription_form': self.change_subscription_form,
-            'credit_list': CreditLine.objects.filter(subscription=self.subscription),
+            'credit_list': CreditLine.objects.filter(subscription=self.subscription, is_active=True),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
             "subscription_has_ended": (
@@ -656,6 +670,7 @@ class ViewSoftwarePlanVersionView(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
 
+
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
@@ -832,6 +847,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'invoice_info_form': self.invoice_info_form,
             'resend_email_form': self.resend_email_form,
             'suppress_invoice_form': self.suppress_invoice_form,
+            'hide_invoice_form': self.hide_invoice_form,
         }
 
     @property
@@ -862,6 +878,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             return SuppressInvoiceForm(self.invoice, self.request.POST)
         return SuppressInvoiceForm(self.invoice)
 
+    @property
+    @memoized
+    def hide_invoice_form(self):
+        if self.request.method == 'POST':
+            return HideInvoiceForm(self.invoice, self.request.POST)
+        return HideInvoiceForm(self.invoice)
+
     def post(self, request, *args, **kwargs):
         if 'adjust' in self.request.POST:
             if self.adjust_balance_form.is_valid():
@@ -884,6 +907,9 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                     return HttpResponseRedirect(CustomerInvoiceInterface.get_url())
                 else:
                     return HttpResponseRedirect(InvoiceInterface.get_url())
+        elif HideInvoiceForm.submit_kwarg in self.request.POST:
+            if self.hide_invoice_form.is_valid():
+                self.hide_invoice_form.hide_invoice()
         return self.get(request, *args, **kwargs)
 
 
@@ -1137,6 +1163,8 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         DomainFilterAsyncHandler,
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
+        InvoiceNumberAsyncHandler,
+        InvoiceBalanceAsyncHandler,
     ]
 
     @method_decorator(require_superuser)
@@ -1410,7 +1438,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    }
+                    },
+                    show_stack_trace=True
                 )
 
     def refresh_item(self, item_id):

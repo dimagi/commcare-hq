@@ -54,16 +54,6 @@ def construct_summary(location, status_type, values, cutoff):
     return ret
 
 
-def construct_randr_summary(location):
-    now = datetime.utcnow()
-    return construct_summary(
-        location,
-        SupplyPointStatusTypes.R_AND_R_FACILITY,
-        [SupplyPointStatusValues.SUBMITTED, SupplyPointStatusValues.NOT_SUBMITTED],
-        get_business_day_of_month_before(now.year, now.month, 5)
-    )
-
-
 def construct_soh_summary(location):
     now = datetime.utcnow()
     return construct_summary(

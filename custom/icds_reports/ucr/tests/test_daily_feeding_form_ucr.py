@@ -1,9 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from mock import patch
+
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 
 
+@patch('custom.icds_reports.ucr.expressions._get_user_location_id',
+       lambda user_id: 'qwe56poiuytr4xcvbnmkjfghwerffdaa')
+@patch('corehq.apps.locations.ucr_expressions._get_location_type_name',
+       lambda loc_id, context: 'awc')
 class TestDailyFeedingForms(BaseFormsTest):
     ucr_name = "static-icds-cas-dashboard_child_health_daily_feeding_forms"
 

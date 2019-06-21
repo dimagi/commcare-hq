@@ -13,8 +13,9 @@ def git_file_deltas(git_dir, commit, compare=None):
 def sub_git_remote_url(git_dir):
     args = ['config', '--get', "remote.origin.url"]
     p = sub_git_cmd(git_dir, args)
-    gitout = p.stdout.read().strip()
+    gitout = p.stdout.read().decode('utf-8').strip()
     return gitout
+
 
 def sub_git_cmd(git_dir, args):
     """
@@ -78,15 +79,15 @@ def sub_git_info(git_dir, log_count=1):
     """
     return_dict = {}
     kv_line_format = {
-        b'sha': b'%H',
-        b'author': b'%an <%ae>',
-        b'date': b'%ai',
-        b'subject': b'%s',
-        b'message': b'%b'
+        'sha': '%H',
+        'author': '%an <%ae>',
+        'date': '%ai',
+        'subject': '%s',
+        'message': '%b'
     }
 
-    KV_DELIMITER = b':~@#$~:'
-    LINE_DELIMITER = b'@#\n#@'
+    KV_DELIMITER = ':~@#$~:'
+    LINE_DELIMITER = '@#\n#@'
 
     # construct an output of git log that is essentially a:
     # key=value
@@ -95,17 +96,17 @@ def sub_git_info(git_dir, log_count=1):
     # there might be newlines in messages and subjects
     # the git log -z format delimits the entire log by null, but we need separation of each property
 
-    line_by_line_format = LINE_DELIMITER.join([b'%s%s%s' % (k, KV_DELIMITER, v) for k, v in kv_line_format.items()])
+    line_by_line_format = LINE_DELIMITER.join(['%s%s%s' % (k, KV_DELIMITER, v) for k, v in kv_line_format.items()])
 
-    args = [b'log',
-            b'-%s' % log_count,
-            b'-z',
-            b'--pretty=format:%s' % line_by_line_format
+    args = ['log',
+            '-%s' % log_count,
+            '-z',
+            '--pretty=format:%s' % line_by_line_format
     ]
     p = sub_git_cmd(git_dir, args)
     url = sub_git_remote_url(git_dir)
-    gitout = p.stdout.read().strip()
-    all_raw_revs = gitout.split(b'\0')
+    gitout = p.stdout.read().decode('utf-8').strip()
+    all_raw_revs = gitout.split('\0')
 
     def parse_rev_block(block_text):
         ret = {}
@@ -115,9 +116,9 @@ def sub_git_info(git_dir, log_count=1):
             try:
                 k, v = prop.split(KV_DELIMITER)
             except ValueError:
-                k = b"GitParseError"
+                k = "GitParseError"
                 v = prop
-            ret[k] = v.decode('utf-8')
+            ret[k] = v
         return ret
     commit_list = [parse_rev_block(s) for s in all_raw_revs]
 
@@ -133,6 +134,7 @@ def get_git_sub_info(git_dir, sub_path, log_count=1):
     full_sub_path = os.path.join(git_dir, sub_path)
     sub_info = sub_git_info(full_sub_path, log_count=log_count)
     return sub_info
+
 
 def sub_git_submodules(git_dir, log_count=1):
     """
@@ -152,6 +154,7 @@ def sub_git_submodules(git_dir, log_count=1):
             sub_log['branch'] = splits[2]
             sub_log['sha_sha'] = sub_sha
             yield sub_log
+
 
 def split_repo_url(repo_url):
     """

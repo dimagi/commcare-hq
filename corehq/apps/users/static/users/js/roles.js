@@ -16,6 +16,7 @@ hqDefine('users/js/roles',[
                     specific: ko.utils.arrayMap(root.reportOptions, function (report) {
                         return {
                             path: report.path,
+                            slug: report.slug,
                             name: report.name,
                             value: data.permissions.view_report_list.indexOf(report.path) !== -1,
                         };
@@ -91,6 +92,7 @@ hqDefine('users/js/roles',[
         self.webAppsList = o.webAppsList;
         self.appsList = o.appsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
+        self.isLocationSafetyExempt = o.isLocationSafetyExempt;
         self.landingPageChoices = o.landingPageChoices;
         self.getReportObject = function (path) {
             var i;
@@ -132,7 +134,8 @@ hqDefine('users/js/roles',[
         };
 
         self.setRoleBeingEdited = function (role) {
-            var title = role === self.defaultRole ? gettext("New Role") : gettext("Edit Role: ") + role.name();
+            var actionType = self.allowEdit ? gettext("Edit Role: ") : gettext("View Role: ");
+            var title = role === self.defaultRole ? gettext("New Role") : actionType + role.name();
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
@@ -144,8 +147,12 @@ hqDefine('users/js/roles',[
         self.setRoleBeingDeleted = function (role) {
             if (!role._id || !role.hasUsersAssigned) {
                 var title = gettext("Delete Role: ") + role.name();
-                var modalConfirmation = gettext("Are you sure you want to delete this role?") + role.name();
+                var context = {role: role.name()};
+                var modalConfirmation = _.template(gettext(
+                    "Are you sure you want to delete the role <%= role %>?"
+                ))(context);
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
+
                 roleCopy.modalTitle = title;
                 roleCopy.modalConfirmation = modalConfirmation;
                 self.roleBeingDeleted(roleCopy);

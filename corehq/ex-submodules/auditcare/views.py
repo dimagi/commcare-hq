@@ -38,6 +38,7 @@ def export_all(request):
 
 from django.contrib.auth import views as auth_views
 
+
 @csrf_protect
 @never_cache
 def audited_login(request, *args, **kwargs):
@@ -115,6 +116,7 @@ def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     context['model'] = model_name
     context['model_uuid'] = model_uuid
     return render(request, 'auditcare/model_instance_history.html', context)
+
 
 @login_required()
 @user_passes_test(lambda u: u.is_superuser)

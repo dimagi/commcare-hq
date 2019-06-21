@@ -17,6 +17,7 @@ from dimagi.utils.chunked import chunked
 import six
 from io import open
 
+
 class Command(BaseCommand):
     """
         Export form impact data to given csv file

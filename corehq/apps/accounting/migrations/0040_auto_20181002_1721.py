@@ -6,7 +6,7 @@ from __future__ import absolute_import
 from django.db import migrations
 from corehq.apps.accounting.bootstrap.config.standard_user_limit_october_2018 import BOOTSTRAP_CONFIG
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def noop(*args, **kwargs):
@@ -24,5 +24,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_bootstrap_new_monthly_pricing, reverse_code=noop)
+        migrations.RunPython(_bootstrap_new_monthly_pricing, reverse_code=noop)
     ]

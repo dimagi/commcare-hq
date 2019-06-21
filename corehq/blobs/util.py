@@ -137,3 +137,29 @@ def get_content_md5(fileobj):
     for chunk in iter(lambda: fileobj.read(1024 * 1024), b''):
         md5.update(chunk)
     return b64encode(md5.digest()).decode('ascii')
+
+
+def set_max_connections(num_workers):
+    """Set max connections for urllib3
+
+    The default is 10. When using something like gevent to process
+    multiple S3 connections conucurrently it is necessary to set max
+    connections equal to the number of workers to avoid
+    `WARNING Connection pool is full, discarding connection: ...`
+
+    This must be called before `get_blob_db()` is called.
+
+    See botocore.config.Config max_pool_connections
+    https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html
+    """
+    from django.conf import settings
+    from corehq.blobs import _db
+
+    def update_config(name):
+        config = getattr(settings, name)["config"]
+        config["max_pool_connections"] = num_workers
+
+    assert not _db, "get_blob_db() has been called"
+    for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
+        if getattr(settings, name, False):
+            update_config(name)

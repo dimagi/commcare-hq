@@ -37,7 +37,6 @@ import re
 import sh
 import sys
 
-from fabric.colors import red
 import gevent
 from gitutils import (
     OriginalBranch,
@@ -71,7 +70,7 @@ class BranchConfig(jsonobject.JsonObject):
 
     def check_trunk_is_recent(self):
         # if it doesn't match our tag format
-        if re.match('[\d-]+_[\d\.]+-\w+-deploy', self.trunk) is None:
+        if re.match(r'[\d-]+_[\d\.]+-\w+-deploy', self.trunk) is None:
             return True
 
         return self.trunk in git_recent_tags()
@@ -306,7 +305,7 @@ def force_push(git, branch):
         # oops we're using a read-only URL, so change to the suggested url
         try:
             line = sh.grep(git.remote("-v"),
-                           '-E', '^origin.(https|git)://github\.com/.*\(push\)$')
+                           '-E', r'^origin.(https|git)://github\.com/.*\(push\)$')
         except sh.ErrorReturnCode_1:
             raise e
         old_url = line.strip().split()[1]
@@ -347,10 +346,24 @@ class DisableGitHooks(object):
             sh.mv(self.hidden_path, self.path)
 
 
+def _wrap_with(code):
+
+    def inner(text, bold=False):
+        c = code
+
+        if bold:
+            c = "1;%s" % c
+        return "\033[%sm%s\033[0m" % (c, text)
+    return inner
+
+
+red = _wrap_with('31')
+
+
 def main():
     from sys import stdin
     import yaml
-    config = yaml.load(stdin)
+    config = yaml.safe_load(stdin)
     config = BranchConfig.wrap(config)
     config.normalize()
     if not config.check_trunk_is_recent():

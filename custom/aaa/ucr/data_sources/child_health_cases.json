@@ -1,0 +1,233 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-child_health_cases",
+    "display_name": "Cases - Child Health (REACH Dashboard Backend)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "type": "boolean_expression",
+      "property_value": "child_health"
+    },
+    "validations": [
+      {
+        "name": "directly_owned",
+        "error_message": "This case has an owner_id and does not default to ownership by extension",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "property_value": "-"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "parent_id"
+        }
+      },
+      {
+        "column_id": "mother_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "mother_id"
+        }
+      },
+      {
+        "column_id": "opened_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "column_id": "closed_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
+      },
+      {
+        "column_id": "breastfed_within_first",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "breastfed_within_first"
+      },
+      {
+        "column_id": "is_exclusive_breastfeeding",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "is_exclusive_breastfeeding"
+      },
+      {
+        "column_id": "comp_feeding",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "comp_feeding"
+      },
+      {
+        "column_id": "diet_diversity",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "diet_diversity"
+      },
+      {
+        "column_id": "diet_quantity",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "diet_quantity"
+      },
+      {
+        "column_id": "hand_wash",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "hand_wash"
+      },
+      {
+        "column_id": "birth_weight",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "birth_weight"
+      }
+    ],
+    "named_expressions": {
+      "parent_id": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "referenced_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "identifier"
+              },
+              "property_value": "parent"
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              }
+            }
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      "mother_id": {
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "array_index",
+            "array_expression": {
+              "filter_expression": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "identifier"
+                },
+                "property_value": "parent"
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "array",
+                  "type": "property_name",
+                  "property_name": "indices"
+                }
+              }
+            },
+            "index_expression": {
+              "type": "constant",
+              "constant": 0
+            }
+          }
+        },
+        "value_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "array_index",
+            "array_expression": {
+              "type": "filter_items",
+              "items_expression": {
+                "datatype": "array",
+                "type": "property_name",
+                "property_name": "indices"
+              },
+              "filter_expression": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "property_value": "mother",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "identifier"
+                }
+              }
+            },
+            "index_expression": {
+              "type": "constant",
+              "constant": 0
+            }
+          }
+        }
+      }
+    },
+    "engine_id": "aaa-data"
+  }
+}

@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from datetime import datetime
+
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.util.test_utils import unit_testing_only
-from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 
@@ -88,16 +90,43 @@ def get_form_ids_for_user(domain, user_id):
     return [result['id'] for result in results]
 
 
-def get_form_ids_by_xmlns(domain, xmlns=None):
+def iter_form_ids_by_xmlns(domain, xmlns):
     if xmlns:
         key = ['submission xmlns', domain, xmlns]
     else:
-        key = ['submission xmlns', domain]
+        key = ['submission', domain]
+
+    endkey = key + [datetime.utcnow().isoformat()]
+
+    # pull the first 1000 documents sorted by submission time
+    LIMIT = 1000
     results = XFormInstance.get_db().view(
         'all_forms/view',
         startkey=key,
-        endkey=key + [{}],
+        endkey=endkey,
         reduce=False,
         include_docs=False,
-    )
-    return [result['id'] for result in results]
+        limit=LIMIT,
+        descending=False,
+    ).all()
+
+    while results:
+        for result in results:
+            yield result['id']
+
+        # add the last document's received_on time to the startkey
+        last_result = results[-1]
+        startkey = key + [last_result['key'][-1]]
+
+        # pull 1000 documents starting with the last document pulled in the previous iteration
+        results = XFormInstance.get_db().view(
+            'all_forms/view',
+            startkey=startkey,
+            endkey=endkey,
+            reduce=False,
+            include_docs=False,
+            limit=LIMIT,
+            descending=False,
+        ).all()
+        # remove the first document in this new iteration so that we do not process it twice
+        results.pop(0)

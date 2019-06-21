@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context, \
 from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
 from corehq.apps.app_manager.views.releases import get_releases_context
-from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
+from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
@@ -205,7 +205,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'qualifier': 'case_list-menu_item_',
             })
             if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username) or
-                    toggles.CASE_LIST_LOOKUP.enabled(app.domain)):
+                    toggles.CASE_LIST_LOOKUP.enabled(app.domain) or
+                    toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)):
                 specific_media.append({
                     'menu_refs': app.get_case_list_lookup_image(module, module_id),
                     'default_file_name': '{}_case_list_lookup'.format(default_file_name),
@@ -222,11 +223,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         uploaders = {
             'icon': MultimediaImageUploadController(
                 "hqimage",
-                reverse(ProcessImageFileUploadView.name,
+                reverse(ProcessImageFileUploadView.urlname,
                         args=[app.domain, app.get_id])
             ),
             'audio': MultimediaAudioUploadController(
-                "hqaudio", reverse(ProcessAudioFileUploadView.name,
+                "hqaudio", reverse(ProcessAudioFileUploadView.urlname,
                         args=[app.domain, app.get_id])
             ),
         }
@@ -283,7 +284,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             MultimediaLogoUploadController(
                 slug,
                 reverse(
-                    ProcessLogoFileUploadView.name,
+                    ProcessLogoFileUploadView.urlname,
                     args=[domain, app_id, slug],
                 )
             )
@@ -322,5 +323,5 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     response = render(request, template, context)
 
-    response.set_cookie('lang', encode_if_unicode(lang))
+    set_lang_cookie(response, lang)
     return response

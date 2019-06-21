@@ -1,14 +1,35 @@
 {
   "domains": [
+    "aparatest",
+    "cas-lab",
+    "derek-icds-sandbox",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "icds-dashboard-qa",
+    "icds-sql",
+    "icds-test",
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
     "reach-test",
     "reach-sandbox",
-    "cas-lab",
-    "icds-dashboard-qa",
-    "icds-cas"
+    "reach-dashboard-qa",
+    "shrena-dev"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-person_cases_v3",
@@ -25,6 +46,24 @@
       },
       "property_value": "person"
     },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "awc_id",
@@ -34,8 +73,7 @@
           "datatype": null,
           "type": "property_name",
           "property_name": "owner_id"
-        },
-        "create_index": true
+        }
       },
       {
         "column_id": "supervisor_id",
@@ -50,7 +88,8 @@
           "location_type": "supervisor",
           "location_property": "_id"
         },
-        "create_index": true
+        "is_primary_key": true,
+        "is_nullable": false
       },
       {
         "column_id": "block_id",
@@ -64,8 +103,7 @@
           },
           "location_type": "block",
           "location_property": "_id"
-        },
-        "create_index": true
+        }
       },
       {
         "column_id": "district_id",
@@ -491,19 +529,41 @@
     "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {
         "column_ids": [
           "opened_on",
           "closed_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "dob"
         ]
       }
     ],

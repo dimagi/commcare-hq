@@ -1,6 +1,6 @@
 {% load i18n %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-5">
             <div class="row">
                 <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
@@ -16,9 +16,10 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
+    <info-message></info-message>
     <div class="ls-dashboard-report-content">
         <div class="row" ng-repeat="section in $ctrl.data track by $index">
-            <div class="col-md-12" ng-repeat="cell in section track by $index">
+            <div class="col-md-6" ng-repeat="cell in section track by $index">
                 <div class="report-cell kpi">
                     <div class="row">
                         <div class="col-md-1"

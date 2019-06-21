@@ -15,14 +15,14 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 )
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
-    republish_all_changes_for_form)
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
+from corehq.util.datadog.utils import case_load_counter
 from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
@@ -259,6 +259,10 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True):
+        if lock:
+            # only record metric if locking since otherwise it has been
+            # (most likley) recorded elsewhere
+            case_load_counter("rebuild_case", domain)()
         case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
         found = bool(case)
         if not found:
@@ -305,7 +309,7 @@ class FormProcessorSQL(object):
         return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
 
     @staticmethod
-    def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+    def get_case_with_lock(case_id, lock=False, wrap=False):
         try:
             if lock:
                 try:

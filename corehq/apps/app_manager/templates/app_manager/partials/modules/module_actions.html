@@ -1,21 +1,21 @@
 {% load i18n %}
 
 <div class="panel panel-appmanager">
-    <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-            {% trans "Overwrite Case List/Detail from Existing Module" %}
-        </h4>
-    </div>
-    <div class="panel-body">
-        <p class="help-block">
-            {% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}
-        </p>
-        {% with detail_type="short" %}
-            {% include 'app_manager/partials/modules/case_list_module_overwrite.html' %}
-        {% endwith %}
-        <br><br>
-        {% with detail_type="long" %}
-            {% include 'app_manager/partials/modules/case_list_module_overwrite.html' %}
-        {% endwith %}
-    </div>
+  <div class="panel-heading">
+    <h4 class="panel-title panel-title-nolink">
+      {% trans "Overwrite Case List/Detail from Existing Module" %}
+    </h4>
+  </div>
+  <div class="panel-body">
+    <p class="help-block">
+      {% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}
+    </p>
+    {% with detail_type="short" %}
+      {% include 'app_manager/partials/modules/case_list_module_overwrite.html' %}
+    {% endwith %}
+    <br><br>
+    {% with detail_type="long" %}
+      {% include 'app_manager/partials/modules/case_list_module_overwrite.html' %}
+    {% endwith %}
+  </div>
 </div>

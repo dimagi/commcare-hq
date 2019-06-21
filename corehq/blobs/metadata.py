@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from itertools import chain
 
 from django.db import connections
 
@@ -62,6 +61,9 @@ class MetaDB(object):
     def delete(self, key, content_length):
         """Delete blob metadata
 
+        Metadata for temporary blobs is deleted. Non-temporary metadata
+        is retained to make it easier to track down missing blobs.
+
         :param key: Blob key string.
         :returns: The number of metadata rows deleted.
         """
@@ -77,15 +79,71 @@ class MetaDB(object):
         """
         if any(meta.id is None for meta in metas):
             raise ValueError("cannot delete unsaved BlobMeta")
+        delete_blobs_sql = """
+        WITH deleted AS (
+            DELETE FROM blobs_blobmeta
+            WHERE id IN %s
+            RETURNING *
+        ), ins AS (
+            INSERT INTO blobs_deletedblobmeta (
+                "id",
+                "domain",
+                "parent_id",
+                "name",
+                "key",
+                "type_code",
+                "created_on",
+                "deleted_on"
+            )
+            SELECT
+                "id",
+                "domain",
+                "parent_id",
+                "name",
+                "key",
+                "type_code",
+                "created_on",
+                %s AS "deleted_on"
+            FROM deleted
+            WHERE expires_on IS NULL
+        ) SELECT COUNT(*) FROM deleted;
+        """
+        now = _utcnow()
         parents = defaultdict(list)
         for meta in metas:
             parents[meta.parent_id].append(meta.id)
         for dbname, split_parent_ids in split_list_by_db_partition(parents):
-            ids = chain.from_iterable(parents[x] for x in split_parent_ids)
-            BlobMeta.objects.using(dbname).filter(id__in=list(ids)).delete()
+            ids = tuple(m for p in split_parent_ids for m in parents[p])
+            with connections[dbname].cursor() as cursor:
+                cursor.execute(delete_blobs_sql, [ids, now])
         deleted_bytes = sum(meta.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
+
+    def expire(self, parent_id, key, minutes=60):
+        """Set blob expiration to some minutes from now
+
+        This makes it easy to handle the scenario where a new blob is
+        replacing another (now obsolete) blob, but immediate deletion of
+        the obsolete blob would introduce a race condition because in-
+        flight code may retain references to it. This will schedule the
+        obsolete blob for deletion in the near future at which point
+        such a race condition is extremely unlikely to be triggered.
+
+        :param parent_id: Parent identifier used for sharding.
+        :param key: Blob key.
+        :param minutes: Optional number of minutes from now that
+        the blob will be set to expire. The default is 60.
+        """
+        try:
+            meta = self.get(parent_id=parent_id, key=key)
+        except BlobMeta.DoesNotExist:
+            return
+        if meta.expires_on is None:
+            datadog_counter('commcare.temp_blobs.count')
+            datadog_counter('commcare.temp_blobs.bytes_added', value=meta.content_length)
+        meta.expires_on = _utcnow() + timedelta(minutes=minutes)
+        meta.save()
 
     def get(self, **kw):
         """Get metadata for a single blob
@@ -95,10 +153,19 @@ class MetaDB(object):
         :param parent_id: `BlobMeta.parent_id`
         :param type_code: `BlobMeta.type_code`
         :param name: `BlobMeta.name`
+        :param key: `BlobMeta.key`
         :raises: `BlobMeta.DoesNotExist` if the metadata is not found.
         :returns: A `BlobMeta` object.
         """
-        if set(kw) != {"parent_id", "type_code", "name"}:
+        keywords = set(kw)
+        if 'key' in keywords and keywords != {'key', 'parent_id'}:
+            kw.pop('key', None)
+            if 'parent_id' not in keywords:
+                raise TypeError("Missing argument 'parent_id'")
+            else:
+                kw.pop('parent_id')
+                raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
+        elif 'key' not in keywords and keywords != {"parent_id", "type_code", "name"}:
             # arg check until on Python 3 -> PEP 3102: required keyword args
             kw.pop("parent_id", None)
             kw.pop("type_code", None)

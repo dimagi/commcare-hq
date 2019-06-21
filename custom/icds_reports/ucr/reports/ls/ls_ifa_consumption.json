@@ -1,0 +1,130 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-ls_ifa_consumption",
+  "data_source_table": "static-ccs_record_cases",
+  "config": {
+    "title": "LS - IFA Consumption (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      },
+      {
+        "compare_as_string": false,
+        "slug": "is_pregnant_count",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Yes",
+            "value": "1"
+          }
+        ],
+        "field": "is_pregnant_count",
+        "type": "choice_list",
+        "display": "Pregnant"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "display": "Estimated Date of Delivery",
+        "field": "edd",
+        "type": "date",
+        "slug": "edd"
+      },
+	  {  
+        "required": false,
+		"type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated"
+      },
+      {
+        "required": false,
+		"type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "owner_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "is_pregnant_count",
+        "field": "is_pregnant_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "is_pregnant_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "ifa_gte_4_open_cases",
+        "field": "ifa_gte_4_open_cases",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "ifa_gte_4_open_cases"
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

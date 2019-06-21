@@ -1,7 +1,7 @@
 @startuml
 left to right direction
 package "Generic Case Data Sources" {
-  [static-person_cases_v2]
+  [static-person_cases_v3]
   [static-household_cases]
 }
 
@@ -71,10 +71,10 @@ package "Dashboard AWC Level Aggregate Tables" {
 [static-dashboard_thr_forms] --> [child_health_monthly]
 [static-child_tasks_cases] --> [child_health_monthly]
 [static-household_cases] --> [child_health_monthly]
-[static-person_cases_v2] --> [child_health_monthly]
+[static-person_cases_v3] --> [child_health_monthly]
 
 [static-household_cases] --> [ccs_record_monthly]
-[static-person_cases_v2] --> [ccs_record_monthly]
+[static-person_cases_v3] --> [ccs_record_monthly]
 [static-ccs_record_cases_monthly_tableau_v2] --> [ccs_record_monthly]
 [static-pregnant-tasks_cases] --> [ccs_record_monthly]
 [static-dashboard_birth_preparedness_forms] --> [ccs_record_monthly]

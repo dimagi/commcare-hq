@@ -263,9 +263,9 @@ class TestFunctionalToilet(TestCase):
             [
                 {'loc_name': 'st2', 'percent': 53.84615384615385},
                 {'loc_name': 'st1', 'percent': 47.05882352941177},
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
-                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -281,11 +281,11 @@ class TestFunctionalToilet(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -314,11 +314,11 @@ class TestFunctionalToilet(TestCase):
             [
                 {"loc_name": "st2", "percent": 53.84615384615385},
                 {"loc_name": "st1", "percent": 47.05882352941177},
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 

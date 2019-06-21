@@ -6,8 +6,12 @@ from functools import reduce
 import six
 from six.moves import range
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
+
 def to_number(bytes):
     return reduce(lambda a, b: a*256 + b, bytes)
+
 
 def to_base(n, b):
     if not n:
@@ -17,6 +21,7 @@ def to_base(n, b):
         answer = to_base(rest, b)
         answer.append(digit)
         return answer
+
 
 class DeidGenerator(object):
 
@@ -41,6 +46,7 @@ class DeidGenerator(object):
         b = len(alphabet)
         answer = [alphabet[i] for i in to_base(self.number, b)]
         if isinstance(alphabet, six.string_types):
+            soft_assert_type_text(alphabet)
             answer = ''.join(answer)
         return answer
 

@@ -6,6 +6,8 @@ from corehq.messaging.smsbackends.starfish.models import StarfishBackend
 from django.http import JsonResponse, HttpResponseBadRequest
 import six
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 class StarfishIncomingView(IncomingBackendView):
     urlname = 'starfish_sms_in'
@@ -16,6 +18,7 @@ class StarfishIncomingView(IncomingBackendView):
 
     def clean_value(self, value):
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return value.strip()
         return value
 

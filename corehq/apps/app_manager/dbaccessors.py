@@ -5,11 +5,15 @@ from itertools import chain
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from django.http import Http404
 from django.core.cache import cache
+from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.es import AppES
+from corehq.apps.es.aggregations import TermsAggregation, NestedAggregation
 from dimagi.utils.couch.database import iter_docs
 import six
 from six.moves import map
@@ -100,16 +104,30 @@ def get_latest_build_id(domain, app_id):
     return res['id'] if res else None
 
 
-def get_build_doc_by_version(domain, app_id, version):
+def get_latest_build_version(domain, app_id):
+    """Get id of the latest build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=False)
+    return res['value']['version'] if res else None
+
+
+def _get_build_by_version(domain, app_id, version, return_doc=False):
     from .models import Application
+    kwargs = {}
+    if version:
+        version = int(version)
+    if return_doc:
+        kwargs = {'include_docs': True, 'reduce': False}
     res = Application.get_db().view(
         'app_manager/saved_app',
         key=[domain, app_id, version],
-        include_docs=True,
-        reduce=False,
         limit=1,
+        **kwargs
     ).first()
-    return res['doc'] if res else None
+    return res['doc'] if return_doc and res else res
+
+
+def get_build_doc_by_version(domain, app_id, version):
+    return _get_build_by_version(domain, app_id, version, return_doc=True)
 
 
 def wrap_app(app_doc, wrap_cls=None):
@@ -117,6 +135,15 @@ def wrap_app(app_doc, wrap_cls=None):
     from corehq.apps.app_manager.util import get_correct_app_class
     cls = wrap_cls or get_correct_app_class(app_doc)
     return cls.wrap(app_doc)
+
+
+def get_current_app_version(domain, app_id):
+    from .models import Application
+    result = Application.get_db().view(
+        'app_manager/applications_brief',
+        key=[domain, app_id],
+    ).one(except_all=True)
+    return result['value']['version']
 
 
 def get_current_app_doc(domain, app_id):
@@ -251,6 +278,7 @@ def get_apps_by_id(domain, app_ids):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
     if isinstance(app_ids, six.string_types):
+        soft_assert_type_text(app_ids)
         app_ids = [app_ids]
     docs = iter_docs(Application.get_db(), app_ids)
     return [get_correct_app_class(doc).wrap(doc) for doc in docs]
@@ -453,11 +481,10 @@ def get_available_versions_for_app(domain, app_id):
 
 
 def get_version_build_id(domain, app_id, version):
-    built_app_ids = get_all_built_app_ids_and_versions(domain, app_id)
-    for app_built_version in built_app_ids:
-        if app_built_version.version == version:
-            return app_built_version.build_id
-    raise Exception("Build for version requested not found")
+    build = _get_build_by_version(domain, app_id, version)
+    if not build:
+        raise BuildNotFoundException(_("Build for version requested not found"))
+    return build['id']
 
 
 def get_case_types_from_apps(domain):
@@ -465,12 +492,14 @@ def get_case_types_from_apps(domain):
     Get the case types of modules in applications in the domain.
     :returns: A set of case_types
     """
+    case_types_agg = NestedAggregation('modules', 'modules').aggregation(
+        TermsAggregation('case_types', 'modules.case_type.exact'))
     q = (AppES()
          .domain(domain)
          .is_build(False)
          .size(0)
-         .terms_aggregation('modules.case_type.exact', 'case_types'))
-    return set(q.run().aggregations.case_types.keys) - {''}
+         .aggregation(case_types_agg))
+    return set(q.run().aggregations.modules.case_types.keys) - {''}
 
 
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):

@@ -6,8 +6,8 @@ import logging
 
 import couchforms.models as xform
 from couchdbkit.exceptions import ResourceNotFound
-from couchexport.models import SavedBasicExport
 from django.core.management import BaseCommand, CommandError
+from gevent.pool import Pool
 
 import corehq.apps.accounting.models as acct
 import corehq.apps.app_manager.models as apps
@@ -16,6 +16,7 @@ from corehq.apps.export import models as exports
 from corehq.blobs import get_blob_db, CODES
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobMetaRef
+from corehq.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
 from io import open
 
@@ -25,7 +26,6 @@ USAGE = "Usage: ./manage.py check_blob_logs [options] FILE [FILE [FILE]]"
 BLOB_MIXIN_MODELS = {
     CODES.application: apps.Application,
     CODES.data_export: exports.CaseExportInstance,
-    CODES.basic_export: SavedBasicExport,
     CODES.form_xml: xform.XFormInstance,
     CODES.form_attachment: xform.XFormInstance,
     CODES.multimedia: hqmedia.CommCareMultimedia,
@@ -54,33 +54,49 @@ class Command(BaseCommand):
             default=False,
             help="Copy blobs found in old db to new db.",
         )
+        parser.add_argument(
+            '--num-workers',
+            type=int,
+            default=10,
+            help="Worker pool size for concurrent processing.",
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, files, migrate=False, **options):
+    def handle(self, files, migrate=False, num_workers=10, **options):
+        set_max_connections(num_workers)
         blob_db = get_blob_db()
         if not isinstance(blob_db, MigratingBlobDB):
             raise CommandError(
                 "Expected to find migrating blob db backend (got %r)" % blob_db)
         old_db = blob_db.old_db
         new_db = blob_db.new_db
-        for filepath in files:
-            with open(filepath, encoding='utf-8') as fh:
-                for line in fh:
-                    if not line:
-                        continue
-                    try:
-                        rec = json.loads(line)
-                    except ValueError:
-                        print(("Ignore {}", line))
-                        continue
-                    if rec.get("error") != "not found":
-                        print("Ignore {}".format(json.dumps(rec)))
-                        continue
-                    category = check_blob(rec, old_db, new_db, migrate)
-                    stats = Stats.get(rec["type_code"])
-                    setattr(stats, category, getattr(stats, category) + 1)
+        ignored = 0
 
+        try:
+            pool = Pool(size=num_workers)
+            for filepath in files:
+                print("Processing {}".format(filepath))
+                with open(filepath, encoding='utf-8') as fh:
+                    for line in fh:
+                        if not line:
+                            continue
+                        try:
+                            rec = json.loads(line)
+                        except ValueError:
+                            ignored += 1
+                            print(("Ignore {}", line))
+                            continue
+                        pool.spawn(process, rec, old_db, new_db, migrate)
+
+            print("CTRL+C to abort")
+            while not pool.join(timeout=10):
+                print("waiting for {} workers to finish...".format(len(pool)))
+        except KeyboardInterrupt:
+            pass
+
+        if ignored:
+            print("Ignored {} malformed records".format(ignored))
         for type_code, stats in sorted(Stats.items.items()):
             try:
                 group = BLOB_MIXIN_MODELS[type_code].__name__
@@ -94,7 +110,13 @@ class Command(BaseCommand):
             print("  Not found: {}".format(stats.lost))
 
 
-def check_blob(doc_type, rec, old_db, new_db, migrate=False):
+def process(rec, old_db, new_db, migrate):
+    category = check_blob(rec, old_db, new_db, migrate)
+    stats = Stats.get(rec["type_code"])
+    setattr(stats, category, getattr(stats, category) + 1)
+
+
+def check_blob(rec, old_db, new_db, migrate=False):
     key = rec["blob_key"]
 
     if new_db.exists(key=key):
@@ -104,10 +126,10 @@ def check_blob(doc_type, rec, old_db, new_db, migrate=False):
         if migrate:
             with old_db.get(key=key) as content:
                 new_db.copy_blob(content, key=key)
-            migrated = " migrated"
+            action = "Migrated from"
         else:
-            migrated = ""
-        print("Found in old db: {}{}".format(json.dumps(rec), migrated))
+            action = "Found in"
+        print("{} old db: {}".format(action, key))
         return "old"
 
     doc_type = BLOB_MIXIN_MODELS.get(rec["type_code"])

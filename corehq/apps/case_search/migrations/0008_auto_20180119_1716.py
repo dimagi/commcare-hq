@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from django.core.management import call_command
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def update_es_mapping(*args, **kwargs):
@@ -22,5 +22,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(update_es_mapping)
+        migrations.RunPython(update_es_mapping)
     ]

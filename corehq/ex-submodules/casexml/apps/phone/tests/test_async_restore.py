@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
 from io import BytesIO
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
@@ -52,7 +52,7 @@ class BaseAsyncRestoreTest(TestCase):
         delete_all_users()
         super(BaseAsyncRestoreTest, cls).tearDownClass()
 
-    def _restore_config(self, async=True, sync_log_id='', overwrite_cache=False):
+    def _restore_config(self, is_async=True, sync_log_id='', overwrite_cache=False):
         restore_config = RestoreConfig(
             project=self.project,
             restore_user=self.user,
@@ -60,7 +60,7 @@ class BaseAsyncRestoreTest(TestCase):
             cache_settings=RestoreCacheSettings(
                 overwrite_cache=overwrite_cache
             ),
-            is_async=async
+            is_async=is_async
         )
         self.addCleanup(get_redis_default_cache().clear)
         return restore_config
@@ -72,7 +72,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         """
         when the feature flag is off, the celery task does not get called
         """
-        self._restore_config(async=False).get_payload()
+        self._restore_config(is_async=False).get_payload()
         self.assertFalse(task.delay.called)
 
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
@@ -81,21 +81,22 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         delay.id = 'random_task_id'
         task.delay.return_value = delay
 
-        self._restore_config(async=True).get_payload()
+        self._restore_config(is_async=True).get_payload()
         self.assertTrue(task.delay.called)
 
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False)
     def test_restore_then_sync_on_same_synclog_returns_async_restore_response(self, task):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         delay.get = mock.MagicMock(side_effect=TimeoutError())  # task not finished
         task.delay.return_value = delay
 
-        restore_config = self._restore_config(async=True)
+        restore_config = self._restore_config(is_async=True)
         initial_payload = restore_config.get_payload()
         self.assertIsInstance(initial_payload, AsyncRestoreResponse)
 
-        subsequent_restore = self._restore_config(async=True)
+        subsequent_restore = self._restore_config(is_async=True)
         subsequent_payload = subsequent_restore.get_payload()
         self.assertIsInstance(subsequent_payload, AsyncRestoreResponse)
 
@@ -113,7 +114,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
             delay.get = mock.MagicMock(side_effect=TimeoutError())  # task not finished
             task.delay.return_value = delay
 
-            restore_config = self._restore_config(async=True)
+            restore_config = self._restore_config(is_async=True)
             initial_payload = restore_config.get_payload()
             self.assertIsNotNone(async_restore_task_id_cache.get_value())
             self.assertIsInstance(initial_payload, AsyncRestoreResponse)
@@ -125,7 +126,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         restore_response = mock.MagicMock(return_value=RestoreResponse(None))
         with mock.patch.object(AsyncResult, 'get', restore_response) as get_result:
             with mock.patch.object(AsyncResult, 'status', ASYNC_RESTORE_SENT):
-                subsequent_restore = self._restore_config(async=True)
+                subsequent_restore = self._restore_config(is_async=True)
                 self.assertIsNotNone(async_restore_task_id_cache.get_value())
                 subsequent_restore.get_payload()
 
@@ -142,7 +143,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
             sync_log_id=None,
             device_id=None,
         )
-        restore_config = self._restore_config(async=True)
+        restore_config = self._restore_config(is_async=True)
         async_restore_task_id_cache.set_value('im going to be deleted by the next command')
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
@@ -151,7 +152,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         self.assertIsNone(async_restore_task_id_cache.get_value())
 
     def test_completed_task_creates_sync_log(self):
-        restore_config = self._restore_config(async=True)
+        restore_config = self._restore_config(is_async=True)
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
         get_async_restore_payload.delay(restore_config)
@@ -170,20 +171,21 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         submit_form_locally(form, self.domain)
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
-    @mock.patch.object(RestorePayloadPathCache, 'get_value')
+    @mock.patch.object(RestorePayloadPathCache, 'exists')
     @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, get_value, invalidate):
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False)
+    def test_clears_cache(self, task, response, exists_patch, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
         response.return_value = BytesIO(b'<restore_id>123</restore_id>')
-        get_value.return_value = 'path-to-cached-restore'
+        exists_patch.return_value = True
 
-        self._restore_config(async=True, overwrite_cache=False).get_payload()
+        self._restore_config(is_async=True, overwrite_cache=False).get_payload()
         self.assertFalse(invalidate.called)
 
-        self._restore_config(async=True, overwrite_cache=True).get_payload()
+        self._restore_config(is_async=True, overwrite_cache=True).get_payload()
         self.assertTrue(invalidate.called)
 
 
@@ -209,7 +211,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         )
         async_restore_task_id = '0edecc20d89d6f4a09f2e992c0c24b5f'
         initial_sync_path = 'path/to/payload'
-        restore_config = self._restore_config(async=True)
+        self._restore_config(is_async=True)
         # pretend we have a task running
         async_restore_task_id_cache.set_value(async_restore_task_id)
         restore_payload_path_cache.set_value(initial_sync_path)
@@ -254,20 +256,21 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         submit_form_locally(form, self.domain)
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
-    @mock.patch.object(RestorePayloadPathCache, 'get_value')
+    @mock.patch.object(RestorePayloadPathCache, 'exists')
     @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, get_value, invalidate):
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False)
+    def test_clears_cache(self, task, response, exists_patch, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
-        get_value.return_value = 'path-to-cached-restore'
+        exists_patch.return_value = True
         response.return_value = BytesIO(b'<restore_id>123</restore_id>')
 
-        self._restore_config(async=True, overwrite_cache=False).get_payload()
+        self._restore_config(is_async=True, overwrite_cache=False).get_payload()
         self.assertFalse(invalidate.called)
 
-        self._restore_config(async=True, overwrite_cache=True).get_payload()
+        self._restore_config(is_async=True, overwrite_cache=True).get_payload()
         self.assertTrue(invalidate.called)
 
 

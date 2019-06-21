@@ -35,7 +35,7 @@ ul.form-step-progress {
       line-height: 20px;
       display: block;
       font-size: 10px;
-      color: #333;
+      color: @cc-text;
       background: white;
       .border-top-radius(5px);
       .border-bottom-radius(5px);
@@ -63,8 +63,8 @@ ul.form-step-progress {
   li.active {
     &:before,
     &:after {
-      background: @cc-att-pos-mid;
-      color: white;
+      background-color: @color-purple-dark;
+      color: @color-purple-dark-inverse;
     }
   }
 }

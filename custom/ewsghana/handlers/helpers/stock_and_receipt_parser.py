@@ -42,7 +42,7 @@ class EWSStockAndReceiptParser(StockAndReceiptParser):
                     raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
                 # NOTE also custom code here, must be formatted like 11.22
-                if re.compile("^\d+\.\d+$").match(arg):
+                if re.compile(r"^\d+\.\d+$").match(arg):
                     value = arg
                 else:
                     raise SMSError('could not understand product quantity "%s"' % arg)

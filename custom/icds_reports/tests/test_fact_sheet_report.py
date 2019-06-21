@@ -284,13 +284,13 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][12],
             {
                 'average': {
-                    'html': 50.0,
-                    'sort_key': 50.0
+                    'html': 33.333333333333336,
+                    'sort_key': 33.333333333333336
                 },
                 'data': [
                     {'html': 'Percent of children born in month with low birth weight'},
                     {'html': 0.0, 'sort_key': 0.0},
-                    {'html': 50.0, 'sort_key': 50.0},
+                    {'html': 33.333333333333336, 'sort_key': 33.333333333333336},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -629,13 +629,13 @@ class TestFactSheetReportBehaviorChange(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
-                    'html': 57.142857142857146,
-                    'sort_key': 57.142857142857146
+                    'html': 40.0,
+                    'sort_key': 40.0
                 },
                 'data': [
                     {'html': 'Percentage of children who were put to the breast within one hour of birth.'},
-                    {'html': 25.0, 'sort_key': 25.0},
-                    {'html': 57.142857142857146, 'sort_key': 57.142857142857146},
+                    {'html': 33.333333333333336, 'sort_key': 33.333333333333336},
+                    {'html': 40.0, 'sort_key': 40.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -781,13 +781,13 @@ class TestFactSheetReportBehaviorChange(TestCase):
             self.get_data()['config']['sections'][1]['rows_config'][0],
             {
                 'average': {
-                    'html': 105.16129032258064,
-                    'sort_key': 105.16129032258064
+                    'html': 89.6774193548387,
+                    'sort_key': 89.6774193548387
                 },
                 'data': [
                     {'html': 'Women resting during pregnancy'},
-                    {'html': 62.5, 'sort_key': 62.5},
-                    {'html': 105.16129032258064, 'sort_key': 105.16129032258064},
+                    {'html': 53.84615384615385, 'sort_key': 53.84615384615385},
+                    {'html': 89.6774193548387, 'sort_key': 89.6774193548387},
                     {'html': 0}
                 ],
                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -798,17 +798,18 @@ class TestFactSheetReportBehaviorChange(TestCase):
         )
 
     def test_extra_meal(self):
+
         self.assertDictEqual(
             self.get_data()['config']['sections'][1]['rows_config'][1],
             {
                 'average': {
-                    'html': 105.16129032258064,
-                    'sort_key': 105.16129032258064
+                    'html': 89.6774193548387,
+                    'sort_key': 89.6774193548387
                 },
                 'data': [
                     {'html': 'Women eating an extra meal during pregnancy'},
-                    {'html': 62.5, 'sort_key': 62.5},
-                    {'html': 105.16129032258064, 'sort_key': 105.16129032258064},
+                    {'html': 53.84615384615385, 'sort_key': 53.84615384615385},
+                    {'html': 89.6774193548387, 'sort_key': 89.6774193548387},
                     {'html': 0}
                 ],
                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -986,7 +987,7 @@ class TestFactSheetReportDemographics(TestCase):
                 },
                 'data': [
                     {'html': 'Number of Households'},
-                    {'html': 6964, 'sort_key': 6964},
+                    {'html': 6951, 'sort_key': 6951},
                     {'html': 6964, 'sort_key': 6964},
                     {'html': 0}
                 ],

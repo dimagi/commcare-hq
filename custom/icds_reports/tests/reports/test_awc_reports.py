@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import json
 import datetime
 
+from datetime import date
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TestCase
 from mock import mock
@@ -21,14 +22,19 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
 from six.moves import filter
 
 
-class FirstDayOfAugust(datetime.datetime):
+class FirstDayOfMay(datetime.datetime):
     @classmethod
     def utcnow(cls):
         return datetime.datetime(2017, 5, 1)
 
 
+class FirstDayOfMayDate(date):
+    @classmethod
+    def today(cls):
+        return date(2017, 5, 1)
+
+
 class TestAWCReport(TestCase):
-    maxDiff = None
     def test_beneficiary_details_recorded_weight_none(self):
         data = get_beneficiary_details(
             case_id='6b234c5b-883c-4849-9dfd-b1571af8717b',
@@ -1038,8 +1044,8 @@ class TestAWCReport(TestCase):
         for kpi in data['kpi']:
             for el in kpi:
                 del el['help_text']
-        self.assertEqual(
-            list(data.keys()),
+        self.assertItemsEqual(
+            data,
             ["images", "kpi", "charts", "map"]
         )
 
@@ -1694,8 +1700,8 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_demographics_monthly_keys(self):
-        self.assertEqual(
-            list(get_awc_report_demographics(
+        self.assertItemsEqual(
+            get_awc_report_demographics(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -1706,7 +1712,7 @@ class TestAWCReport(TestCase):
                 },
                 (2017, 6, 1),
                 (2017, 5, 1),
-            ).keys()),
+            ),
             ['kpi', 'chart']
         )
 
@@ -1935,8 +1941,8 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_demographics_daily_keys(self):
-        self.assertEqual(
-            list(get_awc_report_demographics(
+        self.assertItemsEqual(
+            get_awc_report_demographics(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -1947,7 +1953,7 @@ class TestAWCReport(TestCase):
                 },
                 (2017, 5, 29),
                 (2017, 5, 1),
-            ).keys()),
+            ),
             ['kpi', 'chart']
         )
 
@@ -2176,8 +2182,8 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_demographics_daily_if_aggregation_script_fail_keys(self):
-        self.assertEqual(
-            list(get_awc_report_demographics(
+        self.assertItemsEqual(
+            get_awc_report_demographics(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -2188,7 +2194,7 @@ class TestAWCReport(TestCase):
                 },
                 (2017, 5, 30),
                 (2017, 5, 1),
-            ).keys()),
+            ),
             ['kpi', 'chart']
         )
 
@@ -2476,16 +2482,13 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_keys(self):
         data = get_awc_report_beneficiary(0, 10, 1, 'dob', {'awc_id': 'a18'}, (2017, 5, 1), (2017, 3, 1), False)
-        self.assertJSONEqual(
-            json.dumps(list(data.keys()), cls=DjangoJSONEncoder),
-            json.dumps(
-                ['draw', 'last_month', 'recordsTotal', 'months', 'recordsFiltered', 'data'],
-                cls=DjangoJSONEncoder
-            )
+        self.assertItemsEqual(
+            data,
+            ['draw', 'last_month', 'recordsTotal', 'months', 'recordsFiltered', 'data']
         )
 
     def test_awc_report_pregnant_first_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', FirstDayOfMayDate):
             data = get_awc_report_pregnant(
                 start=0,
                 length=10,
@@ -2493,30 +2496,32 @@ class TestAWCReport(TestCase):
                 reversed_order=False,
                 awc_id='a15'
             )
+
             self.assertEqual(
                 len(data['data']),
-                1
+                2
             )
+
             self.assertEqual(
                 data['data'][0],
                 {
                     'age': 23,
                     'closed': None,
-                    'anemic': 'Unknown',
                     'beneficiary': 'Yes',
+                    'anemic': 'Data Not Entered',
                     'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
-                    'edd': None,
+                    'edd': datetime.date(2017, 8, 31),
                     'last_date_thr': None,
                     'num_anc_complete': None,
                     'number_of_thrs_given': 0,
-                    'opened_on': None,
+                    'opened_on': datetime.date(2017, 5, 12),
                     'person_name': None,
                     'trimester': 2,
                 }
             )
 
     def test_pregnant_details_first_record_first_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2527,7 +2532,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_pregnant_details_first_record_second_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2535,33 +2540,30 @@ class TestAWCReport(TestCase):
             self.assertEqual(
                 data['data'][1],
                 [
-                    {
-                        'age': 23,
-                        'anc_abnormalities': None,
-                        'anc_hemoglobin': '--',
-                        'anc_weight': '--',
-                        'anemic': 'Unknown',
-                        'bp': '-- / --',
-                        'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
-                        'counseling': '--',
-                        'edd': None,
-                        'home_visit_date': None,
-                        'ifa_consumed_last_seven_days': 'Y',
-                        'mobile_number': None,
-                        'opened_on': None,
-                        'person_name': None,
-                        'preg_order': None,
-                        'symptoms': 'None',
-                        'trimester': 2,
-                        'tt_date': '--',
-                        'tt_taken': 'N',
-                        'using_ifa': 'Y'
-                    }
-                ]
+                    {'opened_on': datetime.date(2017, 5, 12),
+                     'tt_taken': 'N',
+                     'person_name': 'Data Not Entered',
+                     'anc_weight': 'Data Not Entered',
+                     'edd': datetime.date(2017, 8, 31),
+                     'age': 23,
+                     'tt_date': 'None',
+                     'anc_hemoglobin': 'Data Not Entered',
+                     'symptoms': 'None',
+                     'preg_order': 'Data Not Entered',
+                     'using_ifa': 'Y',
+                     'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                     'bp': 'Data Not Entered',
+                     'ifa_consumed_last_seven_days': 'Y',
+                     'mobile_number': 'Data Not Entered',
+                     'trimester': 2,
+                     'counseling': 'Eating Extra, Taking Rest',
+                     'anc_abnormalities': 'None',
+                     'anemic': 'Data Not Entered',
+                     'home_visit_date': datetime.date(2017, 5, 4)}]
             )
 
     def test_pregnant_details_first_record_third_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2572,7 +2574,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_first_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2584,19 +2586,19 @@ class TestAWCReport(TestCase):
                 data['data'][0],
                 {
                     'num_rations_distributed': 0,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
-                    'delivery_nature': None,
+                    'delivery_nature': 'Data Not Entered',
                     'age': 20,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
 
     def test_awc_report_lactating_second_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2608,19 +2610,19 @@ class TestAWCReport(TestCase):
                 data['data'][1],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
-                    'delivery_nature': None,
+                    'delivery_nature': 'Data Not Entered',
                     'age': 23,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 4, 20),
                     'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
 
     def test_awc_report_lactating_third_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2632,19 +2634,19 @@ class TestAWCReport(TestCase):
                 data['data'][2],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
-                    'delivery_nature': None,
+                    'delivery_nature': 'Data Not Entered',
                     'age': 24,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
 
     def test_awc_report_lactating_forth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2656,19 +2658,19 @@ class TestAWCReport(TestCase):
                 data['data'][3],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
-                    'delivery_nature': None,
+                    'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 20),
                     'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
 
     def test_awc_report_lactating_fifth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2680,19 +2682,19 @@ class TestAWCReport(TestCase):
                 data['data'][4],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
-                    'delivery_nature': None,
+                    'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
 
     def test_awc_report_lactating_sixth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2704,19 +2706,19 @@ class TestAWCReport(TestCase):
                 data['data'][5],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
-                    'delivery_nature': None,
+                    'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
             )
 
     def test_awc_report_lactating_seventh_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfAugust):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2724,16 +2726,17 @@ class TestAWCReport(TestCase):
                 reversed_order=False,
                 awc_id='a50'
             )
+
             self.assertEqual(
                 data['data'][6],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
-                    'delivery_nature': None,
+                    'delivery_nature': 'Data Not Entered',
                     'age': 29,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}

@@ -52,6 +52,14 @@ class ValueSource(DocumentSchema):
     direction = StringProperty(required=False, default=DIRECTION_BOTH, exclude_if_none=True,
                                choices=DIRECTIONS)
 
+    def __eq__(self, other):
+        return (
+            self.doc_type == other.doc_type and
+            self.external_data_type == other.external_data_type and
+            self.commcare_data_type == other.commcare_data_type and
+            self.direction == other.direction
+        )
+
     @classmethod
     def wrap(cls, data):
         if cls is ValueSource:
@@ -145,8 +153,8 @@ class CaseProperty(ValueSource):
         1
         >>> CaseProperty(case_property="bar")._get_commcare_value(info)
         2
-        >>> type(CaseProperty(case_property="baz")._get_commcare_value(info))
-        <type 'NoneType'>
+        >>> CaseProperty(case_property="baz")._get_commcare_value(info) is None
+        True
 
         """
         if self.case_property in case_trigger_info.updates:
@@ -181,6 +189,12 @@ class ConstantString(ValueSource):
     #     }
     #
     value = StringProperty()
+
+    def __eq__(self, other):
+        return (
+            super(ConstantString, self).__eq__(other) and
+            self.value == other.value
+        )
 
     def deserialize(self, external_value):
         # ConstantString doesn't have a corresponding case or form value

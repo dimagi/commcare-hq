@@ -54,7 +54,8 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         super(TestFixFormsWithMissingXmlns, cls).tearDownClass()
 
     def _submit_form(self, xmlns, form_name, app_id, build_id):
-        xform_source = self.get_xml('xform_template').format(xmlns=xmlns, name=form_name, id=uuid.uuid4().hex)
+        xform_source = self.get_xml('xform_template').decode('utf-8').format(
+            xmlns=xmlns, name=form_name, id=uuid.uuid4().hex)
         result = submit_form_locally(xform_source, DOMAIN, app_id=app_id, build_id=build_id)
         send_to_elasticsearch('forms', transform_xform_for_elasticsearch(result.xform.to_json()))
         return result.xform

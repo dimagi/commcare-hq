@@ -96,8 +96,7 @@ class EWSUserSettings(forms.Form):
             del kwargs['domain']
         super(EWSUserSettings, self).__init__(*args, **kwargs)
         query_url = reverse('non_administrative_locations_for_select2', args=[domain])
-        self.fields['facility'].widget = LocationSelectWidget(domain=domain, id='facility', query_url=query_url,
-                                                              select2_version='v3')
+        self.fields['facility'].widget = LocationSelectWidget(domain=domain, id='facility', query_url=query_url)
 
     def save(self, user, domain):
         ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id, domain=domain)[0]

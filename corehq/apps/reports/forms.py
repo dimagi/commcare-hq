@@ -7,15 +7,14 @@ import langcodes
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.hqwebapp.fields import MultiEmailField
+from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from .models import (
-    DEFAULT_REPORT_NOTIF_SUBJECT,
-    ReportConfig,
-    ReportNotification,
-)
+from corehq.apps.saved_reports.models import ReportConfig, ReportNotification, \
+    DEFAULT_REPORT_NOTIF_SUBJECT
 from six.moves import range
 
 
@@ -99,37 +98,47 @@ class SavedReportConfigForm(forms.Form):
 
 
 class ScheduledReportForm(forms.Form):
+    INTERVAL_CHOICES = [("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")]
+
     config_ids = forms.MultipleChoiceField(
-        label="Saved report(s)",
+        label=_("Saved report(s)"),
         validators=[MinLengthValidator(1)],
         help_text='Note: not all built-in reports support email delivery, so'
                   ' some of your saved reports may not appear in this list')
 
     interval = forms.TypedChoiceField(
-        label='Interval',
-        choices=[("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")])
+        label=_('Interval'),
+        widget=SelectToggle(choices=INTERVAL_CHOICES, apply_bindings=True),
+        choices=INTERVAL_CHOICES)
 
     day = forms.TypedChoiceField(
-        label="Day",
+        label=_("Day"),
         coerce=int,
         required=False,
         choices=[(i, i) for i in range(0, 32)])
 
     hour = forms.TypedChoiceField(
-        label='Time',
+        label=_('Time'),
         coerce=int,
         choices=ReportNotification.hour_choices())
 
+    start_date = forms.DateField(
+        label=_('Report Start Date'),
+        required=False
+    )
+
     send_to_owner = forms.BooleanField(
-        label='Send to owner',
-        required=False)
+        label=_('Send to owner'),
+        required=False
+    )
 
     attach_excel = forms.BooleanField(
-        label='Attach Excel Report',
-        required=False)
+        label=_('Attach Excel Report'),
+        required=False
+    )
 
     recipient_emails = MultiEmailField(
-        label='Other recipients',
+        label=_('Other recipients'),
         required=False
     )
     email_subject = forms.CharField(
@@ -140,7 +149,7 @@ class ScheduledReportForm(forms.Form):
     )
 
     language = forms.ChoiceField(
-        label='Language',
+        label=_('Language'),
         required=False,
         choices=[('', '')] + langcodes.get_all_langs_for_select(),
         widget=forms.Select()
@@ -160,17 +169,16 @@ class ScheduledReportForm(forms.Form):
                     'interval',
                     'day',
                     'hour',
-                    B3MultiField(
-                        ugettext("Send Options"),
-                        'send_to_owner'
-                    ),
-                    B3MultiField(
-                        ugettext("Excel Attachment"),
-                        'attach_excel'
-                    ),
+                    'start_date',
                     crispy.Field(
                         'email_subject',
                         css_class='input-xlarge',
+                    ),
+                    crispy.Field(
+                        'send_to_owner'
+                    ),
+                    crispy.Field(
+                        'attach_excel'
                     ),
                     'recipient_emails',
                     'language',

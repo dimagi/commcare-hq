@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 import json
 from memoized import memoized
 
+
 class TabularCRUDManager(object):
     """
         Tabular Create Read Update Delete Manager

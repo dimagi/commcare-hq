@@ -13,7 +13,7 @@ class TaskStatus(jsonobject.StrictJsonObject):
     result = jsonobject.ObjectProperty(lambda: TaskStatusResult)
 
     def is_finished(self):
-        return self.state not in (STATES.missing, STATES.started)
+        return self.state in (STATES.success, STATES.failed)
 
 
 class TaskStatusProgress(jsonobject.StrictJsonObject):
@@ -23,7 +23,6 @@ class TaskStatusProgress(jsonobject.StrictJsonObject):
 class TaskStatusResult(jsonobject.StrictJsonObject):
     match_count = jsonobject.IntegerProperty()
     created_count = jsonobject.IntegerProperty()
-    too_many_matches = jsonobject.IntegerProperty()
     num_chunks = jsonobject.IntegerProperty()
     errors = jsonobject.ListProperty(lambda: TaskStatusResultError)
 
@@ -43,7 +42,6 @@ def normalize_task_status_result(result):
         return TaskStatusResult(
             match_count=result['match_count'],
             created_count=result['created_count'],
-            too_many_matches=result['too_many_matches'],
             num_chunks=result['num_chunks'],
             errors=normalize_task_status_result_errors(result),
         )

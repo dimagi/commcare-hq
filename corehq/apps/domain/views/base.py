@@ -6,6 +6,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 
+from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.users.models import Invitation
 from corehq.apps.domain.decorators import login_required, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -20,6 +21,8 @@ from memoized import memoized
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
+        from corehq.apps.registration.views import track_domainless_new_user
+        track_domainless_new_user(request)
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()
@@ -37,13 +40,13 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
        or not last_visited_domain:
         return render(request, domain_select_template, additional_context)
     else:
-        domain = Domain.get_by_name(last_visited_domain)
-        if domain and domain.is_active:
+        domain_obj = Domain.get_by_name(last_visited_domain)
+        if domain_obj and domain_obj.is_active:
             # mirrors logic in login_and_domain_required
             if (
-                request.couch_user.is_member_of(domain)
-                or (request.user.is_superuser and not domain.restrict_superusers)
-                or domain.is_snapshot
+                request.couch_user.is_member_of(domain_obj)
+                or (request.user.is_superuser and not domain_obj.restrict_superusers)
+                or domain_obj.is_snapshot
             ):
                 try:
                     from corehq.apps.dashboard.views import dashboard_default
@@ -73,10 +76,10 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain_object(self):
-        domain = Domain.get_by_name(self.domain, strict=self.strict_domain_fetching)
-        if not domain:
+        domain_obj = Domain.get_by_name(self.domain, strict=self.strict_domain_fetching)
+        if not domain_obj:
             raise Http404()
-        return domain
+        return domain_obj
 
 
 class LoginAndDomainMixin(object):
@@ -86,7 +89,7 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
-class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
+class BaseDomainView(LoginAndDomainMixin, BillingModalsMixin, BaseSectionPageView, DomainViewMixin):
 
     @property
     def main_context(self):

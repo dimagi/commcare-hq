@@ -18,8 +18,10 @@ from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrappe
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
+
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -164,14 +166,10 @@ def primary_actions(case):
     return [a for a in case.actions if not a.is_case_rebuild]
 
 
-def iter_cases(case_ids, strip_history=False, wrap=True):
+def iter_cases(case_ids, wrap=True):
     from casexml.apps.case.models import CommCareCase
-    if not strip_history:
-        for doc in iter_docs(CommCareCase.get_db(), case_ids):
-            yield CommCareCase.wrap(doc) if wrap else doc
-    else:
-        for case in CommCareCase.bulk_get_lite(case_ids, wrap=wrap):
-            yield case
+    for doc in iter_docs(CommCareCase.get_db(), case_ids):
+        yield CommCareCase.wrap(doc) if wrap else doc
 
 
 def property_changed_in_action(domain, case_transaction, case_id, case_property_name):
@@ -289,11 +287,10 @@ def get_case_history(case):
     from corehq.apps.reports.display import xmlns_to_name
 
     changes = defaultdict(dict)
-    for action in case.actions:
-        case_blocks = extract_case_blocks(action.form)
+    for form in FormAccessors(case.domain).get_forms(case.xform_ids):
+        case_blocks = extract_case_blocks(form)
         for block in case_blocks:
             if block.get('@case_id') == case.case_id:
-                form = action.form
                 property_changes = {
                     'Form ID': form.form_id,
                     'Form Name': xmlns_to_name(case.domain, form.xmlns, form.app_id),

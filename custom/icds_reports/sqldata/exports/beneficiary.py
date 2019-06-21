@@ -8,14 +8,15 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData, ICDSDatabaseColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import get_status, calculate_date_for_age, \
     current_month_stunting_column, \
-    current_month_wasting_column, ICDSDatabaseColumn
+    current_month_wasting_column, format_decimal, DATA_NOT_ENTERED, phone_number_function
 
 
-class BeneficiaryExport(ExportableMixin, SqlData):
+class BeneficiaryExport(ExportableMixin, IcdsSqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
 
@@ -81,10 +82,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         selected_month = self.config['month']
 
         def test_fucntion(x):
-            return "%.2f" % x if x else "Data Not Entered"
-
-        def phone_number_fucntion(x):
-            return '"{}"'.format(x) if x else x
+            return format_decimal(x) if x else DATA_NOT_ENTERED
 
         columns = [
             DatabaseColumn(
@@ -110,13 +108,13 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('aww_phone_number'),
-                format_fn=phone_number_fucntion,
+                format_fn=phone_number_function,
                 slug='aww_phone_number'
             ),
             DatabaseColumn(
                 'Mother Phone Number',
                 SimpleColumn('mother_phone_number'),
-                format_fn=phone_number_fucntion,
+                format_fn=phone_number_function,
                 slug='mother_phone_number'
             ),
             DatabaseColumn(

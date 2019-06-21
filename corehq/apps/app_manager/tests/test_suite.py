@@ -2,13 +2,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
-import re
-
 import mock
-from django.test import SimpleTestCase
+import re
+from lxml.etree import tostring
 
-from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.util.test_utils import flag_enabled
+from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
 from corehq.apps.app_manager.models import (
@@ -16,7 +14,6 @@ from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
-    DefaultCaseSearchProperty,
     DetailColumn,
     FormActionCondition,
     GraphConfiguration,
@@ -34,12 +31,14 @@ from corehq.apps.app_manager.models import (
     CustomAssertion,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
+from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled, parse_normalize
 from corehq.apps.app_manager.xpath import (
     session_var,
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
+from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.test_utils import flag_enabled
 import commcare_translations
 
 
@@ -393,7 +392,28 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite('app_graphing', 'suite-graphing')
 
     def test_fixtures_in_graph(self):
-        self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
+        expected_suite = parse_normalize(self.get_xml('suite-fixture-graphing'), to_string=False)
+        actual_suite = parse_normalize(
+            Application.wrap(self.get_json('app_fixture_graphing')).create_suite(), to_string=False)
+
+        expected_configuration_list = expected_suite.findall('detail/field/template/graph/configuration')
+        actual_configuration_list = actual_suite.findall('detail/field/template/graph/configuration')
+
+        self.assertEqual(len(expected_configuration_list), 1)
+        self.assertEqual(len(actual_configuration_list), 1)
+
+        expected_configuration = expected_configuration_list[0]
+        actual_configuration = actual_configuration_list[0]
+
+        self.assertItemsEqual(
+            [tostring(text_element) for text_element in expected_configuration],
+            [tostring(text_element) for text_element in actual_configuration]
+        )
+
+        expected_suite.find('detail/field/template/graph').remove(expected_configuration)
+        actual_suite.find('detail/field/template/graph').remove(actual_configuration)
+
+        self.assertXmlEqual(tostring(expected_suite), tostring(actual_suite))
 
     def test_printing(self):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
@@ -582,6 +602,58 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(
             app_strings['m0.case_short.case_gender_1.enum.h{key4_varname}'.format(key4_varname=key4_varname, )],
             'Woman'
+        )
+
+    def test_case_detail_calculated_conditional_enum(self):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Unititled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Gender'},
+                model='case',
+                field="if(gender = 'male', 'boy', 'girl')",
+                format='enum',
+                enum=[
+                    MappingItem(key="boy", value={'en': 'Boy'}),
+                    MappingItem(key="girl", value={'en': 'Girl'}),
+                ],
+            ),
+        ]
+
+        icon_mapping_spec = """
+        <partial>
+          <template>
+            <text>
+              <xpath function="if(if(gender = 'male', 'boy', 'girl') = 'boy', $kboy, if(if(gender = 'male', 'boy', 'girl') = 'girl', $kgirl, ''))">
+                <variable name="kboy">
+                  <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"/>
+                </variable>
+                <variable name="kgirl">
+                  <locale id="m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kgirl"/>
+                </variable>
+              </xpath>
+            </text>
+          </template>
+        </partial>
+        """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            icon_mapping_spec,
+            app.create_suite(),
+            './detail[@id="m0_case_short"]/field/template'
+        )
+        # check app strings mapped correctly
+        app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings["m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kboy"],
+            'Boy'
+        )
+        self.assertEqual(
+            app_strings["m0.case_short.case_if(gender  'male', 'boy', 'girl')_1.enum.kgirl"],
+            'Girl'
         )
 
     def test_case_detail_icon_mapping(self):
@@ -1135,7 +1207,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(fr_app_strings['custom_assertion.m0.f0.0'], "fr-0")
         self.assertEqual(fr_app_strings['custom_assertion.m0.f0.1'], "fr-1")
 
-
     def test_custom_variables(self):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
@@ -1282,3 +1353,15 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # HIERARCHICAL_LOCATION_FIXTURE. In such case the domain stays on flat fixture format
         configuration_mock_obj.sync_hierarchical_fixture = False
         self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+    def test_unicode_lookup_table_instance(self):
+        self.form.form_filter = "instance('item-list:província')/província/"
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <instance id='item-list:província' src='jr://fixture/item-list:província' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )

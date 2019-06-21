@@ -1,4 +1,4 @@
 {% if not col.unwrap %}<td{% if not col or col.html != None and not col.html %} class="null-entry"{% endif %}>{% endif %}
-    <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
-    {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
+  <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
+  {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
 {% if not col.unwrap %}</td>{% endif %}

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations, models
 
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _copy_product_name_to_product_rate_name(apps, schema_editor):
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             field=models.CharField(default='temp', max_length=40),
             preserve_default=False,
         ),
-        HqRunPython(_copy_product_name_to_product_rate_name),
+        migrations.RunPython(_copy_product_name_to_product_rate_name),
         migrations.RunSQL('SET CONSTRAINTS ALL IMMEDIATE',
                           reverse_sql=migrations.RunSQL.noop),
         migrations.RemoveField(

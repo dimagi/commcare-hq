@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+
+
 class Axis(object):
     """
     :param label: Name of the Axis

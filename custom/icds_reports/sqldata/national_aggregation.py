@@ -3,13 +3,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from sqlagg.filters import EQ, IN, NOT
 
-from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.utils.utils import clean_IN_filter_value
 
 
-class NationalAggregationDataSource(SqlData):
+class NationalAggregationDataSource(IcdsSqlData):
 
     def __init__(self, config, data_source=None, show_test=False, beta=False):
         super(NationalAggregationDataSource, self).__init__(config)

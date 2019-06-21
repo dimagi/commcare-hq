@@ -8,13 +8,17 @@ import re
 import six
 from dateutil import parser as dateutil_parser
 
-from corehq.motech.const import COMMCARE_DATA_TYPE_DATE, COMMCARE_DATA_TYPE_TEXT
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DATE,
+    COMMCARE_DATA_TYPE_TEXT,
+)
 from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_BOOLEAN,
     OPENMRS_DATA_TYPE_DATE,
     OPENMRS_DATA_TYPE_DATETIME,
 )
 from corehq.motech.serializers import serializers
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def to_omrs_date(value):
@@ -26,7 +30,8 @@ def to_omrs_date(value):
 
     """
     if isinstance(value, six.string_types):
-        if not re.match('\d{4}-\d{2}-\d{2}', value):
+        soft_assert_type_text(value)
+        if not re.match(r'\d{4}-\d{2}-\d{2}', value):
             raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
         value = dateutil_parser.parse(value)
     if isinstance(value, (datetime.date, datetime.datetime)):
@@ -42,13 +47,23 @@ def to_omrs_datetime(value):
 
     """
     if isinstance(value, six.string_types):
-        if not re.match('\d{4}-\d{2}-\d{2}', value):
+        soft_assert_type_text(value)
+        if not re.match(r'\d{4}-\d{2}-\d{2}', value):
             raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
         value = dateutil_parser.parse(value)
     if isinstance(value, (datetime.date, datetime.datetime)):
         micros = value.strftime('%f')[:3]  # Only 3 digits for OpenMRS
         tz = value.strftime('%z') or '+0000'  # If we don't know, lie
         return value.strftime('%Y-%m-%dT%H:%M:%S.{f}{z}'.format(f=micros, z=tz))
+
+
+def to_omrs_boolean(value):
+    if (
+        isinstance(value, six.string_types)
+        and value.lower() in ('false', '0')
+    ):
+        return False
+    return bool(value)
 
 
 def omrs_datetime_to_date(value):
@@ -72,6 +87,7 @@ serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATE): to_omrs_date,
     (None, OPENMRS_DATA_TYPE_DATETIME): to_omrs_datetime,
+    (None, OPENMRS_DATA_TYPE_BOOLEAN): to_omrs_boolean,
     (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,
     (OPENMRS_DATA_TYPE_BOOLEAN, COMMCARE_DATA_TYPE_TEXT): omrs_boolean_to_text,
 })

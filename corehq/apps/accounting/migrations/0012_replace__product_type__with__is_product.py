@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations, models
 
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _product_type_to_is_product(apps, schema_editor):
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
             name='is_product',
             field=models.BooleanField(default=False),
         ),
-        HqRunPython(_product_type_to_is_product),
+        migrations.RunPython(_product_type_to_is_product),
         migrations.RunSQL('SET CONSTRAINTS ALL IMMEDIATE',
                           reverse_sql=migrations.RunSQL.noop),
         migrations.RemoveField(

@@ -4,97 +4,73 @@
 {% requirejs_main 'hqcase/js/explode_cases' %}
 
 {% block page_content %}
-    {% registerurl "users_select2_options" domain %}
+  {% registerurl "users_select2_options" domain %}
 
-    <div id="explode">
-        <h1>Explode Cases 💣</h1>
-        <h2><small>Use at your own risk 🙃</small></h2>
-        <div class="row">
-            <div class="col-sm-12">
-                <p>This feature multiplies all the cases in a user's restore by <code>factor</code>.</p>
-            </div>
+  <div id="explode">
+    <h1>Explode Cases 💣</h1>
+    <h2><small>Use at your own risk 🙃</small></h2>
+    <div class="row">
+      <div class="col-sm-12">
+        <p>This feature multiplies all the cases in a user's restore by <code>factor</code>.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-8">
+        <div class="panel panel-danger">
+          <div class="panel-heading">Warning!</div>
+          <div class="panel-body">
+            <p>The case exploder will multiply all cases in the user's restore  by the explode factor entered below. So, for example, if you're exploding a test user with 20 cases, and set the factor to be 200, it will actually give you <strong>4,000</strong> cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.</p>
+          </div>
         </div>
-        <div class="row">
-            <div class="col-sm-8">
-                <div class="panel panel-danger">
-                    <div class="panel-heading">Warning!</div>
-                    <div class="panel-body">
-                        <p>The case exploder will multiply all cases in the user's restore  by the explode factor entered below. So, for example, if you're exploding a test user with 20 cases, and set the factor to be 200, it will actually give you <strong>4,000</strong> cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.</p>
-                        {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
-                            <p>At the end of the process, you will be given a unique <strong>Explosion ID</strong>. Note this down so you can delete the cases later.</p>
-                        {% else %}
-                            <p>You will be able to easily delete these cases if you enable the Case Search feature flag for your domain.</p>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        <form class="form" action="" method="POST">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label for="explode-user_id">User</label>
-                                <input id="explode-user_id"
-                                       name="user_id"
-                                       class="input form-control report-filter-single-option-paginated"
-                                       data-bind="value: user_id"
-                                       style="width: 100%"
-                                       placeholder="Select a User"/>
-                            </div>
-                            <div class="form-group" id="explode-factor-input" data-bind="css: {
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <form class="form" action="" method="POST">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="explode-user_id">User</label>
+                <select id="explode-user_id"
+                        name="user_id"
+                        class="input form-control report-filter-single-option-paginated"
+                        data-bind="value: user_id"
+                        style="width: 100%"
+                        placeholder="Select a User"></select>
+              </div>
+              <div class="form-group" id="explode-factor-input" data-bind="css: {
                                         'has-error': factor() < 2 || factor() >= 150 ,
                                         'has-warning': factor() >= 10 && factor() <= 150  }">
-                                <label for="explode-factor">Factor</label>
-                                <input class="form-control" id="explode-factor" data-bind="value: factor" name="factor" />
-                                <span id="factor-warning" class="help-block" data-bind="visible: factor() >= 10 && factor() <= 150">
+                <label for="explode-factor">Factor</label>
+                <input class="form-control" id="explode-factor" data-bind="value: factor" name="factor" />
+                <span id="factor-warning" class="help-block" data-bind="visible: factor() >= 10 && factor() <= 150">
                                     Wowza! You are multiplying by a large factor! Are you sure you want to do this?
                                 </span>
-                                <span id="factor-error" class="help-block" data-bind="visible: factor() > 150">
+                <span id="factor-error" class="help-block" data-bind="visible: factor() > 150">
                                     That number is too high! Please try smaller increments to get to the number of cases you require.
                                 </span>
-                            </div>
-                            <button type="submit" class="btn btn-danger"
-                                    data-bind="attr: {disabled: !user_id() || factor() < 2 || factor() > 150 }">Explode Cases</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+              </div>
+              <button type="submit" class="btn btn-danger"
+                      data-bind="attr: {disabled: !user_id() || factor() < 2 || factor() > 150 }">Explode Cases</button>
+            </form>
+          </div>
         </div>
+      </div>
     </div>
-    {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
-        <div id="delete-exploded">
-            <h1>Delete exploded cases</h1>
-            <h2><small>Delete all cases created by previous explosions</small></h2>
-            <div class="row">
-                <div class="col-sm-8">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Explosion ID</th>
-                                <th>Case Count</th>
-                                <th>Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for explosion_id, count in previous_explosions %}
-                                <tr>
-                                    <td>{{ explosion_id }}</td>
-                                    <td>{{ count }}</td>
-                                    <td>
-                                        <form class="form" action="" method="POST">
-                                            {% csrf_token %}
-                                            <input id="explosion_id" name="explosion_id" type="hidden" value="{{ explosion_id }}" />
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
+  </div>
+  {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
+    <div id="delete-exploded">
+      <h1>Delete exploded cases</h1>
+      <h2><small>Delete all cases created by previous explosions</small></h2>
+      <p>Find this ID on one of your exploded cases under the property 'cc_explosion_id'</p>
+      <div class="row">
+        <div class="col-sm-8">
+          <form class="form" action="" method="POST">
+            {% csrf_token %}
+            <input id="explosion_id" name="explosion_id" type="text" placeholder="cc_explosion_id" />
+            <button type="submit" class="btn btn-danger">
+              <i class="fa fa-trash"></i>
+            </button>
+          </form>
         </div>
-    {% endif %}
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}

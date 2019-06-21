@@ -7,7 +7,7 @@ from django.core.management import call_command
 from django.db import migrations
 
 from corehq.privileges import REPORT_BUILDER_5
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _grandfather_reportbuilder_5_pro(apps, schema_editor):
@@ -26,5 +26,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_grandfather_reportbuilder_5_pro),
+        migrations.RunPython(_grandfather_reportbuilder_5_pro),
     ]

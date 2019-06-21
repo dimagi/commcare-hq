@@ -31,6 +31,8 @@ class CaseStateHash(object):
     
     def __ne__(self, obj):
         return not self == obj
+
+    __hash__ = None
         
 
 class Checksum(object):
@@ -75,5 +77,5 @@ class Checksum(object):
         x = copy(self._list)
         x = list(map(Checksum.hash, x))
         x = reduce(Checksum.xor, x)
-        x = binascii.hexlify(bytes(x))
+        x = binascii.hexlify(bytes(x)).decode('utf-8')
         return x

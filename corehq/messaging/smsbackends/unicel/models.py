@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import codecs
+
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import SQLSMSBackend
@@ -77,13 +80,13 @@ class SQLUnicelBackend(SQLSMSBackend):
                   (OutboundParams.PASSWORD, config.password),
                   (OutboundParams.SENDER, config.sender)]
         try:
-            text = str(message.text)
-            # it's ascii
-            params.append((OutboundParams.MESSAGE, text))
+            text_as_ascii = message.text.encode('ascii')
+            params.append((OutboundParams.MESSAGE, text_as_ascii))
         except UnicodeEncodeError:
             params.extend(UNICODE_PARAMS)
-            encoded = message.text.encode('utf_16_be').encode('hex').upper()
-            params.append((OutboundParams.MESSAGE, encoded))
+            text_as_utf_16_be = message.text.encode('utf_16_be')
+            text_as_hex = codecs.encode(text_as_utf_16_be, 'hex')
+            params.append((OutboundParams.MESSAGE, text_as_hex.upper()))
 
         data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
             timeout=settings.SMS_GATEWAY_TIMEOUT).read()
@@ -105,7 +108,7 @@ def create_from_request(request, backend_id=None):
 
     is_unicode = request.GET.get(InboundParams.DCS, "") == "8"
     if is_unicode:
-        message = message.decode("hex").decode("utf_16_be")
+        message = codecs.decode(codecs.decode(message, 'hex'), 'utf_16_be')
 
     backend_message_id = request.GET.get(InboundParams.MID, None)
 

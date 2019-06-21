@@ -34,7 +34,6 @@ from .views import (
     CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
-    ReportNotificationUnsubscribeView,
     case_forms,
     case_property_changes,
     case_property_names,
@@ -55,20 +54,12 @@ from .views import (
     resave_form_view,
     unarchive_form,
     project_health_user_details,
-    export_data,
-    export_default_or_custom_data,
-    hq_download_saved_export,
-    hq_deid_download_saved_export,
     export_report,
     email_report,
     delete_config,
     delete_scheduled_report,
     send_test_scheduled_report,
     view_scheduled_report,
-    export_all_form_metadata,
-    export_all_form_metadata_async,
-    download_cases,
-    download_cases_internal,
 )
 
 
@@ -130,25 +121,6 @@ urlpatterns = [
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
         name='project_health_user_details'),
 
-    # export API
-    url(r"^export/$", export_data, name='export_data'),
-
-    # Download Exports
-    # todo should eventually be moved to corehq.apps.export
-    # Custom
-    url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", export_default_or_custom_data,
-        name="export_custom_data"),
-    # Default
-    url(r"^export/default/download/$", export_default_or_custom_data, name="export_default_data"),
-    # Bulk
-    url(r"^export/bulk/download/$", export_default_or_custom_data,
-        name="export_bulk_download", kwargs=dict(bulk_export=True)),
-    # saved
-    url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", hq_download_saved_export,
-        name="hq_download_saved_export"),
-    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export,
-        name="hq_deid_download_saved_export"),
-
     # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', export_report, name="export_report"),
 
@@ -176,10 +148,6 @@ urlpatterns = [
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     # Internal Use
-    url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),
-    url(r"^export/forms/all/async/$", export_all_form_metadata_async, name="export_all_form_metadata_async"),
-    url(r'^download/cases/$', download_cases, name='download_cases'),
-    url(r'^download/internal/cases/$', download_cases_internal, name='download_cases_internal'),
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
         name=ReprocessXFormErrorView.urlname),
 

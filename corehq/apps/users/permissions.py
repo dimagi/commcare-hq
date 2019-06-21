@@ -39,20 +39,8 @@ def can_download_data_files(domain, couch_user):
     return toggles.DATA_FILE_DOWNLOAD.enabled(domain) and role.permissions.view_file_dropzone
 
 
-def can_view_form_exports(couch_user, domain):
-    return couch_user.can_edit_data(domain) or has_permission_to_view_report(
-        couch_user, domain, FORM_EXPORT_PERMISSION
-    )
-
-
-def can_view_case_exports(couch_user, domain):
-    return couch_user.can_edit_data(domain) or has_permission_to_view_report(
-        couch_user, domain, CASE_EXPORT_PERMISSION
-    )
-
-
 def can_view_sms_exports(couch_user, domain):
-    return couch_user.can_edit_data(domain) or has_permission_to_view_report(
+    return has_permission_to_view_report(
         couch_user, domain, SMS_EXPORT_PERMISSION
     )
 

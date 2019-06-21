@@ -1,12 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from django.db.models import Q
+import six
+
+from django.conf import settings
+from django.db.models import F, Q
 
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
     Feature,
+    Invoice,
     SoftwarePlan,
     SoftwarePlanVersion,
     SoftwareProductRate,
@@ -118,12 +122,12 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     """
     slug = 'select2_rate'
     allowed_actions = [
-        'feature_id',
+        'select2_feature_id',
         'product_rate_id',
     ]
 
     @property
-    def feature_id_response(self):
+    def select2_feature_id_response(self):
         features = Feature.objects
         if self.existing:
             features = features.exclude(name__in=self.existing)
@@ -210,7 +214,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
-        return [(p.id, p.__str__()) for p in plan_versions.order_by('plan__name')]
+        return [(p.id, six.text_type(p)) for p in plan_versions.order_by('plan__name')]
 
     @property
     def new_plan_version_response(self):
@@ -428,6 +432,50 @@ class SoftwarePlanAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     def name_response(self):
         return [self._fmt_select2_data(p.name, p.name)
                 for p in self.paginated_data]
+
+
+class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'invoice_number_filter'
+    allowed_actions = [
+        'invoice_number',
+    ]
+
+    @property
+    def query(self):
+        query = Invoice.objects.annotate(
+            number_on_invoice=F('id') + settings.INVOICE_STARTING_NUMBER
+        ).order_by('number_on_invoice')
+        if self.search_string:
+            query = query.filter(number_on_invoice__startswith=self.search_string)
+        return query
+
+    @property
+    def invoice_number_response(self):
+        return [
+            self._fmt_select2_data(six.text_type(p.id), six.text_type(p.number_on_invoice))
+            for p in self.paginated_data
+        ]
+
+
+class InvoiceBalanceAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'invoice_balance_filter'
+    allowed_actions = [
+        'invoice_balance'
+    ]
+
+    @property
+    def query(self):
+        query = Invoice.objects.order_by('balance')
+        if self.search_string:
+            query = query.filter(balance__startswith=self.search_string)
+        return query
+
+    @property
+    def invoice_balance_response(self):
+        return [
+            self._fmt_select2_data(six.text_type(p.balance), six.text_type(p.balance))
+            for p in self.paginated_data
+        ]
 
 
 class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):

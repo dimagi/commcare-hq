@@ -3,29 +3,30 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "hqwebapp/js/soil.js" %}"></script>
+  <script src="{% static "hqwebapp/js/soil.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'download_id' download_id %}
-    {% initial_page_data 'error_text' error_text %}
-    {% initial_page_data 'poll_url' poll_url %}
+  {% initial_page_data 'download_id' download_id %}
+  {% initial_page_data 'error_text' error_text %}
+  {% initial_page_data 'poll_url' poll_url %}
 
-    <header>
-        <div class="row">
-            <div class="col-sm-8">
-                <h2>{{ title }}</h2>
-            </div>
-        </div>
-    </header>
-
-    <div class="downloader_container" id="display_{{ download_id }}">
-        <legend>
-            {{ progress_text }}
-        </legend>
+  <header>
+    <div class="row">
+      <div class="col-sm-8">
+        <h2>{{ title }}</h2>
+      </div>
     </div>
+  </header>
 
-    {% if next_url and next_url_text %}
-        <a href='{{ next_url }}'>{{ next_url_text }}</a>
-    {% endif %}
+  <div class="downloader_container"
+       id="display_{{ download_id }}">
+    <legend>
+      {{ progress_text }}
+    </legend>
+  </div>
+
+  {% if next_url and next_url_text %}
+    <a href='{{ next_url }}'>{{ next_url_text }}</a>
+  {% endif %}
 {% endblock %}

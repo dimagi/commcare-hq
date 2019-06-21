@@ -12,7 +12,7 @@ hqDefine("users/js/mobile_workers", function () {
             var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
                 $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
 
-            $modal.find(".btn-danger, .btn-success").addSpinnerToButton();
+            $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse(urlName, self.user_id()),
@@ -44,25 +44,22 @@ hqDefine("users/js/mobile_workers", function () {
         self.itemsPerPage = ko.observable(5);
         self.totalItems = ko.observable();
 
-        // Visibility of spinner, messages, and user table
+        // Visibility of spinners, messages, and user table
         self.hasError = ko.observable(false);
-        self.isLoaded = ko.observable(false);
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
         self.projectHasUsers = ko.observable(true);
 
         self.showProjectHasNoUsers = ko.computed(function () {
-            return self.isLoaded() && !self.hasError() && !self.projectHasUsers();
+            return !self.showLoadingSpinner() && !self.hasError() && !self.projectHasUsers();
         });
 
         self.showNoUsers = ko.computed(function () {
-            return self.isLoaded() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
-        });
-
-        self.showSpinner = ko.computed(function () {
-            return !self.isLoaded() && !self.hasError();
+            return !self.showLoadingSpinner() && !self.hasError() && !self.totalItems() && !self.showProjectHasNoUsers();
         });
 
         self.showTable = ko.computed(function () {
-            return self.isLoaded() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
+            return !self.showLoadingSpinner() && !self.hasError() && !self.showNoUsers() && !self.showProjectHasNoUsers();
         });
 
         self.deactivatedOnly.subscribe(function () {
@@ -72,7 +69,7 @@ hqDefine("users/js/mobile_workers", function () {
         self.goToPage = function (page) {
             self.users.removeAll();
             self.hasError(false);
-            self.isLoaded(false);
+            self.showPaginationSpinner(true);
             $.ajax({
                 method: 'GET',
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_mobile_workers'),
@@ -91,11 +88,13 @@ hqDefine("users/js/mobile_workers", function () {
                     if (!self.query()) {
                         self.projectHasUsers(!!data.users.length);
                     }
-                    self.isLoaded(true);
+                    self.showLoadingSpinner(false);
+                    self.showPaginationSpinner(false);
                     self.hasError(false);
                 },
                 error: function () {
-                    self.isLoaded(true);
+                    self.showLoadingSpinner(false);
+                    self.showPaginationSpinner(false);
                     self.hasError(true);
                 },
             });

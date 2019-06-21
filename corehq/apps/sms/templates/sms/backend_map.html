@@ -6,45 +6,45 @@
 {% requirejs_main "sms/js/backend_map" %}
 
 {% block page_content %}
-    {% initial_page_data 'form.backend_map' form.backend_map.value|safe %}
-    <div id="backend-map-form">
-        {% crispy form %}
-    </div>
+  {% initial_page_data 'form.backend_map' form.backend_map.value|safe %}
+  <div id="backend-map-form">
+    {% crispy form %}
+  </div>
 
-    <script type="text/html" id="ko-template-backend-map">
-        <input type="hidden" name="backend_map" data-bind="value: backend_map_json" />
-        <table class="table table-bordered table-striped" data-bind="visible: backend_map().length > 0">
-            <thead>
-                <tr>
-                    <th>{% trans "Phone Prefix" %}</th>
-                    <th>{% trans "Gateway" %}</th>
-                    <th>{% trans "Action" %}</th>
-                </tr>
-            </thead>
-            <tbody data-bind="foreach: backend_map">
-                <tr>
-                    <td><input type="text"
-                               class="form-control"
-                               placeholder="{% trans 'Prefix' %}"
-                               data-bind="value: prefix" /></td>
-                    <td>
-                        <select data-bind="value: backend_id" class="form-control">
-                            {% for backend in backends %}
-                            <option value="{{ backend.pk }}">{{ backend.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    <td><button type="button"
-                                class="btn btn-danger"
-                                data-bind="click: $parent.removeMapping">
-                        <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
-                </tr>
-            </tbody>
-        </table>
-        <button class="btn btn-success"
-                type="button"
-                data-bind="click: addMapping">
-            <i class="fa fa-plus"></i> {% trans 'Add Mapping' %}
-        </button>
-    </script>
+  <script type="text/html" id="ko-template-backend-map">
+    <input type="hidden" name="backend_map" data-bind="value: backend_map_json" />
+    <table class="table table-bordered table-striped" data-bind="visible: backend_map().length > 0">
+      <thead>
+      <tr>
+        <th>{% trans "Phone Prefix" %}</th>
+        <th>{% trans "Gateway" %}</th>
+        <th>{% trans "Action" %}</th>
+      </tr>
+      </thead>
+      <tbody data-bind="foreach: backend_map">
+      <tr>
+        <td><input type="text"
+                   class="form-control"
+                   placeholder="{% trans 'Prefix' %}"
+                   data-bind="value: prefix" /></td>
+        <td>
+          <select data-bind="value: backend_id" class="form-control">
+            {% for backend in backends %}
+              <option value="{{ backend.pk }}">{{ backend.name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><button type="button"
+                    class="btn btn-danger"
+                    data-bind="click: $parent.removeMapping">
+          <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
+      </tr>
+      </tbody>
+    </table>
+    <button class="btn btn-primary"
+            type="button"
+            data-bind="click: addMapping">
+      <i class="fa fa-plus"></i> {% trans 'Add Mapping' %}
+    </button>
+  </script>
 {% endblock %}

@@ -147,7 +147,7 @@ class PactFormAPI(DomainAPI):
 #                    continue
                 try:
                     xml_str = (BlobHelper(data_row, db, CODES.form_xml)
-                        .fetch_attachment('form.xml', return_bytes=True).decode('utf-8')
+                        .fetch_attachment('form.xml').decode('utf-8')
                         .replace("<?xml version=\'1.0\' ?>", '')
                         .replace("<?xml version='1.0' encoding='UTF-8' ?>", ''))
                     yield xml_str
@@ -421,5 +421,5 @@ class PactAPI(DomainAPI):
     def dispatch(self, *args, **kwargs):
         req = args[0]
         self.method = req.GET.get('method', None)
-        ret =  super(PactAPI, self).dispatch(*args, **kwargs)
+        ret = super(PactAPI, self).dispatch(*args, **kwargs)
         return ret

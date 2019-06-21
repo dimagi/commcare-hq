@@ -3,114 +3,114 @@
 {% load hq_shared_tags %}
 
 <div class="modal fade" id="createExportOptionsModal" data-bind="event: {'hidden.bs.modal': resetForm}">
-    <div class="modal-dialog">
-        <form name="exportOptionsForm" class="form form-horizontal" data-bind="submit: handleSubmitForm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
-                    </button>
-                    <h4 class="modal-title">{{ create_export_form_title }}</h4>
-                </div>
-                <div class="modal-body" data-bind="visible: !isLoaded()">
-                    <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
-                </div>
-                <div class="modal-body" data-bind="visible: showDrilldown">
-                    <div class="alert alert-warning" data-bind="visible: drilldownSubmissionError">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        <strong data-bind="text: drilldownSubmissionError"></strong>
-                        <p>
-                            If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.
-                        </p>
-                    </div>
-                    {% crispy create_export_form %}
-                    <div class="alert alert-info" data-bind="visible: showHasNoCaseTypes">
-                        {% blocktrans %}
-                            This application does not appear to be using
-                            <a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management"
-                               target="_blank"><i class="fa fa-info-circle"></i> case management</a>.
-                        {% endblocktrans %}
-                    </div>
-                    <div class="alert alert-info" data-bind="visible: showSubmissionCount">
-                        <span data-bind="text: submissionCountText"></span>
-                    </div>
-                    <div class="alert alert-warning" data-bind="visible: showMislabeled">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        {% trans "Mislabeled" %}
-                    </div>
-                    <div class="well" data-bind="visible: showSuggestions">
-                        <h4>{% trans "Suggestions" %}</h4>
-                        <div data-bind="visible: showAppDoesNotExist">
-                            {% trans "These form submissions are tagged as if they belong to an application that doesn't exist." %}
-                        </div>
-                        <div data-bind="visible: showDuplicate">
-                            <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
-                            <ul data-bind="foreach: duplicatePossibilities">
-                                <ul>
-                                    <span data-bind="text: app.name"></span> &gt;
-                                    <span data-bind="text: $root.selectedFormName"></span>
-                                    <span data-bind="visible: app_deleted">
+  <div class="modal-dialog">
+    <form name="exportOptionsForm" class="form form-horizontal" data-bind="submit: handleSubmitForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
+          </button>
+          <h4 class="modal-title">{{ create_export_form_title }}</h4>
+        </div>
+        <div class="modal-body" data-bind="visible: !isLoaded()">
+          <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
+        </div>
+        <div class="modal-body" data-bind="visible: showDrilldown">
+          <div class="alert alert-warning" data-bind="visible: drilldownSubmissionError">
+            <i class="fa fa-exclamation-triangle"></i>
+            <strong data-bind="text: drilldownSubmissionError"></strong>
+            <p>
+              {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
+            </p>
+          </div>
+          {% crispy create_export_form %}
+          <div class="alert alert-info" data-bind="visible: showHasNoCaseTypes">
+            {% blocktrans %}
+              This application does not appear to be using
+              <a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management"
+                 target="_blank"><i class="fa fa-info-circle"></i> case management</a>.
+            {% endblocktrans %}
+          </div>
+          <div class="alert alert-info" data-bind="visible: showSubmissionCount">
+            <span data-bind="text: submissionCountText"></span>
+          </div>
+          <div class="alert alert-warning" data-bind="visible: showMislabeled">
+            <i class="fa fa-exclamation-triangle"></i>
+            {% trans "Mislabeled" %}
+          </div>
+          <div class="well" data-bind="visible: showSuggestions">
+            <h4>{% trans "Suggestions" %}</h4>
+            <div data-bind="visible: showAppDoesNotExist">
+              {% trans "These form submissions are tagged as if they belong to an application that doesn't exist." %}
+            </div>
+            <div data-bind="visible: showDuplicate">
+              <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
+              <ul data-bind="foreach: duplicatePossibilities">
+                <ul>
+                  <span data-bind="text: app.name"></span> &gt;
+                  <span data-bind="text: $root.selectedFormName"></span>
+                  <span data-bind="visible: app_deleted">
                                         {% trans "App was deleted." %}
                                     </span>
-                                </li>
-                            </ul>
-                        </div>
-                     </div>
-                </div>
-                <div class="modal-body" data-bind="visible: isSubmitting">
-                    <p class="lead">
-                        <i class="fa fa-spinner fa-spin"></i>
-                        {% blocktrans %}
-                            Preparing {{ export_type_caps }} Data...
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans %}
-                            Please note that this may take several minutes.
-                            Thank you for your patience!
-                        {% endblocktrans %}
-                    </p>
-                </div>
-                <div class="modal-body" data-bind="visible: drilldownLoadError">
-                    <div class="alert alert-warning">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        <span data-bind="text: drilldownLoadError"></span>
-                    </div>
-                    <p>
-                        {% blocktrans %}
-                            If this problem persists, please <a href="#modalReportIssue"
-                                data-toggle="modal">Report an Issue</a> and include this error
-                                message in the description.
-                        {% endblocktrans %}
-                    </p>
-                </div>
-                <div class="modal-body" data-bind="visible: showNoAppsError">
-                    <p class="lead">
-                    {% blocktrans %}
-                        It seems as though you haven't submitted any data to CommCare HQ.
-                        Please deploy an application and submit data before creating any {{ export_type_plural }}.
-                    {% endblocktrans %}
-                    </p>
-                    <a href="https://confluence.dimagi.com/display/commcarepublic/Application+Building"
-                       target="_blank">
-                        <i class="fa fa-info-circle"></i>
-                        {% trans 'How to Create and Deploy a CommCare Application.' %}
-                    </a>
-                </div>
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-default"
-                            data-dismiss="modal"
-                            data-bind="disabled: isSubmitting">{% trans 'Cancel' %}</button>
-                    <button type="submit"
-                            class="btn btn-success"
-                            data-bind="visible: showSubmit, disable: disableSubmit">
-                        {% blocktrans %}
-                            Create {{ export_type_caps }}
-                        {% endblocktrans %}
-                    </button>
-                </div>
+                  </li>
+                </ul>
             </div>
-        </form>
-    </div>
+          </div>
+        </div>
+        <div class="modal-body" data-bind="visible: isSubmitting">
+          <p class="lead">
+            <i class="fa fa-spinner fa-spin"></i>
+            {% blocktrans %}
+              Preparing {{ export_type_caps }} Data...
+            {% endblocktrans %}
+          </p>
+          <p>
+            {% blocktrans %}
+              Please note that this may take several minutes.
+              Thank you for your patience!
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-body" data-bind="visible: drilldownLoadError">
+          <div class="alert alert-warning">
+            <i class="fa fa-exclamation-triangle"></i>
+            <span data-bind="text: drilldownLoadError"></span>
+          </div>
+          <p>
+            {% blocktrans %}
+              If this problem persists, please <a href="#modalReportIssue"
+                                                  data-toggle="modal">Report an Issue</a> and include this error
+              message in the description.
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-body" data-bind="visible: showNoAppsError">
+          <p class="lead">
+            {% blocktrans %}
+              It seems as though you haven't submitted any data to CommCare HQ.
+              Please deploy an application and submit data before creating any {{ export_type_plural }}.
+            {% endblocktrans %}
+          </p>
+          <a href="https://confluence.dimagi.com/display/commcarepublic/Application+Building"
+             target="_blank">
+            <i class="fa fa-info-circle"></i>
+            {% trans 'How to Create and Deploy a CommCare Application.' %}
+          </a>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-default"
+                  data-dismiss="modal"
+                  data-bind="disabled: isSubmitting">{% trans 'Cancel' %}</button>
+          <button type="submit"
+                  class="btn btn-primary"
+                  data-bind="visible: showSubmit, disable: disableSubmit">
+            {% blocktrans %}
+              Add {{ export_type_caps }}
+            {% endblocktrans %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>

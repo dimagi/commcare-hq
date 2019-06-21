@@ -125,7 +125,7 @@ class GenericRepeaterForm(forms.Form):
                         _('Test Link'),
                         type='button',
                         css_id='test-forward-link',
-                        css_class='btn btn-info disabled',
+                        css_class='btn btn-default disabled',
                     ),
                     crispy.Div(
                         css_id='test-forward-result',
@@ -166,13 +166,13 @@ class CaseRepeaterForm(GenericRepeaterForm):
     white_listed_case_types = forms.MultipleChoiceField(
         required=False,
         label=_('Case Types'),
-        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
         help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
     )
     black_listed_users = forms.MultipleChoiceField(
         required=False,
         label=_('Users to exclude'),
-        widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
         help_text=_('Case creations and updates submitted by these users will not be forwarded')
     )
 
@@ -224,8 +224,7 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id',
-                                                                 select2_version='v4')
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()

@@ -7,12 +7,12 @@
 {% load compress %}
 
 {% block page_sidebar_classes %}
-appmanager-sidebar
+  appmanager-sidebar
 {% endblock %}
 
 
 {% block page_content_classes %}
-appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
+  appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
 {% endblock %}
 
 {% block title %}{% trans "Applications" %}{% endblock %}
@@ -22,13 +22,13 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <!--
-        jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
-        tooltip widgets conflict. The B3 base template takes care of that when you use the
-        @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
-        actually used in app manager (no tooltip).
-    -->
-    {% compress js %}
+  <!--
+      jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
+      tooltip widgets conflict. The B3 base template takes care of that when you use the
+      @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
+      actually used in app manager (no tooltip).
+  -->
+  {% compress js %}
     <script src="{% static 'jquery-ui/ui/minified/core.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
@@ -38,18 +38,17 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     <script src="{% static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 
-    {% include 'hqwebapp/includes/atwho.html' %}
-    <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
-    <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
+  {% include 'hqwebapp/includes/atwho.html' %}
+  <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
 
-    {% include 'hqwebapp/includes/ui_element_js.html' %}
-    {% compress js %}
+  {% include 'hqwebapp/includes/ui_element_js.html' %}
+  {% compress js %}
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 {% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}
@@ -60,24 +59,24 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
 {% endblock %}
 
 {% block page_content %}
-<div class="appmanager-loading-bg">
-</div>
-<div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
-     id="js-appmanager-body">
+  <div class="appmanager-loading-bg">
+  </div>
+  <div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
+       id="js-appmanager-body">
     {% if request|ui_notify_enabled:"APP_BUILDER_RELEASE" and not formdesigner %}
-    <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
-         data-slug="{{ "APP_BUILDER_RELEASE"|ui_notify_slug }}"
-         role="alert">
+      <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+           data-slug="{{ "APP_BUILDER_RELEASE"|ui_notify_slug }}"
+           role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <span aria-hidden="true">&times;</span>
         </button>
         <p class="lead">{% trans 'New App Builder Officially Released' %}</p>
         <p>
-            {% blocktrans %}
-                After months of testing and feedback, we are happy to announce the
-                official release of the new CommCare App Builder. The previous App Builder
-                interface is now no longer available.
-            {% endblocktrans %}
+          {% blocktrans %}
+            After months of testing and feedback, we are happy to announce the
+            official release of the new CommCare App Builder. The previous App Builder
+            interface is now no longer available.
+          {% endblocktrans %}
         </p>
         <p>
           <a class="btn btn-primary-dark"
@@ -89,41 +88,41 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
       </div>
     {% endif %}
     {% if app %}
-        {% if error %}
+      {% if error %}
         <div id="error">
-            {% ifequal error 'app_exists' %}
-                {% trans "Oops! We can't create that application; you already have one with the same name." %}
-            {% endifequal %}
+          {% ifequal error 'app_exists' %}
+            {% trans "Oops! We can't create that application; you already have one with the same name." %}
+          {% endifequal %}
         </div>
-        {% endif %}
+      {% endif %}
 
-        {% include 'app_manager/partials/vellum_case_management_warning.html' %}
+      {% include 'app_manager/partials/vellum_case_management_warning.html' %}
 
-        {% block app-content %}{% endblock %}
+      {% block app-content %}{% endblock %}
 
     {% else %}
-        <div style="padding: 1em; text-align: center">
-            <p style="font-size: 1.5em">
-                {% blocktrans %}
-                Welcome to the CommCare Application Builder.
-                Before you begin, check out the
-                <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
-                {% endblocktrans %}
-            </p>
-            <br>
-            {% include 'app_manager/partials/new_app_buttons.html' %}
-        </div>
+      <div style="padding: 1em; text-align: center">
+        <p style="font-size: 1.5em">
+          {% blocktrans %}
+            Welcome to the CommCare Application Builder.
+            Before you begin, check out the
+            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
+          {% endblocktrans %}
+        </p>
+        <br>
+        {% include 'app_manager/partials/new_app_buttons.html' %}
+      </div>
     {% endif %}
-</div>
+  </div>
 {% endblock %}
 
 {% block column_style %}{% endblock %}
 
 {% block modals %}
-    {{ block.super }}
-    {% if app.is_deleted %}
-        {% include 'app_manager/partials/undo_delete_app.html' %}
-    {% endif %}
+  {{ block.super }}
+  {% if app.is_deleted %}
+    {% include 'app_manager/partials/undo_delete_app.html' %}
+  {% endif %}
 {% endblock modals %}
 
 {% block page_row_classes %}appmanager-content-row{% endblock %}

@@ -3,14 +3,11 @@ from __future__ import unicode_literals
 import os
 import weakref
 from contextlib import contextmanager
-from io import UnsupportedOperation
+from io import RawIOBase, UnsupportedOperation
 
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import (
-    check_safe_key,
-    ClosingContextProxy,
-)
+from corehq.blobs.util import check_safe_key
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 from dimagi.utils.logging import notify_exception
 
@@ -104,7 +101,6 @@ class S3BlobDB(AbstractBlobDB):
         check_safe_key(key)
         success = False
         with maybe_not_found(), self.report_timing('delete', key):
-            success = True
             obj = self._s3_bucket().Object(key)
             # may raise a not found error -> return False
             deleted_bytes = obj.content_length
@@ -143,12 +139,41 @@ class S3BlobDB(AbstractBlobDB):
         return self.db.Bucket(self.s3_bucket_name)
 
 
-class BlobStream(ClosingContextProxy):
+class BlobStream(RawIOBase):
 
     def __init__(self, stream, blob_db, blob_key):
-        super(BlobStream, self).__init__(stream)
+        self._obj = stream
         self._blob_db = weakref.ref(blob_db)
         self.blob_key = blob_key
+
+    def readable(self):
+        return True
+
+    def read(self, *args, **kw):
+        return self._obj.read(*args, **kw)
+
+    read1 = read
+
+    def write(self, *args, **kw):
+        raise IOError
+
+    def tell(self):
+        return self._obj._amount_read
+
+    def seek(self, offset, from_what=os.SEEK_SET):
+        if from_what != os.SEEK_SET:
+            raise ValueError("seek mode not supported")
+        pos = self.tell()
+        if offset != pos:
+            raise ValueError("seek not supported")
+        return pos
+
+    def close(self):
+        self._obj.close()
+        return super(BlobStream, self).close()
+
+    def __getattr__(self, name):
+        return getattr(self._obj, name)
 
     @property
     def blob_db(self):
@@ -161,6 +186,10 @@ def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
 
 
 def get_file_size(fileobj):
+    # botocore.response.StreamingBody has a '_content_length' attribute
+    length = getattr(fileobj, "_content_length", None)
+    if length is not None:
+        return int(length)
 
     def tell_end(fileobj_):
         pos = fileobj_.tell()

@@ -11,6 +11,8 @@ from dimagi.utils import gitinfo
 from django.core import cache
 from io import open
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 rcache = cache.caches['redis']
 RESOURCE_PREFIX = '#resource_%s'
 
@@ -56,6 +58,8 @@ class Command(BaseCommand):
             print("getting resource dict from cache")
             self.output_resources(existing_resources)
             return
+        if isinstance(existing_resources, six.string_types):
+            soft_assert_type_text(existing_resources)
 
         resources = {}
         for finder in finders.get_finders():

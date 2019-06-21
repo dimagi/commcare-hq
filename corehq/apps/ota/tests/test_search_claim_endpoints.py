@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
+from collections import OrderedDict
 from uuid import uuid4
 
 from django.urls import reverse
@@ -115,12 +116,12 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
         self.config.ignore_patterns.add(rc)
         self.config.save()
 
-        criteria = {
-            'name': "this word should be gone",
-            'other_name': "this word should not be gone",
-            'special_id': 'abc-123-546',
-            'phone_number': '+91999',
-        }
+        criteria = OrderedDict([
+            ('phone_number', '+91999'),
+            ('special_id', 'abc-123-546'),
+            ('name', "this word should be gone"),
+            ('other_name', "this word should not be gone"),
+        ])
 
         expected = {"query": {
             "filtered": {

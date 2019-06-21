@@ -101,9 +101,9 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    domain.call_center_config.enabled = checked
-    domain.save()
+    domain_obj = Domain.get_by_name(domain_name)
+    domain_obj.call_center_config.enabled = checked
+    domain_obj.save()
 
 
 CALLCENTER = FeaturePreview(

@@ -1,0 +1,118 @@
+{% load hq_shared_tags %}
+<section class="hq-styleguide-article">
+  <h1 id="atoms-css">Code Guidelines</h1>
+  <p class="lead">
+    At the atomic level, coding is CSS and LESS.
+    Good styling code, like any good code, is reusable, DRY, and semantic.
+  </p>
+
+  <h2>Overview</h2>
+
+  <p>
+    Most of us don’t write much CSS. HQ uses <a href="http://getbootstrap.com/">Bootstrap 3</a>, which
+    gives us a consistent and fairly comprehensive set of styles. Most of the "styling" we do is
+    picking the appropriate Bootstrap (or HQ) classes and then troubleshooting anything unexpected.
+  </p>
+  <p>
+    We use <a href="http://lesscss.org/">LESS</a> to write styles. LESS is a fairly simple extension
+    of CSS that allows for more maintainable and reusable styling by supporting variables, mixins, etc.
+  </p>
+  <p>
+    Reusable CSS is good for the same reasons reusable code is good everywhere else. On the front end,
+    reusable code is also correlated with visual consistency and generally better UX. To that end, when
+    creating a new page or section:
+  <ul>
+    <li>It should look very similar to related HQ pages.</li>
+    <li>It should look fairly similar to other HQ pages.</li>
+    <li>It should look somewhat like the rest of the internet.</li>
+  </ul>
+  Bootstrap takes care of a lot this: it gives us a consistent framework so our pages look like each other,
+  and that framework is designed to resemble the rest of the internet.
+  </p>
+  <p>
+    Good styling is <strong>semantic</strong>, because that makes it easier for other developers to reuse.
+    Ideally, a visual designer decides what an error looks like, or what a CRUD page looks like, and then
+    developers only need to determine that they're displaying an error, or creating a CRUD page, and the look
+    and feel is taken care of.
+  </p>
+  <p>
+    Classes like <code>.bump-down { margin-top: 10px; }</code> are problematic because it isn't clear when
+    and why they should be used, so they get applied inconsistently and we end up with a site that looks
+    a little bit...off...but it isn't obvious why. Bootstrap is a good example of a largely semantic system:
+    classes have names like <code>.btn-danger</code> rather than <code>.btn-red</code>, to make it clear <strong>why</strong>
+    you should use a particular class.
+  </p>
+
+  <h2>Style Hierarchy</h2>
+
+  <p class="lead">
+    Most styling should live in external LESS files.
+  </p>
+  <p>
+    Most HQ-specific styling lives in external LESS files, typically in
+    <code>corehq/apps/hqwebapp/static/hqwebapp/less</code>.
+  </p>
+  <p>
+    App-specific styling
+    can live in <code>corehq/apps/style/static/APPNAME/less</code> and then be
+    included with <code>&lt;link&gt;</code> tags in the appropriate template.
+  </p>
+  <p>
+    Some pages use in-page <code>&lt;style&gt;</code> blocks. This isn't ideal for two reasons:
+  <ul>
+    <li>In-page styles can't be reused by other pages - but for the sake of a consistent experience,
+      most styling shouldn't be specific to a single page.</li>
+    <li>In-page styles can't use LESS, so they tend to be less DRY and has to hard-code values like
+      colors and dimensions, rather than using the standard values stored in LESS.</li>
+  </ul>
+  Inline styling is generally a bad idea for the same reasons as in-page styling: one-off styling
+  isn't good for consistency and often isn't semantic.
+  </p>
+  <h2>Handling Z-Index</h2>
+  <p class="lead">
+    Disorganized z-indices lead to highly visible bugs.
+  </p>
+  <p>
+    Z-index gives you control over the stacking order of elements. The challenge is that
+    it acts like a global variable and, like any global variable, gets hard to keep track of.
+    HQ deals with this as best as it can, by declaring numeric z-index values as variables in
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/less/_hq/includes/variables.less">variables.less</a>
+    and using the variables in other LESS files. This isn't perfect, but it at least gives us
+    one place to define HQ-specific absolute z-index values - which also need to play nicely
+    with Bootstrap's z-index list.
+  </p>
+  <p>
+    Most z-index issues arise from not having a good handle on all of the different values
+    used in an application, but there are a few other complexities that occasionally cause problems:
+  <ul>
+    <li>
+      Stacking levels: Z index isn't the only aspect of element stacking. Stacking is also affected
+      by element positioning and floating.
+      <a href="http://vanseodesign.com/css/css-stack-z-index/">
+        "Natural" stacking order, from top to bottom:
+      </a>
+      <ul>
+        <li>Positive z-index</li>
+        <li>z-index auto or 0</li>
+        <li>Inline elements</li>
+        <li>Floated elements</li>
+        <li>Block-level elements</li>
+        <li>Negative z-index</li>
+        <li>Background</li>
+      </ul>
+    </li>
+    <li>
+      Stacking context: Z-index isn't strictly global, it acts within a stacking context. There's a
+      global context but may also be sub-contexts within that. The most common of these is that an
+      element with a non-auto z-index creates a stacking context. This is intuitive: if you set a modal
+      to <code>z-index: 9999</code>, you don’t have to set the z-index on all of its children to 1000,
+      they just come along for the ride. But there are other properties that also create new stacking
+      contexts where you might not expect it. <code>position: fixed</code> is one, translucent elements
+      is another.
+      <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Positioning/Understanding_z_index/The_stacking_context">
+        The others are pretty obscure.
+      </a>
+    </li>
+  </ul>
+  </p>
+</section>

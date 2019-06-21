@@ -5,39 +5,40 @@
 {% requirejs_main 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
-{% if less_debug %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'dashboard/less/dashboard.debug.less' %}" />
-{% else %}
-{% compress css %}
+  {% if less_debug %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'dashboard/less/dashboard.less' %}" />
-{% endcompress %}
-{% endif %}
+          href="{% static 'dashboard/less/dashboard.debug.less' %}" />
+  {% else %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'dashboard/less/dashboard.less' %}" />
+    {% endcompress %}
+  {% endif %}
 {% endblock stylesheets %}
 
 {% block content %}
-{% initial_page_data 'dashboard_tiles' dashboard_tiles %}
-{% registerurl 'dashboard_tile' domain '---' %}
-{% registerurl 'dashboard_tile_total' domain '---' %}
-<div class="container" id="hq-content">
+  {% initial_page_data 'dashboard_tiles' dashboard_tiles %}
+  {% registerurl 'dashboard_tile' domain '---' %}
+  {% registerurl 'dashboard_tile_total' domain '---' %}
+  <div class="container" id="hq-content">
     <div class="page-header">
-        <h1>
-            {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-                Welcome Back to {{ cc_name }}
-            {% endblocktrans %}
-        </h1>
+      <h1>
+        {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+          Welcome Back to {{ cc_name }}
+        {% endblocktrans %}
+      </h1>
     </div>
     <div id="dashboard-tiles">
-        <div class="row" data-bind="foreach: tiles">
-            <div class="col-md-3">
-                <div class="panel panel-dashboard panel-dashboard-medium">
-                    <div class="panel-heading">
-                        <a data-bind="
+      <div class="row" data-bind="foreach: tiles">
+        <div class="col-md-3">
+          <div class="panel panel-dashboard panel-dashboard-medium">
+            <div class="panel-heading">
+              <a data-bind="
+                               visible: url,
                                text: title,
                                attr: {href: url},
                                popover: {
@@ -47,44 +48,46 @@
                                     trigger: 'hover',
                                },
                            "></a>
-                    </div>
-                    <div class="panel-body">
+              <span data-bind="text: title, visible: !url"></span>
+            </div>
+            <div class="panel-body">
 
-                        <!-- Icon in a watermark style, displayed under item list -->
-                        <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
+              <!-- Icon in a watermark style, displayed under item list -->
+              <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
 
-                        <!-- Spinner -->
-                        <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
+              <!-- Spinner -->
+              <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
 
-                        <!-- List of items, with pagination if there are multiple pages -->
-                        <!-- ko if: hasItemList() -->
-                            <div data-bind="visible: showItemList">
-                                <div class="list-group" data-bind="foreach: items">
-                                    <div class="list-group-item"
-                                         data-bind="popover: {
+              <!-- List of items, with pagination if there are multiple pages -->
+              <!-- ko if: hasItemList() -->
+              <div data-bind="visible: showItemList">
+                <div class="list-group" data-bind="foreach: items">
+                  <div class="list-group-item"
+                       data-bind="popover: {
                                             title: description ? name_full : '',
                                             content: description,
                                             placement: 'right',
                                             trigger: 'hover',
                                          }"
-                                         title="">
-                                        <a data-bind="attr: {href: url}, text: name"></a>
-                                    </div>
-                                </div>
+                       title="">
+                    <a data-bind="attr: {href: url}, text: name"></a>
+                  </div>
+                </div>
 
-                                <pagination data-apply-bindings="false"
-                                            params="goToPage: goToPage,
+                <pagination data-apply-bindings="false"
+                            data-bind="visible: totalItems() > itemsPerPage"
+                            params="goToPage: goToPage,
                                                     perPage: itemsPerPage,
                                                     maxPagesShown: 6,
                                                     totalItems: totalItems,
                                                     inlinePageListOnly: true"></pagination>
-                            </div>
-                        <!-- /ko -->
+              </div>
+              <!-- /ko -->
 
-                        <!-- No items to show or there's an error, just show an icon that links -->
-                        <!-- ko if: showIconLink -->
-                            <a class="dashboard-link"
-                               data-bind="
+              <!-- No items to show or there's an error, just show an icon that links -->
+              <!-- ko if: showIconLink -->
+              <a class="dashboard-link"
+                 data-bind="
                                    attr: {href: url},
                                    popover: {
                                        title: title,
@@ -93,69 +96,85 @@
                                        trigger: 'hover',
                                    },
                                ">
-                                <i class="dashboard-icon dashboard-icon-medium" data-bind="css: icon"></i>
-                            </a>
-                        <!-- /ko -->
+                <i class="dashboard-icon dashboard-icon-medium" data-bind="css: icon"></i>
+              </a>
+              <!-- /ko -->
 
-                    </div>
-                </div>
             </div>
+          </div>
         </div>
-        <p class="lead text-center" style="margin-bottom: 5em;">
-            {% if enterprise_mode %}
-                {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
-                    Thanks for using {{ cc_name }}!
-                {% endblocktrans %}
-            {% else %}
-                {% blocktrans %}
-                    Thanks for using CommCare HQ! If you have questions, suggestions,
-                    or other thoughts, <br />we invite you to join the discussion on the
-                    <a href="https://forum.dimagi.com/"
-                       target="_blank">CommCare User Forums</a>.
-                {% endblocktrans %}
-            {% endif %}
-        </p>
+      </div>
+      <p class="lead text-center" style="margin-bottom: 5em;">
+        {% if enterprise_mode %}
+          {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
+            Thanks for using {{ cc_name }}!
+          {% endblocktrans %}
+        {% else %}
+          {% blocktrans %}
+            Thanks for using CommCare HQ! If you have questions, suggestions,
+            or other thoughts, <br />we invite you to join the discussion on the
+            <a href="https://forum.dimagi.com/"
+               target="_blank">CommCare User Forums</a>.
+          {% endblocktrans %}
+        {% endif %}
+      </p>
     </div>
-</div>
+  </div>
 {% endblock content %}
 
 {% block modals %}{{ block.super }}
   {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
-      <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-           style="position: absolute; width: 200px;"
-           data-target="#ProjectReportsTab"
-           data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
-           role="alert">
-          {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
-        </div>
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="position: absolute; width: 200px;"
+         data-target="#ProjectReportsTab"
+         data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
+         role="alert">
+      {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
+    </div>
   {% endif %}
-    {% if is_saas_environment and request|ui_notify_enabled:"MESSAGING_DASHBOARD" %}
-        <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-             style="position: absolute; width: 200px;"
-             data-target="#MessagingTab"
-             data-slug="{{ "MESSAGING_DASHBOARD"|ui_notify_slug }}"
-             role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            <p class="lead">
-                {% trans "Check out the new Dashboard for Messaging!" %}
-            </p>
-        </div>
-    {% endif %}
-    {% if request|ui_notify_enabled:"DATA_FIND_BY_ID" %}
-        <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-             style="position: absolute; width: 200px;"
-             data-target="#ProjectDataTab"
-             data-slug="{{ "DATA_FIND_BY_ID"|ui_notify_slug }}"
-             role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            <p class="lead">
-                {% trans 'Have you ever needed to find a form or a case by its ID? Check out the new "Find Data by ID" page!' %}
-            </p>
-        </div>
-    {% endif %}
+  {% if is_saas_environment and request|ui_notify_enabled:"MESSAGING_DASHBOARD" %}
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="position: absolute; width: 200px;"
+         data-target="#MessagingTab"
+         data-slug="{{ "MESSAGING_DASHBOARD"|ui_notify_slug }}"
+         role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">
+        {% trans "Check out the new Dashboard for Messaging!" %}
+      </p>
+    </div>
+  {% endif %}
+  {% if request|ui_notify_enabled:"DATA_FIND_BY_ID" %}
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="position: absolute; width: 200px;"
+         data-target="#ProjectDataTab"
+         data-slug="{{ "DATA_FIND_BY_ID"|ui_notify_slug }}"
+         role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">
+        {% trans 'Have you ever needed to find a form or a case by its ID? Check out the new "Find Data by ID" page!' %}
+      </p>
+    </div>
+  {% endif %}
+  {% if request|ui_notify_enabled:"USERS_PERMISSIONS_UPDATES" %}
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="position: absolute; width: 200px;"
+         data-target="#ProjectUsersTab"
+         data-slug="{{ "USERS_PERMISSIONS_UPDATES"|ui_notify_slug }}"
+         role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">
+        {% blocktrans %}
+          We have improved our Web User Roles and Permissions to give you more control on your project space. Check it out!
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
 {% endblock %}
 

@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 from collections import defaultdict
 
 from corehq.blobs import Error as BlobError
-from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, \
+    iter_all_ids, CaseReindexAccessor, LedgerReindexAccessor
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
@@ -55,8 +56,11 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
-        # todo: support last_id
-        return iter(self.case_accessors.iter_case_ids_by_domain_and_type(self.case_type))
+        if should_use_sql_backend(self.domain):
+            accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
+            return iter_all_ids(accessor)
+        else:
+            return iter(self.case_accessors.get_case_ids_in_domain(self.case_type))
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):
@@ -69,7 +73,6 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)
         self.domain = domain
         self.ledger_accessors = LedgerAccessorSQL
-        self.case_accessors = CaseAccessorSQL
 
     def get_document(self, doc_id):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
@@ -86,10 +89,17 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         return Product.ids_by_domain(self.domain)
 
     def iter_document_ids(self, last_id=None):
+        if should_use_sql_backend(self.domain):
+            accessor = LedgerReindexAccessor(self.domain)
+            return iter_all_ids(accessor)
+        else:
+            return iter(self._couch_iterator())
+
+    def _couch_iterator(self):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-        # todo: support last_id
+        case_accessors = CaseAccessors(domain=self.domain)
         # assuming we're only interested in the 'stock' section for now
-        for case_id in self.case_accessors.get_case_ids_in_domain(self.domain):
+        for case_id in case_accessors.get_case_ids_in_domain():
             for product_id in self.product_ids:
                 yield UniqueLedgerReference(case_id, 'stock', product_id).to_id()
 
@@ -116,4 +126,27 @@ class LedgerV1DocumentStore(DjangoDocumentStore):
         def _doc_gen_fn(obj):
             return obj.to_json()
 
-        super(LedgerV1DocumentStore, self).__init__(StockState, _doc_gen_fn, model_manager=StockState.include_archived)
+        super(LedgerV1DocumentStore, self).__init__(
+            StockState, _doc_gen_fn, model_manager=StockState.include_archived)
+
+
+class DocStoreLoadTracker(object):
+
+    def __init__(self, store, track_load):
+        self.store = store
+        self.track_load = track_load
+
+    def get_document(self, doc_id):
+        self.track_load()
+        return self.store.get_document(doc_id)
+
+    def iter_documents(self, ids):
+        for doc in self.store.iter_documents(ids):
+            self.track_load()
+            yield doc
+
+    def __getattr__(self, name):
+        return getattr(self.store, name)
+
+    def __repr__(self):
+        return 'DocStoreLoadTracker({})'.format(repr(self.store))

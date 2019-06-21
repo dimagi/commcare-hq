@@ -5,115 +5,113 @@
 {% requirejs_main 'locations/js/locations' %}
 
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
+  <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
 {% endblock %}
 
 
 {% block page_content %}
-    {% registerurl 'archive_location' domain '---' %}
-    {% registerurl 'unarchive_location' domain '---' %}
-    {% registerurl 'delete_location' domain '---' %}
-    {% registerurl 'location_lineage' domain '---' %}
-    {% registerurl 'location_descendants_count' domain '---'%}
+  {% registerurl 'archive_location' domain '---' %}
+  {% registerurl 'unarchive_location' domain '---' %}
+  {% registerurl 'delete_location' domain '---' %}
+  {% registerurl 'location_lineage' domain '---' %}
+  {% registerurl 'location_descendants_count' domain '---'%}
 
-    {% registerurl 'edit_location' domain '---' %}
-    {% registerurl 'location_search' domain %}
-    {% registerurl 'create_location' domain %}
-    {% initial_page_data 'api_root' api_root %}
-    {% initial_page_data 'locations' locations %}
-    {% initial_page_data 'can_edit_root' can_edit_root %}
-    {% initial_page_data 'hierarchy' hierarchy %}
-    {% initial_page_data 'show_inactive' show_inactive %}
+  {% registerurl 'edit_location' domain '---' %}
+  {% registerurl 'location_search' domain %}
+  {% registerurl 'create_location' domain %}
+  {% initial_page_data 'api_root' api_root %}
+  {% initial_page_data 'locations' locations %}
+  {% initial_page_data 'can_edit_root' can_edit_root %}
+  {% initial_page_data 'hierarchy' hierarchy %}
+  {% initial_page_data 'show_inactive' show_inactive %}
 
-<header>
+  <header>
     <div class="row">
-        <div class="col-sm-8">
-            <h2>{% trans "Manage Organization Structure" %}</h2>
-            <p>
-                {% blocktrans %}
-                    The Organization feature allows you to represent the real-world
-                    structure of your project (districts, facilities, frontline workers, etc.).
-                    Once this structure has been defined, you can use it for reporting and
-                    case sharing. Learn more about Organizations on our <a href="https://help.commcarehq.org/display/commcarepublic/Organizations">Help Site</a>.
-                {% endblocktrans %}
-            </p>
-            {% if show_inactive %}
-            <p class="alert alert-info">
-                {% if show_inactive %}{% trans 'Showing the Archived Location List.' %}{% endif %}
-            </p>
-            {% endif %}
-        </div>
-        <div class="col-sm-4">
-            {% if not show_inactive %}
-                <a class="btn btn-default pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
-                    {% trans "Show Archived Locations" %}
-                </a>
-            {% else %}
-                <a class="btn btn-default pull-right" href="?" style="margin-right: 2.5em;">
-                    {% trans "Show Active Locations" %}
-                </a>
-            {% endif %}
-        </div>
+      <div class="col-sm-8">
+        <p class="lead">
+          {% if request.is_view_only %}
+            {% trans "View Organization Structure" %}
+          {% else %}
+            {% trans "Manage Organization Structure" %}
+          {% endif %}
+        </p>
+        <p>
+          {% blocktrans %}
+            The organization feature allows you to represent the real-world
+            structure of your project (districts, facilities, frontline workers, etc.).
+            Once this structure has been defined, you can use it for reporting and
+            case sharing. Learn more about Organizations on our <a href="https://help.commcarehq.org/display/commcarepublic/Organizations">Help Site</a>.
+          {% endblocktrans %}
+        </p>
+        {% if show_inactive %}
+          <p class="alert alert-info">
+            {% if show_inactive %}{% trans 'Showing the Archived Location List.' %}{% endif %}
+          </p>
+        {% endif %}
+      </div>
     </div>
-</header>
+  </header>
 
-{% if not show_inactive %}
-<div class="row">
-    <div class="col-sm-12">
+  {% if not show_inactive %}
+    <div class="row">
+      <div class="col-sm-12">
         <div class="btn-toolbar">
 
-            {% if request.can_access_all_locations %}
+          {% if request.can_access_all_locations %}
             <a class="btn btn-info"
-               {% if not has_location_types %}
-                   disabled
-               {% else %}
-                   href="{% url "location_export" domain %}"
-               {% endif %}
+              {% if not has_location_types %}
+               disabled
+              {% else %}
+               href="{% url "location_export" domain %}"
+              {% endif %}
             >
-                <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
+              <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
             </a>
-            {% endif %}
+          {% endif %}
 
+          {% if not request.is_view_only %}
             <a class="btn btn-default"
-               {% if not has_location_types %}
-                   disabled
-               {% else %}
-                   href="{% url "location_import" domain %}"
-               {% endif %}
+              {% if not has_location_types %}
+               disabled
+              {% else %}
+               href="{% url "location_import" domain %}"
+              {% endif %}
             >
-                <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
+              <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
             </a>
+          {% endif %}
 
-            {% if request.can_access_all_locations %}
+          {% if request.can_access_all_locations and not request.is_view_only %}
             <a class="btn btn-default track-usage-link" href="{% url "location_fields_view" domain %}"
                data-category="Organization Structure" data-action="Edit Location Fields">
-                <i class="fa fa-edit"></i>
-                {% trans "Edit Location Fields" %}
+              <i class="fa fa-edit"></i>
+              {% trans "Edit Location Fields" %}
             </a>
-            {% endif %}
+          {% endif %}
 
         </div>
+      </div>
     </div>
-</div>
-{% endif %}
+  {% endif %}
 
-<hr />
+  <hr />
 
-<div class="col-xs-12 col-md-12 col-lg-12 loc_search" id="location_search">
-    <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
+  <div class="row">
+    <div class="col-xs-8 col-md-8 col-lg-8 loc_search" id="location_search">
+      <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
 
-    <div class="col-xs-7 col-md-7 col-lg-8">
+      <div class="col-xs-7 col-md-7 col-lg-8">
 
         <select type="text"
-            id="location_search_select"
-            data-bind="value: l__selected_location_id"
-            class="span4 form-control"
-            placeholder="Specify location"
-            name="location_search"
-            style="max-width:80%;"></select>
+                id="location_search_select"
+                data-bind="value: l__selected_location_id"
+                class="span4 form-control"
+                placeholder="Specify location"
+                name="location_search"
+                style="max-width:80%;"></select>
 
         <button type="button" class="btn btn-secondary" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
-            <i class="fa fa-times" aria-hidden="true"></i>
+          <i class="fa fa-times" aria-hidden="true"></i>
         </button>
 
         <span class="help-block">
@@ -121,161 +119,181 @@
             To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
         </span>
 
+      </div>
+
     </div>
+    <div class="col-sm-4">
+      {% if not show_inactive %}
+        <a class="btn btn-default pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
+          {% trans "Show Archived Locations" %}
+        </a>
+      {% else %}
+        <a class="btn btn-default pull-right" href="?" style="margin-right: 2.5em;">
+          {% trans "Show Active Locations" %}
+        </a>
+      {% endif %}
+    </div>
+  </div>
 
-</div>
-
-{% if has_location_types %}
-    <script type="text/html" id="location-template">
-
-        <div class="loc_section">
-            <!-- header bar -->
-            <div class="loc_header clearfix" data-bind="if: name() != '_root'">
-                <div style="float:right;" data-bind="if: can_edit()" id="button-template">
-                    {% if not show_inactive %}
-                        <a class="btn btn-primary"
-                           data-bind="attr: { href: loc_edit_url(uuid()) }">
-                            <i class="fa fa-edit"></i>
-                            {% trans "Edit" %}
-                        </a>
-                    {% endif %}
-
-                    {% if show_inactive %}
-                        <button class="btn btn-default"
-                            data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
-                            <i class="fa fa-archive"></i>
-                            {% trans "Unarchive" %}
-                        </button>
-                    {% else %}
-                        <button class="btn btn-default"
-                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
-                            <i class="fa fa-archive"></i>
-                            {% trans "Archive" %}
-                        </button>
-                    {% endif %}
-                    <button class="btn btn-danger"
-                        data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
-                        <i class="fa fa-trash"></i>
-                        {% trans "Delete" %}
-                    </button>
-                </div>
-
-                <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-                <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
-                    <span data-bind="if: can_have_children">
-                        <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
-                    </span>
-                    <span class="loc_name" data-bind="text: name"></span>
-                    <span class="loc_type">(<span data-bind="text: type"></span>)</span>
-                </div>
-                <div style="clear: both;"></div>
-                <hr style="margin: 0px;"/>
-            </div>
-
-            <!-- child content -->
-            <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
-
-                <!-- ajax spinner -->
-                <div class="loc_section loc_child" data-bind="visible: children_status() == 'loading'">
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
-                </div>
-
-                <!-- ajax content -->
-                <div data-bind="fadeVisible: children_status() == 'loaded' || children_status() == 'semi_loaded'">
-
-                    <!-- child entries -->
-                    <div data-bind="foreach: children">
-                        <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
-                    </div>
-
-                    <!-- 'no children' message -->
-                    <div class="loc_child no_children alert alert-info" data-bind="visible: children().length == 0, text: no_children_caption"></div>
-
-                </div>
-
-                {% if not show_inactive %}
-                    <!-- create child button -->
-                    <!-- ko if: can_edit() -->
-                        <a class="btn btn-success loc_child"
-                           data-bind="attr: { href: new_loc_url() + '?parent=' + (uuid() || '') },
-                                      click: new_location_tracking">
-                            <i class="fa fa-plus"></i> <span data-bind="text: new_child_caption"></span>
-                        </a>
-                    <!-- /ko -->
-                {% endif %}
-            </div>
-        </div>
-
-    </script>
-{% else %}
+  {% if not has_location_types %}
     <div class="loc_child no_children alert alert-info">
-        {% url "location_types" domain as location_types_url %}
-        {% blocktrans %}
+      {% url "location_types" domain as location_types_url %}
+      {% blocktrans %}
         Please define the organization levels
         <a href="{{ location_types_url }}">here</a>
         for your project before creating any locations.
-        {% endblocktrans %}
+      {% endblocktrans %}
     </div>
-{% endif %}
-<div class="row">
+  {% endif %}
+
+  <div class="row">
     <div class="col-lg-12" style="clear: both">
-        <div id="location_tree">
+      <div id="location_tree">
         <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
-        </div>
+      </div>
     </div>
-</div>
+  </div>
+
+  <script type="text/html" id="location-template">
+    <div class="loc_section">
+      <!-- header bar -->
+      <div class="loc_header clearfix" data-bind="if: name() != '_root'">
+        <div style="float:right;" data-bind="if: can_edit()" id="button-template">
+          {% if not show_inactive %}
+            <a class="btn btn-primary"
+               data-bind="attr: { href: loc_edit_url(uuid()) }">
+              {% if request.is_view_only %}
+                <i class="fa fa-eye"></i>
+                {% trans "View" %}
+              {% else %}
+                <i class="fa fa-edit"></i>
+                {% trans "Edit" %}
+              {% endif %}
+            </a>
+          {% endif %}
+          {% if not request.is_view_only %}
+            {% if show_inactive %}
+              <button class="btn btn-default"
+                      data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
+                <i class="fa fa-archive"></i>
+                {% trans "Unarchive" %}
+              </button>
+            {% else %}
+              <button class="btn btn-default"
+                      data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                <i class="fa fa-archive"></i>
+                {% trans "Archive" %}
+              </button>
+            {% endif %}
+            <button class="btn btn-danger"
+                    data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+              <i class="fa fa-trash"></i>
+              {% trans "Delete" %}
+            </button>
+          {% endif %}
+        </div>
+
+        <!-- want to make entire row clickable, but overrides click on 'edit' button -->
+        <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
+                <span data-bind="if: can_have_children">
+                    <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
+                </span>
+          <span class="loc_name" data-bind="text: name"></span>
+          <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+        </div>
+        <div style="clear: both;"></div>
+        <hr style="margin: 0px;"/>
+      </div>
+
+      <!-- child content -->
+      <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+
+        <!-- ajax spinner -->
+        <div class="loc_section loc_child" data-bind="visible: children_status() == 'loading'">
+          <i class="fa fa-spin fa-spinner"></i> Loading&hellip;
+        </div>
+
+        <!-- ajax content -->
+        <div data-bind="fadeVisible: children_status() == 'loaded' || children_status() == 'semi_loaded'">
+
+          <!-- child entries -->
+          <div data-bind="foreach: children">
+            <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+          </div>
+
+          <!-- 'no children' message -->
+          <div class="loc_child no_children alert alert-info" data-bind="visible: children().length == 0, text: no_children_caption"></div>
+
+        </div>
+
+        {% if not show_inactive and not request.is_view_only %}
+          <!-- create child button -->
+          <!-- ko if: can_edit() -->
+          <a class="btn btn-primary loc_child"
+             data-bind="attr: { href: new_loc_url() + '?parent=' + (uuid() || '') },
+                                  click: new_location_tracking">
+            <i class="fa fa-plus"></i> <span data-bind="text: new_child_caption"></span>
+          </a>
+          <!-- /ko -->
+        {% endif %}
+      </div>
+    </div>
+  </script>
+
 {% endblock %}
 
 {% block modals %}
-{{ block.super }}
-<div class="modal fade" id="delete-location-modal">
-    <div class="modal-dialog">
+  {{ block.super }}
+  {% if not request.is_view_only %}
+    <div class="modal fade" id="delete-location-modal">
+      <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">{% trans "Delete Location:" %} <span data-bind="text: name" /></h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    {% blocktrans %}
-                    <strong>Warning!</strong> Deleting a location is permanent. There is no way to undo this action.
-                    This will also delete all child locations. If you are sure you would like to delete these
-                    <span data-bind="text: count"></span> locations, please type
-                    <strong><span data-bind="text: count"></span></strong> in the box below.
-                    {% endblocktrans %}
-                </p>
-                <input data-bind="value: signOff, valueUpdate: 'input'" />
-            </div>
-            <div class="modal-footer">
-                <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-                <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-danger">{% trans "Delete" %}</button>
-            </div>
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">{% trans "Delete Location:" %} <span data-bind="text: name" /></h4>
+          </div>
+          <div class="modal-body">
+            <p>
+              {% blocktrans %}
+                <strong>Warning!</strong> Deleting a location is permanent. There is no way to undo this action.
+                This will also delete all child locations. If you are sure you would like to delete these
+                <span data-bind="text: count"></span> locations, please type
+                <strong><span data-bind="text: count"></span></strong> in the box below.
+              {% endblocktrans %}
+            </p>
+            <input data-bind="value: signOff, valueUpdate: 'input'" />
+          </div>
+          <div class="modal-footer">
+            <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
+            <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-danger">{% trans "Delete" %}</button>
+          </div>
         </div>
+      </div>
     </div>
-</div>
 
-<div class="modal fade" id="archive-location-modal">
-    <div class="modal-dialog">
+    <div class="modal fade" id="archive-location-modal">
+      <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">{% trans "Archive Location:" %} <span data-bind="text: name" /></h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    {% blocktrans %}
-                    <strong>Warning!</strong> Archiving a location will unassign any users
-                    which were associated with that location.  You can unarchive this
-                    location at any point, but you will have to reassign the users
-                    manually.
-                    {% endblocktrans %}
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-                <button data-bind="click: archive_fn" class="btn btn-warning">{% trans "Archive" %}</button>
-            </div>
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">{% trans "Archive Location:" %} <span data-bind="text: name" /></h4>
+          </div>
+          <div class="modal-body">
+            <p>
+              {% blocktrans %}
+                <strong>Warning!</strong> Archiving a location will unassign any users
+                which were associated with that location.  You can unarchive this
+                location at any point, but you will have to reassign the users
+                manually.
+              {% endblocktrans %}
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
+            <button data-bind="click: archive_fn" class="btn btn-danger">{% trans "Archive" %}</button>
+          </div>
         </div>
+      </div>
     </div>
-</div>
+  {% endif %}
 {% endblock modals %}

@@ -2,24 +2,24 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="sub-group-fullform-ko-template">
-      <div class="gr" data-bind="
+  <div class="gr" data-bind="
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions()
         }">
-        <fieldset class="gr-header">
-            <legend>
-                <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
-                <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+    <fieldset class="gr-header">
+      <legend>
+        <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+        <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
                 ">Delete repeat</button>
-            </legend>
-            <span class="ix"></span>
-        </fieldset>
-        <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-    </div>
+      </legend>
+      <span class="ix"></span>
+    </fieldset>
+    <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+  </div>
 </script>
 
 <script type="text/html" id="form-navigation-ko-template">
@@ -61,179 +61,179 @@
 </script>
 
 <script type="text/html" id="form-fullform-ko-template">
-    <div class="webforms-nav-container"
-         data-bind="css: { 'webforms-nav-single-question': showInFormNavigation }">
-      <div class="webforms-nav"
-           data-bind="template: { name: 'form-navigation-ko-template' }"></div>
-    </div>
-    <div class="container form-container js-form-container" data-bind="
+  <div class="webforms-nav-container"
+       data-bind="css: { 'webforms-nav-single-question': showInFormNavigation }">
+    <div class="webforms-nav"
+         data-bind="template: { name: 'form-navigation-ko-template' }"></div>
+  </div>
+  <div class="container form-container js-form-container" data-bind="
           css: { 'form-single-question': showInFormNavigation },
       ">
 
-      <div class="page-header">
-        <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
-      </div>
+    <div class="page-header">
+      <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
+    </div>
 
-      <div class="row">
-        <div class="col-sm-12">
-          <form class="form form-horizontal" data-bind="submit: submitForm">
-            <div class="question-container">
-              <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-            </div>
-            <div class="form-actions form-group" data-bind="visible: showSubmitButton">
-                <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
-                    <input class="submit btn btn-primary"
-                        type="submit"
-                        value="Submit"
-                        data-bind="
+    <div class="row">
+      <div class="col-sm-12">
+        <form class="form form-horizontal" data-bind="submit: submitForm">
+          <div class="question-container">
+            <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+          </div>
+          <div class="form-actions form-group" data-bind="visible: showSubmitButton">
+            <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
+              <input class="submit btn btn-primary"
+                     type="submit"
+                     value="Submit"
+                     data-bind="
                             attr: {
                                 value: submitText
                             }
                             "
-                        />
-                </div>
+              />
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
+  </div>
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">
-    <!-- ko if: datatype() !== 'info' -->
-    <div class="q form-group" data-bind="
+  <!-- ko if: datatype() !== 'info' -->
+  <div class="q form-group" data-bind="
             css: {
                 error: error,
                 required: $data.required,
                 on: $root.forceRequiredVisible,
             }
         ">
-        <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH">
-            <div>
-                <!-- ko if: help() -->
-                <a
-                    class="help-text-trigger"
-                    role="button"
-                    ><i class="fa fa-question-circle"></i></a>
-                <div class="modal fade" role="dialog">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-body">
-                                <p align="left" data-bind="text: help"></p>
-                            </div>
-                            <div class="modal-footer">
-                                <!-- This needs to be a <span> instead of a <button> because (inexplicably) making it
-                                a button causes it to get clicked automatically when the modal opens, thus closing
-                                the modal immediately after it opens. We have yet to figure out why this is so. -->
-                                <span class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- /ko -->
-                <span data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+    <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH">
+      <div>
+        <!-- ko if: help() -->
+        <a
+          class="help-text-trigger"
+          role="button"
+        ><i class="fa fa-question-circle"></i></a>
+        <div class="modal fade" role="dialog">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-body">
+                <p align="left" data-bind="text: help"></p>
+              </div>
+              <div class="modal-footer">
+                <!-- This needs to be a <span> instead of a <button> because (inexplicably) making it
+                a button causes it to get clicked automatically when the modal opens, thus closing
+                the modal immediately after it opens. We have yet to figure out why this is so. -->
+                <span class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</span>
+              </div>
             </div>
-            <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
-        </label>
-        <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
-            <div class="loading">
-                <i class="fa fa-check text-success" data-bind="visible: clean "></i>
-                <i class="fa fa-spin fa-refresh" data-bind="visible: dirty"></i>
-                <i class="fa fa-remove text-danger clickable" data-bind="visible: hasError, click: triggerAnswer"></i>
-            </div>
-            <div class="widget" data-bind="
+          </div>
+        </div>
+        <!-- /ko -->
+        <span data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+      </div>
+      <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
+    </label>
+    <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
+      <div class="loading">
+        <i class="fa fa-check text-success" data-bind="visible: clean "></i>
+        <i class="fa fa-spin fa-refresh" data-bind="visible: dirty"></i>
+        <i class="fa fa-remove text-danger clickable" data-bind="visible: hasError, click: triggerAnswer"></i>
+      </div>
+      <div class="widget" data-bind="
                 template: { name: entryTemplate, data: entry, afterRender: afterRender },
                 css: { 'has-error': hasError }
             ">
-            </div>
-            <div class="widget-multimedia" data-bind="
+      </div>
+      <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
-                >
-            </div>
-            <div class="text-danger error-message" data-bind="
+      >
+      </div>
+      <div class="text-danger error-message" data-bind="
                 visible: error,
                 text: error
             "></div>
-            <div class="text-danger error-message server-error-message" data-bind="
+      <div class="text-danger error-message server-error-message" data-bind="
                 visible: serverError,
                 text: serverError
             "></div>
-        </div>
-        <span class="ix" data-bind="text: ixInfo($data)"></span>
-        <div class="eoq"></div>
     </div>
-    <div class="form-group-required-label"
-         data-bind="visible: $data.required, css: {
+    <span class="ix" data-bind="text: ixInfo($data)"></span>
+    <div class="eoq"></div>
+  </div>
+  <div class="form-group-required-label"
+       data-bind="visible: $data.required, css: {
                       on: $root.forceRequiredVisible,
                     }">{% trans 'Sorry, this response is required!' %}</div>
-    <!-- /ko -->
-    <!-- ko if: datatype() === 'info' -->
-    <div class="info panel panel-default">
-        <div class="panel-body">
-            <span class="ix" data-bind="text: ixInfo($data)">></span>
-            <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
-            <div class="widget-multimedia" data-bind="
+  <!-- /ko -->
+  <!-- ko if: datatype() === 'info' -->
+  <div class="info panel panel-default">
+    <div class="panel-body">
+      <span class="ix" data-bind="text: ixInfo($data)">></span>
+      <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+      <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
-                >
-            </div>
-        </div>
+      >
+      </div>
     </div>
-    <!-- /ko -->
+  </div>
+  <!-- /ko -->
 </script>
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
-    <div class="panel panel-default rep">
-        <div class="panel-heading">
-            <h3 class="caption" data-bind="html: header"></h3>
-            <span class="ix" data-bind="text: ixInfo($data)"></span>
-        </div>
-        <div class="panel-body">
-            <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-            <div class="alert alert-info empty" data-bind="visible: !children().length">This repeatable group is empty</div>
-        </div>
-        <div class="panel-footer">
-            <button class="btn btn-info btn-xs add" href="#" data-bind="click: newRepeat">Add new repeat</button>
-        </div>
-
+  <div class="panel panel-default rep">
+    <div class="panel-heading">
+      <h3 class="caption" data-bind="html: header"></h3>
+      <span class="ix" data-bind="text: ixInfo($data)"></span>
     </div>
+    <div class="panel-body">
+      <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+      <div class="alert alert-info empty" data-bind="visible: !children().length">This repeatable group is empty</div>
+    </div>
+    <div class="panel-footer">
+      <button class="btn btn-default btn-xs add" href="#" data-bind="click: newRepeat">Add new repeat</button>
+    </div>
+
+  </div>
 </script>
 
 <script type="text/html" id="widget-multimedia-ko-template">
-    <img class="img-responsive" data-bind="
+  <img class="img-responsive" data-bind="
          attr: { src: mediaSrc($data.caption_image()) },
          visible: mediaSrc($data.caption_image())
          " />
-    <audio controls="controls" data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio()) }">
-        Your browser does not support audio
-    </audio>
-    <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
-        Your browser does not support video
-    </video>
+  <audio controls="controls" data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio()) }">
+    Your browser does not support audio
+  </audio>
+  <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+    Your browser does not support video
+  </video>
 </script>
 
 <script type="text/html" id="text-entry-ko-template">
-    <textarea class="textfield form-control" data-bind="
+  <textarea class="textfield form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
             maxlength: lengthLimit,
         }
     "></textarea>
-    <span class="help-block type" data-bind="
+  <span class="help-block type" data-bind="
         text: helpText()
     "></span>
 </script>
 
 <script type="text/html" id="password-entry-ko-template">
-    <input type="password" class="form-control" data-bind="
+  <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
     "/>
-    <span class="help-block type" data-bind="text: helpText()"></span>
+  <span class="help-block type" data-bind="text: helpText()"></span>
 </script>
 
 <script type="text/html" id="str-entry-ko-template">
-    <input autocomplete="off" type="text" class="form-control" data-bind="
+  <input autocomplete="off" type="text" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
@@ -242,72 +242,72 @@
             placeholder: placeholderText
         }
     "/>
-    <span class="help-block type" data-bind="
+  <span class="help-block type" data-bind="
         text: helpText()
     "></span>
 </script>
 <script type="text/html" id="unsupported-entry-ko-template">
-    <div class="unsupported alert alert-warning">
-        <a class="unsupported-question-type-trigger" role="button"
-            ><i class="fa fa-question-circle"></i></a>
-        {% blocktrans %}
-            Sorry, web entry cannot support this type of question.
-        {% endblocktrans %}
-    </div>
-    <div class="modal fade" role="dialog" id="unsupported-question-type-modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body">
-                    {% blocktrans %}
-                        This question will appear as follows in data exports.
-                    {% endblocktrans %}
-                    <br><br>
-                    <input type="text" class="form-control" data-bind="value: $data.answer" />
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-default" data-dismiss="modal">{% trans "OK" %}</button>
-                </div>
-            </div>
+  <div class="unsupported alert alert-warning">
+    <a class="unsupported-question-type-trigger" role="button"
+    ><i class="fa fa-question-circle"></i></a>
+    {% blocktrans %}
+      Sorry, web entry cannot support this type of question.
+    {% endblocktrans %}
+  </div>
+  <div class="modal fade" role="dialog" id="unsupported-question-type-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          {% blocktrans %}
+            This question will appear as follows in data exports.
+          {% endblocktrans %}
+          <br><br>
+          <input type="text" class="form-control" data-bind="value: $data.answer" />
         </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" data-dismiss="modal">{% trans "OK" %}</button>
+        </div>
+      </div>
     </div>
+  </div>
 </script>
 <script type="text/html" id="geo-entry-ko-template">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr>
-                <td class="lat coordinate" data-bind="text: formatLat()"></td>
-                <td class="lon coordinate" data-bind="text: formatLon()"></td>
-                <td align="right" valign="bottom">
-                    <button class="btn btn-default btn-xs clear" data-bind="
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+    <tr>
+      <td class="lat coordinate" data-bind="text: formatLat()"></td>
+      <td class="lon coordinate" data-bind="text: formatLon()"></td>
+      <td align="right" valign="bottom">
+        <button class="btn btn-default btn-xs clear" data-bind="
                         click: onClear
                     ">Clear map</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="map" data-bind="attr: { id: entryId }">
-        <div class="wait" data-bind="visible: !map">Please wait while the map loads</div>
-    </div>
-    <div>
-        <form data-bind="submit: search">
-            <div class="form-group">
-                <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
-                    <div class="input-group">
-                        <input class="query form-control" type="text" />
-                        <span class="input-group-btn">
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <div class="map" data-bind="attr: { id: entryId }">
+    <div class="wait" data-bind="visible: !map">Please wait while the map loads</div>
+  </div>
+  <div>
+    <form data-bind="submit: search">
+      <div class="form-group">
+        <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
+          <div class="input-group">
+            <input class="query form-control" type="text" />
+            <span class="input-group-btn">
                             <button class="btn btn-default search">Search</button>
                         </span>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
 </script>
 <script type="text/html" id="select-entry-ko-template">
-    <div class="sel" data-bind="foreach: choices, as: 'choice'">
-        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
-            <label>
-                <input data-bind="
+  <div class="sel" data-bind="foreach: choices, as: 'choice'">
+    <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
+      <label>
+        <input data-bind="
                     checked: $parent.rawAnswer,
                     checkedValue: $index() + 1,
                     attr: {
@@ -317,41 +317,41 @@
                         class: 'group-' + $parent.entryId,
                     }
                 "/>
-                <span data-bind="renderMarkdown: $data"></span>
-            </label>
-        </div>
+        <span data-bind="renderMarkdown: $data"></span>
+      </label>
     </div>
+  </div>
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">
-    <select class="form-control" data-bind="
+  <select class="form-control" data-bind="
         options: options,
         optionsValue: 'idx',
         optionsText: 'text',
         value: rawAnswer,
         valueAllowUnset: true,
-        optionsCaption: gettext('Choose...')
+        optionsCaption: '{% trans_html_attr 'Choose...' %}'
         ">
-    </select>
+  </select>
 </script>
 <script type="text/html" id="date-entry-ko-template">
-    <div class="input-group">
-        <input type="text" class="form-control" data-bind="attr: { id: entryId } "/>
-        <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-    </div>
+  <div class="input-group">
+    <input type="text" class="form-control" data-bind="attr: { id: entryId } "/>
+    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+  </div>
 </script>
 
 <script type="text/html" id="datetime-entry-ko-template">
-    <div class="input-group">
-        <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
-        <span class="input-group-addon"><i class="fcc fcc-fd-datetime"></i></span>
-    </div>
+  <div class="input-group">
+    <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
+    <span class="input-group-addon"><i class="fcc fcc-fd-datetime"></i></span>
+  </div>
 </script>
 
 <script type="text/html" id="time-entry-ko-template">
-    <div class="input-group">
-        <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
-        <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
-    </div>
-    <span class="help-block">24-hour clock</span>
+  <div class="input-group">
+    <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
+    <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
+  </div>
+  <span class="help-block">24-hour clock</span>
 </script>
 <script type="text/html" id="blank-entry-ko-template"></script>

@@ -6,40 +6,40 @@
 {% load xforms_extras %}
 
 {% block head %}{{ block.super }}
-    {% include 'analytics/fullstory.html' %}
+  {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 
 {% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Menu Settings' %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <style>
-        /* Prevent help icons from disturbing horizontal alignment of table headers */
-        th > .hq-help {
-            position: absolute;
-        }
-    </style>
+  <style>
+    /* Prevent help icons from disturbing horizontal alignment of table headers */
+    th > .hq-help {
+      position: absolute;
+    }
+  </style>
 {% endblock %}
 {% block js %}{{ block.super }}
-    {% compress js %}
+  {% compress js %}
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
-    {% endcompress %}
-    {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
-        {% compress js %}
-        <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
-        <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
+  {% endcompress %}
+  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     {% compress js %}
+      <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+      <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
+  {% compress js %}
     <script src="{% static 'app_manager/js/modules/module_view.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/case_list_setting.js' %}"></script>
-    {% endcompress %}
-    {% include "app_manager/partials/xpathValidator.html" %}
+  {% endcompress %}
+  {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include 'hqmedia/partials/multimedia_js.html' %}
-    {% compress js %}
+  {% include 'hqmedia/partials/multimedia_js.html' %}
+  {% compress js %}
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
@@ -48,10 +48,10 @@
     <script src="{% static 'app_manager/js/details/case_list_callout.js' %}"></script>
     <script src="{% static 'app_manager/js/details/screen_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 
-    {% include 'hqwebapp/partials/key_value_mapping.html' %}
-    {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
+  {% include 'hqwebapp/partials/key_value_mapping.html' %}
+  {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
 {% endblock %}
 
 {% block pre_form_content %}
@@ -81,6 +81,7 @@
   {% registerurl "edit_module_detail_screens" domain app.id module.unique_id %}
   {% registerurl "hqmedia_remove_detail_print_template" domain app.id %}
   {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
+  {% registerurl "existing_case_types" domain %}
   <div class="tabbable appmanager-tabs-container">
 
     {% if not module.is_surveys %}
@@ -102,7 +103,7 @@
             {% endif %}
           {% endfor %}
           {% if add_ons.case_detail_overwrite and details and app|get_available_modules_for_case_list_configuration:module %}
-              <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+            <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
           {% endif %}
         {% endblock %}{# endblock tab-headers #}
       </ul>
@@ -129,40 +130,40 @@
           {% endfor %}
           {% if add_ons.case_detail_overwrite and details %}
             {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
-            {% if available_modules %}
-            <div class="tab-pane" id="module-actions">
-                {% include 'app_manager/partials/modules/module_actions.html' %}
-            </div>
-            {% endif %}
+              {% if available_modules %}
+                <div class="tab-pane" id="module-actions">
+                  {% include 'app_manager/partials/modules/module_actions.html' %}
+                </div>
+              {% endif %}
             {% endwith %}
           {% endif %}
         {% endif %}
       {% endblock %}
     </div>
-</div>
+  </div>
 
-<script type="text/html" id="module-forms-template">
+  <script type="text/html" id="module-forms-template">
     <div class="checkbox">
-        <label>
-            <input name="incl_form_ids"
-                   type="checkbox"
-                   data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
-            <span data-bind="text: name"></span>
-        </label>
+      <label>
+        <input name="incl_form_ids"
+               type="checkbox"
+               data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
+        <span data-bind="text: name"></span>
+      </label>
     </div>
-</script>
+  </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/partials/nav_menu_media_modals.html" %}
-{% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+  {% include "app_manager/partials/nav_menu_media_modals.html" %}
+  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     {% with print_uploader as uploader %}
-        {% include 'hqmedia/partials/multimedia_uploader.html' %}
+      {% include 'hqmedia/partials/multimedia_uploader.html' %}
     {% endwith %}
-{% endif %}
+  {% endif %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
-    {{ block.super }}
-    {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
+  {{ block.super }}
+  {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
 {% endblock %}

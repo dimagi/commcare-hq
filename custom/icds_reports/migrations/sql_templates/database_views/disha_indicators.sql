@@ -1,10 +1,6 @@
 DROP VIEW IF EXISTS icds_disha_indicators CASCADE;
 CREATE VIEW icds_disha_indicators AS
 SELECT
-    "awc_monthly"."awc_id" AS "awc_id",
-    "awc_monthly"."awc_name" AS "awc_name",
-    "awc_monthly"."supervisor_id" AS "supervisor_id",
-    "awc_monthly"."supervisor_name" AS "supervisor_name",
     "awc_monthly"."block_id" AS "block_id",
     "awc_monthly"."block_name" AS "block_name",
     "awc_monthly"."district_id" AS "district_id",
@@ -54,21 +50,54 @@ SELECT
     CASE WHEN  "child_health"."height_measured_in_month"=0 THEN null 
         ELSE 100 * "child_health"."stunting_moderate"/"child_health"."height_measured_in_month" END as "stunting_moderate_percent"
 FROM "agg_awc_monthly" "awc_monthly"
-LEFT JOIN "agg_ccs_record_monthly" "ccs_record" ON (
+LEFT JOIN (
+    SELECT 
+        state_id, district_id, block_id, month, aggregation_level,
+        sum(pregnant) as pregnant,
+        sum(trimester_3) as trimester_3,
+        sum(resting_during_pregnancy) as resting_during_pregnancy,
+        sum(counsel_immediate_bf) as counsel_immediate_bf,
+        sum(extra_meal) as extra_meal
+    FROM
+        "agg_ccs_record_monthly"
+    WHERE
+        aggregation_level in (1, 2, 3)
+    GROUP BY
+        state_id, district_id, block_id, month, aggregation_level
+)"ccs_record" ON (
         ("awc_monthly"."month" = "ccs_record"."month") AND
         ("awc_monthly"."aggregation_level" = "ccs_record"."aggregation_level") AND
         ("awc_monthly"."state_id" = "ccs_record"."state_id") AND
         ("awc_monthly"."district_id" = "ccs_record"."district_id") AND
-        ("awc_monthly"."block_id" = "ccs_record"."block_id") AND
-        ("awc_monthly"."supervisor_id" = "ccs_record"."supervisor_id") AND
-        ("awc_monthly"."awc_id" = "ccs_record"."awc_id")
+        ("awc_monthly"."block_id" = "ccs_record"."block_id")
     )
-LEFT JOIN "agg_child_health_monthly" "child_health" ON (
+LEFT JOIN (
+    SELECT
+        state_id, district_id, block_id, month, aggregation_level,
+        sum(wer_eligible) as wer_eligible,
+        sum(height_eligible) as height_eligible,
+        sum(height_measured_in_month) as height_measured_in_month,
+        sum(nutrition_status_weighed) as nutrition_status_weighed,
+        sum(nutrition_status_unweighed) as nutrition_status_unweighed,
+        sum(nutrition_status_severely_underweight) as nutrition_status_severely_underweight,
+        sum(nutrition_status_moderately_underweight) as nutrition_status_moderately_underweight,
+        sum(weighed_and_height_measured_in_month) as weighed_and_height_measured_in_month,
+        sum(wasting_severe) as wasting_severe,
+        sum(wasting_moderate) as wasting_moderate,
+        sum(stunting_severe) as stunting_severe,
+        sum(stunting_moderate) as stunting_moderate
+    FROM
+        "agg_child_health_monthly"
+    WHERE
+        aggregation_level in (1, 2, 3)
+    GROUP BY
+        state_id, district_id, block_id, month, aggregation_level
+) "child_health" ON (
         ("awc_monthly"."month" = "child_health"."month") AND
         ("awc_monthly"."aggregation_level" = "child_health"."aggregation_level") AND
         ("awc_monthly"."state_id" = "child_health"."state_id") AND
         ("awc_monthly"."district_id" = "child_health"."district_id") AND
-        ("awc_monthly"."block_id" = "child_health"."block_id") AND
-        ("awc_monthly"."supervisor_id" = "child_health"."supervisor_id") AND
-        ("awc_monthly"."awc_id" = "child_health"."awc_id")
-    );
+        ("awc_monthly"."block_id" = "child_health"."block_id")
+    )
+WHERE
+    "awc_monthly"."aggregation_level" in (1, 2, 3);

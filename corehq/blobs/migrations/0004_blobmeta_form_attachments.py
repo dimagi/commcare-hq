@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
+from corehq.sql_db.operations import RawSQLMigration
 from corehq.sql_db.migrations import partitioned
 
 migrator = RawSQLMigration(('corehq', 'blobs', 'sql_templates'), {})
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
     operations = [
         # this was accidentally removed by 0003_big_content
         # drop first in case it already exists
-        HqRunSQL(
+        migrations.RunSQL(
             """
             ALTER TABLE blobs_blobmeta DROP CONSTRAINT IF EXISTS
                 blobs_blobmeta_content_length_check;
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             "SELECT 1"
         ),
 
-        migrator.get_migration('get_blobmetas.sql'),
+        partitioned(migrator.get_migration('get_blobmetas.sql'), apply_to_proxy=False),
         migrator.get_migration('setup_blobmeta_view.sql', 'drop_blobmeta_view.sql'),
         migrator.get_migration('restrict_legacy_attachment_metadata_insert.sql', testing_only=True),
     ]

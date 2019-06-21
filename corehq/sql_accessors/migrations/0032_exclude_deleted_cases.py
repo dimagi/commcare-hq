@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.form_processor.models import CommCareCaseIndexSQL
-from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
+from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'RELATIONSHIP_TYPE_EXTENSION': CommCareCaseIndexSQL.EXTENSION

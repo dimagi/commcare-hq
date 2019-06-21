@@ -1,23 +1,22 @@
 from __future__ import absolute_import, division
-
 from __future__ import unicode_literals
+
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import percent_num, person_has_aadhaar_column, person_is_beneficiary_column
 from custom.icds_reports.utils.mixins import ProgressReportMixIn
 from custom.utils.utils import clean_IN_filter_value
 
 
-class AggAWCMonthlyDataSource(ProgressReportMixIn, SqlData):
+class AggAWCMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_awc_monthly'
-    engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggAWCMonthlyDataSource, self).__init__(config)
@@ -61,66 +60,6 @@ class AggAWCMonthlyDataSource(ProgressReportMixIn, SqlData):
     def get_columns(self, filters):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
-            # DatabaseColumn(
-            #     'Number of AWCs Open In Month',
-            #     SumColumn('num_awcs'),
-            #     slug='awc_num_open'
-            # ),
-            # DatabaseColumn(
-            #     'Number of Household Registration Forms',
-            #     SumColumn('usage_num_hh_reg')
-            # ),
-            # DatabaseColumn(
-            #     'Number of Pregnancy Registration Forms',
-            #     SumColumn('usage_num_add_pregnancy')
-            # ),
-            # DatabaseColumn(
-            #     'Number of PSE Forms with Photo',
-            #     SumColumn('usage_num_pse_with_image')
-            # ),
-            # AggregateColumn(
-            #     'Home Visit - Number of Birth Preparedness Forms',
-            #     lambda x, y, z: x + y + z,
-            #     columns=[
-            #         SumColumn('usage_num_bp_tri1'),
-            #         SumColumn('usage_num_bp_tri2'),
-            #         SumColumn('usage_num_bp_tri3')
-            #     ],
-            #     slug='num_bp'
-            # ),
-            # DatabaseColumn(
-            #     'Home Visit - Number of Delivery Forms',
-            #     SumColumn('usage_num_delivery')
-            # ),
-            # DatabaseColumn(
-            #     'Home Visit - Number of PNC Forms',
-            #     SumColumn('usage_num_pnc')
-            # ),
-            # DatabaseColumn(
-            #     'Home Visit - Number of EBF Forms',
-            #     SumColumn('usage_num_ebf')
-            # ),
-            # DatabaseColumn(
-            #     'Home Visit - Number of CF Forms',
-            #     SumColumn('usage_num_cf')
-            # ),
-            # DatabaseColumn(
-            #     'Number of GM forms',
-            #     SumColumn('usage_num_gmp')
-            # ),
-            # DatabaseColumn(
-            #     'Number of THR forms',
-            #     SumColumn('usage_num_thr')
-            # ),
-            # AggregateColumn(
-            #     'Number of Due List forms',
-            #     lambda x, y: x + y,
-            #     [
-            #         SumColumn('usage_num_due_list_ccs'),
-            #         SumColumn('usage_num_due_list_child_health')
-            #     ],
-            #     slug='due_list'
-            # ),
             DatabaseColumn(
                 'Number of Households',
                 SumColumn('cases_household'),

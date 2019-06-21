@@ -3,19 +3,68 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "hqwebapp/js/widgets_v4" %}
+{% requirejs_main "translations/js/app_translations" %}
+
 
 {% block page_content %}
-    {% if not transifex_details_available %}
-        <p class="text-error">
+  {% registerurl "paginate_releases" domain '---' %}
+
+  {% if not transifex_details_available %}
+    <p class="text-error">
             <span class="label label-danger">
                 {% trans 'Transifex integration not set for this domain' %}
             </span>
-        </p>
-    {% else %}
+    </p>
+  {% else %}
+    <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+      <li><a data-toggle="tab" href="#create-trans-form" id="create-tab">{% trans "Create" %}</a></li>
+      <li><a data-toggle="tab" href="#update-trans-form" id="update-tab">{% trans "Update" %}</a></li>
+      <li><a data-toggle="tab" href="#push-trans-form" id="push-tab">{% trans "Push" %}</a></li>
+      <li><a data-toggle="tab" href="#pull-trans-form" id="pull-tab">{% trans "Pull" %}</a></li>
+      <li><a data-toggle="tab" href="#backup-trans-form" id="backup-tab">{% trans "BackUp" %}</a></li>
+      <li><a data-toggle="tab" href="#del-trans-form" id="delete-tab">{% trans "Delete" %}</a></li>
+    </ul>
+    <div class="tab-content">
+      <div id="create-trans-form" class="tab-pane">
         <form class="form form-horizontal" name="product" method="post">
-            <legend>{% trans "ICDS App Translations" %}</legend>
-            {% crispy translations_form %}
+          <legend>{% trans "Set Up New Project" %}</legend>
+          {% crispy create_form %}
         </form>
-    {% endif %}
+      </div>
+      <div id="update-trans-form" class="tab-pane">
+        <form class="form form-horizontal" name="product" method="post">
+          <legend>{% trans "Update Source Files" %}</legend>
+          {% crispy update_form %}
+        </form>
+      </div>
+      <div id="push-trans-form" class="tab-pane">
+        <form class="form form-horizontal" name="product" method="post">
+          <legend>{% trans "Push Target Language" %}</legend>
+          {% crispy push_form %}
+        </form>
+      </div>
+      <div id="pull-trans-form" class="tab-pane">
+        <form class="form form-horizontal" name="product" method="post">
+          <legend>{% trans "Pull App Translations" %}</legend>
+          {% crispy pull_form %}
+        </form>
+      </div>
+      <div id="backup-trans-form" class="tab-pane">
+        <form class="form form-horizontal" name="product" method="post">
+          <legend>{% trans "BackUp Translations" %}</legend>
+          {% crispy backup_form %}
+        </form>
+      </div>
+      <div id="del-trans-form" class="tab-pane">
+        {% if delete_form %}
+          <form class="form form-horizontal" name="product" method="post">
+            <legend>{% trans "Delete Project" %}</legend>
+            {% crispy delete_form %}
+          </form>
+        {% else %}
+          <b>{% trans "Action permitted to only users with staff access" %}</b>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}

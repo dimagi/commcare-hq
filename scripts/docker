@@ -77,6 +77,25 @@ function usage() {
             echo "Remove all containers, images and volumes"
             echo ""
             ;;
+        citus)
+            echo "Manage citus containers"
+            echo ""
+            echo "$0 citus [COMMAND]"
+            echo ""
+            echo "OPTIONS are passed to docker compose."
+            echo ""
+            echo "Examples:"
+            echo ""
+            echo "  # run citus containers in the background
+            echo "  $0 citus up -d"
+            echo ""
+            echo "  # list citus containers"
+            echo "  $0 citus ps"
+            echo ""
+            echo "  # stop citus containers"
+            echo "  $0 citus stop"
+            echo ""
+            ;;
         *)
             echo "Manage docker services for CommCare HQ"
             echo ""
@@ -125,6 +144,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
         if [ "$CMD" == "py3test" ]; then
             CMD=test
             DOCKERFILE=Dockerfile-py3
+            PYTHON_VERSION=py3
         fi
     fi
     export COMPOSE_FILE=docker/hq-compose.yml
@@ -132,7 +152,23 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
     else
-        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+        # Since we don't want to persist tests data beyond the lifecycle of the container
+        # we don't want to specify a volume path. Prior to v2 of docker compse this wasn't
+        # an issue since not specifying a path resulted in using named volumes which docker
+        # would dynamically create. From >v2 docker compose requires declaring named volumes
+        # in the compose file which means we can't use the same compose file using named volumes
+        # in one instance and unnamed in another.
+        # The solution was to specify a blank path in tests rather than a volume name. Docker compose
+        # will then create the volume as before.
+        # Making this work relies on a exploiting variable substitution:
+        #     ${VARIABLE-default} evaluates to default only if VARIABLE is unset in the environment.
+        # In normal operations we set VOLUME_PREFIX and leave BLANK_IF_TESTS unset which will cause
+        # this "${BLANK_IF_TESTS-vol1:}" to evaluate to "vol1:" (note the ':'). During tests we set "BLANK_IF_TESTS"
+        # to an empty string and the result of the above expression is an empty string.
+        # Note: I also tried using the long syntax for volume specification but wasn't able to get it to work.
+        # See https://docs.docker.com/compose/compose-file/compose-file-v2/#volumes
+        export VOLUME_PREFIX=""
+        export BLANK_IF_TESTS=""
     fi
 else
     if [[ "$CMD" =~ ^(runserver|bash|shell|ps)$ ]]; then
@@ -147,6 +183,13 @@ else
             elif [ -z "$CMD" ]; then
                 CMD="up"
             fi
+        fi
+    elif [ "$CMD" == "citus" ]; then
+        SERVICES="citus"
+        CMD="$1"
+        shift
+        if [ -z "$CMD" ]; then
+            CMD="help"
         fi
     else
         SERVICES="services"
@@ -176,6 +219,7 @@ else
 fi
 # export variables for compose file (they must be set or it complains)
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
+export PYTHON_VERSION="${PYTHON_VERSION:-py2}"
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
@@ -196,17 +240,6 @@ else
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
 fi
 
-if [  -z "$DOCKER_MACHINE_NAME" -a `uname` == 'Darwin' ]; then
-    # Docker for Mac (not in virtualbox)
-    # Put elasticsearch (and other) data in a named data volume, automatically
-    # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
-    # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
-    # The commit that introduced this can be reverted when the issue is resolved.
-    export DATA_VOLUME_PREFIX=${COMPOSE_PROJECT_NAME}-
-else
-    export DATA_VOLUME_PREFIX=${VOLUME_PREFIX}
-fi
-
 case $CMD in
     -h | --help | help | services | "")
         if [ "$COMPOSE_PROJECT_NAME" == "hqtest" ]; then
@@ -223,7 +256,7 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    docker-compose pull --parallel couch postgres redis elasticsearch kafka riakcs
+    docker-compose pull
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"
@@ -266,7 +299,8 @@ else
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \
             ${VOLUME_PREFIX}redis \
-            ${VOLUME_PREFIX}riakcs \
+            ${VOLUME_PREFIX}minio-conf \
+            ${VOLUME_PREFIX}minio-data \
             ${VOLUME_PREFIX}zookeeper
     fi
 fi

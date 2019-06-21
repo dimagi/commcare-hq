@@ -1,23 +1,23 @@
 {% load hq_shared_tags %}
 <div id="js-appmanager-preview" class="preview-phone-wrapper">
-    <div class="preview-toggler js-preview-toggle">
-      <i class="fa fa-chevron-left js-preview-action-show"></i>
-      <i class="fa fa-chevron-right js-preview-action-hide"></i>
+  <div class="preview-toggler js-preview-toggle">
+    <i class="fa fa-chevron-left js-preview-action-show"></i>
+    <i class="fa fa-chevron-right js-preview-action-hide"></i>
+  </div>
+  <div class="preview-phone-container">
+    <iframe class="preview-phone-window" frameBorder="0" scrolling="no" src="{% url 'preview_app' request.domain app.get_id %}">
+    </iframe>
+    <div class="hardware-buttons">
+      <button type="button" class="btn btn-hardware btn-preview-back js-preview-back">
+        <i class="fa fa-chevron-left"></i>
+      </button>
+      <button type="button" class="btn btn-hardware btn-preview-refresh js-preview-refresh">
+        <i class="fa fa-refresh"></i>
+      </button>
+      <button type="button" class="btn btn-hardware btn-preview-toggle-tablet-view js-preview-toggle-tablet-view">
+        <i class="fa fa-tablet preview-tablet-icon"></i>
+        <i class="fa fa-mobile preview-mobile-icon"></i>
+      </button>
     </div>
-    <div class="preview-phone-container">
-        <iframe class="preview-phone-window" frameBorder="0" scrolling="no" src="{% url 'preview_app' request.domain app.get_id %}">
-        </iframe>
-        <div class="hardware-buttons">
-            <button type="button" class="btn btn-hardware btn-preview-back js-preview-back">
-                <i class="fa fa-chevron-left"></i>
-            </button>
-            <button type="button" class="btn btn-hardware btn-preview-refresh js-preview-refresh">
-                <i class="fa fa-refresh"></i>
-            </button>
-            <button type="button" class="btn btn-hardware btn-preview-toggle-tablet-view js-preview-toggle-tablet-view">
-                <i class="fa fa-tablet preview-tablet-icon"></i>
-                <i class="fa fa-mobile preview-mobile-icon"></i>
-            </button>
-        </div>
-    </div>
+  </div>
 </div>

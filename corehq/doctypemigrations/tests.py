@@ -33,13 +33,7 @@ class TestDocTypeMigrations(TestCase):
 
         self.docs = [
             {'doc_type': 'CommCareUser', 'username': 'johnny@example.com'},
-            {'doc_type': 'CommCareUser', 'username': 'fatima@example.com',
-             '_attachments': {
-                 "greeting.txt": {
-                     "content_type": "text/plain", "data": base64.b64encode(b"hi").decode('utf-8'),
-                     "digest": "md5-QTVOnBwGnrw6Tx9YG1ZRyA==", "revpos": 1,
-                 }
-             }},
+            {'doc_type': 'CommCareUser', 'username': 'fatima@example.com'},
             {'doc_type': 'Group', 'name': 'User Group'},
             {'doc_type': 'Group-Deleted', 'name': 'Deleted User Group'},
         ]

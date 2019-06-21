@@ -1,0 +1,12 @@
+<script type="text/html" id="ko-select-toggle">
+  <div class="ko-select-toggle">
+    <select class="hide" data-bind="foreach: options, attr: {name: name, id: id}, value: value">
+      <option data-bind="value: $data.id,
+                               text: $data.text,
+                               attr: {selected: $data.selected}"></option>
+    </select>
+    <div class="btn-group-separated" data-bind="foreach: options">
+      <button class="btn btn-default"
+              data-bind="text: $data.text, css: {active: $data.selected}, click: click"></button>
+    </div>
+</script>

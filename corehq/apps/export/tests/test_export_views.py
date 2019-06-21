@@ -272,7 +272,7 @@ class ExportViewTest(ViewTestCase):
             "external_blobs": {},
             "export_format": "csv",
             "include_errors": False,
-            "type": "form",
+            "type": "case",
             "name": "A Villager's Health > Registrationaa > Reg form: 2016-06-27"
         })
         resp = self.client.post(

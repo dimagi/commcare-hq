@@ -26,3 +26,7 @@
    icon: icon-vellum-android-intent
    name: Breath Counter
    id: org.commcare.respiratory.BREATHCOUNT
+-
+   icon: fa-id-badge
+   name: Simprints Enrolment
+   id: com.simprints.id.REGISTER

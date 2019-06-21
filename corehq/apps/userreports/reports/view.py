@@ -13,7 +13,6 @@ from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
     use_daterangepicker,
     use_jquery_ui,
     use_nvd3,
@@ -35,7 +34,7 @@ from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.dispatcher import (
     ReportDispatcher,
 )
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -141,7 +140,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             return self._domain
         return super(ConfigurableReportView, self).domain
 
-    @use_select2
     @use_daterangepicker
     @use_jquery_ui
     @use_datatables
@@ -411,7 +409,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if settings.DEBUG:
                 raise
             return self.render_json_response({
-                'error': e.message,
+                'error': six.text_type(e),
                 'aaData': [],
                 'iTotalRecords': 0,
                 'iTotalDisplayRecords': 0,

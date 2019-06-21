@@ -5,8 +5,12 @@ import tempfile
 import six
 from io import open
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 def Temp(tmp):
+    if isinstance(tmp, six.string_types):
+        soft_assert_type_text(tmp)
     cls = PathTemp if isinstance(tmp, six.string_types) else StringIOTemp
     return cls(tmp)
 

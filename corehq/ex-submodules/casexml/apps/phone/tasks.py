@@ -11,6 +11,7 @@ from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.form_processor.backends.sql.dbaccessors import get_cursor
+from dimagi.utils.logging import notify_exception
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
@@ -18,7 +19,7 @@ ASYNC_RESTORE_SENT = "SENT"
 SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="2", minute="0", day_of_week="1"),
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="1"),
                queue='background_queue')
 def update_cleanliness_flags():
     """
@@ -27,7 +28,7 @@ def update_cleanliness_flags():
     set_cleanliness_flags_for_all_domains(force_full=False)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="4", minute="0", day_of_month="5"),
+@periodic_task(run_every=crontab(hour="4", minute="0", day_of_month="5"),
                queue='background_queue')
 def force_update_cleanliness_flags():
     """
@@ -45,16 +46,25 @@ def get_async_restore_payload(restore_config, domain=None, username=None):
     Process an async restore
     domain and username: added for displaying restore request details on flower
     """
+    try:
+        repr(restore_config)
+    except Exception as e:
+        notify_exception(
+            None,
+            'Something went wrong with RestoreConfig.__repr__()',
+            details={'error': str(e)}
+        )
+
     response = restore_config.generate_payload(async_task=current_task)
 
     # delete the task id from the task, since the payload can now be fetched from the cache
     restore_config.async_restore_task_id_cache.invalidate()
 
-    return response
+    return response.name
 
 
 @after_task_publish.connect
-def update_celery_state(sender=None, body=None, **kwargs):
+def update_celery_state(sender=None, headers=None, **kwargs):
     """Updates the celery task progress to "SENT"
 
     When fetching an task from celery using the form AsyncResponse(task_id), if
@@ -72,10 +82,10 @@ def update_celery_state(sender=None, body=None, **kwargs):
     task = current_app.tasks.get(sender)
     backend = task.backend if task else current_app.backend
 
-    backend.store_result(body['id'], None, ASYNC_RESTORE_SENT)
+    backend.store_result(headers['id'], None, ASYNC_RESTORE_SENT)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="1", minute="0"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )

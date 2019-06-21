@@ -10,7 +10,7 @@ from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import early_initiation_breastfeeding_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
@@ -18,7 +18,7 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chos
     indian_formatted_number, get_child_locations
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -83,7 +83,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -129,11 +129,16 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
         data_for_month['birth'] += birth
         data_for_month['y'] = data_for_month['birth'] / float(data_for_month['all'] or 1)
 
-    top_locations = sorted(
-        [dict(loc_name=key, percent=val) for key, val in six.iteritems(best_worst)],
-        key=lambda x: x['percent'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': val
+        }
+        for key, val in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
 
     return {
         "chart_data": [
@@ -152,14 +157,14 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_early_initiation_breastfeeding_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 

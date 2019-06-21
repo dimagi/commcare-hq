@@ -1,22 +1,24 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-<div id="delete-export-modal-{{ export.get_id }}" class="modal fade">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">{% trans "Delete Export for" %} "{{ export.name }}"?</h4>
-            </div>
-            <form name="drop_report" action="{% url "delete_new_custom_export" domain export.type export.get_id %}" method="post">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <p>{% trans "Are you sure you want to delete this export?" %}</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" type="submit"><i class="fa fa-remove"></i> {% trans "Delete" %}</button>
-                    <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</a>
-                </div>
-            </form>
+<div data-bind="attr: {id: 'delete-export-modal-' + id()}" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">
+          {% trans "Delete Export for" %} "<!-- ko text: name --><!-- /ko -->"?
+        </h4>
+      </div>
+      <form name="drop_report" data-bind="attr: {action: deleteUrl}" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p>{% trans "Are you sure you want to delete this export?" %}</p>
         </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger" type="submit"><i class="fa fa-remove"></i> {% trans "Delete" %}</button>
+          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+        </div>
+      </form>
     </div>
+  </div>
 </div>

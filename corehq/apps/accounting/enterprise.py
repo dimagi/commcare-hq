@@ -11,10 +11,11 @@ from dimagi.utils.dates import DateSpan
 
 from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.exceptions import EnterpriseReportError
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
+from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.calculations import sms_in_in_last
 from corehq.apps.es import forms as form_es
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors.all_commcare_users import (
@@ -67,17 +68,17 @@ class EnterpriseReport(object):
     def format_date(self, date):
         return date.strftime('%Y/%m/%d %H:%M:%S') if date else ''
 
-    def domain_properties(self, domain):
+    def domain_properties(self, domain_obj):
         return [
-            domain.name,
-            domain.hr_name,
-            get_default_domain_url(domain.name),
+            domain_obj.name,
+            domain_obj.hr_name,
+            get_default_domain_url(domain_obj.name),
         ]
 
-    def rows_for_domain(self, domain):
+    def rows_for_domain(self, domain_obj):
         raise NotImplementedError("Subclasses should override this")
 
-    def total_for_domain(self, domain):
+    def total_for_domain(self, domain_obj):
         raise NotImplementedError("Subclasses should override this")
 
     @memoized
@@ -110,19 +111,20 @@ class EnterpriseDomainReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseDomainReport, self).headers
-        return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'),
-                _('# of Web Users'), _('Last Form Submission [UTC]')] + headers
+        return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'), _('# of Web Users'),
+                _('# of SMS (last 30 days)'), _('Last Form Submission [UTC]')] + headers
 
-    def rows_for_domain(self, domain):
+    def rows_for_domain(self, domain_obj):
         return [[
-            self.format_date(domain.date_created),
-            len(domain.applications()),
-            get_mobile_user_count(domain.name, include_inactive=False),
-            get_web_user_count(domain.name, include_inactive=False),
-            self.format_date(get_last_form_submission_received(domain.name)),
-        ] + self.domain_properties(domain)]
+            self.format_date(domain_obj.date_created),
+            len(domain_obj.applications()),
+            get_mobile_user_count(domain_obj.name, include_inactive=False),
+            get_web_user_count(domain_obj.name, include_inactive=False),
+            sms_in_in_last(domain_obj.name, 30),
+            self.format_date(get_last_form_submission_received(domain_obj.name)),
+        ] + self.domain_properties(domain_obj)]
 
-    def total_for_domain(self, domain):
+    def total_for_domain(self, domain_obj):
         return 1
 
 
@@ -135,23 +137,31 @@ class EnterpriseWebUserReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseWebUserReport, self).headers
-        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]')] + headers
+        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]'),
+                _('Last Access Date [UTC]')] + headers
 
-    def rows_for_domain(self, domain):
+    def rows_for_domain(self, domain_obj):
         rows = []
-        for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False,
+        for user in get_all_user_rows(domain_obj.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
             user = CouchUser.wrap_correctly(user['doc'])
-            rows.append([
-                user.full_name,
-                user.username,
-                user.role_label(domain.name),
-                self.format_date(user.last_login),
-            ] + self.domain_properties(domain))
+            domain_membership = user.get_domain_membership(domain_obj.name)
+            last_accessed_domain = None
+            if domain_membership:
+                last_accessed_domain = domain_membership.last_accessed
+            rows.append(
+                [
+                    user.full_name,
+                    user.username,
+                    user.role_label(domain_obj.name),
+                    self.format_date(user.last_login),
+                    last_accessed_domain
+                ]
+                + self.domain_properties(domain_obj))
         return rows
 
-    def total_for_domain(self, domain):
-        return get_web_user_count(domain.name, include_inactive=False)
+    def total_for_domain(self, domain_obj):
+        return get_web_user_count(domain_obj.name, include_inactive=False)
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
@@ -166,9 +176,9 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
         return [_('Username'), _('Name'), _('Created Date [UTC]'), _('Last Sync [UTC]'),
                 _('Last Submission [UTC]'), _('CommCare Version')] + headers
 
-    def rows_for_domain(self, domain):
+    def rows_for_domain(self, domain_obj):
         rows = []
-        for user in get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
+        for user in get_all_user_rows(domain_obj.name, include_web_users=False, include_mobile_users=True,
                                       include_inactive=False, include_docs=True):
             user = CouchUser.wrap_correctly(user['doc'])
             rows.append([
@@ -178,11 +188,11 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
                 self.format_date(user.reporting_metadata.last_sync_for_user.sync_date),
                 self.format_date(user.reporting_metadata.last_submission_for_user.submission_date),
                 user.reporting_metadata.last_submission_for_user.commcare_version or '',
-            ] + self.domain_properties(domain))
+            ] + self.domain_properties(domain_obj))
         return rows
 
-    def total_for_domain(self, domain):
-        return get_mobile_user_count(domain.name, include_inactive=False)
+    def total_for_domain(self, domain_obj):
+        return get_mobile_user_count(domain_obj.name, include_inactive=False)
 
 
 class EnterpriseFormReport(EnterpriseReport):
@@ -214,11 +224,11 @@ class EnterpriseFormReport(EnterpriseReport):
                  .filter(users_filter))
         return query.run().hits
 
-    def rows_for_domain(self, domain):
-        apps = get_brief_apps_in_domain(domain.name)
+    def rows_for_domain(self, domain_obj):
+        apps = get_brief_apps_in_domain(domain_obj.name)
         apps = {a.id: a.name for a in apps}
         rows = []
-        for hit in self.hits(domain.name):
+        for hit in self.hits(domain_obj.name):
             username = hit['form']['meta']['username']
             submitted = self.format_date(datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S'))
             rows.append([
@@ -226,8 +236,8 @@ class EnterpriseFormReport(EnterpriseReport):
                 submitted,
                 apps[hit['app_id']] if hit['app_id'] in apps else _('App not found'),
                 username,
-            ] + self.domain_properties(domain))
+            ] + self.domain_properties(domain_obj))
         return rows
 
-    def total_for_domain(self, domain):
-        return len(self.hits(domain.name))
+    def total_for_domain(self, domain_obj):
+        return len(self.hits(domain_obj.name))

@@ -13,7 +13,9 @@ import six
 
 
 def datetime_to_xml_string(datetime_string):
-    if isinstance(datetime_string, six.string_types):
+    if isinstance(datetime_string, bytes):
+        datetime_string = datetime_string.decode('utf-8')
+    if isinstance(datetime_string, six.text_type):
         return datetime_string
 
     return json_format_datetime(datetime_string)
@@ -34,7 +36,9 @@ def date_to_xml_string(date):
     if not date:
         return ''
 
-    if isinstance(date, six.string_types):
+    if isinstance(date, bytes):
+        date = date.decode('utf-8')
+    if isinstance(date, six.text_type):
         date = parse_datetime(date)
 
     return json_format_date(date)

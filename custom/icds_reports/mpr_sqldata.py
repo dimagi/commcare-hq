@@ -43,8 +43,9 @@ class MPRSectors(object):
     subtitle = []
     posttitle = None
 
-    def __init__(self, config):
+    def __init__(self, config, allow_conditional_agg=False):
         self.config = config
+        self.allow_conditional_agg = allow_conditional_agg
 
     @property
     def headers(self):
@@ -289,8 +290,8 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
     title = '4. Delivery of Supplementary Nutrition and Pre-School Education (PSE)'
     slug = 'supplementary_nutrition'
 
-    def __init__(self, config):
-        super(MPRSupplementaryNutrition, self).__init__(config)
+    def __init__(self, config, allow_conditional_agg=False):
+        super(MPRSupplementaryNutrition, self).__init__(config, allow_conditional_agg)
         self.awc_open_count = 0
 
     @property
@@ -417,21 +418,20 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 class MPRUsingSalt(ICDSMixin, MPRData):
 
     slug = 'using_salt'
+    title = "5. Number of AWCs using Iodized Salt"
 
     @property
-    def title(self):
+    def rows(self):
         if self.config['location_id']:
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             use_salt = data.get('use_salt', 0)
+            percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
+            return [
+                ["Number of AWCs using Iodized Salt:", use_salt],
+                ["% of AWCs:", percent + " %"]
+            ]
 
-            return "5. Number of AWCs using Iodized Salt: {0}".format(use_salt)
-
-    @property
-    def subtitle(self):
-        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-        use_salt = data.get('use_salt', 0)
-        percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
-        return ["% of AWCs: {0} %".format(percent)]
+        return []
 
 
 class MPRProgrammeCoverage(ICDSMixin, MPRData):
@@ -1634,20 +1634,21 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
 
     @property
     def rows(self):
-        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-        children_completing = data.get('open_child_count', 0)
-        vaccination = data.get('open_child_1yr_immun_complete', 1)
-        immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
-        return [
-            ['(I)', 'Children Completing 12 months during the month:', children_completing],
-            ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
-            ['(III)', 'Completed timely immunization coverage (%):', immunization]
-        ]
+        if self.config['location_id']:
+            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            children_completing = data.get('open_child_count', 0)
+            vaccination = data.get('open_child_1yr_immun_complete', 1)
+            immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
+            return [
+                ['(I)', 'Children Completing 12 months during the month:', children_completing],
+                ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
+                ['(III)', 'Completed timely immunization coverage (%):', immunization]
+            ]
 
 
 class MPRVhnd(ICDSMixin, MPRData):
 
-    title = '10. Village Health and Nutrition Day (VHND) activity summary'
+    title = '10. Village Health Sanitation and Nutrition Day (VHSND) activity summary'
     slug = 'vhnd'
 
     @property
@@ -1678,7 +1679,7 @@ class MPRVhnd(ICDSMixin, MPRData):
     def row_config(self):
         return (
             (
-                'a) Was VHND conducted on planned date?',
+                'a) Was VHSND conducted on planned date?',
                 'done_when_planned',
                 {
                     'column': 'done_when_planned',
@@ -1687,7 +1688,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'b) AWW present during VHND?',
+                'b) AWW present during VHSND?',
                 'aww_present',
                 {
                     'column': 'aww_present',
@@ -1696,7 +1697,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'c) ICDS Supervisor present during VHDN?',
+                'c) ICDS Supervisor present during VHSND?',
                 'icds_sup',
                 {
                     'column': 'icds_sup',
@@ -1705,7 +1706,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'd) ASHA present during VHND?',
+                'd) ASHA present during VHSND?',
                 'asha_present',
                 {
                     'column': 'asha_present',
@@ -1714,7 +1715,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'e) ANM / MPW present during VHDN?',
+                'e) ANM / MPW present during VHSND?',
                 'anm_mpw',
                 {
                     'column': 'anm_mpw',
@@ -1786,7 +1787,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 }
             ),
             (
-                'm) Was a due list prepared before the VHND for:',
+                'm) Was a due list prepared before the VHSND for:',
                 '',
                 ''
             ),

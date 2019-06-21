@@ -5,18 +5,17 @@ from datetime import datetime
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, underweight_children_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
 from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column, \
     wasting_moderate_column, wasting_severe_column, stunting_moderate_column, stunting_severe_column, \
-    hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval
+    hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval, \
+    get_color_with_red_positive, get_color_with_green_positive
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
 
     def get_data_for_child_health_monthly(date, filters):
@@ -194,12 +193,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'weighed_and_born_in_month'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'low_birth_weight',
                         this_month_data,
                         prev_month_data,
                         'weighed_and_born_in_month'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'low_birth_weight'),
                     'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
@@ -217,12 +216,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'born'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'bf_birth',
                         this_month_data,
                         prev_month_data,
                         'born'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'bf_birth'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
@@ -238,12 +237,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'ebf_eli'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'ebf',
                         this_month_data,
                         prev_month_data,
                         'ebf_eli'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'ebf'),
                     'all': get_value(this_month_data, 'ebf_eli'),
                     'format': 'percent_and_div',
@@ -261,12 +260,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'cf_initiation_eli'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'cf_initiation',
                         this_month_data,
                         prev_month_data,
                         'cf_initiation_eli'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'cf_initiation'),
                     'all': get_value(this_month_data, 'cf_initiation_eli'),
                     'format': 'percent_and_div',
@@ -282,12 +281,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         deliveries_prev_month,
                         'delivered'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'institutional_delivery',
                         deliveries_this_month,
                         deliveries_prev_month,
                         'delivered'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(deliveries_this_month, 'institutional_delivery'),
                     'all': get_value(deliveries_this_month, 'delivered'),
                     'format': 'percent_and_div',

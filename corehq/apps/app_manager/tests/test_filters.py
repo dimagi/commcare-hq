@@ -326,6 +326,7 @@ class AutoFilterTests(TestCase):
         ancestor_state_value = ucr_filter.get_filter_value(self.nate, ui_filter)
         self.assertEqual(ancestor_state_value, ui_filter.default_value())
 
+
 class NumericFilterTests(TestCase):
 
     def test_numeric_filter(self):

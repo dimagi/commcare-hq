@@ -6,6 +6,8 @@ import six
 from django.utils.dateparse import parse_date
 from django.utils.translation import ugettext as _
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 class XPathFunctionException(Exception):
     pass
@@ -21,6 +23,7 @@ def date(node):
         return (datetime.date(1970, 1, 1) + datetime.timedelta(days=arg)).strftime("%Y-%m-%d")
 
     if isinstance(arg, six.string_types):
+        soft_assert_type_text(arg)
         try:
             parsed_date = parse_date(arg)
         except ValueError:

@@ -2,29 +2,22 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import six.moves.html_parser
 import json
 from collections import OrderedDict, defaultdict, namedtuple
 
+import six
+import six.moves.html_parser
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseNotFound,
-    JsonResponse,
-    StreamingHttpResponse,
 )
 from django.shortcuts import render
 
 from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_contractor,
-    login_or_basic, domain_admin_required,
-    check_lockout)
+    require_superuser)
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
-    use_nvd3_v3
 from corehq.elastic import ES_META, run_query
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
@@ -32,17 +25,7 @@ from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, 
     CommCareCaseSQLRawDocSerializer
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
-from corehq.util.supervisord.api import (
-    PillowtopSupervisorApi,
-    SupervisorException,
-    all_pillows_supervisor_status,
-    pillow_supervisor_status
-)
-from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, EmailForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm,
-    DisableTwoFactorForm, DisableUserForm)
-import six
+from corehq.util.json import CommCareJSONEncoder
 
 
 class _Db(object):
@@ -115,8 +98,9 @@ def _lookup_id_in_database(doc_id, db_name=None):
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
-                "doc": json.dumps(doc, indent=4, sort_keys=True),
+                "doc": json.dumps(doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder),
                 "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
+                "domain": doc.get('domain', 'Unknown'),
                 "dbname": db.dbname,
             })
 
@@ -156,12 +140,6 @@ def doc_in_es(request):
 
 
 @require_superuser
-def raw_couch(request):
-    get_params = dict(six.iteritems(request.GET))
-    return HttpResponseRedirect(reverse("raw_doc", params=get_params))
-
-
-@require_superuser
 def raw_doc(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
@@ -178,4 +156,4 @@ def raw_doc(request):
 
     other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
     context['all_databases'] = ['commcarehq'] + other_couch_dbs + list(_SQL_DBS)
-    return render(request, "hqadmin/raw_couch.html", context)
+    return render(request, "hqadmin/raw_doc.html", context)

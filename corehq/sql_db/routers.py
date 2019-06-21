@@ -1,10 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.db import connections
-from django.conf import settings
+import threading
 
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
+from django.conf import settings
+from django.db import connections
+
+from corehq.sql_db.connections import (
+    AAA_DB_ENGINE_ID,
+    ICDS_UCR_ENGINE_ID,
+    ICDS_UCR_CITUS_ENGINE_ID,
+    connection_manager,
+    get_aaa_db_alias,
+    get_icds_ucr_db_alias,
+    get_icds_ucr_citus_db_alias)
+
 from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
@@ -12,10 +22,12 @@ FORM_PROCESSOR_APP = 'form_processor'
 BLOB_DB_APP = 'blobs'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
-ICDS_MODEL = 'icds_model'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
+AAA_APP = 'aaa'
+
+_thread_local = threading.local()
 
 
 class MultiDBRouter(object):
@@ -54,7 +66,10 @@ def allow_migrate(db, app_label):
     :return: Must return a boolean value, not None.
     """
     if app_label == ICDS_REPORTS_APP:
-        db_alias = get_icds_ucr_db_alias()
+        db_aliases = [get_icds_ucr_db_alias(), get_icds_ucr_citus_db_alias()]
+        return db in db_aliases
+    elif app_label == AAA_APP:
+        db_alias = get_aaa_db_alias()
         return bool(db_alias and db_alias == db)
     elif app_label == SYNCLOGS_APP:
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
@@ -91,10 +106,18 @@ def db_for_read_write(model, write=True):
         return settings.WAREHOUSE_DATABASE_ALIAS
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
-    elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
-        engine_id = ICDS_UCR_ENGINE_ID
+    elif app_label == ICDS_REPORTS_APP:
+        if forced_citus():
+            engine_id = ICDS_UCR_CITUS_ENGINE_ID
+        else:
+            engine_id = ICDS_UCR_ENGINE_ID
+            if not write:
+                engine_id = connection_manager.get_load_balanced_read_db_alias(ICDS_UCR_ENGINE_ID)
+        return connection_manager.get_django_db_alias(engine_id)
+    elif app_label == AAA_APP:
+        engine_id = AAA_DB_ENGINE_ID
         if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alais(ICDS_UCR_ENGINE_ID)
+            engine_id = connection_manager.get_load_balanced_read_db_alias(AAA_DB_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
 
     if not settings.USE_PARTITIONED_DATABASE:
@@ -109,10 +132,18 @@ def db_for_read_write(model, write=True):
     else:
         default_db = partition_config.get_main_db()
         if not write:
-            return connection_manager.get_load_balanced_read_db_alais(app_label, default_db)
+            return connection_manager.get_load_balanced_read_db_alias(app_label, default_db)
         return default_db
 
 
 def get_cursor(model):
     db = db_for_read_write(model)
     return connections[db].cursor()
+
+
+def force_citus_engine():
+    _thread_local.force_citus = True
+
+
+def forced_citus():
+    return getattr(_thread_local, 'force_citus', False)

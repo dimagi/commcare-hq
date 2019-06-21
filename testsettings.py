@@ -1,6 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from copy import deepcopy
+
+import settingshelper as helper
 from settings import *
+
+USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
@@ -11,6 +17,17 @@ INSTALLED_APPS = (
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)
+
+if USING_CITUS:
+    if 'testapps.citus_master' not in INSTALLED_APPS:
+        INSTALLED_APPS = (
+            'testapps.citus_master',
+            'testapps.citus_worker',
+        ) + tuple(INSTALLED_APPS)
+
+    if 'testapps.citus_master.citus_router.CitusDBRouter' not in DATABASE_ROUTERS:
+        # this router must go first
+        DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -51,7 +68,7 @@ del key, value
 if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
     SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
 
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
@@ -75,19 +92,24 @@ def _set_logging_levels(levels):
         logging.getLogger(path).setLevel(level)
 _set_logging_levels({
     # Quiet down noisy loggers. Selective removal can be handy for debugging.
+    'alembic': 'WARNING',
     'auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
+    'couchdbkit.designer': 'WARNING',
     'datadog': 'WARNING',
     'elasticsearch': 'ERROR',
+    'kafka.conn': 'WARNING',
+    'kafka.client': 'WARNING',
+    'kafka.consumer.kafka': 'WARNING',
+    'kafka.metrics': 'WARNING',
+    'kafka.protocol.parser': 'WARNING',
+    'kafka.producer': 'WARNING',
     'quickcache': 'INFO',
     'requests.packages.urllib3': 'WARNING',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
-    'kafka.conn': 'WARNING',
-    'kafka.client': 'WARNING',
-    'kafka.consumer.kafka': 'WARNING',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
@@ -98,11 +120,21 @@ LOGGING = {
     'loggers': {},
 }
 
+# Default custom databases to use the same configuration as the default
+if 'icds-ucr' not in DATABASES:
+    DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
+    # use a different name otherwise migrations don't get run
+    DATABASES['icds-ucr']['NAME'] = 'commcarehq_icds_ucr'
+    del DATABASES['icds-ucr']['TEST']['NAME']  # gets set by `helper.assign_test_db_names`
+
+helper.assign_test_db_names(DATABASES)
+
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': 'default',
-    'icds-test-ucr': 'default',
+    'icds-ucr': 'icds-ucr',
+    'icds-ucr-non-dashboard': 'icds-ucr',
+    'aaa-data': 'default',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED

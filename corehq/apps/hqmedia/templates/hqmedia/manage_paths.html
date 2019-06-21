@@ -1,0 +1,96 @@
+{% extends "hqmedia/uploader_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+  <script src="{% static 'hqmedia/js/manage_paths_main.js' %}"></script>
+{% endblock js %}
+
+{% block page_content %}
+  {% registerurl 'update_multimedia_paths' domain app_id %}
+
+  <p class="lead">{{ current_page.page_name }}</p>
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">{% trans "Download Paths" %}</h3>
+    </div>
+    <div class="panel-body">
+      <div class="help-block">
+        {% blocktrans %}
+          Download a file containing each unique multimedia path in this application
+          and the places where that path is referenced.
+        {% endblocktrans %}
+      </div>
+
+      <form class="form-horizontal" method="GET" action="{% url 'download_multimedia_paths' domain app_id %}">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="only_missing" />
+            {% trans "Include only paths where the multimedia file is missing" %}
+          </label>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa fa-cloud-download"></i>
+          {% trans "Download Paths" %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">{% trans "Upload Paths" %}</h3>
+    </div>
+    <div class="panel-body">
+      <div class="help-block">
+        {% blocktrans %}
+          Fill in the "New Path" column and upload.
+        {% endblocktrans %}
+      </div>
+
+      <form id="upload-paths" enctype="multipart/form-data" data-bind="submit: update" class="ko-template">
+        {% csrf_token %}
+        <input name="file" type="file" />
+        <br>
+        <button class="btn btn-primary" type="submit"
+                data-bind="enable: !isSubmitting()">
+          <i class="fa" data-bind="css: {'fa-cloud-upload': !isSubmitting(), 'fa-spin': isSubmitting(),'fa-refresh': isSubmitting()}"></i>
+          {% trans "Upload Paths" %}
+        </button>
+        <br><br>
+        <div class="alert alert-danger" data-bind="visible: serverError(), text: serverError()"></div>
+        <div class="alert alert-success" data-bind="visible: successMessage(), text: successMessage()"></div>
+        <div class="alert alert-danger" data-bind="visible: errorMessages().length">
+          {% blocktrans %}
+            Your file has the following errors and may not be used to update multimedia paths.
+          {% endblocktrans %}
+          <br><br>
+          <ul data-bind="foreach: errorMessages">
+            <li data-bind="html: $data"></li>
+          </ul>
+        </div>
+        <div class="alert alert-warning" data-bind="visible: warningMessages().length">
+          {% blocktrans %}
+            Your file has the following warnings. Please verify that these are intentional before proceeding.
+          {% endblocktrans %}
+          <br><br>
+          <ul data-bind="foreach: warningMessages">
+            <li data-bind="html: $data"></li>
+          </ul>
+        </div>
+        <div class="alert alert-success" data-bind="visible: successMessages().length">
+          {% blocktrans %}
+            The following updates were made successfully.
+          {% endblocktrans %}
+          <br><br>
+          <ul data-bind="foreach: successMessages">
+            <li data-bind="html: $data"></li>
+          </ul>
+        </div>
+      </form>
+    </div>
+  </div>
+
+{% endblock %}

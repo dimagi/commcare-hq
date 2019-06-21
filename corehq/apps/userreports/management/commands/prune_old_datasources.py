@@ -4,15 +4,11 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 
-from alembic.autogenerate.api import compare_metadata
 from django.core.management.base import BaseCommand
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.sql.adapter import metadata
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_table_name, UCR_TABLE_PREFIX, LEGACY_UCR_TABLE_PREFIX
 from corehq.sql_db.connections import connection_manager
-
-from fluff.signals import get_migration_context, reformat_alembic_diffs
 
 
 class Command(BaseCommand):
@@ -25,63 +21,65 @@ class Command(BaseCommand):
             help='Only check this DB engine',
         )
         parser.add_argument(
-            '--execute',
+            '--show-counts',
             action='store_true',
             default=False,
-            help='Not implemented: Actually call DROP TABLE',
+            help='Show the row counts for the tables.',
         )
 
     def handle(self, **options):
         data_sources = list(DataSourceConfiguration.all())
         data_sources.extend(list(StaticDataSourceConfiguration.all()))
 
-        engine_ids = self._get_engine_ids(data_sources, options.get('engine_id'))
+        tables_by_engine_id = self._get_tables_by_engine_id(data_sources, options.get('engine_id'))
 
         tables_to_remove_by_engine = defaultdict(list)
-        for engine_id in engine_ids:
+        for engine_id, expected_tables in tables_by_engine_id.items():
             engine = connection_manager.get_engine(engine_id)
             with engine.begin() as connection:
-                migration_context = get_migration_context(connection, include_object=_include_object)
-                raw_diffs = compare_metadata(migration_context, metadata)
+                results = connection.execute("""
+                SELECT table_name
+                  FROM information_schema.tables
+                WHERE table_schema='public'
+                  AND table_type='BASE TABLE'
+                  AND (
+                    table_name LIKE '{}%%'
+                    OR
+                    table_name LIKE '{}%%'
+                );
+                """.format(UCR_TABLE_PREFIX, LEGACY_UCR_TABLE_PREFIX)).fetchall()
+                tables_in_db = {r[0] for r in results}
 
-            diffs = reformat_alembic_diffs(raw_diffs)
-            tables_to_remove_by_engine[engine_id] = [
-                diff.table_name for diff in diffs
-                if diff.type == 'remove_table'
-            ]
+            tables_to_remove_by_engine[engine_id] = tables_in_db - expected_tables
 
         for engine_id, tablenames in tables_to_remove_by_engine.items():
+            print("\nTables no longer referenced in database: {}:\n".format(engine_id))
             engine = connection_manager.get_engine(engine_id)
-            for tablename in tablenames:
-                with engine.begin() as connection:
-                    try:
-                        result = connection.execute(
-                            'SELECT COUNT(*), MAX(inserted_at) FROM "{tablename}"'.format(tablename=tablename)
-                        )
-                    except Exception:
-                        print(tablename, "no inserted_at column, probably not UCR")
-                    else:
-                        print(tablename, result.fetchone())
+            if not tablenames:
+                print("\t No tables to prune")
+                continue
 
-    def _get_engine_ids(self, data_sources, engine_id):
-        engine_ids = set()
+            for tablename in tablenames:
+                if options['show_counts']:
+                    with engine.begin() as connection:
+                        try:
+                            result = connection.execute(
+                                'SELECT COUNT(*), MAX(inserted_at) FROM "{tablename}"'.format(tablename=tablename)
+                            )
+                        except Exception:
+                            print("\t{}: no inserted_at column, probably not UCR".format(tablename))
+                        else:
+                            print("\t{}: {}".foramt(tablename, result.fetchone()))
+                else:
+                    print("\t{}".format(tablename))
+
+    def _get_tables_by_engine_id(self, data_sources, engine_id):
+        tables_by_engine_id = defaultdict(set)
         for data_source in data_sources:
             if engine_id and data_source.engine_id != engine_id:
                 continue
 
-            # Magic: getting the table adds the table to the global sqlalchemy metadata object
-            adapter = get_indicator_adapter(data_source)
-            adapter.get_table()
-            engine_ids.add(adapter.engine_id)
+            table_name = get_table_name(data_source.domain, data_source.table_id)
+            tables_by_engine_id[data_source.engine_id].add(table_name)
 
-        return engine_ids
-
-
-def _include_object(object_, name, type_, reflected, compare_to):
-    if type_ != 'table':
-        return False
-
-    if name.startswith('config_report_'):
-        return True
-
-    return False
+        return tables_by_engine_id

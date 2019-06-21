@@ -8,7 +8,7 @@ import django.contrib.postgres.fields
 import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def add_partitions(apps, schema_editor):
@@ -41,5 +41,5 @@ class Migration(migrations.Migration):
                 'db_table': 'icds_audit_entry_record',
             },
         ),
-        HqRunPython(add_partitions),
+        migrations.RunPython(add_partitions),
     ]

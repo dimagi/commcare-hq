@@ -9,7 +9,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
     get_all_user_ids,
     get_deleted_user_by_username,
-    get_all_usernames_by_domain)
+    get_all_usernames_by_domain, get_existing_usernames)
 from corehq.apps.users.dbaccessors.couch_users import (
     get_user_id_by_username,
 )
@@ -33,7 +33,12 @@ class AllCommCareUsersTest(TestCase):
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
         cls.custom_role = UserRole.get_or_create_with_permissions(
             cls.ccdomain.name,
-            Permissions(edit_apps=True, edit_web_users=True),
+            Permissions(
+                edit_apps=True,
+                edit_web_users=True,
+                view_web_users=True,
+                view_roles=True,
+            ),
             "Custom Role"
         )
         cls.custom_role.save()
@@ -155,6 +160,14 @@ class AllCommCareUsersTest(TestCase):
         self.assertItemsEqual(
             get_user_docs_by_username(usernames),
             [u.to_json() for u in users]
+        )
+
+    def test_get_existing_usernames(self):
+        users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
+        usernames = [u.username for u in users] + ['nonexistant@username.com']
+        self.assertItemsEqual(
+            get_existing_usernames(usernames),
+            [u.username for u in users]
         )
 
     def test_get_all_ids(self):

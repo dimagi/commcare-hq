@@ -174,7 +174,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                   </menu>
                   <menu id="m0">
                     <text>
-                      <locale id="modules.m2"/>
+                      <locale id="modules.m0"/>
                     </text>
                     <command id="m2-f0"/>
                   </menu>
@@ -206,7 +206,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                   </menu>
                   <menu id="m0">
                     <text>
-                      <locale id="modules.m2"/>
+                      <locale id="modules.m0"/>
                     </text>
                     <command id="m2-f0"/>
                   </menu>

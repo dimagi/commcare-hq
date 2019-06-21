@@ -42,6 +42,7 @@ def get_case_to_report_es_processor():
         doc_filter_fn=report_case_filter,
     )
 
+
 def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearchPillow',
                                             num_processes=1, process_num=0, **kwargs):
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/

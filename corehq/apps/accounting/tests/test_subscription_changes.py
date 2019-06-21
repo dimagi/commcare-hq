@@ -64,7 +64,12 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.user_roles = UserRole.by_domain(self.domain.name)
         self.custom_role = UserRole.get_or_create_with_permissions(
             self.domain.name,
-            Permissions(edit_apps=True, edit_web_users=True),
+            Permissions(
+                edit_apps=True,
+                edit_web_users=True,
+                view_web_users=True,
+                view_roles=True,
+            ),
             "Custom Role"
         )
         self.custom_role.save()
@@ -151,8 +156,15 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         for u in self.user_roles:
             user_role = UserRole.get(u.get_id)
             user_role.permissions = Permissions(
-                view_reports=True, edit_commcare_users=True, edit_locations=True,
-                edit_apps=True, edit_data=True
+                view_reports=True,
+                edit_commcare_users=True,
+                view_commcare_users=True,
+                edit_groups=True,
+                view_groups=True,
+                edit_locations=True,
+                view_locations=True,
+                edit_apps=True,
+                edit_data=True
             )
             user_role.save()
 
@@ -403,7 +415,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p3.call_count, 2)
             p3.assert_has_calls(
                 [
-                    call(rule.domain, rule.pk)
+                    call(rule)
                     for rule in (self.domain_1_sms_schedules[2], self.domain_1_survey_schedules[2])
                 ],
                 any_order=True
@@ -433,7 +445,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             p2.assert_called_once_with(b.schedule_id, b.recipients)
 
             rule = self.domain_1_survey_schedules[2]
-            p3.assert_called_once_with(rule.domain, rule.pk)
+            p3.assert_called_once_with(rule)
 
         self.assertSchedulesActive(self.domain_1_sms_schedules)
         self.assertSchedulesInactive(self.domain_1_survey_schedules)

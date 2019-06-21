@@ -1,34 +1,10 @@
 <fixture id="related_locations" indexed="true" user_id="{user_id}">
     <locations>
-        <location city_id="{cambridge_id}" county_id="{middlesex_id}" id="{cambridge_id}" state_id="{massachusetts_id}" type="city">
-            <name>Cambridge</name>
-            <site_code>cambridge</site_code>
-            <external_id/>
-            <latitude/>
-            <longitude/>
-            <location_type>city</location_type>
-            <supply_point_id/>
-            <location_data/>
+		<location id="{boston_id}">
+			<related_location>{cambridge_id}</related_location>
         </location>
-        <location city_id="" id="{massachusetts_id}" type="state" county_id="" state_id="{massachusetts_id}">
-            <name>Massachusetts</name>
-            <site_code>massachusetts</site_code>
-            <external_id/>
-            <latitude/>
-            <longitude/>
-            <location_type>state</location_type>
-            <supply_point_id/>
-            <location_data/>
-        </location>
-        <location city_id="" county_id="{middlesex_id}" id="{middlesex_id}" state_id="{massachusetts_id}" type="county">
-            <name>Middlesex</name>
-            <site_code>middlesex</site_code>
-            <external_id/>
-            <latitude/>
-            <longitude/>
-            <location_type>county</location_type>
-            <supply_point_id/>
-            <location_data/>
+		<location id="{cambridge_id}">
+			<related_location>{boston_id}</related_location>
         </location>
     </locations>
 </fixture>

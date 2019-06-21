@@ -4,112 +4,13 @@ from contextlib import contextmanager
 import itertools
 from couchexport.exceptions import SchemaMismatchException,\
     UnsupportedExportFormat
-from couchexport.schema import extend_schema
 from django.conf import settings
-from couchexport.models import ExportSchema, Format
-from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch.database import get_db, iter_docs
+from couchexport.models import Format
 from couchexport import writers
-from memoized import memoized
-from couchexport.util import get_schema_index_view_keys, default_cleanup
-from datetime import datetime
 import six
 from six.moves import range
 from six.moves import map
-
-
-class ExportConfiguration(object):
-    """
-    A representation of the configuration parameters for an export and
-    some functions to actually facilitate the export from this config.
-    """
-
-    def __init__(self, database, schema_index, previous_export=None, filter=None,
-                 disable_checkpoints=False, cleanup_fn=default_cleanup):
-        self.database = database
-        if len(schema_index) > 2:
-            schema_index = schema_index[0:2]
-        self.schema_index = schema_index
-        self.previous_export = previous_export
-        self.filter = filter
-        self.timestamp = datetime.utcnow()
-        self.potentially_relevant_ids = self._potentially_relevant_ids()
-        self.disable_checkpoints = disable_checkpoints
-        self.cleanup_fn = cleanup_fn
-
-    def include(self, document):
-        """
-        Returns True if the document should be included in the results,
-        otherwise false
-        """
-        return self.filter(document) if self.filter else True
-
-    def cleanup(self, document_or_schema):
-        """
-        Given a doc or schema, pass it through a cleanup function prior to mapping
-        to remove potential unwanted properties. One example of this is to remove
-        the overly verbose _attachments fields.
-        """
-        return self.cleanup_fn(document_or_schema) if self.cleanup_fn else document_or_schema
-
-    @property
-    @memoized
-    def all_doc_ids(self):
-        """
-        Gets view results for all documents matching this schema
-        """
-        return set([result['id'] for result in \
-                    self.database.view(
-                        "couchexport/schema_index",
-                        reduce=False,
-                        **get_schema_index_view_keys(self.schema_index)
-                    ).all()])
-
-    def _potentially_relevant_ids(self):
-        return self.previous_export.get_new_ids() if self.previous_export \
-            else self.all_doc_ids
-
-    def get_potentially_relevant_docs(self):
-        return iter_docs(self.database, self.potentially_relevant_ids)
-
-    def enum_docs(self):
-        """
-        yields (index, doc) tuples for docs that pass the filter
-        index counts number of docs processed so far
-        NOT the number of docs returned so far
-
-        Useful for progress bars which use
-        len(self.potentially_relevant_ids) as the total.
-
-        """
-        for i, doc in enumerate(self.get_potentially_relevant_docs()):
-            if self.include(doc):
-                yield i, self.cleanup(doc)
-
-    def get_docs(self):
-        for _, doc in self.enum_docs():
-            yield doc
-
-    def last_checkpoint(self):
-        return None if self.disable_checkpoints else ExportSchema.last(self.schema_index)
-
-    @memoized
-    def get_latest_schema(self):
-        last_export = self.last_checkpoint()
-        schema = self.cleanup(dict(last_export.schema) if last_export and last_export.schema else None)
-        doc_ids = last_export.get_new_ids(self.database) if last_export else self.all_doc_ids
-        for doc in iter_docs(self.database, doc_ids):
-            schema = extend_schema(schema, self.cleanup(doc))
-        return schema
-
-    def create_new_checkpoint(self):
-        checkpoint = ExportSchema(
-            schema=self.get_latest_schema(),
-            timestamp=self.timestamp,
-            index=self.schema_index,
-        )
-        checkpoint.save()
-        return checkpoint
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def get_writer(format):
@@ -130,10 +31,19 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
-    tables = FormattedRow.wrap_all_rows(tables)
     writer = get_writer(format)
-    writer.open(tables, file, max_column_size=max_column_size)
-    writer.write(tables, skip_first=True)
+    sheet_headers = []
+    rows_by_sheet = []
+
+    for table in tables:
+        worksheet_title, rows = FormattedRow.wrap_all_rows([table])[0]
+        row_generator = iter(rows)
+        # The first row gets added to sheet_headers, the rest gets added to rows_by_sheet
+        sheet_headers.append((worksheet_title, [next(row_generator)]))
+        rows_by_sheet.append((worksheet_title, row_generator))
+
+    writer.open(sheet_headers, file, max_column_size=max_column_size)
+    writer.write(rows_by_sheet)
     writer.close()
 
 
@@ -190,34 +100,13 @@ def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
     writer.close()
 
 
-def get_export_components(schema_index, previous_export_id=None, filter=None):
-    """
-    Get all the components needed to build an export file.
-    """
-
-    previous_export = ExportSchema.get(previous_export_id)\
-        if previous_export_id else None
-    database = get_db()
-    config = ExportConfiguration(database, schema_index,
-        previous_export, filter)
-
-    # handle empty case
-    if not config.potentially_relevant_ids:
-        return None, None, None
-
-    # get and checkpoint the latest schema
-    updated_schema = config.get_latest_schema()
-    export_schema_checkpoint = config.create_new_checkpoint()
-
-    return config, updated_schema, export_schema_checkpoint
-
-
-class Constant(UnicodeMixIn):
+@six.python_2_unicode_compatible
+class Constant(object):
 
     def __init__(self, message):
         self.message = message
 
-    def __unicode__(self):
+    def __str__(self):
         return self.message
 
 SCALAR_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \
@@ -288,8 +177,8 @@ def fit_to_schema(doc, schema):
         if not doc:
             doc = ""
         if not isinstance(doc, six.string_types):
-        #log("%s is not a string" % doc)
             doc = six.text_type(doc)
+        soft_assert_type_text(doc)
         return doc
 
 
@@ -334,6 +223,7 @@ def _create_intermediate_tables(docs, schema):
         id = []
         for k in path:
             if isinstance(k, six.string_types):
+                soft_assert_type_text(k)
                 if k:
                     column.append(k)
             else:
@@ -378,12 +268,13 @@ class FormattedRow(object):
     """
 
     def __init__(self, data, id=None, separator=".", id_index=0,
-                 is_header_row=False):
+                 is_header_row=False, hyperlink_column_indices=()):
         self.data = data
         self.id = id
         self.separator = separator
         self.id_index = id_index
         self.is_header_row = is_header_row
+        self.hyperlink_column_indices = hyperlink_column_indices
 
     def __iter__(self):
         for i in self.get_data():
@@ -395,6 +286,7 @@ class FormattedRow(object):
     @property
     def formatted_id(self):
         if isinstance(self.id, six.string_types):
+            soft_assert_type_text(self.id)
             return self.id
         return self.separator.join(map(six.text_type, self.id))
 
@@ -404,6 +296,7 @@ class FormattedRow(object):
     @property
     def compound_id(self):
         if isinstance(self.id, six.string_types):
+            soft_assert_type_text(self.id)
             return [self.id]
         return self.id
 
@@ -429,18 +322,27 @@ class FormattedRow(object):
     @classmethod
     def wrap_all_rows(cls, tables):
         """
-        Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...))
+        Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...)). The rows can be generators.
         """
-        ret = []
-        for name, rows in tables:
-            rows = list(rows)
-            if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
+
+        def coerce_to_list_of_rows(rows):
+            rows = iter(rows)
+            # peek at the first element, then add it back
+            try:
+                first_entry = next(rows)
+            except StopIteration:
+                return rows
+            rows = itertools.chain([first_entry], rows)
+            if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, six.string_types)):
+                soft_assert_type_text(first_entry)
                 # `rows` is actually just a single row, so wrap it
-                rows = [rows]
-            ret.append(
-                (name, [cls(row) for row in rows])
-            )
-        return ret
+                return [rows]
+            return rows
+
+        return [
+            (name, (cls(row) for row in coerce_to_list_of_rows(rows)))
+            for name, rows in tables
+        ]
 
 
 def _format_tables(tables, id_label='id', separator='.', include_headers=True,

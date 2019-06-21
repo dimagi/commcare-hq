@@ -16,9 +16,9 @@
     </div>
     <div class="panel-body">
       <div class="row">
-          <div class="col-sm-6">
-              <textarea class="form-control" data-bind="value: xml"></textarea>
-          </div>
+        <div class="col-sm-6">
+          <textarea class="form-control" data-bind="value: xml"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -35,109 +35,109 @@
   </div>
   <div class="panel-body">
     <div data-bind="with: shortScreen">
-        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
-        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
+      {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
+      {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         <div class="row">
-            <div class="col-sm-6">
-                <select data-bind="value: useCaseTiles" class="form-control">
-                    <option value="no">{% trans "Don't Use Case Tiles" %}</option>
-                    <option value="yes">{% trans "Use Case Tiles" %}</option>
-                </select>
-            </div>
+          <div class="col-sm-6">
+            <select data-bind="value: useCaseTiles" class="form-control">
+              <option value="no">{% trans "Don't Use Case Tiles" %}</option>
+              <option value="yes">{% trans "Use Case Tiles" %}</option>
+            </select>
+          </div>
         </div>
-        {% endif %}
-        {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
-        {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
+      {% endif %}
+      {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
+      {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
         <div data-bind="visible: useCaseTiles() == 'no'">
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" data-bind="checked: persistCaseContext">
-                    {% trans "Show some information about the case at the top of the screen when filling out forms" %}
-                </label>
-            </div>
-            <div class="form-inline" data-bind="visible: persistCaseContext">
-                <label>
-                    {% trans "Case property to show" %}
-                </label>
-                <input class="form-control" type="text" data-bind="value: persistentCaseContextXML" placeholder="e.g. case_name" />
-            </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: persistCaseContext">
+              {% trans "Show some information about the case at the top of the screen when filling out forms" %}
+            </label>
+          </div>
+          <div class="form-inline" data-bind="visible: persistCaseContext">
+            <label>
+              {% trans "Case property to show" %}
+            </label>
+            <input class="form-control" type="text" data-bind="value: persistentCaseContextXML" placeholder="e.g. case_name" />
+          </div>
         </div>
-        {% endif %}
-        <div data-bind="visible: useCaseTiles() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" data-bind="checked: persistTileOnForms">
-                    {% trans "Use this case list tile persistently in forms" %}
-                </label>
-            </div>
+      {% endif %}
+      <div data-bind="visible: useCaseTiles() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" data-bind="checked: persistTileOnForms">
+            {% trans "Use this case list tile persistently in forms" %}
+          </label>
         </div>
+      </div>
 
-        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
-        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
-            {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
-            {% if available_modules %}
+      {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
+      {% if request|toggle_enabled:'CASE_LIST_TILE' %}
+        {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
+          {% if available_modules %}
             <div class="row">
-                <div class="col-sm-6">
-                    <label>
-                        {% trans "Use persistent case tile from menu" %}
-                    </label>
-                    <div>
-                        <select name='persistent_case_tile_from_module' class='form-control' data-bind="value: persistentCaseTileFromModule">
-                            <option value>
-                                {% trans "Select Menu" %}
-                            </option>
-                            {% for other_mod in available_modules %}
-                                <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            {% endwith %}
-        {% endif %}
-
-        <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
-            <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
+              <div class="col-sm-6">
                 <label>
-                    <input type="checkbox" data-bind="checked: enableTilePullDown">
-                    <span data-bind="visible: persistTileOnForms() && !persistentCaseTileFromModule()">
+                  {% trans "Use persistent case tile from menu" %}
+                </label>
+                <div>
+                  <select name='persistent_case_tile_from_module' class='form-control' data-bind="value: persistentCaseTileFromModule">
+                    <option value>
+                      {% trans "Select Menu" %}
+                    </option>
+                    {% for other_mod in available_modules %}
+                      <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% endwith %}
+      {% endif %}
+
+      <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+        <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
+          <label>
+            <input type="checkbox" data-bind="checked: enableTilePullDown">
+            <span data-bind="visible: persistTileOnForms() && !persistentCaseTileFromModule()">
                         {% trans "Embed case details in case tile pull-down" %}
                     </span>
-                    <span data-bind="visible: persistentCaseTileFromModule()">
+            <span data-bind="visible: persistentCaseTileFromModule()">
                         {% trans "Embed case details in case tile pull-down from the menu" %}
                     </span>
-                </label>
-            </div>
+          </label>
         </div>
-        {% include 'app_manager/partials/modules/case_list_properties.html' %}
+      </div>
+      {% include 'app_manager/partials/modules/case_list_properties.html' %}
     </div>
   </div>
 </div>
 
 
 {% if detail.type == 'case' %}
-<div class="panel panel-appmanager">
-  <div class="panel-heading">
-    <h4 class="panel-title panel-title-nolink">
-      {% trans "Filtering and Sorting" %}
-    </h4>
-  </div>
-  <div class="panel-body">
-    {% include 'app_manager/partials/modules/case_list_filtering.html' %}
-    <div data-bind="with: sortRows">
+  <div class="panel panel-appmanager">
+    <div class="panel-heading">
+      <h4 class="panel-title panel-title-nolink">
+        {% trans "Filtering and Sorting" %}
+      </h4>
+    </div>
+    <div class="panel-body">
+      {% include 'app_manager/partials/modules/case_list_filtering.html' %}
+      <div data-bind="with: sortRows">
         {% if app.enable_multi_sort %}
-            <div class="ui-sortable">
-                <table class="table table-condensed" data-bind="visible: showing">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>
-                                {% trans "Sort Property" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "Sort Properties" %}"
-                                      data-content=
-                                          "{% blocktrans %}
+          <div class="ui-sortable">
+            <table class="table table-condensed" data-bind="visible: showing">
+              <thead>
+              <tr>
+                <th></th>
+                <th>
+                  {% trans "Sort Property" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Sort Properties" %}"
+                        data-content=
+                          "{% blocktrans %}
                                               Properties in this list determine how
                                               cases are ordered in your case list. This
                                               is useful if for example you want higher
@@ -147,33 +147,33 @@
                                               etc.
                                           {% endblocktrans %}" >
                                 </span>
-                            </th>
-                            <th>{% trans "Direction" %}</th>
-                            {% if app.enable_case_list_sort_blanks %}
-                                <th>
-                                    {% trans "Display Blanks" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Display Blanks" %}"
-                                          data-content=
-                                              "{% blocktrans %}
+                </th>
+                <th>{% trans "Direction" %}</th>
+                {% if app.enable_case_list_sort_blanks %}
+                  <th>
+                    {% trans "Display Blanks" %}
+                    <span class="hq-help-template"
+                          data-title="{% trans "Display Blanks" %}"
+                          data-content=
+                            "{% blocktrans %}
                                                   Should cases that don't have a value for the sort property
                                                   appear at the top or the bottom of the case list?
                                               {% endblocktrans %}" >
                                     </span>
-                                </th>
-                            {% endif %}
-                            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-                            <th>{% trans "Sort Calculation" %}</th>
-                            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
-                              <th>{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
-                            {% endif %}
-                            <th>{% trans "Format" %}</th>
-                            <th>
-                                {% trans "Display Text" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "Display Text" %}"
-                                      data-content=
-                                          "{% blocktrans %}
+                  </th>
+                {% endif %}
+                {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                  <th>{% trans "Sort Calculation" %}</th>
+                {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
+                  <th>{{ request|toggle_tag_info:"SORT_CALCULATION_IN_CASE_LIST" }}</th>
+                {% endif %}
+                <th>{% trans "Format" %}</th>
+                <th>
+                  {% trans "Display Text" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Display Text" %}"
+                        data-content=
+                          "{% blocktrans %}
                                               The 'Display Text' is used for properties that are only listed as
                                               Sort Properties and not as Display Properties above. The text appears
                                               in the 'Sort By' menu on the mobile to allow the user to change the
@@ -181,155 +181,156 @@
                                               for that sort property will not appear in the 'Sort By' menu.
                                           {% endblocktrans %}" >
                                 </span>
-                            </th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
-                        <tr>
-                            <td>
-                                <i class="grip fa fa-arrows-v icon-blue"></i>
-                            </td>
-                            <td class="form-group" data-bind="css: {'has-error': showWarning}">
-                                <div data-bind="jqueryElement: textField.ui"></div>
-                                <div data-bind="visible: showWarning">
+                </th>
+                <th></th>
+              </tr>
+              </thead>
+              <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
+              <tr>
+                <td>
+                  <i class="grip fa fa-arrows-v icon-blue"></i>
+                </td>
+                <td class="form-group" data-bind="css: {'has-error': showWarning}">
+                  <div data-bind="jqueryElement: selectField.ui"></div>
+                  <div data-bind="visible: showWarning">
                                     <span class="help-block" data-bind="
-                                        text: hqImport('app_manager/js/details/screen_config').DetailScreenConfig.field_format_warning_message
+                                        text: hqImport('app_manager/js/details/screen_config').detailScreenConfig.field_format_warning_message
                                     "></span>
-                                </div>
-                            </td>
-                            <td>
-                                <select class="form-control" data-bind="value: direction">
-                                    <option value="ascending"
-                                            data-bind="text: ascendText">
-                                    </option>
-                                    <option value="descending"
-                                            data-bind="text: descendText">
-                                    </option>
-                                </select>
-                            </td>
+                  </div>
+                </td>
+                <td>
+                  <select class="form-control" data-bind="value: direction">
+                    <option value="ascending"
+                            data-bind="text: ascendText">
+                    </option>
+                    <option value="descending"
+                            data-bind="text: descendText">
+                    </option>
+                  </select>
+                </td>
 
-                            {% if app.enable_case_list_sort_blanks %}
-                                <td>
-                                    <select class="form-control" data-bind="value: blanks">
-                                        <option value="last">
-                                            {% trans "Bottom of list" %}
-                                        </option>
-                                        <option value="first">
-                                            {% trans "Top of list" %}
-                                        </option>
-                                    </select>
-                                </td>
-                            {% endif %}
+                {% if app.enable_case_list_sort_blanks %}
+                  <td>
+                    <select class="form-control" data-bind="value: blanks">
+                      <option value="last">
+                        {% trans "Bottom of list" %}
+                      </option>
+                      <option value="first">
+                        {% trans "Top of list" %}
+                      </option>
+                    </select>
+                  </td>
+                {% endif %}
 
-                            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
-                            <td>
-                                <input class="form-control" type='text' data-bind='value: sortCalculation'/>
-                            </td>
-                            {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
-                              <td></td>
-                            {% endif %}
+                {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                  <td>
+                    <input class="form-control" type='text' data-bind='value: sortCalculation'/>
+                  </td>
+                {% elif request|toggle_enabled:'SHOW_DEV_TOGGLE_INFO' %}
+                  <td></td>
+                {% endif %}
 
 
-                            <td>
-                                <select class="form-control" data-bind="value: type">
-                                    <option value="plain">
-                                        {% trans "Plain" %}
-                                    </option>
-                                    <option value="date">
-                                        {% trans "Date" %}
-                                    </option>
-                                    <option value="int">
-                                        {% trans "Integer" %}
-                                    </option>
-                                    <option value="double">
-                                        {% trans "Decimal" %}
-                                    </option>
-                                    <option value="distance">
-                                        {% trans "Distance from current location" %}
-                                    </option>
-                                    {{ request|toggle_tag_info:"CACHE_AND_INDEX" }}
-                                    {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
-                                        <option value="index">
-                                            {% trans "Cache and Index" %}
-                                        </option>
-                                    {% endif %}
-                                </select>
-                            </td>
-                            <td>
-                                <input class="form-control" type='text' data-bind='value: display'/>
-                            </td>
-                            <td>
-                                <a data-bind="click: $root.sortRows.removeSortRow">
-                                    <i class="fa fa-remove icon-blue"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-default btn-sm" data-bind="
+                <td>
+                  <select class="form-control" data-bind="value: type">
+                    <option value="plain">
+                      {% trans "Plain" %}
+                    </option>
+                    <option value="date">
+                      {% trans "Date" %}
+                    </option>
+                    <option value="int">
+                      {% trans "Integer" %}
+                    </option>
+                    <option value="double">
+                      {% trans "Decimal" %}
+                    </option>
+                    <option value="distance">
+                      {% trans "Distance from current location" %}
+                    </option>
+                    {{ request|toggle_tag_info:"CACHE_AND_INDEX" }}
+                    {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
+                      <option value="index">
+                        {% trans "Cache and Index" %}
+                      </option>
+                    {% endif %}
+                  </select>
+                </td>
+                <td>
+                  <input class="form-control" type='text' data-bind='value: display'/>
+                </td>
+                <td>
+                  <a data-bind="click: $root.sortRows.removeSortRow">
+                    <i class="fa fa-remove icon-blue"></i>
+                  </a>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-default btn-sm" data-bind="
                     click: function(data){data.addSortRow('', '', '', '', '', true, '');}"
-                >
-                    <i class="fa fa-plus"></i>
-                    {% trans "Add sort property" %}
-                </button>
-            </div>
+            >
+              <i class="fa fa-plus"></i>
+              {% trans "Add sort property" %}
+            </button>
+          </div>
         {% endif %}
+      </div>
     </div>
   </div>
-</div>
 {% endif %}
 
 {% if detail.parent_select %}
-<div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
+  <div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
     <div class="panel panel-appmanager" data-bind="visible: moduleOptions().length">
-        <div class="panel-heading">
-            <h4 class="panel-title panel-title-nolink">
-                {% trans "Parent Child Selection" %}
-            </h4>
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+          {% trans "Parent Child Selection" %}
+        </h4>
+      </div>
+      <div class="form-horizontal panel-body">
+        <div class="form-group">
+          <label class="control-label {% css_label_class %}">
+            {% trans "Select Parent First" %}
+          </label>
+          <div class="{% css_field_class %} checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: active"/>
+            </label>
+          </div>
         </div>
-        <div class="form-horizontal panel-body">
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">
-                    {% trans "Select Parent First" %}
-                </label>
-                <div class="{% css_field_class %} checkbox">
-                    <label>
-                        <input type="checkbox" data-bind="checked: active"/>
-                    </label>
-                </div>
+        <div class="form-group" data-bind="visible: active, css: {'has-error': hasError}">
+          <label class="control-label {% css_label_class %}">
+            {% trans "Use Case List from" %}
+          </label>
+          <div class="{% css_field_class %}">
+            <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+            <div class="help-block" data-bind="visible: hasError">
+              {% blocktrans %}
+                This menu coiuld not be found. It may have been deleted. Please select a different menu.
+              {% endblocktrans %}
             </div>
-            <div class="form-group" data-bind="visible: active, css: {'has-error': hasError}">
-                <label class="control-label {% css_label_class %}">
-                    {% trans "Use Case List from" %}
-                </label>
-                <div class="{% css_field_class %}">
-                    <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
-                    <div class="help-block" data-bind="visible: hasError">
-                        {% blocktrans %}
-                            This menu coiuld not be found. It may have been deleted. Please select a different menu.
-                        {% endblocktrans %}
-                    </div>
-                </div>
-            </div>
-            <div class="spacer"></div>
+          </div>
         </div>
+        <div class="spacer"></div>
+      </div>
     </div>
-</div>
+  </div>
 {% endif %}
 
 {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
-{% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-    {% include "app_manager/partials/modules/case_list_lookup.html" %}
+{{ request|toggle_tag_info:"BIOMETRIC_INTEGRATION" }}
+{% if request|toggle_enabled:"CASE_LIST_LOOKUP" or request|toggle_enabled:"BIOMETRIC_INTEGRATION"  %}
+  {% include "app_manager/partials/modules/case_list_lookup.html" %}
 {% endif %}
 
 {{ request|toggle_tag_info:"FIXTURE_CASE_SELECTION" }}
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}
-    {% include "app_manager/partials/modules/fixture_case_selection.html" %}
+  {% include "app_manager/partials/modules/fixture_case_selection.html" %}
 {% endif %}
 
 {% if detail.type == 'case' and js_options.is_search_enabled %}
-{% include 'app_manager/partials/modules/case_search_properties.html' %}
+  {% include 'app_manager/partials/modules/case_search_properties.html' %}
 {% endif %}

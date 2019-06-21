@@ -41,7 +41,8 @@ def process_pillow_retry(error_doc):
             document_store = get_document_store(
                 data_source_type=change_metadata.data_source_type,
                 data_source_name=change_metadata.data_source_name,
-                domain=change_metadata.domain
+                domain=change_metadata.domain,
+                load_source="pillow_retry",
             )
             change.document_store = document_store
         if isinstance(pillow.get_change_feed(), CouchChangeFeed):

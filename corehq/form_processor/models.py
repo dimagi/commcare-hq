@@ -37,6 +37,7 @@ from corehq.form_processor.exceptions import UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -84,6 +85,7 @@ class Attachment(IsImageMixin):
     name = attr.ib()
     raw_content = attr.ib(repr=False)
     content_type = attr.ib()
+    properties = attr.ib(default=None)
 
     def __attrs_post_init__(self):
         """This is necessary for case attachments
@@ -94,13 +96,14 @@ class Attachment(IsImageMixin):
         `write()` when case attachments are removed.
         """
         self.key = uuid.uuid4().hex
-        self.properties = {}
-        if self.is_image:
-            try:
-                img_size = Image.open(self.open()).size
-                self.properties.update(width=img_size[0], height=img_size[1])
-            except IOError:
-                self.content_type = 'application/octet-stream'
+        if self.properties is None:
+            self.properties = {}
+            if self.is_image:
+                try:
+                    img_size = Image.open(self.open()).size
+                    self.properties.update(width=img_size[0], height=img_size[1])
+                except IOError:
+                    self.content_type = 'application/octet-stream'
 
     @property
     @memoized
@@ -228,7 +231,7 @@ class AttachmentMixin(SaveStateMixin):
         """Copy attachments from the given xform"""
         existing_names = {a.name for a in self.attachments_list}
         self.attachments_list.extend(
-            Attachment(meta.name, meta, meta.content_type)
+            Attachment(meta.name, meta, meta.content_type, meta.properties)
             for meta in six.itervalues(xform.attachments)
             if meta.name not in existing_names
         )
@@ -311,6 +314,7 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
+@six.python_2_unicode_compatible
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
@@ -515,10 +519,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSQLSerializer
-        serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
+        from .serializers import XFormInstanceSQLSerializer, lazy_serialize_form_attachments, \
+            lazy_serialize_form_history
+        serializer = XFormInstanceSQLSerializer(self)
         data = dict(serializer.data)
-        data['history'] = [dict(op) for op in data['history']]
+        if include_attachments:
+            data['external_blobs'] = lazy_serialize_form_attachments(self)
+        data['history'] = lazy_serialize_form_history(self)
         data['backend_id'] = 'sql'
         return data
 
@@ -593,7 +600,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
                 xform_unarchived.send(sender="form_processor", xform=self)
             publish_form_saved(self)
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "XFormInstance("
             "form_id='{f.form_id}', "
@@ -606,6 +613,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         index_together = [
             ('domain', 'state'),
             ('domain', 'user_id'),
+        ]
+        indexes = [
+            models.Index(['xmlns'])
         ]
 
 
@@ -722,6 +732,7 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
+@six.python_2_unicode_compatible
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
@@ -806,10 +817,16 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return serializer.data
 
     def to_json(self):
-        from .serializers import CommCareCaseSQLSerializer
+        from .serializers import (
+            CommCareCaseSQLSerializer, lazy_serialize_case_indices, lazy_serialize_case_transactions,
+            lazy_serialize_case_xform_ids, lazy_serialize_case_attachments
+        )
         serializer = CommCareCaseSQLSerializer(self)
         ret = dict(serializer.data)
-        ret['indices'] = [dict(index) for index in ret['indices']]
+        ret['indices'] = lazy_serialize_case_indices(self)
+        ret['actions'] = lazy_serialize_case_transactions(self)
+        ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
+        ret['case_attachments'] = lazy_serialize_case_attachments(self)
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
@@ -818,7 +835,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
-        return json.dumps(self.to_json(), indent=indent)
+        return json.dumps(self.to_json(), indent=indent, cls=CommCareJSONEncoder)
 
     def pprint(self):
         print(self.dumps(pretty=True))
@@ -1026,7 +1043,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
         return result[0] if result else None
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "CommCareCase("
             "case_id='{c.case_id}', "
@@ -1047,6 +1064,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
+@six.python_2_unicode_compatible
 class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
@@ -1125,7 +1143,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     def new(cls, name):
         return cls(name=name, attachment_id=uuid.uuid4())
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type(
             "CaseAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
@@ -1157,6 +1175,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         ]
 
 
+@six.python_2_unicode_compatible
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1217,10 +1236,13 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "CaseIndex("
             "case_id='{i.case_id}', "
@@ -1241,6 +1263,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
+@six.python_2_unicode_compatible
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1473,7 +1496,15 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             details=detail.to_json()
         )
 
-    def __unicode__(self):
+    def __str__(self):
+        return (
+            "{self.form_id}: "
+            "{self.client_date} "
+            "({self.server_date}) "
+            "{self.readable_type}"
+        ).format(self=self)
+
+    def __repr__(self):
         return (
             "CaseTransaction("
             "case_id='{self.case_id}', "
@@ -1492,6 +1523,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ('case', 'server_date', 'sync_log_id'),
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
@@ -1506,6 +1538,8 @@ class CaseTransactionDetail(JsonObject):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    __hash__ = None
 
 
 class RebuildWithReason(CaseTransactionDetail):
@@ -1615,6 +1649,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         unique_together = ("case", "section_id", "entry_id")
 
 
+@six.python_2_unicode_compatible
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1639,9 +1674,9 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
 
     # change from previous balance
-    delta = models.IntegerField(default=0)
+    delta = models.BigIntegerField(default=0)
     # new balance
-    updated_balance = models.IntegerField(default=0)
+    updated_balance = models.BigIntegerField(default=0)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
@@ -1696,7 +1731,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def stock_on_hand(self):
         return self.updated_balance
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "LedgerTransaction("
             "form_id='{self.form_id}', "
@@ -1719,6 +1754,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

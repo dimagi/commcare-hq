@@ -3,16 +3,25 @@
 {% load hq_shared_tags %}
 {% load humanize %}
 
-<div class="alert alert-info" data-bind="visible: !exports.length">
-    <p>
-        {% if is_deid %}
-            {% blocktrans %}
-                No De-Identified {{ export_type_caps_plural }} are available at this time.
-            {% endblocktrans %}
-        {% else %}
-            {% blocktrans %}
-                No {{ export_type_caps_plural }} Created Yet.
-            {% endblocktrans %}
-        {% endif %}
-    </p>
+<div class="alert alert-danger" data-bind="visible: showError">
+  {% blocktrans %}
+    Problem loading exports. Please refresh the page, or report an issue if the problem persists.
+  {% endblocktrans %}
+</div>
+
+<div class="alert alert-info" data-bind="visible: isLoadingPanel">
+  <i class="fa fa-spin fa-spinner"></i>
+  {% trans "Loading exports..." %}
+</div>
+
+<div class="help-block" data-bind="visible: showEmpty">
+  {% if is_deid %}
+    {% blocktrans %}
+      No De-Identified {{ export_type_caps_plural }} to display
+    {% endblocktrans %}
+  {% else %}
+    {% blocktrans %}
+      No {{ export_type_caps_plural }} to display
+    {% endblocktrans %}
+  {% endif %}
 </div>

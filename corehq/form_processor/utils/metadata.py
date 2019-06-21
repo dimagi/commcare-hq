@@ -7,6 +7,7 @@ from jsonobject.api import re_date
 
 from dimagi.utils.parsing import json_format_datetime
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 
 
@@ -128,4 +129,5 @@ def _get_text_attribute(node):
 
     if not isinstance(value, six.string_types):
         value = six.text_type(value)
+    soft_assert_type_text(value)
     return value

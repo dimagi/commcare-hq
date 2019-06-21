@@ -16,7 +16,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=0),  # execute once every hour
     queue='background_queue',
 )

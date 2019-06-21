@@ -141,6 +141,8 @@ class MobileRecoveryMeasure(models.Model):
                 "Notify the user that CommCare needs to be reinstalled"),
         Measure('cc_update', "CC Update Needed",
                 "Notify the user that CommCare needs to be updated"),
+        Measure('app_offline_reinstall_and_update', "Offline Reinstall and Update App",
+                "Reinstall the current CommCare app offline.")
     )
     measure = models.CharField(
         max_length=255,

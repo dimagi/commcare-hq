@@ -35,14 +35,10 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertTrue(self.es.indices.exists(self.index))
         # check the subset of settings we expected to set
         settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        if settings.ELASTICSEARCH_VERSION < 1.0:
-            self.assertEqual('whitespace', settings_back['index.analysis.analyzer.default.tokenizer'])
-            self.assertEqual('lowercase', settings_back['index.analysis.analyzer.default.filter.0'])
-        else:
-            self.assertEqual(
-                TEST_INDEX_INFO.meta['settings']['analysis'],
-                settings_back['index']['analysis'],
-            )
+        self.assertEqual(
+            TEST_INDEX_INFO.meta['settings']['analysis'],
+            settings_back['index']['analysis'],
+        )
         self.es.indices.delete(self.index)
         self.assertFalse(self.es.indices.exists(self.index))
 
@@ -130,17 +126,13 @@ class ElasticPillowTest(SimpleTestCase):
         self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
 
     def _compare_es_dicts(self, expected, returned, prefix):
-        if settings.ELASTICSEARCH_VERSION < 1.0:
-            for key, value in expected[prefix].items():
-                self.assertEqual(str(value), returned['{}.{}'.format(prefix, key)])
-        else:
-            sub_returned = returned[prefix]
-            for key, value in expected[prefix].items():
-                split_key = key.split('.')
-                returned_value = sub_returned[split_key[0]]
-                for sub_key in split_key[1:]:
-                    returned_value = returned_value[sub_key]
-                self.assertEqual(str(value), returned_value)
+        sub_returned = returned[prefix]
+        for key, value in expected[prefix].items():
+            split_key = key.split('.')
+            returned_value = sub_returned[split_key[0]]
+            for sub_key in split_key[1:]:
+                returned_value = returned_value[sub_key]
+            self.assertEqual(str(value), returned_value)
 
 
 class TestSendToElasticsearch(SimpleTestCase):

@@ -155,7 +155,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             search_url=reverse("global_quick_find"),
             doc_id=error.doc_id,
             search_title=_("Search HQ for this document: %(doc_id)s") % {'doc_id': error.doc_id},
-            raw_url=reverse("raw_couch"),
+            raw_url=reverse("raw_doc"),
             raw_title=_("Open the raw document: %(doc_id)s") % {'doc_id': error.doc_id},
             error_url=reverse(EditPillowError.urlname),
             error_id=error.id,
@@ -251,7 +251,7 @@ class EditPillowError(BasePageView):
         )
 
         # only fake the from email if it's an @dimagi.com account
-        if re.search('@dimagi\.com$', couch_user.username):
+        if re.search(r'@dimagi\.com$', couch_user.username):
             email.from_email = couch_user.username
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL

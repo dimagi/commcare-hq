@@ -1,0 +1,14 @@
+<div class="row">
+  <div class="col-sm-2">
+    <button class='btn btn-{{ css_class }}'>{% if icon %}<i class='{{ icon }}'></i> {% endif %}{{ css_class|title }}</button>
+  </div>
+  <div class="col-sm-4" style="margin-top: 5px;">
+    {{ description|safe }}
+  </div>
+  <div class="col-sm-6">
+        <pre>&lt;button class='btn btn-{{ css_class }}'&gt;{% if icon %}
+          &lt;i class='{{ icon }}'&gt;&lt;/i&gt;{% endif %}
+          {{ css_class|title }}
+&lt;/button&gt;</pre>
+  </div>
+</div>

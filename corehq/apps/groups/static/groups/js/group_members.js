@@ -98,7 +98,7 @@ hqDefine("groups/js/group_members", function () {
                 return false;
             });
             $('#edit-group-settings').submit(function () {
-                $(this).find(':button').disableButton();
+                $(this).find('.modal-footer :button').disableButton();
                 $(this).ajaxSubmit({
                     success: outcome(true, "Group settings", "#edit-group-settings", "Edit Settings"),
                     error: outcome(false, "Group settings", "#edit-group-settings"),

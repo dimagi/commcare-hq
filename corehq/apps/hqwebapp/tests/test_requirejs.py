@@ -4,8 +4,12 @@ import gevent
 import os
 import re
 import subprocess
+from io import open
 
+from django.core.management import call_command
 from django.test import SimpleTestCase
+
+from corehq.apps.hqwebapp.management.commands.build_requirejs import Command as BuildRequireJSCommand
 
 
 class TestRequireJS(SimpleTestCase):
@@ -33,11 +37,11 @@ class TestRequireJS(SimpleTestCase):
         cls.requirejs_files = []
 
         def _categorize_file(filename):
-            proc = subprocess.Popen(["grep", "^\s*hqDefine", filename], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(["grep", r"^\s*hqDefine", filename], stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             if out:
                 cls.hqdefine_files.append(filename)
-                proc = subprocess.Popen(["grep", "hqDefine.*,.*\[", filename], stdout=subprocess.PIPE)
+                proc = subprocess.Popen(["grep", r"hqDefine.*,.*\[", filename], stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
                 if out:
                     cls.requirejs_files.append(filename)

@@ -301,18 +301,18 @@ class Command(BaseCommand):
         old_id = doc._id
 
         attachments = {}
-        attachemnt_stubs = None
+        attachment_stubs = None
         if isinstance(doc, BlobMixin) and doc.blobs:
-            attachemnt_stubs = {k: v.to_json() for k, v in six.iteritems(doc.blobs)}
+            attachment_stubs = {k: v.to_json() for k, v in six.iteritems(doc.blobs)}
             doc['external_blobs'] = {}
             if doc._attachments:
                 del doc['_attachments']
         elif "_attachments" in doc and doc['_attachments']:
-            attachemnt_stubs = doc["_attachments"]
+            attachment_stubs = doc["_attachments"]
             del doc['_attachments']
-        if attachemnt_stubs:
+        if attachment_stubs:
             # fetch attachments before assigning new _id
-            attachments = {k: doc.fetch_attachment(k) for k in attachemnt_stubs}
+            attachments = {k: doc.fetch_attachment(k) for k in attachment_stubs}
 
         doc._id = uuid.uuid4().hex
         del doc['_rev']
@@ -324,7 +324,7 @@ class Command(BaseCommand):
         else:
             doc.save()
             for k, attach in attachments.items():
-                doc.put_attachment(attach, name=k, content_type=attachemnt_stubs[k]["content_type"])
+                doc.put_attachment(attach, name=k, content_type=attachment_stubs[k]["content_type"])
 
         new_id = doc._id
         self.log_copy(doc.doc_type, old_id, new_id)

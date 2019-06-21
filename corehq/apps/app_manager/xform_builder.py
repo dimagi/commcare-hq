@@ -27,6 +27,8 @@ from lxml import etree
 from lxml.builder import E
 import six
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
         xmlns:orx="http://openrosa.org/jr/xforms"
@@ -133,6 +135,8 @@ class XFormBuilder(object):
         """
         if data_type is not None and data_type not in ODK_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
+        if isinstance(group, six.string_types):
+            soft_assert_type_text(group)
         if group is not None and not isinstance(group, six.string_types) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
         groups = [group] if isinstance(group, six.string_types) else group
@@ -355,6 +359,8 @@ class XFormBuilder(object):
                     E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
                 )
             for choice_name in choices_.keys():
+                if isinstance(choice_name, six.string_types):
+                    soft_assert_type_text(choice_name)
                 node_.append(
                     E.item(
                         E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, choice_name))}),

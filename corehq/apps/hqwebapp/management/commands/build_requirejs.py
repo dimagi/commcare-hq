@@ -27,6 +27,9 @@ class Command(ResourceStaticCommand):
     '''
 
     root_dir = settings.FILEPATH
+    build_js_filename = "staticfiles/build.js"
+    build_txt_filename = "staticfiles/build.txt"
+    local_js_dirs = set()   # a reference of js filenames, for use when copying optimized bundles back into corehq
 
     def add_arguments(self, parser):
         parser.add_argument('--local', action='store_true',
@@ -36,45 +39,21 @@ class Command(ResourceStaticCommand):
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
 
-    def handle(self, **options):
-        logger.setLevel('DEBUG')
+    def _relative(self, path, root=None):
+        if not root:
+            root = self.root_dir
+        rel = path.replace(root, '')
+        if rel.startswith("/"):
+            rel = rel[1:]
+        return rel
 
-        local = options['local']
-        no_optimize = options['no_optimize']
-
-        def _relative(path, root=None):
-            if not root:
-                root = self.root_dir
-            rel = path.replace(root, '')
-            if rel.startswith("/"):
-                rel = rel[1:]
-            return rel
-
-        if local:
-            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
-                                    stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            if out:
-                confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
-                                    "This script overwrites some static files. "
-                                    "Are you sure you want to continue (y/n)? ".format(out))
-                if confirm[0].lower() != 'y':
-                    exit()
-            confirm = six.moves.input("You are running locally. Have you already run "
-                                "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
-            if confirm[0].lower() != 'y':
-                exit()
-            # We'll be copying optimized bundles back into corehq and could use a reference of js filenames
-            local_js_dirs = set()
-
-        try:
-            from resource_versions import resource_versions
-        except (ImportError, SyntaxError):
-            resource_versions = {}
-
-        # Write build.js file to feed to r.js
+    def r_js(self, local=False, no_optimize=False):
+        '''
+        Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
+        and the bundle config output by the build.
+        '''
         with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
 
             if no_optimize:
                 config['optimize'] = 'none'
@@ -89,7 +68,7 @@ class Command(ResourceStaticCommand):
                         if not re.search(r'/partials/', filename):
                             html_files.append(filename)
                     elif local and name.endswith(".js"):
-                        local_js_dirs.add(_relative(root))
+                        self.local_js_dirs.add(self._relative(root))
 
             '''
             Build a dict of all main js modules, grouped by directory:
@@ -101,9 +80,10 @@ class Command(ResourceStaticCommand):
             '''
             dirs = defaultdict(set)
             for filename in html_files:
-                proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
                                         stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
+                out = out.decode('utf-8')
                 if out:
                     match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
                     if match:
@@ -127,8 +107,39 @@ class Command(ResourceStaticCommand):
             with open(os.path.join(self.root_dir, 'staticfiles', 'build.js'), 'w') as fout:
                 fout.write("({});".format(json.dumps(config, indent=4)))
 
-        # Run r.js
-        call(["node", "bower_components/r.js/dist/r.js", "-o", "staticfiles/build.js"])
+        call(["node", "bower_components/r.js/dist/r.js", "-o", self.build_js_filename])
+
+        return config
+
+    def handle(self, **options):
+        logger.setLevel('DEBUG')
+
+        local = options['local']
+        no_optimize = options['no_optimize']
+
+        if local:
+            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
+                                    stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+            out = out.decode('utf-8')
+            if out:
+                confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
+                                    "This script overwrites some static files. "
+                                    "Are you sure you want to continue (y/n)? ".format(out))
+                if confirm[0].lower() != 'y':
+                    exit()
+            confirm = six.moves.input("You are running locally. Have you already run "
+                                "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
+            if confirm[0].lower() != 'y':
+                exit()
+
+        try:
+            from resource_versions import resource_versions
+        except (ImportError, SyntaxError):
+            resource_versions = {}
+
+        config = self.r_js(local=local, no_optimize=no_optimize)
+
         if local:
             # Copy optimized modules in staticfiles back into corehq
             for module in config['modules']:
@@ -144,15 +155,15 @@ class Command(ResourceStaticCommand):
                     # If that didn't work, look for a js directory that matches the module name
                     # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                     # for something ending in foo/baz
-                    common_dir = _relative(os.path.dirname(src), os.path.join(self.root_dir, 'staticfiles'))
-                    options = [d for d in local_js_dirs if _relative(d).endswith(common_dir)]
+                    common_dir = self._relative(os.path.dirname(src), os.path.join(self.root_dir, 'staticfiles'))
+                    options = [d for d in self.local_js_dirs if self._relative(d).endswith(common_dir)]
                     if len(options) == 1:
                         dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
                         copyfile(src, os.path.join(self.root_dir, dest_stem, module['name'] + '.js'))
                     else:
-                        logger.warning("Could not copy {} into {}".format(_relative(src), _relative(dest)))
-            logger.info("Final build config written to staticfiles/build.js")
-            logger.info("Bundle config output written to staticfiles/build.txt")
+                        logger.warning("Could not copy {} to {}".format(self._relative(src), self._relative(dest)))
+            logger.info("Final build config written to {}".format(self.build_js_filename))
+            logger.info("Bundle config output written to {}".format(self.build_txt_filename))
 
         filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
         resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
@@ -160,7 +171,7 @@ class Command(ResourceStaticCommand):
             dest = os.path.join(self.root_dir, 'corehq', 'apps', 'hqwebapp', 'static',
                                 'hqwebapp', 'js', 'requirejs_config.js')
             copyfile(filename, dest)
-            logger.info("Copied updated requirejs_config.js back into {}".format(_relative(dest)))
+            logger.info("Copied updated requirejs_config.js back into {}".format(self._relative(dest)))
 
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:

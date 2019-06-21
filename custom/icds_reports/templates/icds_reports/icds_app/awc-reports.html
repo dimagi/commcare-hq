@@ -1,6 +1,6 @@
 {% load i18n %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-5">
             <div class="row">
                 <span id="reportTitle" class="breadcrump-element" ng-bind="$ctrl.label"></span>
@@ -18,7 +18,8 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations" is-open-modal="$ctrl.message"></filters>
         </div>
     </div>
-    <div class="report-content">
+    <info-message></info-message>
+    <div class="report-content report-content-without-message">
         <div ng-if="$ctrl.data">
             <div class="row" ng-if="$ctrl.step === 'pse'">
                 <div class="row no-margin">
@@ -180,95 +181,170 @@
                             <thead>
                                 <tr role="row">
                                     <th class="big-col"></th>
-                                    <th class="big-col" colspan="2">Trimester 1</th>
-                                    <th class="big-col">Trimester 2</th>
-                                    <th class="big-col">Trimester 3</th>
+                                    <th class="big-col"
+                                        ng-if="$ctrl.pregnantData[0].length !== 0"
+                                        colspan="{$ $ctrl.pregnantData[0].length $}" >
+                                        Trimester 1
+                                    </th>
+                                    <th class="big-col"
+                                        ng-if="$ctrl.pregnantData[1].length !== 0"
+                                        colspan="{$ $ctrl.pregnantData[1].length $}" >
+                                        Trimester 2
+                                    </th>
+                                    <th class="big-col"
+                                        ng-if="$ctrl.pregnantData[2].length !== 0"
+                                        colspan="{$ $ctrl.pregnantData[2].length $}" >
+                                        Trimester 3
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="odd" role="row">
-                                    <td class="big-col">Home Visit Date</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].home_visit_date $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].home_visit_date $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].home_visit_date $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].home_visit_date $}</td>
+                                    <td class="big-col pregnantDetailsColumn">Home Visit Date</td>
+                                    <td class="medium-col pregnantDetailsColumn"
+                                        ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.home_visit_date $}
+                                    </td>
+                                    <td class="medium-col pregnantDetailsColumn"
+                                        ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.home_visit_date $}
+                                    </td>
+                                    <td class="medium-col pregnantDetailsColumn"
+                                        ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.home_visit_date $}
+                                    </td>
                                 </tr>
                                 <tr class="even" role="row">
                                     <td class="big-col">BP</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].bp $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].bp $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].bp $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].bp $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.bp $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.bp $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.bp $}
+                                    </td>
                                 </tr>
                                 <tr class="odd" role="row">
                                     <td class="big-col">Weight</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anc_weight $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anc_weight $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anc_weight $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anc_weight $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.anc_weight $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.anc_weight $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.anc_weight $}
+                                    </td>
                                 </tr>
                                 <tr class="even" role="row">
                                     <td class="big-col">Haemoglobin</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anc_hemoglobin $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anc_hemoglobin $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anc_hemoglobin $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anc_hemoglobin $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.anc_hemoglobin $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.anc_hemoglobin $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.anc_hemoglobin $}
+                                    </td>
                                 </tr>
                                 <tr class="odd" role="row">
                                     <td class="big-col">Abnormalities</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anc_abnormalities $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anc_abnormalities $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anc_abnormalities $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anc_abnormalities $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.anc_abnormalities $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.anc_abnormalities $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.anc_abnormalities $}
+                                    </td>
                                 </tr>
                                 <tr class="even" role="row">
                                     <td class="big-col">Anemia</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].anemic $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].anemic $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].anemic $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].anemic $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.anemic $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.anemic $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.anemic $}
+                                    </td>
                                 </tr>
                                 <tr class="odd" role="row">
                                     <td class="big-col">Symptoms</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].symptoms $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].symptoms $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].symptoms $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].symptoms $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.symptoms $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.symptoms $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.symptoms $}
+                                    </td>
                                 </tr>
                                 <tr class="even" role="row">
                                     <td class="big-col">Counselling</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].counseling $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].counseling $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].counseling $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].counseling $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.counseling $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.counseling $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.counseling $}
+                                    </td>
                                 </tr>
                                 <tr class="odd" role="row">
                                     <td class="big-col">IFA tablet issued</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].using_ifa $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].using_ifa $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].using_ifa $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].using_ifa $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.using_ifa $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.using_ifa $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.using_ifa $}
+                                    </td>
                                 </tr>
                                 <tr class="even" role="row">
-                                    <td class="big-col">IFA tablet consumed in last 7 days</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].ifa_consumed_last_seven_days $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].ifa_consumed_last_seven_days $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].ifa_consumed_last_seven_days $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].ifa_consumed_last_seven_days $}</td>
+                                    <td class="big-col">IFA taken in week prior to home visit</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.ifa_consumed_last_seven_days $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.ifa_consumed_last_seven_days $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.ifa_consumed_last_seven_days $}
+                                    </td>
                                 </tr>
                                 <tr class="odd" role="row">
                                     <td class="big-col">TT Taken? (Y/N)</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].tt_taken $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].tt_taken $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].tt_taken $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].tt_taken $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.tt_taken $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.tt_taken $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.tt_taken $}
+                                    </td>
                                 </tr>
                                 <tr class="even" role="row">
                                     <td class="big-col">TT Date</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][0].tt_date $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[0][1].tt_date $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[1][0].tt_date $}</td>
-                                    <td class="medium-col">{$ $ctrl.pregnantData[2][0].tt_date $}</td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[0]" >
+                                        {$ record.tt_date $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[1]" >
+                                        {$ record.tt_date $}
+                                    </td>
+                                    <td class="medium-col" ng-repeat="record in $ctrl.pregnantData[2]" >
+                                        {$ record.tt_date $}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

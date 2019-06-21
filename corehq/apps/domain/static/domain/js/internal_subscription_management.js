@@ -1,7 +1,6 @@
 hqDefine('domain/js/internal_subscription_management', [
     'jquery',
     'knockout',
-    'accounting/js/widgets',
     'jquery-ui/ui/datepicker',
 ], function (
     $,

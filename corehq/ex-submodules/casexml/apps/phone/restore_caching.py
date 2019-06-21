@@ -16,6 +16,10 @@ class _CacheAccessor(object):
     timeout = None
     debug_info = None
 
+    def exists(self):
+        logger.debug('if exists {}'.format(self.debug_info))
+        return self.cache_key in get_redis_default_cache()
+
     def get_value(self):
         logger.debug('getting {}'.format(self.debug_info))
         return get_redis_default_cache().get(self.cache_key)

@@ -37,7 +37,7 @@ class DataInterface(GenericReportView):
 
     @property
     def default_report_url(self):
-        return reverse('data_interfaces_default', args=[self.request.project])
+        return reverse('data_interfaces_default', args=[self.request.project.name])
 
 
 @location_safe
@@ -66,7 +66,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(mark_safe(
-                'Select  <a href="#" class="select-all btn btn-xs btn-info">all'
+                'Select  <a href="#" class="select-all btn btn-xs btn-default">all'
                 '</a> <a href="#" class="select-none btn btn-xs btn-default">'
                 'none</a>'), sortable=False, span=2),
             DataTablesColumn(_("Case Name"), span=3, prop_name="name.exact"),
@@ -196,7 +196,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
             DataTablesColumn(
                 mark_safe(
                     """
-                    Select  <a class="select-visible btn btn-xs btn-info">all</a>
+                    Select  <a class="select-visible btn btn-xs btn-default">all</a>
                     <a class="select-none btn btn-xs btn-default">none</a>
                     """
                 ),

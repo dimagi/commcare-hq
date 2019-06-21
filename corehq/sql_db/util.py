@@ -1,9 +1,16 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
 import uuid
 from collections import defaultdict
-from numpy import random
+
+from django.db import OperationalError
+
+try:
+    from random import choices
+except ImportError:
+    from corehq.sql_db.backports import choices
 
 from django.conf import settings
 from django import db
@@ -62,7 +69,8 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
             yield result
 
 
-def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000):
+def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
+                                                values=None):
     """
     Runs a query across all partitioned databases in small chunks and produces a generator
     with the results.
@@ -74,12 +82,21 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     :param q_expression: An instance of django.db.models.Q representing the
     filter to apply
 
-    :param annotate: (optional) If specified, should by a dictionary of annotated fields
+    :param annotate: (optional) If specified, should be a dictionary of annotated fields
     and their calculations. The dictionary will be splatted into the `.annotate` function
+
+    :param values: (optional) If specified, should be a list of values to retrieve rather
+    than retrieving entire objects. If `pk` is not defined in `values`, then the values
+    returned will be a tuple of (pk + *values)
 
     :return: A generator with the results
     """
     db_names = get_db_aliases_for_partitioned_query()
+    sort_col = 'pk'
+
+    return_values = None
+    if values and sort_col not in values:
+        return_values = ['pk'] + values
 
     for db_name in db_names:
         qs = model_class.objects.using(db_name)
@@ -87,15 +104,19 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
             qs = qs.annotate(**annotate)
 
         qs = qs.filter(q_expression)
-        sort_col = 'pk'
         value = 0
         last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
         if last_value is not None:
             qs = qs.order_by(sort_col)
+            if return_values:
+                qs = qs.values_list(*return_values)
             while value < last_value:
                 filter_expression = {'{}__gt'.format(sort_col): value}
                 for row in qs.filter(**filter_expression)[:query_size]:
-                    value = row.pk
+                    if return_values:
+                        value = row[0]
+                    else:
+                        value = row.pk
                     yield row
 
 
@@ -226,19 +247,22 @@ def get_replication_delay_for_standby(db_alias):
         return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
-    sql = """
-    SELECT
-    CASE
-        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN {delay}
-        WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
-        ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
-    END
-    AS replication_lag;
-    """.format(delay=VERY_LARGE_DELAY)
-    with db.connections[db_alias].cursor() as cursor:
-        cursor.execute(sql)
-        [(delay, )] = cursor.fetchall()
-        return delay
+    try:
+        sql = """
+        SELECT
+        CASE
+            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN %(delay)s
+            WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
+            ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
+        END
+        AS replication_lag;
+        """
+        with db.connections[db_alias].cursor() as cursor:
+            cursor.execute(sql, {'delay': VERY_LARGE_DELAY})
+            [(delay, )] = cursor.fetchall()
+            return delay
+    except OperationalError:
+        return VERY_LARGE_DELAY
 
 
 @memoized
@@ -267,7 +291,7 @@ def select_db_for_read(weighted_dbs):
     """
     Returns a randomly selected database per the weights assigned from
         a list of databases. If any database is standby and its replication has
-        more than accesptable delay, that db is dropped from selection
+        more than acceptable delay, that db is dropped from selection
 
     Args:
         weighted_dbs: a list of tuple of db and the weight.
@@ -290,7 +314,4 @@ def select_db_for_read(weighted_dbs):
             weights.append(weight)
 
     if dbs:
-        # normalize weights of remaining dbs
-        total_weight = sum(weights)
-        normalized_weights = [float(weight) / total_weight for weight in weights]
-        return random.choice(dbs, p=normalized_weights)
+        return choices(dbs, weights=weights)[0]

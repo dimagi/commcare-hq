@@ -4,86 +4,86 @@
 {% load i18n %}
 
 {% block stylesheets %}{{ block.super }}
-<style type="text/css">
+  <style type="text/css">
     .chart-tab-container {
-        position: relative;
+      position: relative;
     }
     .panel-chart-heading {
-        padding: 20px 15px;
+      padding: 20px 15px;
     }
     .reload-graph-form {
-        top: -59px;
-        position: absolute;
-        right: 0px;
+      top: -59px;
+      position: absolute;
+      right: 0px;
     }
     .chart-tab-container {
-        height: 360px;
+      height: 360px;
     }
-</style>
+  </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
-{% compress js %}
-<script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
-<script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}'></script>
-<script src='{% static 'hqadmin/js/visualizations.js' %}'></script>
-<script src='{% static 'hqadmin/js/domain_faceted_report.js' %}'></script>
-{% endcompress %}
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/hash-tab.js' %}"></script>
+    <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}'></script>
+    <script src='{% static 'hqadmin/js/visualizations.js' %}'></script>
+    <script src='{% static 'hqadmin/js/domain_faceted_report.js' %}'></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block page_content %}
-{{ block.super }}
-    {% registerurl "admin_stats_data" %}
-    {% initial_page_data "interval" interval %}
-    <div class="well">
-        <form id="all-charts-filter" style="margin: 0;" class="form-inline">
-            <h3>{% trans "Filters for All Charts Below" %}</h3>
-            <label for="all-charts-interval" class="sub-label">{% trans 'Interval' %}</label>
-            <select id="all-charts-interval" name="interval" class="form-control">
-                <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
-                <option {% if interval == 'week' %}selected {% endif %}value="week">{% trans 'Week' %}</option>
-                <option {% if interval == 'month' %}selected {% endif %}value="month">{% trans 'Month' %}</option>
-                <option {% if interval == 'year' %}selected {% endif %}value="year">{% trans 'Year' %}</option>
-            </select>
-            <label for="all-charts-startdate" class="sub-label">{% trans 'From' %}</label>
-            <input type="text" id="all-charts-startdate" name="startdate" value="{{ startdate }}" class="date-picker form-control">
-            <label for="all-charts-enddate" class="sub-label">{% trans 'To' %}</label>
-            <input type="text" id="all-charts-enddate" name="enddate" value="{{ enddate }}" class="date-picker form-control">
-            <button type="submit" class="btn btn-info">{% trans "Apply to All Charts" %}</button>
+  {{ block.super }}
+  {% registerurl "admin_stats_data" %}
+  {% initial_page_data "interval" interval %}
+  <div class="well">
+    <form id="all-charts-filter" style="margin: 0;" class="form-inline">
+      <h3>{% trans "Filters for All Charts Below" %}</h3>
+      <label for="all-charts-interval" class="sub-label">{% trans 'Interval' %}</label>
+      <select id="all-charts-interval" name="interval" class="form-control">
+        <option {% if interval == 'day' %}selected {% endif %}value="day">{% trans 'Day' %}</option>
+        <option {% if interval == 'week' %}selected {% endif %}value="week">{% trans 'Week' %}</option>
+        <option {% if interval == 'month' %}selected {% endif %}value="month">{% trans 'Month' %}</option>
+        <option {% if interval == 'year' %}selected {% endif %}value="year">{% trans 'Year' %}</option>
+      </select>
+      <label for="all-charts-startdate" class="sub-label">{% trans 'From' %}</label>
+      <input type="text" id="all-charts-startdate" name="startdate" value="{{ startdate }}" class="date-picker form-control">
+      <label for="all-charts-enddate" class="sub-label">{% trans 'To' %}</label>
+      <input type="text" id="all-charts-enddate" name="enddate" value="{{ enddate }}" class="date-picker form-control">
+      <button type="submit" class="btn btn-default">{% trans "Apply to All Charts" %}</button>
 
-        </form>
-    </div>
+    </form>
+  </div>
 
-    <div class="panel panel-default">
-        <div class="panel-heading panel-chart-heading">
-            <h2 class="panel-title">{% trans "Project Spaces" %}</h2>
-        </div>
-        <div class="panel-body">
-        {% include "hqadmin/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
-        </div>
+  <div class="panel panel-default">
+    <div class="panel-heading panel-chart-heading">
+      <h2 class="panel-title">{% trans "Project Spaces" %}</h2>
     </div>
-    <div class="panel panel-default">
-        <div class="panel-heading panel-chart-heading">
-            <h2 class="panel-title">{% trans "Forms" %}</h2>
-        </div>
-        <div class="panel-body">
-        {% include "hqadmin/partials/visualizations.html" with chart_name="forms" %}
-        </div>
+    <div class="panel-body">
+      {% include "hqadmin/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
     </div>
-    <div class="panel panel-default">
-        <div class="panel-heading panel-chart-heading">
-            <h2 class="panel-title">{% trans "Cases" %}</h2>
-        </div>
-        <div class="panel-body">
-        {% include "hqadmin/partials/visualizations.html" with chart_name="cases" %}
-        </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading panel-chart-heading">
+      <h2 class="panel-title">{% trans "Forms" %}</h2>
     </div>
-    <div class="panel panel-default">
-        <div class="panel-heading panel-chart-heading">
-            <h2 class="panel-title">{% trans "Users" %}</h2>
-        </div>
-        <div class="panel-body">
-        {% include "hqadmin/partials/visualizations.html" with chart_name="users" %}
-        </div>
+    <div class="panel-body">
+      {% include "hqadmin/partials/visualizations.html" with chart_name="forms" %}
     </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading panel-chart-heading">
+      <h2 class="panel-title">{% trans "Cases" %}</h2>
+    </div>
+    <div class="panel-body">
+      {% include "hqadmin/partials/visualizations.html" with chart_name="cases" %}
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading panel-chart-heading">
+      <h2 class="panel-title">{% trans "Users" %}</h2>
+    </div>
+    <div class="panel-body">
+      {% include "hqadmin/partials/visualizations.html" with chart_name="users" %}
+    </div>
+  </div>
 {% endblock %}

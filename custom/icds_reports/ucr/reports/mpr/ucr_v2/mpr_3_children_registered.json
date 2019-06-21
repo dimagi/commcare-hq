@@ -1,0 +1,174 @@
+{
+  "domains": [
+    "icds-cas",
+    "icds-cas-sandbox",
+    "cas-lab",
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_3_children_registered",
+  "data_source_table": "static-person_cases_v3",
+  "config": {
+    "title": "MPR 3 - Children Registered (Static)",
+    "description": "New children registered during month.  Displays person cases grouped by month opened, owner ID, and age group at time of registration",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id",
+      "month",
+      "age_group"
+    ],
+    "filters": [
+      {
+        "display": "Date Case Opened",
+        "slug": "opened_on",
+        "type": "date",
+        "field": "opened_on",
+        "datatype": "date"
+      },
+      {
+        "slug": "age_at_registration_in_bounds",
+        "type": "pre",
+        "field": "age_at_reg",
+        "pre_operator": "between",
+        "pre_value": [0, 6],
+        "datatype": "integer"
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        }
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      }
+    ],
+    "columns": [
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "opened_on",
+        "format": "%Y-%m"
+      },
+      {
+        "display": "Age Group",
+        "column_id": "age_group",
+        "type": "conditional_aggregation",
+        "whens": {
+            "age_at_reg BETWEEN 0 AND 2": "0_to_2",
+            "age_at_reg BETWEEN 3 AND 6": "3_to_6"
+        }
+      },
+      {
+        "display": "F_resident_count",
+        "column_id": "F_resident_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' AND resident = 1": 1
+        }
+      },
+      {
+        "display": "M_resident_count",
+        "column_id": "M_resident_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1": 1
+        }
+      },
+      {
+        "display": "F_migrant_count",
+        "column_id": "F_migrant_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' AND resident IS DISTINCT FROM 1": 1
+        }
+      },
+      {
+        "display": "M_migrant_count",
+        "column_id": "M_migrant_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident IS DISTINCT FROM 1": 1
+        }
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

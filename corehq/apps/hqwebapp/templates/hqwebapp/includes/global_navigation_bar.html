@@ -120,6 +120,14 @@
                     </a>
                 </li>
             {% endif %}
+            {% if not enterprise_mode %}
+                <li>
+                    <a href="https://status.commcarehq.org/" data-toggle="modal" class="track-usage-link"
+                       data-category="Nav Bar" data-action="Question Mark" data-label="Status Page">
+                        <i class="fa fa-info-circle dropdown-icon"></i> {% trans "Status Page" %}
+                    </a>
+                </li>
+              {% endif %}
         </ul>
         </li>
     {% endif %}

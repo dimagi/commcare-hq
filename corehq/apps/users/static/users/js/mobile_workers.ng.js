@@ -209,17 +209,6 @@
             visualFormCtrl.markDefault();
         };
 
-        $scope.availableLocations = [];
-
-        $scope.searchLocations = function (query) {
-            var reqStr = location_url + "?name=" + query;
-            $http.get(reqStr).then(
-                function (response) {
-                    $scope.availableLocations = response.data.results;
-                }
-            );
-        };
-
         $scope.initializeMobileWorker = function (existingMobileWorker) {
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
@@ -232,7 +221,31 @@
                     username: existingMobileWorker.username,
                 });
             } else {
-                $(".select2multiplechoicewidget").select2('data', null);
+                $("#id_location_id").select2({
+                    minimumInputLength: 0,
+                    width: '100%',
+                    placeholder: gettext("Select location"),
+                    ajax: {
+                        delay: 100,
+                        url: location_url,
+                        data: function (params) {
+                            return {
+                                name: params.term,
+                            };
+                        },
+                        dataType: 'json',
+                        processResults: function (data, params) {
+                            return {
+                                results: _.map(data.results, function (r) {
+                                    return {
+                                        text: r.name,
+                                        id: r.id,
+                                    };
+                                }),
+                            };
+                        },
+                    },
+                });
                 $scope.mobileWorker = mobileWorker({
                     customFields: customFields,
                     generateStrongPasswords: generateStrongPasswords,
@@ -266,7 +279,7 @@
                 newWorker.password = (hqImport("nic_compliance/js/encoder")()).encode(newWorker.password);
             }
             djangoRMI.create_mobile_worker({
-                mobileWorker: newWorker, 
+                mobileWorker: newWorker,
             })
                 .success(function (data) {
                     if (data.success) {

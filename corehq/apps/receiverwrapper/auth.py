@@ -22,9 +22,9 @@ def domain_requires_auth(domain):
 
 
 def _domain_requires_auth(domain):
-    project = Domain.get_by_name(domain, strict=True)
-    if project:
-        return project.secure_submissions
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj:
+        return domain_obj.secure_submissions
     else:
         raise ResourceNotFound('No domain with name %s' % domain)
 

@@ -1,27 +1,34 @@
 hqDefine("hqmedia/js/hqmedia.reference_controller",[
     'jquery',
-    'underscore',
     'knockout',
-    "hqmedia/js/hqmediauploaders",
-],function ($, _, ko, hQMediaUploaders) {
-    var HQMediaUploaders = hQMediaUploaders.get();
+    'underscore',
+    'hqwebapp/js/assert_properties',
+    'hqmedia/js/hqmediauploaders',
+],function (
+    $,
+    ko,
+    _,
+    assertProperties,
+    mediaUploaders
+) {
+    var HQMediaUploaders = mediaUploaders.get();
 
-    function MultimediaReferenceController(references, objMap, totals) {
-        'use strict';
+    function MultimediaReferenceController(options) {
+        assertProperties.assert(options, ['references', 'objectMap', 'totals']);
         var self = {};
-        self.objMap = objMap;
+        self.objectMap = options.objectMap;
         self.modules = [];
         self.showMissingReferences = ko.observable(false);
-        self.totals = ko.observable(totals);
+        self.totals = ko.observable(options.totals);
 
         self.toggleRefsText = ko.computed(function () {
             return (self.showMissingReferences()) ? gettext("Show All References") : gettext("Show Only Missing References");
         }, self);
 
         self.render = function () {
-            _.each(references, function (ref) {
+            _.each(options.references, function (ref) {
                 if (!self.modules[ref.module.id]) {
-                    self.modules[ref.module.id] = ModuleReferences(ref.module.name, self.objMap, ref.module.id);
+                    self.modules[ref.module.id] = ModuleReferences(ref.module.name, self.objectMap, ref.module.id);
                 }
                 self.modules[ref.module.id].processReference(ref);
             });
@@ -60,16 +67,16 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
             });
             self.totals(newTotals);
         };
-        
+
         return self;
     }
 
-    function BaseReferenceGroup(name, objMap, groupId) {
+    function BaseReferenceGroup(name, objectMap, groupId) {
         'use strict';
         var self = {};
         self.name = name;
         self.id = groupId;
-        self.objMap = objMap;
+        self.objectMap = objectMap;
         self.menu_references = ko.observableArray();
         self.showOnlyMissing = ko.observable(false);
 
@@ -82,7 +89,7 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         }, self);
 
         self.createReferenceObject = function (ref) {
-            var objRef = self.objMap[ref.path];
+            var objRef = self.objectMap[ref.path];
             if (ref.media_class === "CommCareImage") {
                 var imageRef = ImageReference(ref);
                 imageRef.setObjReference(objRef);
@@ -112,16 +119,16 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         return self;
     }
 
-    function ModuleReferences(name, objMap, groupId) {
+    function ModuleReferences(name, objectMap, groupId) {
         'use strict';
-        var self = BaseReferenceGroup(name, objMap, groupId);
+        var self = BaseReferenceGroup(name, objectMap, groupId);
         self.forms = [];
         self.id = "module-" + self.id;
 
         self.processReference = function (ref) {
             if (ref.form.id) {
                 if (!self.forms[ref.form.order]) {
-                    self.forms[ref.form.order] = FormReferences(ref.form.name, self.objMap, ref.form.id);
+                    self.forms[ref.form.order] = FormReferences(ref.form.name, self.objectMap, ref.form.id);
                 }
                 self.forms[ref.form.order].processReference(ref);
             } else if (ref.is_menu_media) {
@@ -135,9 +142,9 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
     ModuleReferences.prototype.constructor = ModuleReferences;
 
 
-    function FormReferences(name, objMap, groupId) {
+    function FormReferences(name, objectMap, groupId) {
         'use strict';
-        var self = BaseReferenceGroup(name, objMap, groupId);
+        var self = BaseReferenceGroup(name, objectMap, groupId);
 
         self.images = ko.observableArray();
         self.audio = ko.observableArray();
@@ -210,15 +217,11 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         self.image_size = ko.observable();
 
         self.status_icon = ko.computed(function () {
-            return (self.is_matched()) ? "fa fa-check media-status-ok" : "fa fa-exclamation-triangle media-status-warning";
+            return (self.is_matched()) ? "fa fa-check text-success" : "fa fa-exclamation-triangle text-danger";
         }, self);
 
         self.upload_button_class = ko.computed(function () {
-            return (self.is_matched()) ? "btn btn-success" : "btn btn-warning";
-        }, self);
-
-        self.upload_button_text = ko.computed(function () {
-            return ((self.is_matched()) ? gettext("Replace ") : gettext("Upload ")) + self.media_type;
+            return (self.is_matched()) ? "btn btn-success" : "btn btn-danger";
         }, self);
 
         self.preview_template = null; // override

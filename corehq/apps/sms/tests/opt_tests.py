@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.sms.api import incoming, send_sms_to_verified_number
 from corehq.apps.sms.messages import MSG_OPTED_IN, MSG_OPTED_OUT, get_message
 from corehq.apps.sms.models import PhoneBlacklist, SMS, PhoneNumber
@@ -32,6 +33,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         FormProcessorTestUtils.delete_all_cases(cls.domain)
         cls.teardown_subscription()
         cls.domain_obj.delete()
+        clear_plan_version_cache()
         super(OptTestCase, cls).tearDownClass()
 
     def tearDown(self):

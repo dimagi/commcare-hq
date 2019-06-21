@@ -5,128 +5,128 @@
 {% requirejs_main 'locations/js/location_types' %}
 
 {% block page_content %}
-    {% initial_page_data 'location_types' location_types %}
-    {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
-    <div class="row">
-        <div class="col-sm-8">
-            <h2>{% trans "Organization Levels" %}</h2>
-            <p>
-                {% blocktrans %}
-                    Organization Levels allow you to configure the different types of
-                    locations within your project (districts, facilities, front line
-                    workers, etc.). Locations can own data and cases, view child
-                    location's data or simply be used for aggregation. Once you've
-                    defined your organization structure types, you'll be able to define
-                    the organization structure for your project. Learn more about
-                    Organizations on our <a href="https://help.commcarehq.org/display/commcarepublic/Organizations">Help Site</a>.
-                {% endblocktrans %}
-            </p>
-        </div>
+  {% initial_page_data 'location_types' location_types %}
+  {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
+  <div class="row">
+    <div class="col-sm-8">
+      <h2>{% trans "Organization Levels" %}</h2>
+      <p>
+        {% blocktrans %}
+          Organization Levels allow you to configure the different types of
+          locations within your project (districts, facilities, front line
+          workers, etc.). Locations can own data and cases, view child
+          location's data or simply be used for aggregation. Once you've
+          defined your organization structure types, you'll be able to define
+          the organization structure for your project. Learn more about
+          Organizations on our <a href="https://help.commcarehq.org/display/commcarepublic/Organizations">Help Site</a>.
+        {% endblocktrans %}
+      </p>
     </div>
-    <form id="settings" class="form form-horizontal" method="post">
-        {% csrf_token %}
-        <fieldset>
-            <div class="col-sm-12">
-                <div class="form-group">
-                    <button type="submit" class="btn btn-default pull-right" disabled>
-                        {% trans "Save" %}
-                    </button>
-                    <button type="button" class="btn btn-success" data-bind="click: new_loctype">
-                        <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
-                    </button>
-                    <hr />
-                    <div class="pull-right">
-                        <label>
-                            <input type="checkbox" data-bind="checked:advanced_mode"/>
-                            {% trans "Advanced mode" %}
-                        </label>
-                    </div>
-                    <div class="alert alert-danger" style="display: none"
-                         data-bind="visible: loc_types_error">
-                        {% trans "Organization Levels cannot be their own ancestors." %}
-                    </div>
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>{% trans "Organization Level" %}</th>
-                                <th>
-                                    {% trans "Parent Level" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Parent Type" %}"
-                                          data-content="{% blocktrans %}
+  </div>
+  <form id="settings" class="form form-horizontal" method="post">
+    {% csrf_token %}
+    <fieldset>
+      <div class="col-sm-12">
+        <div class="form-group">
+          <button type="submit" class="btn btn-default pull-right" disabled>
+            {% trans "Save" %}
+          </button>
+          <button type="button" class="btn btn-primary" data-bind="click: new_loctype">
+            <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
+          </button>
+          <hr />
+          <div class="pull-right">
+            <label>
+              <input type="checkbox" data-bind="checked:advanced_mode"/>
+              {% trans "Advanced mode" %}
+            </label>
+          </div>
+          <div class="alert alert-danger" style="display: none"
+               data-bind="visible: loc_types_error">
+            {% trans "Organization Levels cannot be their own ancestors." %}
+          </div>
+          <table class="table table-striped table-bordered">
+            <thead>
+            <tr>
+              <th>{% trans "Organization Level" %}</th>
+              <th>
+                {% trans "Parent Level" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Parent Type" %}"
+                      data-content="{% blocktrans %}
                                               This controls which parent this organization level
                                               must have. You can use this to setup a organization
                                               level that can have different types of children.
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                <th data-bind="visible: advanced_mode">
-                                    {% trans "Type Code" %}
-                                </th>
-                                <th data-bind="visible: advanced_mode">
-                                    {% trans "Level to expand from" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Level to expand from" %}"
-                                          data-content="{% blocktrans %}
+              </th>
+              <th data-bind="visible: advanced_mode">
+                {% trans "Type Code" %}
+              </th>
+              <th data-bind="visible: advanced_mode">
+                {% trans "Level to expand from" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Level to expand from" %}"
+                      data-content="{% blocktrans %}
                                                         <p>When directly accessing locations in your app, this controls the level below which all possible locations are available.</p>
                                                         <p>The default is to make the user's location's ancestors and all descendants available</p>
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                <th data-bind="visible: advanced_mode">
-                                    {% trans "Level to expand to" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Level to expand to" %}"
-                                          data-content="{% blocktrans %}
+              </th>
+              <th data-bind="visible: advanced_mode">
+                {% trans "Level to expand to" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Level to expand to" %}"
+                      data-content="{% blocktrans %}
                                                         <p>When directly accessing locations in your app, this controls the depth of locations available.</p>
                                                         <p>This can reduce the sync size and time - for example, a user at the State level may not need to see all Cities in that state.</p>
                                                         <p>The default is to make the user's location's ancestors and all descendants available.</p>
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                <th data-bind="visible: advanced_mode">
-                                    {% trans "Include without expanding" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Include without expanding" %}"
-                                          data-content="{% blocktrans %}
+              </th>
+              <th data-bind="visible: advanced_mode">
+                {% trans "Include without expanding" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Include without expanding" %}"
+                      data-content="{% blocktrans %}
                                                         <p>Force sync all locations of this level and their ancestors.</p>
                                                         <p>This is useful if you require some high level information in your app, like all the state names, but don't want to sync all the descendants of that location</p>
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                <th data-bind="visible: advanced_mode">
-                                    {% trans "Include only" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Include only" %}"
-                                          data-content="{% blocktrans %}
+              </th>
+              <th data-bind="visible: advanced_mode">
+                {% trans "Include only" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Include only" %}"
+                      data-content="{% blocktrans %}
                                               <p>Include only locations of the specified types.</p>
                                               <p>Every type you select must also have its parent included.</p>
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                {% if request|toggle_enabled:'LOCATION_USERS' %}
-                                <th data-bind="visible: advanced_mode">
-                                    {% trans "Has Location User" %}
-                                </th>
-                                {% endif %}
-                                {% if commtrack_enabled %}
-                                <th>
-                                    {% trans "Tracks Stock" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Tracks Stock" %}"
-                                          data-content="{% blocktrans %}
+              </th>
+              {% if request|toggle_enabled:'LOCATION_USERS' %}
+                <th data-bind="visible: advanced_mode">
+                  {% trans "Has Location User" %}
+                </th>
+              {% endif %}
+              {% if commtrack_enabled %}
+                <th>
+                  {% trans "Tracks Stock" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Tracks Stock" %}"
+                        data-content="{% blocktrans %}
                                               Does this location keep inventory and track stock?
                                               Note that changing this property will update all
                                               locations of this level accordingly.
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                {% endif %}
-                                <th>
-                                    {% trans "Owns Cases" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "Owns Cases" %}"
-                                          data-content="{% blocktrans %}
+                </th>
+              {% endif %}
+              <th>
+                {% trans "Owns Cases" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Owns Cases" %}"
+                      data-content="{% blocktrans %}
                                               <p>Determines if locations at this level should own cases;
                                               this will allow sharing of cases among any users assigned to a
                                               location at this level.</p>
@@ -136,12 +136,12 @@
                                               for more details.</p>
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                <th>
-                                    {% trans "View Child Data" %}
-                                    <span class="hq-help-template"
-                                          data-title="{% trans "View Child Data" %}"
-                                          data-content="{% blocktrans %}
+              </th>
+              <th>
+                {% trans "View Child Data" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "View Child Data" %}"
+                      data-content="{% blocktrans %}
                                               <p>Indicates if users assigned to this level should be able to see and update cases owned by levels below them.</p>
                                               <p>In order for this to work, you need to make sure you have enabled
                                               Case Sharing in your App settings.
@@ -149,101 +149,101 @@
                                               for more details.</p>
                                           {% endblocktrans %}">
                                     </span>
-                                </th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody data-bind="foreach: loc_types">
-                        <tr data-bind="bind_element: Object()">
-                            <td class="form-group" data-bind="css: { 'has-error': name_error() || duplicate_name_error() }">
-                                <input class="loctype_name form-control" data-bind="value: name" type="text" />
-                                <div class="help-block" data-bind="visible: name_error">
-                                    {% trans "Required" %}
-                                </div>
-                                <div class="help-block" data-bind="visible: duplicate_name_error">
-                                    {% trans "This field must be unique" %}
-                                </div>
-                            </td>
-                            <td class="form-group">
-                                <select class="form-control"
-                                        data-bind="options: $root.loc_type_options($data),
+              </th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: loc_types">
+            <tr data-bind="bind_element: Object()">
+              <td class="form-group" data-bind="css: { 'has-error': name_error() || duplicate_name_error() }">
+                <input class="loctype_name form-control" data-bind="value: name" type="text" />
+                <div class="help-block" data-bind="visible: name_error">
+                  {% trans "Required" %}
+                </div>
+                <div class="help-block" data-bind="visible: duplicate_name_error">
+                  {% trans "This field must be unique" %}
+                </div>
+              </td>
+              <td class="form-group">
+                <select class="form-control"
+                        data-bind="options: $root.loc_type_options($data),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: parent_type,
                                                    optionsCaption: '\u2013top level\u2013'">
-                                </select>
-                            </td>
-                            <td class="form-group" data-bind="visible: $parent.advanced_mode,
+                </select>
+              </td>
+              <td class="form-group" data-bind="visible: $parent.advanced_mode,
                                                               css: { 'has-error': duplicate_code_error }">
-                                <input class="form-control typecode" data-bind="value: code" type="text" />
-                                <div class="help-block" data-bind="visible: duplicate_code_error">
-                                    {% trans "This field must be unique" %}
-                                </div>
-                            </td>
-                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                                <select class="form-control"
-                                        data-bind="options: $data.expand_from_options(),
+                <input class="form-control typecode" data-bind="value: code" type="text" />
+                <div class="help-block" data-bind="visible: duplicate_code_error">
+                  {% trans "This field must be unique" %}
+                </div>
+              </td>
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                <select class="form-control"
+                        data-bind="options: $data.expand_from_options(),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: expand_from,
                                                    optionsCaption: '\u2013{%trans 'default'%} (' + name() + ')\u2013'">
-                                </select>
-                            </td>
-                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                                <select class="form-control"
-                                        data-bind="options: $data.expand_to_options().children,
+                </select>
+              </td>
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                <select class="form-control"
+                        data-bind="options: $data.expand_to_options().children,
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: expand_to,
                                                    optionsCaption: '\u2013{%trans 'default'%} (' + $data.expand_to_options().leaf.name() + ')\u2013'">
-                                </select>
-                            </td>
-                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                                <select class="form-control"
-                                        data-bind="options: $data.include_without_expanding_options(),
+                </select>
+              </td>
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                <select class="form-control"
+                        data-bind="options: $data.include_without_expanding_options(),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: include_without_expanding,
                                                    optionsCaption: '\u2013{%trans 'none' %}\u2013'">
-                                </select>
-                            </td>
-                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
-                                <select multiple="true" class="include-only form-control"
-                                        data-bind="options: $data.include_only_options(),
+                </select>
+              </td>
+              <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                <select multiple="true" class="include-only form-control"
+                        data-bind="options: $data.include_only_options(),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    selectedOptions: include_only,
                                                    optionsCaption: '\u2013{%trans 'all' %}\u2013'">
-                                </select>
-                            </td>
-                            {% if request|toggle_enabled:'LOCATION_USERS' %}
-                            <td data-bind="visible: $parent.advanced_mode">
-                                <input data-bind="checked: has_user" type="checkbox" />
-                            </td>
-                            {% endif %}
-                            {% if commtrack_enabled %}
-                            <td>
-                                <input data-bind="checked: tracks_stock" type="checkbox" />
-                            </td>
-                            {% endif %}
-                            <td>
-                                <input data-bind="checked: shares_cases" type="checkbox" />
-                            </td>
-                            <td>
-                                <input data-bind="checked: view_descendants" type="checkbox" />
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
-                                    <i class="fa fa-trash"></i> {% trans "Remove" %}
-                                </button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </fieldset>
-        <input name="json" type="hidden" data-bind="value: json_payload" />
-    </form>
+                </select>
+              </td>
+              {% if request|toggle_enabled:'LOCATION_USERS' %}
+                <td data-bind="visible: $parent.advanced_mode">
+                  <input data-bind="checked: has_user" type="checkbox" />
+                </td>
+              {% endif %}
+              {% if commtrack_enabled %}
+                <td>
+                  <input data-bind="checked: tracks_stock" type="checkbox" />
+                </td>
+              {% endif %}
+              <td>
+                <input data-bind="checked: shares_cases" type="checkbox" />
+              </td>
+              <td>
+                <input data-bind="checked: view_descendants" type="checkbox" />
+              </td>
+              <td>
+                <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
+                  <i class="fa fa-trash"></i> {% trans "Remove" %}
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </fieldset>
+    <input name="json" type="hidden" data-bind="value: json_payload" />
+  </form>
 
 {% endblock %}

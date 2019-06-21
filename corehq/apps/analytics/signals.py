@@ -5,14 +5,15 @@ import six
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.analytics.tasks import (
-    track_user_sign_in_on_hubspot_v2,
+    track_user_sign_in_on_hubspot,
     HUBSPOT_COOKIE,
-    update_hubspot_properties_v2,
-    identify_v2,
+    update_hubspot_properties,
+    identify,
     update_subscription_properties_by_domain, get_subscription_properties_by_user)
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.registration.views import ProcessRegistrationView
 from corehq.util.decorators import handle_uncaught_exceptions
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 
 from django.dispatch import receiver
@@ -39,15 +40,19 @@ def user_save_callback(sender, **kwargs):
         properties = {}
         properties.update(get_subscription_properties_by_user(couch_user))
         properties.update(get_domain_membership_properties(couch_user))
-        identify_v2.delay(couch_user.username, properties)
-        update_hubspot_properties_v2.delay(couch_user, properties)
+        identify.delay(couch_user.username, properties)
+        update_hubspot_properties.delay(couch_user, properties)
 
 
 @receiver(commcare_domain_post_save)
 @receiver(subscription_upgrade_or_downgrade)
 def domain_save_callback(sender, domain, **kwargs):
-    domain_name = domain if isinstance(domain, six.string_types) else domain.name
-    update_subscription_properties_by_domain.delay(domain_name)
+    if isinstance(domain, six.string_types):
+        soft_assert_type_text(domain)
+        domain_name = domain
+    else:
+        domain_name = domain.name
+    update_subscription_properties_by_domain(domain_name)
 
 
 def get_domain_membership_properties(couch_user):
@@ -75,4 +80,5 @@ def track_user_login(sender, request, user, **kwargs):
                     return
 
             meta = get_meta(request)
-            track_user_sign_in_on_hubspot_v2.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)
+            track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE),
+                                                meta, request.path)

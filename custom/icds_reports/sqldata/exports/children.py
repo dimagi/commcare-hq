@@ -5,14 +5,15 @@ from __future__ import unicode_literals
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumWhen, SumColumn, SimpleColumn
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import wasting_severe_column, wasting_moderate_column, \
     wasting_normal_column, stunting_severe_column, stunting_moderate_column, stunting_normal_column, percent, \
-    hfa_recorded_in_month_column, wfh_recorded_in_month_column, get_age_condition
+    hfa_recorded_in_month_column, wfh_recorded_in_month_column, get_age_condition, phone_number_function
 
 
-class ChildrenExport(ExportableMixin, SqlData):
+class ChildrenExport(ExportableMixin, IcdsSqlData):
     title = 'Children'
     table_name = 'agg_child_health_monthly'
 
@@ -45,6 +46,7 @@ class ChildrenExport(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns

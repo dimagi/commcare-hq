@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert.api import soft_assert
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 import six
@@ -16,6 +17,7 @@ def get_case_ids_in_domain(domain, type=None):
         )
         type_keys = [[t] for t in type]
     elif isinstance(type, six.string_types):
+        soft_assert_type_text(type)
         type_keys = [[type]]
     else:
         raise ValueError(
@@ -101,44 +103,6 @@ def _get_case_ids(domain, owner_id, is_closed):
     )]
 
 
-def iter_lite_cases_json(case_ids, chunksize=100):
-    for case_id_chunk in chunked(case_ids, chunksize):
-        rows = CommCareCase.get_db().view(
-            'cases_get_lite/get_lite',
-            keys=case_id_chunk,
-            reduce=False,
-        )
-        for row in rows:
-            yield row['value']
-
-
-def get_lite_case_json(case_id):
-    return CommCareCase.get_db().view(
-        "cases_get_lite/get_lite",
-        key=case_id,
-        include_docs=False,
-    ).one()
-
-
-def get_case_properties(domain, case_type=None):
-    """
-    For a given case type and domain, get all unique existing case properties,
-    known and unknown
-    """
-    key = [domain]
-    if case_type:
-        key.append(case_type)
-    keys = [row['key'] for row in CommCareCase.get_db().view(
-        'all_case_properties/view',
-        startkey=key,
-        endkey=key + [{}],
-        reduce=True,
-        group=True,
-        group_level=3,
-    )]
-    return sorted(set([property_name for _, _, property_name in keys]))
-
-
 def get_cases_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
         'cases_by_domain_external_id/view',
@@ -146,18 +110,6 @@ def get_cases_in_domain_by_external_id(domain, external_id):
         reduce=False,
         include_docs=True,
     ).all()
-
-
-def get_supply_point_case_in_domain_by_id(
-        domain, supply_point_integer_id):
-    from corehq.apps.commtrack.models import SupplyPointCase
-    return SupplyPointCase.view(
-        'cases_by_domain_external_id/view',
-        key=[domain, str(supply_point_integer_id)],
-        reduce=False,
-        include_docs=True,
-        limit=1,
-    ).first()
 
 
 def get_all_case_owner_ids(domain):

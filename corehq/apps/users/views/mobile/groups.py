@@ -8,10 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.reports.filters.api import MobileWorkersOptionsView
-from corehq.apps.hqwebapp.decorators import (
-    use_multiselect,
-    use_select2_v4,
-)
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -30,7 +27,10 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
 )
 from corehq.apps.users.forms import GroupMembershipForm
-from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.decorators import (
+    require_can_edit_groups,
+    require_can_edit_or_view_groups,
+)
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq import privileges
@@ -62,7 +62,7 @@ def get_group_or_404(domain, group_id):
 class BulkSMSVerificationView(BaseDomainView):
     urlname = 'bulk_sms_verification'
 
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_groups)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(BulkSMSVerificationView, self).dispatch(*args, **kwargs)
@@ -124,9 +124,8 @@ class BulkSMSVerificationView(BaseDomainView):
 
 class BaseGroupsView(BaseUserSettingsView):
 
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_or_view_groups)
     @use_multiselect
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
 
@@ -167,6 +166,8 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     def page_name(self):
+        if self.request.is_view_only:
+            return _('Viewing Group "%s"') % self.group.name
         return _('Editing Group "%s"') % self.group.name
 
     @property
@@ -218,13 +219,16 @@ class EditGroupMembersView(BaseGroupsView):
         )
         return {
             'group': self.group,
+            'group_members': self.members,
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
             'num_users': len(self.members),
             'group_membership_form': self.group_membership_form,
+            'can_edit_group_membership': (self.couch_user.can_edit_users_in_groups()
+                                          or self.couch_user.can_edit_commcare_users()),
             'domain_uses_case_sharing': self.domain_uses_case_sharing,
         }
 
     @property
     def domain_uses_case_sharing(self):
-        domain = Domain.get_by_name(Group.get(self.group_id).domain)
-        return domain.case_sharing_included()
+        domain_obj = Domain.get_by_name(Group.get(self.group_id).domain)
+        return domain_obj.case_sharing_included()

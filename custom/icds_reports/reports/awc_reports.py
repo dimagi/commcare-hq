@@ -1,16 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
 
+from django.db.models import F
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text, \
@@ -23,14 +24,16 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
     current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
-    chosen_filters_to_labels, default_age_interval, get_anamic_status, get_symptoms, get_counseling, get_tt_dates
+    chosen_filters_to_labels, default_age_interval, get_anemic_status, get_symptoms, get_counseling, \
+    get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED, get_delivery_nature, get_color_with_green_positive,\
+    get_color_with_red_positive
 from custom.icds_reports.const import MapColors
 import six
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, loc_level, show_test=False):
 
     def get_data_for(filters, date):
@@ -127,7 +130,7 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
     }
 
 
-@quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
 def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
@@ -329,7 +332,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'month', 'prev_month', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'month', 'prev_month', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False, icds_feature_flag=False):
 
     def get_data_for(date):
@@ -458,12 +461,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'valid_weighed'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'underweight',
                         this_month_data,
                         prev_month_data,
                         'valid_weighed'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid_weighed'),
                     'format': 'percent_and_div',
@@ -478,12 +481,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'weighed_and_height_measured_in_month'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
                         'weighed_and_height_measured_in_month'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
@@ -500,12 +503,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'height_measured_in_month'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
                         'height_measured_in_month'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
@@ -523,12 +526,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data_we,
                         'wer_eli'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'wer_weight',
                         this_month_data_we,
                         prev_month_data_we,
                         'wer_eli'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data_we, 'wer_weight'),
                     'all': get_value(this_month_data_we, 'wer_eli'),
                     'format': 'percent_and_div',
@@ -548,12 +551,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'weighed_and_born_in_month'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'low_birth',
                         this_month_data,
                         prev_month_data,
                         'weighed_and_born_in_month'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'low_birth'),
                     'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
@@ -568,12 +571,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'born'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'birth',
                         this_month_data,
                         prev_month_data,
                         'born'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'birth'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
@@ -590,12 +593,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'ebf'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'month_ebf',
                         this_month_data,
                         prev_month_data,
                         'ebf'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'month_ebf'),
                     'all': get_value(this_month_data, 'ebf'),
                     'format': 'percent_and_div',
@@ -610,12 +613,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'cf'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'month_cf',
                         this_month_data,
                         prev_month_data,
                         'cf'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'month_cf'),
                     'all': get_value(this_month_data, 'cf'),
                     'format': 'percent_and_div',
@@ -640,12 +643,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data,
                         'eligible'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'immunized',
                         this_month_data,
                         prev_month_data,
                         'eligible'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'immunized'),
                     'all': get_value(this_month_data, 'eligible'),
                     'format': 'percent_and_div',
@@ -660,12 +663,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_institutional_delivery_data,
                         'delivered_in_month_sum'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'institutional_delivery_in_month_sum',
                         this_month_institutional_delivery_data,
                         prev_month_institutional_delivery_data,
                         'delivered_in_month_sum'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(
                         this_month_institutional_delivery_data,
                         'institutional_delivery_in_month_sum'
@@ -679,7 +682,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
-@quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
 def get_awc_report_demographics(domain, config, now_date, month, show_test=False, beta=False):
     selected_month = datetime(*month)
     now_date = datetime(*now_date)
@@ -768,10 +771,10 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                         data,
                         prev_data,
                     ),
-                    'color': 'green' if percent_increase(
+                    'color': get_color_with_green_positive(percent_increase(
                         'household',
                         data,
-                        prev_data) > 0 else 'red',
+                        prev_data)),
                     'value': get_value(data, 'household'),
                     'all': '',
                     'format': 'number',
@@ -789,12 +792,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                         prev_data,
                         'all_persons'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'person_aadhaar',
                         data,
                         prev_data,
                         'all_persons'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
@@ -806,10 +809,10 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
                     'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'child_health_all',
                         data,
-                        prev_data, 'child_health_all') > 0 else 'red',
+                        prev_data, 'child_health_all')),
                     'value': get_value(data, 'child_health'),
                     'all': get_value(data, 'child_health_all'),
                     'format': 'percent_and_div',
@@ -820,12 +823,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'help_text': _('Of the total number of pregnant women, the percentage of pregnant '
                                    'women enrolled for Anganwadi Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'ccs_pregnant',
                         data,
                         prev_data,
                         'ccs_pregnant_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
@@ -839,12 +842,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'help_text': _('Of the total number of lactating women, the percentage of '
                                    'lactating women enrolled for Anganwadi Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'css_lactating',
                         data,
                         prev_data,
                         'css_lactating_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'css_lactating'),
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
@@ -862,12 +865,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                         prev_data,
                         'person_adolescent_all'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'person_adolescent',
                         data,
                         prev_data,
                         'person_adolescent_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'person_adolescent'),
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
@@ -878,7 +881,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
     }
 
 
-@quickcache(['domain', 'config', 'month', 'show_test', 'beta'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'month', 'show_test', 'beta'], timeout=30 * 60)
 def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=False):
     selected_month = datetime(*month)
 
@@ -910,7 +913,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
             else:
                 return _("Not Available")
         else:
-            return _("Data not Entered")
+            return _(DATA_NOT_ENTERED)
 
     kpi_data = get_data_for_kpi(config, selected_month.date())
 
@@ -971,7 +974,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
     }
 
 
-@quickcache([
+@icds_quickcache([
     'start', 'length', 'draw', 'order', 'filters', 'month', 'two_before', 'icds_features_flag'
 ], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_before,
@@ -1041,7 +1044,7 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
     return config
 
 
-@quickcache(['case_id', 'awc_id', 'selected_month'], timeout=30 * 60)
+@icds_quickcache(['case_id', 'awc_id', 'selected_month'], timeout=30 * 60)
 def get_beneficiary_details(case_id, awc_id, selected_month):
     selected_month = datetime(*selected_month)
     six_month_before = selected_month - relativedelta(months=6)
@@ -1090,25 +1093,20 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     return beneficiary
 
 
-@quickcache([
+@icds_quickcache([
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
-    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
+    this_month = date.today() - relativedelta(day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
-        month__gte=ten_months_ago,
-    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'pregnant', 'open_in_month').filter(
-        pregnant=1).exclude(open_in_month=False)
-    data = CcsRecordMonthlyView.objects.filter(
-        awc_id=awc_id,
-        month__gte=ten_months_ago,
-        case_id__in=[case['case_id'] for case in data],
+        month=this_month,
+        pregnant_all=1,
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'person_name', 'age_in_months', 'opened_on', 'edd', 'trimester', 'anemic_severe',
-        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant',
-        'num_rations_distributed', 'last_date_thr', 'month', 'closed'
-    )
+        'anemic_moderate', 'anemic_normal', 'anemic_unknown', 'num_anc_complete', 'pregnant_all',
+        'num_rations_distributed', 'last_date_thr', 'month', 'closed', 'open_in_month', 'pregnant'
+    ).exclude(open_in_month=False)
     data_count = data.count()
     config = {
         'data': [],
@@ -1123,7 +1121,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
             opened_on=row_data['opened_on'],
             edd=row_data['edd'],
             trimester=row_data['trimester'],
-            anemic=get_anamic_status(row_data),
+            anemic=is_anemic(row_data),
             num_anc_complete=row_data['num_anc_complete'],
             beneficiary='Yes' if row_data['pregnant'] else 'No',
             number_of_thrs_given=row_data['num_rations_distributed'],
@@ -1133,7 +1131,18 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
-    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    def ordering_format(record):
+        if record[order]:
+            return record[order]
+        numeric_fields = ['age', 'closed', 'trimester', 'num_anc_complete', 'number_of_thrs_given']
+        if any([field in order for field in numeric_fields]):
+            return 0
+        date_fields = ['opened_on', 'edd', 'last_date_thr']
+        if any([field in order for field in date_fields]):
+            return date.today()
+        return ""
+
+    config['data'].sort(key=ordering_format, reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
@@ -1141,20 +1150,20 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
     return config
 
 
-@quickcache(['case_id', 'awc_id'], timeout=30 * 60)
+@icds_quickcache(['case_id', 'awc_id'], timeout=30 * 60)
 def get_pregnant_details(case_id, awc_id):
     ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
         month__gte=ten_months_ago,
+        home_visit_date__lte=F('month') + timedelta(days=31),
     ).order_by('home_visit_date', '-month').distinct('home_visit_date').values(
         'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on', 'preg_order',
         'home_visit_date', 'bp_sys', 'bp_dia', 'anc_weight', 'anc_hemoglobin', 'anemic_severe', 'anemic_moderate',
         'anemic_normal', 'anemic_unknown', 'bleeding', 'swelling', 'blurred_vision', 'convulsions', 'rupture',
-        'counsel_immediate_bf', 'counsel_bp_vid', 'counsel_preparation', 'counsel_fp_vid',
-        'counsel_immediate_conception', 'counsel_accessible_postpartum_fp', 'counsel_fp_methods', 'using_ifa',
-        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month'
+        'eating_extra', 'resting', 'immediate_breastfeeding', 'using_ifa',
+        'ifa_consumed_last_seven_days', 'tt_1', 'tt_2', 'month', 'anc_abnormalities'
     )
 
     config = {
@@ -1164,43 +1173,68 @@ def get_pregnant_details(case_id, awc_id):
             [],
         ],
     }
-    current_trimester = 1
-    current_record = 0
     for row_data in data:
-        if row_data['trimester'] >= current_trimester:
-            config['data'][row_data['trimester'] - 1].append(dict(
+        config['data'][row_data['trimester'] - 1].append(
+            dict(
                 case_id=row_data['case_id'],
-                trimester=row_data['trimester'],
-                person_name=row_data['person_name'],
+                trimester=row_data['trimester'] if row_data['trimester'] else DATA_NOT_ENTERED,
+                person_name=row_data['person_name'] if row_data['person_name'] else DATA_NOT_ENTERED,
                 age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
-                mobile_number=row_data['mobile_number'],
-                edd=row_data['edd'],
-                opened_on=row_data['opened_on'],
-                preg_order=row_data['preg_order'],
-                home_visit_date=row_data['home_visit_date'],
-                bp='{} / {}'.format(
-                    row_data['bp_sys'] if row_data['bp_sys'] else '--',
-                    row_data['bp_dia'] if row_data['bp_dia'] else '--',
+                mobile_number=row_data['mobile_number'] if row_data['mobile_number'] else DATA_NOT_ENTERED,
+                edd=row_data['edd'] if row_data['edd'] else DATA_NOT_ENTERED,
+                opened_on=row_data['opened_on'] if row_data['opened_on'] else DATA_NOT_ENTERED,
+                preg_order=row_data['preg_order'] if row_data['preg_order'] else DATA_NOT_ENTERED,
+                home_visit_date=row_data['home_visit_date'] if row_data['home_visit_date'] else DATA_NOT_ENTERED,
+                bp=DATA_NOT_ENTERED if not row_data['bp_sys'] and not row_data['bp_dia'] else '{} / {}'.format(
+                    row_data['bp_sys'] if row_data['bp_sys'] else DATA_NOT_ENTERED,
+                    row_data['bp_dia'] if row_data['bp_dia'] else DATA_NOT_ENTERED,
                 ),
-                anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else '--',
-                anc_hemoglobin=row_data['anc_hemoglobin'] if row_data['anc_hemoglobin'] else '--',
-                anc_abnormalities=None,  # todo change to num_anc_complete when available in Model
-                anemic=get_anamic_status(row_data),
+                anc_weight=row_data['anc_weight'] if row_data['anc_weight'] else DATA_NOT_ENTERED,
+                anc_hemoglobin=format_decimal(
+                    row_data['anc_hemoglobin']
+                ) if row_data['anc_hemoglobin'] else DATA_NOT_ENTERED,
+                anc_abnormalities='Yes' if row_data['anc_abnormalities'] else 'None',
+                anemic=get_anemic_status(row_data),
                 symptoms=get_symptoms(row_data),
                 counseling=get_counseling(row_data),
                 using_ifa='Y' if row_data['using_ifa'] else 'N',
                 ifa_consumed_last_seven_days='Y' if row_data['ifa_consumed_last_seven_days'] else 'N',
-                tt_taken='Y' if row_data['tt_1'] or row_data['tt_2'] else 'N',
+                tt_taken='Y' if get_tt_dates(row_data) != 'None' else 'N',
                 tt_date=get_tt_dates(row_data),
-            ))
-            if current_trimester == 1 and row_data['trimester'] == 1 and current_record == 0:
-                current_record += 1
-            else:
-                current_trimester = row_data['trimester'] + 1
+            )
+        )
+        if not config.get('pregnant', None):
+            config['pregnant'] = {
+                'person_name': row_data['person_name'] if row_data['person_name'] else DATA_NOT_ENTERED,
+                'age': row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+                'mobile_number': row_data['mobile_number'] if row_data['mobile_number'] else DATA_NOT_ENTERED,
+                'edd': row_data['edd'] if row_data['edd'] else DATA_NOT_ENTERED,
+                'opened_on': row_data['opened_on'] if row_data['opened_on'] else DATA_NOT_ENTERED,
+                'trimester': row_data['trimester'] if row_data['trimester'] else DATA_NOT_ENTERED,
+                'preg_order': row_data['preg_order'] if row_data['preg_order'] else DATA_NOT_ENTERED,
+            }
+    if not config.get('pregnant', None):
+        row_data = CcsRecordMonthlyView.objects.filter(
+            case_id=case_id,
+            awc_id=awc_id,
+            month__gte=ten_months_ago,
+        ).order_by('case_id', '-month').distinct('case_id').values(
+            'case_id', 'trimester', 'person_name', 'age_in_months', 'mobile_number', 'edd', 'opened_on',
+            'preg_order', 'home_visit_date'
+        ).first()
+        config['pregnant'] = {
+            'person_name': row_data['person_name'] if row_data['person_name'] else DATA_NOT_ENTERED,
+            'age': row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
+            'mobile_number': row_data['mobile_number'] if row_data['mobile_number'] else DATA_NOT_ENTERED,
+            'edd': row_data['edd'] if row_data['edd'] else DATA_NOT_ENTERED,
+            'opened_on': row_data['opened_on'] if row_data['opened_on'] else DATA_NOT_ENTERED,
+            'trimester': row_data['trimester'] if row_data['trimester'] else DATA_NOT_ENTERED,
+            'preg_order': row_data['preg_order'] if row_data['preg_order'] else DATA_NOT_ENTERED,
+        }
     return config
 
 
-@quickcache([
+@icds_quickcache([
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
@@ -1208,17 +1242,26 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
         month__gte=one_month_ago,
-    ).order_by('case_id', '-month').distinct('case_id').values('case_id', 'lactating', 'open_in_month').filter(
-        lactating=1).exclude(open_in_month=False)
-    data = CcsRecordMonthlyView.objects.filter(
-        awc_id=awc_id,
-        month__gte=one_month_ago,
-        case_id__in=[case['case_id'] for case in data],
     ).order_by('case_id', '-month').distinct('case_id').values(
-        'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery_in_month',
-        'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed', 'month'
-    )
-    data_count = data.count()
+        'case_id', 'lactating', 'open_in_month', 'date_death'
+    ).filter(lactating=1, date_death=None).exclude(open_in_month=False)
+
+    case_ids = [case['case_id'] for case in data]
+    if case_ids:
+        data = CcsRecordMonthlyView.objects.filter(
+            awc_id=awc_id,
+            month__gte=one_month_ago,
+            date_death=None,
+            case_id__in=case_ids,
+        ).order_by('case_id', '-month').distinct('case_id').values(
+            'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery',
+            'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed', 'month'
+        )
+        data_count = data.count()
+    else:
+        data = []
+        data_count = 0
+
     config = {
         'data': [],
     }
@@ -1229,8 +1272,8 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
             person_name=row_data['person_name'],
             age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             add=row_data['add'],
-            delivery_nature=row_data['delivery_nature'],
-            institutional_delivery_in_month='Y' if row_data['institutional_delivery_in_month'] else 'N',
+            delivery_nature=get_delivery_nature(row_data),
+            institutional_delivery='Y' if row_data['institutional_delivery'] else 'N',
             num_pnc_visits=row_data['num_pnc_visits'],
             breastfed_at_birth='Y' if row_data['breastfed_at_birth'] else 'N',
             is_ebf='Y' if row_data['is_ebf'] else 'N',
@@ -1240,7 +1283,18 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     for row in data:
         config['data'].append(base_data(row))
 
-    config['data'].sort(key=lambda record: record[order], reverse=reversed_order)
+    def ordering_format(record):
+        if record[order]:
+            return record[order]
+        numeric_fields = ['age', 'delivery_nature', 'num_pnc_visits', 'num_rations_distributed']
+        if any([field in order for field in numeric_fields]):
+            return 0
+        date_fields = ['add']
+        if any([field in order for field in date_fields]):
+            return date.today()
+        return ""
+
+    config['data'].sort(key=ordering_format, reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count

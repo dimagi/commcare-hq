@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import functools
 import logging
 
+
 class log_exception(object):
     """
     A decorator that can be used to log an exception stack trace and then

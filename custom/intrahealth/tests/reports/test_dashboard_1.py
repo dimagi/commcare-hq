@@ -10,6 +10,78 @@ from custom.intrahealth.reports import Dashboard1Report
 
 class TestDashboard1(YeksiTestCase):
 
+    def test_extract_value_from_report_table_row_value_input_dict(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'location_id': '',
+            'program': '',
+            'month_start': '10',
+            'year_start': '2017',
+            'month_end': '3',
+            'year_end': '2018',
+        }
+        dashboard1_report = Dashboard1Report(request=mock, domain='test-pna')
+        report_table = {
+            'fix_column': False,
+            'comment': 'test_comment',
+            'rows': [[{'style': 'style0', 'html': 'html0'}, {'style': 'style3', 'html': 'html3'}],
+                     [{'style': 'style1', 'html': 'html1'}, {'style': 'style4', 'html': 'html4'}],
+                     [{'style': 'style2', 'html': 'html2'}, {'style': 'style5', 'html': 'html5'}]],
+            'datatables': False,
+            'title': 'test_title',
+            'total_row': [
+                {'html': 'pas de donn\xe9es0'},
+                {'html': 'pas de donn\xe9es1'},
+                {'html': 'pas de donn\xe9es2'},
+                {'html': 'pas de donn\xe9es3'}
+            ],
+            'slug': 'disponibilite',
+            'default_rows': 10
+        }
+        total_row = dashboard1_report._sanitize_single_row(report_table['total_row'])
+        self.assertEqual(total_row, ['pas de donn\xe9es0', 'pas de donn\xe9es1',
+                                     'pas de donn\xe9es2', 'pas de donn\xe9es3'])
+
+        all_rows = dashboard1_report._sanitize_all_rows(report_table)
+        self.assertEqual(all_rows, [['html0', 'html3'],
+                                    ['html1', 'html4'],
+                                    ['html2', 'html5']])
+
+    def test_extract_value_from_report_table_row_value_input_string(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'location_id': '',
+            'program': '',
+            'month_start': '10',
+            'year_start': '2017',
+            'month_end': '3',
+            'year_end': '2018',
+        }
+        dashboard1_report = Dashboard1Report(request=mock, domain='test-pna1')
+        report_table = {
+            'fix_column': False,
+            'comment': 'test_comment',
+            'rows': [['0', '4', '8', '12'],
+                     ['1', '5', '9', '13'],
+                     ['2', '6', '10', '14'],
+                     ['3', '7', '11', '15']],
+            'datatables': False,
+            'title': 'test_title',
+            'total_row': ['row_0', 'row_1', 'row_2', 'row_3'],
+            'slug': 'disponibilite',
+            'default_rows': 10
+        }
+        report_table_value = dashboard1_report._sanitize_single_row(report_table['total_row'])
+        self.assertEqual(report_table_value, ['row_0', 'row_1', 'row_2', 'row_3'])
+
+        all_rows = dashboard1_report._sanitize_all_rows(report_table)
+        self.assertEqual(all_rows, [['0', '4', '8', '12'],
+                                    ['1', '5', '9', '13'],
+                                    ['2', '6', '10', '14'],
+                                    ['3', '7', '11', '15']])
+
     def test_availability_report(self):
         mock = MagicMock()
         mock.couch_user = self.user

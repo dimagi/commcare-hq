@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -14,5 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL("DROP FUNCTION IF EXISTS case_modified_since(TEXT, TIMESTAMP)")
+        migrations.RunSQL("DROP FUNCTION IF EXISTS case_modified_since(TEXT, TIMESTAMP)")
     ]

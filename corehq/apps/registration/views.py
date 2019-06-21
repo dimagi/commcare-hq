@@ -23,8 +23,8 @@ from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
-    track_confirmed_account_on_hubspot_v2,
-    track_clicked_signup_on_hubspot_v2,
+    track_confirmed_account_on_hubspot,
+    track_clicked_signup_on_hubspot,
     HUBSPOT_COOKIE,
     track_web_user_registration_hubspot,
 )
@@ -46,7 +46,6 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.users.landing_pages import get_cloudcare_urlname
-from corehq import toggles
 from django.contrib.auth.models import User
 
 from corehq.util.soft_assert import soft_assert
@@ -57,12 +56,33 @@ from dimagi.utils.web import get_ip
 from corehq.util.context_processors import get_per_domain_context
 
 
+_domainless_new_user_soft_assert = soft_assert(to=[
+    '{}@{}'.format('biyeun', 'dimagi.com')
+], send_to_ops=False, fail_if_debug=False)
+
+
 def get_domain_context():
     return get_per_domain_context(Domain())
 
 
 def registration_default(request):
     return redirect(UserRegistrationView.urlname)
+
+
+def track_domainless_new_user(request):
+    if settings.UNIT_TESTING:
+        # don't trigger soft assert in a test
+        return
+    user = request.user
+    is_new_user = not (Domain.active_for_user(user) or user.is_superuser)
+    if is_new_user:
+        _domainless_new_user_soft_assert(
+            False, ("A new user '{}' was redirected to "
+                    "RegisterDomainView on '{}', which shouldn't "
+                    "actually happen.").format(
+                user.username, settings.SERVER_ENVIRONMENT
+            )
+        )
 
 
 class ProcessRegistrationView(JSONResponseMixin, View):
@@ -145,9 +165,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                         'project name unavailable': [],
                     }
                 }
-
-            username = reg_form.cleaned_data['email']
-
             return {
                 'success': True,
                 'appcues_ab_test': appcues_ab_test
@@ -199,19 +216,19 @@ class UserRegistrationView(BasePageView):
             # Redirect to a page which lets user choose whether or not to create a new account
             domains_for_user = Domain.active_for_user(request.user)
             if len(domains_for_user) == 0:
+                track_domainless_new_user(request)
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         if settings.IS_SAAS_ENVIRONMENT:
-            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(
-                response)
+            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW_V2, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
-            track_clicked_signup_on_hubspot_v2.delay(
+            track_clicked_signup_on_hubspot.delay(
                 self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
@@ -236,8 +253,8 @@ class UserRegistrationView(BasePageView):
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
         if settings.IS_SAAS_ENVIRONMENT:
-            context['demo_workflow_ab'] = ab_tests.SessionAbTest(
-                ab_tests.DEMO_WORKFLOW, self.request).context
+            context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
+                ab_tests.DEMO_WORKFLOW_V2, self.request).context
         return context
 
     @property
@@ -271,7 +288,6 @@ class RegisterDomainView(TemplateView):
         user = self.request.user
         return not (Domain.active_for_user(user) or user.is_superuser)
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')
@@ -411,7 +427,7 @@ def confirm_domain(request, guid=''):
 
         requested_domain = Domain.get_by_name(req.domain)
         view_name = "dashboard_default"
-        view_args = [requested_domain]
+        view_args = [requested_domain.name]
         if not domain_has_apps(req.domain):
             if False and settings.IS_SAAS_ENVIRONMENT and domain_is_on_trial(req.domain):
                 view_name = "app_from_template"
@@ -441,7 +457,7 @@ def confirm_domain(request, guid=''):
                 'the time to confirm your email address: %s.'
             % (requesting_user.username))
         track_workflow(requesting_user.email, "Confirmed new project")
-        track_confirmed_account_on_hubspot_v2.delay(requesting_user)
+        track_confirmed_account_on_hubspot.delay(requesting_user)
         request.session['CONFIRM'] = True
 
         if settings.IS_SAAS_ENVIRONMENT:

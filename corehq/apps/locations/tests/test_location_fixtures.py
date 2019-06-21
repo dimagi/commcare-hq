@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
+from casexml.apps.phone.restore import RestoreParams
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain
@@ -685,8 +686,27 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     def test_related_locations(self, *args):
         self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
         self._assert_fixture_matches_file(
+            'related_location_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
             'related_location',
-            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            ['Boston', 'Cambridge'],
+            related=True
+        )
+
+    def test_related_locations_parent_location(self, *args):
+        # verify that being assigned to a parent location pulls in sub location's relations
+        self.user._couch_user.add_to_assigned_locations(self.locations['Middlesex'])
+        self._assert_fixture_matches_file(
+            'related_location_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
+            'related_location',
+            ['Boston', 'Cambridge'],
             related=True
         )
 
@@ -696,10 +716,41 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
         self.relation.save()
         self.addCleanup(lambda: LocationRelation.objects.filter(pk=self.relation.pk).update(distance=None))
         self._assert_fixture_matches_file(
+            'related_location_with_distance_flat_fixture',
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Boston', 'Suffolk'],
+            flat=True
+        )
+        self._assert_fixture_matches_file(
             'related_location_with_distance',
-            ['Massachusetts', 'Middlesex', 'Cambridge'],
+            ['Boston', 'Cambridge'],
             related=True
         )
+
+    def test_should_sync_when_changed(self, *args):
+        self.user._couch_user.add_to_assigned_locations(self.locations['Boston'])
+        last_sync_time = datetime.utcnow()
+        sync_log = SyncLog(date=last_sync_time)
+        locations_queryset = SQLLocation.objects.filter(pk=self.locations['Boston'].pk)
+
+        restore_state = MockRestoreState(self.user, RestoreParams())
+
+        self.assertFalse(should_sync_locations(sync_log, locations_queryset, restore_state))
+        self.assertEquals(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 0)
+
+        LocationRelation.objects.create(location_a=self.locations["Revere"], location_b=self.locations["Boston"])
+        self.assertTrue(should_sync_locations(SyncLog(date=last_sync_time), locations_queryset, restore_state))
+
+        # length 2 for index definition + data
+        self.assertEquals(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
+
+    def test_force_empty_when_user_has_no_locations(self, *args):
+        sync_log = SyncLog(date=datetime.utcnow())
+        # no relations have been touched since this synclog, but it still pushes down the empty list
+        self.assertEquals(
+            len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
+
 
 
 class ShouldSyncLocationFixturesTest(TestCase):
@@ -748,8 +799,9 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams())
         self.assertFalse(
-            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, restore_state)
         )
 
         self.location_type.shares_cases = True
@@ -759,7 +811,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertTrue(
-            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, restore_state)
         )
 
     def test_archiving_location_should_resync(self):
@@ -775,9 +827,10 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_save = datetime.utcnow()
         self.assertEqual('winterfell', location.name)
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams())
         # Should not resync if last sync was after location save
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, restore_state)
         )
 
         # archive the location
@@ -788,15 +841,30 @@ class ShouldSyncLocationFixturesTest(TestCase):
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         # Should resync if last sync was after location was saved but before location was archived
         self.assertTrue(
-            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, restore_state)
         )
         # Should not resync if last sync was after location was deleted
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_archive), locations_queryset, restore_state)
+        )
+
+    def test_changed_build_id(self):
+        app = MockApp('project_default', 'build_1')
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=app))
+        sync_log_from_old_app = SyncLog(date=datetime.utcnow(), build_id=app.get_id)
+        self.assertFalse(
+            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+        )
+
+        new_build = MockApp('project_default', 'build_2')
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=new_build))
+        self.assertTrue(
+            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
         )
 
 
-MockApp = namedtuple("MockApp", ["location_fixture_restore"])
+MockApp = namedtuple("MockApp", ["location_fixture_restore", "get_id"])
+MockRestoreState = namedtuple("MockRestoreState", ["restore_user", "params"])
 
 
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
@@ -857,7 +925,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_sync_format_with_app_aware_project_default(self):
-        app = MockApp(location_fixture_restore='project_default')
+        app = MockApp(location_fixture_restore='project_default', get_id="build")
         conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
         conf.sync_hierarchical_fixture = True
         conf.sync_flat_fixture = False
@@ -875,7 +943,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
 @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
 def test_sync_format(self, fixture_restore_type, sync_flat, sync_hierarchical):
-    app = MockApp(location_fixture_restore=fixture_restore_type)
+    app = MockApp(location_fixture_restore=fixture_restore_type, get_id="build")
     conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
     conf.sync_hierarchical_fixture = not sync_hierarchical
     conf.sync_flat_fixture = not sync_flat

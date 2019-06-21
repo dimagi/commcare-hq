@@ -23,6 +23,7 @@ from corehq.motech.const import (
     COMMCARE_DATA_TYPE_INTEGER,
     COMMCARE_DATA_TYPE_TEXT,
 )
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def to_decimal(value):
@@ -44,6 +45,7 @@ def to_text(value):
         return ''
     if not isinstance(value, six.string_types):
         return six.text_type(value)
+    soft_assert_type_text(value)
     return value
 
 

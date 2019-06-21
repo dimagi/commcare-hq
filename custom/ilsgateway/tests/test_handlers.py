@@ -17,18 +17,16 @@ from custom.ilsgateway.models import (
     DeliveryGroups, SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 )
 from custom.ilsgateway.tanzania.reminders import (
-    ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN, EMG_ERROR, EMG_HELP,
+    EMG_ERROR, EMG_HELP,
     CONTACT_SUPERVISOR, DELIVERED_CONFIRM, DELIVERY_CONFIRM_CHILDREN,
     DELIVERY_CONFIRM_DISTRICT, DELIVERY_LATE_DISTRICT, DELIVERY_PARTIAL_CONFIRM,
     DELIVERY_REMINDER_DISTRICT, DELIVERY_REMINDER_FACILITY, HELP_REGISTERED,
     INVALID_PRODUCT_CODE, LANGUAGE_CONFIRM, LANGUAGE_UNKNOWN, LOSS_ADJUST_CONFIRM,
     LOSS_ADJUST_HELP, LOSS_ADJUST_NO_SOH, NOT_DELIVERED_CONFIRM, NOT_SUBMITTED_CONFIRM,
     REGISTER_HELP, REGISTER_UNKNOWN_CODE, REGISTER_UNKNOWN_DISTRICT, REGISTRATION_CONFIRM,
-    REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE, SOH_THANK_YOU,
-    STOP_CONFIRM, SUBMITTED_CONFIRM,
-    SUBMITTED_NOTIFICATION_MSD, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY,
-    SUPERVISION_REMINDER, TEST_HANDLER_BAD_CODE,
-    TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
+    REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE,
+    STOP_CONFIRM,
+    TEST_HANDLER_BAD_CODE, TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group
@@ -570,67 +568,6 @@ class TestHandlers(ILSTestScript):
             """ % {'language_unknown': response % {"language": "de"}}
         self.run_script(script)
 
-    def test_randr_submitted_district(self):
-        with localize('sw'):
-            response1 = six.text_type(SUBMITTED_REMINDER_DISTRICT)
-            response2 = six.text_type(SUBMITTED_NOTIFICATION_MSD)
-        script = """
-          555 > nimetuma
-          555 < {0}
-          111 < {1}
-        """.format(response1,
-                   response2 % {"district_name": self.dis.name, "group_a": 0, "group_b": 0, "group_c": 0})
-        self.run_script(script)
-
-        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
-                                               status_type="rr_dist").order_by("-status_date")[0]
-
-        self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_DISTRICT, sps.status_type)
-
-    def test_randr_submitted_district_with_amounts(self):
-        with localize('sw'):
-            response1 = six.text_type(SUBMITTED_CONFIRM)
-            response2 = six.text_type(SUBMITTED_NOTIFICATION_MSD)
-        script = """
-          555 > nimetuma a 10 b 11 c 12
-          555 < {0}
-          111 < {1}
-        """.format(response1 % {"contact_name": self.user_dis.name, "sp_name": self.dis.name},
-                   response2 % {"district_name": self.dis.name, "group_a": 10, "group_b": 11, "group_c": 12})
-        self.run_script(script)
-
-        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
-                                               status_type="rr_dist").order_by("-status_date")[0]
-
-        self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_DISTRICT, sps.status_type)
-
-    # def test_invalid_randr_with_amounts(self):
-    #     with localize('sw'):
-    #         response1 = unicode(SUBMITTED_INVALID_QUANTITY)
-    #     script = """
-    #         555 > nimetuma a dd b 11 c 12
-    #         555 < {0}
-    #     """ .format(response1 % {'number': 'dd'})
-    #     self.run_script(script)
-    #
-    def test_randr_submitted_facility(self):
-        with localize('sw'):
-            response = six.text_type(SUBMITTED_CONFIRM)
-
-        script = """
-          5551234 > nimetuma
-          5551234 < {0}
-        """.format(response % {"contact_name": self.user_fac1.name, "sp_name": self.loc1.name})
-        self.run_script(script)
-
-        sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
-                                               status_type="rr_fac").order_by("-status_date")[0]
-
-        self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_FACILITY, sps.status_type)
-
     def test_randr_not_submitted(self):
         with localize('sw'):
             response = six.text_type(NOT_SUBMITTED_CONFIRM)
@@ -799,50 +736,6 @@ class TestHandlers(ILSTestScript):
             """ % {"test_bad_code": response % {"code": "d5000000"}}
         self.run_script(script)
 
-    def test_message_initiator_randr_facility(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SUBMITTED_REMINDER_FACILITY)
-        script = """
-            5551234 > test randr d31049
-            5551234 < %(test_handler_confirm)s
-            32347 < %(response)s
-            32348 < %(response)s
-            32349 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
-        supply_point_status = SupplyPointStatus.objects.filter(
-            location_id=self.facility3.get_id,
-            status_type=SupplyPointStatusTypes.R_AND_R_FACILITY
-        ).order_by("-status_date")[0]
-        self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_FACILITY, supply_point_status.status_type)
-
-    def test_message_initiator_randr_district(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SUBMITTED_REMINDER_DISTRICT)
-        script = """
-            5551234 > test randr d10101
-            5551234 < %(test_handler_confirm)s
-            32350 < %(response)s
-            32351 < %(response)s
-            32352 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
-        supply_point_status = SupplyPointStatus.objects.filter(
-            location_id=self.district2.get_id,
-            status_type=SupplyPointStatusTypes.R_AND_R_DISTRICT
-        ).order_by("-status_date")[0]
-        self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_DISTRICT, supply_point_status.status_type)
-
     def test_message_initiator_delivery_facility(self):
         with localize('sw'):
             response1 = six.text_type(TEST_HANDLER_CONFIRM)
@@ -935,44 +828,6 @@ class TestHandlers(ILSTestScript):
         self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
         self.assertEqual(SupplyPointStatusTypes.SOH_FACILITY, supply_point_status.status_type)
 
-    def test_message_initiator_supervision(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SUPERVISION_REMINDER)
-        script = """
-            5551234 > test supervision d31049
-            5551234 < %(test_handler_confirm)s
-            32347 < %(response)s
-            32348 < %(response)s
-            32349 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
-        supply_point_status = SupplyPointStatus.objects.filter(
-            location_id=self.facility3.get_id,
-            status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY
-        ).order_by("-status_date")[0]
-        self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
-        self.assertEqual(SupplyPointStatusTypes.SUPERVISION_FACILITY, supply_point_status.status_type)
-
-    def test_message_initiator_soh_thank_you(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SOH_THANK_YOU)
-        script = """
-            5551234 > test soh_thank_you d31049
-            5551234 < %(test_handler_confirm)s
-            32347 < %(response)s
-            32348 < %(response)s
-            32349 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
-
     def testTrans(self):
         with localize('sw'):
             response = six.text_type(SOH_CONFIRM)
@@ -1011,34 +866,6 @@ class TestHandlers(ILSTestScript):
         for ps in StockState.objects.all():
             self.assertEqual(self.user_fac1.location.linked_supply_point().get_id, ps.case_id)
             self.assertTrue(0 != ps.stock_on_hand)
-
-    def test_arrived_help(self):
-        msg = """
-           5551235 > arrived
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_HELP))
-        self.run_script(msg)
-
-    def test_arrived_unknown_code(self):
-        msg = """
-           5551235 > arrived NOTACODEINTHESYSTEM
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_DEFAULT))
-        self.run_script(msg)
-
-    def test_arrived_known_code(self):
-        msg = """
-           5551235 > arrived loc1
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_KNOWN) % {'facility': self.loc1.name})
-        self.run_script(msg)
-
-    def test_arrived_with_time(self):
-        msg = """
-           5551235 > arrived loc1 10:00
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_KNOWN % {'facility': self.loc1.name}))
-        self.run_script(msg)
 
     def test_soh_in_swahili(self):
         with localize('sw'):

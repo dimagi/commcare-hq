@@ -7,8 +7,8 @@ import logging
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_case_sharing_apps_in_domain
-from corehq.apps.app_manager.util import is_usercase_in_use, all_apps_by_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_case_sharing_apps_in_domain
+from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
@@ -70,18 +70,19 @@ class _CaseRelationshipManager(object):
     You can then ask "what are the different ways a `patient` can be referred to?":
 
     >>> expansions = case_relationship_manager.expand_case_type('patient')
-    >>> for case_type_ref in sorted(expansions):
-    ...     print(case_type_ref)
-    _CaseTypeRef(case_type=u'patient', relationship_path=())
-    _CaseTypeRef(case_type=u'referral', relationship_path=(u'parent',))
+    >>> expansions == {
+    ...     _CaseTypeRef(case_type='patient', relationship_path=()),
+    ...     _CaseTypeRef(case_type='referral', relationship_path=('parent',))
+    ... }
+    True
 
     This is read "`patient` and `referral`'s parent are the two ways to refer to `patient`".
 
 
     You can also ask "What are all of the case_types a `referral`'s `parent` can be?":
 
-    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',)))
-    set([u'patient'])
+    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',))) == {'patient'}
+    True
 
     This is read "a `referral`'s parent can only be a `patient`".
 
@@ -291,7 +292,7 @@ class ParentCasePropertyBuilder(object):
 
     @classmethod
     def for_domain(cls, domain, include_parent_properties=True):
-        apps = [app for app in all_apps_by_domain(domain) if not app.is_remote_app()]
+        apps = get_apps_in_domain(domain, include_remote=False)
         return cls(domain,
                    apps,
                    defaults=('name',),
@@ -404,7 +405,7 @@ class ParentCasePropertyBuilder(object):
             case_properties.update(self.defaults)
 
         if self.exclude_invalid_properties:
-            from corehq.apps.app_manager.models import validate_property
+            from corehq.apps.app_manager.helpers.validators import validate_property
             for case_type, case_properties in case_properties_by_case_type.items():
                 to_remove = []
                 for prop in case_properties:
@@ -422,13 +423,10 @@ class ParentCasePropertyBuilder(object):
             include_parent_properties=self.include_parent_properties
         )
 
-    def get_parent_type_map(self, case_types, if_multiple_parents_arbitrarily_pick_one=False):
+    def get_parent_type_map(self, case_types):
         """
         :param case_types: Case types to filter on. Setting to None will include all.
                todo: including all should be the default behavior since it isn't more work.
-        :param if_multiple_parents_arbitrarily_pick_one: whether to include a list of parent types
-               or arbitrarily pick one. todo: remove this argument
-               since True behavior is of dubious utility and correctness.
         :return: {<case_type>: {<relationship>: [<parent_type>], ...}, ...}
                  if allow_multiple_parents; otherwise
                  {<case_type>: {<relationship>: <parent_type>, ...}, ...}
@@ -444,15 +442,7 @@ class ParentCasePropertyBuilder(object):
                 rel_map[relationship].append(parent_type)
 
             for relationship, types in rel_map.items():
-                if if_multiple_parents_arbitrarily_pick_one:
-                    if len(types) > 1:
-                        logger.error(
-                            "Case Type '%s' in has multiple parents for relationship '%s': %s",
-                            case_type, relationship, types
-                        )
-                    parent_map[case_type][relationship] = types[0]
-                else:
-                    parent_map[case_type][relationship] = types
+                parent_map[case_type][relationship] = types
 
         if case_types is not None:
             return {case_type: rel_map for case_type, rel_map in parent_map.items()
@@ -477,11 +467,9 @@ class ParentCasePropertyBuilder(object):
         }
 
 
-def get_parent_type_map(app, if_multiple_parents_arbitrarily_pick_one=False):
+def get_parent_type_map(app):
     builder = ParentCasePropertyBuilder.for_app(app)
-    return builder.get_parent_type_map(
-        app.get_case_types(),
-        if_multiple_parents_arbitrarily_pick_one=if_multiple_parents_arbitrarily_pick_one)
+    return builder.get_parent_type_map(app.get_case_types())
 
 
 def get_case_properties(app, case_types, defaults=(), include_parent_properties=True,

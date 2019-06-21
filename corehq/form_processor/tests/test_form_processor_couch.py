@@ -36,28 +36,24 @@ class TestFormProcessorCouch(TestCase):
 
 
 @generate_cases([
-    (True, True, True),
-    (True, True, False),
-    (True, False, True),
-    (True, False, False),
-    (False, True, True),
-    (False, True, False),
-    (False, False, True),
-    (False, False, False),
+    (True, True),
+    (True, False),
+    (False, True),
+    (False, False),
 ], TestFormProcessorCouch)
-def test_get_case_with_lock(self, lock, strip_history, wrap):
-    case, case_lock = FormProcessorCouch.get_case_with_lock(self.case_id, lock, strip_history, wrap)
+def test_get_case_with_lock(self, lock, wrap):
+    case, case_lock = FormProcessorCouch.get_case_with_lock(self.case_id, lock, wrap)
 
     try:
-        if lock and not strip_history:
+        if lock:
             self.assertIsNotNone(case_lock)
         else:
             self.assertIsNone(case_lock)
 
         if wrap:
-            self.assertEqual(len(case.actions), 0 if strip_history else 2)
+            self.assertEqual(len(case.actions), 2)
         else:
-            self.assertEqual('actions' in case, False if strip_history else True)
+            self.assertEqual('actions' in case, True)
 
         self.assertIsInstance(case, CommCareCase if wrap else dict)
     finally:

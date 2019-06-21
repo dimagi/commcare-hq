@@ -28,8 +28,8 @@ def setUpModule():
     _call_center_domain_mock.start()
 
     domain = create_domain('champ-cameroon')
-    with override_settings(SERVER_ENVIRONMENT='production'):
 
+    try:
         configs = StaticDataSourceConfiguration.by_domain(domain.name)
         adapters = [get_indicator_adapter(config) for config in configs]
 
@@ -48,6 +48,10 @@ def setUpModule():
                     f, table, engine, format='csv' if six.PY3 else b'csv',
                     null='' if six.PY3 else b'', header=True
                 )
+    except Exception:
+        tearDownModule()
+        raise
+
     _call_center_domain_mock.stop()
 
 
@@ -60,5 +64,12 @@ def tearDownModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
+
+    configs = StaticDataSourceConfiguration.by_domain('champ-cameroon')
+    adapters = [get_indicator_adapter(config) for config in configs]
+
+    for adapter in adapters:
+        adapter.drop_table()
+
     Domain.get_by_name('champ-cameroon').delete()
     _call_center_domain_mock.stop()

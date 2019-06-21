@@ -2,127 +2,22 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans "Form Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
+{% block title %}
+  {% blocktrans with app_version=app_version %}
+    Form Summary - Version {{ app_version }}
+  {% endblocktrans %}
+{% endblock %}
 
 {% requirejs_main "app_manager/js/summary/form_summary" %}
 
 {% block content_extra %}
-    {% initial_page_data 'errors' errors %}
-    {% initial_page_data 'modules' modules %}
-    {% registerurl 'form_source' domain app_id '---' %}
-    {% registerurl 'view_module' domain app_id '---' %}
+  {% initial_page_data 'errors' errors %}
+  {% initial_page_data 'modules' modules %}
+  {% registerurl 'form_source' domain app_id '---' %}
+  {% registerurl 'view_module' domain app_id '---' %}
 
-    <div class="page-header" style="margin-top: 0;">
-        <h3>
-          <i class="fa fa-file-text-o"></i>
-          {% trans "Form Summary" %}  - {% trans "Version" %} {{ app_version }}
-          {% if app_id != latest_app_id %}
-              <small><a href="{% url 'app_form_summary' domain  latest_app_id %}">{% trans "See latest" %}</a> </small>
-          {% endif %}
-        </h3>
-        <div class="row">
-            <div class="col-xs-3">
-                <!-- ko template: {name: 'search-box', data: $root} --><!-- /ko -->
-            </div>
-            <div class="col-xs-9">
-                <div class="btn-toolbar pull-right" role="toolbar">
-                    <!-- ko template: 'label-id-toggle' --><!-- /ko -->
-                    <div class="btn-group" role="group">
-                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
-                                           icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
-                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleRelevance, activeObs: showRelevance,
-                                           icon: 'fa fa-code-fork', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
-                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleConstraints, activeObs: showConstraints,
-                                           icon: 'fa fa-ban', text: '{% trans "Validation"|escapejs %}' } }--><!-- /ko -->
-                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleComments, activeObs: showComments,
-                                           icon: 'fa fa-quote-left', text: '{% trans "Comments"|escapejs %}' } }--><!-- /ko -->
-                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleDefaultValues, activeObs: showDefaultValues,
-                                           icon: 'fa fa-home', text: '{% trans "Default Values"|escapejs %}' } }--><!-- /ko -->
-                    </div>
-                 </div>
-             </div>
-        </div>
-    </div>
-
-    <!-- ko foreach: errors -->
-        <div class="alert alert-danger">
-            <i class="fa fa-exclamation-circle"></i> {% trans "Error in form:" %}
-            <span data-bind="html: $root.moduleFormReference(id)"></span>
-            <br/>
-            <span data-bind="text: error.details"></span>
-        </div>
-    <!-- /ko -->
-
-    <ul class="fa-ul" data-bind="foreach: modules">
-        <li data-bind="slideVisible: isVisible">
-            <h4>
-                <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
-                    <i data-bind="attr: { 'class': icon }"></i>
-                    <span data-bind="text: $root.translate(name)"></span>
-                </a>
-                <div data-bind="if: $root.readOnly">
-                    <i data-bind="attr: { 'class': icon }"></i>
-                    <span data-bind="text: $root.translate(name)"></span>
-                </div>
-                <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
-            </h4>
-            <ul class="fa-ul" data-bind="foreach: forms">
-                <li data-bind="slideVisible: isVisible">
-                    <h5>
-                        <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
-                            <i data-bind="attr: { 'class': icon }"></i>
-                            <span data-bind="text: $root.translate(name)"></span>
-                        </a>
-                        <div data-bind="if: $root.readOnly">
-                            <i data-bind="attr: { 'class': icon }"></i>
-                            <span data-bind="text: $root.translate(name)"></span>
-                        </div>
-                        <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"</span>
-                    </h5>
-                    <ol data-bind="foreach: questions">
-                        <li data-bind="slideVisible: isVisible">
-                            <i data-bind="attr: { 'class': $root.questionIcon($data) }" title="type"></i>
-                            <span data-bind="visible: $root.showIds, text: value"></span>
-                            <span data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></span>
-                            <span data-bind="visible: required" title="{% trans "This question is required"|escapejs %}">*</span>
-                            <span class="text-muted" data-bind="visible: $root.showComments">
-                                &nbsp; <span data-bind="text: comment"></span>
-                            </span>
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: calculate, icon: 'fa-calculator',
-                                               visibleObs: $root.showCalculations } }--><!-- /ko -->
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: relevant, icon: 'fa-code-fork',
-                                               visibleObs: $root.showRelevance } }--><!-- /ko -->
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: constraint, icon: 'fa-ban',
-                                               visibleObs: $root.showConstraints } }--><!-- /ko -->
-                            <!-- ko template: {name: 'question-attribute', data: { attribute: setvalue, icon: 'fa-home',
-                                               visibleObs: $root.showDefaultValues } }--><!-- /ko -->
-                            <ol data-bind="foreach: options">
-                                <li data-bind="visible: $root.showIds, text: value"></li>
-                                <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
-                            </ol>
-                        </li>
-                    </ol>
-                </li>
-            </ul>
-        </li>
-    </ul>
-
-    {# Button to toggle question attribute #}
-    <script type="text/html" id="question-attribute">
-        <ul class="fa-ul" data-bind="if: attribute, slideVisible: visibleObs">
-            <li>
-                <i data-bind="attr: {'class': 'fa-li fa text-muted ' + icon}"></i>
-                <span data-bind="text: attribute"></span>
-            </li>
-        </ul>
-    </script>
-
-    {# Button for question attribute #}
-    <script type="text/html" id="attribute-toggle">
-        <button type="button" class="btn btn-default"
-                data-bind="click: clickFn, css: { active: activeObs }">
-                <i class="fa fa-calculator" data-bind="css: { 'hq-icon': activeObs }, attr: {'class': icon}"></i>
-                &nbsp;<span data-bind="text: text"></span>
-        </button>
-    </script>
+  {% include 'app_manager/partials/form_summary_header.html' %}
+  <div id="form-summary" class="ko-template">
+    {% include 'app_manager/form_summary_base.html' with modules=modules errors=errors %}
+  </div>
 {% endblock content_extra %}

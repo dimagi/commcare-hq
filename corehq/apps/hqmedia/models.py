@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from copy import copy
 import hashlib
 import json
 import logging
@@ -8,12 +9,27 @@ from datetime import datetime
 from io import BytesIO
 
 import magic
-from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.template.defaultfilters import filesizeformat
 
+from corehq import privileges
+from corehq import toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
-from corehq.util.soft_assert import soft_assert
-from dimagi.ext.couchdbkit import *
+from corehq.util.python_compatibility import soft_assert_type_text
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SafeSaveDocument,
+    SchemaDictProperty,
+    SchemaListProperty,
+    StringListProperty,
+    StringProperty,
+)
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
@@ -22,6 +38,7 @@ from django.utils.translation import ugettext as _
 from PIL import Image
 
 from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
@@ -59,7 +76,7 @@ class HQMediaLicense(DocumentSchema):
         if properties and properties.get('type', '') == 'public':
             properties['type'] = 'cc'
         super(HQMediaLicense, self).__init__(_d, **properties)
-    
+
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
@@ -135,13 +152,9 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
 
         if not self.blobs or attachment_id not in self.blobs:
             if not getattr(self, '_id'):
-                # put attchment blows away existing data, so make sure an id has been
-                # assigned to this guy before we do it. this is the expected path
+                # put_attchment blows away existing data, so make sure an id has been assigned
+                # to this guy before we do it. This is the usual path; remote apps are the exception.
                 self.save()
-            else:
-                # this should only be files that had attachments deleted while the bug
-                # was in effect, so hopefully we will stop seeing it after a few days
-                logging.error('someone is uploading a file that should have existed for multimedia %s' % self._id)
             self.put_attachment(
                 data,
                 attachment_id,
@@ -241,7 +254,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     def get_base_mime_type(cls, data, filename=None):
         mime_type = cls.get_mime_type(data, filename=filename)
         return mime_type.split('/')[0] if mime_type else None
-        
+
     @classmethod
     def generate_hash(cls, data):
         return hashlib.md5(data).hexdigest()
@@ -258,6 +271,10 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     def get_by_data(cls, data):
         file_hash = cls.generate_hash(data)
         return cls.get_by_hash(file_hash)
+
+    @classmethod
+    def get_doc_types(cls):
+        return ('CommCareImage', 'CommCareAudio', 'CommCareVideo')
 
     @classmethod
     def get_doc_class(cls, doc_type):
@@ -400,7 +417,7 @@ class CommCareImage(CommCareMultimedia):
     def get_icon_class(cls):
         return "fa fa-picture-o"
 
-        
+
 class CommCareAudio(CommCareMultimedia):
 
     class Config(object):
@@ -433,7 +450,6 @@ class HQMediaMapItem(DocumentSchema):
     output_size = DictProperty()
     version = IntegerProperty()
     unique_id = StringProperty()
-    form_media = BooleanProperty(default=False)
 
     @property
     def url(self):
@@ -459,6 +475,7 @@ class ApplicationMediaReference(object):
 
         if not isinstance(path, six.string_types):
             path = ''
+        soft_assert_type_text(path)
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):
@@ -525,25 +542,204 @@ class ApplicationMediaReference(object):
         return self._get_name(self.form_name, lang=lang)
 
 
-def _log_media_deletion(app, deleted_media):
-    # https://dimagi-dev.atlassian.net/browse/ICDS-2
-    formatted_media = [
-        {'path': path, 'map_item': map_item.to_json(), 'media': media.as_dict() if media else None}
-        for path, map_item, media in deleted_media
-    ]
-    soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-        False, "path deleted from multimedia map", json.dumps({
-            'domain': app.domain,
-            'app_id': app._id,
-            'deleted_media': list(formatted_media),
-        }, indent=4)
-    )
-
-
-class HQMediaMixin(Document):
+class MediaMixin(object):
     """
-        Mix this guy in with Application to support multimedia.
-        Anything multimedia related happens here.
+        An object that has multimedia associated with it.
+        Used by apps, modules, forms.
+    """
+    def get_media_ref_kwargs():
+        raise NotImplementedError
+
+    def all_media(self, lang=None):
+        """
+            Finds all the multimedia IMAGES and AUDIO referenced in this object
+            Returns list of ApplicationMediaReference objects
+        """
+        raise NotImplementedError
+
+    def rename_media(self, old_path, new_path):
+        """
+            Returns a count of number of changes made.
+            Should rename each item returned by all_media.
+        """
+        raise NotImplementedError
+
+    @memoized
+    def all_media_paths(self, lang=None):
+        return set([m.path for m in self.all_media(lang=lang)])
+
+    @memoized
+    def get_all_paths_of_type(self, media_type):
+        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_type])
+
+    def menu_media(self, menu, lang=None):
+        """
+            Convenience method. Gets the ApplicationMediaReference for a menu that's
+            associated with this MediaMixin (which may be self or a different attribute)
+
+            Note that "menu" may refer to any object that implements NavMenuItemMediaMixin,
+            like a module or a form.
+        """
+        kwargs = self.get_media_ref_kwargs()
+        media = []
+        media.extend([ApplicationMediaReference(image, media_class=CommCareImage, is_menu_media=True, **kwargs)
+                      for image in menu.all_image_paths(lang=lang) if image])
+        media.extend([ApplicationMediaReference(audio, media_class=CommCareAudio, is_menu_media=True, **kwargs)
+                      for audio in menu.all_audio_paths(lang=lang) if audio])
+        return media
+
+    def rename_menu_media(self, menu, old_path, new_path):
+        """
+            Convenience method, similar to menu_media.
+        """
+        app = self.get_app()
+        update_count = 0
+        for lang in app.langs:
+            if menu.icon_by_language(lang) == old_path:
+                menu.set_icon(lang, new_path)
+                update_count += 1
+            if menu.audio_by_language(lang) == old_path:
+                menu.set_audio(lang, new_path)
+                update_count += 1
+        return update_count
+
+
+class ModuleMediaMixin(MediaMixin):
+    def get_media_ref_kwargs(self):
+        return {
+            'app_lang': self.get_app().default_language,
+            'module_name': self.name,
+            'module_id': self.id,
+            'form_name': None,
+            'form_id': None,
+            'form_order': None,
+        }
+
+    def all_media(self, lang=None):
+        kwargs = self.get_media_ref_kwargs()
+        media = []
+
+        media.extend(self.menu_media(self, lang=lang))
+
+        # Registration from case list
+        if self.case_list_form.form_id:
+            media.extend(self.menu_media(self.case_list_form, lang=lang))
+
+        # Case list menu item
+        if hasattr(self, 'case_list') and self.case_list.show:
+            media.extend(self.menu_media(self.case_list, lang=lang))
+
+        for name, details, display in self.get_details():
+            # Case list lookup - not language-specific
+            if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                media.append(ApplicationMediaReference(details.lookup_image, media_class=CommCareImage,
+                                                       is_menu_media=True, **kwargs))
+
+            # Print template - not language-specific
+            if display and details.display == 'long' and details.print_template:
+                media.append(ApplicationMediaReference(details.print_template['path'],
+                                                       media_class=CommCareMultimedia, **kwargs))
+
+            # Icon-formatted columns
+            for column in details.get_columns():
+                if column.format == 'enum-image':
+                    for map_item in column.enum:
+                        icon = trans(map_item.value, [lang] + self.get_app().langs, include_lang=False)
+                        if icon:
+                            media.append(ApplicationMediaReference(icon, media_class=CommCareImage,
+                                                                   is_menu_media=True, **kwargs))
+
+        return media
+
+    def rename_media(self, old_path, new_path):
+        count = 0
+
+        count += self.rename_menu_media(self, old_path, new_path)
+
+        # Registration from case list
+        if self.case_list_form.form_id:
+            count += self.rename_menu_media(self.case_list_form, old_path, new_path)
+
+        # Case list menu item
+        if hasattr(self, 'case_list') and self.case_list.show:
+            count += self.rename_menu_media(self.case_list, old_path, new_path)
+
+        for name, details, display in self.get_details():
+            # Case list lookup
+            if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                if details.lookup_image == old_path:
+                    details.lookup_image = new_path
+                    count += 1
+
+            # Print template
+            if display and details.display == 'long' and details.print_template:
+                details.print_template['path'] = new_path
+                count += 1
+
+            # Icon-formatted columns
+            for column in details.get_columns():
+                if column.format == 'enum-image':
+                    for map_item in column.enum:
+                        for lang, icon in six.iteritems(map_item.value):
+                            if icon == old_path:
+                                map_item.value[lang] = new_path
+                                count += 1
+
+        return count
+
+
+class FormMediaMixin(MediaMixin):
+    def get_media_ref_kwargs(self):
+        module = self.get_module()
+        return {
+            'app_lang': module.get_app().default_language,
+            'module_name': module.name,
+            'module_id': module.id,
+            'form_name': self.name,
+            'form_id': self.unique_id,
+            'form_order': self.id,
+        }
+
+    @memoized
+    def memoized_xform(self):
+        return self.wrapped_xform()
+
+    def all_media(self, lang=None):
+        kwargs = self.get_media_ref_kwargs()
+
+        media = copy(self.menu_media(self, lang=lang))
+
+        # Form questions
+        parsed = self.wrapped_xform()
+        if parsed.exists():
+            self.validate_form()
+            for image in parsed.image_references(lang=lang):
+                if image:
+                    media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
+            for audio in parsed.audio_references(lang=lang):
+                if audio:
+                    media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **kwargs))
+            for video in parsed.video_references(lang=lang):
+                if video:
+                    media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **kwargs))
+            for text in parsed.text_references(lang=lang):
+                if text:
+                    media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
+
+        return media
+
+    def rename_media(self, old_path, new_path):
+        count = 0
+
+        count += self.rename_menu_media(self, old_path, new_path)
+        count += self.memoized_xform().rename_media(old_path, new_path)
+
+        return count
+
+
+class ApplicationMediaMixin(Document, MediaMixin):
+    """
+        Manages multimedia for itself and sub-objects.
     """
 
     # keys are the paths to each file in the final application media zip
@@ -555,96 +751,42 @@ class HQMediaMixin(Document):
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
     @memoized
-    def all_media(self):
+    def all_media(self, lang=None):
         """
-            Get all the paths of multimedia IMAGES and AUDIO referenced in this application.
-            (Video and anything else is currently not supported...)
+            Somewhat counterituitively, this contains all media in the app EXCEPT app-level media (logos).
         """
         media = []
         self.media_form_errors = False
 
-        def _add_menu_media(item, **kwargs):
-            media.extend([ApplicationMediaReference(image,
-                                                    media_class=CommCareImage,
-                                                    is_menu_media=True, **kwargs)
-                          for image in item.all_image_paths()
-                          if image])
-
-            media.extend([ApplicationMediaReference(audio,
-                                                    media_class=CommCareAudio,
-                                                    is_menu_media=True, **kwargs)
-                          for audio in item.all_audio_paths()
-                          if audio])
-
-        for m, module in enumerate([m for m in self.get_modules() if m.uses_media()]):
-            media_kwargs = {
-                'module_name': module.name,
-                'module_id': m,
-                'app_lang': self.default_language,
-            }
-            _add_menu_media(module, **media_kwargs)
-
-            for name, details, display in module.get_details():
-                if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
-                    media.append(ApplicationMediaReference(
-                        details.lookup_image,
-                        media_class=CommCareImage,
-                        **media_kwargs)
-                    )
-                # Icons in case-details
-                for column in details.get_columns():
-                    if column.format == 'enum-image':
-                        for map_item in column.enum:
-                            # iterate over icons of each lang
-                            icons = list(map_item.value.values())
-                            media.extend([ApplicationMediaReference(
-                                icon,
-                                media_class=CommCareImage,
-                                is_menu_media=True,
-                                **media_kwargs)
-                                for icon in icons
-                                if icon]
-                            )
-                # Print template
-                if display and details.display == 'long' and details.print_template:
-                    media.append(ApplicationMediaReference(
-                        details.print_template['path'],
-                        media_class=CommCareMultimedia,
-                        **media_kwargs)
-                    )
-
-            if module.case_list_form.form_id:
-                _add_menu_media(module.case_list_form, **media_kwargs)
-
-            if hasattr(module, 'case_list') and module.case_list.show:
-                _add_menu_media(module.case_list, **media_kwargs)
-
-            for f_order, f in enumerate(module.get_forms()):
-                media_kwargs['form_name'] = f.name
-                media_kwargs['form_id'] = f.unique_id
-                media_kwargs['form_order'] = f_order
-                _add_menu_media(f, **media_kwargs)
+        for module in [m for m in self.get_modules() if m.uses_media()]:
+            media.extend(module.all_media(lang=lang))
+            for form in module.get_forms():
                 try:
-                    parsed = f.wrapped_xform()
-                    if not parsed.exists():
-                        continue
-                    f.validate_form()
-                    for image in parsed.image_references:
-                        if image:
-                            media.append(ApplicationMediaReference(image, media_class=CommCareImage, **media_kwargs))
-                    for audio in parsed.audio_references:
-                        if audio:
-                            media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **media_kwargs))
-                    for video in parsed.video_references:
-                        if video:
-                            media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
-                    for text in parsed.text_references:
-                        if text:
-                            media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **media_kwargs))
+                    media.extend(form.all_media(lang=lang))
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
 
+    def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
+        if self.multimedia_map is None:
+            self.multimedia_map = {}
+
+        if self.multimedia_map and remove_unused:
+            self.remove_unused_mappings()
+
+        if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
+            return self.multimedia_map
+
+        requested_media = copy(self.logo_paths)   # logos aren't language-specific
+        for lang in build_profile.langs:
+            requested_media |= self.all_media_paths(lang=lang)
+
+        return {path: self.multimedia_map[path] for path in requested_media if path in self.multimedia_map}
+
+    # The following functions (get_menu_media, get_case_list_form_media, get_case_list_menu_item_media,
+    # get_case_list_lookup_image, _get_item_media, and get_media_ref_kwargs) are used to set up context
+    # for app manager settings pages. Ideally, they'd be moved into ModuleMediaMixin and FormMediaMixin
+    # and perhaps share logic with those mixins' versions of all_media.
     def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
@@ -711,14 +853,6 @@ class HQMediaMixin(Document):
         menu_media['audio'] = audio_ref
         return menu_media
 
-    @memoized
-    def all_media_paths(self):
-        return set([m.path for m in self.all_media()])
-
-    @memoized
-    def get_all_paths_of_type(self, media_class_name):
-        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
-
     def get_media_ref_kwargs(self, module, module_index, form=None,
                              form_index=None, is_menu_media=False):
         return {
@@ -746,18 +880,11 @@ class HQMediaMixin(Document):
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths() | self.logo_paths
-        deleted_media = []
-        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
         for path in paths:
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
-                deleted_media.append((path, map_item, None))
-                if allow_deletion:
-                    map_changed = True
-                    del self.multimedia_map[path]
-
-        if not allow_deletion and deleted_media:
-            _log_media_deletion(self, deleted_media)
+                map_changed = True
+                del self.multimedia_map[path]
 
         if map_changed:
             self.save()
@@ -781,43 +908,37 @@ class HQMediaMixin(Document):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self, languages=None):
+    def get_media_objects(self, build_profile_id=None, remove_unused=False):
         """
             Gets all the media objects stored in the multimedia map.
             If passed a profile, will only get those that are used
             in a language in the profile.
+
+            Returns a generator of tuples, where the first item in the tuple is
+            the path (jr://...) and the second is the object (CommCareMultimedia or a subclass)
         """
         found_missing_mm = False
-        filter_multimedia = languages and self.media_language_map
-        if filter_multimedia:
-            requested_media = set()
-            for lang in languages:
-                requested_media.update(self.media_language_map[lang].media_refs)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
-        expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
+        build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
+        multimedia_map_for_build = self.multimedia_map_for_build(build_profile=build_profile,
+                                                                 remove_unused=remove_unused)
+        expected_ids = [map_item.multimedia_id for map_item in multimedia_map_for_build.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
-        all_media = {m.path: m for m in self.all_media()}
-        deleted_media = []
-        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
-        for path, map_item in list(self.multimedia_map.items()):
-            if not filter_multimedia or not map_item.form_media or path in requested_media:
-                media_item = raw_docs.get(map_item.multimedia_id)
-                if media_item:
-                    media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
-                    yield path, media_cls.wrap(media_item)
-                else:
-                    # delete media reference from multimedia map so this doesn't pop up again!
-                    deleted_media.append((path, map_item, all_media.get(path)))
-                    if allow_deletion:
-                        del self.multimedia_map[path]
-                        found_missing_mm = True
-
-        if not allow_deletion and deleted_media:
-            _log_media_deletion(self, deleted_media)
-
-        if found_missing_mm:
-            self.save()
+        for path, map_item in multimedia_map_for_build.items():
+            media_item = raw_docs.get(map_item.multimedia_id)
+            if media_item:
+                media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
+                yield path, media_cls.wrap(media_item)
+            else:
+                # Re-attempt to fetch media directly from couch
+                media = CommCareMultimedia.get_doc_class(map_item.media_type)
+                try:
+                    media = media.get(map_item.multimedia_id)
+                    yield path, media
+                except ResourceNotFound as e:
+                    if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
+                        raise e
 
     def get_references(self, lang=None):
         """
@@ -827,7 +948,7 @@ class HQMediaMixin(Document):
 
     def get_object_map(self):
         object_map = {}
-        for path, media_obj in self.get_media_objects():
+        for path, media_obj in self.get_media_objects(remove_unused=False):
             object_map[path] = media_obj.get_media_info(path)
         return object_map
 
@@ -836,7 +957,7 @@ class HQMediaMixin(Document):
             Returns a list of totals of each type of media in the application and total matches.
         """
         totals = []
-        for mm in [CommCareImage, CommCareAudio, CommCareVideo]:
+        for mm in [CommCareMultimedia.get_doc_class(t) for t in CommCareMultimedia.get_doc_types()]:
             paths = self.get_all_paths_of_type(mm.__name__)
             matched_paths = [p for p in self.multimedia_map.keys() if p in paths]
             if len(paths) > 0:
@@ -854,7 +975,7 @@ class HQMediaMixin(Document):
             Prepares the multimedia in the application for exchanging across domains.
         """
         self.remove_unused_mappings()
-        for path, media in self.get_media_objects():
+        for path, media in self.get_media_objects(remove_unused=True):
             if not media or (not media.is_shared and self.domain not in media.owners):
                 del self.multimedia_map[path]
 

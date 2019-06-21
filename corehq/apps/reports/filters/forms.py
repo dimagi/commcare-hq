@@ -1,8 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+from memoized import memoized
+from six.moves import range
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
@@ -12,21 +19,13 @@ from corehq.apps.reports.analytics.couchaccessors import (
     get_form_details_for_app_and_module,
     get_form_details_for_app,
 )
-from corehq.apps.reports.analytics.esaccessors import (
-    guess_form_name_from_submissions_using_xmlns,
-)
+from corehq.apps.reports.analytics.esaccessors import guess_form_name_from_submissions_using_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.const import MISSING_APP_ID
 from corehq.elastic import ESError
+from corehq.util.context_processors import commcare_hq_names
+from corehq.util.python_compatibility import soft_assert_type_text
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
-from memoized import memoized
-
-# For translations
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop, ugettext_lazy
-import six
-from six.moves import range
-
 
 PARAM_SLUG_STATUS = 'status'
 PARAM_SLUG_APP_ID = 'app_id'
@@ -406,6 +405,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         If obj is a string, just output that string.
         """
         if isinstance(obj, six.string_types):
+            soft_assert_type_text(obj)
             return obj
         if not obj:
             return _('Untitled')
@@ -436,8 +436,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] in [PARAM_SLUG_APP_ID, PARAM_SLUG_STATUS]:
+            if param['slug'] == PARAM_SLUG_APP_ID:
                 return True
+        if request.GET.get('show_advanced') == 'on':
+            return True
         return False
 
     def _get_filtered_data(self, filter_results):
@@ -606,7 +608,7 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
                         "<strong>Completion</strong> time is when the form is completed on the phone."),
                         ugettext_lazy(
                         "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
-                            hq_name=settings.COMMCARE_HQ_NAME))))
+                            hq_name=commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))))
     default_text = ugettext_lazy("Completion Time")
 
     @property

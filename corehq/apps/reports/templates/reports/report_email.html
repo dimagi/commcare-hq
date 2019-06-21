@@ -1,24 +1,24 @@
 {% load i18n %}
 <head>
-<style>
-h1 {
-    font-size: 130%;
-}
-th, td {
-    padding-right: 1em;
-}
-td.null-entry {
-    color: #ccc;
-}
-.pagebreak {
-    page-break-after: always;
-}
-</style>
+  <style>
+    h1 {
+      font-size: 130%;
+    }
+    th, td {
+      padding-right: 1em;
+    }
+    td.null-entry {
+      color: #ccc;
+    }
+    .pagebreak {
+      page-break-after: always;
+    }
+  </style>
 </head>
 <body>
-    {{ email_content|safe }}
-    <br><hr />
-    {% if unsub_link %}
-        <a href="{{ unsub_link }}">{% trans 'Unsubscribe from this report' %}</a>.
-    {% endif %}
+  {{ email_content|safe }}
+  <br><hr />
+  {% if unsub_link %}
+    <a href="{{ unsub_link }}">{% trans 'Unsubscribe from this report' %}</a>.
+  {% endif %}
 </body>

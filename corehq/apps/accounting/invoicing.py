@@ -3,8 +3,11 @@ from __future__ import division
 from __future__ import unicode_literals
 import calendar
 import datetime
+
+import six
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import transaction
@@ -13,7 +16,7 @@ from django.utils.translation import ugettext as _, ungettext
 
 from memoized import memoized
 
-from corehq.util.dates import get_previous_month_date_range
+from corehq.util.dates import get_first_last_days, get_previous_month_date_range
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -27,7 +30,7 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SubscriptionType, InvoicingPlan, DomainUserHistory
+    SubscriptionType, InvoicingPlan, DomainUserHistory, SoftwarePlanEdition
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -36,7 +39,6 @@ from corehq.apps.accounting.utils import (
     months_from_date
 )
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.users.models import CommCareUser
 
 DEFAULT_DAYS_UNTIL_DUE = 30
 
@@ -163,7 +165,7 @@ class DomainInvoiceFactory(object):
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
-                    log_accounting_error(e.message)
+                    log_accounting_error(six.text_type(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True
@@ -264,7 +266,7 @@ class DomainWireInvoiceFactory(object):
             invoices = CustomerInvoice.objects.filter(account=self.account)
         else:
             invoices = Invoice.objects.filter(
-                subscription__subscriber__domain=self.domain,
+                subscription__subscriber__domain=self.domain.name,
                 is_hidden=False,
                 date_paid__exact=None
             ).order_by('-date_start')
@@ -308,7 +310,7 @@ class DomainWireInvoiceFactory(object):
             except InvoiceEmailThrottledError as e:
                 # Currently wire invoices are never throttled
                 if not self.logged_throttle_error:
-                    log_accounting_error(e.message)
+                    log_accounting_error(six.text_type(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True
@@ -342,15 +344,13 @@ class CustomerAccountInvoiceFactory(object):
         self.account = account
         self.recipients = recipients
         self.customer_invoice = None
-        self.subscriptions = {}
+        self.subscriptions = defaultdict(list)
 
     def create_invoice(self):
-        for subscription in self.account.subscription_set.all():
-            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
-                if subscription.plan_version in self.subscriptions:
-                    self.subscriptions[subscription.plan_version].append(subscription)
-                else:
-                    self.subscriptions[subscription.plan_version] = [subscription]
+        for sub in self.account.subscription_set.filter(do_not_invoice=False):
+            if not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
+                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
+                self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
             return
         try:
@@ -482,12 +482,15 @@ class LineItemFactory(object):
     @property
     @memoized
     def subscribed_domains(self):
-        if self.subscription.subscriber.domain is None:
-            raise LineItemError("No domain could be obtained as the subscriber.")
         if self.subscription.account.is_customer_billing_account:
-            return [sub.subscriber.domain for sub in
-                    self.subscription.account.subscription_set
-                        .filter(plan_version=self.subscription.plan_version)]
+            return list(self.subscription.account.subscription_set.filter(
+                Q(date_end__isnull=True) | Q(date_end__gt=self.invoice.date_start),
+                date_start__lte=self.invoice.date_end
+            ).filter(
+                plan_version=self.subscription.plan_version
+            ).values_list(
+                'subscriber__domain', flat=True
+            ))
         return [self.subscription.subscriber.domain]
 
     def create(self):
@@ -632,13 +635,8 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return non_prorated_unit_cost
 
     @property
+    @memoized
     def quantity(self):
-        if self.invoice.is_customer_invoice and self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
-            return self.num_excess_users_over_period
-        return self.num_excess_users
-
-    @property
-    def num_excess_users_over_period(self):
         # Iterate through all months in the invoice date range to aggregate total users into one line item
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
@@ -649,12 +647,12 @@ class UserLineItemFactory(FeatureLineItemFactory):
                     history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
                 except DomainUserHistory.DoesNotExist:
-                    total_users += 0
+                    raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 
     def all_month_ends_in_invoice(self):
-        month_end = self.invoice.date_end
+        _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
         dates = []
         while month_end > self.invoice.date_start:
             dates.append(month_end)
@@ -662,28 +660,11 @@ class UserLineItemFactory(FeatureLineItemFactory):
         return dates
 
     @property
-    def num_excess_users(self):
-        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-            return 0
-        else:
-            return max(self.num_users - self.rate.monthly_limit, 0)
-
-    @property
-    @memoized
-    def num_users(self):
-        total_users = 0
-        for domain in self.subscribed_domains:
-            total_users += CommCareUser.total_by_domain(domain, is_active=True)
-        return total_users
-
-    @property
     def unit_description(self):
-        non_monthly_invoice = self.invoice.is_customer_invoice and \
-            self.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
-        if self.num_excess_users > 0 or (non_monthly_invoice and self.num_excess_users_over_period > 0):
+        if self.quantity > 0:
             return ungettext(
-                "Per User fee exceeding monthly limit of %(monthly_limit)s user.",
-                "Per User fee exceeding monthly limit of %(monthly_limit)s users.",
+                "Per User fee exceeding limit of %(monthly_limit)s user.",
+                "Per User fee exceeding limit of %(monthly_limit)s users.",
                 self.rate.monthly_limit
             ) % {
                 'monthly_limit': self.rate.monthly_limit,

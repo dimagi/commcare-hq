@@ -1,92 +1,141 @@
-web:
-  build: .
-  dockerfile: "${DOCKERFILE}"
-  environment:
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
-    DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
-    JS_SETUP: "${JS_SETUP}"
-    NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
-    REUSE_DB: "${REUSE_DB}"
-    TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
-    TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
-    DATADOG_API_KEY: "${DATADOG_API_KEY}"
-    TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
-    TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
-    TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
-  privileged: true  # allows mount inside container
-  links:
-    - postgres
-    - couch
-    - redis
-    - elasticsearch
-    - kafka
-    - riakcs
-  volumes:
-    - ..:/mnt/commcare-hq-ro${RO}
-    - ${VOLUME_PREFIX}lib:/mnt/lib
+version: '2.3'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: "${DOCKERFILE}"
+    environment:
+      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 kafka:9092 elasticsearch:9200 minio:9980"
+      DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
+      JS_SETUP: "${JS_SETUP}"
+      PYTHON_VERSION: "${PYTHON_VERSION}"
+      NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
+      REUSE_DB: "${REUSE_DB}"
+      TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
+      TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
+      DATADOG_API_KEY: "${DATADOG_API_KEY}"
+      TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
+      TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
+      TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
+    privileged: true  # allows mount inside container
+    links:
+      - postgres
+      - couch
+      - redis
+      - elasticsearch
+      - kafka
+      - minio
+    volumes:
+      - ..:/mnt/commcare-hq-ro${RO}
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
+    depends_on:
+      citus_worker1: { condition: service_healthy }
+      citus_worker2: { condition: service_healthy }
 
-formplayer:
-  image: dimagi/formplayer
-  environment:
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
-    WEB_HOST: "dockerhost"
-  expose:
-    - "8010"
+  formplayer:
+    image: dimagi/formplayer
+    environment:
+      WEB_HOST: "dockerhost"
+    expose:
+      - "8010"
 
-postgres:
-  image: dimagi/docker-postgresql
-  environment:
-    POSTGRES_USER: commcarehq
-    POSTGRES_PASSWORD: commcarehq
-  expose:
-    - "5432"
-  volumes:
-    - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
+  postgres:
+    image: dimagi/docker-postgresql
+    environment:
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
+    expose:
+      - "5432"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
-couch:
-  image: klaemo/couchdb:2.0-dev
-  command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
-  ulimits:
-    # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
-    # https://groups.google.com/forum/#!topic/rabbitmq-users/hO06SB-QBqc
-    nofile:
-      soft: 1024
-      hard: 1048576
-  expose:
-    - "5984"
-  volumes:
-    - ${VOLUME_PREFIX}couchdb2:/usr/src/couchdb/dev/lib/node1/data
+  couch:
+    image: klaemo/couchdb:2.0-dev
+    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
+    ulimits:
+      # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
+      # https://groups.google.com/forum/#!topic/rabbitmq-users/hO06SB-QBqc
+      nofile:
+        soft: 1024
+        hard: 1048576
+    expose:
+      - "5984"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/usr/src/couchdb/dev/lib/node1/data
 
-redis:
-  image: redis
-  expose:
-    - "6379"
-  volumes:
-    - ${VOLUME_PREFIX}redis:/data
+  redis:
+    image: redis
+    expose:
+      - "6379"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
-elasticsearch:
-  image: elasticsearch:1.7.4
-  environment:
-    ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-  expose:
-    - "9200"
-  volumes:
-    - ${DATA_VOLUME_PREFIX}elasticsearch:/usr/share/elasticsearch/data
+  elasticsearch:
+    image: elasticsearch:1.7.4
+    environment:
+      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+    expose:
+      - "9200"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
 
-kafka:
-  image: spotify/kafka
-  environment:
-    ADVERTISED_PORT: 9092
-  expose:
-    - "2181"
-    - "9092"
-  volumes:
-    - ${VOLUME_PREFIX}kafka:/tmp/kafka-logs
-    - ${VOLUME_PREFIX}zookeeper:/var/lib/zookeeper
+  kafka:
+    image: spotify/kafka
+    environment:
+      ADVERTISED_PORT: 9092
+    expose:
+      - "2181"
+      - "9092"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/tmp/kafka-logs
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/var/lib/zookeeper
 
-riakcs:
-  image: dimagi/riak-cs
-  expose:
-    - "9980"
-  volumes:
-    - ${DATA_VOLUME_PREFIX}riakcs:/var/lib/riak-data
+  minio:
+    image: minio/minio
+    command: server --address :9980 /data
+    expose:
+      - "9980"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-conf:}/root/.minio
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-data:}/data
+    environment:
+      MINIO_ACCESS_KEY: admin-key
+      MINIO_SECRET_KEY: admin-secret
+
+  citus_master:
+    image: 'citusdata/citus:8.1.1'
+    ports: ["${CITUS_MASTER_EXTERNAL_PORT:-5600}:5432"]
+    labels: ['com.citusdata.role=Master']
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_master:}/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
+  citus_manager:
+    image: 'citusdata/membership-manager:0.2.0'
+    volumes: ['/var/run/docker.sock:/var/run/docker.sock']
+    depends_on: { citus_master: { condition: service_healthy } }
+    environment:
+      CITUS_HOST: citus_master
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
+  citus_worker1:
+    image: 'citusdata/citus:8.1.1'
+    labels: ['com.citusdata.role=Worker']
+    depends_on: { citus_manager: { condition: service_healthy } }
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker1:}/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+  citus_worker2:
+    image: 'citusdata/citus:8.1.1'
+    labels: ['com.citusdata.role=Worker']
+    depends_on: { citus_manager: { condition: service_healthy } }
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker2:}/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq

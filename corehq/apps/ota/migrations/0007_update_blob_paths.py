@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             # This migration is not reversible because blobs created
             # since the migration will no longer be accessible after
             # reversing because the old blob db would use the wrong path.

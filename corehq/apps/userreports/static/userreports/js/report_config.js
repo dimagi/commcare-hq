@@ -4,18 +4,17 @@ hqDefine('userreports/js/report_config', function () {
         reportBuilder: function () {
             var self = this;
 
-            var PropertyList = hqImport('userreports/js/builder_view_models').PropertyList;
-            var PropertyListItem = hqImport('userreports/js/builder_view_models').PropertyListItem;
+            var propertyList = hqImport('userreports/js/builder_view_models').propertyList;
+            var propertyListItem = hqImport('userreports/js/builder_view_models').propertyListItem;
             var constants = hqImport('userreports/js/constants');
 
             var _kmq_track_click = function (action) {
                 hqImport('analytix/js/kissmetrix').track.event("RBv2 - " + action);
             };
 
-            var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
-                PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
-                var self = this;
-                this.inputBoundCalculation = ko.computed({
+            var columnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
+                var self = propertyListItem(getDefaultDisplayText, getPropertyObject, hasDisplayText);
+                self.inputBoundCalculation = ko.computed({
                     read: function () {
                         return self.calculation();
                     },
@@ -27,69 +26,67 @@ hqDefine('userreports/js/report_config', function () {
                     },
                     owner: this,
                 });
+                return self;
             };
-            ColumnProperty.prototype = Object.create(PropertyListItem.prototype);
-            ColumnProperty.prototype.constructor = ColumnProperty;
 
+            var columnList = function (options) {
+                var self = propertyList(options);
+                self.newProperty = ko.observable(null);
 
-            var ColumnList = function (options) {
-                PropertyList.call(this, options);
-                this.newProperty = ko.observable(null);
-            };
-            ColumnList.prototype = Object.create(PropertyList.prototype);
-            ColumnList.prototype.constructor = ColumnList;
-            ColumnList.prototype._createListItem = function () {
-                return new ColumnProperty(
-                    this.getDefaultDisplayText.bind(this),
-                    this.getPropertyObject.bind(this),
-                    this.reorderColumns.bind(this),
-                    this.hasDisplayCol
-                );
-            };
-            ColumnList.prototype.buttonHandler = function () {
-                if (this.newProperty()) {
-                    var item = this._createListItem();
-                    item.property(this.newProperty());
-                    if (this.reportType() === constants.REPORT_TYPE_LIST) {
-                        item.calculation(constants.GROUP_BY);
-                    } else {
-                        item.calculation(item.getDefaultCalculation());
-                    }
-                    this.newProperty(null);
-                    this.columns.push(item);
-                    if (_.isFunction(this.addItemCallback)) {
-                        this.addItemCallback();
-                    }
-                }
-            };
-            ColumnList.prototype.reorderColumns = function () {
-                var items = {};
-
-                // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
-                // each ColumnProperty), but we don't want this function to run until the this.columns exists.
-                if (this.columns) {
-                    this.columns().forEach(function (v, i) {
-                        items[[v.property(), v.calculation(), v.displayText()]] = i;
-                    });
-
-                    var isGroupBy = function (column) {
-                        return column.calculation() === constants.GROUP_BY;
-                    };
-                    var index = function (column) {
-                        return items[[column.property(), column.calculation(), column.displayText()]];
-                    };
-                    var compare = function (first, second) {
-                        // return negative if first is smaller than second
-                        if (isGroupBy(first) !== isGroupBy(second)) {
-                            return isGroupBy(first) ? -1 : 1;
+                self._createListItem = function () {
+                    return columnProperty(
+                        self.getDefaultDisplayText.bind(self),
+                        self.getPropertyObject.bind(self),
+                        self.reorderColumns.bind(self),
+                        self.hasDisplayCol
+                    );
+                };
+                self.buttonHandler = function () {
+                    if (self.newProperty()) {
+                        var item = self._createListItem();
+                        item.property(self.newProperty());
+                        if (self.reportType() === constants.REPORT_TYPE_LIST) {
+                            item.calculation(constants.GROUP_BY);
+                        } else {
+                            item.calculation(item.getDefaultCalculation());
                         }
-                        if (index(first) !== index(second)) {
-                            return index(first) < index(second) ? -1 : 1;
+                        self.newProperty(null);
+                        self.columns.push(item);
+                        if (_.isFunction(self.addItemCallback)) {
+                            self.addItemCallback();
                         }
-                        return 0;
-                    };
-                    this.columns.sort(compare);
-                }
+                    }
+                };
+                self.reorderColumns = function () {
+                    var items = {};
+
+                    // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
+                    // each ColumnProperty), but we don't want this function to run until the this.columns exists.
+                    if (self.columns) {
+                        self.columns().forEach(function (v, i) {
+                            items[[v.property(), v.calculation(), v.displayText()]] = i;
+                        });
+
+                        var isGroupBy = function (column) {
+                            return column.calculation() === constants.GROUP_BY;
+                        };
+                        var index = function (column) {
+                            return items[[column.property(), column.calculation(), column.displayText()]];
+                        };
+                        var compare = function (first, second) {
+                            // return negative if first is smaller than second
+                            if (isGroupBy(first) !== isGroupBy(second)) {
+                                return isGroupBy(first) ? -1 : 1;
+                            }
+                            if (index(first) !== index(second)) {
+                                return index(first) < index(second) ? -1 : 1;
+                            }
+                            return 0;
+                        };
+                        self.columns.sort(compare);
+                    }
+                };
+                return self;
             };
 
 
@@ -248,7 +245,7 @@ hqDefine('userreports/js/report_config', function () {
                 self.selectablePropertyOptions = _getSelectableProperties(config['dataSourceProperties']);
                 self.selectableReportColumnOptions = _getSelectableReportColumnOptions(self.columnOptions, config['dataSourceProperties']);
 
-                self.columnList = new ColumnList({
+                self.columnList = columnList({
                     hasFormatCol: false,
                     hasCalculationCol: self.isAggregationEnabled,
                     initialCols: config['initialColumns'],
@@ -279,7 +276,7 @@ hqDefine('userreports/js/report_config', function () {
                     self.saveButton.fire('change');
                 });
 
-                self.filterList = new PropertyList({
+                self.filterList = propertyList({
                     hasFormatCol: self._sourceType === "case",
                     hasCalculationCol: false,
                     initialCols: config['initialUserFilters'],
@@ -305,7 +302,7 @@ hqDefine('userreports/js/report_config', function () {
                 self.filterList.serializedProperties.subscribe(function () {
                     self.saveButton.fire("change");
                 });
-                self.defaultFilterList = new PropertyList({
+                self.defaultFilterList = propertyList({
                     hasFormatCol: true,
                     hasCalculationCol: false,
                     hasDisplayCol: false,

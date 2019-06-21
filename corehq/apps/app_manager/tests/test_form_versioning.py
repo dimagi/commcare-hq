@@ -55,7 +55,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make a build
-        build1 = app.make_build(previous_version=None)
+        build1 = app.make_build()
         build1.save()
 
         # modify first form
@@ -63,7 +63,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make second build
-        build2 = app.make_build(previous_version=build1)
+        build2 = app.make_build()
         build2.save()
 
         # modify first form
@@ -73,7 +73,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make third build
-        build3 = app.make_build(previous_version=build2)
+        build3 = app.make_build()
         build3.save()
 
         self.assertEqual(self.get_form_versions(build1), [1, 1])
@@ -85,7 +85,7 @@ class FormVersioningTest(TestCase):
         app.save()
 
         # make reverted build
-        build4 = app.make_build(previous_version=build3)
+        build4 = app.make_build()
         build4.save()
 
         self.assertEqual(self.get_form_versions(build4), [6, 1])
@@ -94,7 +94,7 @@ class FormVersioningTest(TestCase):
         xxx_app = import_app(app.export_json(dump_json=False), domain)
 
         # make build of copy
-        xxx_build1 = xxx_app.make_build(previous_version=None)
+        xxx_build1 = xxx_app.make_build()
         xxx_build1.save()
 
         # modify first form of copy app
@@ -102,7 +102,7 @@ class FormVersioningTest(TestCase):
         xxx_app.save()
 
         # make second build of copy
-        xxx_build2 = xxx_app.make_build(previous_version=xxx_build1)
+        xxx_build2 = xxx_app.make_build()
         xxx_build2.save()
 
         self.assertEqual(self.get_form_versions(xxx_build1), [1, 1])
@@ -113,7 +113,7 @@ class FormVersioningTest(TestCase):
         from lxml import etree
 
         suite = suite_models.Suite(
-            etree.fromstring(build.fetch_attachment('files/suite.xml', return_bytes=True))
+            etree.fromstring(build.fetch_attachment('files/suite.xml'))
         )
         return [r.version for r in suite.xform_resources]
 

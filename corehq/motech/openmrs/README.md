@@ -5,6 +5,25 @@ See the [MOTECH README](../README.md#openMRS----bahmni--module) for a
 brief introduction to OpenMRS and Bahmni in the context of MOTECH.
 
 
+Contents
+--------
+
+1. [The OpenmrsRepeater](#the-openmrsrepeater)
+2. [OpenMRS Repeater Location](#openmrs-repeater-location)
+3. [OpenmrsConfig](#openmrsconfig)
+4. [An OpenMRS Patient](#an-openmrs-patient)
+5. [OpenmrsCaseConfig](#openmrscaseconfig)
+6. [PatientFinders](#patientfinders)
+   1. [Creating Missing Patients](#creating-missing-patients)
+   2. [WeightedPropertyPatientFinder](#weightedpropertypatientfinder)
+7. [OpenmrsFormConfig](#openmrsformconfig)
+8. [Provider](#provider)
+9. [Atom Feed Integration](#atom-feed-integration)
+   1. [Adding cases for OpenMRS patients](#adding-cases-for-openmrs-patients)
+10. [Import-Only and Export-Only Values](#import-only-and-export-only-values)
+11. [Data Types](#data-types)
+
+
 The OpenmrsRepeater
 -------------------
 
@@ -13,13 +32,60 @@ changes made to cases in CommCare. It is also responsible for creating
 OpenMRS "visits", "encounters" and "observations" when a corresponding
 visit form is submitted in CommCare.
 
-It is different from other repeaters in two important details:
+It is different from other repeaters in three important details:
 
 1. It updates the OpenMRS equivalent of cases like a CaseRepeater, but
 it reads forms like a FormRepeater. So it subclasses CaseRepeater, but
 its payload format is form_json.
 
 2. It makes many API calls for each payload.
+
+3. It can have a location.
+
+
+OpenMRS Repeater Location
+-------------------------
+
+Assigning an OpenMRS Repeater to a location allows a project to
+integrate with multiple OpenMRS/Bahmni servers.
+
+(A project's locations or organization structure can be managed by
+opening the "User" menu, and choosing "View All". On the left, under the
+heading "Organization", are links to define organization levels, and to
+build the organization structure. You can also build the organization
+structure in a spreadsheet and upload it.)
+
+Imagine a location hierarchy like the following:
+
+* (country) South Africa
+  * (province) Gauteng
+  * (province) Western Cape
+    * (district) City of Cape Town
+    * (district) Central Karoo
+      * (municipality) Laingsburg
+
+Imagine we had an OpenMRS server to store medical records for the city
+of Cape Town, and a second OpenMRS server to store medical records for
+the central Karoo.
+
+When a mobile worker whose primary location is set to Laingburg submits
+data, MOTECH will search their location and the locations above it until
+it finds an OpenMRS server. That will be the server that their data is
+forwarded to.
+
+When patients are imported from OpenMRS, either using its Atom Feed API
+or its Reporting API, and new cases are created in CommCare, those new
+cases must be assigned an owner.
+
+The owner will be the *first* mobile worker found in the OpenMRS
+server's location. If no mobile workers are found, the case's owner will
+be set to the location itself. A good way to manage new cases is to have
+just one mobile worker, like a supervisor, assigned to the same location
+as the OpenMRS server. In the example above, in terms of organization
+levels, it would make sense to have a supervisor at the district level
+and other mobile workers at the municipality level.
+
+See also: PatientFinders: [Creating Missing Patients](#creating-missing-patients)
 
 
 OpenmrsConfig
@@ -452,7 +518,7 @@ it into a given name ("CommCare") and a family name ("Provider").
 CommCare HQ's first Git commit is dated 2009-03-10, so that seems close
 enough to a date of birth. OpenMRS equates gender with sex, and is quite
 binary about it. You will have to decided whether CommCare is male or
-female. When you are done, click "Create Person". On the next page, 
+female. When you are done, click "Create Person". On the next page,
 "City/Village" is a required field. You can set "State/Province" to
 "Other" and set "City/Village" to "Cambridge". Then click "Save Person".
 
@@ -482,7 +548,7 @@ Atom Feed Integration
 ---------------------
 
 The [OpenMRS Atom Feed Module](https://wiki.openmrs.org/display/docs/Atom+Feed+Module)
-allows MOTECH to poll feeds of updates to patients and encounters. The 
+allows MOTECH to poll feeds of updates to patients and encounters. The
 feed adheres to the
 [Atom syndication format](https://validator.w3.org/feed/docs/rfc4287.html).
 
@@ -583,7 +649,7 @@ start of the feed. A `<link rel="next-archive" ...` tag indicates that
 there is a next page.
 
 MOTECH stores the last page number polled in the
-`OpenmrsRepeater.patients_last_page` and 
+`OpenmrsRepeater.patients_last_page` and
 `OpenmrsRepeater.encounters_last_page`  properties. When it polls again,
 it starts at this page, and iterates "next-archive" links until all have
 been fetched.
@@ -621,6 +687,14 @@ patient:
 The **name of cases** updated from the Atom feed are set to the display
 name of the *person* (not the display name of patient because it often
 includes punctuation and an identifier).
+
+When a new case is created, its case's owner is determined by the
+CommCare location of the OpenMRS repeater. (You can set the location
+when you create or edit the OpenMRS repeater in *Project Settings* >
+*Data Forwarding*.) The case will be assigned to the first mobile worker
+found at the repeater's location. The intention is that this mobile
+worker would be a supervisor who can pass the case to the appropriate
+person.
 
 
 Import-Only and Export-Only Values

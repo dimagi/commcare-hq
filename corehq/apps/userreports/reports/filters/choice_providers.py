@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext
 from sqlalchemy import or_
 
@@ -11,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
@@ -160,16 +161,16 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         # this one's query_count, so leaving unimplemented for now
         raise NotImplementedError()
 
-    @property
+    @cached_property
     def _adapter(self):
-        return IndicatorSqlAdapter(self.report.config)
+        return get_indicator_adapter(self.report.config, load_source='choice_provider')
 
     @property
     def _sql_column(self):
         try:
             return self._adapter.get_table().c[self.report_filter.field]
         except KeyError as e:
-            raise ColumnNotFoundError(e.message)
+            raise ColumnNotFoundError(six.text_type(e))
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
@@ -178,7 +179,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:
-            return [v[0] for v in query]
+            values = [v[0] for v in query]
+            self._adapter.track_load(len(values))
+            return values
         except ProgrammingError:
             return []
 
@@ -193,7 +196,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
         try:
             return [self._adapter.get_table().c[field] for field in self.report_filter.fields]
         except KeyError as e:
-            raise ColumnNotFoundError(e.message)
+            raise ColumnNotFoundError(six.text_type(e))
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(*self._sql_columns)
@@ -213,6 +216,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
             result = []
             for row in query:
                 for value in row:
+                    self._adapter.track_load()
                     if query_context and query_context.query.lower() not in value.lower():
                         continue
                     result.append(value)
@@ -229,20 +233,25 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         super(LocationChoiceProvider, self).__init__(report, filter_slug)
         self.include_descendants = False
         self.show_full_path = False
+        self.location_type = None
 
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
         self.show_full_path = spec.get('show_full_path', self.show_full_path)
+        self.location_type = spec.get('location_type', self.location_type)
 
     def _locations_query(self, query_text, user):
-        active_locations = SQLLocation.active_objects
+        locations = SQLLocation.active_objects
         if query_text:
-            return active_locations.filter_path_by_user_input(
+            locations = locations.filter_path_by_user_input(
                 domain=self.domain,
                 user_input=query_text
-            ).accessible_to_user(self.domain, user)
+            )
 
-        return active_locations.accessible_to_user(self.domain, user).filter(domain=self.domain)
+        if self.location_type:
+            locations = locations.filter(location_type__code=self.location_type)
+
+        return locations.accessible_to_user(self.domain, user).filter(domain=self.domain)
 
     def query(self, query_context):
         # todo: consider making this an extensions framework similar to custom expressions
@@ -347,7 +356,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
     @staticmethod
     def get_choices_from_es_query(group_es):
         return [Choice(group_id, name)
-                for group_id, name in group_es.values_list('_id', 'name')]
+                for group_id, name in group_es.values_list('_id', 'name', scroll=True)]
 
     def default_value(self, user):
         return None

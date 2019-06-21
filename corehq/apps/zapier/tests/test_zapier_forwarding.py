@@ -1,14 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
+from datetime import timedelta, datetime
+
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier, cleanup_repeaters_for_domain, \
-    cleanup_repeat_records_for_domain
+from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from corehq.motech.repeaters.models import RepeatRecord
 
 
@@ -28,11 +30,11 @@ class TestZapierCaseForwarding(TestCase):
     def tearDownClass(cls):
         cls.web_user.delete()
         cls.domain_object.delete()
-        cleanup_repeaters_for_domain(cls.domain)
+        delete_all_repeaters()
         super(TestZapierCaseForwarding, cls).tearDownClass()
 
     def tearDown(self):
-        cleanup_repeat_records_for_domain(self.domain)
+        delete_all_repeat_records()
         ZapierSubscription.objects.all().delete()
 
     @run_with_all_backends
@@ -80,7 +82,9 @@ class TestZapierCaseForwarding(TestCase):
                 ).as_xml()
             ], domain=self.domain
         )
-        repeat_records = list(RepeatRecord.all(domain=self.domain))
+        # Enqueued repeat records have next_check set 48 hours in the future.
+        later = datetime.utcnow() + timedelta(hours=48 + 1)
+        repeat_records = list(RepeatRecord.all(domain=self.domain, due_before=later))
         self.assertEqual(expected_records_after_create, len(repeat_records))
         for record in repeat_records:
             self.assertEqual(case_id, record.payload_id)
@@ -94,7 +98,7 @@ class TestZapierCaseForwarding(TestCase):
                 ).as_xml()
             ], domain=self.domain
         )
-        repeat_records = list(RepeatRecord.all(domain=self.domain))
+        repeat_records = list(RepeatRecord.all(domain=self.domain, due_before=later))
         self.assertEqual(expected_records_after_update, len(repeat_records))
         for record in repeat_records:
             self.assertEqual(case_id, record.payload_id)

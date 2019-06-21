@@ -7,9 +7,9 @@
 if [ $# != 0 ]; then
     ENVS=$@
 else
-    ENVS=(staging production softlayer swiss icds pna)
+    ENVS=(staging production india swiss icds pna)
 fi
 
 for i in ${ENVS[@]}; do
-    git tag | grep deploy | grep ${i} | tail -n 1
+    git tag | grep deploy | grep ${i} | grep -v hot_fix | tail -n 1
 done

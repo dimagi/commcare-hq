@@ -5,6 +5,7 @@ from django.urls import RegexURLPattern, Resolver404, get_resolver
 
 __all__ = ('resolve_to_name',)
 
+
 def _pattern_resolve_to_name(self, path):
     match = self.regex.search(path)
     if match:
@@ -16,6 +17,7 @@ def _pattern_resolve_to_name(self, path):
         else:
             name = "%s.%s" % (self.callback.__module__, self.callback.__name__)
         return name
+
 
 def _resolver_resolve_to_name(self, path):
     tried = []

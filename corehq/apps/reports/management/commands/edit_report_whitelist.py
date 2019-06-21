@@ -27,11 +27,11 @@ class Command(BaseCommand):
 
     def handle(self, domain, reports, **options):
         reset = options.pop('reset')
-        domain = Domain.get_by_name(domain)
+        domain_obj = Domain.get_by_name(domain)
 
         if reset:
-            domain.report_whitelist = []
+            domain_obj.report_whitelist = []
 
         for report in reports:
-            domain.report_whitelist.append(report)
-        domain.save()
+            domain_obj.report_whitelist.append(report)
+        domain_obj.save()

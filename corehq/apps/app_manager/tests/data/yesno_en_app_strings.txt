@@ -1,0 +1,14 @@
+app.display.name=Yes / No
+cchq.case=Case
+cchq.referral=Referral
+cchq.report_data_table=Data Table
+cchq.report_description_header=Report Description
+cchq.report_last_sync=Last Sync
+cchq.report_menu=Reports
+cchq.report_name_header=Report Name
+forms.m0f0=Yes/No
+forms.m0f1=PIL
+homescreen.title=Yes / No
+lang.current=en
+modules.m0=Untitled Module
+modules.m0.icon=jr://file/commcare_media/image/image.jpeg

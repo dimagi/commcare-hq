@@ -1,0 +1,250 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_10a_person_cases",
+  "data_source_table": "static-person_cases_v3",
+  "config": {
+    "title": "MPR - 10a - Person cases (Static)",
+    "description": "This is used in apps for report modules",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "display": "Last Referral Date",
+        "slug": "last_referral_date",
+        "type": "date",
+        "field": "last_referral_date",
+        "datatype": "date"
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        }
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      }
+    ],
+    "columns": [
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "referred_premature",
+        "column_id": "referred_premature",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ypremature\\y'": 1
+        }
+      },
+      {
+        "display": "referred_sepsis",
+        "column_id": "referred_sepsis",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ysepsis\\y'": 1
+        }
+      },
+      {
+        "display": "referred_diarrhoea",
+        "column_id": "referred_diarrhoea",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ydiarrhoea\\y'": 1
+        }
+      },
+      {
+        "display": "referred_pneumonia",
+        "column_id": "referred_pneumonia",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ypneumonia\\y'": 1
+        }
+      },
+      {
+        "display": "referred_fever_child",
+        "column_id": "referred_fever_child",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yfever_child\\y'": 1
+        }
+      },
+      {
+        "display": "referred_severely_underweight",
+        "column_id": "referred_severely_underweight",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yseverely_underweight\\y'": 1
+        }
+      },
+      {
+        "display": "referred_other_child",
+        "column_id": "referred_other_child",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yother_child\\y'": 1
+        }
+      },
+      {
+        "display": "premature_reached_count",
+        "column_id": "premature_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ypremature\\y'": 1
+        }
+      },
+      {
+        "display": "sepsis_reached_count",
+        "column_id": "sepsis_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ysepsis\\y'": 1
+        }
+      },
+      {
+        "display": "diarrhoea_reached_count",
+        "column_id": "diarrhoea_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ydiarrhoea\\y'": 1
+        }
+      },
+      {
+        "display": "pneumonia_reached_count",
+        "column_id": "pneumonia_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\ypneumonia\\y'": 1
+        }
+      },
+      {
+        "display": "fever_child_reached_count",
+        "column_id": "fever_child_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yfever_child\\y'": 1
+        }
+      },
+      {
+        "display": "sev_underweight_reached_count",
+        "column_id": "sev_underweight_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yseverely_underweight\\y'": 1
+        }
+      },
+      {
+        "display": "other_child_reached_count",
+        "column_id": "other_child_reached_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 1 AND referral_health_problem ~ '\\yother_child\\y'": 1
+        }
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

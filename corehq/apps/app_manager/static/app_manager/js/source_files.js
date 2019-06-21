@@ -1,45 +1,26 @@
-/* globals hqDefine */
-hqDefine('app_manager/js/source_files',[
+hqDefine('app_manager/js/source_files', [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'select2/dist/js/select2.full.min',
+    'app_manager/js/widgets',       // version dropdown
 ], function ($, _, initialPageData) {
     $(function () {
         $('.toggle-next').click(function (e) {
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
-    
-        var currentVersion = initialPageData.get('current_version'),
-            builtVersions = initialPageData.get('built_versions'),
-            $form = $("#compare-form"),
-            $input = $form.find("input");
 
-        builtVersions = _.sortBy(_.filter(builtVersions, function (v) {
-            return v.version !== currentVersion;
-        }), function (v) { return parseInt(v.version); }).reverse();
-        var versionMap = _.indexBy(builtVersions, 'version');
-    
-        $input.select2({
-            data: _.map(builtVersions, function (v) {
-                return {
-                    id: v.version,
-                    text: v.version + ": " + (v.comment || "no comment"),
-                };
-            }),
-        });
-    
+        var currentVersion = initialPageData.get('current_version'),
+            $form = $("#compare-form"),
+            $select = $form.find("select");
+
         $form.find("button").click(function () {
-            var version = $input.val();
-            if (!version) {
-                alert("Please enter a version to compare");
-                return;
-            } else if (!versionMap[version]) {
-                alert(version + " is not a valid version");
+            var buildId = $select.val();
+            if (!buildId) {
+                alert(gettext("Please enter a version to compare"));
                 return;
             }
-            window.location = initialPageData.reverse('diff', versionMap[version].build_id);
+            window.location = initialPageData.reverse('diff', buildId);
         });
     });
 });

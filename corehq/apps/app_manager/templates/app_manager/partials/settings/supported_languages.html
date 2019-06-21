@@ -1,52 +1,57 @@
 {% load i18n %}
 <div data-bind="saveButton: saveButton"></div>
 <table class="table table-languages">
-    <tbody data-bind="sortable: languages">
-        <tr data-bind="
+  <tbody data-bind="sortable: languages">
+  <tr data-bind="
                 css: {'has-error': show_error},
                 attr: {'data-order': _sortableOrder}
                 ">
-            <td class="col-sm-1" data-bind="css: {'sortable-handle': $root.canSortLanguages}">
-                <i class="fa fa-arrows-v" data-bind="visible: $root.canSortLanguages"></i>
-            </td>
-            <td class="col-sm-3">
-                <input class="short form-control"
-                       data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"/>
-            </td>
-            <td class="col-sm-2">
-                <span class="label label-default" data-bind="visible: isDefaultLang()">default</span>
-            </td>
-            <td class="col-sm-5">
-                <p class="help-block" data-bind="text: message"></p>
-                <p class="help-block" data-bind="text: originalLangcodeMessage, visible: originalLangcode() !== langcode()"></p>
-            </td>
-            <td class="col-sm-1">
-                <a href="#" data-bind="click: $root.removeLanguage" class="btn btn-danger"><i class="fa fa-trash-o"></i></a>
-            </td>
-        </tr>
-    </tbody>
+    <td class="col-sm-1" data-bind="css: {'sortable-handle': $root.canSortLanguages}">
+      <i class="fa fa-arrows-v" data-bind="visible: $root.canSortLanguages"></i>
+    </td>
+    <td class="col-sm-3">
+      <form>
+        <select class="form-control" data-bind="langcode: langcode, valueAllowUnset: true"></select>
+      </form>
+
+    </td>
+    <td class="col-sm-1">
+      <span class="label label-default" data-bind="visible: isDefaultLang()">default</span>
+    </td>
+    <td class="col-sm-4">
+      <p class="help-block" data-bind="text: message"></p>
+      <p class="help-block" data-bind="text: originalLangcodeMessage, visible: originalLangcode() !== langcode()"></p>
+    </td>
+    <td class="col-sm-2">
+      <a href="#" data-bind="click: $root.setAsDefault, visible: !isDefaultLang()" class="btn btn-default">{% trans "Set as default" %}</a>
+    </td>
+    <td class="col-sm-1">
+      <a href="#" data-bind="click: $root.removeLanguage" class="btn btn-danger"><i class="fa fa-trash-o"></i></a>
+    </td>
+  </tr>
+  </tbody>
 </table>
 <button class="btn btn-default" data-bind="click: addLanguage, disable: addLanguageDisabled">
-    <i class="fa fa-plus"></i>
-    {% trans "Add Language" %}
+  <i class="fa fa-plus"></i>
+  {% trans "Add Language" %}
 </button>
 <span class='help-block' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
 {% if show_smart_lang_option %}
-    <div data-bind="visible: showSmartLangDisplayOption">
-        <br/>
-        <input type="checkbox" data-bind="checked: smartLangDisplay"/>
-        {% trans "Smart language display in forms" %}.
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Hide+languages+in+forms" target="_blank">Learn more</a>
-    </div>
+  <div data-bind="visible: showSmartLangDisplayOption">
+    <br/>
+    <input type="checkbox" data-bind="checked: smartLangDisplay"/>
+    {% trans "Smart language display in forms" %}.
+    <a href="https://confluence.dimagi.com/display/commcarepublic/Hide+languages+in+forms" target="_blank">Learn more</a>
+  </div>
 {% endif %}
 <div data-bind="if: removedLanguages().length" class="removed-languages">
-    <h5>{% trans 'Deleting Languages:' %}</h5>
-    <table class="table">
-        <tbody data-bind="foreach: removedLanguages">
-            <tr>
-                <td><p data-bind="text: langcode"></p></td>
-                <td><a href="#" class="btn btn-default" data-bind="click: $root.unremoveLanguage"><i class="fa fa-undo"></i> {% trans "Don't Delete" %}</a></td>
-            </tr>
-        </tbody>
-    </table>
+  <h5>{% trans 'Deleting Languages:' %}</h5>
+  <table class="table">
+    <tbody data-bind="foreach: removedLanguages">
+    <tr>
+      <td><p data-bind="text: langcode"></p></td>
+      <td><a href="#" class="btn btn-default" data-bind="click: $root.unremoveLanguage"><i class="fa fa-undo"></i> {% trans "Don't Delete" %}</a></td>
+    </tr>
+    </tbody>
+  </table>
 </div>

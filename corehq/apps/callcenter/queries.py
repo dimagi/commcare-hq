@@ -20,7 +20,9 @@ class BaseQuery(six.with_metaclass(ABCMeta)):
 
     def _run_query(self, query):
         with self.sql_adapter.session_helper.session_context() as session:
-            return list(session.execute(query))
+            data = list(session.execute(query))
+            self.sql_adapter.track_load(len(data))
+            return data
 
 
 class CaseQuery(BaseQuery):

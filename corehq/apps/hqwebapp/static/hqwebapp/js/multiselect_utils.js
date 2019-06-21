@@ -61,12 +61,12 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         $('#' + multiselectId).multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
-                _renderAction(selectAllId, 'btn-info', 'fa fa-plus', django.gettext("Add All")),
+                _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All")),
                 _renderSearch(searchSelectableId, searchItemTitle)
             ),
             selectionHeader: _renderHeader(
                 selectedHeaderTitle,
-                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', django.gettext("Remove All")),
+                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', gettext("Remove All")),
                 _renderSearch(searchSelectedId, searchItemTitle)
             ),
             afterInit: function () {

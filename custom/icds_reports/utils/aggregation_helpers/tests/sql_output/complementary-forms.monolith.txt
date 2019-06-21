@@ -1,0 +1,68 @@
+
+        CREATE TABLE IF NOT EXISTS "icds_db_child_cf_form_06010e08381e3ede425406c5" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_comp_feed_form" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_comp_feed_form")
+        
+{"month_string": "2018-12-01", "state_id": "st1"}
+DROP TABLE IF EXISTS "icds_db_child_cf_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_child_cf_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_comp_feed_form" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_comp_feed_form")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_child_cf_form_7a197ee47818209780c23ed9" (
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
+          demo_comp_feeding, counselled_pediatric_ifa, play_comp_feeding_vid,
+          comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+            GREATEST(ucr.comp_feeding_ever, prev_month.comp_feeding_ever) AS comp_feeding_ever,
+            GREATEST(ucr.demo_comp_feeding, prev_month.demo_comp_feeding) AS demo_comp_feeding,
+            GREATEST(ucr.counselled_pediatric_ifa, prev_month.counselled_pediatric_ifa) AS counselled_pediatric_ifa,
+            GREATEST(ucr.play_comp_feeding_vid, prev_month.play_comp_feeding_vid) AS play_comp_feeding_vid,
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.comp_feeding_latest ELSE prev_month.comp_feeding_latest
+            END AS comp_feeding_latest,
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.diet_diversity ELSE prev_month.diet_diversity
+            END AS diet_diversity,
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.diet_quantity ELSE prev_month.diet_quantity
+            END AS diet_quantity,
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.hand_wash ELSE prev_month.hand_wash
+            END AS hand_wash
+          FROM (
+        SELECT DISTINCT child_health_case_id AS case_id,
+        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
+        MAX(comp_feeding) OVER w AS comp_feeding_ever,
+        MAX(demo_comp_feeding) OVER w AS demo_comp_feeding,
+        MAX(counselled_pediatric_ifa) OVER w AS counselled_pediatric_ifa,
+        LAST_VALUE(comp_feeding) OVER w AS comp_feeding_latest,
+        LAST_VALUE(diet_diversity) OVER w AS diet_diversity,
+        LAST_VALUE(diet_quantity) OVER w AS diet_quantity,
+        LAST_VALUE(hand_wash) OVER w AS hand_wash
+        FROM "ucr_icds-cas_static-complementary_feeding_f2d76da0"
+        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WINDOW w AS (
+            PARTITION BY child_health_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        ) ucr
+          FULL OUTER JOIN "icds_db_child_cf_form_06010e08381e3ede425406c5" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

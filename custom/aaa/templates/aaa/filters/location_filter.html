@@ -1,0 +1,30 @@
+<script type="text/html" id="location-template">
+  <h3 class="filter-title"><strong><i class="fa fa-map-marker icon-bar"></i> Location</strong></h3>
+  <div class="row" data-bind="css: {hide: !showMinistryFilter()}">
+    <div class="col-md-12">
+      <div class="form-group">
+        <label>Ministry</label>
+        <select class="form-control" data-bind="
+                                                options: ministryList,
+                                                value: selectedMinistry,
+                                                select2: {}">
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="row" data-bind="foreach: { data: hierarchyConfig, as: 'location' }">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label data-bind="text: location.name"></label>
+        <select class="form-control" data-bind="
+                                                options: location.locations,
+                                                optionsText: 'name',
+                                                optionsValue: 'id',
+                                                value: location.selectedLocation,
+                                                disable: location.isDisabled(),
+                                                select2: {}">
+        </select>
+      </div>
+    </div>
+  </div>
+</script>

@@ -1,18 +1,18 @@
-attrs==18.1.0
-# used to build jsonobject from source
-cython>=0.29.1,<1.0.0
+attrs~=18.1
 iso8601==0.1.12
-jsonobject==0.9.4
-jsonobject-couchdbkit==0.9.12
-celery==3.1.25
+jsonobject==0.9.9
+jsonobject-couchdbkit~=0.9
+# celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737
+# upgrade when https://github.com/celery/celery/issues/4980 is fixed
+git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 # required by django-digest
 decorator==4.0.11
-django~=1.11
+django>=1.11.21  # security update
 django-braces==1.13.0
-django-celery==3.2.1
+django-celery-results~=1.0
 django-crispy-forms==1.7.0
 jsonfield==1.0.3
-dropbox==7.3.1
+dropbox==9.3.0
 defusedxml==0.5.0
 diff-match-patch==20120106
 dimagi-memoized==1.1.1
@@ -22,39 +22,40 @@ elasticsearch==1.9.0
 eulxml==1.1.3
 ghdiff==0.4
 gunicorn
-lxml==3.4.4
-kafka-python~=1.4
+lxml~=4.3.0
+kafka-python==1.4.4
+kombu==4.2.2.post1
+billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 mock==2.0.0
-openpyxl~=2.5
-Pillow==5.2.0
-phonenumberslite==8.8.9
-psycopg2~=2.7
-psycogreen==1.0
+Pillow~=6.0
+phonenumberslite~=8.8
+psycopg2~=2.7.7
+psycogreen~=1.0
 pycryptodome>=3.6.6  # security update
 py-KISSmetrics==1.0.1
 pygooglechart==0.4.0
-python-dateutil==2.6.1
+python-dateutil~=2.6
 python-Levenshtein
-python-magic==0.4.13
-pytz==2017.2
-PyYAML==3.13
+python-magic~=0.4.13
+pytz>=2017.2
+PyYAML~=5.1
 requests~=2.20
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
 Unidecode==0.04.20
 xlrd==1.0.0
-simplejson==3.11.1
+simplejson~=3.11
 sh==1.09
-gevent==1.2.2
-greenlet==0.4.12
-numpy==1.7.1
-six==1.11.0
+gevent==1.4.0
+greenlet==0.4.15
+openpyxl~=2.6
+six~=1.11
 socketpool==0.5.3
 markdown==2.2.1
-sqlagg==0.12.0
-django-redis==4.9.0
+sqlagg>=0.13.0
+django-redis~=4.9
 redis==2.10.6
-redis-py-cluster==1.3.5
+redis-py-cluster==1.3.6
 twilio==6.5.1
 django-countries==4.6
 reportlab==3.0
@@ -63,11 +64,11 @@ django-compressor==2.1
 django-angular==0.7.16
 Pycco==0.5.1
 django-cte==1.1.4
-django-partial-index==0.4.0
+django-partial-index~=0.5.0
 jsonpath-rw==1.4.0
 django-transfer==0.4
-Pygments==2.0.2
-Jinja2==2.10
+Pygments~=2.0
+Jinja2~=2.10
 tinys3==0.1.12
 django-formtools==2.1
 django-otp==0.3.13
@@ -76,39 +77,36 @@ datadog==0.15.0
 ddtrace==0.14.1
 django-websocket-redis==0.5.2
 django-redis-sessions==0.6.1
-SQLAlchemy~=1.2
+SQLAlchemy~=1.3.0
 alembic==0.8.6
 pyzxcvbn==0.8.0
 django-statici18n==1.3.0
 django-simple-captcha==0.5.9
-httpagentparser==1.7.8
-boto3==1.4.4
-simpleeval==0.9.5
+httpagentparser~=1.7
+boto3~=1.9
+simpleeval~=0.9
 laboratory==0.2.0
-ConcurrentLogHandler==0.9.1
+concurrent-log-handler==0.9.12
 PyGithub==1.35
-django-bulk-update==1.1.10
+django-bulk-update~=2.0
 csiphash==0.0.5
 json-delta==2.0
 email_validator==1.0.3
 dnspython==1.15.0
 raven==6.1.0
-quickcache==0.5.1
+quickcache~=0.5
 ethiopian-date-converter==0.1.5
-contextlib2==0.5.4
+contextlib2~=0.5.4
 hiredis==0.2.0
 xlwt==1.3.0
 django-prbac>=0.0.7
-xhtml2pdf==0.2.3
 qrcode==4.0.4
 django-user-agents==0.3.2
 csv342==1.0.0
 Faker==0.8.15
 polib==1.1.0
 werkzeug==0.11.15
+CommcareTranslationChecker==0.9.3.5
+WeasyPrint==0.42.3
 
-# Workaround for https://github.com/jazzband/pip-tools/issues/355
-# git URL installs need to be listed with -e to satisfy pip-compile
-# but once they're in requirements.txt we will strip the -e
-
--e git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
