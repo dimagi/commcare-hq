@@ -196,7 +196,7 @@ class Command(BaseCommand):
             return self.show_status(state_id, ucr_ids)
         elif options['force_resetup']:
             assert not state_id, "state_id is not valid option with resetup_scripts"
-            assert not ucr_id, "ucr_id is not valid option with resetup_scripts"
+            assert not ucr_ids, "ucr_id is not valid option with resetup_scripts"
             self.show_status(None, None)
             self.boostrap_sql_scripts(force=True)
             self.start_scripts(None, None)
