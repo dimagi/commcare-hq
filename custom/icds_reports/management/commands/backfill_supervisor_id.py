@@ -191,9 +191,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         state_id = options['state_id']
-        ucr_id = options['ucr_id']
+        ucr_ids = options['ucr_id'].split(',') if options['ucr_id'] else []
         if options['show_status']:
-            return self.show_status(state_id, ucr_id)
+            return self.show_status(state_id, ucr_ids)
         elif options['force_resetup']:
             assert not state_id, "state_id is not valid option with resetup_scripts"
             assert not ucr_id, "ucr_id is not valid option with resetup_scripts"
@@ -204,12 +204,13 @@ class Command(BaseCommand):
             self.boostrap_sql_scripts(force=False)
         else:
             self.boostrap_sql_scripts(force=False)
-            self.start_scripts(state_id, ucr_id)
+            self.start_scripts(state_id, ucr_ids)
 
-    def start_scripts(self, state_id, ucr_id):
+    def start_scripts(self, state_id, ucr_ids):
         state_ids = [state_id] if state_id else get_state_ids()
-        ucr_ids = [ucr_id] if ucr_id else get_sql_scripts(state_id).keys()
-        pool = Pool(10)
+        if not ucr_ids:
+            ucr_ids = get_sql_scripts(state_id).keys()
+        pool = Pool(5)
         for ucr_id in ucr_ids:
             for state_id in state_ids:
                 rows = self.get_session().query(BackfillScriptStub).filter_by(state_id=state_id, ucr_id=ucr_id).all()
@@ -227,15 +228,15 @@ class Command(BaseCommand):
     def get_engine(self):
         return connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
 
-    def show_status(self, state_id, ucr_id):
+    def show_status(self, state_id, ucr_ids):
         engine = self.get_engine()
         if not engine.dialect.has_table(engine, BackfillScriptStub.__table__.name):
             return
         query = self.get_session().query(BackfillScriptStub)
         if state_id:
             query = query.filter_by(state_id=state_id)
-        if ucr_id:
-            query = query.filter_by(ucr_id=ucr_id)
+        if ucr_ids:
+            query = query.filter_by(ucr_id__in=ucr_ids)
         for row in query.order_by('started_at').all():
             print(row.ucr_id, row.state_id, row.started_at, row.ended_at, row.status)
         return
