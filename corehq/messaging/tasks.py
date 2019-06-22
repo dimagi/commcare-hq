@@ -126,6 +126,8 @@ def run_messaging_rule(domain, rule_id):
         if incr >= 1000:
             progress_helper.increase_total_case_count(incr)
             incr = 0
+            if progress_helper.is_canceled():
+                break
 
     progress_helper.increase_total_case_count(incr)
 

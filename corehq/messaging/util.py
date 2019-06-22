@@ -27,6 +27,10 @@ class MessagingRuleProgressHelper(object):
     def rule_initiation_key(self):
         return 'messaging-rule-run-initiated-%s' % self.rule_id
 
+    @property
+    def rule_cancellation_key(self):
+        return 'messaging-rule-run-canceled-%s' % self.rule_id
+
     def set_rule_initiation_key(self):
         self.client.set(self.rule_initiation_key, 1, timeout=2 * 60 * 60)
 
@@ -60,6 +64,17 @@ class MessagingRuleProgressHelper(object):
     def increase_total_case_count(self, value):
         self.client.incr(self.total_key, delta=value)
         self.client.expire(self.total_key, self.key_expiry)
+
+    def cancel(self):
+        """Cancel the currently running task
+
+        This does nothing unless the task checks if it has been canceled.
+        """
+        self.client.set(self.rule_cancellation_key, 1, timeout=2 * 60 * 60)
+
+    def is_canceled(self):
+        """Check if task has been canceled"""
+        self.client.get(self.rule_cancellation_key) is not None
 
     @staticmethod
     def _int_or_zero(value):
