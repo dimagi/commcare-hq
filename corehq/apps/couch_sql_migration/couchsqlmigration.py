@@ -99,7 +99,7 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
-UNDO_CSV = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'couch_sql_migration', 'undo.csv')
+UNDO_CSV = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'couch_sql_migration', 'undo_{domain}.csv')
 UNDO_SET_DOMAIN = 'set_domain'
 UNDO_CREATE = 'create'
 
@@ -875,8 +875,9 @@ def _copy_form_properties(sql_form, couch_form):
     return sql_form
 
 
-def append_undo(meta, operation):
-    with io.open(UNDO_CSV, 'ab') as undo_csv:
+def append_undo(src_domain, meta, operation):
+    filename = UNDO_CSV.format(domain=src_domain)
+    with io.open(filename, 'ab') as undo_csv:
         writer = csv.writer(undo_csv)
         row = (meta.parent_id, meta.type_code, meta.name, operation)
         writer.writerow(row)
@@ -918,14 +919,14 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
                 content_length=blob.content_length,
             )
             meta.save()
-            append_undo(meta, UNDO_CREATE)
+            append_undo(couch_form.domain, meta, UNDO_CREATE)
             continue
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
 
         if meta and meta.domain != sql_form.domain and not dry_run:
             # meta domain is couch_form.domain; form is being migrated to sql_form.domain
-            append_undo(meta, UNDO_SET_DOMAIN)
+            append_undo(couch_form.domain, meta, UNDO_SET_DOMAIN)
             meta.domain = sql_form.domain
             meta.save()
 
@@ -936,7 +937,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
             meta = try_to_get_blob_meta(couch_form.form_id, CODES.form_xml, name)
             if meta:
                 if meta.domain != sql_form.domain and not dry_run:
-                    append_undo(meta, UNDO_SET_DOMAIN)
+                    append_undo(couch_form.domain, meta, UNDO_SET_DOMAIN)
                     meta.domain = sql_form.domain
                 meta.type_code = CODES.form_attachment
                 meta.save()
@@ -952,7 +953,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
                 key=blob.key,
             )
             meta.save()
-            append_undo(meta, UNDO_CREATE)
+            append_undo(couch_form.domain, meta, UNDO_CREATE)
 
         attachments.append(meta)
     sql_form.attachments_list.extend(attachments)
@@ -962,8 +963,9 @@ def revert_form_attachment_meta_domain(src_domain):
     """
     Change form attachment meta.domain from dst_domain back to src_domain
     """
+    filename = UNDO_CSV.format(domain=src_domain)
     try:
-        csv_file = io.open(UNDO_CSV, 'rb')
+        csv_file = io.open(filename, 'rb')
     except IOError as err:
         if 'No such file or directory' in str(err):
             # Nothing to undo
@@ -985,7 +987,7 @@ def revert_form_attachment_meta_domain(src_domain):
             elif operation == UNDO_CREATE:
                 meta.delete()
 
-    os.unlink(UNDO_CSV)
+    os.unlink(filename)
 
 
 def _migrate_form_operations(sql_form, couch_form):
