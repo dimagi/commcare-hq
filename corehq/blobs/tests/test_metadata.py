@@ -120,6 +120,40 @@ class TestMetaDB(TestCase):
         )
         self.assertEqual(copy.key, meta.key)
 
+    def test_get_missing_parent_id(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        with self.assertRaises(TypeError):
+            self.db.metadb.get(
+                type_code=meta.type_code,
+                name="",
+            )
+
+    def test_get_missing_type_code(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        with self.assertRaises(TypeError):
+            self.db.metadb.get(
+                parent_id=meta.parent_id,
+                name="",
+            )
+
+    def test_get_missing_name(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        with self.assertRaises(TypeError):
+            self.db.metadb.get(
+                parent_id=meta.parent_id,
+                type_code=meta.type_code,
+            )
+
+    def test_get_extra_arg(self):
+        meta = self.db.put(BytesIO(b"cx"), meta=new_meta())
+        with self.assertRaises(TypeError):
+            self.db.metadb.get(
+                parent_id=meta.parent_id,
+                type_code=meta.type_code,
+                name="",
+                domain="test",
+            )
+
     def test_get_missing_blobmeta(self):
         xid = uuid4().hex
         with self.assertRaises(BlobMeta.DoesNotExist):
