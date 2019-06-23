@@ -935,7 +935,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
         if not meta and name != "form.xml":
             meta = try_to_get_blob_meta(couch_form.form_id, CODES.form_xml, name)
             if meta:
-                if meta.domain != sql_form.domain and not dry_run:
+                if not dry_run:
                     append_undo(couch_form.domain, meta, UNDO_SET_DOMAIN)
                     meta.domain = sql_form.domain
                 meta.type_code = CODES.form_attachment
