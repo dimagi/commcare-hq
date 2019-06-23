@@ -14,6 +14,7 @@ from mock import patch
 import corehq.blobs.fsdb as mod
 from corehq.blobs import CODES
 from corehq.blobs.metadata import MetaDB
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.tasks import delete_expired_blobs
 from corehq.blobs.tests.util import new_meta, temporary_blob_db
 from corehq.util.test_utils import generate_cases, patch_datadog
@@ -59,6 +60,27 @@ class _BlobDBTests(object):
         meta = self.db.put(BytesIO(b"content"), meta=new_meta())
         with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"content")
+
+    def test_metadb_get_not_found(self):
+        meta = new_meta()
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            self.db.metadb.get(parent_id=meta.parent_id,
+                               type_code=meta.type_code,
+                               name=meta.name)
+
+    def test_metadb_get_duplicates(self):
+        identifier_1 = new_meta()
+        identifier_2 = new_meta()
+        identifier_2.domain = 'another-test-domain'
+
+        meta_1 = self.db.put(BytesIO(b"content"), meta=identifier_1)
+        meta_2 = self.db.put(BytesIO(b"content"), meta=identifier_2)
+        self.assertEqual(identifier_1, meta_1)
+        self.assertEqual(identifier_2, meta_2)
+        with self.assertRaises(BlobMeta.MultipleObjectsReturned):
+            self.db.metadb.get(parent_id=meta_1.parent_id,
+                               type_code=meta_1.type_code,
+                               name=meta_1.name)
 
     def test_put_from_get_stream(self):
         old = self.db.put(BytesIO(b"content"), meta=new_meta())
