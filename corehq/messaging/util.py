@@ -48,6 +48,7 @@ class MessagingRuleProgressHelper(object):
         self.client.set(self.total_key, 0)
         self.client.expire(self.current_key, self.key_expiry)
         self.client.expire(self.total_key, self.key_expiry)
+        self.client.delete(self.rule_cancellation_key)
         self.set_rule_initiation_key()
 
     def set_rule_complete(self):
