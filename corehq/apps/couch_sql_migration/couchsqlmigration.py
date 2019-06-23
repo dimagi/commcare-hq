@@ -55,6 +55,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     doc_type_to_state,
 )
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import (
     Attachment,
@@ -421,15 +422,21 @@ class CouchSqlDomainMigrator(object):
 
         case_stock_result = None
         if form_is_processed and sql_form.initial_processing_complete:
-            case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
-            if len(case_stock_result.case_models):
-                touch_updates = [
-                    update for update in get_case_updates(couch_form)
-                    if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
-                ]
-                if len(touch_updates):
-                    # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
-                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
+            try:
+                case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
+            except AttachmentNotFound:
+                # Dry runs don't copy form.xml attachments to dst_domain.
+                if not self.dry_run:
+                    raise
+            else:
+                if len(case_stock_result.case_models):
+                    touch_updates = [
+                        update for update in get_case_updates(couch_form)
+                        if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
+                    ]
+                    if len(touch_updates):
+                        # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
+                        self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
 
         _save_migrated_models(sql_form, case_stock_result)
 
