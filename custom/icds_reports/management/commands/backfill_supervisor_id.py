@@ -16,9 +16,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
 from custom.icds_reports.models.aggregate import AwcLocation
-from custom.icds_reports.const import AggregationLevels, DASHBOARD_DOMAIN, AGG_INFRASTRUCTURE_TABLE, \
-    AGG_GROWTH_MONITORING_TABLE, AGG_COMP_FEEDING_TABLE, AGG_CCS_RECORD_CF_TABLE, AGG_CHILD_HEALTH_PNC_TABLE, \
-    AGG_CCS_RECORD_PNC_TABLE, AGG_CCS_RECORD_BP_TABLE
+from custom.icds_reports.const import AggregationLevels, DASHBOARD_DOMAIN, AGG_INFRASTRUCTURE_TABLE
 from dimagi.utils.logging import notify_exception
 
 
@@ -86,10 +84,7 @@ def get_sql_scripts(state_id):
         # child_health_cases_a46c129f loc table has some empty supervisor_id
         _table_name('dashboard_child_health_daily_feeding_forms'),
         _table_name('static-dashboard_growth_monitoring_forms'),
-        _table_name('static-complementary_feeding_forms'),
-        AGG_GROWTH_MONITORING_TABLE,
-        AGG_COMP_FEEDING_TABLE,
-        AGG_CHILD_HEALTH_PNC_TABLE
+        _table_name('static-complementary_feeding_forms')
     ]
 
     child_health_case_id = [
@@ -106,9 +101,6 @@ def get_sql_scripts(state_id):
         _table_name('static-dashboard_birth_preparedness_forms'),
         _table_name('static-dashboard_thr_forms'),
         _table_name('static-postnatal_care_forms'),
-        AGG_CCS_RECORD_CF_TABLE,
-        AGG_CCS_RECORD_PNC_TABLE,
-        AGG_CCS_RECORD_BP_TABLE
     ]
 
     # has column 'case_load_ccs_record0'
