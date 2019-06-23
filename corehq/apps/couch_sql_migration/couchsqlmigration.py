@@ -890,13 +890,12 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
 
     def try_to_get_blob_meta(parent_id, type_code, name):
         try:
-            meta = metadb.get(
+            return metadb.get(
+                domain=couch_form.domain,
                 parent_id=parent_id,
                 type_code=type_code,
                 name=name
             )
-            assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
-            return meta
         except BlobMeta.DoesNotExist:
             return None
 
@@ -959,7 +958,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
     sql_form.attachments_list.extend(attachments)
 
 
-def revert_form_attachment_meta_domain(src_domain):
+def revert_form_attachment_meta_domain(src_domain, dst_domain):
     """
     Change form attachment meta.domain from dst_domain back to src_domain
     """
@@ -977,6 +976,7 @@ def revert_form_attachment_meta_domain(src_domain):
         for row in reader:
             parent_id, type_code, name, operation = row
             meta = metadb.get(
+                domain=dst_domain,
                 parent_id=parent_id,
                 type_code=type_code,
                 name=name

@@ -305,7 +305,7 @@ def _blow_away_migration(domain, dst_domain):
         assert not should_use_sql_backend(domain)
         delete_attachments = False
     else:
-        revert_form_attachment_meta_domain(domain)
+        revert_form_attachment_meta_domain(domain, dst_domain)
         delete_attachments = True
 
     delete_diff_db(domain)
