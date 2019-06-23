@@ -7,12 +7,14 @@ from __future__ import unicode_literals
 import logging
 from itertools import groupby
 
+import six
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
+from corehq.blobs import get_blob_db, CODES
 from corehq.form_processor.change_publishers import publish_case_saved, publish_form_saved
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
@@ -43,6 +45,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import iter_docs
 
 log = logging.getLogger('main_couch_sql_datamigration')
 
@@ -171,13 +174,8 @@ class Command(BaseCommand):
             if domain == dst_domain:
                 set_couch_sql_migration_complete(domain)
             else:
-                toggles.DATA_MIGRATION.enable(domain)  # Prevent any more changes on domain
-                set_couch_sql_migration_not_started(domain)
-                set_couch_sql_migration_not_started(dst_domain)
-                for form in _iter_migrated_forms(dst_domain):
-                    publish_form_saved(form)
-                for case in _iter_migrated_cases(dst_domain):
-                    publish_case_saved(case, send_post_save_signal=True)
+                _commit_src_domain(domain)
+                _commit_dst_domain(dst_domain)
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
@@ -305,7 +303,7 @@ def _blow_away_migration(domain, dst_domain):
         assert not should_use_sql_backend(domain)
         delete_attachments = False
     else:
-        revert_form_attachment_meta_domain(domain, dst_domain)
+        revert_form_attachment_meta_domain(domain)
         delete_attachments = True
 
     delete_diff_db(domain)
@@ -325,7 +323,52 @@ def _blow_away_migration(domain, dst_domain):
     log.info("blew away migration for domain {}\n".format(domain))
 
 
-def _iter_migrated_forms(domain):
+def _commit_src_domain(domain):
+    """
+    Form IDs are the same in both `domain` and `dst_domain`.
+    We must delete the form.xml attachments in `domain` so
+    that they are not returned by BlobMeta.get_for_parent(),
+    BlobMeta.get_for_parents(), and
+    BlobMeta.get(parent_id, type_code, name) when called for
+    forms in `dst_domain`.
+    """
+    blob_db = get_blob_db()
+
+    # Prevent any more changes on the Couch domain:
+    toggles.DATA_MIGRATION.enable(domain)
+    set_couch_sql_migration_not_started(domain)
+    for form in _iter_couch_forms(domain):
+        for meta in blob_db.metadb.get_for_parent(
+            parent_id=form.form_id,
+            type_code=CODES.form_xml,
+        ):
+            # `get_for_parent()` will return meta for both `domain`
+            # and `dst_domain` forms. Don't delete the wrong forms.
+            if meta.domain == domain:
+                blob_db.delete(key=meta.key)
+                meta.delete()
+
+
+def _commit_dst_domain(domain):
+    """
+    Send forms and cases to ElasticSearch
+    """
+    # We will be migrating to this domain several times:
+    set_couch_sql_migration_not_started(domain)
+    for form in _iter_sql_forms(domain):
+        publish_form_saved(form)
+    for case in _iter_sql_cases(domain):
+        publish_case_saved(case, send_post_save_signal=True)
+
+
+def _iter_couch_forms(domain):
+    for doc_type, class_ in six.iteritems(doc_types()):
+        form_ids = set(get_form_ids_by_type(domain, doc_type))
+        for form in iter_docs(XFormInstance.get_db(), form_ids):
+            yield class_.wrap(form)
+
+
+def _iter_sql_forms(domain):
     for doc_type in doc_types():
         form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
         for form_ids_chunk in chunked(form_ids, 500):
@@ -333,7 +376,7 @@ def _iter_migrated_forms(domain):
                 yield form
 
 
-def _iter_migrated_cases(domain):
+def _iter_sql_cases(domain):
     for get_case_ids_func in [
         CaseAccessorSQL.get_case_ids_in_domain,
         CaseAccessorSQL.get_deleted_case_ids_in_domain

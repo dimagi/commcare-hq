@@ -879,7 +879,7 @@ def append_undo(src_domain, meta, operation):
     filename = UNDO_CSV.format(domain=src_domain)
     with io.open(filename, 'ab') as undo_csv:
         writer = csv.writer(undo_csv)
-        row = (meta.domain, meta.parent_id, meta.type_code, meta.name, operation)
+        row = (meta.parent_id, meta.key, operation)
         writer.writerow(row)
 
 
@@ -891,7 +891,6 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
     def try_to_get_blob_meta(parent_id, type_code, name):
         try:
             return metadb.get(
-                domain=couch_form.domain,
                 parent_id=parent_id,
                 type_code=type_code,
                 name=name
@@ -917,6 +916,10 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
                 content_type=blob.content_type,
                 content_length=blob.content_length,
             )
+            # NOTE: This will create a parent_id+type_code+name duplicate in
+            #       dst_domain. metadb.get() must use parent_id+key to uniquely
+            #       identify blob meta and we must delete form.xml and meta on
+            #       commit and blow-away.
             meta.save()
             append_undo(couch_form.domain, meta, UNDO_CREATE)
             continue
@@ -970,21 +973,20 @@ def revert_form_attachment_meta_domain(src_domain):
             # Nothing to undo
             return
         raise
-    metadb = get_blob_db().metadb
+    blob_db = get_blob_db()
     with csv_file as undo_csv:
         reader = csv.reader(undo_csv)
         for row in reader:
-            dst_domain, parent_id, type_code, name, operation = row
-            meta = metadb.get(
-                domain=dst_domain,
+            parent_id, key, operation = row
+            meta = blob_db.metadb.get(
                 parent_id=parent_id,
-                type_code=type_code,
-                name=name
+                key=key,
             )
             if operation == UNDO_SET_DOMAIN:
                 meta.domain = src_domain
                 meta.save()
             elif operation == UNDO_CREATE:
+                blob_db.delete(key=meta.key)
                 meta.delete()
 
     os.unlink(filename)
