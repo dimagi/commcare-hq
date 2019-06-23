@@ -879,7 +879,7 @@ def append_undo(src_domain, meta, operation):
     filename = UNDO_CSV.format(domain=src_domain)
     with io.open(filename, 'ab') as undo_csv:
         writer = csv.writer(undo_csv)
-        row = (meta.parent_id, meta.type_code, meta.name, operation)
+        row = (meta.domain, meta.parent_id, meta.type_code, meta.name, operation)
         writer.writerow(row)
 
 
@@ -958,7 +958,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
     sql_form.attachments_list.extend(attachments)
 
 
-def revert_form_attachment_meta_domain(src_domain, dst_domain):
+def revert_form_attachment_meta_domain(src_domain):
     """
     Change form attachment meta.domain from dst_domain back to src_domain
     """
@@ -974,7 +974,7 @@ def revert_form_attachment_meta_domain(src_domain, dst_domain):
     with csv_file as undo_csv:
         reader = csv.reader(undo_csv)
         for row in reader:
-            parent_id, type_code, name, operation = row
+            dst_domain, parent_id, type_code, name, operation = row
             meta = metadb.get(
                 domain=dst_domain,
                 parent_id=parent_id,
