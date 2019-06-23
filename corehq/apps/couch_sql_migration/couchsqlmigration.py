@@ -412,7 +412,8 @@ class CouchSqlDomainMigrator(object):
             user_id=user_id,
         )
         _copy_form_properties(sql_form, couch_form)
-        _migrate_form_attachments(sql_form, couch_form, form_xml, dry_run=self.dry_run)
+        if not self.dry_run:
+            _migrate_form_attachments(sql_form, couch_form, form_xml)
         _migrate_form_operations(sql_form, couch_form)
 
         if couch_form.doc_type != 'SubmissionErrorLog':
@@ -883,7 +884,7 @@ def append_undo(src_domain, meta, operation):
         writer.writerow(row)
 
 
-def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False):
+def _migrate_form_attachments(sql_form, couch_form, form_xml=None):
     """Copy over attachment meta"""
     attachments = []
     metadb = get_blob_db().metadb
@@ -926,7 +927,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
 
-        if meta and meta.domain != sql_form.domain and not dry_run:
+        if meta and meta.domain != sql_form.domain:
             # meta domain is couch_form.domain; form is being migrated to sql_form.domain
             append_undo(couch_form.domain, meta, UNDO_SET_DOMAIN)
             meta.domain = sql_form.domain
@@ -938,9 +939,8 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None, dry_run=False
         if not meta and name != "form.xml":
             meta = try_to_get_blob_meta(couch_form.form_id, CODES.form_xml, name)
             if meta:
-                if not dry_run:
-                    append_undo(couch_form.domain, meta, UNDO_SET_DOMAIN)
-                    meta.domain = sql_form.domain
+                append_undo(couch_form.domain, meta, UNDO_SET_DOMAIN)
+                meta.domain = sql_form.domain
                 meta.type_code = CODES.form_attachment
                 meta.save()
 
