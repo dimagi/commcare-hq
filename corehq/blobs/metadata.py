@@ -174,10 +174,13 @@ class MetaDB(object):
                 raise TypeError("Missing argument 'name' and/or 'parent_id'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
         dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
-        meta = BlobMeta.objects.using(dbname).filter(**kw).first()
-        if meta is None:
+        queryset = BlobMeta.objects.using(dbname).filter(**kw)
+        objects = list((queryset if queryset.ordered else queryset.order_by('pk'))[:2])
+        if not objects:
             raise BlobMeta.DoesNotExist(repr(kw))
-        return meta
+        elif len(objects) > 1:
+            raise BlobMeta.MultipleObjectsReturned(repr(kw))
+        return objects[0]
 
     def get_for_parent(self, parent_id, type_code=None):
         """Get a list of `BlobMeta` objects for the given parent
