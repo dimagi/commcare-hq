@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import hashlib
+import itertools
 import logging
 
 from django.utils.translation import ugettext as _
@@ -210,15 +211,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
-        doc_ids = set(row['doc_id'] for row in formatted_rows)
-        table = self.get_table()
-        delete = table.delete().where(table.c.doc_id.in_(doc_ids))
         if self.session_helper.is_citus_db:
             config = self.config.sql_settings.citus_config
             if config.distribution_type == 'hash':
-                col = config.distribution_column
-                values = set(row[col] for row in formatted_rows)
-                delete = delete.where(table.c.get(col).in_(values))
+                self._by_column_update(formatted_rows)
+                return
+        doc_ids = set(row['doc_id'] for row in formatted_rows)
+        table = self.get_table()
+        delete = table.delete().where(table.c.doc_id.in_(doc_ids))
         # Using session.bulk_insert_mappings below might seem more inline
         #   with sqlalchemy API, but it results in
         #   appending an empty row which results in a postgres
@@ -231,6 +231,23 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_context() as session:
             session.execute(delete)
             session.execute(insert)
+
+    def _by_column_update(self, rows):
+        config = self.config.sql_settings.citus_config
+        shard_col = config.distribution_column
+        table = self.get_table()
+
+        rows = sorted(rows, key=lambda row: row[shard_col])
+        for shard_value, rows_ in itertools.groupby(rows, key=lambda row: row[shard_col]):
+            formatted_rows = list(rows_)
+            doc_ids = set(row['doc_id'] for row in formatted_rows)
+            delete = table.delete().where(table.c.get(shard_col) == shard_value)
+            delete = delete.where(table.c.doc_id.in_(doc_ids))
+            insert = table.insert().values(formatted_rows)
+
+            with self.session_context() as session:
+                session.execute(delete)
+                session.execute(insert)
 
     def bulk_save(self, docs):
         rows = []
