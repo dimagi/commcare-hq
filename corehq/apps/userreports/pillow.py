@@ -414,6 +414,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             eval_context = EvaluationContext(doc)
             # make copy to avoid modifying list during iteration
             adapters = list(self.table_adapters_by_domain[domain])
+            doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
                     if table.run_asynchronous:
@@ -421,7 +422,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     else:
                         self._save_doc_to_table(domain, table, doc, eval_context)
                         eval_context.reset_iteration()
-                else:
+                elif (doc_subtype is None
+                        or doc_subtype in table.config.get_case_type_or_xmlns_filter()):
                     table.delete(doc)
 
             if async_tables:
