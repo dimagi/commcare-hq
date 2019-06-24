@@ -1499,9 +1499,13 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
 
 REGEX_FIELD_VALIDATION = StaticToggle(
     'regex_field_validation',
-    'Enable regex validation for custom data fields',
+    'Regular Expression Validation for Custom Data Fields',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
 REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
