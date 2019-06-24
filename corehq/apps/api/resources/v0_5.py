@@ -38,6 +38,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
+from corehq.apps.export.models import CaseExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.sms.util import strip_plus
@@ -1009,6 +1010,12 @@ class ODataCaseFromExportInstanceResource(v0_4.CommCareCaseResource):
         response = super(ODataCaseFromExportInstanceResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        config = CaseExportInstance.get(self.config_id)
+        elastic_query_set = super(ODataCaseFromExportInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
+        elastic_query_set.payload['filter']['and'].append({'term': {'type.exact': config.case_type}})
+        return elastic_query_set
 
     class Meta(v0_4.CommCareCaseResource.Meta):
         authentication = ODataAuthentication(Permissions.edit_data)
