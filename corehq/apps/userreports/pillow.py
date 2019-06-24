@@ -307,6 +307,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     eval_context.reset_iteration()
                             elif (doc_subtype is None
                                     or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
+                                if change.metadata.document_type == 'XFormDuplicate':
+                                    continue
                                 # Delete if the subtype is unknown or
                                 # if the subtype matches our filters, but the full filter no longer applies
                                 to_delete_by_adapter[adapter].append(doc['_id'])
