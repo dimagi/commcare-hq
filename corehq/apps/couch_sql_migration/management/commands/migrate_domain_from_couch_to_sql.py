@@ -278,9 +278,10 @@ class Command(BaseCommand):
 
         print('\n{:_^79}'.format(" %s " % name))
         print(row.format('Couch', '|', 'SQL'))
-        print(_highlight(doc_count_row))
+        print(_highlight(doc_count_row).encode('utf-8'))
         if diff_count:
-            print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
+            highlighted = _highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs)))
+            print(highlighted.encode('utf-8'))
 
         if not short:
             if ids_in_couch ^ ids_in_sql:
