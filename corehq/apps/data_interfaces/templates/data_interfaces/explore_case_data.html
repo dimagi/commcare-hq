@@ -78,11 +78,21 @@
       {% trans "Learn more." %}
     </a>
   </p>
-  <div class="ko-loading">
-    <i class="fa fa-spinner fa-spin"></i>
-    {% blocktrans %}
-      Loading...
-    {% endblocktrans %}
+
+  <div id="datagrid-initial-loading"
+       class="datagrid-initial-loading">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body text-center">
+          <i class="fa fa-spinner fa-spin fa-2x"></i>
+          <p class="lead">
+            {% blocktrans %}
+              Preparing your case data for exploration...
+            {% endblocktrans %}
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="report-datagrid"
