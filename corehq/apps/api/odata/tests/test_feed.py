@@ -18,6 +18,7 @@ from corehq.apps.api.resources.v0_5 import (
     ODataXFormInstanceResource,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.models import CaseExportInstance, TableConfiguration
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -274,6 +275,13 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
 
         self.web_user.set_role(self.domain.name, 'admin')
         self.web_user.save()
+
+        export_config = CaseExportInstance(
+            _id='config_id',
+            tables=[TableConfiguration(columns=[])],
+        )
+        export_config.save()
+        self.addCleanup(export_config.delete)
 
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):

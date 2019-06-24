@@ -12,7 +12,7 @@ from corehq.apps.api.odata.views import (
     ODataFormMetadataView,
 )
 from corehq.apps.export.dbaccessors import get_latest_form_export_schema
-from corehq.apps.export.models import ExportItem
+from corehq.apps.export.models import CaseExportInstance, ExportItem
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
@@ -140,6 +140,35 @@ class ODataCaseFromExportInstanceSerializer(Serializer):
             config_id
         )
         data.pop('meta')
-        data['value'] = data.pop('objects')
+
+        config = CaseExportInstance.get(config_id)
+        data['value'] = self.serialize_cases_using_config(data.pop('objects'), config)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+    @staticmethod
+    def serialize_cases_using_config(cases, config):
+        selected_columns = [
+            column for column in config.tables[0].columns
+            if column.selected
+        ]
+        return [
+            {
+                column.label: _get_case_value_by_column(case_data, column)
+                for column in selected_columns
+            }
+            for case_data in cases
+        ]
+
+
+def _get_case_value_by_column(case_data, column):
+    lookup_key = _get_lookup_key_from_column(column)
+    return case_data.get(lookup_key, None) or case_data['properties'].get(lookup_key, None)
+
+
+def _get_lookup_key_from_column(column):
+    property_name = column.item.path[0].name
+    return {
+        '_id': 'case_id',
+        'name': 'case_name',
+    }.get(property_name, property_name)
