@@ -24,7 +24,11 @@ from tastypie.utils import dict_strip_unicode_keys
 from casexml.apps.stock.models import StockTransaction
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer, ODataXFormInstanceSerializer
+from corehq.apps.api.odata.serializers import (
+    ODataCaseFromExportInstanceSerializer,
+    ODataCommCareCaseSerializer,
+    ODataXFormInstanceSerializer,
+)
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
     ODataAuthentication
@@ -984,5 +988,35 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
     def prepend_urls(self):
         return [
             url(r"^(?P<resource_name>%s)/(?P<app_id>[\w\d_.-]+)/(?P<xmlns>[\w\d_.-]+)" % self._meta.resource_name,
+                self.wrap_view('dispatch_list'))
+        ]
+
+
+class ODataCaseFromExportInstanceResource(v0_4.CommCareCaseResource):
+
+    config_id = None
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not toggles.ODATA.enabled_for_request(request):
+            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        self.config_id = kwargs['config_id']
+        return super(ODataCaseFromExportInstanceResource, self).dispatch(request_type, request, **kwargs)
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        data['domain'] = request.domain
+        data['config_id'] = self.config_id
+        data['api_path'] = request.path
+        response = super(ODataCaseFromExportInstanceResource, self).create_response(
+            request, data, response_class, **response_kwargs)
+        return add_odata_headers(response)
+
+    class Meta(v0_4.CommCareCaseResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/cases'
+        serializer = ODataCaseFromExportInstanceSerializer()
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)" % self._meta.resource_name,
                 self.wrap_view('dispatch_list'))
         ]

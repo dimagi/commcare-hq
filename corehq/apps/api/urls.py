@@ -87,6 +87,7 @@ API_LIST = (
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCommCareCaseResource,
         v0_5.ODataXFormInstanceResource,
+        v0_5.ODataCaseFromExportInstanceResource,
         LookupTableResource,
         LookupTableItemResource,
     )),
