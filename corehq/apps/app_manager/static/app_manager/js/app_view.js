@@ -10,6 +10,7 @@ hqDefine("app_manager/js/app_view", function () {
         if ($settingsContainer.length) {
             var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings').CommcareSettings;
             $settingsContainer.koApplyBindings(new CommcareSettings(initial_page_data("app_view_options")));
+            $settingsContainer.find("form").disableAutoFill();
         }
 
         // Languages
