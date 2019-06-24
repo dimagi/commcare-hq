@@ -1020,3 +1020,7 @@ class ODataCaseFromExportInstanceResource(v0_4.CommCareCaseResource):
             url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)" % self._meta.resource_name,
                 self.wrap_view('dispatch_list'))
         ]
+
+    def determine_format(self, request):
+        # Results should be sent as JSON
+        return 'application/json'
