@@ -212,7 +212,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         ]
         doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
-        delete = table.delete(table.c.doc_id.in_(doc_ids))
+        delete_conditions = [table.c.doc_id.in_(doc_ids)]
+        if self.session_helper.is_citus_db:
+            config = self.config.sql_settings.citus_config
+            if config.distribution_type == 'hash':
+                col = config.distribution_column
+                values = set(row[col] for row in formatted_rows)
+                delete_conditions.append(table.c.get(col).in_(values))
+        delete = table.delete(*delete_conditions)
         # Using session.bulk_insert_mappings below might seem more inline
         #   with sqlalchemy API, but it results in
         #   appending an empty row which results in a postgres
