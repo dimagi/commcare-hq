@@ -57,12 +57,6 @@ class ExploreCaseDataReport(BaseReport):
             width=200,
             sort='asc',
         ),
-        ColumnMeta(
-            title=ugettext_lazy("Case Type"),
-            name='@case_type',
-            width=200,
-            sort=None,
-        ),
     ]
 
     column_filters = [

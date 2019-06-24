@@ -189,7 +189,7 @@ class ICDSMixin(object):
         datadog_histogram(
             "commcare.icds.block_reports.custom_data_duration",
             timer.duration,
-            tags=["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug)]
+            tags=tags
         )
         return to_ret
 
@@ -231,12 +231,13 @@ class ICDSMixin(object):
                 loc_type = selected_location.location_type.name
             else:
                 loc_type = None
+            tags = ["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug), "config:{}".format(config['id'])]
+            if allow_conditional_agg:
+                tags.append("allow_conditional_agg:yes")
             datadog_histogram(
                 "commcare.icds.block_reports.ucr_querytime",
                 timer.duration,
-                tags="config:{}, location_type:{}, report_slug:{}".format(
-                    config['id'], loc_type, self.slug
-                )
+                tags=tags
             )
 
             for column in config['columns']:

@@ -12,6 +12,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
+import attr
 import mock
 import six
 from couchdbkit.exceptions import ResourceNotFound
@@ -26,18 +27,6 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     FIXED_FORM_PROBLEM_TEMPLATE,
 )
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    MigrationRestricted,
-    PartiallyLockingQueue,
-    get_case_ids,
-    get_diff_db,
-    sql_form_to_json,
-)
-from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
-    COMMIT,
-    MIGRATE,
-    RESET,
-)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -45,6 +34,7 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
 from corehq.blobs import get_blob_db, NotFound as BlobNotFound
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -75,10 +65,25 @@ from corehq.util.test_utils import (
     trap_extra_setup,
 )
 
+from ..couchsqlmigration import (
+    MigrationRestricted,
+    PartiallyLockingQueue,
+    get_case_ids,
+    sql_form_to_json,
+)
+from ..diffrule import ANY
+from ..management.commands.migrate_domain_from_couch_to_sql import (
+    COMMIT,
+    MIGRATE,
+    RESET,
+)
+from ..statedb import open_state_db
+
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
     file_path = 'data',
     root = os.path.dirname(__file__)
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -115,16 +120,19 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self._do_migration(domain)
         self.assertTrue(should_use_sql_backend(domain))
 
-    def _compare_diffs(self, expected):
-        diff_db = get_diff_db(self.domain_name)
-        diffs = diff_db.get_diffs()
+    def _compare_diffs(self, expected_diffs=None, missing=None):
+        def diff_key(diff):
+            return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
+
+        state = open_state_db(self.domain_name)
+        diffs = sorted(state.get_diffs(), key=diff_key)
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
-        self.assertEqual(expected, json_diffs)
+        self.assertEqual(json_diffs, expected_diffs or [])
         self.assertEqual({
             kind: counts.missing
-            for kind, counts in six.iteritems(diff_db.get_doc_counts())
+            for kind, counts in six.iteritems(state.get_doc_counts())
             if counts.missing
-        }, {})
+        }, missing or {})
 
     def _get_form_ids(self, doc_type='XFormInstance'):
         return FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain(doc_type=doc_type)
@@ -640,7 +648,10 @@ class MigrationTestCase(BaseMigrationTestCase):
             'commcare.couch_sql_migration.count.duration:',
         ]
         for t_stat in tracked_stats:
-            self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
+            self.assertTrue(
+                any(r_stat.startswith(t_stat) for r_stat in received_stats),
+                "missing stat %r" % t_stat,
+            )
 
     def test_dry_run(self):
         self.assertFalse(should_use_sql_backend(self.domain_name))
@@ -749,6 +760,26 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._get_case("test-case")
         self._compare_diffs([])
 
+    def test_form_with_missing_xml(self):
+        create_form_with_missing_xml(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        # This may change in the future: it may be possible to rebuild the
+        # XML using parsed form JSON from couch.
+        with self.assertRaises(CaseNotFound):
+            self._get_case("test-case")
+        self._compare_diffs([
+            ('XFormInstance', Diff('missing', ['form', '#type'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@name'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@uiVersion'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@version'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@xmlns'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'age'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'case'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'first_name'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'meta'], new=MISSING)),
+        ], missing={'CommCareCase': 1})
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
@@ -807,7 +838,7 @@ class LedgerMigrationTests(BaseMigrationTestCase):
 
 class TestLockingQueues(TestCase):
     def setUp(self):
-        self.queues = PartiallyLockingQueue()
+        self.queues = PartiallyLockingQueue("id", max_size=-1)
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
         self.queues._add_item(lock_ids, DummyObject(queue_obj_id))
@@ -938,20 +969,7 @@ class TestHelperFunctions(TestCase):
         self.domain.delete()
 
     def get_form_with_missing_xml(self):
-        form = submit_form_locally(TEST_FORM, self.domain_name).xform
-        form = FormAccessors(self.domain_name).get_form(form.form_id)
-        blobs = get_blob_db()
-        with mock.patch.object(blobs.metadb, "delete"):
-            if isinstance(form, XFormInstance):
-                # couch
-                form.delete_attachment("form.xml")
-                self.assertIsNone(form.get_xml())
-            else:
-                # sql
-                blobs.delete(form.get_attachment_meta("form.xml").key)
-                with self.assertRaises(BlobNotFound):
-                    form.get_xml()
-        return form
+        return create_form_with_missing_xml(self.domain_name)
 
     def test_sql_form_to_json_with_missing_xml(self):
         self.domain.use_sql_backend = True
@@ -963,6 +981,50 @@ class TestHelperFunctions(TestCase):
     def test_get_case_ids_with_missing_xml(self):
         form = self.get_form_with_missing_xml()
         self.assertEqual(get_case_ids(form), ["test-case"])
+
+
+def create_form_with_missing_xml(domain_name):
+    form = submit_form_locally(TEST_FORM, domain_name).xform
+    form = FormAccessors(domain_name).get_form(form.form_id)
+    blobs = get_blob_db()
+    with mock.patch.object(blobs.metadb, "delete"):
+        if isinstance(form, XFormInstance):
+            # couch
+            form.delete_attachment("form.xml")
+            assert form.get_xml() is None, form.get_xml()
+        else:
+            # sql
+            blobs.delete(form.get_attachment_meta("form.xml").key)
+            try:
+                form.get_xml()
+                assert False, "expected BlobNotFound exception"
+            except BlobNotFound:
+                pass
+    return form
+
+
+@attr.s(cmp=False)
+class Diff(object):
+
+    type = attr.ib(default=ANY)
+    path = attr.ib(default=ANY)
+    old = attr.ib(default=ANY)
+    new = attr.ib(default=ANY)
+
+    def __eq__(self, other):
+        if type(other) == FormJsonDiff:
+            return (
+                self.type == other.diff_type
+                and self.path == other.path
+                and self.old == other.old_value
+                and self.new == other.new_value
+            )
+        return NotImplemented
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    __hash__ = None
 
 
 class DummyObject(object):

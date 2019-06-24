@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+from copy import copy
+
 from django.urls import reverse
 from django.http import Http404
 import collections
@@ -431,11 +433,13 @@ class ApplicationDataRMIHelper(object):
         forms_by_app_by_module = {}
         for form in self._all_forms:
             has_app = form.get('has_app', False)
-            app_langs = []
-            if self.user.language in form['app'].get('langs', {}):
-                app_langs.append(self.user.language)
 
-            app_langs.append(form['app']['langs'][0] if 'langs' in form['app'] else 'en')
+            app_langs = copy(form['app'].get('langs', []))
+
+            # Move user's language to the front (if applicable)
+            if self.user.language in app_langs:
+                app_langs.insert(0, self.user.language)
+
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
             module = None
             module_id = None

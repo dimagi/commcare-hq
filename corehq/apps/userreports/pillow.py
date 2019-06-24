@@ -4,6 +4,8 @@ import hashlib
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
+from django.conf import settings
+
 import six
 
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
@@ -43,7 +45,7 @@ from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
-from corehq.util.datadog.gauges import datadog_histogram
+from corehq.util.datadog.gauges import datadog_bucket_timer, datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
@@ -282,47 +284,76 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         rows_to_save_by_adapter = defaultdict(list)
         async_configs_by_doc_id = defaultdict(list)
         to_update = {change for change in changes_chunk if not change.deleted}
-        retry_changes, docs = self.get_docs_for_changes(to_update, domain)
+        with self._datadog_timing('extract'):
+            retry_changes, docs = self.get_docs_for_changes(to_update, domain)
         change_exceptions = []
 
-        for doc in docs:
-            eval_context = EvaluationContext(doc)
-            for adapter in adapters:
-                if adapter.config.filter(doc, eval_context):
-                    if adapter.run_asynchronous:
-                        async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
-                    else:
-                        try:
-                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
-                        except Exception as e:
-                            change_exceptions.append((changes_by_id[doc["_id"]], e))
-                        eval_context.reset_iteration()
-                else:
-                    # Delete regardless whether doc exists or not to avoid individual doc lookups
-                    to_delete_by_adapter[adapter].append(doc['_id'])
+        with self._datadog_timing('single_batch_transform'):
+            for doc in docs:
+                change = changes_by_id[doc['_id']]
+                doc_subtype = change.metadata.document_subtype
+                eval_context = EvaluationContext(doc)
+                with self._datadog_timing('single_doc_transform'):
+                    for adapter in adapters:
+                        with self._datadog_timing('transform', adapter.config._id):
+                            if adapter.config.filter(doc, eval_context):
+                                if adapter.run_asynchronous:
+                                    async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                                else:
+                                    try:
+                                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                                    except Exception as e:
+                                        change_exceptions.append((change, e))
+                                    eval_context.reset_iteration()
+                            elif (doc_subtype is None
+                                    or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
+                                # Delete if the subtype is unknown or
+                                # if the subtype matches our filters, but the full filter no longer applies
+                                to_delete_by_adapter[adapter].append(doc['_id'])
 
-        # bulk delete by adapter
-        to_delete = [c.id for c in changes_chunk if c.deleted]
-        for adapter in adapters:
-            delete_ids = to_delete_by_adapter[adapter] + to_delete
-            try:
-                adapter.bulk_delete(delete_ids)
-            except Exception:
-                retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
-        # bulk update by adapter
-        for adapter, rows in six.iteritems(rows_to_save_by_adapter):
-            try:
-                adapter.save_rows(rows)
-            except Exception:
-                retry_changes.update(to_update)
+        with self._datadog_timing('single_batch_delete'):
+            # bulk delete by adapter
+            to_delete = [c.id for c in changes_chunk if c.deleted]
+            for adapter in adapters:
+                delete_ids = to_delete_by_adapter[adapter] + to_delete
+                if not delete_ids:
+                    continue
+                with self._datadog_timing('delete', adapter.config._id):
+                    try:
+                        adapter.bulk_delete(delete_ids)
+                    except Exception:
+                        retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
+
+        with self._datadog_timing('single_batch_load'):
+            # bulk update by adapter
+            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+                with self._datadog_timing('load', adapter.config._id):
+                    try:
+                        adapter.save_rows(rows)
+                    except Exception:
+                        retry_changes.update(to_update)
+
         if async_configs_by_doc_id:
-            doc_type_by_id = {
-                _id: changes_by_id[_id].metadata.document_type
-                for _id in async_configs_by_doc_id.keys()
-            }
-            AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
+            with self._datadog_timing('async_config_load'):
+                doc_type_by_id = {
+                    _id: changes_by_id[_id].metadata.document_type
+                    for _id in async_configs_by_doc_id.keys()
+                }
+                AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
 
         return retry_changes, change_exceptions
+
+    def _datadog_timing(self, step, config_id=None):
+        tags = [
+            'action:{}'.format(step),
+            'index:ucr',
+        ]
+        if config_id and settings.ENTERPRISE_MODE:
+            tags.append('config_id:{}'.format(config_id))
+        return datadog_bucket_timer(
+            'commcare.change_feed.processor.timing',
+            tags=tags, timing_buckets=(.03, .1, .3, 1, 3, 10)
+        )
 
     @staticmethod
     def get_docs_for_changes(changes, domain):

@@ -44,7 +44,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         });
 
         self.showAddExpression = ko.computed(function () {
-            return self.appliedFilters().length === 1;
+            return self.appliedFilters().length > 0 && self.appliedFilters().length < 5;
         });
 
         self.unwrap = function () {
@@ -96,6 +96,11 @@ hqDefine('reports/v2/js/datagrid/columns', [
             if (!self.column().name()) return false;
             if (!_.isFunction(self.hideColumnFilterCondition)) return true;
             return !self.hideColumnFilterCondition(self.column());
+        });
+
+        self.showColumnFilterPlaceholder = ko.computed(function () {
+            if (!self.column()) return false;
+            return self.column().name() === undefined || self.column().name().length === 0;
         });
 
         self.showDelete = ko.computed(function () {

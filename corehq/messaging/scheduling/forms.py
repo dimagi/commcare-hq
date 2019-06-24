@@ -3118,6 +3118,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
                     css_class='col-sm-4',
                 ),
+                crispy.Div(
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("This cannot be changed after initial configuration."),
+                    ),
+                    css_class='col-sm-12',
+                ),
             ),
             hqcrispy.B3MultiField(
                 _("Use case property stop date"),
