@@ -139,12 +139,21 @@ class ODataCaseFromExportInstanceSerializer(Serializer):
             absolute_reverse(ODataCaseMetadataFromExportInstanceView.urlname, args=[domain]),
             config_id
         )
-        data.pop('meta')
+
+        next_link = self.get_next_url(data.pop('meta'), api_path)
+        if next_link:
+            data['@odata.nextLink'] = next_link
 
         config = CaseExportInstance.get(config_id)
         data['value'] = self.serialize_cases_using_config(data.pop('objects'), config)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+    @staticmethod
+    def get_next_url(meta, api_path):
+        next_page = meta['next']
+        if next_page:
+            return '{}{}{}'.format(get_url_base(), api_path, next_page)
 
     @staticmethod
     def serialize_cases_using_config(cases, config):
