@@ -85,7 +85,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_edit_permissions(self):
-        return self.couch_user.can_edit_data()
+        return self.couch_user.can_edit_data() and self.has_view_permissions
 
     @property
     def has_form_export_permissions(self):
@@ -184,6 +184,19 @@ class ODataFeedMixin(object):
     @method_decorator(toggles.ODATA.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
+
+    @property
+    def terminology(self):
+        return {
+            'page_header': _("OData Feed Settings"),
+            'help_text': "",
+            'name_label': _("OData Feed Name"),
+            'choose_fields_label': _("Choose the fields you want to include in this feed."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them. You can also rename
+                fields, which will update the field labels in the PowerBi/Tableau
+            """),
+        }
 
     def create_new_export_instance(self, schema):
         instance = super(ODataFeedMixin, self).create_new_export_instance(schema)

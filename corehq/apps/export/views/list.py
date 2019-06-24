@@ -1,45 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import json
 from datetime import datetime, timedelta
 
-from couchdbkit import ResourceNotFound
-from couchexport.models import Format
-from couchexport.writers import XlsLengthException
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.http import Http404
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+
+from couchdbkit import ResourceNotFound
 from memoized import memoized
+
+from couchexport.models import Format
+from couchexport.writers import XlsLengthException
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
-from corehq.apps.domain.decorators import login_and_domain_required, api_auth
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe, location_restricted_response
-from corehq.apps.reports.views import should_update_export
-from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.users.models import WebUser
-from corehq.apps.users.permissions import (
-    CASE_EXPORT_PERMISSION,
-    FORM_EXPORT_PERMISSION,
-    has_permission_to_view_report,
-)
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-from corehq.util.download import get_download_response
-
 from corehq.apps.export.const import (
     CASE_EXPORT,
     FORM_EXPORT,
@@ -48,14 +37,38 @@ from corehq.apps.export.const import (
     SharingOption,
 )
 from corehq.apps.export.dbaccessors import (
-    get_brief_exports,
     get_brief_deid_exports,
+    get_brief_exports,
     get_properly_wrapped_export_instance,
 )
-from corehq.apps.export.forms import CreateExportTagForm, DashboardFeedFilterForm
+from corehq.apps.export.forms import (
+    CreateExportTagForm,
+    DashboardFeedFilterForm,
+)
 from corehq.apps.export.models import FormExportInstance
-from corehq.apps.export.tasks import get_saved_export_task_status, rebuild_saved_export
-from corehq.apps.export.views.utils import ExportsPermissionsManager, user_can_view_deid_exports
+from corehq.apps.export.tasks import (
+    get_saved_export_task_status,
+    rebuild_saved_export,
+)
+from corehq.apps.export.views.utils import (
+    ExportsPermissionsManager,
+    user_can_view_deid_exports,
+)
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import (
+    location_restricted_response,
+    location_safe,
+)
+from corehq.apps.reports.views import should_update_export
+from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.users.models import WebUser
+from corehq.apps.users.permissions import (
+    CASE_EXPORT_PERMISSION,
+    FORM_EXPORT_PERMISSION,
+    has_permission_to_view_report,
+)
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.util.download import get_download_response
 
 
 class ExportListHelper(object):
@@ -452,7 +465,7 @@ class BaseExportListView(BaseProjectDataView):
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
-            'lead_text': self.lead_text,
+            'lead_text': mark_safe(self.lead_text),
             "export_filter_form": (DashboardFeedFilterForm(self.domain_object)
                                    if self.include_saved_filters else None),
         }
@@ -835,7 +848,7 @@ class ODataFeedListHelper(ExportListHelper):
 
     @property
     def create_export_form_title(self):
-        return _("Select a model to export")
+        return ""
 
     def _should_appear_in_list(self, export):
         return export['is_odata_config']
@@ -864,13 +877,24 @@ class ODataFeedListHelper(ExportListHelper):
 @method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     urlname = 'list_odata_feeds'
-    page_title = ugettext_lazy("OData Integration")
+    page_title = ugettext_lazy("PowerBi/Tableau Integration")
     lead_text = ugettext_lazy('''
-        OData feeds allow you to directly connect CommCareHQ to BI tools.
+        Use OData feeds to integrate your CommCare data with PowerBi or Tableau.
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau">
+            Learn more.
+        </a>
     ''')
 
     @property
     def page_context(self):
         context = super(ODataFeedListView, self).page_context
-        context['is_odata'] = True
+        context.update({
+            'is_odata': True,
+            "export_type_caps": _("OData Feed"),
+            "export_type": _("OData feed"),
+            "export_type_caps_plural": _("OData Feeds"),
+            "export_type_plural": _("OData feeds"),
+            'my_export_type': _('My OData Feeds'),
+            'shared_export_type': _('OData Feeds Shared with Me'),
+        })
         return context

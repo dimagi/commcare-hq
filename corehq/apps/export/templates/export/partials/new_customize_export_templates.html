@@ -41,7 +41,7 @@
         </div>
       </div>
       <!-- /ko -->
-      <h4>{% trans "Choose the fields you want to export." %}</h4>
+      <h4>{{ terminology.choose_fields_label }}</h4>
       <div class="help-block">
         {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
           {% blocktrans %}
@@ -54,7 +54,7 @@
             <p>You can also rename fields, which will update the headers in the export file.</p>
           {% endblocktrans %}
         {% else %}
-          {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
+          {{ terminology.choose_fields_description }}
         {% endif %}
       </div>
 

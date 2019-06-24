@@ -11,7 +11,7 @@ from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
-from corehq.apps.export.views.new import BaseModifyNewCustomView
+from corehq.apps.export.views.new import BaseExportView
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
@@ -19,7 +19,7 @@ from corehq.apps.export.views.utils import (
 )
 
 
-class BaseEditNewCustomExportView(BaseModifyNewCustomView):
+class BaseEditNewCustomExportView(BaseExportView):
 
     @property
     def export_id(self):
