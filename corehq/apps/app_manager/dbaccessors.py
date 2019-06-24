@@ -56,6 +56,22 @@ def get_latest_released_app(domain, app_id):
     return None
 
 
+def get_latest_released_app_versions_by_app_id(domain):
+    """
+    Gets a dict of all apps in domain that have released at least one build
+    and the version of their most recently released build. Note that keys
+    are the app ids, not build ids.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/applications',
+        startkey=['^ReleasedApplications', domain],
+        endkey=['^ReleasedApplications', domain, {}],
+        include_docs=False,
+    ).all()
+    return {r['key'][2]: r['key'][3] for r in results}
+
+
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
     app = _get_latest_released_build_view_result(domain, app_id)
@@ -300,21 +316,35 @@ def get_built_app_ids(domain):
     return [app_id for app_id in app_ids if app_id]
 
 
-def get_built_app_ids_for_app_id(domain, app_id, version=None):
+def get_build_ids_after_version(domain, app_id, version):
     """
-    Returns all the built apps for an application id. If version is specified returns all apps after that
-    version.
+    Returns ids of all an app's builds that are more recent than the given version.
     """
     from .models import Application
     key = [domain, app_id]
-    skip = 1 if version else 0
     results = Application.get_db().view(
         'app_manager/saved_app',
         startkey=key + [version],
         endkey=key + [{}],
         reduce=False,
         include_docs=False,
-        skip=skip
+        skip=1
+    ).all()
+    return [result['id'] for result in results]
+
+
+def get_build_ids(domain, app_id):
+    """
+    Returns all the built apps for an application id, in descending order.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        reduce=False,
+        include_docs=False,
     ).all()
     return [result['id'] for result in results]
 
