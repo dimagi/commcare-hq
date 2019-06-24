@@ -153,7 +153,7 @@
         },
         "is_primary_key": false,
         "is_nullable": true,
-        "column_id": "image_name",
+        "column_id": "photo_thr_packets_distributed",
         "type": "expression"
       }
     ],
