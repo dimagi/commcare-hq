@@ -1033,18 +1033,19 @@ SUPPORT = StaticToggle(
 
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
-    'Basic modules can be child modules',
+    'Basic modules can be sub-menus',
     TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Sub-menus',
 )
 
 LEGACY_CHILD_MODULES = StaticToggle(
     'legacy_child_modules',
-    'Legacy, non-nested child modules',
+    'Legacy, non-nested sub-menus',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
-        "Child Menus are now displayed nested under their parent menu. Some "
+        "Sub-menus are now displayed nested under their parent menu. Some "
         "apps built before this change will require that their modules be "
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
