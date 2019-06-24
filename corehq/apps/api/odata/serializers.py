@@ -128,6 +128,8 @@ class ODataXFormInstanceSerializer(Serializer):
 class ODataCaseFromExportInstanceSerializer(Serializer):
 
     def to_json(self, data, options=None):
+        data = self.to_simple(data, options)  # Convert bundled objects to JSON
+
         domain = data.pop('domain', None)
         config_id = data.pop('config_id', None)
         api_path = data.pop('api_path', None)
