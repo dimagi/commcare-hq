@@ -104,6 +104,8 @@ UNDO_CSV = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'couch_sql_migratio
 UNDO_SET_DOMAIN = 'set_domain'
 UNDO_CREATE = 'create'
 
+ID_MAP_FILE = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'couch_sql_migration', 'id_map_{domain}.txt')
+
 
 class MissingValueError(ValueError):
     pass
@@ -451,13 +453,37 @@ class CouchSqlDomainMigrator(object):
         the destination domain.
         """
         self._id_map = {}
+        dst_locations_without_orig_id = []
+        dst_users_without_orig_id = []
         for location in SQLLocation.objects.filter(domain=self.dst_domain):
             if 'orig_id' in location.metadata:
                 self._id_map[location.metadata['orig_id']] = location.location_id
-
+            else:
+                dst_locations_without_orig_id.append(location.location_id)
         for user in CommCareUser.by_domain(self.dst_domain):
             if 'orig_id' in user.user_data:
                 self._id_map[user.user_data['orig_id']] = user.get_id
+            else:
+                dst_users_without_orig_id.append(user.get_id)
+        self._dump_id_map(dst_locations_without_orig_id, dst_users_without_orig_id)
+
+    def _dump_id_map(self, missing_locations, missing_users):
+        filename = ID_MAP_FILE.format(domain=self.dst_domain)
+        with open(filename, 'w') as f:
+            f.write('ID Map\n'
+                    '------\n')
+            for src, dst in six.iteritems(self._id_map):
+                f.write(' -> '.join((src, dst)))
+                f.write('\n')
+            f.write('\n')
+            f.write('Locations without "orig_id" in metadata\n'
+                    '---------------------------------------\n')
+            f.write('\n'.join(missing_locations))
+            f.write('\n\n')
+            f.write('Users without "orig_id" in user data\n'
+                    '------------------------------------\n')
+            f.write('\n'.join(missing_users))
+            f.write('\n\n')
 
     def _map_form_ids(self, couch_form):
         """
