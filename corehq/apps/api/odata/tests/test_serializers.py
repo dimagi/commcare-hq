@@ -227,3 +227,19 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
             ),
             [{'case-name-label': 'case-name-value'}]
         )
+
+    def test_next_link_present(self):
+        meta = {'next': '?limit=1&offset=1'}
+        api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.get_next_url(meta, api_path),
+            'http://localhost:8000/a/odata-test/api/v0.5/odata/cases/config_id?limit=1&offset=1'
+        )
+
+    def test_next_link_absent(self):
+        meta = {'next': None}
+        api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.get_next_url(meta, api_path),
+            None
+        )
