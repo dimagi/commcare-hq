@@ -6,7 +6,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from tastypie.serializers import Serializer
 
 from corehq.apps.api.odata.utils import get_case_type_to_properties, get_odata_property_from_export_item
-from corehq.apps.api.odata.views import ODataCaseMetadataView, ODataFormMetadataView
+from corehq.apps.api.odata.views import (
+    ODataCaseMetadataFromExportInstanceView,
+    ODataCaseMetadataView,
+    ODataFormMetadataView,
+)
 from corehq.apps.export.dbaccessors import get_latest_form_export_schema
 from corehq.apps.export.models import ExportItem
 from corehq.util.view_utils import absolute_reverse
@@ -117,5 +121,23 @@ class ODataXFormInstanceSerializer(Serializer):
                     for item in export_items
                 }
                 data['value'][i]['xform_id'] = xform_json['id']
+
+        return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+
+class ODataCaseFromExportInstanceSerializer(Serializer):
+
+    def to_json(self, data, options=None):
+        domain = data.pop('domain', None)
+        config_id = data.pop('config_id', None)
+        api_path = data.pop('api_path', None)
+        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(ODataCaseMetadataFromExportInstanceView.urlname, args=[domain]),
+            config_id
+        )
+        data.pop('meta')
+        data['value'] = data.pop('objects')
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
