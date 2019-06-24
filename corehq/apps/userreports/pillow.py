@@ -307,9 +307,20 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     eval_context.reset_iteration()
                             elif (doc_subtype is None
                                     or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
-                                # Delete if the subtype is unknown or
-                                # if the subtype matches our filters, but the full filter no longer applies
-                                to_delete_by_adapter[adapter].append(doc['_id'])
+                                if adapter.session_helper.is_citus_db:
+                                    values = adapter.get_all_values(doc, eval_context)
+                                    config = adapter.config.sql_settings.citus_config
+                                    shard_col = config.distribution_column
+                                    shard_value = values[0][shard_col]
+                                    table = adapter.get_table()
+                                    delete = table.delete().where(table.c.get(shard_col) == shard_value)
+                                    delete = delete.where(table.c.doc_id == doc['_id'])
+                                    with adapter.session_context() as session:
+                                        session.execute(delete)
+                                else:
+                                    # Delete if the subtype is unknown or
+                                    # if the subtype matches our filters, but the full filter no longer applies
+                                    to_delete_by_adapter[adapter].append(doc['_id'])
 
         with self._datadog_timing('single_batch_delete'):
             # bulk delete by adapter
