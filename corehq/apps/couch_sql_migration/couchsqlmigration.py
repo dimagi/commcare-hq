@@ -13,6 +13,7 @@ import uuid
 from collections import defaultdict, deque
 from copy import deepcopy
 from datetime import datetime, timedelta
+from itertools import chain
 from time import time
 
 import gevent
@@ -43,9 +44,10 @@ from corehq.apps.couch_sql_migration.diff import (
 )
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
@@ -454,22 +456,25 @@ class CouchSqlDomainMigrator(object):
         Apps and app builds are not mapped because they are not all in
         the destination domain.
         """
+        all_users = chain(
+            (u for u in CommCareUser.by_domain(self.dst_domain)),
+            (u for u in CommCareUser.by_domain(self.dst_domain, is_active=False)),
+            (u for u in WebUser.by_domain(self.dst_domain)),
+            (u for u in WebUser.by_domain(self.dst_domain, is_active=False)),
+        )
         self._id_map = {}
-        dst_locations_without_orig_id = []
-        dst_users_without_orig_id = []
         for location in SQLLocation.objects.filter(domain=self.dst_domain):
             if 'orig_id' in location.metadata:
                 self._id_map[location.metadata['orig_id']] = location.location_id
-            else:
-                dst_locations_without_orig_id.append(location.location_id)
-        for user in CommCareUser.by_domain(self.dst_domain):
+        for group in Group.by_domain(self.dst_domain):
+            if 'orig_id' in group.metadata:
+                self._id_map[group.metadata['orig_id']] = group._id
+        for user in all_users:
             if 'orig_id' in user.user_data:
                 self._id_map[user.user_data['orig_id']] = user.get_id
-            else:
-                dst_users_without_orig_id.append(user.get_id)
-        self._dump_id_map(dst_locations_without_orig_id, dst_users_without_orig_id)
+        self._dump_id_map()
 
-    def _dump_id_map(self, missing_locations, missing_users):
+    def _dump_id_map(self):
         filename = ID_MAP_FILE.format(domain=self.dst_domain)
         with open(filename, 'w') as f:
             f.write('ID Map\n'
@@ -478,14 +483,6 @@ class CouchSqlDomainMigrator(object):
                 f.write(' -> '.join((src, dst)))
                 f.write('\n')
             f.write('\n')
-            f.write('Locations without "orig_id" in metadata\n'
-                    '---------------------------------------\n')
-            f.write('\n'.join(missing_locations))
-            f.write('\n\n')
-            f.write('Users without "orig_id" in user data\n'
-                    '------------------------------------\n')
-            f.write('\n'.join(missing_users))
-            f.write('\n\n')
 
     def _map_form_ids(self, couch_form):
         """
