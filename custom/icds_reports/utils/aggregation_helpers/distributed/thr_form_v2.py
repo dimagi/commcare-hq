@@ -35,13 +35,13 @@ class THRFormV2AggDistributedHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-        state_id, supervisor_id, awc_id, image_count, month
+        state_id, supervisor_id, awc_id, thr_distribution_image_count, month
         ) (
             SELECT
                 state_id,
                 supervisor_id,
                 awc_id,
-                COUNT(*) FILTER (WHERE image_name is not null) as image_count,
+                COUNT(*) FILTER (WHERE photo_thr_packets_distributed is not null) as thr_distribution_image_count,
                 %(start_date)s::DATE AS month
                 FROM "{ucr_tablename}"
                 WHERE submitted_on >= %(start_date)s AND submitted_on < %(end_date)s
