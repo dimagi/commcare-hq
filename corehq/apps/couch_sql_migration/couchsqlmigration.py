@@ -89,6 +89,7 @@ from corehq.util.datadog.utils import bucket_value
 from corehq.util.log import with_progress_bar
 from corehq.util.pagination import PaginationEventHandler
 from corehq.util.timer import TimingContext
+from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from couchforms.models import XFormOperation, doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
@@ -147,7 +148,7 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
 
 
 def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
-              changed_id_paths, ignore_missing_formxml_value=False):
+              changed_id_paths):
     """
     Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
     Finds the same property under `form_root` Element, and maps it there
@@ -171,9 +172,10 @@ def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
     form_xml_path = [root_tag] + item_path[1:]
     try:
         update_xml(form_root, form_xml_path, old_id, new_id)
-    except MissingValueError:
-        if not ignore_missing_formxml_value:
-            raise
+    except MissingValueError as err:
+        message = ('Value came from prop "{}" in caseblock or meta {!r}. '
+                   'New value is "{}"'.format(prop, caseblock_or_meta, new_id))
+        raise MissingValueError(' '.join((err, message)))
     changed_id_paths.append(tuple(item_path))
 
 
@@ -237,7 +239,7 @@ def update_xml(xml, path, old_value, new_value):
     assert get_localname(root) == path[0], 'root "{}" not found in path {}'.format(root.tag, path)
     recurse_elements(root, path)
     if not any(found):
-        raise MissingValueError('Unable to find "{value}" in "{xml}" at path "{path}"'.format(
+        raise MissingValueError('Unable to find "{value}" at path "{path}" in "{xml}".'.format(
             value=old_value,
             xml=xml if isinstance(xml, six.string_types) else etree.tostring(xml),
             path=path,
@@ -467,7 +469,7 @@ class CouchSqlDomainMigrator(object):
             if 'orig_id' in location.metadata:
                 self._id_map[location.metadata['orig_id']] = location.location_id
         for group in Group.by_domain(self.dst_domain):
-            if 'orig_id' in group.metadata:
+            if group.metadata and 'orig_id' in group.metadata:
                 self._id_map[group.metadata['orig_id']] = group._id
         for user in all_users:
             if 'orig_id' in user.user_data:
@@ -508,34 +510,41 @@ class CouchSqlDomainMigrator(object):
         form_xml = couch_form.get_xml()
         form_root = etree.XML(form_xml)
         ignore_paths = []
-        for caseblock, path in extract_case_blocks(couch_form.form, include_path=True):
-            # Example caseblock:
-            #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
-            #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
-            #      u'@user_id': u'7ea59f550f35758447400937f800f78c',
-            #      u'@xmlns': u'http://commcarehq.org/case/transaction/v2',
-            #      u'create': {u'case_name': u'Abigail',
-            #                  u'case_type': u'case',
-            #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
-            case_path = ['form'] + path + ['case']
-            update_id(self._id_map, caseblock, '@userid', form_root,
-                      base_path=case_path + ['@userid'], changed_id_paths=ignore_paths)
+        try:
+            for caseblock, path in extract_case_blocks(couch_form.form, include_path=True):
+                # Example caseblock:
+                #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
+                #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
+                #      u'@user_id': u'7ea59f550f35758447400937f800f78c',
+                #      u'@xmlns': u'http://commcarehq.org/case/transaction/v2',
+                #      u'create': {u'case_name': u'Abigail',
+                #                  u'case_type': u'case',
+                #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
+                case_path = ['form'] + path + ['case']
+                update_id(self._id_map, caseblock, '@userid', form_root,
+                          base_path=case_path + ['@userid'], changed_id_paths=ignore_paths)
 
-            if 'create' in caseblock:
-                create_path = case_path + ['create']
-                for prop in id_properties:
-                    update_id(self._id_map, caseblock['create'], prop, form_root,
-                              base_path=create_path, changed_id_paths=ignore_paths)
+                if 'create' in caseblock:
+                    create_path = case_path + ['create']
+                    for prop in id_properties:
+                        update_id(self._id_map, caseblock['create'], prop, form_root,
+                                  base_path=create_path, changed_id_paths=ignore_paths)
 
-            if 'update' in caseblock:
-                update_path = case_path + ['update']
-                for prop in id_properties:
-                    update_id(self._id_map, caseblock['update'], prop, form_root,
-                              base_path=update_path, changed_id_paths=ignore_paths)
+                if 'update' in caseblock:
+                    update_path = case_path + ['update']
+                    for prop in id_properties:
+                        update_id(self._id_map, caseblock['update'], prop, form_root,
+                                  base_path=update_path, changed_id_paths=ignore_paths)
 
-        update_id(self._id_map, couch_form.form['meta'], 'userID', form_root,
-                  base_path=['form', 'meta'], changed_id_paths=ignore_paths)
-
+            update_id(self._id_map, couch_form.form['meta'], 'userID', form_root,
+                      base_path=['form', 'meta'], changed_id_paths=ignore_paths)
+        except MissingValueError as err:
+            if couch_form.external_blobs and ATTACHMENT_NAME in couch_form.external_blobs:
+                key = couch_form.external_blobs[ATTACHMENT_NAME].key
+            else:
+                key = None
+            message = 'couch form ID {!r}. Attachment key {!r}.'.format(couch_form.form_id, key)
+            raise MissingValueError(' '.join((err, message)))
         self._ignore_paths[couch_form.get_id].extend(ignore_paths)
         form_xml = etree.tostring(form_root, encoding='utf-8', xml_declaration=True)
         return couch_form, form_xml
