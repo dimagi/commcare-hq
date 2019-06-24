@@ -148,7 +148,7 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
 
 
 def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
-              changed_id_paths):
+              changed_id_paths, case_id=None):
     """
     Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
     Finds the same property under `form_root` Element, and maps it there
@@ -174,8 +174,41 @@ def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
         update_xml(form_root, form_xml_path, old_id, new_id)
     except MissingValueError as err:
         message = ('Value came from prop "{}" in caseblock or meta {!r}. '
-                   'New value is "{}"'.format(prop, caseblock_or_meta, new_id))
-        raise MissingValueError('{} {}'.format(err, message))
+                   'Original caseblock value: {!r}. '
+                   'New value: {!r}.'.format(prop, caseblock_or_meta, old_id, new_id))
+        exception = MissingValueError('{} {}'.format(err, message))
+
+        # "Fixed" case imports seem to keep their original form.xml
+        # attachment, but update their couch form. If a case has been
+        # reassigned to a different owner or mobile worker, keep the
+        # form.xml, and correct the owner / mobile worker ID
+        case_create_path = ['system', 'case', 'create']
+        case_update_path = ['system', 'case', 'update']
+        if form_xml_path[:3] in [case_create_path, case_update_path] and case_id:
+            nsmap = {'c': "http://commcarehq.org/case/transaction/v2"}
+            formxml_case_ids = form_root.xpath('./c:case/@case_id', namespaces=nsmap)
+            if case_id and case_id in formxml_case_ids:
+                create_or_update = base_path[2]
+                formxml_ids = form_root.xpath('./c:case[@case_id="{case_id}"]/c:{cu}/c:{prop}'.format(
+                    case_id=case_id,
+                    cu=create_or_update,
+                    prop=prop,
+                ), namespaces=nsmap)
+                if len(formxml_ids) == 1:
+                    formxml_id = formxml_ids[0].text
+                    try:
+                        update_xml(form_root, form_xml_path, formxml_id, new_id)
+                    except MissingValueError as err:
+                        message = ('Found case import with form.xml value different from couch form value. '
+                                   '{} '
+                                   'Original form.xml value: {!r}'.format(message, formxml_id))
+                        raise MissingValueError('{} {}'.format(err, message))
+                else:
+                    raise exception
+            else:
+                raise exception
+        else:
+            raise exception
     changed_id_paths.append(tuple(item_path))
 
 
@@ -528,13 +561,15 @@ class CouchSqlDomainMigrator(object):
                     create_path = case_path + ['create']
                     for prop in id_properties:
                         update_id(self._id_map, caseblock['create'], prop, form_root,
-                                  base_path=create_path, changed_id_paths=ignore_paths)
+                                  base_path=create_path, changed_id_paths=ignore_paths,
+                                  case_id=caseblock.get('case_id'))
 
                 if 'update' in caseblock:
                     update_path = case_path + ['update']
                     for prop in id_properties:
                         update_id(self._id_map, caseblock['update'], prop, form_root,
-                                  base_path=update_path, changed_id_paths=ignore_paths)
+                                  base_path=update_path, changed_id_paths=ignore_paths,
+                                  case_id=caseblock.get('case_id'))
 
             update_id(self._id_map, couch_form.form['meta'], 'userID', form_root,
                       base_path=['form', 'meta'], changed_id_paths=ignore_paths)
