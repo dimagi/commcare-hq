@@ -114,11 +114,12 @@ class MissingValueError(ValueError):
 def setup_logging(log_dir):
     if not log_dir:
         return
-    time = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-    log_file = os.path.join(log_dir, "couch2sql-form-case-{}.log".format(time))
+    time = datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S")
+    log_file = os.path.join(log_dir, "couch2sql_form_case_{}.log".format(time))
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
+    handler.setLevel(logging.DEBUG)
     logging.root.addHandler(handler)
     log.info("command: %s", " ".join(sys.argv))
 
@@ -386,8 +387,9 @@ class CouchSqlDomainMigrator(object):
             set_local_domain_sql_backend_override(self.src_domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
-        except Exception:
-            log.exception("Unable to migrate form: %s", wrapped_form.form_id)
+        except Exception as err:
+            log.exception("Unable to migrate form %s", wrapped_form.form_id)
+            log.debug('Unable to migrate form %s: "%s"', wrapped_form.form_id, err)
         finally:
             self.queues.release_lock_for_queue_obj(wrapped_form)
             self.processed_docs += 1
@@ -594,8 +596,9 @@ class CouchSqlDomainMigrator(object):
             self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
             self.processed_docs += 1
             self._log_unprocessed_forms_processed_count(throttled=True)
-        except Exception:
-            log.exception("Error migrating form %s", couch_form_json["_id"])
+        except Exception as err:
+            log.exception("Unable to migrate unprocessed form %s", couch_form_json["_id"])
+            log.debug('Unable to migrate unprocessed form %s: "%s"', couch_form_json["_id"], err)
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
