@@ -150,11 +150,6 @@
           <!-- ko foreach: columns -->
           <th data-bind="style: { width: width() + 'px' },
                          columnResize: width">
-            <a class="datagrid-sort"
-               data-bind="click: $root.toggleSortColumn,
-                          visible: $root.isSortableColumn(name())">
-              <i data-bind="attr: { class: sortIconClass }"></i>
-            </a>
             <a class="datagrid-edit-link"
                data-bind="click: $root.editColumnController.set">
               <span data-bind="text: title"></span>
