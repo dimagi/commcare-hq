@@ -52,7 +52,7 @@ class OdataTestMixin(object):
 
     @classmethod
     def _get_correct_credentials(cls):
-        return CaseOdataTestMixin._get_basic_credentials(cls.web_user.username, 'my_password')
+        return OdataTestMixin._get_basic_credentials(cls.web_user.username, 'my_password')
 
     @staticmethod
     def _get_basic_credentials(username, password):
@@ -71,6 +71,14 @@ class FormOdataTestMixin(OdataTestMixin):
     @property
     def view_url(self):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'app_id': 'my_app_id'})
+
+
+class CaseOdataFromExportInstanceTestMixin(OdataTestMixin):
+
+    @property
+    def view_url(self):
+        return reverse(self.view_urlname, kwargs={'domain': self.domain.name})
+
 
 
 def generate_api_key_from_web_user(web_user):

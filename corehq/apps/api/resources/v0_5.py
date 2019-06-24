@@ -24,7 +24,11 @@ from tastypie.utils import dict_strip_unicode_keys
 from casexml.apps.stock.models import StockTransaction
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer, ODataXFormInstanceSerializer
+from corehq.apps.api.odata.serializers import (
+    ODataCaseFromExportInstanceSerializer,
+    ODataCommCareCaseSerializer,
+    ODataXFormInstanceSerializer,
+)
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
     ODataAuthentication
@@ -34,6 +38,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
+from corehq.apps.export.models import CaseExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.sms.util import strip_plus
@@ -969,7 +974,7 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
 
-    def obj_get_list(self, bundle, domain, **kwargs):
+    def obj_get_list(self, bundle, domain, **kwargs):  # TODO and test
         elastic_query_set = super(ODataXFormInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
         full_xmlns = 'http://openrosa.org/formdesigner/' + kwargs['xmlns']
         elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': full_xmlns}})
@@ -986,3 +991,43 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
             url(r"^(?P<resource_name>%s)/(?P<app_id>[\w\d_.-]+)/(?P<xmlns>[\w\d_.-]+)" % self._meta.resource_name,
                 self.wrap_view('dispatch_list'))
         ]
+
+
+class ODataCaseFromExportInstanceResource(v0_4.CommCareCaseResource):
+
+    config_id = None
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not toggles.ODATA.enabled_for_request(request):
+            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        self.config_id = kwargs['config_id']
+        return super(ODataCaseFromExportInstanceResource, self).dispatch(request_type, request, **kwargs)
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        data['domain'] = request.domain
+        data['config_id'] = self.config_id
+        data['api_path'] = request.path
+        response = super(ODataCaseFromExportInstanceResource, self).create_response(
+            request, data, response_class, **response_kwargs)
+        return add_odata_headers(response)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        config = CaseExportInstance.get(self.config_id)
+        elastic_query_set = super(ODataCaseFromExportInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
+        elastic_query_set.payload['filter']['and'].append({'term': {'type.exact': config.case_type}})
+        return elastic_query_set
+
+    class Meta(v0_4.CommCareCaseResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/cases'
+        serializer = ODataCaseFromExportInstanceSerializer()
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)" % self._meta.resource_name,
+                self.wrap_view('dispatch_list'))
+        ]
+
+    def determine_format(self, request):
+        # Results should be sent as JSON
+        return 'application/json'
