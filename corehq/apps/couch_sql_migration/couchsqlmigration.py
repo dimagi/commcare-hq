@@ -175,7 +175,7 @@ def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
     except MissingValueError as err:
         message = ('Value came from prop "{}" in caseblock or meta {!r}. '
                    'New value is "{}"'.format(prop, caseblock_or_meta, new_id))
-        raise MissingValueError(' '.join((err, message)))
+        raise MissingValueError('{} {}'.format(err, message))
     changed_id_paths.append(tuple(item_path))
 
 
@@ -544,7 +544,7 @@ class CouchSqlDomainMigrator(object):
             else:
                 key = None
             message = 'couch form ID {!r}. Attachment key {!r}.'.format(couch_form.form_id, key)
-            raise MissingValueError(' '.join((err, message)))
+            raise MissingValueError('{} {}'.format(err, message))
         self._ignore_paths[couch_form.get_id].extend(ignore_paths)
         form_xml = etree.tostring(form_root, encoding='utf-8', xml_declaration=True)
         return couch_form, form_xml
