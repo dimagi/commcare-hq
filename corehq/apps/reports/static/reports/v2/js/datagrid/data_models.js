@@ -45,6 +45,11 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 .css('left', position.left + 'px')
                 .css('top', position.top + "px");
 
+            if (marginTop < 0) {
+                // This makes sure there's no overlap with the header.
+                marginTop = 0;
+            }
+
             $loading.find('.loading-text')
                 .css('margin-top', marginTop + 'px');
         });
