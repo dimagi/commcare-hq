@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('supervisor_id', models.TextField()),
                 ('awc_id', models.TextField()),
                 ('month', models.DateField()),
-                ('image_count', models.IntegerField(help_text='Count of Images clicked per awc')),
+                ('thr_distribution_image_count', models.IntegerField(help_text='Count of Images clicked per awc')),
             ],
             options={
                 'db_table': 'icds_dashboard_thr_v2',

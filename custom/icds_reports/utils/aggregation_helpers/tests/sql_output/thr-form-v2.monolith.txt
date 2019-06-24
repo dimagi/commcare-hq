@@ -9,13 +9,13 @@ DROP TABLE IF EXISTS "icds_db_thr_form_v2_7a197ee47818209780c23ed9"
 {"month_string": "2019-01-01", "state_id": "st1"}
 
         INSERT INTO "icds_db_thr_form_v2_7a197ee47818209780c23ed9" (
-        state_id, supervisor_id, awc_id, image_count, month
+        state_id, supervisor_id, awc_id, thr_distribution_image_count, month
         ) (
             SELECT
                 state_id,
                 supervisor_id,
                 awc_id,
-                COUNT(*) FILTER (WHERE image_name is not null) as image_count,
+                COUNT(*) FILTER (WHERE photo_thr_packets_distributed is not null) as thr_distribution_image_count,
                 %(start_date)s::DATE AS month
                 FROM "ucr_icds-cas_static-thr_forms_v2_7f2a03ba"
                 WHERE submitted_on >= %(start_date)s AND submitted_on < %(end_date)s

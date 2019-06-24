@@ -8,7 +8,7 @@ from six.moves import map
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from corehq.util.python_compatibility import soft_assert_type_text
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, \
     month_formatter
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
@@ -69,7 +69,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
-            thr_image_count
+            thr_distribution_image_count
         )
         (
             SELECT
@@ -84,25 +84,26 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             5,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            icds_dashboard_thr_v2.image_count
+            thr_v2.thr_distribution_image_count
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
-            LEFT JOIN icds_dashboard_thr_v2 on (awc_location.doc_id = icds_dashboard_thr_v2.awc_id AND
-                                                icds_dashboard_thr_v2.month = %(start_date)s
+            LEFT JOIN "{thr_v2_table}" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
+                                                thr_v2.month = %(start_date)s
                                                 )
             group by awc_location.state_id,
             awc_location.district_id,
             awc_location.block_id,
             awc_location.supervisor_id,
             awc_location.doc_id,
-            image_count
+            thr_distribution_image_count
         )
         """.format(
             tablename=self.tablename,
             ucr_table=self.ucr_tablename,
             cbe_table=self._ucr_tablename('static-cbe_form'),
-            vhnd_table=self._ucr_tablename('static-vhnd_form')
+            vhnd_table=self._ucr_tablename('static-vhnd_form'),
+            thr_v2_table=AGG_THR_V2_TABLE
         ), {
             'start_date': self.month_start
         }
@@ -587,7 +588,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('num_awc_infra_last_update',),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
-            ('thr_image_count',),
+            ('thr_distribution_image_count',),
             ('electricity_awc', 'COALESCE(sum(electricity_awc), 0)'),
             ('infantometer', 'COALESCE(sum(infantometer), 0)'),
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),

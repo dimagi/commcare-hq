@@ -478,7 +478,7 @@ class AggAwc(models.Model, AggregateMixin):
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
-    thr_image_count = models.IntegerField(null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
 
     objects = CitusComparisonManager()
 
@@ -570,7 +570,7 @@ class AggregateTHRForm(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     awc_id = models.TextField()
     month = models.DateField()
-    image_count = models.IntegerField(help_text='Count of Images clicked per awc')
+    thr_distribution_image_count = models.IntegerField(help_text='Count of Images clicked per awc')
 
     objects = CitusComparisonManager()
 

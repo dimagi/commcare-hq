@@ -1,4 +1,4 @@
-doc_id,awc_id,supervisor_id,state_id,submitted_on,inserted_at,count,image_name
+doc_id,awc_id,supervisor_id,state_id,submitted_on,inserted_at,count,photo_thr_packets_distributed
 doc_id1,a1,s1,st1,2017-05-12,2017-05-12,1,image1.jpg
 doc_id2,a1,s1,st1,2017-05-12,2017-05-12,1,
 doc_id3,a1,s1,st1,2017-05-12,2017-05-12,1,image1.jpg
