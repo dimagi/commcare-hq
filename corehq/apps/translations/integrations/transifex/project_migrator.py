@@ -10,14 +10,17 @@ from memoized import memoized
 from collections import OrderedDict
 
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.translations.integrations.transifex.exceptions import (
+    InvalidProjectMigration,
     ResourceMissing,
 )
 from corehq.apps.translations.models import TransifexProject
 from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
 from corehq.apps.translations.integrations.transifex.const import (
+    SOURCE_LANGUAGE_MAPPING,
     TRANSIFEX_SLUG_PREFIX_MAPPING,
 )
 
@@ -152,10 +155,30 @@ class ProjectMigrator(object):
 class ProjectMigrationValidator(object):
     def __init__(self, migrator):
         self.migrator = migrator
+        self.source_app_default_lang = migrator.source_app_default_lang
+        self.target_app_default_lang = migrator.target_app_default_lang
 
     def _ensure_same_source_lang(self):
-        # ToDo: ensure same source lang for source app, target app and on transifex project
-        pass
+        """
+        ensure same source lang for source app, target app and on transifex project
+        """
+        if not self.source_app_default_lang or (self.source_app_default_lang != self.target_app_default_lang):
+            raise InvalidProjectMigration(
+                _("Target app default language and the source app default language don't match"))
+
+        project_source_lang = self.migrator.get_project_source_lang
+        source_app_lang_code = SOURCE_LANGUAGE_MAPPING.get(self.source_app_default_lang,
+                                                           self.source_app_default_lang)
+        if source_app_lang_code != project_source_lang:
+            raise InvalidProjectMigration(
+                _("Transifex project source lang and the source app default language don't match"))
+
+        target_app_lang_code = SOURCE_LANGUAGE_MAPPING.get(self.target_app_default_lang,
+                                                           self.target_app_default_lang)
+
+        if target_app_lang_code != project_source_lang:
+            raise InvalidProjectMigration(
+                _("Transifex project source lang and the target app default language don't match"))
 
     def valid(self):
         self._ensure_same_source_lang()
