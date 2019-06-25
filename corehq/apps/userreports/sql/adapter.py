@@ -218,19 +218,23 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 return
         doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
-        delete = table.delete().where(table.c.doc_id.in_(doc_ids))
-        # Using session.bulk_insert_mappings below might seem more inline
-        #   with sqlalchemy API, but it results in
-        #   appending an empty row which results in a postgres
-        #   not-null constraint error, which has been hard to debug.
-        # In addition, bulk_insert_mappings is less performant than
-        #   the plain INSERT INTO VALUES statement resulting from below line
-        #   because bulk_insert_mappings is meant for multi-table insertion
-        #   so it has overhead of format conversions and multiple statements
-        insert = table.insert().values(formatted_rows)
+        if self.supports_upsert():
+            queries = [self._upsert_query(table, formatted_rows)]
+        else:
+            delete = table.delete().where(table.c.doc_id.in_(doc_ids))
+            # Using session.bulk_insert_mappings below might seem more inline
+            #   with sqlalchemy API, but it results in
+            #   appending an empty row which results in a postgres
+            #   not-null constraint error, which has been hard to debug.
+            # In addition, bulk_insert_mappings is less performant than
+            #   the plain INSERT INTO VALUES statement resulting from below line
+            #   because bulk_insert_mappings is meant for multi-table insertion
+            #   so it has overhead of format conversions and multiple statements
+            insert = table.insert().values(formatted_rows)
+            queries = [delete, insert]
         with self.session_context() as session:
-            session.execute(delete)
-            session.execute(insert)
+            for query in queries:
+                session.execute(query)
 
     def _by_column_update(self, rows):
         config = self.config.sql_settings.citus_config
@@ -241,13 +245,39 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         for shard_value, rows_ in itertools.groupby(rows, key=lambda row: row[shard_col]):
             formatted_rows = list(rows_)
             doc_ids = set(row['doc_id'] for row in formatted_rows)
-            delete = table.delete().where(table.c.get(shard_col) == shard_value)
-            delete = delete.where(table.c.doc_id.in_(doc_ids))
-            insert = table.insert().values(formatted_rows)
+            if self.supports_upsert():
+                queries = [self._upsert_query(table, formatted_rows)]
+            else:
+                delete = table.delete().where(table.c.get(shard_col) == shard_value)
+                delete = delete.where(table.c.doc_id.in_(doc_ids))
+                insert = table.insert().values(formatted_rows)
+                queries = [delete, insert]
 
             with self.session_context() as session:
-                session.execute(delete)
-                session.execute(insert)
+                for query in queries:
+                    session.execute(query)
+
+    def supports_upsert(self):
+        """Return True if supports UPSERTS else False
+
+        Assumes that neither a distribution column (citus) nor doc_id can change.
+        """
+        if self.session_helper.is_citus_db:
+            # distribution_column and doc_id
+            return len(self.config.pk_columns) == 2
+
+        # doc_id
+        return len(self.config.pk_columns) == 1
+
+    def _upsert_query(self, table, rows):
+        from sqlalchemy.dialects.postgresql import insert
+        upsert = insert(table).values(rows)
+        return upsert.on_conflict_do_update(
+            constraint=table.primary_key,
+            set_={
+                col.name: col for col in upsert.excluded if not col.primary_key
+            }
+        )
 
     def bulk_save(self, docs):
         rows = []
