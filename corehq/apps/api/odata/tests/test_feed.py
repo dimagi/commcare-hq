@@ -37,13 +37,15 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         super(TestCaseOdataFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(wrong_credentials)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_domain(self):
         other_domain = Domain(name='other_domain')
@@ -51,11 +53,12 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            self._odata_feed_url_by_domain(other_domain.name),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(
+                self._odata_feed_url_by_domain(other_domain.name),
+                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+            )
+        self.assertEqual(response.status_code, 401)
 
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
@@ -129,13 +132,15 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         super(TestFormOdataFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(wrong_credentials)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_domain(self):
         other_domain = Domain(name='other_domain')
@@ -143,11 +148,12 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            self._odata_feed_url_by_domain(other_domain.name),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(
+                self._odata_feed_url_by_domain(other_domain.name),
+                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+            )
+        self.assertEqual(response.status_code, 401)
 
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
