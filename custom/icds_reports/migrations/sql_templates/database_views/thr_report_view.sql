@@ -22,7 +22,8 @@ SELECT
 "awc_location_months"."aww_name" AS "aww_name",
 "awc_location_months"."contact_phone_number" AS "contact_phone_number",
 "awc_location_months"."aggregation_level" AS "aggregation_level",
-agg_awc.thr_distribution_image_count,
+COALESCE(agg_awc.thr_distribution_image_count,0) as thr_distribution_image_count,
+agg_awc.is_launched,
 agg_awc.month as month,
 COALESCE(SUM(agg_child_health.rations_21_plus_distributed),0) + COALESCE(ccr.mother_thr,0) as thr_given_21_days,
 COALESCE(SUM(agg_child_health.thr_eligible),0) + COALESCE(ccr.mother_thr_eligible,0) as total_thr_candidates
@@ -92,6 +93,7 @@ GROUP BY
   "awc_location_months"."contact_phone_number",
   "awc_location_months"."aggregation_level",
   agg_awc.month,
+  agg_awc.is_launched,
   agg_awc.thr_distribution_image_count,
   ccr.mother_thr,
   ccr.mother_thr_eligible
