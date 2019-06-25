@@ -58,13 +58,10 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_no_case_types(self):
-        self._test_no_case_types()
-
-    @flag_enabled('ODATA')
-    def _test_no_case_types(self):
         correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_case_types_for_domain_es', return_value=set()):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch('corehq.apps.api.odata.views.get_case_types_for_domain_es', return_value=set()):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
@@ -72,16 +69,13 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
         )
 
     def test_with_case_types(self):
-        self._test_with_case_types()
-
-    @flag_enabled('ODATA')
-    def _test_with_case_types(self):
         correct_credentials = self._get_correct_credentials()
-        with patch(
-            'corehq.apps.api.odata.views.get_case_types_for_domain_es',
-            return_value=['case_type_1', 'case_type_2'],  # return ordered iterable for deterministic test
-        ):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch(
+                'corehq.apps.api.odata.views.get_case_types_for_domain_es',
+                return_value=['case_type_1', 'case_type_2'],  # return ordered iterable for deterministic test
+            ):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
@@ -152,13 +146,10 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_no_xmlnss(self):
-        self._test_no_xmlnss()
-
-    @flag_enabled('ODATA')
-    def _test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=[]):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=[]):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
@@ -169,13 +160,10 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         )
 
     def test_with_xmlnss(self):
-        self._test_with_xmlnss()
-
-    @flag_enabled('ODATA')
-    def _test_with_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=['xmlns_1', 'xmlns_2']):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=['xmlns_1', 'xmlns_2']):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),

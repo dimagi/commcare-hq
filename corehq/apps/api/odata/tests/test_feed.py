@@ -63,10 +63,6 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
-        self._test_request_succeeded()
-
-    @flag_enabled('ODATA')
-    def _test_request_succeeded(self):
         with trap_extra_setup(ConnectionError):
             elasticsearch_instance = get_es_new()
             initialize_index_and_mapping(elasticsearch_instance, CASE_INDEX_INFO)
@@ -76,7 +72,8 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         self.web_user.save()
 
         correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
 
     @property
@@ -158,10 +155,6 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
-        self._test_request_succeeded()
-
-    @flag_enabled('ODATA')
-    def _test_request_succeeded(self):
         with trap_extra_setup(ConnectionError):
             elasticsearch_instance = get_es_new()
             initialize_index_and_mapping(elasticsearch_instance, XFORM_INDEX_INFO)
@@ -171,7 +164,8 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         self.web_user.save()
 
         correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),
