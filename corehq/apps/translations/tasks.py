@@ -188,10 +188,33 @@ def email_project_from_hq(domain, data, email):
 
 @task
 def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, target_app_id, mappings, email):
-    def generate_email_body():
-        pass
+    def consolidate_errors_messages():
+        error_messages = []
+        for old_id, response in slug_update_responses.items():
+            if response.status_code != 200:
+                error_messages.append("Slug update failed for %s with message %s" % (old_id, response.content))
+        for lang_code, response in menus_and_forms_sheet_update_responses.items():
+            if response.status_code != 200:
+                error_messages.append(
+                    "Menus and forms sheet update failed for lang %s with message %s" % (
+                        lang_code, response.content))
+        return error_messages
 
-    ProjectMigrator(domain, transifex_project_slug, source_app_id, target_app_id, mappings).migrate()
+    def generate_email_body():
+        error_messages = consolidate_errors_messages()
+        email_body = "Transifex project migration completed for project %s.\n" % transifex_project_slug
+        if error_messages:
+            email_body += "Following issues were encountered during update:\n"
+            for error_message in error_messages:
+                email_body += error_message + "\n"
+        return email_body
+
+    slug_update_responses, menus_and_forms_sheet_update_responses = ProjectMigrator(
+        domain,
+        transifex_project_slug,
+        source_app_id, target_app_id,
+        mappings
+    ).migrate()
 
     email = EmailMessage(
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),

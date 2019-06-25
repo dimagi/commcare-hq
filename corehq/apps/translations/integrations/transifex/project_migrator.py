@@ -148,8 +148,9 @@ class ProjectMigrator(object):
         ProjectMigrationValidator(self).valid()
 
     def migrate(self):
-        self._update_slugs()
-        self._update_menus_and_forms_sheet()
+        slug_update_responses = self._update_slugs()
+        menus_and_forms_sheet_update_responses = self._update_menus_and_forms_sheet()
+        return slug_update_responses, menus_and_forms_sheet_update_responses
 
 
 class ProjectMigrationValidator(object):
