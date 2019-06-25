@@ -1,10 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from memoized import memoized
 from collections import OrderedDict
 
 from corehq.apps.translations.models import TransifexProject
 from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
+from corehq.apps.translations.integrations.transifex.const import (
+    TRANSIFEX_SLUG_PREFIX_MAPPING,
+)
 
 
 class ProjectMigrator(object):
@@ -25,9 +29,20 @@ class ProjectMigrator(object):
         self.resource_ids_mapping = resource_ids_mapping
         self.id_mapping = {old_id: new_id for _, old_id, new_id in self.resource_ids_mapping}
 
+    @memoized
+    def _get_slug_prefix(self, resource_type):
+        return TRANSIFEX_SLUG_PREFIX_MAPPING.get(resource_type)
+
     def _update_slugs(self):
-        # ToDo: update slugs on transifex
-        pass
+        responses = {}
+        for resource_type, old_id, new_id in self.resource_ids_mapping:
+            slug_prefix = self._get_slug_prefix(resource_type)
+            if not slug_prefix:
+                continue
+            resource_slug = "%s_%s" % (slug_prefix, old_id)
+            new_resource_slug = "%s_%s" % (slug_prefix, new_id)
+            responses[old_id] = self.client.update_resource_slug(resource_slug, new_resource_slug)
+        return responses
 
     def _update_context(self, translations):
         # ToDo: update context on Menus and forms sheet
