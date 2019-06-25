@@ -67,9 +67,10 @@ class MessagingRuleProgressHelper(object):
         self.client.expire(self.total_key, self.key_expiry)
 
     def cancel(self):
-        """Cancel the currently running task
+        """Mark the current task as canceled
 
-        This does nothing unless the task checks if it has been canceled.
+        The task is responsible for checking to see if it has been
+        canceled and acting accordingly.
         """
         self.client.set(self.rule_cancellation_key, 1, timeout=2 * 60 * 60)
 
