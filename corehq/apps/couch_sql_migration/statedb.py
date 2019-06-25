@@ -6,6 +6,7 @@ import json
 import os
 import os.path
 from collections import namedtuple
+from contextlib import contextmanager
 from datetime import datetime
 
 from django.conf import settings
@@ -59,15 +60,23 @@ class StateDB(DiffDB):
         if self._connection is not None:
             self._connection.close()
 
+    @contextmanager
+    def session(self):
+        session = self.Session()
+        try:
+            yield session
+            session.commit()
+        finally:
+            session.close()
+
     @property
     @memoized
     def unique_id(self):
         return self._get_kv("db_unique_id").value
 
     def add_problem_form(self, form_id):
-        session = self.Session()
-        session.add(ProblemForm(id=form_id))
-        session.commit()
+        with self.session() as session:
+            session.add(ProblemForm(id=form_id))
 
     def iter_problem_forms(self):
         query = self.Session().query(ProblemForm.id)
@@ -75,9 +84,8 @@ class StateDB(DiffDB):
             yield form_id
 
     def add_no_action_case_form(self, form_id):
-        session = self.Session()
-        session.add(NoActionCaseForm(id=form_id))
-        session.commit()
+        with self.session() as session:
+            session.add(NoActionCaseForm(id=form_id))
         self.get_no_action_case_forms.reset_cache(self)
 
     @memoized
@@ -101,41 +109,37 @@ class StateDB(DiffDB):
         return session.query(KeyValue).filter_by(key=key).scalar()
 
     def _pop_kv(self, key):
-        session = self.Session()
-        kv = self._get_kv(key, session)
-        if kv is not None:
-            session.delete(kv)
-            session.commit()
+        with self.session() as session:
+            kv = self._get_kv(key, session)
+            if kv is not None:
+                session.delete(kv)
         return kv
 
     def _set_kv(self, key, value):
-        session = self.Session()
-        session.add(KeyValue(key=key, value=value))
-        session.commit()
+        with self.session() as session:
+            session.add(KeyValue(key=key, value=value))
 
     def add_missing_docs(self, kind, doc_ids):
-        session = self.Session()
-        session.bulk_save_objects([
-            MissingDoc(kind=kind, doc_id=doc_id)
-            for doc_id in doc_ids
-        ])
-        session.commit()
+        with self.session() as session:
+            session.bulk_save_objects([
+                MissingDoc(kind=kind, doc_id=doc_id)
+                for doc_id in doc_ids
+            ])
 
     def increment_counter(self, kind, value):
-        session = self.Session()
-        updated = (
-            session.query(DocCount)
-            .filter_by(kind=kind)
-            .update(
-                {DocCount.value: DocCount.value + value},
-                synchronize_session=False,
+        with self.session() as session:
+            updated = (
+                session.query(DocCount)
+                .filter_by(kind=kind)
+                .update(
+                    {DocCount.value: DocCount.value + value},
+                    synchronize_session=False,
+                )
             )
-        )
-        if not updated:
-            session.add(DocCount(kind=kind, value=value))
-        else:
-            assert updated == 1, (kind, updated)
-        session.commit()
+            if not updated:
+                session.add(DocCount(kind=kind, value=value))
+            else:
+                assert updated == 1, (kind, updated)
 
     def get_doc_counts(self):
         """Returns a dict of counts by kind
@@ -146,12 +150,12 @@ class StateDB(DiffDB):
         - total: number of items counted with `increment_counter`.
         - missing: count of ids added with `add_missing_docs`.
         """
-        session = self.Session()
-        totals = {dc.kind: dc.value for dc in session.query(DocCount)}
-        missing = {row[0]: row[1] for row in session.query(
-            MissingDoc.kind,
-            func.count(MissingDoc.doc_id),
-        ).group_by(MissingDoc.kind).all()}
+        with self.session() as session:
+            totals = {dc.kind: dc.value for dc in session.query(DocCount)}
+            missing = {row[0]: row[1] for row in session.query(
+                MissingDoc.kind,
+                func.count(MissingDoc.doc_id),
+            ).group_by(MissingDoc.kind).all()}
         return {kind: Counts(
             total=totals.get(kind, 0),
             missing=missing.get(kind, 0),
