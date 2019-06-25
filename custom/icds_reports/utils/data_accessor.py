@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from time import sleep
 
+from corehq.util.datadog.utils import create_datadog_event
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
@@ -18,7 +19,7 @@ notify_logger = logging.getLogger('notify')
 def _all_zeros(data):
     values = [(kpi['value'] == 0 and kpi['all'] == 0) for row in data['records'] for kpi in row]
     if all(values):
-        notify_logger.info("ICDS - All indicators in program summary equals 0")
+        create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0')
     return all(values)
 
 
