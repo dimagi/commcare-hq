@@ -256,17 +256,33 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.save_rows(rows)
 
     def bulk_delete(self, docs):
+        if self.session_helper.is_citus_db:
+            config = self.config.sql_settings.citus_config
+            if config.distribution_type == 'hash':
+                self._citus_bulk_delete(docs, config.distribution_column)
+                return
         table = self.get_table()
         doc_ids = [doc['_id'] for doc in docs]
         delete = table.delete(table.c.doc_id.in_(doc_ids))
         with self.session_context() as session:
             session.execute(delete)
 
-    def delete(self, doc):
+    def _citus_bulk_delete(self, docs, column):
+        SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDuplicate')
         table = self.get_table()
-        delete = table.delete(table.c.doc_id == doc['_id'])
-        with self.session_helper.session_context() as session:
-            session.execute(delete)
+        # todo group by the sharding column and issue bulk_delete
+        for doc in docs:
+            delete = table.delete().where(table.c.doc_id == doc['_id'])
+            if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
+                # todo only get sharding column's value
+                rows = self.get_all_values(doc)
+                if rows.get(column):
+                    delete = delete.where(table.c.get(column) == rows[column])
+            with self.session_context() as session:
+                session.execute(delete)
+
+    def delete(self, doc):
+        self.bulk_delete([doc])
 
     def doc_exists(self, doc):
         with self.session_context() as session:
