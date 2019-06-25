@@ -43,8 +43,10 @@
       <th class="col-sm-1">
         {% if is_daily_saved_export %}
           {% trans "Edit Columns" %}
-        {% else %}
+        {% elif not is_odata %}
           {% trans 'Edit' %}
+        {% else %}
+          {% trans 'Copy' %}
         {% endif %}
       </th>
       <th class="col-sm-1">{% trans 'Delete' %}</th>
