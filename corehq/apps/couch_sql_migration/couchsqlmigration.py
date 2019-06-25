@@ -175,21 +175,21 @@ def map_form_ids(form_json, form_root, id_map, ignore_paths):
             for prop in id_properties:
                 update_id(id_map, caseblock['create'], prop, form_root,
                           base_path=create_path, changed_id_paths=ignore_paths,
-                          case_id=caseblock.get('@case_id'), modified_at=caseblock.get('@date_modified'))
+                          case_id=caseblock.get('@case_id'))
 
         if 'update' in caseblock:
             update_path = case_path + ['update']
             for prop in id_properties:
                 update_id(id_map, caseblock['update'], prop, form_root,
                           base_path=update_path, changed_id_paths=ignore_paths,
-                          case_id=caseblock.get('@case_id'), modified_at=caseblock.get('@date_modified'))
+                          case_id=caseblock.get('@case_id'))
 
     update_id(id_map, form_json['meta'], 'userID', form_root,
               base_path=['form', 'meta'], changed_id_paths=ignore_paths)
 
 
 def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
-              changed_id_paths, case_id=None, modified_at=None):
+              changed_id_paths, case_id=None):
     """
     Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
     Finds the same property under `form_root` Element, and maps it there
@@ -218,39 +218,34 @@ def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
 
     case_create_path = ['system', 'case', 'create']
     case_update_path = ['system', 'case', 'update']
-    if form_xml_path[:3] in [case_create_path, case_update_path] and case_id and modified_at:
-        _update_case_import(form_root, form_xml_path, prop, old_id, new_id, case_id, modified_at)
+    if form_xml_path[:3] in [case_create_path, case_update_path] and case_id:
+        _update_case_import(form_root, form_xml_path, prop, old_id, new_id, case_id)
     else:
         # This is a normal property create/update
         update_xml(form_root, form_xml_path, old_id, new_id)
 
 
-def _update_case_import(form_root, form_xml_path, prop, old_id, new_id, case_id, modified_at):
+def _update_case_import(form_root, form_xml_path, prop, old_id, new_id, case_id):
     create_or_update = form_xml_path[2]
     nsmap = {'c': "http://commcarehq.org/case/transaction/v2"}
     formxml_ids = form_root.xpath(
-        './c:case[@case_id="{case_id}"][@date_modified="{modified_at}"]/c:{cu}/c:{prop}'.format(
+        './c:case[@case_id="{case_id}"]/c:{cu}/c:{prop}'.format(
             case_id=case_id,
-            modified_at=modified_at,
             cu=create_or_update,
             prop=prop,
         ),
         namespaces=nsmap
     )
-    assert formxml_ids, 'case {} for @case_id="{}" @date_modified="{}" not found'.format(
-        create_or_update, case_id, modified_at)
-    assert len(formxml_ids) == 1, '@case_id="{}" @date_modified="{}" not unique'.format(case_id, modified_at)
+    assert formxml_ids, 'case {} for @case_id="{}" not found'.format(create_or_update, case_id)
+    for formxml_id in formxml_ids:
+        if formxml_id.text != old_id:
+            # TODO: Find out why HQ returns a different form.xml
+            # ID in form.xml != ID in couch form -- This case import was cancelled(?) and updated
+            if formxml_id.text == new_id:
+                # Nothing to do
+                return
 
-    formxml_id = formxml_ids[0].text
-
-    if formxml_id != old_id:
-        # TODO: Find out why HQ returns a different form.xml
-        # ID in form.xml != ID in couch form -- This case import was cancelled(?) and updated
-        if formxml_id == new_id:
-            # Nothing to do
-            return
-
-    formxml_ids[0].text = new_id
+        formxml_id.text = new_id
 
 
 def get_localname(elem):
