@@ -175,21 +175,21 @@ def map_form_ids(form_json, form_root, id_map, ignore_paths):
             for prop in id_properties:
                 update_id(id_map, caseblock['create'], prop, form_root,
                           base_path=create_path, changed_id_paths=ignore_paths,
-                          case_id=caseblock.get('@case_id'))
+                          case_id=caseblock.get('@case_id'), modified_at=caseblock.get('@date_modified'))
 
         if 'update' in caseblock:
             update_path = case_path + ['update']
             for prop in id_properties:
                 update_id(id_map, caseblock['update'], prop, form_root,
                           base_path=update_path, changed_id_paths=ignore_paths,
-                          case_id=caseblock.get('@case_id'))
+                          case_id=caseblock.get('@case_id'), modified_at=caseblock.get('@date_modified'))
 
     update_id(id_map, form_json['meta'], 'userID', form_root,
               base_path=['form', 'meta'], changed_id_paths=ignore_paths)
 
 
 def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
-              changed_id_paths, case_id=None):
+              changed_id_paths, case_id=None, modified_at=None):
     """
     Maps the ID stored at `caseblock_or_meta`[`prop`] using `id_map`.
     Finds the same property under `form_root` Element, and maps it there
@@ -200,57 +200,57 @@ def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
     if prop not in caseblock_or_meta or caseblock_or_meta[prop] not in id_map:
         return
 
+    # The easy part: Update the caseblock
     old_id = caseblock_or_meta[prop]
     new_id = id_map[old_id]
     caseblock_or_meta[prop] = new_id
 
     item_path = base_path + [prop]
+    changed_id_paths.append(tuple(item_path))
+
+    # The hard part: Update form.xml
     root_tag = get_localname(form_root)
     # Root node is "form" in form JSON, "data" in normal form XML, and
     # "system" in case imports.
     assert root_tag in ('data', 'system'), \
         'Unexpected Form XML root node "{}"'.format(root_tag)
     form_xml_path = [root_tag] + item_path[1:]
-    try:
-        update_xml(form_root, form_xml_path, old_id, new_id)
-    except MissingValueError as err:
-        message = ('Value came from prop "{}" in caseblock or meta {!r}. '
-                   'Original caseblock value: {!r}. '
-                   'New value: {!r}.'.format(prop, caseblock_or_meta, old_id, new_id))
-        exception = MissingValueError('{} {}'.format(err, message))
 
-        # "Fixed" case imports seem to keep their original form.xml
-        # attachment, but update their couch form. If a case has been
-        # reassigned to a different owner or mobile worker, keep the
-        # form.xml, and correct the owner / mobile worker ID
-        case_create_path = ['system', 'case', 'create']
-        case_update_path = ['system', 'case', 'update']
-        if form_xml_path[:3] in [case_create_path, case_update_path] and case_id:
-            nsmap = {'c': "http://commcarehq.org/case/transaction/v2"}
-            formxml_case_ids = form_root.xpath('./c:case/@case_id', namespaces=nsmap)
-            if case_id in formxml_case_ids:
-                create_or_update = base_path[2]
-                formxml_ids = form_root.xpath('./c:case[@case_id="{case_id}"]/c:{cu}/c:{prop}'.format(
-                    case_id=case_id,
-                    cu=create_or_update,
-                    prop=prop,
-                ), namespaces=nsmap)
-                if len(formxml_ids) == 1:
-                    formxml_id = formxml_ids[0].text
-                    try:
-                        update_xml(form_root, form_xml_path, formxml_id, new_id)
-                    except MissingValueError as err:
-                        message = ('Found case import with form.xml value different from couch form value. '
-                                   '{} '
-                                   'Original form.xml value: {!r}'.format(message, formxml_id))
-                        raise MissingValueError('{} {}'.format(err, message))
-                else:
-                    raise exception
-            else:
-                raise exception
-        else:
-            raise exception
-    changed_id_paths.append(tuple(item_path))
+    case_create_path = ['system', 'case', 'create']
+    case_update_path = ['system', 'case', 'update']
+    if form_xml_path[:3] in [case_create_path, case_update_path] and case_id and modified_at:
+        _update_case_import(form_root, form_xml_path, prop, old_id, new_id, case_id, modified_at)
+    else:
+        # This is a normal property create/update
+        update_xml(form_root, form_xml_path, old_id, new_id)
+
+
+def _update_case_import(form_root, form_xml_path, prop, old_id, new_id, case_id, modified_at):
+    create_or_update = form_xml_path[2]
+    nsmap = {'c': "http://commcarehq.org/case/transaction/v2"}
+    formxml_ids = form_root.xpath(
+        './c:case[@case_id="{case_id}"][@date_modified="{modified_at}"]/c:{cu}/c:{prop}'.format(
+            case_id=case_id,
+            modified_at=modified_at,
+            cu=create_or_update,
+            prop=prop,
+        ),
+        namespaces=nsmap
+    )
+    assert formxml_ids, 'case {} for @case_id="{}" @date_modified="{}" not found'.format(
+        create_or_update, case_id, modified_at)
+    assert len(formxml_ids) == 1, '@case_id="{}" @date_modified="{}" not unique'.format(case_id, modified_at)
+
+    formxml_id = formxml_ids[0].text
+
+    if formxml_id != old_id:
+        # TODO: Find out why HQ returns a different form.xml
+        # ID in form.xml != ID in couch form -- This case import was cancelled(?) and updated
+        if formxml_id == new_id:
+            # Nothing to do
+            return
+
+    formxml_ids[0].text = new_id
 
 
 def get_localname(elem):
