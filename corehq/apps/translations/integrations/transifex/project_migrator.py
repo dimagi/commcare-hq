@@ -43,33 +43,13 @@ class ProjectMigrator(object):
         self.resource_ids_mapping = resource_ids_mapping
         self.id_mapping = {old_id: new_id for _, old_id, new_id in self.resource_ids_mapping}
 
-    @cached_property
-    def get_project_source_lang(self):
-        return self.client.project_details().json()['source_language_code']
+    def validate(self):
+        ProjectMigrationValidator(self).valid()
 
-    @cached_property
-    def _source_app(self):
-        return get_app(self.domain, self.source_app_id)
-
-    @cached_property
-    def _target_app(self):
-        return get_app(self.domain, self.target_app_id)
-
-    @cached_property
-    def source_app_langs(self):
-        return self._source_app.langs
-
-    @cached_property
-    def source_app_default_lang(self):
-        return self._source_app.default_language
-
-    @cached_property
-    def target_app_default_lang(self):
-        return self._target_app.default_language
-
-    @memoized
-    def _get_slug_prefix(self, resource_type):
-        return TRANSIFEX_SLUG_PREFIX_MAPPING.get(resource_type)
+    def migrate(self):
+        slug_update_responses = self._update_slugs()
+        menus_and_forms_sheet_update_responses = self._update_menus_and_forms_sheet()
+        return slug_update_responses, menus_and_forms_sheet_update_responses
 
     def _update_slugs(self):
         responses = {}
@@ -81,6 +61,30 @@ class ProjectMigrator(object):
             new_resource_slug = "%s_%s" % (slug_prefix, new_id)
             responses[old_id] = self.client.update_resource_slug(resource_slug, new_resource_slug)
         return responses
+
+    @memoized
+    def _get_slug_prefix(self, resource_type):
+        return TRANSIFEX_SLUG_PREFIX_MAPPING.get(resource_type)
+
+    def _update_menus_and_forms_sheet(self):
+        langs = copy.copy(self.source_app_langs)
+        translations = OrderedDict()
+        for lang in langs:
+            try:
+                translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
+            except ResourceMissing:
+                # Probably a lang in app not present on Transifex, so skip
+                pass
+        self._update_context(translations)
+        return self._upload_new_translations(translations)
+
+    @cached_property
+    def source_app_langs(self):
+        return self._source_app.langs
+
+    @cached_property
+    def _source_app(self):
+        return get_app(self.domain, self.source_app_id)
 
     def _update_context(self, translations):
         """
@@ -97,16 +101,14 @@ class ProjectMigrator(object):
                     if resource_id in self.id_mapping:
                         po_entry.msgctxt = po_entry.msgctxt.replace(resource_id, self.id_mapping[resource_id])
 
-    @property
-    def metadata(self):
-        now = str(datetime.datetime.now())
-        return {
-            'App-Id': self.target_app_id,
-            'PO-Creation-Date': now,
-            'MIME-Version': '1.0',
-            'Content-Type': 'text/plain; charset=utf-8',
-            'Language': self.target_app_default_lang
-        }
+    def _upload_new_translations(self, translations):
+        responses = {}
+        # the project source lang, which is the app default language should be the first to update.
+        # HQ keeps the default lang on top and hence it should be the first one here
+        assert translations.keys()[0] == self.target_app_default_lang
+        for lang_code in translations:
+            responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
+        return responses
 
     def _upload_translation(self, translations, lang_code):
         po = polib.POFile()
@@ -123,34 +125,32 @@ class ProjectMigrator(object):
                 return self.client.upload_translation(temp_file.name, "Menus_and_forms", "Menus_and_forms",
                                                       lang_code)
 
-    def _upload_new_translations(self, translations):
-        responses = {}
-        # the project source lang, which is the app default language should be the first to update.
-        # HQ keeps the default lang on top and hence it should be the first one here
-        assert translations.keys()[0] == self.target_app_default_lang
-        for lang_code in translations:
-            responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
-        return responses
+    @property
+    def metadata(self):
+        now = str(datetime.datetime.now())
+        return {
+            'App-Id': self.target_app_id,
+            'PO-Creation-Date': now,
+            'MIME-Version': '1.0',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Language': self.target_app_default_lang
+        }
 
-    def _update_menus_and_forms_sheet(self):
-        langs = copy.copy(self.source_app_langs)
-        translations = OrderedDict()
-        for lang in langs:
-            try:
-                translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
-            except ResourceMissing:
-                # Probably a lang in app not present on Transifex, so skip
-                pass
-        self._update_context(translations)
-        return self._upload_new_translations(translations)
+    @cached_property
+    def target_app_default_lang(self):
+        return self._target_app.default_language
 
-    def validate(self):
-        ProjectMigrationValidator(self).valid()
+    @cached_property
+    def _target_app(self):
+        return get_app(self.domain, self.target_app_id)
 
-    def migrate(self):
-        slug_update_responses = self._update_slugs()
-        menus_and_forms_sheet_update_responses = self._update_menus_and_forms_sheet()
-        return slug_update_responses, menus_and_forms_sheet_update_responses
+    @cached_property
+    def get_project_source_lang(self):
+        return self.client.project_details().json()['source_language_code']
+
+    @cached_property
+    def source_app_default_lang(self):
+        return self._source_app.default_language
 
 
 class ProjectMigrationValidator(object):
@@ -158,6 +158,9 @@ class ProjectMigrationValidator(object):
         self.migrator = migrator
         self.source_app_default_lang = migrator.source_app_default_lang
         self.target_app_default_lang = migrator.target_app_default_lang
+
+    def valid(self):
+        self._ensure_same_source_lang()
 
     def _ensure_same_source_lang(self):
         """
@@ -180,6 +183,3 @@ class ProjectMigrationValidator(object):
         if target_app_lang_code != project_source_lang:
             raise InvalidProjectMigration(
                 _("Transifex project source lang and the target app default language don't match"))
-
-    def valid(self):
-        self._ensure_same_source_lang()
