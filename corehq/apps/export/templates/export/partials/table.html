@@ -375,7 +375,7 @@
         </div>
         <div data-bind="ifnot: $parent.showOwnership">
           <div data-bind="if: isLocationSafeForUser">
-            <a data-bind="attr: {href: editUrl}" class="btn btn-default">
+            <a data-bind="attr: {href: editUrl}" class="btn btn-default"{% if odata_feeds_over_limit %} data-toggle="modal"{% endif %}>
               <i class="fa fa-pencil"></i>
               <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
               <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>

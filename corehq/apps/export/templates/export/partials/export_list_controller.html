@@ -22,14 +22,18 @@
 {% if has_edit_permissions %}
   <div id="create-export" class="ko-template">
     <p>
-      <a href="#createExportOptionsModal" data-toggle="modal" class="btn btn-primary">
+      <a href="{{ create_url }}" data-toggle="modal" class="btn btn-primary">
         <i class="fa fa-plus"></i>
         {% blocktrans %}
           Add {{ export_type_caps }}
         {% endblocktrans %}
       </a>
     </p>
-    {% include 'export/partials/export_list_create_export_modal.html' %}
+    {% if not odata_feeds_over_limit %}
+      {% include 'export/partials/export_list_create_export_modal.html' %}
+    {% else %}
+      {% include 'export/partials/odata_feed_limit_reached_modal.html' %}
+    {% endif %}
   </div>
 {% endif %}
 
