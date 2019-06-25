@@ -861,7 +861,7 @@ class TestHelperFunctions(TestCase):
 
     def test_get_case_ids_with_missing_xml(self):
         form = self.get_form_with_missing_xml()
-        self.assertEqual(get_case_ids(form), ["test-case"])
+        self.assertEqual(get_case_ids(form), {"test-case"})
 
 
 def create_form_with_missing_xml(domain_name):

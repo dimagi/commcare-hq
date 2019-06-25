@@ -318,7 +318,7 @@ def _fix_replacement_form_problem_in_couch(doc):
 
 
 def get_case_ids(form):
-    """Get case ids referenced in form
+    """Get a set of case ids referenced in form
 
     Gracefully handles missing XML, but will omit case ids referenced in
     ledger updates if XML is missing.
@@ -326,4 +326,4 @@ def get_case_ids(form):
     try:
         return get_case_ids_from_form(form)
     except MissingFormXml:
-        return [update.id for update in get_case_updates(form)]
+        return {update.id for update in get_case_updates(form)}
