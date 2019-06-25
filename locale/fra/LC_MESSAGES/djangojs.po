@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-11 20:20+0000\n"
+"POT-Creation-Date: 2019-06-25 19:30+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -121,17 +121,17 @@ msgstr "Vous avez des modifications non sauvegardées."
 msgid "There was an error saving."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:143
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr "Ajouter"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:336
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:392
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:364
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:413
 msgid "You have unsaved changes"
 msgstr "Vous avez des modifications non sauvegardées."
 
@@ -3127,6 +3127,12 @@ msgstr ""
 msgid "Unknown"
 msgstr "Inconnu"
 
+#: corehq/apps/reports/static/reports/js/case_details.js:109
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:297
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:345
+msgid "Sorry, there was an issue communicating with the server."
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:23
 msgid "Loading"
 msgstr "Chargement en cours"
@@ -3507,11 +3513,6 @@ msgstr ""
 msgid "Username is available."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:297
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:345
-msgid "Sorry, there was an issue communicating with the server."
-msgstr ""
-
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:446
 msgid "Username"
 msgstr "Nom d'utilisateur"
@@ -3774,4 +3775,20 @@ msgstr ""
 
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "show"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "hide"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "toggle"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/main-components.js:30
+msgid "6.0.65"
 msgstr ""

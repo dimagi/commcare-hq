@@ -41,10 +41,11 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--status',
-            action='store_true',
+            action='store',
             dest='status',
             default=False,
-            help='Show status of remaining domains.'
+            help='Show status of remaining domains. '
+                 'Values: migrated, remaining, couch.'
         )
 
     @staticmethod
@@ -54,8 +55,7 @@ class Command(BaseCommand):
             is_trial=False,
         ).filter(
             Q(plan_version__plan__edition=SoftwarePlanEdition.ADVANCED) |
-            Q(plan_version__plan__edition=SoftwarePlanEdition.PRO) |
-            Q(plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE)
+            Q(plan_version__plan__edition=SoftwarePlanEdition.PRO)
         ).all()
         return [sub.subscriber.domain for sub in relevant_subs]
 
@@ -87,7 +87,7 @@ class Command(BaseCommand):
         remaining, couch_domains, migrated = self._get_domain_lists()
 
         if status:
-            self.show_status(remaining, couch_domains, migrated)
+            self.show_status(remaining, couch_domains, migrated, status)
             return
 
         if domain:
@@ -136,20 +136,20 @@ class Command(BaseCommand):
         CaseSearchReindexerFactory(domain=domain).build().reindex()
         self.stdout.write('Done...\n\n'.format(domain))
 
-    def show_status(self, remaining, couch_domains, migrated):
-        if remaining:
+    def show_status(self, remaining, couch_domains, migrated, status):
+        if remaining and 'remaining' in status:
             self.stdout.write('\n\nDomains Needing Migration:\n')
             self.stdout.write('\n'.join(remaining))
-        if couch_domains:
+        if couch_domains and 'couch' in status:
             self.stdout.write('\n\nCouch Domains Needing Careful Migration:\n')
             self.stdout.write('\n'.join(couch_domains))
-        if migrated:
+        if migrated and 'migrated' in status:
             self.stdout.write('\n\nDomains Already Migrated:\n')
             self.print_totals(migrated)
         self.stdout.write('\n\n')
 
     def print_totals(self, domains):
-        max_space = '\t' * (int(max(map(lambda x: len(x), domains)) / 8) + 2)
+        max_space = '\t' * (int(max([len(x) for x in domains]) / 8) + 2)
         header = 'Domain{}CaseES\t\tCaseSearchES\n'.format(max_space)
         divider = '{}\n'.format('*' * (len(header) + len(max_space) * 8))
         self.stdout.write(divider)

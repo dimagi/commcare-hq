@@ -2,7 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
+
 from django.utils.functional import cached_property
+
+from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -33,7 +36,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "{ucr_tablename}"
-            WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
+            WHERE inserted_at >= %(last_sync)s AND month > %(six_months_ago)s AND form_date <= %(now)s
             WINDOW forms AS (
               PARTITION BY supervisor_id, awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -42,7 +45,8 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             ucr_tablename=self.ucr_tablename,
         ), {
             "last_sync": self.last_sync,
-            "now": datetime.datetime.utcnow()
+            "now": datetime.datetime.utcnow(),
+            "six_months_ago": datetime.datetime.utcnow() - relativedelta(months=6),
         }
 
     def missing_location_query(self):
