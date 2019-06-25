@@ -426,8 +426,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                         eval_context.reset_iteration()
                 elif (doc_subtype is None
                         or doc_subtype in table.config.get_case_type_or_xmlns_filter()):
-                    if change.metadata.document_type == 'XFormDuplicate':
-                        continue
                     table.delete(doc)
 
             if async_tables:
