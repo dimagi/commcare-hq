@@ -255,8 +255,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             rows.extend(self.get_all_values(doc))
         self.save_rows(rows)
 
-    def bulk_delete(self, doc_ids):
+    def bulk_delete(self, docs):
         table = self.get_table()
+        doc_ids = [doc['_id'] for doc in docs]
         delete = table.delete(table.c.doc_id.in_(doc_ids))
         with self.session_context() as session:
             session.execute(delete)
@@ -340,9 +341,9 @@ class MultiDBSqlAdapter(object):
         for adapter in self.all_adapters:
             adapter.bulk_save(docs)
 
-    def bulk_delete(self, doc_ids):
+    def bulk_delete(self, docs):
         for adapter in self.all_adapters:
-            adapter.bulk_delete(doc_ids)
+            adapter.bulk_delete(docs)
 
     def doc_exists(self, doc):
         return any([

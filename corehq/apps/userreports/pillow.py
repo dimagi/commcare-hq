@@ -307,23 +307,22 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     eval_context.reset_iteration()
                             elif (doc_subtype is None
                                     or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
-                                if change.metadata.document_type == 'XFormDuplicate':
-                                    continue
                                 # Delete if the subtype is unknown or
                                 # if the subtype matches our filters, but the full filter no longer applies
-                                to_delete_by_adapter[adapter].append(doc['_id'])
+                                to_delete_by_adapter[adapter].append(doc)
 
         with self._datadog_timing('single_batch_delete'):
             # bulk delete by adapter
-            to_delete = [c.id for c in changes_chunk if c.deleted]
+            to_delete = [{'_id': c.id} for c in changes_chunk if c.deleted]
             for adapter in adapters:
-                delete_ids = to_delete_by_adapter[adapter] + to_delete
-                if not delete_ids:
+                delete_docs = to_delete_by_adapter[adapter] + to_delete
+                if not delete_docs:
                     continue
                 with self._datadog_timing('delete', adapter.config._id):
                     try:
-                        adapter.bulk_delete(delete_ids)
+                        adapter.bulk_delete(delete_docs)
                     except Exception:
+                        delete_ids = [doc['_id'] for doc in delete_docs]
                         retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
 
         with self._datadog_timing('single_batch_load'):
