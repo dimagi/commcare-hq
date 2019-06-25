@@ -381,13 +381,13 @@ class TestFactSheetReportInterventions(TestCase):
             self.get_data()['config']['sections'][1]['rows_config'][0],
             {
                 'average': {
-                    'html': 25.806451612903224,
-                    'sort_key': 25.806451612903224
+                    'html': 22.580645161290324,
+                    'sort_key': 22.580645161290324
                 },
                 'data': [
                     {'html': 'Pregnant women who are anemic'},
-                    {'html': 17.307692307692307, 'sort_key': 17.307692307692307},
-                    {'html': 25.806451612903224, 'sort_key': 25.806451612903224},
+                    {'html': 16.346153846153847, 'sort_key': 16.346153846153847},
+                    {'html': 22.580645161290324, 'sort_key': 22.580645161290324},
                     {'html': 0}
                 ],
                 'data_source': 'AggCCSRecordMonthlyDataSource',

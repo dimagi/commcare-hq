@@ -2,7 +2,7 @@ from __future__ import absolute_import, division
 
 from __future__ import unicode_literals
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SumColumn, SimpleColumn
+from sqlagg.columns import SumColumn, SimpleColumn, SumWhen
 from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
@@ -55,8 +55,15 @@ class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 'Percent of pregnant women who are anemic in given month',
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
-                    SumColumn('anemic_moderate'),
-                    SumColumn('anemic_severe'),
+
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_moderate'},
+                        alias='anemic_moderate'
+                    ),
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_severe'},
+                        alias='anemic_severe'
+                    ),
                     SumColumn('pregnant', alias='pregnant')
                 ],
                 slug='severe_anemic'
