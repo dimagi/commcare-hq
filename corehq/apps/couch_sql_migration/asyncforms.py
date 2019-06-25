@@ -27,7 +27,6 @@ class AsyncFormProcessor(object):
     def __init__(self, statedb, migrate_form):
         self.statedb = statedb
         self.migrate_form = migrate_form
-        self.processed_docs = 0
 
     def __enter__(self):
         self.pool = Pool(15)

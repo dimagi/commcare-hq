@@ -198,12 +198,12 @@ class CouchSqlDomainMigrator(object):
         case_stock_result = None
         if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
-            if len(case_stock_result.case_models):
-                touch_updates = [
-                    update for update in get_case_updates(couch_form)
-                    if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
-                ]
-                if len(touch_updates):
+            if case_stock_result.case_models:
+                has_noop_update = any(
+                    len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
+                    for update in get_case_updates(couch_form)
+                )
+                if has_noop_update:
                     # record these for later use when filtering case diffs.
                     # See ``_filter_forms_touch_case``
                     self.statedb.add_no_action_case_form(couch_form.form_id)
@@ -741,7 +741,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
     )
 
 
-def _save_migrated_models(sql_form, case_stock_result=None):
+def _save_migrated_models(sql_form, case_stock_result):
     """
     See SubmissionPost.save_processed_models for ~what this should do.
     However, note that that function does some things that this one shouldn't,
