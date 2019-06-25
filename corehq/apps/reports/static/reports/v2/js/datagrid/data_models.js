@@ -121,7 +121,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
                     if (!self.hasInitialLoadFinished()) {
                         self.hasInitialLoadFinished(true);
-                        $('#datagrid-initial-loading').fadeOut();
+                        $('#js-datagrid-initial-loading').fadeOut();
                         _.each(self.reportFilters(), function (reportFilter) {
                             reportFilter.value.subscribe(function () {
                                 self.refresh();
