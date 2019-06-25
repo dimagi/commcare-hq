@@ -1,0 +1,596 @@
+<?xml version='1.0' encoding='utf-8'?>
+<system xmlns="http://commcarehq.org/case" xmlns:orx="http://openrosa.org/jr/xforms" version="1" uiVersion="1">
+  <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+    <orx:deviceID>corehq.apps.case_importer.tasks.do_import</orx:deviceID>
+    <orx:timeStart>2017-10-09T09:47:24.996013Z</orx:timeStart>
+    <orx:timeEnd>2017-10-09T09:47:24.996013Z</orx:timeEnd>
+    <orx:username>felizardochaguala@ccsaude.org.mz</orx:username>
+    <orx:userID>9b7c1fdcbcca80cc1756daf6bf2a9f1b</orx:userID>
+    <orx:instanceID>5af63d3a38b1444a815985dcbcc7dc1a</orx:instanceID>
+    <cc:appVersion/>
+  </orx:meta>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="695281a59f1f448d994828dd8b9688df" date_modified="2017-10-09T09:47:23.037199Z">
+    <update>
+      <case_name>Macamo</case_name>
+      <external_id>08090001/17/0076</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>Queme</bairro>
+      <celula>Igreja  luz</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1992-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-16</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-15</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>TRUE</gravida>
+      <lactante/>
+      <nome>Anastancia Mario</nome>
+      <numero_conviventes>5</numero_conviventes>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone/>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="01968c33228f459890daebfc1cfd6bfc" date_modified="2017-10-09T09:47:23.402764Z">
+    <update>
+      <case_name>Sitoe</case_name>
+      <external_id>08090001/17/0092</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>guizuco</bairro>
+      <celula>Michonguene</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1988-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-09-16</data_proxima_consulta>
+      <data_ultima_consulta>2017-08-27</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>TRUE</gravida>
+      <lactante/>
+      <nome>Carolina Alberto</nome>
+      <numero_conviventes>7</numero_conviventes>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>846458120</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="7353d4eed1d3455e85ff5643ff6602a5" date_modified="2017-10-09T09:47:23.486335Z">
+    <update>
+      <case_name>Alberto</case_name>
+      <external_id>08090001/16/1560</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>malova</bairro>
+      <celula>perto da igreja metodista</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1980-11-23</data_do_nacimento>
+      <data_proxima_consulta>2017-10-09</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-08</data_ultima_consulta>
+      <distrito>Inhambane</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>TRUE</gravida>
+      <lactante/>
+      <nome>Gelentina Alexandre </nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone/>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="995b762727eb4f4185564ab362dcab84" date_modified="2017-10-09T09:47:23.536919Z">
+    <update>
+      <case_name>Homo</case_name>
+      <external_id>08090001/17/1005</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>malovecua</bairro>
+      <celula>Mallovecua escola secundaria de Maguezane</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1977-07-06</data_do_nacimento>
+      <data_proxima_consulta>2017-10-10</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-18</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Dianora Francisco</nome>
+      <numero_conviventes/>
+      <numero_de_filhos>4</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>848692197</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="57e7243f2ca5440ba40a00f93c62849b" date_modified="2017-10-09T09:47:23.574844Z">
+    <update>
+      <case_name>Mnhice</case_name>
+      <external_id>08090001/17/1022</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>Eduardo Mondlane</bairro>
+      <celula>perto da senhora linda chefe de 10 casas</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>2012-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-20</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-20</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Nioma Francisco</nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone/>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="19f6bc909f894ef1bccc9af5ec0e189c" date_modified="2017-10-09T09:47:23.621455Z">
+    <update>
+      <case_name>Matsimbe</case_name>
+      <external_id>08090001/17/0958</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>tsumbane</bairro>
+      <celula>Perto da EPC de tsumbane</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1987-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-17</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-18</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Artur Elias</nome>
+      <numero_conviventes>3</numero_conviventes>
+      <numero_de_filhos>2</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>849339023</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="944e7d6339f84040be4a8c8ef2470db7" date_modified="2017-10-09T09:47:23.678131Z">
+    <update>
+      <case_name>zualu</case_name>
+      <external_id>08090001/17/1015</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>Rovene</bairro>
+      <celula/>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1974-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-20</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-20</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Manuel Antonio</nome>
+      <numero_conviventes>7</numero_conviventes>
+      <numero_de_filhos>5</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>844102755</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="ad9bd2249a0649d383f1705a7c6386ed" date_modified="2017-10-09T09:47:23.731892Z">
+    <update>
+      <case_name>Cossa</case_name>
+      <external_id>08090001/17/1006</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>murrungulo</bairro>
+      <celula>Bonito B</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1967-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-20</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-20</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Celeste Jose</nome>
+      <numero_conviventes/>
+      <numero_de_filhos>8</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>820995784</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="f7f07997335e415a9cae737b9cbebaf4" date_modified="2017-10-09T09:47:23.786288Z">
+    <update>
+      <case_name>Chifeche</case_name>
+      <external_id>08090001/17/0529</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>conze</bairro>
+      <celula>Proximo da Padaria Bissimilah</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1987-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-18</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-19</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Mercia Francisco</nome>
+      <numero_conviventes>1</numero_conviventes>
+      <numero_de_filhos>3</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>849437713</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="c6f854db5f324db7a9474542ab411570" date_modified="2017-10-09T09:47:23.841959Z">
+    <update>
+      <case_name>Massingue</case_name>
+      <external_id>08090001/17/0991</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>malovecua</bairro>
+      <celula>Perto da Igreja Velha Apostolica</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1993-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-20</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-20</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Tamires Samuel</nome>
+      <numero_conviventes>5</numero_conviventes>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>845093687</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="eef73124b3464d1aaa28b89bc7b0775e" date_modified="2017-10-09T09:47:23.906053Z">
+    <update>
+      <case_name>Novele</case_name>
+      <external_id>08090001/17/0954</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>mudauca</bairro>
+      <celula>Perto de EPCA DE Cofe</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1974-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-18</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-19</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Amina Jaime</nome>
+      <numero_conviventes>1</numero_conviventes>
+      <numero_de_filhos>2</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>845469963</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="21883c9b6b924e95926acc3e3ee2f35c" date_modified="2017-10-09T09:47:23.977128Z">
+    <update>
+      <case_name>Mapamo</case_name>
+      <external_id>08090001/17/1012</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>Licunha</bairro>
+      <celula>mapamo</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1978-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-16</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-18</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Luis Calisto</nome>
+      <numero_conviventes/>
+      <numero_de_filhos>1</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>848166300</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="1a1bd774c25e43fa83eaba808030534e" date_modified="2017-10-09T09:47:24.008910Z">
+    <update>
+      <case_name>Chulo</case_name>
+      <external_id>08090001/17/0571</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>ngongane</bairro>
+      <celula>perto do sr francisco</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1981-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-16</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-15</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Saugina Lacita</nome>
+      <numero_conviventes>2</numero_conviventes>
+      <numero_de_filhos>6</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>848768671</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="77be6d51d2684ff498e4de011c5f17c9" date_modified="2017-10-09T09:47:24.515737Z">
+    <update>
+      <case_name>Covele</case_name>
+      <external_id>08090001/17/0910</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>Rovene</bairro>
+      <celula>Proximo da Igreja testemunha de Jeova</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1991-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-11-02</data_proxima_consulta>
+      <data_ultima_consulta>2017-10-02</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Benardino Manuel</nome>
+      <numero_conviventes>6</numero_conviventes>
+      <numero_de_filhos>4</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone/>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="4b5f3638c3654ff59b0cb71f5ad00b66" date_modified="2017-10-09T09:47:24.739139Z">
+    <update>
+      <case_name>Vilanculos</case_name>
+      <external_id>110506/17/0417</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>Rovene/Guizuco</bairro>
+      <celula>Perto de Senhor Anselmo Murrure</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1984-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-17</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-19</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Sheila Moises</nome>
+      <numero_conviventes>2</numero_conviventes>
+      <numero_de_filhos>1</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados>1</numero_de_filhos_testados>
+      <numero_de_telefone>842719684</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="42b03e56a5104d08b85c3df10a7ef15d" date_modified="2017-10-09T09:47:24.819876Z">
+    <update>
+      <case_name>Cossa</case_name>
+      <external_id>08090001/17/0361</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>1</a_faltar>
+      <avenida/>
+      <bairro>Rovene</bairro>
+      <celula>Perto de Circulo Anhane</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1986-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-05-01</data_proxima_consulta>
+      <data_ultima_consulta>2017-04-03</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>TRUE</gravida>
+      <lactante/>
+      <nome>Celia Fernando</nome>
+      <numero_conviventes>4</numero_conviventes>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone/>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="fae233c3a3994bbd9ddbed1aefa98b0b" date_modified="2017-10-09T09:47:24.861316Z">
+    <update>
+      <case_name>Alberto</case_name>
+      <external_id>08090001/14/1662</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>1</a_faltar>
+      <avenida/>
+      <bairro>malembane</bairro>
+      <celula>perto de casa de 10 casas</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1975-10-02</data_do_nacimento>
+      <data_proxima_consulta>2017-08-04</data_proxima_consulta>
+      <data_ultima_consulta>2017-07-04</data_ultima_consulta>
+      <distrito>Inhambane</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Adelaide Alberto </nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>842503832</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="aa96976d1b024c83bfcc0bcb37a0274a" date_modified="2017-10-09T09:47:24.909282Z">
+    <update>
+      <case_name>Mucale</case_name>
+      <external_id>08090001/16/940</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>21 de Abril</bairro>
+      <celula>21 de abril</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1987-07-15</data_do_nacimento>
+      <data_proxima_consulta>2017-12-06</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-13</data_ultima_consulta>
+      <distrito>Inhambane</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>TRUE</gravida>
+      <lactante/>
+      <nome>Amelia Lampiao </nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>840127017</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="1a1bd774c25e43fa83eaba808030534e" date_modified="2017-10-09T09:47:24.944101Z">
+    <update>
+      <case_name>Chulo</case_name>
+      <external_id>08090001/17/0571</external_id>
+      <owner_id>ef4049861d0d43a4bfc9a9f1a6ca031e</owner_id>
+      <a_faltar>0</a_faltar>
+      <avenida/>
+      <bairro>Rovene</bairro>
+      <celula>perto do sr francisco</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1981-01-01</data_do_nacimento>
+      <data_proxima_consulta>2017-10-16</data_proxima_consulta>
+      <data_ultima_consulta>2017-09-15</data_ultima_consulta>
+      <distrito>Massinga</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Saugina Lacita</nome>
+      <numero_conviventes>2</numero_conviventes>
+      <numero_de_filhos>6</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>848768671</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="e1564b5e07784a19acf160acbdf48691" date_modified="2017-10-09T09:47:24.984979Z" user_id="9b7c1fdcbcca80cc1756daf6bf2a9f1b">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Inguane</case_name>
+      <owner_id>a71deea898a84f8bb95b6dc723303b8b</owner_id>
+    </create>
+    <update>
+      <external_id>08090001/16/1357</external_id>
+      <date_opened>2017-10-09</date_opened>
+      <a_faltar>1</a_faltar>
+      <avenida/>
+      <bairro>21 de Abril</bairro>
+      <celula>21 de Abril</celula>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1993-10-16</data_do_nacimento>
+      <data_proxima_consulta>2017-07-06</data_proxima_consulta>
+      <data_ultima_consulta>2017-06-05</data_ultima_consulta>
+      <distrito>Inhambane</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Sara Alfredo </nome>
+      <numero_conviventes>2</numero_conviventes>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>849554459</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Inhambane</provincia>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+</system>

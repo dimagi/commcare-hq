@@ -1,0 +1,715 @@
+<?xml version='1.0' encoding='utf-8'?>
+<system xmlns="http://commcarehq.org/case" xmlns:orx="http://openrosa.org/jr/xforms" version="1" uiVersion="1">
+  <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+    <orx:deviceID>corehq.apps.case_importer.tasks.do_import</orx:deviceID>
+    <orx:timeStart>2018-06-11T12:46:23.281883Z</orx:timeStart>
+    <orx:timeEnd>2018-06-11T12:46:23.281883Z</orx:timeEnd>
+    <orx:username>luisfranciscofole@gmail.com</orx:username>
+    <orx:userID>fabce9ef77010c152298d8a56512cd6a</orx:userID>
+    <orx:instanceID>f7d4a40b4eaf45b39a21daaa3b1f069f</orx:instanceID>
+    <cc:appVersion/>
+  </orx:meta>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="bbe7469103fc4fe59c79347be76dc4ba" date_modified="2018-06-11T12:46:21.837427Z">
+    <update>
+      <case_name>Sitoe</case_name>
+      <external_id>11030701/18/0490</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Malanga</bairro>
+      <casa>C.952</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1981-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-15</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-15</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Manecas Vicente</nome>
+      <numero_conviventes>6</numero_conviventes>
+      <numero_de_filhos>4</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>846194480</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>2</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="a93d5d24939845cea7e6a5de2eb8ded2" date_modified="2018-06-11T12:46:21.983706Z">
+    <update>
+      <case_name>Namburete</case_name>
+      <external_id>11030701/18/0475</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Maxaquene D</bairro>
+      <casa>C.6</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1968-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-08</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-10</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Samuel Ernesto</nome>
+      <numero_conviventes>4</numero_conviventes>
+      <numero_de_filhos>2</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>842512129</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>29</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="4350171bf84e4112a3291f6d93a5106c" date_modified="2018-06-11T12:46:22.124278Z">
+    <update>
+      <case_name>Mahumane</case_name>
+      <external_id>11030701/18/0482</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Polana Canico B</bairro>
+      <casa>C.370</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1986-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-14</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-14</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Dario Paulino</nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>847759444</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>7</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="6d007c2c6ace449db331db8db4d2d445" date_modified="2018-06-11T12:46:22.213809Z">
+    <update>
+      <case_name>Chibule</case_name>
+      <external_id>11030701/18/0373</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Polana Canico B</bairro>
+      <casa>C. 526</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1958-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-08</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-10</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Isabel Bila</nome>
+      <numero_conviventes/>
+      <numero_de_filhos>5</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>844361714</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>42</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="fe6f425e79634a12b2d24b6f53bbc8bd" date_modified="2018-06-11T12:46:22.243627Z">
+    <update>
+      <case_name>Ernesto</case_name>
+      <external_id>11030701/18/0351</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Polana Canico B</bairro>
+      <casa>C.114</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1989-09-26</data_do_nacimento>
+      <data_proxima_consulta>2018-06-15</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-16</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Edgar </nome>
+      <numero_conviventes>3</numero_conviventes>
+      <numero_de_filhos>2</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>849523459</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>39</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="84f779beaab148fbba01f99e11bb065b" date_modified="2018-06-11T12:46:22.274388Z">
+    <update>
+      <case_name>Leonardo</case_name>
+      <external_id>11030701/18/0396</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Polana Canico A</bairro>
+      <casa>C.291</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1988-01-29</data_do_nacimento>
+      <data_proxima_consulta>2018-06-14</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-14</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Marcelo </nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>847760787</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>8</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="9ea2e63fe95440b7b29133a48f98f6b2" date_modified="2018-06-11T12:46:22.302543Z">
+    <update>
+      <case_name>Rungo</case_name>
+      <external_id>11030701/18/0288</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Maxaquene C</bairro>
+      <casa>C.41</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1988-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-22</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-24</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Virginia Meneses</nome>
+      <numero_conviventes>9</numero_conviventes>
+      <numero_de_filhos>3</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados>1</numero_de_filhos_testados>
+      <numero_de_telefone>844793038</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>28</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="d1df082c99bd477f99dfa51d09a93df9" date_modified="2018-06-11T12:46:22.331746Z">
+    <update>
+      <case_name>Inguane</case_name>
+      <external_id>11030701/18/0352</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Bobole</bairro>
+      <casa/>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1978-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-11</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-11</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Elisa Vasco</nome>
+      <numero_conviventes>2</numero_conviventes>
+      <numero_de_filhos>5</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>843992296</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>5</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="ccb4b45e8f20452c9d484524f973e1a4" date_modified="2018-06-11T12:46:22.362596Z">
+    <update>
+      <case_name>Machava</case_name>
+      <external_id>11030701/18/0372</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Polana Canico A</bairro>
+      <casa>C.144</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1963-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-22</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-25</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Jose Afonso</nome>
+      <numero_conviventes>3</numero_conviventes>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>827783126</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>62</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="9ae0970db73e4ac9bdc058e374cde88f" date_modified="2018-06-11T12:46:22.434853Z">
+    <update>
+      <case_name>Sandela</case_name>
+      <external_id>11030701/18/0376</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>maxaquene c</bairro>
+      <casa>C.43</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1951-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-22</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-24</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Helena </nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>847620086</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>25</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="a93d5d24939845cea7e6a5de2eb8ded2" date_modified="2018-06-11T12:46:22.589012Z">
+    <update>
+      <case_name>Namburete</case_name>
+      <external_id>11030701/18/0475</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Maxaquene D</bairro>
+      <casa>C.6</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1968-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-08</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-10</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Samuel Ernesto</nome>
+      <numero_conviventes>4</numero_conviventes>
+      <numero_de_filhos>2</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>842512129</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>29</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="07453759d2c049b5ad0f05c4358933e2" date_modified="2018-06-11T12:46:22.623936Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Tovela</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/18/0466</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>0</a_faltar>
+      <bairro>Ferroviario</bairro>
+      <casa>C.5</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1992-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-08</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-08</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Alice Josefa</nome>
+      <numero_conviventes>10</numero_conviventes>
+      <numero_de_filhos>1</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>843697189</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>24</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="7271d81ff50e40658fa3c8b245a22c96" date_modified="2018-06-11T12:46:22.652355Z">
+    <update>
+      <case_name>Macuacua</case_name>
+      <external_id>11030701/18/0422</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>Maxaquene B</bairro>
+      <casa>C.21</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>2014-01-22</data_do_nacimento>
+      <data_proxima_consulta>2018-06-07</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-10</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Isabel Carlos</nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>845307084</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>29</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="9ae0970db73e4ac9bdc058e374cde88f" date_modified="2018-06-11T12:46:22.682799Z">
+    <update>
+      <case_name>Sandela</case_name>
+      <external_id>11030701/18/0376</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>0</a_faltar>
+      <bairro>maxaquene c</bairro>
+      <casa>C.43</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1951-01-01</data_do_nacimento>
+      <data_proxima_consulta>2018-06-22</data_proxima_consulta>
+      <data_ultima_consulta>2018-05-24</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Helena </nome>
+      <numero_conviventes/>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>847620086</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>25</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="35790696ab3c44d385c0c099bfd47e5b" date_modified="2018-06-11T12:46:22.865005Z">
+    <update>
+      <case_name>Raul</case_name>
+      <external_id>11030701/18/0179</external_id>
+      <owner_id>1ebc17b280af4bbb8af6c7c66b5119ae</owner_id>
+      <a_faltar>1</a_faltar>
+      <bairro>Maxaquene C</bairro>
+      <casa>C.320</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1993-12-22</data_do_nacimento>
+      <data_proxima_consulta>2018-03-26</data_proxima_consulta>
+      <data_ultima_consulta>2018-02-23</data_ultima_consulta>
+      <distrito>Cidade de Maputo</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Assane </nome>
+      <numero_conviventes/>
+      <numero_de_filhos>1</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>840505931</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>40</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="b463a8aac9654d2aba982e848637de32" date_modified="2018-06-11T12:46:22.916457Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Alberto</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/16/0132</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>Maxaq.B</bairro>
+      <casa>Casa 18</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1995-07-05</data_do_nacimento>
+      <data_proxima_consulta>2017-07-30</data_proxima_consulta>
+      <data_ultima_consulta>2017-06-30</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Amina</nome>
+      <numero_conviventes>6</numero_conviventes>
+      <numero_de_filhos>7</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>843896646</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q22</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="186e97f060354f2d89666ee83ecc9b5b" date_modified="2018-06-11T12:46:22.982428Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Tomas</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>1130701/16/0541</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>Maxaq.B</bairro>
+      <casa>Casa 32</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1996-06-05</data_do_nacimento>
+      <data_proxima_consulta>2017-08-28</data_proxima_consulta>
+      <data_ultima_consulta>2017-07-28</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Helena</nome>
+      <numero_conviventes>7</numero_conviventes>
+      <numero_de_filhos/>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>847828064</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q52</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="adf2eee142c743469153076272734917" date_modified="2018-06-11T12:46:23.002513Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Franscisco</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/09/4197</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>Maxaq.C</bairro>
+      <casa>casa 34</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1973-03-02</data_do_nacimento>
+      <data_proxima_consulta>2016-10-13</data_proxima_consulta>
+      <data_ultima_consulta>2016-08-18</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Maria </nome>
+      <numero_conviventes>10</numero_conviventes>
+      <numero_de_filhos>11</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>842218012</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q15</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="dfaacb07715e4322a6eaa49f0d4a6127" date_modified="2018-06-11T12:46:23.026271Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Mugabe</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/16/0675</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>P.C.A</bairro>
+      <casa>Casa 56</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1979-08-03</data_do_nacimento>
+      <data_proxima_consulta>2016-09-02</data_proxima_consulta>
+      <data_ultima_consulta>2016-08-05</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Celio Jose</nome>
+      <numero_conviventes>12</numero_conviventes>
+      <numero_de_filhos>13</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>826455078</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q98</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="63fc698fb9f84e7396cebd30f41f3a38" date_modified="2018-06-11T12:46:23.058865Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Domingos</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/14/0210</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>P.C.A</bairro>
+      <casa>CASA198</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1994-05-29</data_do_nacimento>
+      <data_proxima_consulta>2017-08-17</data_proxima_consulta>
+      <data_ultima_consulta>2017-07-17</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Adelaide </nome>
+      <numero_conviventes>14</numero_conviventes>
+      <numero_de_filhos>15</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>840135659</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q19</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="62845bad1af14966b30a2463bfae0371" date_modified="2018-06-11T12:46:23.187826Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Chauque</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/13/2513</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>P.C.A</bairro>
+      <casa>Casa 105</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1985-06-20</data_do_nacimento>
+      <data_proxima_consulta>2017-12-18</data_proxima_consulta>
+      <data_ultima_consulta>2017-11-17</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Elsa Jossias</nome>
+      <numero_conviventes>15</numero_conviventes>
+      <numero_de_filhos>16</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>826812667</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q60</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="b2d52c530698420ab585ce301150d87a" date_modified="2018-06-11T12:46:23.229592Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Mussa</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/08/4285</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>Malhan</bairro>
+      <casa>Casa68</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1983-03-12</data_do_nacimento>
+      <data_proxima_consulta>2016-02-29</data_proxima_consulta>
+      <data_ultima_consulta>2016-02-01</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>F</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Berta Humberto</nome>
+      <numero_conviventes>16</numero_conviventes>
+      <numero_de_filhos>17</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>824955710</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q24</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+  <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="039ebe40cf3743c5b11c200759a68a88" date_modified="2018-06-11T12:46:23.267419Z" user_id="fabce9ef77010c152298d8a56512cd6a">
+    <create>
+      <case_type>paciente</case_type>
+      <case_name>Paulo</case_name>
+      <owner_id>3cc8009fda194040bbeae8248d855b40</owner_id>
+    </create>
+    <update>
+      <external_id>11030701/11/1114</external_id>
+      <date_opened>2018-06-11</date_opened>
+      <a_faltar>1</a_faltar>
+      <bairro>Maxaq.B</bairro>
+      <casa>Casa49</casa>
+      <coinfectado>FALSE</coinfectado>
+      <data_do_nacimento>1990-04-20</data_do_nacimento>
+      <data_proxima_consulta>2017-11-11</data_proxima_consulta>
+      <data_ultima_consulta>2017-10-11</data_ultima_consulta>
+      <distrito>Cidade</distrito>
+      <estado_tarv>TARV</estado_tarv>
+      <genero>M</genero>
+      <gravida>FALSE</gravida>
+      <lactante/>
+      <nome>Nelson</nome>
+      <numero_conviventes>20</numero_conviventes>
+      <numero_de_filhos>21</numero_de_filhos>
+      <numero_de_filhos_positivos/>
+      <numero_de_filhos_testados/>
+      <numero_de_telefone>829757810</numero_de_telefone>
+      <parceiro_serologia/>
+      <provincia>Maputo</provincia>
+      <quarteiro>Q15</quarteiro>
+      <tarv_elegivel>0</tarv_elegivel>
+    </update>
+  </case>
+</system>

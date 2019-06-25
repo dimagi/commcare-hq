@@ -147,6 +147,47 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
     ).migrate()
 
 
+def map_form_ids(form_json, form_root, id_map, ignore_paths):
+    id_properties = (
+        'activista_responsavel',
+        'activista_responsavel_casa',
+        'activista_responsavel_paciente',
+        'location_id',
+        'owner_id',
+        'user_location_id',
+    )
+
+    for caseblock, path in extract_case_blocks(form_json, include_path=True):
+        # Example caseblock:
+        #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
+        #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
+        #      u'@user_id': u'7ea59f550f35758447400937f800f78c',
+        #      u'@xmlns': u'http://commcarehq.org/case/transaction/v2',
+        #      u'create': {u'case_name': u'Abigail',
+        #                  u'case_type': u'case',
+        #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
+        case_path = ['form'] + path + ['case']
+        update_id(id_map, caseblock, '@userid', form_root,
+                  base_path=case_path + ['@userid'], changed_id_paths=ignore_paths)
+
+        if 'create' in caseblock:
+            create_path = case_path + ['create']
+            for prop in id_properties:
+                update_id(id_map, caseblock['create'], prop, form_root,
+                          base_path=create_path, changed_id_paths=ignore_paths,
+                          case_id=caseblock.get('@case_id'))
+
+        if 'update' in caseblock:
+            update_path = case_path + ['update']
+            for prop in id_properties:
+                update_id(id_map, caseblock['update'], prop, form_root,
+                          base_path=update_path, changed_id_paths=ignore_paths,
+                          case_id=caseblock.get('@case_id'))
+
+    update_id(id_map, form_json['meta'], 'userID', form_root,
+              base_path=['form', 'meta'], changed_id_paths=ignore_paths)
+
+
 def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
               changed_id_paths, case_id=None):
     """
@@ -531,48 +572,12 @@ class CouchSqlDomainMigrator(object):
         if self.same_domain():
             return couch_form, None
 
-        id_properties = (
-            'activista_responsavel',
-            'activista_responsavel_casa',
-            'activista_responsavel_paciente',
-            'location_id',
-            'owner_id',
-            'user_location_id',
-        )
-
+        form_json = couch_form.form
         form_xml = couch_form.get_xml()
         form_root = etree.XML(form_xml)
         ignore_paths = []
         try:
-            for caseblock, path in extract_case_blocks(couch_form.form, include_path=True):
-                # Example caseblock:
-                #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
-                #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
-                #      u'@user_id': u'7ea59f550f35758447400937f800f78c',
-                #      u'@xmlns': u'http://commcarehq.org/case/transaction/v2',
-                #      u'create': {u'case_name': u'Abigail',
-                #                  u'case_type': u'case',
-                #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
-                case_path = ['form'] + path + ['case']
-                update_id(self._id_map, caseblock, '@userid', form_root,
-                          base_path=case_path + ['@userid'], changed_id_paths=ignore_paths)
-
-                if 'create' in caseblock:
-                    create_path = case_path + ['create']
-                    for prop in id_properties:
-                        update_id(self._id_map, caseblock['create'], prop, form_root,
-                                  base_path=create_path, changed_id_paths=ignore_paths,
-                                  case_id=caseblock.get('@case_id'))
-
-                if 'update' in caseblock:
-                    update_path = case_path + ['update']
-                    for prop in id_properties:
-                        update_id(self._id_map, caseblock['update'], prop, form_root,
-                                  base_path=update_path, changed_id_paths=ignore_paths,
-                                  case_id=caseblock.get('@case_id'))
-
-            update_id(self._id_map, couch_form.form['meta'], 'userID', form_root,
-                      base_path=['form', 'meta'], changed_id_paths=ignore_paths)
+            map_form_ids(form_json, form_root, self._id_map, ignore_paths)
         except MissingValueError as err:
             if couch_form.external_blobs and ATTACHMENT_NAME in couch_form.external_blobs:
                 key = couch_form.external_blobs[ATTACHMENT_NAME].key
