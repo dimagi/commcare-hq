@@ -53,24 +53,21 @@ class TestPaginateReleases(TestCase):
         delete_es_index(APP_INDEX_INFO.index)
         super(TestPaginateReleases, cls).tearDownClass()
 
+    def get_target_commcare_flavor_on_releases_page(self, only_released=False):
+        url = reverse('paginate_releases', args=(self.domain_name, self.app.get_id))
+        if only_released:
+            url += "?only_show_released=true"
+        response = self.client.get(url)
+        return response.json()['apps'][0]['target_commcare_flavor']
+
     def test_target_commcare_flavor(self):
         self.client.login(username=self.username, password=self.password)
-
         # Couch View Test
-        response = self.client.get(reverse('paginate_releases', args=(self.domain_name, self.app.get_id)))
-        self.assertEqual(response.json()['apps'][0]['target_commcare_flavor'], 'none')
-
+        self.assertEqual(self.get_target_commcare_flavor_on_releases_page(), 'none')
         # ES Search Test
-        response = self.client.get(reverse('paginate_releases', args=(self.domain_name, self.app.get_id),
-                                           ) + '?only_show_released=true')
-        self.assertEqual(response.json()['apps'][0]['target_commcare_flavor'], 'none')
-
+        self.assertEqual(self.get_target_commcare_flavor_on_releases_page(only_released=True), 'none')
         with flag_enabled('TARGET_COMMCARE_FLAVOR'):
             # Couch View Test
-            response = self.client.get(reverse('paginate_releases', args=(self.domain_name, self.app.get_id)))
-            self.assertEqual(response.json()['apps'][0]['target_commcare_flavor'], 'commcare_lts')
-
+            self.assertEqual(self.get_target_commcare_flavor_on_releases_page(), 'commcare_lts')
             # ES Search Test
-            response = self.client.get(reverse('paginate_releases', args=(self.domain_name, self.app.get_id),
-                                               ) + '?only_show_released=true')
-            self.assertEqual(response.json()['apps'][0]['target_commcare_flavor'], 'commcare_lts')
+            self.assertEqual(self.get_target_commcare_flavor_on_releases_page(only_released=True), 'commcare_lts')
