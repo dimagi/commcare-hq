@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from zipfile import ZipFile
 
 import openpyxl
+from memoized import memoized
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -12,6 +13,7 @@ from django import forms
 from django.forms.widgets import Select
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
+from django.utils.functional import cached_property
 
 import langcodes
 from corehq.apps.app_manager.dbaccessors import (
@@ -20,8 +22,14 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.translations.exceptions import TransifexProjectMigrationInvalidUpload
 from corehq.apps.translations.models import TransifexBlacklist, TransifexProject
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.workbook_json.excel import WorkbookJSONReader
+from corehq.apps.translations.integrations.transifex.project_migrator import (
+    ProjectMigrator,
+)
 
 
 class ConvertTranslationsForm(forms.Form):
@@ -352,3 +360,107 @@ class AddTransifexBlacklistForm(forms.ModelForm):
     class Meta(object):
         model = TransifexBlacklist
         fields = '__all__'
+
+
+class MigrateTransifexProjectForm(forms.Form):
+    TYPE_HEADER = "Type"
+    OLD_ID_HEADER = "Old-ID"
+    NEW_ID_HEADER = "New-ID"
+    from_app_id = forms.ChoiceField(label=ugettext_lazy("From Application"), choices=(), required=True)
+    to_app_id = forms.ChoiceField(label=ugettext_lazy("To Application"), choices=(), required=True)
+    transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Transifex project"), choices=(),
+                                               required=True)
+    mapping_file = forms.FileField(label="", required=True,
+                                   help_text=ugettext_lazy("Upload a xls file mapping old to new ids"))
+
+    def __init__(self, domain, *args, **kwargs):
+        super(MigrateTransifexProjectForm, self).__init__(*args, **kwargs)
+        self.domain = domain
+        self._set_choices()
+        self.helper = HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "Migrate Project",
+                hqcrispy.Field('from_app_id', css_class="hqwebapp-select2"),
+                hqcrispy.Field('to_app_id', css_class="hqwebapp-select2"),
+                hqcrispy.Field('transifex_project_slug'),
+                hqcrispy.Field('mapping_file')
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    ugettext_lazy("Submit"),
+                    type="submit",
+                    css_class="btn btn-primary disable-on-submit",
+                    onclick="return confirm('%s')" % ugettext_lazy(
+                        "We recommend taking a backup if you have not already."
+                        "Please confirm that you want to proceed?")
+                )
+            )
+        )
+
+    def _set_choices(self):
+        app_id_choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(self.domain))
+        self.fields['from_app_id'].choices = app_id_choices
+        self.fields['to_app_id'].choices = app_id_choices
+        projects = TransifexProject.objects.filter(domain=self.domain).all()
+        if projects:
+            self.fields['transifex_project_slug'].choices = (
+                tuple((project.slug, project) for project in projects)
+            )
+
+    def _validate_worksheet_headers(self, headers):
+        if (self.TYPE_HEADER not in headers
+                or self.OLD_ID_HEADER not in headers
+                or self.NEW_ID_HEADER not in headers):
+            raise TransifexProjectMigrationInvalidUpload(
+                _("Could not load file. Please ensure columns %s, %s and %s are present") % (
+                    self.TYPE_HEADER, self.OLD_ID_HEADER, self.NEW_ID_HEADER
+                ))
+
+    def _validate_worksheet_row(self, row):
+        if not (row.get(self.TYPE_HEADER) and row.get(self.OLD_ID_HEADER) and row.get(self.NEW_ID_HEADER)):
+            raise TransifexProjectMigrationInvalidUpload(_("missing value(s) in sheet"))
+        if not row.get(self.TYPE_HEADER) in ['Menu', 'Form']:
+            raise TransifexProjectMigrationInvalidUpload(
+                _("Could not load file. 'Type' column should be either 'Menu' or 'Form'"))
+
+    @memoized
+    def uploaded_resource_id_mappings(self):
+        uploaded_file = self.cleaned_data.get('mapping_file')
+        worksheet = WorkbookJSONReader(uploaded_file).worksheets[0]
+        self._validate_worksheet_headers(worksheet.headers)
+        details = []
+        for row in worksheet:
+            self._validate_worksheet_row(row)
+            details.append((row[self.TYPE_HEADER], row[self.OLD_ID_HEADER], row[self.NEW_ID_HEADER]))
+        return details
+
+    @cached_property
+    def migrator(self):
+        data = self.cleaned_data
+        return ProjectMigrator(self.domain,
+                               data['transifex_project_slug'],
+                               self.cleaned_data['from_app_id'],
+                               self.cleaned_data['to_app_id'],
+                               self.uploaded_resource_id_mappings())
+
+    def _invalid_apps(self):
+        if self.cleaned_data['to_app_id'] == self.cleaned_data['from_app_id']:
+            self.add_error('from_app_id', _("Source and target app can not be the same"))
+            return True
+
+    def _invalid_upload(self):
+        try:
+            self.uploaded_resource_id_mappings()
+        except TransifexProjectMigrationInvalidUpload as e:
+            self.add_error('mapping_file', e)
+            return True
+
+    def _validate_migration(self):
+        self.migrator.validate()
+
+    def clean(self):
+        super(MigrateTransifexProjectForm, self).clean()
+        if self._invalid_apps() or self._invalid_upload():
+            return
+        self._validate_migration()
