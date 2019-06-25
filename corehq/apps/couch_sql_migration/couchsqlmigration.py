@@ -664,7 +664,7 @@ class CouchSqlDomainMigrator(object):
         dst_couch_case = self._map_case_ids(couch_case)
         sql_case = CommCareCaseSQL(
             case_id=dst_couch_case.case_id,
-            domain=self.src_domain,
+            domain=self.dst_domain,
             type=dst_couch_case.type or '',
             name=dst_couch_case.name,
             owner_id=dst_couch_case.owner_id or dst_couch_case.user_id or '',
@@ -690,7 +690,7 @@ class CouchSqlDomainMigrator(object):
         except IntegrityError:
             # case re-created by form processing so just mark the case as deleted
             CaseAccessorSQL.soft_delete_cases(
-                self.src_domain,
+                self.dst_domain,
                 [sql_case.case_id],
                 sql_case.deleted_on,
                 sql_case.deletion_id
