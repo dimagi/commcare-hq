@@ -10,9 +10,11 @@ from celery.task import task
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
 from django.core.mail.message import EmailMessage
+from django.template.defaultfilters import linebreaksbr
 
 from corehq.apps.translations.generators import AppTranslationsGenerator
 from corehq.apps.translations.integrations.transifex.parser import TranslationsParser
+from corehq.apps.translations.integrations.transifex.project_migrator import ProjectMigrator
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 
@@ -182,3 +184,18 @@ def email_project_from_hq(domain, data, email):
             os.remove(translation_file.name)
         except (NameError, OSError):
             pass
+
+
+@task
+def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, target_app_id, mappings, email):
+    def generate_email_body():
+        pass
+
+    ProjectMigrator(domain, transifex_project_slug, source_app_id, target_app_id, mappings).migrate()
+
+    email = EmailMessage(
+        subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
+        body=linebreaksbr(generate_email_body()),
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL)
+    email.send()
