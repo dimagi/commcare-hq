@@ -113,5 +113,8 @@ class CasePropertiesEndpoint(BaseOptionsEndpoint):
 
     def get_response(self):
         return {
-            'options': self.special_properties + self.case_properties,
+            'options': filter(
+                lambda o: not o['text'].startswith('parent/'),
+                self.special_properties + self.case_properties
+            ),
         }
