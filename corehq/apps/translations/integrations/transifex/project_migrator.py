@@ -1,9 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import copy
+import datetime
+import polib
+import tempfile
+
 from memoized import memoized
 from collections import OrderedDict
 
+from django.utils.functional import cached_property
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.translations.integrations.transifex.exceptions import (
+    ResourceMissing,
+)
 from corehq.apps.translations.models import TransifexProject
 from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
 from corehq.apps.translations.integrations.transifex.const import (
@@ -29,6 +40,30 @@ class ProjectMigrator(object):
         self.resource_ids_mapping = resource_ids_mapping
         self.id_mapping = {old_id: new_id for _, old_id, new_id in self.resource_ids_mapping}
 
+    @cached_property
+    def get_project_source_lang(self):
+        return self.client.project_details().json()['source_language_code']
+
+    @cached_property
+    def _source_app(self):
+        return get_app(self.domain, self.source_app_id)
+
+    @cached_property
+    def _target_app(self):
+        return get_app(self.domain, self.target_app_id)
+
+    @cached_property
+    def source_app_langs(self):
+        return self._source_app.langs
+
+    @cached_property
+    def source_app_default_lang(self):
+        return self._source_app.default_language
+
+    @cached_property
+    def target_app_default_lang(self):
+        return self._target_app.default_language
+
     @memoized
     def _get_slug_prefix(self, resource_type):
         return TRANSIFEX_SLUG_PREFIX_MAPPING.get(resource_type)
@@ -45,16 +80,64 @@ class ProjectMigrator(object):
         return responses
 
     def _update_context(self, translations):
-        # ToDo: update context on Menus and forms sheet
-        pass
+        """
+        update msgctxt for all POEntry objects replacing ids
+        :param translations: dict of lang code mapped to it list of POEntries
+        """
+        for po_entries in translations.values():
+            for po_entry in po_entries:
+                # make sure the format is as expected, if not skip
+                context_entries = po_entry.msgctxt.split(":")
+                if len(context_entries) == 3:
+                    resource_id = context_entries[-1]
+                    # replace if we have been asked to replace it
+                    if resource_id in self.id_mapping:
+                        po_entry.msgctxt = po_entry.msgctxt.replace(resource_id, self.id_mapping[resource_id])
+
+    @property
+    def metadata(self):
+        now = str(datetime.datetime.now())
+        return {
+            'App-Id': self.target_app_id,
+            'PO-Creation-Date': now,
+            'MIME-Version': '1.0',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Language': self.target_app_default_lang
+        }
+
+    def _upload_translation(self, translations, lang_code):
+        po = polib.POFile()
+        po.check_for_duplicates = False
+        po.metadata = self.metadata
+        po.extend(translations)
+        with tempfile.NamedTemporaryFile() as temp_file:
+            po.save(temp_file.name)
+            temp_file.seek(0)
+            if lang_code == self.target_app_default_lang:
+                return self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms",
+                                                   update_resource=True)
+            else:
+                return self.client.upload_translation(temp_file.name, "Menus_and_forms", "Menus_and_forms",
+                                                      lang_code)
 
     def _upload_new_translations(self, translations):
-        # ToDo: upload updated translations
-        pass
+        responses = {}
+        # the project source lang, which is the app default language should be the first to update.
+        # HQ keeps the default lang on top and hence it should be the first one here
+        assert translations.keys()[0] == self.target_app_default_lang
+        for lang_code in translations:
+            responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
+        return responses
 
     def _update_menus_and_forms_sheet(self):
+        langs = copy.copy(self.source_app_langs)
         translations = OrderedDict()
-        # ToDo: pull translations from transifex
+        for lang in langs:
+            try:
+                translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
+            except ResourceMissing:
+                # Probably a lang in app not present on Transifex, so skip
+                pass
         self._update_context(translations)
         return self._upload_new_translations(translations)
 
