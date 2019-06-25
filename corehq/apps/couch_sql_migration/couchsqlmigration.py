@@ -117,6 +117,8 @@ class CouchSqlDomainMigrator(object):
         self.with_progress = with_progress
         self.domain = domain
         self.statedb = init_state_db(domain)
+        # exit immediately on uncaught greenlet error
+        gevent.get_hub().SYSTEM_ERROR = BaseException
 
     def migrate(self):
         log.info('migrating domain {}'.format(self.domain))
