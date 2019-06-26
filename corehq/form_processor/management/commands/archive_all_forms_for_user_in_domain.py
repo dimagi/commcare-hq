@@ -91,15 +91,12 @@ class Command(BaseCommand):
         self.case_ids_to_rebuild = self._fetch_case_ids_to_rebuild()
         print("Found %s cases that would need to be rebuilt" % len(self.case_ids_to_rebuild))
 
-        # archive forms
         print("Starting with form archival")
         self._archive_forms()
 
-        # removing ledger transactions
         print("Starting with removing ledger transactions")
         self._remove_ledger_transactions()
 
-        # rebuild cases
         print("Starting with cases rebuild")
         self._rebuild_cases()
 
