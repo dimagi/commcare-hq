@@ -41,12 +41,15 @@ hqDefine('hqwebapp/js/components/pagination', [
             if (params.limitSlug) {
                 self.initialValues.limit = parseInt(self._url.searchParams.get(params.limitSlug));
             }
+            self.watchChanges = (typeof params.watchChanges !== 'undefined') ? params.watchChanges : true;
 
             self.currentPage = ko.observable(self.initialValues.page || self.currentPage || 1);
 
             self.totalItems = params.totalItems;
             self.totalItems.subscribe(function (newValue) {
-                self.goToPage(1);
+                if (self.watchChanges()) {
+                    self.goToPage(1);
+                }
             });
 
             self.slug = params.slug;
@@ -56,7 +59,9 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.perPageCookieName = 'ko-pagination-' + self.slug;
                 self.perPage(self.initialValues.limit || $.cookie(self.perPageCookieName) || self.perPage());
                 self.perPage.subscribe(function (newValue) {
-                    self.goToPage(1);
+                    if (self.watchChanges()) {
+                        self.goToPage(1);
+                    }
                     if (self.slug) {
                         $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/' });
                     }
