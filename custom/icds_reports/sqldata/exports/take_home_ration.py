@@ -41,7 +41,7 @@ class TakeHomeRationExport(ExportableMixin, IcdsSqlData):
         headers = []
 
         for column in self.columns:
-            if column.slug == 'is_launched':
+            if column.slug != 'is_launched':
                 headers.append(column.header)
         excel_rows.append(headers)
 
