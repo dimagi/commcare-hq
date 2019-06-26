@@ -1,73 +1,176 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import logging
+from collections import defaultdict
+from contextlib import contextmanager
+
 import attr
 import gevent
 import six
 from django.test import SimpleTestCase
 from mock import patch
 
-from ..casediff import CaseDiffQueue
+from .. import casediff as mod
 from ..statedb import delete_state_db, init_state_db
 
+log = logging.getLogger(__name__)
 
-@patch.object(CaseDiffQueue, "BATCH_SIZE", 2)
+
+@patch.object(mod.CaseDiffQueue, "BATCH_SIZE", 2)
 @patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
 class TestCaseDiffQueue(SimpleTestCase):
 
     def setUp(self):
-        def make_get_cases():
-            return lambda case_ids: [self.cases[x] for x in case_ids]
-
-        def diff_cases(cases):
-            for case in six.itervalues(cases):
-                case_id = case["_id"]
-                if case_id in diffed:
-                    diffed[case_id] += 1
-                else:
-                    diffed[case_id] = 1
-
-        self.close_context = _test_context(self,
-            get_cases=patch(
-                "corehq.form_processor.backends.couch.dbaccessors."
-                "CaseAccessorCouch.get_cases",
-                new_callable=make_get_cases,
-            ),
-            statedb=init_state_db("test"),
+        self.get_cases_patcher = patch(
+            "corehq.form_processor.backends.couch.dbaccessors.CaseAccessorCouch.get_cases",
+            self.get_cases,
         )
-
+        self.get_cases_patcher.start()
         self.cases = {}
-        self.diffed = diffed = {}
-        self.queue = CaseDiffQueue(self.statedb, diff_cases)
+        self.diffed = defaultdict(int)
 
     def tearDown(self):
-        self.close_context()
+        self.get_cases_patcher.stop()
         delete_state_db("test")
 
-    def add_case(self, case_id, xform_ids=None):
-        if isinstance(xform_ids, six.text_type):
-            xform_ids = xform_ids.split()
-        self.cases[case_id] = FakeCase(case_id, xform_ids or [])
-
     def test_case_diff(self):
-        self.add_case("cx", "fx")
-        with self.queue as queue:
-            queue.update({"cx"}, "fx")
-        self.assertEqual(self.diffed, {"cx": 1})
+        self.add_cases("c", "fx")
+        with self.queue() as queue:
+            queue.update({"c"}, "fx")
+        self.assertDiffed("c")
 
     def test_diff_batching(self):
-        self.add_case("a", "fx")
-        self.add_case("b", "fx")
-        self.add_case("c", "fx")
-        self.add_case("d", "fx")
-        self.add_case("e", "fx")
-        batch_size = CaseDiffQueue.BATCH_SIZE
+        self.add_cases("a b c d e", "fx")
+        batch_size = mod.CaseDiffQueue.BATCH_SIZE
         assert batch_size < 3, batch_size
-        with self.queue as queue:
+        with self.queue() as queue:
             queue.update({"a", "b", "c", "d", "e"}, "fx")
             self.assertLess(len(queue.processed_forms), batch_size)
             self.assertLess(len(queue.cases_to_diff), batch_size)
-        self.assertEqual(self.diffed, {"a": 1, "b": 1, "c": 1, "d": 1, "e": 1})
+        self.assertDiffed("a b c d e")
+
+    def test_get_cases_failure(self):
+        self.add_cases("a b c", "f1")
+        self.add_cases("d", "f2")
+        # simulate a single call to couch failing
+        with self.queue() as queue, self.get_cases_failure():
+            queue.update({"a", "b", "c"}, "f1")
+        with self.queue() as queue:
+            queue.update({"d"}, "f2")
+        self.assertDiffed("a b c d")
+
+    def test_resume_after_couch_down(self):
+        self.add_cases("a b c", "f1")
+        self.add_cases("d", "f2")
+        # simulate couch down all the way through queue __exit__
+        with self.get_cases_failure(), self.queue() as queue:
+            queue.update({"a", "b", "c"}, "f1")
+        with self.queue() as queue:
+            queue.update({"d"}, "f2")
+        self.assertDiffed("a b c d")
+
+    def test_diff_cases_failure(self):
+        self.add_cases("a b c", "f1")
+        self.add_cases("d", "f2")
+        self.add_cases("e", "f3")
+        with self.queue() as queue, self.diff_cases_failure():
+            queue.update({"a", "b", "c"}, "f1")
+            queue.update({"d"}, "f2")
+        with self.queue() as queue:
+            queue.update({"e"}, "f3")
+        self.assertDiffed("a b c d e")
+
+    def test_stop_with_cases_to_diff(self):
+        self.add_cases("a", "f1")
+        with self.assertRaises(Error), self.queue() as queue:
+            # HACK mutate queue internal state
+            # currently there is no easier way to stop non-empty cases_to_diff
+            queue.cases_to_diff["a"] = self.get_cases("a")[0]
+            raise Error("do not _process_remaining_diffs")
+        self.assertTrue(queue.cases_to_diff)
+        with self.queue() as queue:
+            pass
+        self.assertDiffed("a")
+
+    def test_resume_after_error_in_process_remaining_diffs(self):
+        self.add_cases("a b c", "f1")
+        self.add_cases("d", "f2")
+        with self.assertRaises(Error), self.queue() as queue:
+            mock = patch.object(queue, "_process_remaining_diffs").start()
+            mock.side_effect = Error("cannot process remaining diffs")
+            queue.update({"a", "b", "c"}, "f1")
+        queue.pool.kill()  # simulate end process
+        with self.queue() as queue:
+            queue.update({"d"}, "f2")
+        self.assertDiffed("a b c d")
+
+    @contextmanager
+    def queue(self):
+        log.info("init CaseDiffQueue")
+        with init_state_db("test") as statedb, \
+                mod.CaseDiffQueue(statedb, self.diff_cases) as queue:
+            yield queue
+
+    def add_cases(self, case_ids, xform_ids=None):
+        """Add cases with updating form ids
+
+        `case_ids` and `form_ids` can be either a string (space-
+        delimited ids) or a sequence of strings (ids).
+        """
+        if isinstance(case_ids, six.text_type):
+            case_ids = case_ids.split()
+        if isinstance(xform_ids, six.text_type):
+            xform_ids = xform_ids.split()
+        for case_id in case_ids:
+            self.cases[case_id] = FakeCase(case_id, xform_ids or [])
+
+    def get_cases(self, case_ids):
+        def get(case_id):
+            try:
+                case = self.cases[case_id]
+                log.info("get %s", case)
+            except Exception as err:
+                log.info("get %s -> %s", case_id, err)
+                raise
+            return case
+        return [get(case_id) for case_id in case_ids]
+
+    def diff_cases(self, cases):
+        log.info("diff cases %s", list(cases))
+        for case in six.itervalues(cases):
+            case_id = case["_id"]
+            self.diffed[case_id] += 1
+
+    def assertDiffed(self, spec):
+        if not isinstance(spec, dict):
+            if isinstance(spec, six.text_type):
+                spec = spec.split()
+            spec = {c: 1 for c in spec}
+        self.assertEqual(dict(self.diffed), spec)
+
+    @contextmanager
+    def get_cases_failure(self):
+        """Raise error on CaseAccessorCouch.get_cases(...)
+
+        Assumes `CaseAccessorCouch.get_cases` has been patched with
+        `self.get_cases`.
+        """
+        with self.expected_error(), patch.object(self, "cases") as couch:
+            couch.__getitem__.side_effect = Error("COUCH IS DOWN!")
+            yield
+
+    @contextmanager
+    def diff_cases_failure(self):
+        """Raise error on self.diff_cases(...)"""
+        with self.expected_error(), patch.object(self, "diffed") as diffed:
+            diffed.__setitem__.side_effect = Error("FAILED TO DIFF!")
+            yield
+
+    @contextmanager
+    def expected_error(self):
+        with silence_expected_errors(), self.assertRaises(Error):
+            yield
 
 
 @attr.s
@@ -85,12 +188,23 @@ class FakeCase(object):
         return {f.name: getattr(self, f.name) for f in attr.fields(type(self))}
 
 
-def _test_context(test, **contexts):
-    def close():
-        for context in six.itervalues(contexts):
-            context.__exit__(None, None, None)
+class Error(Exception):
+    pass
 
-    for name, context in six.iteritems(contexts):
-        value = context.__enter__()
-        setattr(test, name, value)
-    return close
+
+@contextmanager
+def silence_expected_errors():
+    """Prevent print expected error to stderr
+
+    not sure why it is not captured by nose
+    """
+    def print_unexpected(context, type, value, tb):
+        if type == Error:
+            log.error(context, exc_info=(type, value, tb))
+        else:
+            print_exception(context, type, value, tb)
+
+    hub = gevent.get_hub()
+    print_exception = hub.print_exception
+    with patch.object(hub, "print_exception", print_unexpected):
+        yield
