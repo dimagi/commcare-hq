@@ -991,6 +991,11 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None):
             #       identify blob meta and we must delete form.xml and meta on
             #       commit and blow-away.
             sql_form.attachments_list.append(attachment)
+            # TODO: No.
+            #       Save the attachment.
+            #       Save the meta.
+            #       sql_form.attachments_list.append(meta).
+            #       append_undo(couch_form.domain, meta, UNDO_CREATE)
             continue
 
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
