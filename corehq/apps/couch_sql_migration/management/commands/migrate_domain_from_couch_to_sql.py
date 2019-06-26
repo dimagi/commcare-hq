@@ -45,7 +45,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
 
 log = logging.getLogger('main_couch_sql_datamigration')
 
@@ -338,16 +337,21 @@ def _commit_src_domain(domain):
     # Prevent any more changes on the Couch domain:
     toggles.DATA_MIGRATION.set(domain, True)
     set_couch_sql_migration_not_started(domain)
-    for form in _iter_couch_forms(domain):
-        for meta in blob_db.metadb.get_for_parent(
-            parent_id=form.form_id,
+    for form_id in _iter_couch_form_ids(domain):
+        metas = blob_db.metadb.get_for_parent(
+            parent_id=form_id,
             type_code=CODES.form_xml,
-        ):
+        )
+        keys = {meta.key for meta in metas}
+        if len(metas) != len(keys):
+            print('DUPLICATE META KEYS for form {}!'.format(form_id))
+            log.error('DUPLICATE META KEYS for form {}!'.format(form_id))
+            continue
+        for meta in metas:
             # `get_for_parent()` will return meta for both `domain`
             # and `dst_domain` forms. Don't delete the wrong forms.
             if meta.domain == domain:
                 blob_db.delete(key=meta.key)
-                meta.delete()
 
 
 def _commit_dst_domain(domain):
@@ -362,11 +366,10 @@ def _commit_dst_domain(domain):
         publish_case_saved(case, send_post_save_signal=True)
 
 
-def _iter_couch_forms(domain):
+def _iter_couch_form_ids(domain):
     for doc_type, class_ in six.iteritems(doc_types()):
-        form_ids = set(get_form_ids_by_type(domain, doc_type))
-        for form in iter_docs(XFormInstance.get_db(), form_ids):
-            yield class_.wrap(form)
+        for form_id in get_form_ids_by_type(domain, doc_type):
+            yield form_id
 
 
 def _iter_sql_forms(domain):
