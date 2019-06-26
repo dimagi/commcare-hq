@@ -42,7 +42,7 @@ class ODataCaseMetadataView(View):
         case_type_to_properties = get_case_type_to_properties(domain)
         for case_type in case_type_to_properties:
             case_type_to_properties[case_type] = sorted(
-                {'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'}
+                {'case_name', 'case_type', 'date_opened', 'owner_id', 'backend_id'}
                 | set(case_type_to_properties[case_type])
             )
         metadata = render_to_string('api/odata_metadata.xml', {

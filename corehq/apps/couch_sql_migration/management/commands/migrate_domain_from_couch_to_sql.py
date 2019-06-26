@@ -14,9 +14,7 @@ from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
-    delete_diff_db,
     do_couch_to_sql_migration,
-    get_diff_db,
     setup_logging,
 )
 from corehq.apps.couch_sql_migration.progress import (
@@ -26,9 +24,13 @@ from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_not_started,
     set_couch_sql_migration_started,
 )
+from corehq.apps.couch_sql_migration.statedb import (
+    Counts,
+    delete_state_db,
+    open_state_db,
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.tzmigration.planning import Counts
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -81,18 +83,12 @@ class Command(BaseCommand):
                 operations like syncs, form submissions, sms activity,
                 etc. Dry-run migrations cannot be committed.
             ''')
-        parser.add_argument(
-            '--run-timestamp',
-            type=int,
-            default=None,
-            help='use this option to continue a previous run that was started at this timestamp'
-        )
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "dry_run", "run_timestamp"]:
+        for opt in ["no_input", "verbose", "dry_run"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
@@ -106,18 +102,8 @@ class Command(BaseCommand):
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
-        if self.run_timestamp:
-            if self.dry_run:
-                raise CommandError("--dry-run and --run-timestamp are mutually exclusive")
-            if not couch_sql_migration_in_progress(domain):
-                raise CommandError("Migration must be in progress if --run-timestamp is provided")
-        else:
-            set_couch_sql_migration_started(domain, self.dry_run)
-
-        do_couch_to_sql_migration(
-            domain,
-            with_progress=not self.no_input,
-            run_timestamp=self.run_timestamp)
+        set_couch_sql_migration_started(domain, self.dry_run)
+        do_couch_to_sql_migration(domain, with_progress=not self.no_input)
 
         has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if has_diffs:
@@ -147,7 +133,7 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        db = get_diff_db(domain)
+        db = open_state_db(domain)
         diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
         for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
             print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
@@ -157,7 +143,7 @@ class Command(BaseCommand):
     def print_stats(self, domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(domain)
         print("Couch to SQL migration status for {}: {}".format(domain, status))
-        db = get_diff_db(domain)
+        db = open_state_db(domain)
         try:
             diff_stats = db.get_diff_stats()
         except OperationalError:
@@ -269,7 +255,7 @@ def _confirm(message):
 
 def blow_away_migration(domain):
     assert not should_use_sql_backend(domain)
-    delete_diff_db(domain)
+    delete_state_db(domain)
 
     for doc_type in doc_types():
         sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)

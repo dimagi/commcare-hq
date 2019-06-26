@@ -16,7 +16,8 @@ from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 
-from ...couchsqlmigration import do_couch_to_sql_migration, get_diff_db, setup_logging
+from ...couchsqlmigration import do_couch_to_sql_migration, setup_logging
+from ...statedb import open_state_db
 from ...progress import (
     couch_sql_migration_in_progress,
     set_couch_sql_migration_complete,
@@ -99,7 +100,7 @@ class Command(BaseCommand):
 
 
 def get_diff_stats(domain, strict=True):
-    db = get_diff_db(domain)
+    db = open_state_db(domain)
     diff_stats = db.get_diff_stats()
 
     stats = {}

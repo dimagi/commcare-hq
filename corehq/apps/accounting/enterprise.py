@@ -137,8 +137,8 @@ class EnterpriseWebUserReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseWebUserReport, self).headers
-        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]')] + headers + \
-               [_("Last Access Date [UTC]")]
+        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]'),
+                _('Last Access Date [UTC]')] + headers
 
     def rows_for_domain(self, domain_obj):
         rows = []
@@ -155,9 +155,9 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     user.username,
                     user.role_label(domain_obj.name),
                     self.format_date(user.last_login),
+                    last_accessed_domain
                 ]
-                + self.domain_properties(domain_obj)
-                + [last_accessed_domain])
+                + self.domain_properties(domain_obj))
         return rows
 
     def total_for_domain(self, domain_obj):
