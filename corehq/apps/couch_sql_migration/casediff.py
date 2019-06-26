@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import logging
 from collections import defaultdict
 
+import gevent
 from gevent.pool import Pool
 
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
@@ -12,6 +13,8 @@ log = logging.getLogger(__name__)
 
 
 class CaseDiffQueue(object):
+
+    BATCH_SIZE = 100
 
     def __init__(self, statedb, diff_cases):
         self.statedb = statedb
@@ -39,6 +42,9 @@ class CaseDiffQueue(object):
         processed = self.processed_forms
         for case_id in case_ids:
             processed[case_id].add(form_id)
+            if len(processed) >= self.BATCH_SIZE:
+                self._lookup_pending_cases()
+                processed = self.processed_forms
 
     def _lookup_pending_cases(self):
         """Lookup cases to be diffed
@@ -54,7 +60,12 @@ class CaseDiffQueue(object):
     def enqueue(self, case_doc):
         case_id = case_doc["_id"]
         log.debug("enqueue case for diff: %s", case_id)
-        self.cases_to_diff[case_id] = case_doc
+        cases_to_diff = self.cases_to_diff
+        cases_to_diff[case_id] = case_doc
+        if len(cases_to_diff) >= self.BATCH_SIZE:
+            self.cases_to_diff = {}
+            self.pool.spawn(self.diff_cases, cases_to_diff)
+            gevent.sleep()  # swap greenlets
 
     def _process_remaining_diffs(self):
         if self.processed_forms:

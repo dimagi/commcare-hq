@@ -11,6 +11,7 @@ from ..casediff import CaseDiffQueue
 from ..statedb import delete_state_db, init_state_db
 
 
+@patch.object(CaseDiffQueue, "BATCH_SIZE", 2)
 @patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
 class TestCaseDiffQueue(SimpleTestCase):
 
@@ -53,6 +54,20 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.queue as queue:
             queue.update({"cx"}, "fx")
         self.assertEqual(self.diffed, {"cx": 1})
+
+    def test_diff_batching(self):
+        self.add_case("a", "fx")
+        self.add_case("b", "fx")
+        self.add_case("c", "fx")
+        self.add_case("d", "fx")
+        self.add_case("e", "fx")
+        batch_size = CaseDiffQueue.BATCH_SIZE
+        assert batch_size < 3, batch_size
+        with self.queue as queue:
+            queue.update({"a", "b", "c", "d", "e"}, "fx")
+            self.assertLess(len(queue.processed_forms), batch_size)
+            self.assertLess(len(queue.cases_to_diff), batch_size)
+        self.assertEqual(self.diffed, {"a": 1, "b": 1, "c": 1, "d": 1, "e": 1})
 
 
 @attr.s
