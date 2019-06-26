@@ -643,7 +643,6 @@ class MigrationTestCase(BaseMigrationTestCase):
             'commcare.couch_sql_migration.unprocessed_cases.count.duration:',
             'commcare.couch_sql_migration.main_forms.count.duration:',
             'commcare.couch_sql_migration.unprocessed_forms.count.duration:',
-            'commcare.couch_sql_migration.case_diffs.count.duration:',
             'commcare.couch_sql_migration.count.duration:',
         ]
         for t_stat in tracked_stats:

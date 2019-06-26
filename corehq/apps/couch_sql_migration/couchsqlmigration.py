@@ -25,6 +25,7 @@ from django.db.utils import IntegrityError
 from gevent.pool import Pool
 
 from corehq.apps.couch_sql_migration.asyncforms import AsyncFormProcessor
+from corehq.apps.couch_sql_migration.casediff import CaseDiffQueue
 from corehq.apps.couch_sql_migration.diff import (
     filter_case_diffs,
     filter_form_diffs,
@@ -117,6 +118,7 @@ class CouchSqlDomainMigrator(object):
         self.with_progress = with_progress
         self.domain = domain
         self.statedb = init_state_db(domain)
+        self.case_diff_queue = CaseDiffQueue(self.statedb, self._diff_cases)
         # exit immediately on uncaught greenlet error
         gevent.get_hub().SYSTEM_ERROR = BaseException
 
@@ -124,7 +126,8 @@ class CouchSqlDomainMigrator(object):
         log.info('migrating domain {}'.format(self.domain))
 
         self.processed_docs = 0
-        with TimingContext("couch_sql_migration") as timing_context:
+        timing = TimingContext("couch_sql_migration")
+        with timing as timing_context, self.case_diff_queue:
             self.timing_context = timing_context
             with timing_context('main_forms'):
                 self._process_main_forms()
@@ -132,8 +135,6 @@ class CouchSqlDomainMigrator(object):
                 self._copy_unprocessed_forms()
             with timing_context("unprocessed_cases"):
                 self._copy_unprocessed_cases()
-            with timing_context("case_diffs"):
-                self._calculate_case_diffs()
 
         self._send_timings(timing_context)
         log.info('migrated domain {}'.format(self.domain))
@@ -149,12 +150,14 @@ class CouchSqlDomainMigrator(object):
 
     def _migrate_form(self, wrapped_form, case_ids):
         set_local_domain_sql_backend_override(self.domain)
+        form_id = wrapped_form.form_id
         try:
             self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
-            log.exception("Unable to migrate form: %s", wrapped_form.form_id)
+            log.exception("Unable to migrate form: %s", form_id)
         finally:
             self.processed_docs += 1
+            self.case_diff_queue.update(case_ids, form_id)
             self._log_main_forms_processed_count(throttled=True)
 
     def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
@@ -250,7 +253,8 @@ class CouchSqlDomainMigrator(object):
         self._log_unprocessed_cases_processed_count()
 
     def _copy_unprocessed_case(self, change):
-        couch_case = CommCareCase.wrap(change.get_document())
+        doc = change.get_document()
+        couch_case = CommCareCase.wrap(doc)
         log.debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
         try:
             first_action = couch_case.actions[0]
@@ -291,27 +295,9 @@ class CouchSqlDomainMigrator(object):
                 sql_case.deletion_id
             )
 
+        self.case_diff_queue.enqueue(doc)
         self.processed_docs += 1
         self._log_unprocessed_cases_processed_count(throttled=True)
-
-    def _calculate_case_diffs(self):
-        cases = {}
-        batch_size = 100
-        pool = Pool(10)
-        changes = self._get_resumable_iterator(CASE_DOC_TYPES, 'case_diffs')
-        for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
-            cases[change.id] = change.get_document()
-            if len(cases) == batch_size:
-                pool.spawn(self._diff_cases, deepcopy(cases))
-                cases = {}
-
-        if cases:
-            pool.spawn(self._diff_cases, cases)
-
-        while not pool.join(timeout=10):
-            log.info("Waiting on at most {} more docs".format(len(pool) * batch_size))
-
-        self._log_case_diff_count()
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
