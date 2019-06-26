@@ -31,13 +31,14 @@ class AsyncFormProcessor(object):
     def __enter__(self):
         self.pool = Pool(15)
         self.queues = PartiallyLockingQueue()
-        self._rebuild_queues(self.statedb.pop_saved_resume_state())
+        form_ids = self.statedb.pop_resume_state(type(self).__name__, [])
+        self._rebuild_queues(form_ids)
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
         if exc_type is None:
             self._finish_processing_queues()
-        self.statedb.save_resume_state(self.queues.queue_ids)
+        self.statedb.set_resume_state(type(self).__name__, self.queues.queue_ids)
         self.queues = self.pool = None
 
     def _rebuild_queues(self, form_ids):

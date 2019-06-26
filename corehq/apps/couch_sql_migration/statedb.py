@@ -49,7 +49,6 @@ class StateDB(DiffDB):
         db = super(StateDB, cls).init(path)
         if is_new_db:
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
-            db.save_resume_state([])
         return db
 
     def __enter__(self):
@@ -61,7 +60,10 @@ class StateDB(DiffDB):
             self._connection.close()
 
     @contextmanager
-    def session(self):
+    def session(self, session=None):
+        if session is not None:
+            yield session
+            return
         session = self.Session()
         try:
             yield session
@@ -72,7 +74,8 @@ class StateDB(DiffDB):
     @property
     @memoized
     def unique_id(self):
-        return self._get_kv("db_unique_id").value
+        with self.session() as session:
+            return self._get_kv("db_unique_id", session).value
 
     def add_problem_form(self, form_id):
         with self.session() as session:
@@ -93,31 +96,49 @@ class StateDB(DiffDB):
         """Get the set of form ids that touch cases without actions"""
         return {x for x, in self.Session().query(NoActionCaseForm.id)}
 
-    def save_resume_state(self, state):
-        self._set_kv("resume_state", json.dumps(state))
+    def set_resume_state(self, key, value):
+        resume_key = "resume-{}".format(key)
+        self._upsert(KeyValue, KeyValue.key, resume_key, json.dumps(value))
 
-    def pop_saved_resume_state(self):
-        value = self._pop_kv("resume_state")
-        if value is None:
-            raise ResumeError(
-                "Cannot resume because previous session did not exit cleanly.")
-        return json.loads(value.value)
+    def pop_resume_state(self, key, default):
+        resume_key = "resume-{}".format(key)
+        with self.session() as session:
+            kv = self._get_kv(resume_key, session)
+            if kv is None:
+                self._set_kv(resume_key, RESUME_NOT_ALLOWED, session)
+                value = default
+            elif kv.value == RESUME_NOT_ALLOWED:
+                raise ResumeError("previous session did not save resume state")
+            else:
+                value = json.loads(kv.value)
+                kv.value = RESUME_NOT_ALLOWED
+        return value
 
-    def _get_kv(self, key, session=None):
-        if session is None:
-            session = self.Session()
+    def _get_kv(self, key, session):
         return session.query(KeyValue).filter_by(key=key).scalar()
 
-    def _pop_kv(self, key):
-        with self.session() as session:
-            kv = self._get_kv(key, session)
-            if kv is not None:
-                session.delete(kv)
-        return kv
-
-    def _set_kv(self, key, value):
-        with self.session() as session:
+    def _set_kv(self, key, value, session=None):
+        with self.session(session) as session:
             session.add(KeyValue(key=key, value=value))
+
+    def _upsert(self, model, key_field, key, value, insert_value=None):
+        with self.session() as session:
+            updated = (
+                session.query(model)
+                .filter(key_field == key)
+                .update(
+                    {model.value: value},
+                    synchronize_session=False,
+                )
+            )
+            if not updated:
+                if insert_value is None:
+                    insert_value = value
+                obj = model(value=insert_value)
+                key_field.__set__(obj, key)
+                session.add(obj)
+            else:
+                assert updated == 1, (key, updated)
 
     def add_missing_docs(self, kind, doc_ids):
         with self.session() as session:
@@ -127,19 +148,7 @@ class StateDB(DiffDB):
             ])
 
     def increment_counter(self, kind, value):
-        with self.session() as session:
-            updated = (
-                session.query(DocCount)
-                .filter_by(kind=kind)
-                .update(
-                    {DocCount.value: DocCount.value + value},
-                    synchronize_session=False,
-                )
-            )
-            if not updated:
-                session.add(DocCount(kind=kind, value=value))
-            else:
-                assert updated == 1, (kind, updated)
+        self._upsert(DocCount, DocCount.kind, kind, DocCount.value + value, value)
 
     def get_doc_counts(self):
         """Returns a dict of counts by kind
@@ -174,6 +183,9 @@ class StateDB(DiffDB):
 
 class ResumeError(Exception):
     pass
+
+
+RESUME_NOT_ALLOWED = "RESUME_NOT_ALLOWED"
 
 
 class DocCount(Base):
