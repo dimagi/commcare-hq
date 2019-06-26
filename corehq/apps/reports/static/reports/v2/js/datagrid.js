@@ -94,12 +94,12 @@ hqDefine('reports/v2/js/datagrid', [
         self.deleteColumn = function () {
             var replacementCols = [];
             _.each(self.columns(), function (col) {
-                if (col.name() !== self.editColumnController.oldColumn().name()) {
+                if (col.name() !== self.editColumnController.column().name()) {
                     replacementCols.push(col);
                 }
             });
             self.columns(replacementCols);
-            if (self.editColumnController.oldColumn().appliedFilters.length > 0) {
+            if (self.editColumnController.column().appliedFilters().length > 0) {
                 // refresh data if the deleted column had filters applied.
                 self.data.refresh();
             }
