@@ -12,6 +12,8 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.dataAgeSDD = '0_3';
     vm.dataAggregationLevel = 1;
 
+    vm.showMessage = $scope.dateChanged;
+
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
             url: url('service_delivery_dashboard'),

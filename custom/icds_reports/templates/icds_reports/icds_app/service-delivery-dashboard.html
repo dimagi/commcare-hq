@@ -23,6 +23,9 @@
         </div>
     </div>
     <info-message></info-message>
+    <div class="alert alert-info" ng-show="$ctrl.showMessage">
+      <strong>Info!</strong> The date was changed to the <strong>current month</strong> because the report was loaded for a period which is not supported. Supported period is after Feb 2018.
+    </div>
     <div class="report-content report-content-without-message">
         <div ng-if="$ctrl.data">
             <div class="row black">

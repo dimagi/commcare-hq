@@ -9,6 +9,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
+    $scope.dateChanged = false;
 
     var locationParams = $location.search();
     var newKey;
@@ -17,6 +18,19 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         if (newKey.startsWith('amp;')) {
             newKey = newKey.slice(4);
             $location.search(newKey, locationParams[key]).search(key, null);
+        }
+    }
+
+    var selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
+    var selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
+
+
+    var isServiceDeliveryDashboard = $location.path().indexOf('service_delivery_dashboard') !== -1;
+    if (isServiceDeliveryDashboard && selectedYear <= 2018) {
+        if (selectedYear < 2018 || (selectedYear === 2018 && selectedMonth === 1)) {
+            $location.search('month', new Date().getMonth() + 1);
+            $location.search('year', new Date().getFullYear());
+            $scope.dateChanged = true;
         }
     }
 
