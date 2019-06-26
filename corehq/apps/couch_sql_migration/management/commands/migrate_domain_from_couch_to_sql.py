@@ -336,7 +336,7 @@ def _commit_src_domain(domain):
     blob_db = get_blob_db()
 
     # Prevent any more changes on the Couch domain:
-    toggles.DATA_MIGRATION.enable(domain)
+    toggles.DATA_MIGRATION.set(domain, True)
     set_couch_sql_migration_not_started(domain)
     for form in _iter_couch_forms(domain):
         for meta in blob_db.metadb.get_for_parent(
