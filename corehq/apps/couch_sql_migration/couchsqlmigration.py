@@ -984,23 +984,15 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None):
     for name, blob in six.iteritems(couch_form.blobs):
         if name == "form.xml" and form_xml:
             # form_xml is None if we are migrating to the same domain
+
             attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
-            sql_form.attachments_list.append(attachment)
-            meta = metadb.new(
-                domain=sql_form.domain,
-                name=name,
-                parent_id=sql_form.form_id,
-                type_code=CODES.form_xml,
-                content_type=blob.content_type,
-                content_length=blob.content_length,
-            )
             # NOTE: This will create a parent_id+type_code+name duplicate in
             #       dst_domain. metadb.get() must use parent_id+key to uniquely
             #       identify blob meta and we must delete form.xml and meta on
             #       commit and blow-away.
-            meta.save()
-            append_undo(couch_form.domain, meta, UNDO_CREATE)
+            sql_form.attachments_list.append(attachment)
             continue
+
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
 
