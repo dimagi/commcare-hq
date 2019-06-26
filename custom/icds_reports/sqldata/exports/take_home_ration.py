@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from sqlagg.columns import SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from corehq.apps.locations.models import  SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED

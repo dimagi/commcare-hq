@@ -1226,7 +1226,6 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     return file_hash
 
 
-
 def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_level):
     export_info = excel_data[1][1]
     state = export_info[1][1] if aggregation_level > 0 else ''
