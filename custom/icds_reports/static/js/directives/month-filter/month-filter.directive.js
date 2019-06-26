@@ -17,7 +17,7 @@ function MonthModalController($location, $uibModalInstance) {
     });
 
 
-    for (var year = startDate; year <= new Date().getFullYear(); year++ ) {
+    for (var year = startDate; year <= new Date().getFullYear(); year++) {
         vm.years.push({
             name: year,
             id: year,
