@@ -151,7 +151,7 @@ class ExportListHelper(object):
             raise Http404
 
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
-        brief_exports = sorted(self.get_saved_exports(), key=lambda x: x['name'])
+        brief_exports = self.get_saved_exports()
         if toggles.EXPORT_OWNERSHIP.enabled(self.domain):
 
             def _can_view(e, user_id):
@@ -178,7 +178,8 @@ class ExportListHelper(object):
             exports = get_brief_deid_exports(self.domain, self.form_or_case)
         else:
             exports = get_brief_exports(self.domain, self.form_or_case)
-        return [x for x in exports if self._should_appear_in_list(x)]
+        exports = [x for x in exports if self._should_appear_in_list(x)]
+        return sorted(exports, key=lambda x: x['name'])
 
     def _should_appear_in_list(self, export):
         raise NotImplementedError("must implement _should_appear_in_list")
