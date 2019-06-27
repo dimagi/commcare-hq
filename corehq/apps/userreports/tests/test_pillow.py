@@ -431,7 +431,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
-        sample_doc['type'] = 'wrong_type'
+        sample_doc['doc_type'] = 'CommCareCase-Deleted'
 
         self.pillow.process_change(doc_to_change(sample_doc))
 
