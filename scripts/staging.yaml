@@ -58,6 +58,5 @@ branches:
   - jls/linked-app-multiple-masters # Jenny June 18
   - jls/disable-autofill # Jenny June 19
   - odata-merge  # Nick June 24
-  - odata-cap  # Nick June 25
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
 submodules: {}
