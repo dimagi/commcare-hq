@@ -17,7 +17,9 @@ from corehq.apps.api.object_fetch_api import (
     FormAttachmentAPI,
 )
 from corehq.apps.api.odata.views import (
+    ODataCaseMetadataFromExportInstanceView,
     ODataCaseMetadataView,
+    ODataCaseServiceFromExportInstanceView,
     ODataCaseServiceView,
     ODataFormMetadataView,
     ODataFormServiceView,
@@ -85,6 +87,7 @@ API_LIST = (
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCommCareCaseResource,
         v0_5.ODataXFormInstanceResource,
+        v0_5.ODataCaseFromExportInstanceResource,
         LookupTableResource,
         LookupTableItemResource,
     )),
@@ -103,6 +106,8 @@ def api_url_patterns():
     yield url(r'v0.5/odata/Cases/\$metadata$', ODataCaseMetadataView.as_view(), name=ODataCaseMetadataView.urlname)
     yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/$', ODataFormServiceView.as_view(), name=ODataFormServiceView.urlname)
     yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/\$metadata$', ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
+    yield url(r'v0.5/odata/cases/$', ODataCaseServiceFromExportInstanceView.as_view(), name=ODataCaseServiceFromExportInstanceView.urlname)
+    yield url(r'v0.5/odata/cases/\$metadata$', ODataCaseMetadataFromExportInstanceView.as_view(), name=ODataCaseMetadataFromExportInstanceView.urlname)
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
