@@ -242,7 +242,7 @@ hqDefine("export/js/export_list", [
             if (self.showPagination()) {
                 self.fetchPage(page);
             }
-        }
+        };
         self.fetchPage = function (page) {
             self.isLoadingPage(true);
             $.ajax({
