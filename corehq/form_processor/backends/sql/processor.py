@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import uuid
+from collections import OrderedDict
 
 import redis
 from contextlib2 import ExitStack
@@ -212,7 +213,7 @@ class FormProcessorSQL(object):
     def get_cases_from_forms(case_db, xforms):
         """Get all cases affected by the forms. Includes new cases, updated cases.
         """
-        touched_cases = {}
+        touched_cases = OrderedDict()
         if len(xforms) > 1:
             domain = xforms[0].domain
             affected_cases = set()
