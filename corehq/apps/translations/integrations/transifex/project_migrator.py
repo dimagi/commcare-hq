@@ -44,7 +44,7 @@ class ProjectMigrator(object):
         self.id_mapping = {old_id: new_id for _, old_id, new_id in self.resource_ids_mapping}
 
     def validate(self):
-        ProjectMigrationValidator(self).valid()
+        ProjectMigrationValidator(self).validate()
 
     def migrate(self):
         slug_update_responses = self._update_slugs()
@@ -159,7 +159,7 @@ class ProjectMigrationValidator(object):
         self.source_app_default_lang = migrator.source_app_default_lang
         self.target_app_default_lang = migrator.target_app_default_lang
 
-    def valid(self):
+    def validate(self):
         self._ensure_same_source_lang()
 
     def _ensure_same_source_lang(self):
