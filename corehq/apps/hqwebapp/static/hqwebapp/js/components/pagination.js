@@ -17,6 +17,7 @@
  *          in a cookie.
  *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
  *          which shows up next to the left of the limit dropdown.
+ *      isReady: Optional. An observable. If provided, only call goToPage when it is true.
  *
  *  See releases_table.html for an example.
  */
@@ -41,13 +42,13 @@ hqDefine('hqwebapp/js/components/pagination', [
             if (params.limitSlug) {
                 self.initialValues.limit = parseInt(self._url.searchParams.get(params.limitSlug));
             }
-            self.watchChanges = (typeof params.watchChanges !== 'undefined') ? params.watchChanges : true;
+            self.isReady = (typeof params.isReady !== 'undefined') ? params.isReady : ko.observable(true);
 
             self.currentPage = ko.observable(self.initialValues.page || self.currentPage || 1);
 
             self.totalItems = params.totalItems;
             self.totalItems.subscribe(function (newValue) {
-                if (self.watchChanges()) {
+                if (self.isReady()) {
                     self.goToPage(1);
                 }
             });
@@ -59,7 +60,7 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.perPageCookieName = 'ko-pagination-' + self.slug;
                 self.perPage(self.initialValues.limit || $.cookie(self.perPageCookieName) || self.perPage());
                 self.perPage.subscribe(function (newValue) {
-                    if (self.watchChanges()) {
+                    if (self.isReady()) {
                         self.goToPage(1);
                     }
                     if (self.slug) {
