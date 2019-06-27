@@ -10,7 +10,8 @@ from custom.icds_reports.utils import DATA_NOT_ENTERED, percent_or_not_entered, 
 @icds_quickcache([
     'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'step'
 ], timeout=30 * 60)
-def get_service_delivery_data(domain, start, length, order, reversed_order, location_filters, year, month, step, include_test=False):
+def get_service_delivery_data(domain, start, length, order, reversed_order, location_filters,
+                              year, month, step, include_test=False):
     if location_filters.get('aggregation_level') == 1:
         default_order = 'state_name'
     elif location_filters.get('aggregation_level') == 2:
