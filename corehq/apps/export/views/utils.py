@@ -194,7 +194,7 @@ class ODataFeedMixin(object):
             'choose_fields_label': _("Choose the fields you want to include in this feed."),
             'choose_fields_description': _("""
                 You can drag and drop fields to reorder them. You can also rename
-                fields, which will update the field labels in the PowerBi/Tableau
+                fields, which will update the field labels in the Power BI/Tableau
             """),
         }
 
