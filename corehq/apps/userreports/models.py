@@ -588,6 +588,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             return [None]
 
         expression = config_filter['expression']
+
+        if not isinstance(expression, dict):
+            return [None]
+
         if expression['type'] == 'property_name' and expression['property_name'] == property_name:
             prop_value = config_filter['property_value']
             if not isinstance(prop_value, list):

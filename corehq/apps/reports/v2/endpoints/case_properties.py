@@ -112,6 +112,10 @@ class CasePropertiesEndpoint(BaseOptionsEndpoint):
         return all_properties
 
     def get_response(self):
+        options = self.special_properties + self.case_properties
         return {
-            'options': self.special_properties + self.case_properties,
+            'options': [
+                prop for prop in options
+                if not prop['text'].startswith('parent/')
+            ],
         }

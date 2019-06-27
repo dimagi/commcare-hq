@@ -52,7 +52,7 @@ class OdataTestMixin(object):
 
     @classmethod
     def _get_correct_credentials(cls):
-        return CaseOdataTestMixin._get_basic_credentials(cls.web_user.username, 'my_password')
+        return OdataTestMixin._get_basic_credentials(cls.web_user.username, 'my_password')
 
     @staticmethod
     def _get_basic_credentials(username, password):

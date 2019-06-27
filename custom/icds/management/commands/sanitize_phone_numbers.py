@@ -26,6 +26,7 @@ from corehq.form_processor.backends.sql.dbaccessors import iter_all_rows
 
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.mock import CaseBlock
+from six.moves import range
 
 DOMAIN = "icds-cas"
 CASE_TYPE = "person"

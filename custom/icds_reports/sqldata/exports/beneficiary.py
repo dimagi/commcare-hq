@@ -112,6 +112,11 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
                 slug='aww_phone_number'
             ),
             DatabaseColumn(
+                'Mother name',
+                SimpleColumn('mother_name'),
+                slug='mother_name'
+            ),
+            DatabaseColumn(
                 'Mother Phone Number',
                 SimpleColumn('mother_phone_number'),
                 format_fn=phone_number_function,

@@ -309,19 +309,20 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
                                 # Delete if the subtype is unknown or
                                 # if the subtype matches our filters, but the full filter no longer applies
-                                to_delete_by_adapter[adapter].append(doc['_id'])
+                                to_delete_by_adapter[adapter].append(doc)
 
         with self._datadog_timing('single_batch_delete'):
             # bulk delete by adapter
-            to_delete = [c.id for c in changes_chunk if c.deleted]
+            to_delete = [{'_id': c.id} for c in changes_chunk if c.deleted]
             for adapter in adapters:
-                delete_ids = to_delete_by_adapter[adapter] + to_delete
-                if not delete_ids:
+                delete_docs = to_delete_by_adapter[adapter] + to_delete
+                if not delete_docs:
                     continue
                 with self._datadog_timing('delete', adapter.config._id):
                     try:
-                        adapter.bulk_delete(delete_ids)
+                        adapter.bulk_delete(delete_docs)
                     except Exception:
+                        delete_ids = [doc['_id'] for doc in delete_docs]
                         retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
 
         with self._datadog_timing('single_batch_load'):
@@ -415,6 +416,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             eval_context = EvaluationContext(doc)
             # make copy to avoid modifying list during iteration
             adapters = list(self.table_adapters_by_domain[domain])
+            doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
                     if table.run_asynchronous:
@@ -422,7 +424,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     else:
                         self._save_doc_to_table(domain, table, doc, eval_context)
                         eval_context.reset_iteration()
-                elif table.config.deleted_filter(doc) or table.doc_exists(doc):
+                elif (doc_subtype is None
+                        or doc_subtype in table.config.get_case_type_or_xmlns_filter()):
                     table.delete(doc)
 
             if async_tables:
