@@ -5802,7 +5802,7 @@ class AppReleaseByLocation(models.Model):
     def clean(self):
         if self.active:
             if not self.build.is_released:
-                raise ValidationError({'version': _("Version not released. Please mark it as released to add "
+                raise ValidationError({'version': _("Version {} not released. Please mark it as released to add "
                                                     "restrictions.").format(self.build.version)})
             enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id,
                                                                  self.app_id)
