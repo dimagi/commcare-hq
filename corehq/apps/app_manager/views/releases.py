@@ -11,6 +11,7 @@ from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+from django.core.exceptions import ValidationError
 
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
@@ -593,49 +594,20 @@ class LanguageProfilesView(View):
 @require_can_edit_apps
 def toggle_build_profile(request, domain, build_id, build_profile_id):
     build = Application.get(build_id)
-    action = request.GET.get('action')
-    if action and action == 'enable' and not build.is_released:
-        messages.error(request, _("Release the build first. Can not enable profiles for unreleased versions"))
-        return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
-    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
-        app_id=build.copy_of,
-        build_profile_id=build_profile_id
-    ).order_by('-version').first()
-    if action == 'enable' and latest_enabled_build_profile:
-        if latest_enabled_build_profile.version > build.version:
-            messages.error(request, _(
-                "Latest version available for this profile is {}, which is "
-                "higher than this version. Disable any higher versions first.".format(
-                    latest_enabled_build_profile.version
-                )))
-            return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
-    if action == 'enable':
-        build_profile = LatestEnabledBuildProfiles.objects.create(
-            app_id=build.copy_of,
-            version=build.version,
-            build_profile_id=build_profile_id,
-            build_id=build_id
-        )
-        build_profile.expire_cache(domain)
-    elif action == 'disable':
-        build_profile = LatestEnabledBuildProfiles.objects.filter(
-            app_id=build.copy_of,
-            version=build.version,
-            build_profile_id=build_profile_id,
-            build_id=build_id
-        ).first()
-        build_profile.delete()
-        build_profile.expire_cache(domain)
-    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
-        app_id=build.copy_of,
-        build_profile_id=build_profile_id
-    ).order_by('-version').first()
-    if latest_enabled_build_profile:
-        messages.success(request, _("Latest version for profile {} is now {}").format(
-            build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
-        ))
+    status = request.GET.get('action') == 'enable'
+    try:
+        LatestEnabledBuildProfiles.update_status(build.copy_of, build_id, build_profile_id, build.version, status)
+    except ValidationError as e:
+        messages.error(request, e)
     else:
-        messages.success(request, _("Latest release now available for profile {}").format(
-            build.build_profiles[build_profile_id].name
-        ))
+        latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
+            build.copy_of, build_profile_id)
+        if latest_enabled_build_profile:
+            messages.success(request, _("Latest version for profile {} is now {}").format(
+                build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
+            ))
+        else:
+            messages.success(request, _("Latest release now available for profile {}").format(
+                build.build_profiles[build_profile_id].name
+            ))
     return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))

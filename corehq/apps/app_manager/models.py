@@ -5863,6 +5863,72 @@ class LatestEnabledBuildProfiles(models.Model):
     build_id = models.CharField(max_length=255)
     active = models.BooleanField(default=True)
 
+    def save(self, *args, **kwargs):
+        super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
+        self.expire_cache(self.build.domain)
+
+    @property
+    @memoized
+    def build(self):
+        return Application.get(self.build_id)
+
+    def clean(self):
+        if self.active:
+            if not self.build.is_released:
+                raise ValidationError({
+                    'version': _("Release the build first. Can not enable profiles for unreleased versions"
+                                 ).format(self.build.version)
+                })
+            latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
+                app_id=self.build.copy_of,
+                build_profile_id=self.build_profile_id,
+            ).order_by('-version').first()
+            if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
+                raise ValidationError({
+                    'version': _("Latest version available for this profile is {}, which is "
+                                 "higher than this version. Disable any higher versions first."
+                                 ).format(latest_enabled_build_profile.version)})
+
+    @classmethod
+    def update_status(cls, app_id, build_id, build_profile_id, version, active):
+        """
+        create a new object or just set the status of an existing one with provided
+        app_id, build_profile_id, build_id and version to the status passed
+        :param build_id: id of the build corresponding to the version
+        """
+        try:
+            build_profile = LatestEnabledBuildProfiles.objects.get(
+                app_id=app_id,
+                version=version,
+                build_profile_id=build_profile_id,
+                build_id=build_id
+            )
+        except cls.DoesNotExist:
+            build_profile = LatestEnabledBuildProfiles(
+                app_id=app_id,
+                version=version,
+                build_profile_id=build_profile_id,
+                build_id=build_id
+            )
+        build_profile.activate() if active else build_profile.deactivate()
+
+    def activate(self):
+        self.active = True
+        self.full_clean()
+        self.save()
+
+    def deactivate(self):
+        self.active = False
+        self.full_clean()
+        self.save()
+
+    @classmethod
+    def for_app_and_profile(cls, app_id, build_profile_id):
+        return cls.objects.filter(
+            app_id=app_id,
+            build_profile_id=build_profile_id,
+        ).order_by('-version').first()
+
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
         get_latest_enabled_versions_per_profile.clear(self.app_id)
