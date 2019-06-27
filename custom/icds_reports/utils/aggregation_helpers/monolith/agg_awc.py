@@ -23,6 +23,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
         self.month_end = self.month_start + relativedelta(months=1, seconds=-1)
+        self.next_month = self.month_start + relativedelta(months=1)
         self.prev_month = self.month_start - relativedelta(months=1)
         self.month_start_6m = self.month_start - relativedelta(months=6)
         self.month_end_11yr = self.month_end - relativedelta(years=11)
@@ -150,7 +151,9 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_child_health_all = ut.cases_child_health_all,
             wer_weighed = ut.wer_weighed,
             wer_eligible = ut.wer_eligible,
-            cases_person_beneficiary_v2 = ut.cases_child_health
+            cases_person_beneficiary_v2 = ut.cases_child_health,
+            wer_eligible_0_2 = ut.wer_eligible_0_2,
+            wer_weighed_0_2 = ut.wer_weighed_0_2
         FROM (
             SELECT
                 awc_id,
@@ -158,7 +161,9 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(valid_in_month) AS cases_child_health,
                 sum(valid_all_registered_in_month) AS cases_child_health_all,
                 sum(nutrition_status_weighed) AS wer_weighed,
-                sum(wer_eligible) AS wer_eligible
+                sum(wer_eligible) AS wer_eligible,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2
             FROM agg_child_health
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
         ) ut
@@ -363,14 +368,16 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(due_list_ccs) AS usage_num_due_list_ccs,
                 sum(due_list_child) AS usage_num_due_list_child_health
             FROM "{usage_table}"
-            WHERE month = %(start_date)s GROUP BY awc_id, month
+            WHERE month = %(start_date)s AND form_date >= %(start_date)s AND form_date < %(next_month)s
+            GROUP BY awc_id, month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
             usage_table=self._ucr_tablename('static-usage_forms'),
         ), {
-            'start_date': self.month_start
+            'start_date': self.month_start,
+            'next_month': self.next_month,
         }
 
         yield """
@@ -516,6 +523,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('awc_num_open',),
             ('wer_weighed',),
             ('wer_eligible',),
+            ('wer_eligible_0_2',),
+            ('wer_weighed_0_2',),
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),

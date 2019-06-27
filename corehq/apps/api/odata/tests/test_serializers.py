@@ -5,7 +5,7 @@ from mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
+from corehq.apps.api.odata.serializers import get_properties_to_include, update_case_json
 
 
 class TestODataCommCareCaseSerializer(SimpleTestCase):
@@ -38,7 +38,8 @@ class TestODataCommCareCaseSerializer(SimpleTestCase):
         with patch('corehq.apps.api.odata.serializers.get_case_type_to_properties', return_value={
             'my_case_type': ['included_property', 'missing_property']
         }):
-            ODataCommCareCaseSerializer().update_case_json(case_json, 'test-domain', 'my_case_type')
+            case_properties_to_include = get_properties_to_include('fake_domain', 'my_case_type')
+        update_case_json(case_json, case_properties_to_include)
         self.assertEqual(case_json, {
             'date_closed': None,
             'domain': 'test-domain',

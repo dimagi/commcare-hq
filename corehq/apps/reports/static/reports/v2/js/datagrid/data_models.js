@@ -35,7 +35,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             var $rows = $('#js-datagrid-rows'),
                 $loading = $('#js-datagrid-loading'),
                 position = $rows.position(),
-                marginTop = $rows.height() / 2 - 50; // 50 is half the line height of the loading text
+                marginTop = Math.max(0, $rows.height() / 2 - 50); // 50 is half the line height of the loading text
 
             if (position.top === 0) return;
 
@@ -44,7 +44,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 .width($rows.width())
                 .css('left', position.left + 'px')
                 .css('top', position.top + "px");
-
+            
             $loading.find('.loading-text')
                 .css('margin-top', marginTop + 'px');
         });
@@ -116,6 +116,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
                     if (!self.hasInitialLoadFinished()) {
                         self.hasInitialLoadFinished(true);
+                        $('#js-datagrid-initial-loading').fadeOut();
                         _.each(self.reportFilters(), function (reportFilter) {
                             reportFilter.value.subscribe(function () {
                                 self.refresh();

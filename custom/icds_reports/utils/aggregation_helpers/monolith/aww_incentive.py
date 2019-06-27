@@ -60,17 +60,17 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             awcm.awc_name,
             awcm.aww_name,
             awcm.contact_phone_number,
-            awcm.wer_weighed,
-            awcm.wer_eligible,
+            awcm.wer_weighed_0_2,
+            awcm.wer_eligible_0_2,
             awcm.awc_days_open,
             sum(ccsm.valid_visits),
             sum(ccsm.expected_visits),
             awcm.is_launched = 'yes',
             round(sum(ccsm.expected_visits)),
             awcm.awc_days_open >= 21,
-            (ROUND(awcm.wer_weighed / GREATEST(awcm.wer_eligible, 1)::NUMERIC, 4) >= 0.6 
-                    OR COALESCE(awcm.wer_eligible, 0) = 0)
-                AND (ROUND(sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)::NUMERIC, 4) >= 0.6 
+            (ROUND(awcm.wer_weighed_0_2 / GREATEST(awcm.wer_eligible_0_2, 1)::NUMERIC, 4) >= 0.6
+                    OR COALESCE(awcm.wer_eligible_0_2, 0) = 0)
+                AND (ROUND(sum(ccsm.valid_visits) / GREATEST(round(sum(ccsm.expected_visits)), 1)::NUMERIC, 4) >= 0.6
                     OR round(COALESCE(sum(ccsm.expected_visits), 0)) = 0)
           FROM agg_awc_monthly as awcm
           INNER JOIN agg_ccs_record_monthly AS ccsm
@@ -78,13 +78,18 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
           WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
           GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name,
                 awcm.district_name, awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
-                awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
+                awcm.contact_phone_number, awcm.wer_weighed_0_2, awcm.wer_eligible_0_2,
                 awcm.awc_days_open, awcm.is_launched
         );
         /* update visits for cf cases (not in agg_ccs_record) */
         UPDATE "{tablename}" perf
         SET expected_visits = expected_visits + cf_data.expected,
-            valid_visits = valid_visits + cf_data.valid
+            valid_visits = valid_visits + cf_data.valid,
+            visit_denominator = round(expected_visits + cf_data.expected),
+            incentive_eligible = (ROUND(wer_weighed / GREATEST(wer_eligible, 1)::NUMERIC, 4) >= 0.6 
+                                  OR COALESCE(wer_eligible, 0) = 0)
+                                 AND (ROUND((valid_visits + cf_data.valid) / GREATEST(round(expected_visits + cf_data.expected), 1)::NUMERIC, 4) >= 0.6
+                                  OR round(COALESCE((expected_visits + cf_data.expected), 0)) = 0)
         FROM (
              SELECT
              SUM(0.39) AS expected,

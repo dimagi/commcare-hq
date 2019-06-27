@@ -17,6 +17,7 @@ from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
 from corehq.messaging.tasks import initiate_messaging_rule_run
+from six.moves import zip
 
 
 def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
@@ -122,7 +123,6 @@ class ConditionalAlertUploader(object):
                 condensed_rows[row['id']].append(row)
                 continue
 
-            rule = getattr(rules_by_id, six.text_type(row['id']), None)
             try:
                 rule = AutomaticUpdateRule.objects.get(
                     pk=row['id'],

@@ -9,7 +9,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.utils import case_load_counter
 from dimagi.utils.couch import CriticalSection
@@ -82,20 +82,26 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
 def initiate_messaging_rule_run(rule):
     if not rule.active:
         return
-    MessagingRuleProgressHelper(rule.pk).set_initial_progress()
     AutomaticUpdateRule.objects.filter(pk=rule.pk).update(locked_for_editing=True)
     transaction.on_commit(lambda: run_messaging_rule.delay(rule.domain, rule.pk))
+
+
+def paginated_case_ids(domain, case_type):
+    row_generator = paginate_query_across_partitioned_databases(
+        CommCareCaseSQL,
+        Q(domain=domain, type=case_type, deleted=False),
+        values=['case_id']
+    )
+    for row in row_generator:
+        # return value from case generator is ('<pk>', '<case_id>')
+        yield row[1]
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
     if not should_use_sql_backend(domain):
         return CaseAccessors(domain).get_case_ids_in_domain(case_type)
     else:
-        return run_query_across_partitioned_databases(
-            CommCareCaseSQL,
-            Q(domain=domain, type=case_type, deleted=False),
-            values=['case_id']
-        )
+        return paginated_case_ids(domain, case_type)
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
@@ -110,16 +116,20 @@ def run_messaging_rule(domain, rule_id):
     if not rule:
         return
 
-    total_count = 0
+    incr = 0
     progress_helper = MessagingRuleProgressHelper(rule_id)
+    progress_helper.set_initial_progress()
 
     for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
         sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
-        total_count += 1
-        if total_count % 1000 == 0:
-            progress_helper.set_total_case_count(total_count)
+        incr += 1
+        if incr >= 1000:
+            progress_helper.increase_total_case_count(incr)
+            incr = 0
+            if progress_helper.is_canceled():
+                break
 
-    progress_helper.set_total_case_count(total_count)
+    progress_helper.increase_total_case_count(incr)
 
     # By putting this task last in the queue, the rule should be marked
     # complete at about the time that the last tasks are finishing up.
