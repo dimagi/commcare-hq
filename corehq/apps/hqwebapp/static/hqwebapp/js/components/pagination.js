@@ -18,6 +18,8 @@
  *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
  *          which shows up next to the left of the limit dropdown.
  *      isReady: Optional. An observable. If provided, only call goToPage when it is true.
+ *          This can be used to indicate to the view model when the page has been populated and perPage and
+ *          totalItems have been set.
  *
  *  See releases_table.html for an example.
  */
