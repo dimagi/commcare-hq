@@ -37,14 +37,18 @@ class BaseModifySubscriptionHandler(object):
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
 
         def get_domain(domain):
+            wait_time = 3  # seconds
+            max_attempts = 5
+            attempt = 1
             obj = Domain.get_by_name(domain)
-            if obj:
-                return obj
-            else:
-                # This could happen in when there is an issue with couch cluster
-                #   that makes the obj not available
-                time.sleep(5)
-                return Domain.get_by_name(domain)
+            while obj is None and attempt <= max_attempts:
+                # This could happen when a user is going through the sign up
+                # process (cf. HI-534), or when there is an issue with the
+                # couch cluster that makes the obj not available.
+                time.sleep(wait_time)
+                attempt += 1
+                obj = Domain.get_by_name(domain)
+            return obj
 
         self.domain = domain if isinstance(domain, Domain) else get_domain(domain)
         if self.domain is None:
