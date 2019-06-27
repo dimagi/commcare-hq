@@ -5861,6 +5861,7 @@ class LatestEnabledBuildProfiles(models.Model):
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
     build_id = models.CharField(max_length=255)
+    active = models.BooleanField(default=True)
 
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
