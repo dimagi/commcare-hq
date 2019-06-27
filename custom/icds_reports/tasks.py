@@ -987,8 +987,15 @@ def _get_value(data, field):
     return getattr(data, field) or default
 
 
-@periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
-def collect_inactive_awws():
+# This task causes issues on the india environment
+# so it's limited to only ICDS_ENVS
+if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    @periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
+    def collect_inactive_awws():
+        _collect_inactive_awws()
+
+
+def _collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
     last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
