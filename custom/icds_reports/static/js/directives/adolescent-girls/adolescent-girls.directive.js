@@ -14,7 +14,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.data = {
         legendTitle: 'Number of Women',
     };
-    vm.filters = ['age', 'gender', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age', 'gender'];
     vm.rightLegend = {
         info: 'Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
     };

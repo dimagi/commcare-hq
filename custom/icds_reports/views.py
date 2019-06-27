@@ -328,7 +328,6 @@ class ServiceDeliveryDashboardView(BaseReportView):
 
         location_filters = get_location_filter(location, domain)
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
-        age_sdd = request.GET.get('ageSDD', '0_3')
 
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
@@ -343,7 +342,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
             location_filters,
             year,
             month,
-            age_sdd,
+            step,
             include_test
         )
         return JsonResponse(data=data)
