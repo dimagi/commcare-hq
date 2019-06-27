@@ -520,24 +520,28 @@ class MigrateTransifexProject(BaseTranslationsView):
             context['migration_form'] = self.form
         return context
 
+    def _perform_request(self):
+        migrator = self.form.migrator
+        # ToDo: Check if you can pass form.migrator instead of its attrs and then re-init it
+        migrate_project_on_transifex.delay(
+            migrator.domain,
+            migrator.project_slug,
+            migrator.source_app_id,
+            migrator.target_app_id,
+            self.form.uploaded_resource_id_mappings(),
+            self.request.user.email
+        )
+
     def post(self, request, *args, **kwargs):
         if self.transifex_integration_enabled(request):
-            form = self.form
             try:
-                if form.is_valid():
-                    # ToDo: Check if you can pass form.migrator instead of its attrs and then re-init it
-                    migrator = form.migrator
-                    migrate_project_on_transifex.delay(
-                        migrator.domain,
-                        migrator.project_slug,
-                        migrator.source_app_id,
-                        migrator.target_app_id,
-                        form.uploaded_resource_id_mappings(),
-                        self.request.user.email
-                    )
-                    return redirect(self.urlname, domain=self.domain)
+                valid_form = self.form.is_valid()
             except InvalidProjectMigration as e:
                 messages.error(self.request, e)
+            else:
+                if valid_form:
+                    self._perform_request()
+                    return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 

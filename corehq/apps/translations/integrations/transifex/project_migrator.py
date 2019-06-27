@@ -113,7 +113,7 @@ class ProjectMigrator(object):
     def _upload_translation(self, translations, lang_code):
         po = polib.POFile()
         po.check_for_duplicates = False
-        po.metadata = self.metadata
+        po.metadata = self.get_metadata()
         po.extend(translations)
         with tempfile.NamedTemporaryFile() as temp_file:
             po.save(temp_file.name)
@@ -125,8 +125,7 @@ class ProjectMigrator(object):
                 return self.client.upload_translation(temp_file.name, "Menus_and_forms", "Menus_and_forms",
                                                       lang_code)
 
-    @property
-    def metadata(self):
+    def get_metadata(self):
         now = str(datetime.datetime.now())
         return {
             'App-Id': self.target_app_id,
