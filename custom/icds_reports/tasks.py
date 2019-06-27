@@ -179,6 +179,15 @@ SQL_FUNCTION_PATHS = [
 ]
 
 
+# Tasks that are only to be run on ICDS_ENVS should be marked
+# with @only_icds_periodic_task rather than @periodic_task
+if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    only_icds_periodic_task = periodic_task
+else:
+    def only_icds_periodic_task(**kwargs):
+        return lambda fn: fn
+
+
 @periodic_task(run_every=crontab(minute=0, hour=18),
                acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task():
@@ -987,15 +996,10 @@ def _get_value(data, field):
     return getattr(data, field) or default
 
 
-# This task causes issues on the india environment
-# so it's limited to only ICDS_ENVS
-if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    @periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
-    def collect_inactive_awws():
-        _collect_inactive_awws()
-
-
-def _collect_inactive_awws():
+# This task caused memory spikes once a day on the india env
+# before it was switched to icds-only (June 2019)
+@only_icds_periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
+def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
     last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
