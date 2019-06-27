@@ -8,7 +8,7 @@ from dimagi.ext.couchdbkit import (
 )
 from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
+from corehq.apps.app_manager.dbaccessors import get_build_ids_after_version
 from dimagi.utils.couch.database import iter_docs
 import six
 from six.moves import map
@@ -92,7 +92,7 @@ class FormQuestionSchema(Document):
             self._id = self._get_id(self.domain, self.app_id, self.xmlns)
 
     def update_schema(self):
-        all_app_ids = get_built_app_ids_for_app_id(
+        all_app_ids = get_build_ids_after_version(
             self.domain,
             self.app_id,
             self.last_processed_version
