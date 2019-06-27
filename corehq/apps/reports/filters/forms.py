@@ -193,7 +193,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         map_deleted = sorted(map_deleted, key=lambda item: item['text'].lower())
 
         if (bool(map_deleted) + bool(map_active)) > 1:
-            self.display_app_type = True
+            if self.request.GET.get('show_advanced') != 'on':
+                self.display_app_type = True
             if map_active:
                 final_map.append(
                     self._map_structure(PARAM_VALUE_STATUS_ACTIVE, _('Active CommCare Applications'), map_active)
