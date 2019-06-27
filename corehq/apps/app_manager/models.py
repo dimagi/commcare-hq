@@ -5867,8 +5867,7 @@ class LatestEnabledBuildProfiles(models.Model):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
         self.expire_cache(self.build.domain)
 
-    @property
-    @memoized
+    @cached_property
     def build(self):
         return Application.get(self.build_id)
 
@@ -5891,12 +5890,15 @@ class LatestEnabledBuildProfiles(models.Model):
                                  ).format(latest_enabled_build_profile.version)})
 
     @classmethod
-    def update_status(cls, app_id, build_id, build_profile_id, version, active):
+    def update_status(cls, build, build_profile_id, active):
         """
-        create a new object or just set the status of an existing one with provided
-        app_id, build_profile_id, build_id and version to the status passed
-        :param build_id: id of the build corresponding to the version
+        create a new object or just set the status of an existing one for an app
+        build and build profile to the status passed
+        :param active: to be set as active, True/False
         """
+        app_id = build.copy_of
+        build_id = build.get_id
+        version = build.version
         try:
             build_profile = LatestEnabledBuildProfiles.objects.get(
                 app_id=app_id,
@@ -5911,6 +5913,8 @@ class LatestEnabledBuildProfiles(models.Model):
                 build_profile_id=build_profile_id,
                 build_id=build_id
             )
+        # assign it to avoid re-fetching during validations
+        build_profile.build = build
         build_profile.activate() if active else build_profile.deactivate()
 
     def activate(self):

@@ -596,7 +596,7 @@ def toggle_build_profile(request, domain, build_id, build_profile_id):
     build = Application.get(build_id)
     status = request.GET.get('action') == 'enable'
     try:
-        LatestEnabledBuildProfiles.update_status(build.copy_of, build_id, build_profile_id, build.version, status)
+        LatestEnabledBuildProfiles.update_status(build, build_profile_id, status)
     except ValidationError as e:
         messages.error(request, e)
     else:
