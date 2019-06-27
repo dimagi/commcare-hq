@@ -5882,6 +5882,7 @@ class LatestEnabledBuildProfiles(models.Model):
             latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
                 app_id=self.build.copy_of,
                 build_profile_id=self.build_profile_id,
+                active=True
             ).order_by('-version').first()
             if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
                 raise ValidationError({
@@ -5927,6 +5928,7 @@ class LatestEnabledBuildProfiles(models.Model):
         return cls.objects.filter(
             app_id=app_id,
             build_profile_id=build_profile_id,
+            active=True
         ).order_by('-version').first()
 
     def expire_cache(self, domain):
