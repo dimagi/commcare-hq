@@ -48,9 +48,7 @@ hqDefine('hqwebapp/js/components/pagination', [
 
             self.totalItems = params.totalItems;
             self.totalItems.subscribe(function (newValue) {
-                if (self.isReady()) {
-                    self.goToPage(1);
-                }
+                self.goToPage(1);
             });
 
             self.slug = params.slug;
@@ -60,9 +58,7 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.perPageCookieName = 'ko-pagination-' + self.slug;
                 self.perPage(self.initialValues.limit || $.cookie(self.perPageCookieName) || self.perPage());
                 self.perPage.subscribe(function (newValue) {
-                    if (self.isReady()) {
-                        self.goToPage(1);
-                    }
+                    self.goToPage(1);
                     if (self.slug) {
                         $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/' });
                     }
@@ -87,6 +83,7 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.goToPage(Math.max(self.currentPage() - 1, 1), e);
             };
             self.goToPage = function (page, e) {
+                if (!self.isReady()) return;
                 // make sure that the first goToPage that's called does not override the initialValues from GET
                 self.currentPage(self.initialValues.page || page);
                 self.initialValues.page = undefined;
