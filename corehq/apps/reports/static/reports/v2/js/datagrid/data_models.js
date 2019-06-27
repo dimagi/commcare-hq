@@ -6,11 +6,15 @@ hqDefine('reports/v2/js/datagrid/data_models', [
     'jquery',
     'knockout',
     'underscore',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components.ko',  // pagination widget
 ], function (
     $,
     ko,
-    _
+    _,
+    kissmetrics,
+    initialPageData
 ) {
     'use strict';
 
@@ -59,10 +63,17 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
         self.resetPagination = ko.observable(false);
 
-        self.limit.subscribe(function () {
+        self.limit.subscribe(function (newLimit) {
             // needed to stay in sync with pagination widget
             // to prevent unnecessary reloads of data
             self.hasLimitBeenModified(true);
+
+            if (self.hasInitialLoadFinished()) {
+                kissmetrics.track.event("Changed page size", {
+                    "Domain": initialPageData.get('domain'),
+                    "Page Size Selected": newLimit,
+                });
+            }
         });
 
         self.hasNoData = ko.computed(function () {
