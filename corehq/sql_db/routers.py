@@ -33,8 +33,8 @@ class MultiDBRouter(object):
     def db_for_write(self, model, **hints):
         return db_for_read_write(model, write=True)
 
-    def allow_migrate(self, db, app_label, model=None, model_name=None, **hints):
-        return allow_migrate(db, app_label, model_name)
+    def allow_migrate(self, db, app_label, model=None, **hints):
+        return allow_migrate(db, app_label)
 
     def allow_relation(self, obj1, obj2, **hints):
         from corehq.sql_db.models import PartitionedModel
@@ -51,7 +51,7 @@ class MultiDBRouter(object):
         return False
 
 
-def allow_migrate(db, app_label, model_name=None):
+def allow_migrate(db, app_label):
     """
     Return ``True`` if a app's migrations should be applied to the specified database otherwise
     return ``False``.
@@ -76,8 +76,6 @@ def allow_migrate(db, app_label, model_name=None):
         return db == partition_config.proxy_db
     elif app_label == BLOB_DB_APP and db == DEFAULT_DB_ALIAS:
         return True
-    elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
-        return False
     elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, BLOB_DB_APP):
         return (
             db == partition_config.proxy_db or
