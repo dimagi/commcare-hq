@@ -21,7 +21,8 @@
   <div data-bind="template: {
                       name: 'importer_template',
                       foreach: openmrsImporters,
-                      as: 'openmrsImporter'
+                      as: 'openmrsImporter',
+                      afterRender: initOpenmrsImporterTemplate
                   }"></div>
 
   <p>

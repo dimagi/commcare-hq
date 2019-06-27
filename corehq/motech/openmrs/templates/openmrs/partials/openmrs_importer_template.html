@@ -18,19 +18,22 @@
             </label>
             <div class="controls col-sm-9 col-md-8 col-lg-6">
                 {% if field.field.widget.input_type == 'select' %}
-                <select class="select form-control"
+                <select name="{{ field.html_name }}"
+                        class="select form-control"
                         data-bind="options: {{ field.html_name }}_options,
                                    optionsText: 'text',
                                    optionsValue: 'value',
                                    value: {{ field.html_name }}"></select>
                 {% elif 'textarea' in field.field.widget.template_name %}
-                <textarea class="jsonwidget form-control"
+                <textarea name="{{ field.html_name }}"
+                          class="jsonwidget form-control"
                           {% if field.field.required %}required=""{% endif %}
                           rows="10"
                           cols="40"
                           data-bind="value: {{ field.html_name }}"></textarea>
                 {% else %}
-                <input class="textinput textInput form-control"
+                <input name="{{ field.html_name }}"
+                       class="textinput textInput form-control"
                        {% if field.field.required %}required=""{% endif %}
                        type="{% if field.field.widget.input_type == 'password' %}password{% else %}text{% endif %}"
                        data-bind="value: {{ field.html_name }}" />
