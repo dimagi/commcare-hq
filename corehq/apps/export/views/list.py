@@ -861,7 +861,7 @@ class ODataFeedListHelper(ExportListHelper):
             'isOData': True,
         })
         if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
-            data['editUrl'] = '#otherModal'
+            data['editUrl'] = '#odataFeedLimitReachedModal'
         return data
 
     def _edit_view(self, export):
@@ -903,6 +903,6 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
             'beta_odata_feed_limit': self.beta_odata_feed_limit,
         })
         if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
-            context['create_url'] = '#otherModal'
+            context['create_url'] = '#odataFeedLimitReachedModal'
             context['odata_feeds_over_limit'] = True
         return context
