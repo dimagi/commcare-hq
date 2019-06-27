@@ -17,33 +17,33 @@
       method="post"
       data-bind="submit: submit">
 
-    <div data-bind="template: {
-                        name: 'importer_template',
-                        foreach: openmrsImporters,
-                        as: 'openmrsImporter',
-                        afterRender: initOpenmrsImporterTemplate
-                    }"></div>
+  <div data-bind="template: {
+                      name: 'importer_template',
+                      foreach: openmrsImporters,
+                      as: 'openmrsImporter',
+                      afterRender: initOpenmrsImporterTemplate
+                  }"></div>
 
-    <p>
-        <button type="button"
-                class="btn btn-primary"
-                data-bind="click: addOpenmrsImporter">
-            <i class="fa fa-plus"></i>
-            {% trans "Add OpenMRS Importer" %}
-        </button>
-    </p>
+  <p>
+    <button type="button"
+            class="btn btn-primary"
+            data-bind="click: addOpenmrsImporter">
+      <i class="fa fa-plus"></i>
+      {% trans "Add OpenMRS Importer" %}
+    </button>
+  </p>
 
-    <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
-            <button class="btn btn-primary" type="submit">
-                {% trans "Update OpenMRS Importers" %}
-            </button>
-            <button class="btn btn-default"
-                    type="button"
-                    data-bind="click: importNow">
-                {% trans "Import Now" %}
-            </button>
-        </div>
+  <div class="form-actions">
+    <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+      <button class="btn btn-primary" type="submit">
+        {% trans "Update OpenMRS Importers" %}
+      </button>
+      <button class="btn btn-default"
+              type="button"
+              data-bind="click: importNow">
+        {% trans "Import Now" %}
+      </button>
     </div>
+  </div>
 </form>
 {% endblock %}
