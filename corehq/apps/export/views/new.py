@@ -319,8 +319,11 @@ class DeleteNewCustomExportView(BaseExportView):
             FormExportListView,
             DashboardFeedListView,
             DailySavedExportListView,
+            ODataFeedListView,
         )
-        if self.export_instance.is_daily_saved_export:
+        if self.export_instance.is_odata_config:
+            return ODataFeedListView
+        elif self.export_instance.is_daily_saved_export:
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
             return DailySavedExportListView
