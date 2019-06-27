@@ -45,6 +45,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_app_cached,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
@@ -593,7 +594,7 @@ class LanguageProfilesView(View):
 
 @require_can_edit_apps
 def toggle_build_profile(request, domain, build_id, build_profile_id):
-    build = Application.get(build_id)
+    build = get_app_cached(request.domain, build_id)
     status = request.GET.get('action') == 'enable'
     try:
         LatestEnabledBuildProfiles.update_status(build, build_profile_id, status)
