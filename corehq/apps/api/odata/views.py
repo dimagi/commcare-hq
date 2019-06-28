@@ -1,4 +1,7 @@
 from __future__ import absolute_import, unicode_literals
+
+from collections import OrderedDict
+
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -121,11 +124,11 @@ class ODataCaseMetadataFromExportInstanceView(View):
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         configs = get_odata_case_configs_by_domain(domain)
+        config_ids_to_properties = OrderedDict()
+        for config in sorted(configs, key=lambda _config: _config.get_id):  # For deterministic tests
+            config_ids_to_properties[config.get_id] = get_case_odata_fields_from_config(config)
         metadata = render_to_string('api/case_odata_metadata.xml', {
-            'config_ids_to_properties': {
-                config.get_id: get_case_odata_fields_from_config(config)
-                for config in sorted(configs, key=lambda _config: _config.get_id)  # For deterministic tests
-            },
+            'config_ids_to_properties': config_ids_to_properties,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
