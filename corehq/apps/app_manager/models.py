@@ -4566,6 +4566,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
+        if self.copy_of:
+            cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 
