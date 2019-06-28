@@ -5,7 +5,6 @@ from uuid import uuid4
 
 from django.db.models import (
     BigIntegerField,
-    BooleanField,
     CharField,
     DateTimeField,
     IntegerField,
@@ -128,17 +127,3 @@ class DeletedBlobMeta(PartitionedModel, Model):
 class BlobMigrationState(Model):
     slug = CharField(max_length=20, unique=True)
     timestamp = DateTimeField(auto_now=True)
-
-
-class BlobExpiration(Model):
-    '''
-    This models records when temporary blobs should be deleted
-    '''
-    bucket = CharField(max_length=255)
-    identifier = CharField(max_length=255, db_index=True)
-    expires_on = DateTimeField(db_index=True)
-    created_on = DateTimeField(auto_now=True)
-    length = IntegerField()
-
-    # This is set to True when the blob associated has been successfully deleted
-    deleted = BooleanField(default=False, db_index=True)

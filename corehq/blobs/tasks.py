@@ -8,7 +8,7 @@ from celery.task import periodic_task
 from celery.schedules import crontab
 
 from corehq.util.datadog.gauges import datadog_counter
-from corehq.blobs.models import BlobExpiration, BlobMeta
+from corehq.blobs.models import BlobMeta
 from corehq.blobs import get_blob_db
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
@@ -34,37 +34,10 @@ def delete_expired_blobs():
         bytes_deleted += shard_deleted
         datadog_counter('commcare.temp_blobs.bytes_deleted', value=shard_deleted)
 
-    legacy_exists, legacy_bytes = _delete_legacy_expired_blobs()
-    if run_again or legacy_exists:
+    if run_again:
         delete_expired_blobs.delay()
 
-    return bytes_deleted + legacy_bytes
-
-
-def _delete_legacy_expired_blobs():
-    """Legacy blob expiration model
-
-    This can be removed once all BlobExpiration rows have expired and
-    been deleted.
-    """
-    blob_expirations = BlobExpiration.objects.filter(expires_on__lt=_utcnow(), deleted=False)
-
-    db = get_blob_db()
-    keys = []
-    deleted_ids = []
-    bytes_deleted = 0
-    for blob_expiration in blob_expirations[:1000]:
-        key = blob_expiration.bucket + "/" + blob_expiration.identifier
-        keys.append(key)
-        deleted_ids.append(blob_expiration.id)
-        bytes_deleted += blob_expiration.length
-        db.delete(key=key)
-
-    log.info("deleted expired blobs: %r", keys)
-    BlobExpiration.objects.filter(id__in=deleted_ids).delete()
-    datadog_counter('commcare.temp_blobs.bytes_deleted', value=bytes_deleted)
-
-    return blob_expirations.exists(), bytes_deleted
+    return bytes_deleted
 
 
 def _utcnow():

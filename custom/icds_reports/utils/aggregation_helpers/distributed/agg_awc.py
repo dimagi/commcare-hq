@@ -159,7 +159,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             wer_weighed = ut.wer_weighed,
             wer_eligible = ut.wer_eligible,
             wer_eligible_0_2 = ut.wer_eligible_0_2,
-            wer_weighed_0_2 = ut.wer_weighed_0_2
+            wer_weighed_0_2 = ut.wer_weighed_0_2,
             cases_person_beneficiary_v2 = ut.cases_child_health
         FROM (
             SELECT

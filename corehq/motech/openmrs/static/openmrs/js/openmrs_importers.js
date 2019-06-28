@@ -11,6 +11,24 @@ hqDefine('openmrs/js/openmrs_importers', [
     alertUser,
     baseAce
 ) {
+
+    var initObservableJsonWidget = function (element) {
+        var $element = $(element),
+            editorElement = $element.after('<pre />').next()[0],
+            importerViewModel = ko.dataFor(element),
+            fieldName = $element.attr('name'),
+            observable = importerViewModel[fieldName];
+        var editor = baseAce.initAceEditor(editorElement, 'ace/mode/json', {
+            useWorker: true,
+            readOnly: false,
+        }, observable());
+        $element.hide();
+
+        editor.getSession().on('change', function () {
+            observable(editor.getSession().getValue());
+        });
+    };
+
     var openmrsImporter = function (properties) {
         var self = {};
 
@@ -87,7 +105,7 @@ hqDefine('openmrs/js/openmrs_importers', [
 
         self.initOpenmrsImporterTemplate = function (elements) {
             _.each(elements, function (element) {
-                _.each($(element).find('.jsonwidget'), baseAce.initJsonWidget);
+                _.each($(element).find('.jsonwidget'), initObservableJsonWidget);
             });
         };
 

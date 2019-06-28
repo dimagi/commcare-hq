@@ -7,11 +7,15 @@ hqDefine('reports/v2/js/datagrid/columns', [
     'knockout',
     'underscore',
     'reports/v2/js/datagrid/column_filters',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
-    columnFilters
+    columnFilters,
+    kissmetrics,
+    initialPageData
 ) {
     'use strict';
 
@@ -175,6 +179,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
                 self.isNew(true);
                 self.hasFilterUpdate(false);
             }
+
+            kissmetrics.track.event("Clicked Add Column", {
+                "Domain": initialPageData.get('domain'),
+            });
         };
 
         self.set = function (existingColumn) {

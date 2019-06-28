@@ -43,8 +43,10 @@
       <th class="col-sm-1">
         {% if is_daily_saved_export %}
           {% trans "Edit Columns" %}
-        {% else %}
+        {% elif not is_odata %}
           {% trans 'Edit' %}
+        {% else %}
+          {% trans 'Copy' %}
         {% endif %}
       </th>
       <th class="col-sm-1">{% trans 'Delete' %}</th>
@@ -362,13 +364,25 @@
           <div data-bind="ifnot: can_edit()">
             <div data-bind="if: isLocationSafeForUser">
               <a class="btn btn-default disabled" data-bind="visible: $parent.myExports">
-                <i class="fa fa-pencil"></i>
-                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
-                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                <div data-bind="ifnot: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                  <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                </div>
+                <div data-bind="if: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span>{% trans 'Copy Feed' %}</span>
+                </div>
               </a>
               <a data-bind="attr: {href: editUrl}, visible: !$parent.myExports" class="btn btn-default">
-                <span data-bind="visible: !isDailySaved()">{% trans 'View' %}</span>
-                <span data-bind="visible: isDailySaved()">{% trans 'View Columns' %}</span>
+                <div data-bind="ifnot: isOData()">
+                  <span data-bind="visible: !isDailySaved()">{% trans 'View' %}</span>
+                  <span data-bind="visible: isDailySaved()">{% trans 'View Columns' %}</span>
+                </div>
+                <div data-bind="if: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span>{% trans 'View Feed' %}</span>
+                </div>
               </a>
             </div>
           </div>
@@ -376,9 +390,15 @@
         <div data-bind="ifnot: $parent.showOwnership">
           <div data-bind="if: isLocationSafeForUser">
             <a data-bind="attr: {href: editUrl}" class="btn btn-default"{% if odata_feeds_over_limit %} data-toggle="modal"{% endif %}>
-              <i class="fa fa-pencil"></i>
-              <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
-              <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+              <div data-bind="ifnot: isOData()">
+                <i class="fa fa-pencil"></i>
+                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+              </div>
+              <div data-bind="if: isOData()">
+                <i class="fa fa-pencil"></i>
+                <span>{% trans 'Copy Feed' %}</span>
+              </div>
             </a>
           </div>
         </div>

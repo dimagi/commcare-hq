@@ -1112,16 +1112,22 @@ def get_dashboard_users_not_logged_in(start_date, end_date, domain='icds-cas'):
     return not_logged_in
 
 
-
-@periodic_task(run_every=crontab(day_of_week=5, hour=19, minute=0), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(day_of_week=5, hour=14, minute=0), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
     # Weekly refresh of disha dumps for current and last month
+    DISHA_NOTIFICATION_EMAIL = '{}@{}'.format('icds-dashboard', 'dimagi.com')
+    _soft_assert = soft_assert(to=[DISHA_NOTIFICATION_EMAIL], send_to_ops=False)
     month = date.today().replace(day=1)
     last_month = month - timedelta(days=1)
     last_month = last_month.replace(day=1)
     celery_task_logger.info("Started dumping DISHA data")
-    build_dumps_for_month(month, rebuild=True)
-    build_dumps_for_month(last_month, rebuild=True)
+    try:
+        build_dumps_for_month(month, rebuild=True)
+        build_dumps_for_month(last_month, rebuild=True)
+    except Exception:
+        _soft_assert(False, "DISHA weekly task has failed.")
+    else:
+        _soft_assert(False, "DISHA weekly task has succeeded.")
     celery_task_logger.info("Finished dumping DISHA data")
 
 

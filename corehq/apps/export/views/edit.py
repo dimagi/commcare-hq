@@ -74,11 +74,23 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     page_title = ugettext_lazy("Edit Form Data Export")
     export_type = FORM_EXPORT
 
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import FormExportListView
+        return FormExportListView
+
 
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
     page_title = ugettext_lazy("Edit Case Data Export")
     export_type = CASE_EXPORT
+
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import CaseExportListView
+        return CaseExportListView
 
 
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
@@ -101,9 +113,25 @@ class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExpor
 
 class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
-    page_title = ugettext_lazy("Edit OData Case Feed")
+    page_title = ugettext_lazy("Copy OData Feed")
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        export_instance = self.export_instance_cls.get(self.export_id)
+        export_instance._id = None
+        export_instance._rev = None
+        return export_instance
 
 
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
-    page_title = ugettext_lazy("Edit OData Form Feed")
+    page_title = ugettext_lazy("Copy OData Feed")
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        export_instance = self.export_instance_cls.get(self.export_id)
+        export_instance._id = None
+        export_instance._rev = None
+        return export_instance
