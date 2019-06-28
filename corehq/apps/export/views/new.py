@@ -72,19 +72,6 @@ class BaseExportView(BaseProjectDataView):
         return reverse(self.report_class.urlname, args=(self.domain,))
 
     @property
-    @memoized
-    def report_class(self):
-        from corehq.apps.export.views.list import CaseExportListView, FormExportListView
-        try:
-            base_views = {
-                'form': FormExportListView,
-                'case': CaseExportListView,
-            }
-            return base_views[self.export_type]
-        except KeyError:
-            raise SuspiciousOperation('Attempted to access list view {}'.format(self.export_type))
-
-    @property
     def terminology(self):
         return {
             'page_header': _("Export Settings"),
@@ -207,6 +194,12 @@ class CreateNewCustomFormExportView(BaseExportView):
     page_title = ugettext_lazy("Create Form Data Export")
     export_type = FORM_EXPORT
 
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import FormExportListView
+        return FormExportListView
+
     def create_new_export_instance(self, schema):
         return self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -225,6 +218,12 @@ class CreateNewCustomCaseExportView(BaseExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Data Export")
     export_type = CASE_EXPORT
+
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import CaseExportListView
+        return CaseExportListView
 
     def create_new_export_instance(self, schema):
         return self.export_instance_cls.generate_instance_from_schema(schema)
@@ -314,8 +313,11 @@ class DeleteNewCustomExportView(BaseExportView):
             FormExportListView,
             DashboardFeedListView,
             DailySavedExportListView,
+            ODataFeedListView,
         )
-        if self.export_instance.is_daily_saved_export:
+        if self.export_instance.is_odata_config:
+            return ODataFeedListView
+        elif self.export_instance.is_daily_saved_export:
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
             return DailySavedExportListView
