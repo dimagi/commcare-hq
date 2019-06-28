@@ -11,7 +11,7 @@ from django.utils.translation import ugettext as _
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_children_enrolled_help_text
-from custom.icds_reports.models import AggChildHealthMonthly
+from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, \
     indian_formatted_number, get_child_locations
 
@@ -21,13 +21,13 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
-        queryset = AggChildHealthMonthly.objects.filter(
+        queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            valid=Sum('valid_in_month'),
-            all=Sum('valid_all_registered_in_month')
+            valid=Sum('cases_child_health'),
+            all=Sum('cases_child_health_all')
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -99,12 +99,12 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
 def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False):
     config['month'] = datetime(*config['month'])
 
-    chart_data = AggChildHealthMonthly.objects.filter(
+    chart_data = AggAwcMonthly.objects.filter(
         **config
     ).values(
         'month', 'age_tranche', '%s_name' % loc_level
     ).annotate(
-        valid=Sum('valid_in_month'),
+        valid=Sum('cases_child_health_all'),
     ).order_by('month')
 
     if not show_test:
@@ -160,13 +160,13 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
-    data = AggChildHealthMonthly.objects.filter(
+    data = AggAwcMonthly.objects.filter(
         **config
     ).values(
         *group_by
     ).annotate(
-        valid=Sum('valid_in_month'),
-        all=Sum('valid_all_registered_in_month')
+        valid=Sum('cases_child_health'),
+        all=Sum('cases_child_health_all')
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
