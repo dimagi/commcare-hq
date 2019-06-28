@@ -74,11 +74,23 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     page_title = ugettext_lazy("Edit Form Data Export")
     export_type = FORM_EXPORT
 
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import FormExportListView
+        return FormExportListView
+
 
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
     page_title = ugettext_lazy("Edit Case Data Export")
     export_type = CASE_EXPORT
+
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import CaseExportListView
+        return CaseExportListView
 
 
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
