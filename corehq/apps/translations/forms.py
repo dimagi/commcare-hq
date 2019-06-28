@@ -24,6 +24,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.translations.exceptions import TransifexProjectMigrationInvalidUpload
+from corehq.apps.translations.integrations.transifex.exceptions import InvalidProjectMigration
 from corehq.apps.translations.models import TransifexBlacklist, TransifexProject
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.workbook_json.excel import WorkbookJSONReader
@@ -457,7 +458,10 @@ class MigrateTransifexProjectForm(forms.Form):
             return True
 
     def _validate_migration(self):
-        self.migrator.validate()
+        try:
+            self.migrator.validate()
+        except InvalidProjectMigration as e:
+            self.add_error(None, e)
 
     def clean(self):
         super(MigrateTransifexProjectForm, self).clean()

@@ -30,7 +30,6 @@ from corehq.apps.translations.forms import (
 from corehq.apps.translations.generators import PoFileGenerator, Translation
 from corehq.apps.translations.integrations.transifex.exceptions import (
     ResourceMissing,
-    InvalidProjectMigration,
 )
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 from corehq.apps.translations.integrations.transifex.utils import (
@@ -534,14 +533,11 @@ class MigrateTransifexProject(BaseTranslationsView):
 
     def post(self, request, *args, **kwargs):
         if self.transifex_integration_enabled(request):
-            try:
-                valid_form = self.form.is_valid()
-            except InvalidProjectMigration as e:
-                messages.error(self.request, e)
-            else:
-                if valid_form:
-                    self._perform_request()
-                    return redirect(self.urlname, domain=self.domain)
+            if self.form.is_valid():
+                self._perform_request()
+                messages.success(request, _('Submitted request to migrate project. '
+                                            'You should receive an email shortly.'))
+                return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 
