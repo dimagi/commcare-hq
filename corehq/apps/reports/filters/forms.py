@@ -138,11 +138,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 
-        if self.display_app_type and not context['selected']:
+        show_advanced = self.request.GET.get('show_advanced') == 'on'
+        
+        #set Default app type to active only when advanced option is not selected
+        if self.display_app_type and not context['selected'] and not show_advanced:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
 
         context["show_advanced"] = (
-            self.request.GET.get('show_advanced') == 'on'
+            show_advanced
             or context["unknown"]["show"]
             or context["hide_fuzzy"]["checked"]
             or (len(context['selected']) > 0
@@ -193,8 +196,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         map_deleted = sorted(map_deleted, key=lambda item: item['text'].lower())
 
         if (bool(map_deleted) + bool(map_active)) > 1:
-            if self.request.GET.get('show_advanced') != 'on':
-                self.display_app_type = True
+            self.display_app_type = True
             if map_active:
                 final_map.append(
                     self._map_structure(PARAM_VALUE_STATUS_ACTIVE, _('Active CommCare Applications'), map_active)
