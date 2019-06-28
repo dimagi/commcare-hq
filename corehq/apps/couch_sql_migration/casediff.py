@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 
 import logging
 from collections import defaultdict
+from itertools import chain, count
 
+import attr
 import gevent
+import six
 from gevent.pool import Pool
-from itertools import count
 
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from dimagi.utils.chunked import chunked
@@ -28,10 +30,19 @@ class CaseDiffQueue(object):
     def __init__(self, statedb, diff_cases):
         self.statedb = statedb
         self.diff_cases = diff_cases
-        self.processed_forms = defaultdict(set)  # case id -> processed form ids
+        self.pending_cases = defaultdict(set)  # case id -> processed form ids
         self.cases_to_diff = {}  # case id -> case doc (JSON)
         self.pool = Pool(5)
         self.case_batcher = BatchProcessor(self.pool)
+        self.diff_batcher = BatchProcessor(self.pool)
+
+        # Core data structure: case id -> CaseRecord. Each CaseRecord
+        # maintains a set of unprocessed form ids for each case known
+        # to the migration. Forms are removed from the set as they are
+        # processed. When the set of form ids for a given case becomes
+        # empty it is queued to be diffed and the corresponding
+        # CaseRecord is removed.
+        self.cases = {}
 
     def __enter__(self):
         self._load_resume_state()
@@ -51,35 +62,62 @@ class CaseDiffQueue(object):
         :param form_id: form id touching case ids.
         """
         log.debug("update: cases=%s form=%s", case_ids, form_id)
-        processed = self.processed_forms
+        pending = self.pending_cases
         for case_id in case_ids:
-            processed[case_id].add(form_id)
-            if len(processed) >= self.BATCH_SIZE:
-                self._enqueue_pending_cases(processed)
-                processed = self.processed_forms = defaultdict(set)
+            pending[case_id].add(form_id)
+            if len(pending) >= self.BATCH_SIZE:
+                self._add_pending_cases(pending)
+                pending = self.pending_cases = defaultdict(set)
         task_switch()
 
-    def _enqueue_pending_cases(self, processed):
-        self.case_batcher.spawn(self._enqueue_cases, list(processed))
+    def _add_pending_cases(self, pending_cases):
+        log.debug("add pending cases %s", pending_cases)
+        self.case_batcher.spawn(self._load_cases, pending_cases)
 
-    def _enqueue_cases(self, case_ids):
+    def _load_cases(self, pending):
+        """Load cases and try to diff them as forms are processed
+
+        :param pending: dict of processed form id sequences (list
+        or set) by case id.
+        """
+        cases = self.cases
+        case_ids = []
+        for case_id, processed_form_ids in pending.items():
+            if case_id in cases:
+                # try to diff
+                self._try_to_diff(cases[case_id], processed_form_ids)
+            else:
+                case_ids.append(case_id)
         for case in CaseAccessorCouch.get_cases(case_ids):
-            self.enqueue(case.to_json())
+            form_ids = get_case_form_ids(case)
+            rec = CaseRecord(case, form_ids)
+            cases[case.case_id] = rec
+            self._try_to_diff(rec, pending[case.case_id])
+
+    def _try_to_diff(self, rec, processed_form_ids):
+        log.debug("trying case %s forms %s - %s",
+            rec.id, rec.remaining_forms, processed_form_ids)
+        for form_id in processed_form_ids:
+            rec.add_processed(form_id)
+        if not rec.remaining_forms:
+            self.enqueue(rec.case.to_json())
 
     def enqueue(self, case_doc):
         case_id = case_doc["_id"]
+        self.cases.pop(case_id, None)
         self.cases_to_diff[case_id] = case_doc
         if len(self.cases_to_diff) >= self.BATCH_SIZE:
             self._diff_cases()
 
     def _diff_cases(self):
-        self.case_batcher.spawn(self.diff_cases, self.cases_to_diff)
+        self.diff_batcher.spawn(self.diff_cases, self.cases_to_diff)
         self.cases_to_diff = {}
 
     def _process_remaining_diffs(self):
         log.debug("process remaining diffs")
-        if self.processed_forms:
-            self._enqueue_pending_cases(self.processed_forms)
+        if self.pending_cases:
+            self._add_pending_cases(self.pending_cases)
+            self.pending_cases = defaultdict(set)
         pool = self.pool
         while self.cases_to_diff or pool:
             if self.cases_to_diff:
@@ -87,14 +125,18 @@ class CaseDiffQueue(object):
             while not pool.join(timeout=10):
                 log.info('Waiting on {} case diff workers'.format(len(pool)))
         self.pool = None
-        self.processed_forms = None
 
     def _save_resume_state(self):
         state = {}
-        if self.processed_forms:
-            state["processed"] = dict_of_lists(self.processed_forms)
-        if self.case_batcher or self.cases_to_diff:
-            state["to_diff"] = list(iter_unprocessed(self.case_batcher))
+        if self.pending_cases or self.case_batcher or self.cases:
+            recs = ((r.id, list(r.processed_forms)) for r in self.cases.values())
+            pending = defaultdict(list, recs)
+            for batch in chain(self.case_batcher, [self.pending_cases]):
+                for case_id, processed_forms in batch.items():
+                    pending[case_id].extend(processed_forms)
+            state["pending"] = dict(pending)
+        if self.diff_batcher or self.cases_to_diff:
+            state["to_diff"] = list(chain.from_iterable(self.diff_batcher))
             state["to_diff"].extend(self.cases_to_diff)
         log.debug("resume state: %s", state)
         self.statedb.set_resume_state(type(self).__name__, state)
@@ -103,22 +145,18 @@ class CaseDiffQueue(object):
         state = self.statedb.pop_resume_state(type(self).__name__, {})
         if "to_diff" in state:
             for chunk in chunked(state["to_diff"], self.BATCH_SIZE, list):
-                self._enqueue_pending_cases(chunk)
-        if "processed" in state:
-            for key, value in state["processed"].items():
-                self.processed_forms[key].update(value)
+                self.diff_batcher.spawn(self._enqueue_cases, chunk)
+        if "pending" in state:
+            for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
+                self._add_pending_cases(dict(chunk))
+
+    def _enqueue_cases(self, case_ids):
+        for case in CaseAccessorCouch.get_cases(case_ids):
+            self.enqueue(case.to_json())
 
 
 def task_switch():
     gevent.sleep()
-
-
-def dict_of_lists(value):
-    return {k: list(v) for k, v in value.items()}
-
-
-def iter_unprocessed(batcher):
-    return (item for batch in batcher for item in batch)
 
 
 def get_case_form_ids(couch_case):
@@ -127,6 +165,22 @@ def get_case_form_ids(couch_case):
     for action in couch_case.actions:
         form_ids.add(action.xform_id)
     return form_ids
+
+
+@attr.s(slots=True)
+class CaseRecord(object):
+
+    case = attr.ib()
+    remaining_forms = attr.ib()
+    processed_forms = attr.ib(factory=set, init=False)
+
+    @property
+    def id(self):
+        return self.case.case_id
+
+    def add_processed(self, form_id):
+        self.remaining_forms.discard(form_id)
+        self.processed_forms.add(form_id)
 
 
 class BatchProcessor(object):
@@ -156,7 +210,8 @@ class BatchProcessor(object):
             try:
                 process(self.batches[key])
             except Exception as err:
-                log.warn("batch processing error: %s: %s", type(err).__name__, err)
+                log.warn("batch processing error: %s: %s",
+                    type(err).__name__, err, exc_info=True)
                 raise
             else:
                 self.batches.pop(key)

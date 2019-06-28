@@ -40,13 +40,19 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update({"c"}, "fx")
         self.assertDiffed("c")
 
+    def test_diff_case_without_forms(self):
+        self.add_cases("cx")
+        with self.queue() as queue:
+            queue.update({"cx"}, "fx")
+        self.assertDiffed("cx")
+
     def test_diff_batching(self):
         self.add_cases("a b c d e", "fx")
         batch_size = mod.CaseDiffQueue.BATCH_SIZE
         assert batch_size < 3, batch_size
         with self.queue() as queue:
             queue.update({"a", "b", "c", "d", "e"}, "fx")
-            self.assertLess(len(queue.processed_forms), batch_size)
+            self.assertLess(len(queue.pending_cases), batch_size)
             self.assertLess(len(queue.cases_to_diff), batch_size)
         self.assertDiffed("a b c d e")
 
@@ -105,6 +111,18 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update({"d"}, "f2")
         self.assertDiffed("a b c d")
 
+    def test_defer_diff_until_all_forms_are_processed(self):
+        self.add_cases("a b", "f0")
+        self.add_cases("c d", "f1")
+        self.add_cases("b d e", "f2")
+        with self.queue() as queue:
+            queue.update({"a", "b"}, "f0")
+            queue.update({"c", "d"}, "f1")
+            self.flush(queue)
+            self.assertDiffed("a c")
+            queue.update({"b", "d", "e"}, "f2")
+        self.assertDiffed("a b c d e")
+
     @contextmanager
     def queue(self):
         log.info("init CaseDiffQueue")
@@ -112,7 +130,13 @@ class TestCaseDiffQueue(SimpleTestCase):
                 mod.CaseDiffQueue(statedb, self.diff_cases) as queue:
             yield queue
 
-    def add_cases(self, case_ids, xform_ids=None):
+    @staticmethod
+    def flush(queue):
+        pool = queue.pool
+        while not pool.join(timeout=1):
+            log.info('waiting on {} case diff workers'.format(len(pool)))
+
+    def add_cases(self, case_ids, xform_ids=()):
         """Add cases with updating form ids
 
         `case_ids` and `form_ids` can be either a string (space-
@@ -123,7 +147,13 @@ class TestCaseDiffQueue(SimpleTestCase):
         if isinstance(xform_ids, six.text_type):
             xform_ids = xform_ids.split()
         for case_id in case_ids:
-            self.cases[case_id] = FakeCase(case_id, xform_ids or [])
+            if case_id in self.cases:
+                case = self.cases[case_id]
+                for fid in xform_ids:
+                    assert fid not in case.xform_ids, (fid, case)
+                    case.xform_ids.append(fid)
+            else:
+                self.cases[case_id] = FakeCase(case_id, list(xform_ids) or [])
 
     def get_cases(self, case_ids):
         def get(case_id):
