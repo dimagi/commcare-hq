@@ -24,6 +24,9 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 class TestCaseOdataFeed(TestCase, OdataTestMixin):
 
+    # flag_enabled is used in the test function body because class-level flags in child classes
+    # cancel out class level decorators or decorators on non-overriden functions.
+
     @classmethod
     def setUpClass(cls):
         super(TestCaseOdataFeed, cls).setUpClass()
