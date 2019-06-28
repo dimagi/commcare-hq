@@ -115,23 +115,7 @@ class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
     page_title = ugettext_lazy("Copy OData Feed")
 
-    @property
-    @memoized
-    def new_export_instance(self):
-        export_instance = self.export_instance_cls.get(self.export_id)
-        export_instance._id = None
-        export_instance._rev = None
-        return export_instance
-
 
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
     page_title = ugettext_lazy("Copy OData Feed")
-
-    @property
-    @memoized
-    def new_export_instance(self):
-        export_instance = self.export_instance_cls.get(self.export_id)
-        export_instance._id = None
-        export_instance._rev = None
-        return export_instance
