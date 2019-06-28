@@ -25,6 +25,7 @@ from corehq.apps.translations.forms import (
     ConvertTranslationsForm,
     DownloadAppTranslationsForm,
     PullResourceForm,
+    MigrateTransifexProjectForm,
 )
 from corehq.apps.translations.generators import PoFileGenerator, Translation
 from corehq.apps.translations.integrations.transifex.exceptions import (
@@ -41,6 +42,7 @@ from corehq.apps.translations.tasks import (
     email_project_from_hq,
     pull_translation_files_from_transifex,
     push_translation_files_to_transifex,
+    migrate_project_on_transifex,
 )
 from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.files import safe_filename_header
@@ -488,6 +490,52 @@ class DownloadTranslations(BaseTranslationsView):
                 form_data = form.cleaned_data
                 email_project_from_hq.delay(request.domain, form_data, request.user.email)
                 messages.success(request, _('Submitted request to download translations. '
+                                            'You should receive an email shortly.'))
+                return redirect(self.urlname, domain=self.domain)
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class MigrateTransifexProject(BaseTranslationsView):
+    page_title = ugettext_lazy('Migrate Project')
+    urlname = 'migrate_transifex_project'
+    template_name = 'migrate_project.html'
+
+    def section_url(self):
+        return reverse(MigrateTransifexProject.urlname, args=self.args, kwargs=self.kwargs)
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.POST:
+            return MigrateTransifexProjectForm(self.domain, self.request.POST, self.request.FILES)
+        else:
+            return MigrateTransifexProjectForm(self.domain)
+
+    @property
+    def page_context(self):
+        context = super(MigrateTransifexProject, self).page_context
+        if context['transifex_details_available']:
+            context['migration_form'] = self.form
+        return context
+
+    def _perform_request(self):
+        migrator = self.form.migrator
+        # ToDo: Check if you can pass form.migrator instead of its attrs and then re-init it
+        migrate_project_on_transifex.delay(
+            migrator.domain,
+            migrator.project_slug,
+            migrator.source_app_id,
+            migrator.target_app_id,
+            self.form.uploaded_resource_id_mappings(),
+            self.request.user.email
+        )
+
+    def post(self, request, *args, **kwargs):
+        if self.transifex_integration_enabled(request):
+            if self.form.is_valid():
+                self._perform_request()
+                messages.success(request, _('Submitted request to migrate project. '
                                             'You should receive an email shortly.'))
                 return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
