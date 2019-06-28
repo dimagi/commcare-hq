@@ -59,4 +59,5 @@ branches:
   - jls/disable-autofill # Jenny June 19
   - odata-merge  # Nick June 24
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
+  - mk/migrate-transifex-proj-realigned # MK June 28
 submodules: {}
