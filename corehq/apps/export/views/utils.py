@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.generic import View
+from memoized import memoized
 from soil import DownloadBase
 from soil.progress import get_task_status
 
@@ -209,6 +210,14 @@ class ODataFeedMixin(object):
         context = super(ODataFeedMixin, self).page_context
         context['format_options'] = ["odata"]
         return context
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        export_instance = self.export_instance_cls.get(self.export_id)
+        export_instance._id = None
+        export_instance._rev = None
+        return export_instance
 
     @property
     def report_class(self):
