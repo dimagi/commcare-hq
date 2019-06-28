@@ -87,6 +87,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
 )
@@ -165,7 +166,8 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import (
     get_latest_master_app_release,
-    get_master_app_version,
+    get_latest_master_releases_versions,
+    get_master_app_briefs,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.reports.daterange import (
@@ -3892,7 +3894,7 @@ class VersionedDoc(LazyBlobDoc):
 
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
-            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
+            increment_version = not self.copy_of
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -5570,8 +5572,9 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    # This is the id of the master application
-    master = StringProperty()
+    master = StringProperty()   # Legacy, should be removed once all linked apps support multiple masters
+    pulled_from_master_version = IntegerProperty()
+    pulled_from_master_app_id = StringProperty()
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5592,20 +5595,49 @@ class LinkedApplication(Application):
         from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
         return get_domain_master_link(self.domain)
 
-    def get_master_version(self):
+    @memoized
+    def get_master_app_briefs(self):
         if self.domain_link:
-            return get_master_app_version(self.domain_link, self.master)
+            return get_master_app_briefs(self.domain_link)
+        return []
 
     @property
     def master_is_remote(self):
         if self.domain_link:
             return self.domain_link.is_remote
 
-    def get_latest_master_release(self):
+    def get_latest_master_release(self, master_app_id):
         if self.domain_link:
-            return get_latest_master_app_release(self.domain_link, self.master)
+            return get_latest_master_app_release(self.domain_link, master_app_id)
         else:
             raise ActionNotPermitted
+
+    def get_latest_master_releases_versions(self):
+        if self.domain_link:
+            return get_latest_master_releases_versions(self.domain_link)
+        return {}
+
+    @memoized
+    def get_previous_version(self, master_app_id=None):
+        if master_app_id is None:
+            master_app_id = self.pulled_from_master_app_id
+        build_ids = get_build_ids(self.domain, self.id)
+        for build_id in build_ids:
+            build_doc = Application.get_db().get(build_id)
+            if build_doc.get('pulled_from_master_app_id', build_doc['master']) == master_app_id:
+                return self.wrap(build_doc)
+        return None
+
+    @classmethod
+    def wrap(cls, data):
+        # Legacy linked apps pulled the master's version along with its content.
+        # So if the master's version wasn't recorded, that means it matches this app's version.
+        if 'pulled_from_master_version' not in data:
+            data['pulled_from_master_version'] = data['version']
+        if 'pulled_from_master_app_id' not in data:
+            data['pulled_from_master_app_id'] = data.get('master', None)
+
+        return super(LinkedApplication, cls).wrap(data)
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
