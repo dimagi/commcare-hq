@@ -59,3 +59,8 @@ def get_odata_property_from_export_item(export_item):
 
 def format_odata_property_for_power_bi(odata_property):
     return odata_property.replace('#', '').replace('@', '').replace('.', '_').strip()
+
+
+def get_case_odata_fields_from_config(case_export_config):
+    export_columns = case_export_config.tables[0].columns
+    return [column.label for column in export_columns if column.selected]
