@@ -446,10 +446,11 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             None, message="Error occurred during ICDS aggregation",
             details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
         )
+        citus = 'Citus ' if force_citus else ''
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
+            "{}{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
+                citus, func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
             )
         )
         self.retry(exc=exc)
