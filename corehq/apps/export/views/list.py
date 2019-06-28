@@ -468,6 +468,7 @@ class BaseExportListView(BaseProjectDataView):
             'lead_text': mark_safe(self.lead_text),
             "export_filter_form": (DashboardFeedFilterForm(self.domain_object)
                                    if self.include_saved_filters else None),
+            'create_url': '#createExportOptionsModal',
         }
 
 
@@ -845,6 +846,7 @@ class ODataFeedListHelper(ExportListHelper):
     form_or_case = None
     is_deid = False
     include_saved_filters = True
+    beta_odata_feed_limit = 20
 
     @property
     def create_export_form_title(self):
@@ -858,6 +860,8 @@ class ODataFeedListHelper(ExportListHelper):
         data.update({
             'isOData': True,
         })
+        if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
+            data['editUrl'] = '#odataFeedLimitReachedModal'
         return data
 
     def _edit_view(self, export):
@@ -896,5 +900,9 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
             "export_type_plural": _("OData feeds"),
             'my_export_type': _('My OData Feeds'),
             'shared_export_type': _('OData Feeds Shared with Me'),
+            'beta_odata_feed_limit': self.beta_odata_feed_limit,
         })
+        if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
+            context['create_url'] = '#odataFeedLimitReachedModal'
+            context['odata_feeds_over_limit'] = True
         return context
