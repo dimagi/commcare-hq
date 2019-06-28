@@ -169,12 +169,13 @@ def overwrite_app(app, master_build, report_map=None):
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
-    form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
 
     for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
             app_json[key] = value
-    app_json['version'] = master_json['version']
+    app_json['version'] = app_json.get('version', 1)
+    app_json['pulled_from_master_version'] = master_json['version']
+    app_json['pulled_from_master_app_id'] = master_json['copy_of']
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -186,20 +187,12 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
-    wrapped_app = _update_form_ids(wrapped_app, master_build, form_ids_by_xmlns)
+    wrapped_app = _update_form_ids(wrapped_app, master_build)
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
 
 
-def _get_form_ids_by_xmlns(app):
-    id_map = {}
-    for module in app['modules']:
-        for form in module['forms']:
-            id_map[form['xmlns']] = form['unique_id']
-    return id_map
-
-
-def _update_form_ids(app, master_app, form_ids_by_xmlns):
+def _update_form_ids(app, master_app):
 
     _attachments = master_app.get_attachments()
 
@@ -207,12 +200,21 @@ def _update_form_ids(app, master_app, form_ids_by_xmlns):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
+    form_ids_by_xmlns = _get_form_ids_by_xmlns(app.get_previous_version(master_app_id=master_app.copy_of))
     updated_source = update_form_unique_ids(app_source, form_ids_by_xmlns)
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
+
+
+def _get_form_ids_by_xmlns(app):
+    id_map = {}
+    for module in app.get_modules():
+        for form in module.get_forms():
+            id_map[form.xmlns] = form.unique_id
+    return id_map
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
@@ -292,11 +294,11 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
-def update_linked_app_and_notify(domain, app_id, user_id, email):
+def update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email):
     app = get_current_app(domain, app_id)
     subject = _("Update Status for linked app %s") % app.name
     try:
-        update_linked_app(app, user_id)
+        update_linked_app(app, master_app_id, user_id)
     except (AppLinkError, MultimediaMissingError) as e:
         message = six.text_type(e)
     except Exception:
@@ -312,41 +314,35 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     send_html_email_async.delay(subject, email, message)
 
 
-def update_linked_app(app, user_id):
+def update_linked_app(app, master_app_id, user_id):
     if not app.domain_link:
         raise AppLinkError(_(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. '
         ))
+
     try:
-        master_version = app.get_master_version()
+        latest_released_master_build = app.get_latest_master_release(master_app_id)
+    except ActionNotPermitted:
+        raise AppLinkError(_(
+            'This project is not authorized to update from the master application. '
+            'Please contact the maintainer of the master app if you believe this is a mistake. '
+        ))
+    except RemoteAuthError:
+        raise AppLinkError(_(
+            'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+            'Please verify your authentication details for the remote link are correct.'
+        ))
     except RemoteRequestError:
         raise AppLinkError(_(
             'Unable to pull latest master from remote CommCare HQ. Please try again later.'
         ))
 
-    if app.version is None or master_version > app.version:
+    previous = app.get_previous_version(master_app_id)
+    if previous is None or latest_released_master_build.version > previous.pulled_from_master_version:
+        report_map = get_static_report_mapping(latest_released_master_build.domain, app['domain'])
         try:
-            latest_master_build = app.get_latest_master_release()
-        except ActionNotPermitted:
-            raise AppLinkError(_(
-                'This project is not authorized to update from the master application. '
-                'Please contact the maintainer of the master app if you believe this is a mistake. '
-            ))
-        except RemoteAuthError:
-            raise AppLinkError(_(
-                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
-                'Please verify your authentication details for the remote link are correct.'
-            ))
-        except RemoteRequestError:
-            raise AppLinkError(_(
-                'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-            ))
-
-        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
-
-        try:
-            app = overwrite_app(app, latest_master_build, report_map)
+            app = overwrite_app(app, latest_released_master_build, report_map)
         except AppEditingError as e:
             raise AppLinkError(
                 _(
