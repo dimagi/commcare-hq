@@ -66,6 +66,7 @@ hqDefine("export/js/export_list", [
             'isDailySaved',
             'isFeed',
             'isOData',
+            'editNameUrl',
             'showLink',
         ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
@@ -82,6 +83,10 @@ hqDefine("export/js/export_list", [
         self.hasEmailedExport = !!options.emailedExport;
         if (self.hasEmailedExport) {
             self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
+        }
+
+        if (options.editNameUrl) {
+            self.editNameUrl = options.editNameUrl;
         }
 
         if (options.isOData) {
