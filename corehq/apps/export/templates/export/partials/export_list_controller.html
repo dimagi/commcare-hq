@@ -42,7 +42,7 @@
         {% include 'export/partials/loading_exports.html' %}
         {% include 'export/partials/table.html' %}
         <pagination data-apply-bindings="false"
-                    data-bind="visible: showPagination"
+                    data-bind="visible: hasData"
                     params="goToPage: goToPage,
                                     slug: 'export-list',
                                     perPage: itemsPerPage,

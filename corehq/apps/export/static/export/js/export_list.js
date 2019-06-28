@@ -232,14 +232,14 @@ hqDefine("export/js/export_list", [
         self.showEmpty = ko.computed(function () {
             return !self.isLoadingPanel() && !self.hasError() && !self.exports().length;
         });
-        self.showPagination = ko.computed(function () {
+        self.hasData = ko.computed(function () {
             return !self.isLoadingPanel() && !self.hasError() && self.exports().length;
         });
 
         self.totalItems = ko.observable(0);
         self.itemsPerPage = ko.observable();
         self.goToPage = function (page) {
-            if (self.showPagination()) {
+            if (self.hasData()) {
                 self.fetchPage(page);
             }
         };
