@@ -282,6 +282,7 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
         export_config = CaseExportInstance(
             _id='config_id',
             tables=[TableConfiguration(columns=[])],
+            case_type='my_case_type',
         )
         export_config.save()
         self.addCleanup(export_config.delete)
