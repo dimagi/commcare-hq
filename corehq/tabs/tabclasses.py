@@ -867,11 +867,6 @@ class ApplicationsTab(UITab):
                 ManageHostedCCZ.page_title,
                 url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
             ))
-        if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _('Manage Releases'),
-                url=(reverse(ManageReleasesByLocation.urlname, args=[self.domain])),
-            ))
         return submenu_context
 
     @property
@@ -1672,6 +1667,12 @@ def _get_administration_section(domain):
         administration.append({
             'title': _(TransferDomainView.page_title),
             'url': reverse(TransferDomainView.urlname, args=[domain])
+        })
+
+    if toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByLocation.page_title),
+            'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
 
     return administration
