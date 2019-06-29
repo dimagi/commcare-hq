@@ -20,3 +20,7 @@ SOURCE_LANGUAGE_MAPPING = {
     'urd': 'ur',  # urdu
     'kan': 'kn',  # kannada
 }
+TRANSIFEX_SLUG_PREFIX_MAPPING = {
+    'Menu': 'module',
+    'Form': 'form',
+}
