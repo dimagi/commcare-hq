@@ -73,6 +73,7 @@ def record_feed_access_in_datadog(request, config_id, duration, response):
     username = request.couch_user.username
     datadog_counter('commcare.odata_feed.test', tags=[
         'domain:{}'.format(request.domain),
+        'feed_id:{}'.format(config_id),
         'feed_type:{}'.format(config.type),
         'username:{}'.format(username),
         'row_count:{}'.format(len([])),
