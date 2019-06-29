@@ -91,9 +91,10 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                  <button type="submit" data-bind="enable: allowSubmit" class="btn btn-primary">
+                  <button type="submit" data-bind="enable: !allowSubmit()" class="btn btn-primary">
                     {% trans "Create" %}
                   </button>
+                  <div class="alert alert-danger" data-bind="visible: allowSubmit, text: allowSubmit"></div>
                 </div>
               </div>
             </form>
