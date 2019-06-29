@@ -5,7 +5,18 @@ from mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.api.odata.serializers import get_properties_to_include, update_case_json
+from corehq.apps.api.odata.serializers import (
+    ODataCaseFromExportInstanceSerializer,
+    get_properties_to_include,
+    update_case_json,
+)
+from corehq.apps.export.models import (
+    CaseExportInstance,
+    ExportColumn,
+    ExportItem,
+    PathNode,
+    TableConfiguration,
+)
 
 
 class TestODataCommCareCaseSerializer(SimpleTestCase):
@@ -59,3 +70,176 @@ class TestODataCommCareCaseSerializer(SimpleTestCase):
             'missing_property': None,
             'backend_id': None
         })
+
+
+class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
+
+    def test_selected_column_included(self):
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+                [{'owner_name': 'owner-name-value', 'properties': {}}],
+                CaseExportInstance(
+                    tables=[
+                        TableConfiguration(
+                            columns=[
+                                ExportColumn(
+                                    label='owner-name-label',
+                                    item=ExportItem(
+                                        path=[
+                                            PathNode(name='owner_name')
+                                        ]
+                                    ),
+                                    selected=True,
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ),
+            [{'owner-name-label': 'owner-name-value'}]
+        )
+
+    def test_unselected_column_excluded(self):
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+                [{'owner_name': 'owner-name-value', 'properties': {}}],
+                CaseExportInstance(
+                    tables=[
+                        TableConfiguration(
+                            columns=[
+                                ExportColumn(
+                                    label='owner-name-label',
+                                    item=ExportItem(
+                                        path=[
+                                            PathNode(name='owner_name')
+                                        ]
+                                    ),
+                                    selected=False,
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ),
+            [{}]
+        )
+
+    def test_missing_value_is_null(self):
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+                [{'properties': {}}],
+                CaseExportInstance(
+                    tables=[
+                        TableConfiguration(
+                            columns=[
+                                ExportColumn(
+                                    label='owner-name-label',
+                                    item=ExportItem(
+                                        path=[
+                                            PathNode(name='owner_name')
+                                        ]
+                                    ),
+                                    selected=True,
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ),
+            [{'owner-name-label': None}]
+        )
+
+    def test_non_standard_case_property(self):
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+                [{'properties': {
+                    'property_1': 'property-1-value'
+                }}],
+                CaseExportInstance(
+                    tables=[
+                        TableConfiguration(
+                            columns=[
+                                ExportColumn(
+                                    label='property-1-label',
+                                    item=ExportItem(
+                                        path=[
+                                            PathNode(name='property_1')
+                                        ]
+                                    ),
+                                    selected=True,
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ),
+            [{'property-1-label': 'property-1-value'}]
+        )
+
+    def test_case_id(self):
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+                [{'case_id': 'case-id-value'}],
+                CaseExportInstance(
+                    tables=[
+                        TableConfiguration(
+                            columns=[
+                                ExportColumn(
+                                    label='case-id-label',
+                                    item=ExportItem(
+                                        path=[
+                                            PathNode(name='_id')
+                                        ]
+                                    ),
+                                    selected=True,
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ),
+            [{'case-id-label': 'case-id-value'}]
+        )
+
+    def test_case_name(self):
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+                [{'properties': {
+                    'case_name': 'case-name-value'
+                }}],
+                CaseExportInstance(
+                    tables=[
+                        TableConfiguration(
+                            columns=[
+                                ExportColumn(
+                                    label='case-name-label',
+                                    item=ExportItem(
+                                        path=[
+                                            PathNode(name='name')
+                                        ]
+                                    ),
+                                    selected=True,
+                                )
+                            ]
+                        )
+                    ]
+                )
+            ),
+            [{'case-name-label': 'case-name-value'}]
+        )
+
+    def test_next_link_present(self):
+        meta = {'next': '?limit=1&offset=1'}
+        api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.get_next_url(meta, api_path),
+            'http://localhost:8000/a/odata-test/api/v0.5/odata/cases/config_id?limit=1&offset=1'
+        )
+
+    def test_next_link_absent(self):
+        meta = {'next': None}
+        api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
+        self.assertEqual(
+            ODataCaseFromExportInstanceSerializer.get_next_url(meta, api_path),
+            None
+        )

@@ -5,8 +5,10 @@ from collections import defaultdict
 
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.export.dbaccessors import get_latest_case_export_schema, get_latest_form_export_schema
-from corehq.apps.export.models import CaseExportDataSchema, ExportItem, FormExportDataSchema
+from corehq.apps.export.models import CaseExportDataSchema, ExportInstance, ExportItem, FormExportDataSchema
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.utils import bucket_value
 
 
 def get_case_type_to_properties(domain):
@@ -59,3 +61,21 @@ def get_odata_property_from_export_item(export_item):
 
 def format_odata_property_for_power_bi(odata_property):
     return odata_property.replace('#', '').replace('@', '').replace('.', '_').strip()
+
+
+def get_case_odata_fields_from_config(case_export_config):
+    export_columns = case_export_config.tables[0].columns
+    return [column.label for column in export_columns if column.selected]
+
+
+def record_feed_access_in_datadog(request, config_id, duration, response):
+    datadog_counter('commcare.odata_feed.test', tags=[
+        'domain:{}'.format(request.domain),
+        'feed_type:{}'.format(ExportInstance.get(config_id).type),
+        'username:{}'.format(request.couch_user.username),
+        'row_count:{}'.format(len([])),
+        'column_count:{}'.format(len([])),
+        'size:{}'.format(len(response.content)),
+        'duration:{}'.format(duration),
+        'duration_bucket:{}'.format(bucket_value(duration, (1, 5, 20, 60, 120, 300, 600), 's')),
+    ])
