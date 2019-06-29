@@ -2465,6 +2465,8 @@ class ManageReleasesByAppProfileForm(forms.Form):
         self.domain = domain
         super(ManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
         self.fields['app_id'].choices = self.app_id_choices()
+        if request.GET.get('app_id'):
+            self.fields['app_id'].initial = request.GET.get('app_id')
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
