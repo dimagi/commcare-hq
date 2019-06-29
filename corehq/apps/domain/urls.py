@@ -16,7 +16,7 @@ from django.views.generic import RedirectView
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views.releases import (
-    ManageReleases,
+    ManageReleasesByLocation,
     deactivate_release_restriction,
     activate_release_restriction,
 )
@@ -227,7 +227,8 @@ domain_settings = [
     url(r'^recovery_measures_history/$',
         RecoveryMeasuresHistory.as_view(),
         name=RecoveryMeasuresHistory.urlname),
-    url(r'^manage_releases/$', ManageReleases.as_view(), name=ManageReleases.urlname),
+    url(r'^manage_releases_by_location/$', ManageReleasesByLocation.as_view(),
+        name=ManageReleasesByLocation.urlname),
     url(r'^deactivate_release_restriction/(?P<restriction_id>[\w-]+)/$', deactivate_release_restriction,
         name='deactivate_release_restriction'),
     url(r'^activate_release_restriction/(?P<restriction_id>[\w-]+)/$', activate_release_restriction,

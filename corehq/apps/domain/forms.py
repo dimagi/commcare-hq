@@ -2374,14 +2374,14 @@ class SelectSubscriptionTypeForm(forms.Form):
             )
 
 
-class ManageAppReleasesForm(forms.Form):
+class ManageReleasesByLocationForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
     location_id = forms.CharField(label=ugettext_lazy("Location"), widget=Select(choices=[]), required=False)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
-        super(ManageAppReleasesForm, self).__init__(*args, **kwargs)
+        super(ManageReleasesByLocationForm, self).__init__(*args, **kwargs)
         self.fields['app_id'].choices = self.app_id_choices()
         if request.GET.get('app_id'):
             self.fields['app_id'].initial = request.GET.get('app_id')

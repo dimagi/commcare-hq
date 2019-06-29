@@ -21,7 +21,7 @@
         <div class="panel-body">
           <form class="form-horizontal disable-on-submit" id="manage-app-releases" action=""
                 method='post'>
-            {% crispy manage_releases_form %}
+            {% crispy manage_releases_by_location_form %}
           </form>
           {% if app_releases_by_location %}
             <table id="managed-releases" class="table">

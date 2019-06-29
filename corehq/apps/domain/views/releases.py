@@ -15,26 +15,25 @@ from django.contrib import messages
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.models import AppReleaseByLocation
-from corehq.apps.domain.forms import ManageAppReleasesForm
+from corehq.apps.domain.forms import ManageReleasesByLocationForm
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 
 
 @method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator()], name='dispatch')
-class ManageReleases(BaseProjectSettingsView):
-    template_name = 'domain/manage_releases.html'
-    urlname = 'manage_releases'
-    page_title = ugettext_lazy("Manage Releases")
+class ManageReleasesByLocation(BaseProjectSettingsView):
+    template_name = 'domain/manage_releases_by_location.html'
+    urlname = 'manage_releases_by_location'
+    page_title = ugettext_lazy("Manage Releases By Location")
 
     @cached_property
-    def manage_releases_form(self):
-        form = ManageAppReleasesForm(
+    def form(self):
+        return ManageReleasesByLocationForm(
             self.request,
             self.domain,
             data=self.request.POST if self.request.method == "POST" else None,
         )
-        return form
 
     @staticmethod
     def _location_path_display(location_id):
@@ -47,7 +46,7 @@ class ManageReleases(BaseProjectSettingsView):
         location_id_slug = self.request.GET.get('location_id')
         location_id = None
         if location_id_slug:
-            location_id = self.manage_releases_form.extract_location_id(location_id_slug)
+            location_id = self.form.extract_location_id(location_id_slug)
             if location_id:
                 q = q.filter(location_id=location_id)
         if self.request.GET.get('app_id'):
@@ -60,7 +59,7 @@ class ManageReleases(BaseProjectSettingsView):
         for r in app_releases_by_location:
             r['app'] = app_names.get(r['app'], r['app'])
         return {
-            'manage_releases_form': self.manage_releases_form,
+            'manage_releases_by_location_form': self.form,
             'app_releases_by_location': app_releases_by_location,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
             'selected_location_details': ({'id': location_id_slug,
@@ -69,8 +68,8 @@ class ManageReleases(BaseProjectSettingsView):
         }
 
     def post(self, request, *args, **kwargs):
-        if self.manage_releases_form.is_valid():
-            success, error_message = self.manage_releases_form.save()
+        if self.form.is_valid():
+            success, error_message = self.form.save()
             if success:
                 return redirect(self.urlname, self.domain)
             else:
