@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import json
 from collections import defaultdict
 
 from corehq.apps.app_manager.dbaccessors import get_current_app
@@ -71,13 +72,20 @@ def get_case_odata_fields_from_config(case_export_config):
 def record_feed_access_in_datadog(request, config_id, duration, response):
     config = ExportInstance.get(config_id)
     username = request.couch_user.username
-    datadog_counter('commcare.odata_feed.test_v2', tags=[
+    json_response = json.loads(response.content.decode('utf-8'))
+    rows = json_response['value']
+    row_count = len(rows)
+    try:
+        column_count = len(rows[0])
+    except IndexError:
+        column_count = 0
+    datadog_counter('commcare.odata_feed.test_v3', tags=[
         'domain:{}'.format(request.domain),
         'feed_id:{}'.format(config_id),
         'feed_type:{}'.format(config.type),
         'username:{}'.format(username),
-        'row_count:{}'.format(len([])),
-        'column_count:{}'.format(len([])),
+        'row_count:{}'.format(row_count),
+        'column_count:{}'.format(column_count),
         'size:{}'.format(len(response.content)),
         'duration:{}'.format(duration),
         'duration_bucket:{}'.format(bucket_value(duration, (1, 5, 20, 60, 120, 300, 600), 's')),
