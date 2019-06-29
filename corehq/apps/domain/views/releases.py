@@ -108,8 +108,16 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
     def page_context(self):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         query = LatestEnabledBuildProfiles.objects.order_by('version')
-        # ToDo: Filter by params in url
+        if self.request.GET.get('app_id'):
+            query = query.filter(app_id=self.request.GET.get('app_id'))
+        else:
+            query = query.filter(app_id__in=app_names.keys())
         version = self.request.GET.get('version')
+        if version:
+            query = query.filter(version=version)
+        build_profile_id = self.request.GET.get('build_profile_id')
+        if build_profile_id:
+            query = query.filter(build_profile_id=build_profile_id)
         app_releases_by_app_profile = [release.to_json(app_names) for release in query]
         return {
             'manage_releases_by_app_profile_form': self.form,
