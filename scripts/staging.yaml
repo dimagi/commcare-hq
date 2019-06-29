@@ -57,7 +57,7 @@ branches:
   - jls/ko-create-mobile-worker-debug # Jenny June 17
   - jls/linked-app-multiple-masters # Jenny June 18
   - jls/disable-autofill # Jenny June 19
-  - odata-merge  # Nick June 24
+  - odata-datadog  # Nick June 29
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
   - mk/migrate-transifex-proj-realigned # MK June 28
 submodules: {}
