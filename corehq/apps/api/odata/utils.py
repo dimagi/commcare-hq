@@ -71,7 +71,7 @@ def get_case_odata_fields_from_config(case_export_config):
 def record_feed_access_in_datadog(request, config_id, duration, response):
     config = ExportInstance.get(config_id)
     username = request.couch_user.username
-    datadog_counter('commcare.odata_feed.test', tags=[
+    datadog_counter('commcare.odata_feed.test_v2', tags=[
         'domain:{}'.format(request.domain),
         'feed_id:{}'.format(config_id),
         'feed_type:{}'.format(config.type),
