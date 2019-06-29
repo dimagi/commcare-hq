@@ -15,6 +15,7 @@ from django.contrib import messages
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
+    get_build_doc_by_version,
 )
 from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
@@ -102,7 +103,17 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         )
 
     def _get_initial_app_profile_details(self, version):
-        return [{}]
+        app_id = self.request.GET.get('app_id')
+        selected_profile_id = self.request.GET.get('profile_id', '')
+        # only when performing search populate these initial values
+        if app_id and version:
+            build_doc = get_build_doc_by_version(self.domain, self.request.GET.get('app_id'), version)
+            if build_doc:
+                return [{
+                    'id': _id,
+                    'text': details['name'],
+                    'selected': selected_profile_id == _id
+                } for _id, details in build_doc['build_profiles'].items()]
 
     @property
     def page_context(self):
