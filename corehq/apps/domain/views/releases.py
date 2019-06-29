@@ -13,9 +13,17 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.app_manager.models import AppReleaseByLocation
-from corehq.apps.domain.forms import ManageReleasesByLocationForm
+from corehq.apps.app_manager.dbaccessors import (
+    get_brief_apps_in_domain,
+)
+from corehq.apps.app_manager.models import (
+    AppReleaseByLocation,
+    LatestEnabledBuildProfiles,
+)
+from corehq.apps.domain.forms import (
+    ManageReleasesByLocationForm,
+    ManageReleasesByAppProfileForm,
+)
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
@@ -65,6 +73,49 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
             'selected_location_details': ({'id': location_id_slug,
                                            'text': self._location_path_display(location_id)}
                                           if location_id else None),
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            success, error_message = self.form.save()
+            if success:
+                return redirect(self.urlname, self.domain)
+            else:
+                messages.error(request, error_message)
+                return self.get(request, *args, **kwargs)
+        else:
+            return self.get(request, *args, **kwargs)
+
+
+@method_decorator([toggles.RELEASE_BUILDS_PER_PROFILE.required_decorator()], name='dispatch')
+class ManageReleasesByAppProfile(BaseProjectSettingsView):
+    template_name = 'domain/manage_releases_by_app_profile.html'
+    urlname = 'manage_releases_by_app_profile'
+    page_title = ugettext_lazy("Manage Releases By App Profile")
+
+    @cached_property
+    def form(self):
+        return ManageReleasesByAppProfileForm(
+            self.request,
+            self.domain,
+            data=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    def _get_initial_app_profile_details(self, version):
+        return [{}]
+
+    @property
+    def page_context(self):
+        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+        query = LatestEnabledBuildProfiles.objects.order_by('version')
+        # ToDo: Filter by params in url
+        version = self.request.GET.get('version')
+        app_releases_by_app_profile = [release.to_json(app_names) for release in query]
+        return {
+            'manage_releases_by_app_profile_form': self.form,
+            'app_releases_by_app_profile': app_releases_by_app_profile,
+            'selected_build_details': ({'id': version, 'text': version} if version else None),
+            'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }
 
     def post(self, request, *args, **kwargs):

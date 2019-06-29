@@ -19,7 +19,10 @@ from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_tria
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
-from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.domain.views.releases import (
+    ManageReleasesByLocation,
+    ManageReleasesByAppProfile,
+)
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
@@ -1673,6 +1676,12 @@ def _get_administration_section(domain):
         administration.append({
             'title': _(ManageReleasesByLocation.page_title),
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
+        })
+
+    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByAppProfile.page_title),
+            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
         })
 
     return administration

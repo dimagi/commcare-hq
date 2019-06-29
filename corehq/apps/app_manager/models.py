@@ -5939,6 +5939,11 @@ class LatestEnabledBuildProfiles(models.Model):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
         get_latest_enabled_versions_per_profile.clear(self.app_id)
 
+    def to_json(self, app_names):
+        from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
+        return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
+
+
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
 FormBase.get_locale_id = lambda self: id_strings.form_locale(self)

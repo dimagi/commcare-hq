@@ -1,0 +1,47 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% requirejs_main 'app_manager/js/manage_releases_by_app_profile' %}
+
+{% block page_content %}
+  {% initial_page_data 'app_releases_by_app_profile' app_releases_by_app_profile %}
+  {% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
+  {% initial_page_data 'appProfileInitialValues' initial_app_profile_details %}
+  {% initial_page_data 'appVersionOnlyShowReleased' True %}
+  {% registerurl "paginate_releases" domain '---' %}
+
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="panel panel-modern-gray panel-form-only">
+        <div class="panel-body">
+          <form class="form-horizontal disable-on-submit" id="manage-app-releases" action=""
+                method='post'>
+            {% crispy manage_releases_by_app_profile_form %}
+          </form>
+          {% if app_releases_by_app_profile %}
+            <table id="managed-releases" class="table">
+              <thead>
+              <tr>
+                <th class="col-sm-2">{% trans 'Application' %}</th>
+                <th class="col-sm-2">{% trans 'Profile' %}</th>
+                <th class="col-sm-2">{% trans 'Version' %}</th>
+                <th class="col-sm-2">{% trans 'Status' %}</th>
+              </tr>
+              </thead>
+              <tbody data-bind="foreach: appReleasesByAppProfile, visible: appReleasesByAppProfile">
+              <tr data-bind="css: {'bg-success': active }">
+                <td data-bind="text: app_name"></td>
+                <td data-bind="text: profile_name"></td>
+                <td data-bind="text: version"></td>
+                <td data-bind="text: status"></td>
+              </tr>
+              </tbody>
+            </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -2453,3 +2453,35 @@ class ManageReleasesByLocationForm(forms.Form):
         except ValidationError as e:
             return False, ','.join(e.messages)
         return True, None
+
+
+class ManageReleasesByAppProfileForm(forms.Form):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+    build_profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
+                                       required=False, widget=Select(choices=[]))
+
+    def __init__(self, request, domain, *args, **kwargs):
+        self.domain = domain
+        super(ManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].choices = self.app_id_choices()
+        self.helper = HQFormHelper()
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
+            crispy.Field('version', id='version-input'),
+            crispy.Field('build_profile_id', id='app-profile-id-input'),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
+                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+                )
+            )
+        )
+
+    def app_id_choices(self):
+        choices = [(None, _('Select Application'))]
+        for app in get_brief_apps_in_domain(self.domain):
+            choices.append((app.id, app.name))
+        return choices
