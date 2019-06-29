@@ -11,7 +11,13 @@ from corehq.apps.app_manager.models import (
 class LatestEnabledBuildProfileSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = LatestEnabledBuildProfiles
+        fields = ['app_id', 'active', 'version']
 
     def to_representation(self, instance):
         ret = super(LatestEnabledBuildProfileSerializer, self).to_representation(instance)
+        build_profile_id = self.instance.build_profile_id
+        profile = self.instance.build.build_profiles.get(build_profile_id)
+        profile_name = profile.name if profile else build_profile_id
+        ret['app_name'] = self.context['app_names'][ret['app_id']]
+        ret['profile_name'] = profile_name
         return ret
