@@ -5867,7 +5867,8 @@ class LatestEnabledBuildProfiles(models.Model):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
         self.expire_cache(self.build.domain)
 
-    @cached_property
+    @property
+    @memoized
     def build(self):
         return Application.get(self.build_id)
 
