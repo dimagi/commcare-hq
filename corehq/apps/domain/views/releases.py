@@ -137,6 +137,17 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }
 
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            success, error_message = self.form.save()
+            if success:
+                return redirect(self.urlname, self.domain)
+            else:
+                messages.error(request, error_message)
+                return self.get(request, *args, **kwargs)
+        else:
+            return self.get(request, *args, **kwargs)
+
 
 @login_and_domain_required
 @require_POST

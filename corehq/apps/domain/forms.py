@@ -17,6 +17,7 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView, CallCenterOptionsController
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.app_manager.dbaccessors import get_app
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -73,7 +74,13 @@ from corehq.apps.accounting.utils import (
     is_downgrade
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_version_build_id, get_brief_apps_in_domain
-from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, AppReleaseByLocation
+from corehq.apps.app_manager.models import (
+    Application,
+    FormBase,
+    RemoteApp,
+    AppReleaseByLocation,
+    LatestEnabledBuildProfiles,
+)
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
@@ -2478,6 +2485,7 @@ class ManageReleasesByAppProfileForm(forms.Form):
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
                     crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+                    Submit('submit', ugettext_lazy("Add New Restriction"))
                 )
             )
         )
@@ -2487,3 +2495,40 @@ class ManageReleasesByAppProfileForm(forms.Form):
         for app in get_brief_apps_in_domain(self.domain):
             choices.append((app.id, app.name))
         return choices
+
+    def save(self):
+        try:
+            LatestEnabledBuildProfiles.update_status(self.build, self.cleaned_data['build_profile_id'],
+                                                     active=True)
+        except ValidationError as e:
+            return False, ','.join(e.messages)
+        return True, None
+
+    @cached_property
+    def build(self):
+        return get_app(self.domain, self.version_build_id)
+
+    @cached_property
+    def version_build_id(self):
+        app_id = self.cleaned_data['app_id']
+        version = self.cleaned_data['version']
+        return get_version_build_id(self.domain, app_id, version)
+
+    def clean(self):
+        if self.cleaned_data.get('version'):
+            try:
+                self.version_build_id
+            except BuildNotFoundException as e:
+                self.add_error('version', e)
+
+    def clean_build_profile_id(self):
+        # ensure value is present for a post request
+        if not self.cleaned_data.get('build_profile_id'):
+            self.add_error('build_profile_id', _("Please select build profile"))
+        return self.cleaned_data.get('build_profile_id')
+
+    def clean_version(self):
+        # ensure value is present for a post request
+        if not self.cleaned_data.get('version'):
+            self.add_error('version', _("Please select version"))
+        return self.cleaned_data.get('version')
