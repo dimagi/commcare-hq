@@ -60,6 +60,4 @@ branches:
   - odata-datadog  # Nick June 29
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
   - mk/migrate-transifex-proj-realigned # MK June 28
-  - mk/profile-based-revisit # MK July 1
-  - mk/profile-based-view # Mk July 1
 submodules: {}
