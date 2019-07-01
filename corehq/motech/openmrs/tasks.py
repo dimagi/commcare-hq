@@ -75,12 +75,7 @@ def get_openmrs_patients(requests, importer, location=None):
     """
     endpoint = '/ws/rest/v1/reportingrest/reportdata/' + importer.report_uuid
     params = parse_params(importer.report_params, location)
-    response = requests.get(endpoint, params=params)
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        logger.debug(response.json())
-        raise
+    response = requests.get(endpoint, params=params, raise_for_status=True)
     data = response.json()
     return data['dataSets'][0]['rows']  # e.g. ...
     #     [{u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
