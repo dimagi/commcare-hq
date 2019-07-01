@@ -60,6 +60,7 @@ hqDefine("export/js/export_list", [
             'name',
             'owner_username',
             'sharing',
+            'odataUrl',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
@@ -90,7 +91,7 @@ hqDefine("export/js/export_list", [
         }
 
         if (options.isOData) {
-            self.odataFeedUrl = 'https://placekitten.com';
+            self.odataFeedUrl = options.odataUrl;
         }
 
         self.isLocationSafeForUser = function () {
