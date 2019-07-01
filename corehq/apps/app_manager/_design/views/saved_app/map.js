@@ -1,5 +1,8 @@
-function(doc){
-    if((doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp' || doc.doc_type == 'LinkedApplication') && doc.copy_of != null) {
+function (doc) {
+    if (
+        (doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp' || doc.doc_type == 'LinkedApplication')
+        && doc.copy_of != null
+    ) {
         emit([doc.domain, doc.copy_of, doc.version], {
             doc_type: doc.doc_type,
             short_url: doc.short_url,
@@ -22,7 +25,12 @@ function(doc){
             case_sharing: doc.case_sharing,
             build_profiles: doc.build_profiles,
             vellum_case_management: !!doc.vellum_case_management,
-            target_commcare_flavor: doc.target_commcare_flavor
+            target_commcare_flavor: doc.target_commcare_flavor,
+
+            // fields related to LinkedApplications
+            progenitor_id : doc.progenitor_id || null,
+            pulled_from_master_version: doc.pulled_from_master_version || null,
+            pulled_from_master_app_id: doc.pulled_from_master_app_id || null
         });
     }
 }

@@ -5570,8 +5570,10 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    # This is the id of the master application
-    master = StringProperty()
+    progenitor_id = StringProperty()  # ID of earliest parent app.  Identifies app "family"
+    master = StringProperty()   # Legacy, should be removed once all linked apps support multiple masters
+    pulled_from_master_version = IntegerProperty()
+    pulled_from_master_app_id = StringProperty()
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
