@@ -39,7 +39,7 @@
                 last_submission = GREATEST(agg_table.last_submission, ut.last_submission)
             FROM (
               SELECT
-                loc.awc_id as awc_id,
+                loc.doc_id as awc_id,
                 ucr.first_submission as first_submission,
                 ucr.last_submission as last_submission
               FROM "tmp_usage" ucr
