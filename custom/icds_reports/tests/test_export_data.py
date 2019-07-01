@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date, datetime
 import json
-from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
+from custom.icds_reports.utils import india_now
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
@@ -16,7 +16,7 @@ from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorEx
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
-from custom.icds_reports.sqldata.exports.take_home_ration import TakeHomeRationExport
+from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 
 class TestExportData(TestCase):
     maxDiff = None
@@ -2178,15 +2178,10 @@ class TestExportData(TestCase):
         location = 'b1'
 
         data = TakeHomeRationExport(
-            config={'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b1',
-                    'aggregation_level': 5,
-                    'domain': 'icds-cas',
-                    'month': datetime(2017, 5, 1)
-                    },
-            loc_level=5
-        ).get_excel_data(location)
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=3
+        ).get_excel_data()
         self.assertListEqual(
             data,
             [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
@@ -2236,12 +2231,10 @@ class TestExportData(TestCase):
     def test_thr_report_export_info_national_level(self):
         location = ''
         data = TakeHomeRationExport(
-            config={'aggregation_level': 5,
-                    'month': datetime(2017, 5, 1),
-                    'domain': 'icds-cas'
-                    },
-            loc_level=5
-        ).get_excel_data(location)
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=0
+        ).get_excel_data()
 
         self.assertListEqual(
             data,

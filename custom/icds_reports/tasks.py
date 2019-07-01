@@ -121,7 +121,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
-from custom.icds_reports.sqldata.exports.take_home_ration import (
+from custom.icds_reports.reports.take_home_ration import (
     TakeHomeRationExport
 )
 from custom.icds_reports.sqldata.exports.pregnant_women import (
@@ -836,13 +836,14 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
     elif indicator == THR_REPORT_EXPORT:
-        config['aggregation_level'] = 5  # this report on all levels shows data (row) per AWC
+        loc_level = aggregation_level if location else 0
         excel_data = TakeHomeRationExport(
-            config=config,
-            loc_level=config['aggregation_level'],
+            location=location,
+            month = config['month'],
+            loc_level=loc_level,
             show_test=include_test,
             beta=beta
-        ).get_excel_data(location)
+        ).get_excel_data()
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
@@ -853,7 +854,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
-                aggregation_level if location else 0,
+                loc_level,
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
