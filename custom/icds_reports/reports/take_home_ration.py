@@ -21,31 +21,29 @@ class TakeHomeRationExport(object):
         def _format_infrastructure_data(data):
             return data if data is not None else DATA_NOT_ENTERED
 
-        if self.loc_level == 4:
-            data = TakeHomeRationMonthly.objects.filter(
-                supervisor_id=self.location, month=self.month, aggregation_level=5
-            ).order_by('awc_name')
-        elif self.loc_level == 3:
-            data = TakeHomeRationMonthly.objects.filter(
-                block_id=self.location, month=self.month, aggregation_level=5
-            ).order_by('supervisor_name', 'awc_name')
-        elif self.loc_level == 2:
-            data = TakeHomeRationMonthly.objects.filter(
-                district_id=self.location, month=self.month, aggregation_level=5
-            ).order_by('block_name', 'supervisor_name', 'awc_name')
-        elif self.loc_level == 1:
-            data = TakeHomeRationMonthly.objects.filter(
-                state_id=self.location, month=self.month, aggregation_level=5
-            ).order_by('district_name', 'block_name', 'supervisor_name', 'awc_name')
-        else:
-            data = TakeHomeRationMonthly.objects.filter(
-                month=self.month, aggregation_level=5
-            ).order_by('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
+        filters = {"month": self.month, "aggregation_level": 5}
 
-        data = data.values('state_name', 'district_name', 'block_name',
-                           'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
-                           'is_launched', 'total_thr_candidates', 'thr_given_21_days',
-                           'thr_distribution_image_count')
+        if self.loc_level == 4:
+            filters['supervisor_id'] = self.location
+            order_by = ('awc_name',)
+        elif self.loc_level == 3:
+            filters['block_id'] = self.location
+            order_by = ('supervisor_name', 'awc_name')
+        elif self.loc_level == 2:
+            filters['district_id'] = self.location
+            order_by = ('block_name', 'supervisor_name', 'awc_name')
+        elif self.loc_level == 1:
+            filters['state_id'] = self.location
+            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name')
+        else:
+            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
+
+        query_set = TakeHomeRationMonthly.objects.filter(**filters).order_by(*order_by)
+
+        data = query_set.values('state_name', 'district_name', 'block_name',
+                                'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
+                                'is_launched', 'total_thr_candidates', 'thr_given_21_days',
+                                'thr_distribution_image_count')
 
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                    'Total No. of Beneficiaries eligible for THR',
