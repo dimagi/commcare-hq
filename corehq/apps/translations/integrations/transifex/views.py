@@ -521,7 +521,6 @@ class MigrateTransifexProject(BaseTranslationsView):
 
     def _perform_request(self):
         migrator = self.form.migrator
-        # ToDo: Check if you can pass form.migrator instead of its attrs and then re-init it
         migrate_project_on_transifex.delay(
             migrator.domain,
             migrator.project_slug,
