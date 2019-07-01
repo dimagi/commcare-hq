@@ -50,7 +50,7 @@ from corehq.apps.export.tasks import (
     get_saved_export_task_status,
     rebuild_saved_export,
 )
-from corehq.apps.export.views.edit import EditExportName
+from corehq.apps.export.views.edit import EditExportNameView
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
@@ -215,7 +215,7 @@ class ExportListHelper(object):
                                  args=(self.domain, export.type, export.get_id)),
             'downloadUrl': reverse(self._download_view(export).urlname, args=(self.domain, export.get_id)),
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
-            'editNameUrl': reverse(EditExportName.urlname, args=(self.domain, export.get_id)),
+            'editNameUrl': reverse(EditExportNameView.urlname, args=(self.domain, export.get_id)),
             'lastBuildDuration': '',
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),

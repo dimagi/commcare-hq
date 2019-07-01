@@ -122,7 +122,7 @@ class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     page_title = ugettext_lazy("Copy OData Feed")
 
 
-class EditExportAttr(BaseEditNewCustomExportView):
+class EditExportAttrView(BaseEditNewCustomExportView):
     export_home_url = None
 
     @property
@@ -137,7 +137,7 @@ class EditExportAttr(BaseEditNewCustomExportView):
         raise NotImplementedError
 
 
-class EditExportName(EditExportAttr):
+class EditExportNameView(EditExportAttrView):
     urlname = 'edit_export_name'
 
     def commit(self, request):
