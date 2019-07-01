@@ -283,7 +283,7 @@ nvd3#sectorChart > div.title.h4 {
     font-size: 14px;
     padding-right: 0;
     padding-left: 0;
-    z-index: 1;
+    z-index: 999999;
 }
 
 .left-menu-with-alert {

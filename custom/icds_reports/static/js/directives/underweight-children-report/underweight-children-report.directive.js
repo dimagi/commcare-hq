@@ -1,10 +1,10 @@
 /* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
+function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, $uibModalStack, maternalChildService,
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
 
@@ -153,7 +153,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {

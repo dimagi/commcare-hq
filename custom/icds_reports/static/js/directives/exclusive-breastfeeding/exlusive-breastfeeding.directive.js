@@ -1,9 +1,9 @@
 /* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
+function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, $uibModalStack, maternalChildService,
     locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
 
@@ -97,7 +97,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     };
 }
 
-ExclusiveBreasfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService'];
+ExclusiveBreasfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('exclusiveBreastfeeding', function() {
     return {

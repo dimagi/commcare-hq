@@ -1,9 +1,9 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function CleanWaterController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
+function CleanWaterController($scope, $routeParams, $location, $filter, $uibModalStack, infrastructureService, locationsService,
     userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -74,7 +74,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     };
 }
 
-CleanWaterController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+CleanWaterController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('cleanWater', function() {
     return {

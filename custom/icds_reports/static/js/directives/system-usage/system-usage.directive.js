@@ -2,8 +2,11 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations) {
+function SystemUsageController($scope, $http, $log, $routeParams, $location, $uibModalStack, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
+
+    $uibModalStack.dismissAll();
+
     vm.data = {};
     vm.label = "Program Summary";
     vm.filters = ['gender', 'age', 'ageServiceDeliveryDashboard'];
@@ -125,7 +128,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', '$uibModalStack', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {

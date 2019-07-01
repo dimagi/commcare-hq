@@ -2,11 +2,13 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
+function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, $uibModalStack, maternalChildService,
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService, haveAccessToFeatures) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures);
+
     var vm = this;
     var ageIndex = _.findIndex(ages,function (x) {
         return x.id === vm.filtersData.age;
@@ -217,7 +219,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 }
 
-PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'haveAccessToFeatures'];
+PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('prevalenceOfSevere', function () {
     return {

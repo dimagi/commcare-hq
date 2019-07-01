@@ -1,9 +1,9 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AdhaarController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
+function AdhaarController($scope, $routeParams, $location, $filter, $uibModalStack, demographicsService, locationsService,
     userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.label = "Percent Aadhaar-seeded Beneficiaries";
@@ -68,7 +68,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
 }
 
-AdhaarController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+AdhaarController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('adhaarBeneficiary', function() {
     return {

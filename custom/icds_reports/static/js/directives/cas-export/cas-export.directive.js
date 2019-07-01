@@ -1,7 +1,9 @@
 /* global moment */
 
-function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId) {
+function CasExportController($window, $location, $uibModalStack, locationHierarchy, locationsService, downloadService, userLocationId) {
     var vm = this;
+
+    $uibModalStack.dismissAll();
 
     vm.months = [];
     vm.monthsCopy = [];
@@ -121,7 +123,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
 }
 
-CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId'];
+CasExportController.$inject = ['$window', '$location', '$uibModalStack', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("casExport", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

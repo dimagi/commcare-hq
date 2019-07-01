@@ -1,9 +1,9 @@
 /* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
+function ChildrenInitiatedController($scope, $routeParams, $location, $filter, $uibModalStack, maternalChildService,
     locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     var genderIndex = _.findIndex(genders, function (x) {
@@ -96,7 +96,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService'];
+ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('childrenInitiated', function() {
     return {

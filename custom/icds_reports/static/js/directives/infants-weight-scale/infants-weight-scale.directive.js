@@ -1,9 +1,9 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function InfantsWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
+function InfantsWeightScaleController($scope, $routeParams, $location, $filter, $uibModalStack, infrastructureService,
     locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.label = "AWCs Reported Weighing Scale: Infants";
@@ -69,7 +69,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     };
 }
 
-InfantsWeightScaleController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+InfantsWeightScaleController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('infantsWeightScale', function() {
     return {

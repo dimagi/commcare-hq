@@ -1,9 +1,9 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function FunctionalToiletController($scope, $routeParams, $location, $filter, infrastructureService,
+function FunctionalToiletController($scope, $routeParams, $location, $filter, $uibModalStack, infrastructureService,
     locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.label = "AWCs Reported Functional Toilet";
@@ -69,7 +69,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     };
 }
 
-FunctionalToiletController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+FunctionalToiletController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('functionalToilet', function() {
     return {

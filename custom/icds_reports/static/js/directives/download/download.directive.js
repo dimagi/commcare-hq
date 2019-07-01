@@ -1,8 +1,10 @@
 /* global moment */
 
-function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
+function DownloadController($rootScope, $location, $uibModalStack, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
     downloadService) {
     var vm = this;
+
+    $uibModalStack.dismissAll();
 
     vm.months = [];
     vm.monthsCopy = [];
@@ -538,7 +540,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
 }
 
-DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
+DownloadController.$inject = ['$rootScope', '$location', '$uibModalStack', 'locationHierarchy', 'locationsService', 'userLocationId',
     'haveAccessToFeatures', 'downloadService'];
 
 window.angular.module('icdsApp').directive("download", function() {

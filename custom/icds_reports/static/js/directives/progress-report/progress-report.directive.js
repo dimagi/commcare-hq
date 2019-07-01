@@ -3,7 +3,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgressReportController($scope, $location, progressReportService,
-    storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder, haveAccessToAllLocations) {
+    storageService, $routeParams, $uibModalStack, userLocationId, DTOptionsBuilder, DTColumnDefBuilder, haveAccessToAllLocations) {
+
+    $uibModalStack.dismissAll();
 
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -168,7 +170,7 @@ function ProgressReportController($scope, $location, progressReportService,
 }
 
 ProgressReportController.$inject = [
-    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations',
+    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', '$uibModalStack', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations',
 ];
 
 window.angular.module('icdsApp').directive('progressReport', function() {

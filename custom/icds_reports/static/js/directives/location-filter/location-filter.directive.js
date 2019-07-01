@@ -132,6 +132,10 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         return $location.path().indexOf('awc_reports') !== -1;
     };
 
+    vm.isLSReport = function () {
+        return $location.path().indexOf('lady_supervisor') !== -1;
+    };
+
     vm.close = function () {
         $uibModalInstance.dismiss('cancel');
     };
@@ -145,7 +149,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 }
 
 
-function LocationFilterController($rootScope, $scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations, allUserLocationId) {
+function LocationFilterController($rootScope, $scope, $location, $uibModal, $uibModalStack, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations, allUserLocationId) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -213,7 +217,12 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
         return $location.path().indexOf('awc_reports') !== -1;
     };
 
+    vm.isLSReport = function () {
+        return $location.path().indexOf('lady_supervisor') !== -1;
+    };
+
     vm.open = function () {
+        $uibModalStack.dismissAll();
         var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,
             ariaLabelledBy: 'modal-title',
@@ -221,7 +230,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             templateUrl: 'locationModalContent.html',
             controller: LocationModalController,
             controllerAs: '$ctrl',
-            backdrop: vm.isAwcReport() ? 'static' : true,
+            backdrop: vm.isAwcReport() || vm.isLSReport() ? 'static' : true,
             resolve: {
                 location_id: function () {
                     return vm.location_id;
@@ -463,7 +472,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     init();
 }
 
-LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
+LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', '$uibModalStack', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {

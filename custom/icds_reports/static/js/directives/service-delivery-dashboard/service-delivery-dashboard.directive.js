@@ -1,7 +1,10 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
+function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, $uibModalStack, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
+
+    $uibModalStack.dismissAll();
+
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
     vm.tooltipPlacement = "right";
@@ -248,7 +251,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', '$uibModalStack', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
     return {

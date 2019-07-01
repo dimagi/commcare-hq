@@ -1,9 +1,9 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
+function AWCDailyStatusController($scope, $routeParams, $location, $filter, $uibModalStack, icdsCasReachService, locationsService,
     userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.label = "AWC Daily Status";
@@ -80,7 +80,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
 }
 
-AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('awcDailyStatus', function() {
     return {

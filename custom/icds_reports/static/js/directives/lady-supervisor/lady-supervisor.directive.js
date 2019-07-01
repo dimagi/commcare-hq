@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function LadySupervisorController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations) {
+function LadySupervisorController($scope, $http, $log, $routeParams, $location, $uibModalStack, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "LS Indicators";
@@ -65,7 +65,7 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.getData();
 }
 
-LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', '$uibModalStack', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('ladySupervisor', function () {
     return {

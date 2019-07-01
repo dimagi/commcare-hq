@@ -1,10 +1,10 @@
 /* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function EnrolledChildrenController($scope, $routeParams, $location, $filter, demographicsService,
+function EnrolledChildrenController($scope, $routeParams, $location, $filter, $uibModalStack, demographicsService,
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
 
@@ -121,7 +121,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
 }
 
-EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
+EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('enrolledChildren', function() {
     return {

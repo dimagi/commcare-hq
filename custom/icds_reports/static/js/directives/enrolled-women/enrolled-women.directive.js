@@ -1,9 +1,9 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
+function EnrolledWomenController($scope, $routeParams, $location, $filter, $uibModalStack, demographicsService, locationsService,
     userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
-    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, $uibModalStack, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.label = "Pregnant Women enrolled for Anganwadi Services";
@@ -92,7 +92,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     };
 }
 
-EnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
+EnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', '$uibModalStack', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('enrolledWomen', function() {
     return {
