@@ -1167,7 +1167,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
         _get_logger().debug('index tree mid update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree mid update: {}'.format(self.extension_index_tree))
 
-        for update in non_live_updates:
+        for update in [
+            case_update for case_update in non_live_updates
+            if case_update.case_id not in self.case_ids_on_phone
+        ] + [
+            case_update for case_update in non_live_updates
+            if case_update.case_id in self.case_ids_on_phone
+        ]:
             if update.case_id in self.case_ids_on_phone:
                 # try purging the case
                 self.purge(update.case_id, xform_id=xform.form_id)
