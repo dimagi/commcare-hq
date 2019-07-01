@@ -2,29 +2,31 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-
 from custom.icds_reports.const import AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class THRFormV2AggDistributedHelper(BaseICDSAggregationHelper):
+class THRFormV2AggDistributedHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'thr-form-v2'
     ucr_data_source_id = 'static-thr_forms_v2'
-    aggregate_parent_table = AGG_THR_V2_TABLE
-    aggregate_child_table_prefix = 'icds_db_thr_form_v2_'
+    tablename = AGG_THR_V2_TABLE
 
     def aggregate(self, cursor):
-        drop_query = self.drop_table_query()
-        curr_month_query, curr_month_params = self.create_table_query()
-        agg_query, agg_param = self.aggregate_query()
-        cursor.execute(drop_query)
-        cursor.execute(curr_month_query, curr_month_params)
-        cursor.execute(agg_query, agg_param)
+        drop_query, drop_params = self.drop_table_query()
+        agg_query, agg_params = self.aggregation_query()
 
-    def aggregate_query(self):
+        cursor.execute(drop_query, drop_params)
+        cursor.execute(agg_query, agg_params)
+
+    def drop_table_query(self):
+        return (
+            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
+            {'month': month_formatter(self.month), 'state': self.state_id}
+        )
+
+    def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
         next_month_start = self.month + relativedelta(months=1)
 
         query_params = {
@@ -50,5 +52,5 @@ class THRFormV2AggDistributedHelper(BaseICDSAggregationHelper):
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
-            tablename=tablename
+            tablename=self.tablename
         ), query_params
