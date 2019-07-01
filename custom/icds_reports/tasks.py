@@ -839,7 +839,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         loc_level = aggregation_level if location else 0
         excel_data = TakeHomeRationExport(
             location=location,
-            month = config['month'],
+            month=config['month'],
             loc_level=loc_level,
             show_test=include_test,
             beta=beta
