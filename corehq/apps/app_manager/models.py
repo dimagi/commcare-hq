@@ -4143,6 +4143,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    # use commcare_flavor to avoid checking for none
     target_commcare_flavor = StringProperty(
         default='none',
         choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
@@ -4600,6 +4601,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         del self.linked_app_logo_refs
         del self.linked_app_attrs
         del self.uses_master_app_form_ids
+
+    @property
+    def commcare_flavor(self):
+        return None if self.target_commcare_flavor == "none" else self.target_commcare_flavor
 
 
 def validate_lang(lang):
