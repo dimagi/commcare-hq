@@ -5870,7 +5870,9 @@ class LatestEnabledBuildProfiles(models.Model):
     @property
     @memoized
     def build(self):
-        return Application.get(self.build_id)
+        if not hasattr(self, '_build'):
+            self._build = Application.get(self.build_id)
+        return self._build
 
     def clean(self):
         if self.active:
@@ -5915,7 +5917,7 @@ class LatestEnabledBuildProfiles(models.Model):
                 build_id=build_id
             )
         # assign it to avoid re-fetching during validations
-        build_profile.build = build
+        build_profile._build = build
         build_profile.activate() if active else build_profile.deactivate()
 
     def activate(self):
