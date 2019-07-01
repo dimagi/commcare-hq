@@ -11,6 +11,7 @@ from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
+from corehq.apps.export.models import ExportInstance
 from corehq.apps.export.views.new import BaseExportView
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
@@ -119,3 +120,21 @@ class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
     page_title = ugettext_lazy("Copy OData Feed")
+
+
+class EditExportName(BaseEditNewCustomExportView):
+    urlname = 'edit_export_name'
+    export_home_url = None
+
+    @property
+    @memoized
+    def export_type(self):
+        return ExportInstance.get(self.export_id).type
+
+    def get(self, request, *args, **kwargs):
+        raise Http404
+
+    def commit(self, request):
+        self.new_export_instance.name = request.POST.get('value')
+        self.new_export_instance.save()
+        return self.new_export_instance.get_id

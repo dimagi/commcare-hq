@@ -64,7 +64,17 @@
   <tr>
     <td>
       <h4 data-bind="css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
-        <span data-bind="text: name"></span>
+        {% if not is_odata %}
+          <span data-bind="text: name"></span>
+        {% else %}
+          <inline-edit params="
+            value: name,
+            id: 'export-title',
+            url: editNameUrl,
+            placeholder: '{% trans "Enter export name here"|escapejs %}',
+            cols: 50,
+          " data-apply-bindings="false"></inline-edit>
+        {% endif %}
         <label class="label label-default label-default" data-bind="visible: isDeid()">
           {% trans 'De-Identified' %}
         </label>
