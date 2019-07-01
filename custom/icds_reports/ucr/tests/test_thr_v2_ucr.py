@@ -19,7 +19,7 @@ class TestTHRFormsV2(BaseFormsTest):
             [{'count': 1,
                 "doc_id": None,
                 "submitted_on": None,
-                'photo_thr_packets_distributed': u'1558605103125.jpg',
+                'photo_thr_packets_distributed': '1558605103125.jpg',
               }
              ])
 
