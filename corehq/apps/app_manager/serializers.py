@@ -11,7 +11,7 @@ from corehq.apps.app_manager.models import (
 class LatestEnabledBuildProfileSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = LatestEnabledBuildProfiles
-        fields = ['app_id', 'active', 'version']
+        fields = ['id', 'app_id', 'active', 'version']
 
     def to_representation(self, instance):
         ret = super(LatestEnabledBuildProfileSerializer, self).to_representation(instance)

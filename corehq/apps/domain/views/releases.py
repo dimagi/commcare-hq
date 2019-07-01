@@ -7,7 +7,11 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.utils.functional import cached_property
 from django.shortcuts import redirect
-from django.http.response import HttpResponse, HttpResponseForbidden
+from django.http.response import (
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseBadRequest,
+)
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -179,5 +183,32 @@ def update_release_restriction(request, domain, restriction_id, active):
                              if release.activated_on else None),
             'deactivated_on': (datetime.strftime(release.deactivated_on, '%Y-%m-%d %H:%M:%S')
                                if release.deactivated_on else None),
+        }
+    return HttpResponse(json.dumps(response_content), content_type='application/json')
+
+
+def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
+    if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(request):
+        return HttpResponseForbidden()
+    release = LatestEnabledBuildProfiles.objects.get(id=restriction_id)
+    if not release:
+        return HttpResponseBadRequest()
+    if request.POST.get('active') == 'false':
+        return _update_release_restriction_by_app_profile(request, restriction_id, active=False)
+    elif request.POST.get('active') == 'true':
+        return _update_release_restriction_by_app_profile(request, restriction_id, active=True)
+
+
+def _update_release_restriction_by_app_profile(release, restriction_id, active):
+    try:
+        release.activate() if active else release.deactivate()
+    except ValidationError as e:
+        response_content = {
+            'message': ','.join(e.messages)
+        }
+    else:
+        response_content = {
+            'id': restriction_id,
+            'success': True,
         }
     return HttpResponse(json.dumps(response_content), content_type='application/json')

@@ -16,14 +16,56 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     $(function () {
         var AppRelease = function (details) {
             var self = {};
-            assertProperties.assert(details, [], ['app_id', 'active', 'app_name', 'profile_name',
+            assertProperties.assert(details, [], ['id', 'app_id', 'active', 'app_name', 'profile_name',
                 'version']);
-            self.active = details.active;
+            self.id = details.id;
+            self.active = ko.observable(details.active);
             self.status = details.active ? gettext('Active') : gettext('Inactive');
             self.app_name = details.app_name;
             self.version = details.version;
             self.profile_name = details.profile_name;
             self.domId = "restriction_" + self.id;
+            self.errorMessage = ko.observable();
+            self.domId = "restriction_" + self.id;
+            self.ajaxInProgress = ko.observable(false);
+            self.actionText = ko.computed(function () {
+                return (self.active() ? gettext("Remove") : gettext("Add"));
+            });
+            self.buttonClass = ko.computed(function () {
+                return (self.active() ? "btn-danger" : "btn-success");
+            });
+            self.toggleStatus = function () {
+                self.active(!self.active());
+            };
+            self.error = ko.observable();
+            self.requestUrl = initialPageData.reverse('toggle_release_restriction_by_app_profile', self.id);
+            self.toggleRestriction = function () {
+                self.ajaxInProgress(true);
+                var oldStatus = self.active();
+                $.ajax({
+                    method: 'POST',
+                    url: self.requestUrl,
+                    data: {'active': !self.active()},
+                    success: function (data) {
+                        if (data.success) {
+                            self.toggleStatus();
+                            self.error(false);
+                        } else {
+                            self.active(oldStatus);
+                            self.errorMessage(data.message);
+                        }
+                    },
+                    error: function () {
+                        self.active(oldStatus);
+                    },
+                    complete: function () {
+                        self.ajaxInProgress(false);
+                        if (self.active() === oldStatus) {
+                            self.error(true);
+                        }
+                    },
+                });
+            };
             return self;
         };
 
