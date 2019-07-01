@@ -2403,7 +2403,7 @@ class ManageReleasesByLocationForm(forms.Form):
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
                     crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
-                    Submit('submit', ugettext_lazy("Add Release Restriction"))
+                    Submit('submit', ugettext_lazy("Add New Restriction"))
                 )
             )
         )
@@ -2438,7 +2438,7 @@ class ManageReleasesByLocationForm(forms.Form):
 
     def clean_version(self):
         if not self.cleaned_data.get('version'):
-            self.add_error('version', _("Please enter version"))
+            self.add_error('version', _("Please select version"))
         return self.cleaned_data.get('version')
 
     def clean(self):
