@@ -53,12 +53,16 @@
               <li>To select a range of fields hold the Shift key and select the first and last field in the range.</li>
               <li>To unselect a field hold the CTRL key on a PC, or the Command key on a Mac, and click.</li>
             </ul>
-            {% if not export_instance.is_odata_config %}
-              <p>You can also rename fields, which will update the headers in the export file.</p>
-            {% else %}
-              <p>You can also rename fields, which will update the column headers in Power BI or Tableau.</p>
-            {% endif %}
           {% endblocktrans %}
+          {% if not export_instance.is_odata_config %}
+            {% blocktrans %}
+              <p>You can also rename fields, which will update the headers in the export file.</p>
+            {% endblocktrans %}
+          {% else %}
+            {% blocktrans %}
+              <p>You can also rename fields, which will update the column headers in Power BI or Tableau.</p>
+            {% endblocktrans %}
+          {% endif %}
         {% else %}
           {{ terminology.choose_fields_description }}
         {% endif %}
