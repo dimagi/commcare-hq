@@ -67,6 +67,7 @@ hqDefine("export/js/export_list", [
             'isFeed',
             'isOData',
             'editNameUrl',
+            'editDescriptionUrl',
             'showLink',
         ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
@@ -87,6 +88,9 @@ hqDefine("export/js/export_list", [
 
         if (options.editNameUrl) {
             self.editNameUrl = options.editNameUrl;
+        }
+        if (options.editDescriptionUrl) {
+            self.editDescriptionUrl = options.editDescriptionUrl;
         }
 
         if (options.isOData) {

@@ -144,3 +144,12 @@ class EditExportNameView(EditExportAttrView):
         self.new_export_instance.name = request.POST.get('value')
         self.new_export_instance.save()
         return self.new_export_instance.get_id
+
+
+class EditExportDescription(EditExportAttrView):
+    urlname = 'edit_export_description'
+
+    def commit(self, request):
+        self.new_export_instance.description = request.POST.get('value')
+        self.new_export_instance.save()
+        return self.new_export_instance.get_id
