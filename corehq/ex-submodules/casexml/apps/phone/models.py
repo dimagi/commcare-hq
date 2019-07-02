@@ -693,7 +693,6 @@ class IndexTree(DocumentSchema):
     indices = SchemaDictProperty()
 
     @property
-    @memoized
     def reverse_indices(self):
         return _reverse_index_map(self.indices)
 
@@ -725,7 +724,6 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
-    @memoized
     def get_all_outgoing_cases(case_id, child_index_tree, extension_index_tree):
         """traverse all outgoing child and extension indices"""
         all_cases = set([case_id])
@@ -739,7 +737,6 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
-    @memoized
     def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases):
         """traverse open incoming extensions"""
         all_cases = set([case_id])
@@ -756,7 +753,6 @@ class IndexTree(DocumentSchema):
                 all_cases.add(incoming_case)
         return all_cases
 
-    @memoized
     def get_cases_that_directly_depend_on_case(self, case_id):
         return self.reverse_indices.get(case_id, set([]))
 
