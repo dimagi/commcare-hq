@@ -697,13 +697,6 @@ class IndexTree(DocumentSchema):
     def reverse_indices(self):
         return _reverse_index_map(self.indices)
 
-    def _clear_reverse_indices_cache(self):
-        # self.reverse_indices is a memoized property, so we can't just call self.reverse_indices.reset_cache
-        try:
-            self._reverse_indices_cache.clear()
-        except AttributeError:
-            pass
-
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
 
@@ -732,6 +725,7 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
+    @memoized
     def get_all_outgoing_cases(case_id, child_index_tree, extension_index_tree):
         """traverse all outgoing child and extension indices"""
         all_cases = set([case_id])
@@ -745,6 +739,7 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
+    @memoized
     def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases):
         """traverse open incoming extensions"""
         all_cases = set([case_id])
@@ -769,13 +764,23 @@ class IndexTree(DocumentSchema):
         prior_ids.pop(index_name, None)
         if prior_ids:
             self.indices[from_case_id] = prior_ids
-        self._clear_reverse_indices_cache()
+        self._clear_index_caches()
 
     def set_index(self, from_case_id, index_name, to_case_id):
         prior_ids = self.indices.get(from_case_id, {})
         prior_ids[index_name] = to_case_id
         self.indices[from_case_id] = prior_ids
-        self._clear_reverse_indices_cache()
+        self._clear_index_caches()
+
+    def _clear_index_caches(self):
+        try:
+            # self.reverse_indices is a memoized property, so we can't just call self.reverse_indices.reset_cache
+            self._reverse_indices_cache.clear()
+        except AttributeError:
+            pass
+
+        self.get_all_outgoing_cases.reset_cache()
+        self.traverse_incoming_extensions.reset_cache()
 
     def apply_updates(self, other_tree):
         """
