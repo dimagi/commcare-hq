@@ -9,11 +9,8 @@ alembic==0.8.6
 amqp==2.4.2               # via kombu
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 argparse==1.4.0           # via unittest2
-asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field, sphinx
-backports.functools-lru-cache==1.5  # via soupsieve
-backports.shutil-get-terminal-size==1.0.0  # via ipython
 beautifulsoup4==4.7.1
 billiard==3.5.0.4
 boto3==1.9.143
@@ -22,7 +19,7 @@ cairocffi==0.9.0          # via cairosvg, weasyprint
 cairosvg==1.0.22          # via weasyprint
 git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 certifi==2019.3.9         # via requests
-cffi==1.12.3              # via cairocffi, cryptography, csiphash, weasyprint
+cffi==1.12.3              # via cairocffi, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
 click==7.0                # via pip-tools
 cloudant==2.12.0          # via jsonobject-couchdbkit
@@ -32,7 +29,6 @@ commonmark==0.9.0         # via recommonmark
 concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 coverage==4.5.1
-cryptography==2.6.1       # via pyopenssl, requests
 csiphash==0.0.5
 cssselect2==0.2.1         # via weasyprint
 csv342==1.0.0
@@ -76,7 +72,6 @@ docutils==0.14
 dropbox==9.3.0
 elasticsearch==1.9.0
 email_validator==1.0.3
-enum34==1.1.6             # via cryptography, traitlets
 et-xmlfile==1.0.1         # via openpyxl
 ethiopian-date-converter==0.1.5
 eulxml==1.1.3
@@ -84,7 +79,6 @@ fakecouch==0.0.15
 faker==0.8.15
 fixture==1.5.11
 freezegun==0.3.11
-funcsigs==1.0.2           # via mock
 future==0.17.1            # via commonmark
 gevent==1.4.0
 ghdiff==0.4
@@ -97,7 +91,6 @@ html5lib==1.0.1           # via weasyprint
 httpagentparser==1.8.2
 idna==2.8                 # via email-validator, requests
 imagesize==1.1.0          # via sphinx
-ipaddress==1.0.22         # via cryptography, faker
 ipdb==0.11
 ipython-genutils==0.2.0   # via traitlets
 ipython==5.2.2
@@ -127,7 +120,6 @@ nose-exclude==0.5.0
 nose==1.3.7
 openpyxl==2.6.2
 packaging==19.0           # via sphinx
-pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.2.0                # via mock
 pdfrw==0.4                # via weasyprint
 pexpect==4.7.0            # via ipython
@@ -150,9 +142,9 @@ pygithub==1.35
 pygments==2.3.1
 pygooglechart==0.4.0
 pyjwt==1.7.1              # via pygithub, twilio
-pyopenssl==19.0.0         # via requests
 pyparsing==2.4.0          # via packaging
 pyphen==0.9.5             # via weasyprint
+pysocks==1.7.0            # via twilio
 pystache==0.5.4           # via pycco
 python-dateutil==2.8.0
 python-editor==1.0.4      # via alembic
@@ -172,10 +164,9 @@ redis-py-cluster==1.3.6
 redis==2.10.6
 reportlab==3.0
 requests-mock==1.6.0
-requests[security]==2.21.0
+requests==2.21.0
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.2.0         # via boto3
-scandir==1.10.0           # via pathlib2
 sh==1.09
 simpleeval==0.9.8
 simplegeneric==0.8.1      # via ipython
@@ -205,7 +196,6 @@ traitlets==4.3.2          # via ipython
 transifex-client==0.12.4
 tropo-webapi-python==0.1.3
 twilio==6.5.1
-typing==3.6.6             # via django-extensions, sphinx
 ua-parser==0.8.0          # via user-agents
 unidecode==0.04.20
 unittest2==1.1.0

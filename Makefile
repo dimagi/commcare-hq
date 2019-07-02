@@ -1,32 +1,30 @@
 .PHONY: requirements upgrade-requirements docs
 
+# https://stackoverflow.com/questions/4933285/how-to-detemine-python-version-in-makefile
+python_version_full := $(wordlist 2,4,$(subst ., ,$(shell python --version 2>&1)))
+python_version_major := $(word 1,${python_version_full})
+
+ifeq (${python_version_major}, 2)
+REQUIREMENTS_TXT_DIR=requirements
+else
+REQUIREMENTS_TXT_DIR=requirements-python3
+endif
+
 requirements: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 requirements:
-	pip-compile -o requirements/requirements.txt requirements/requirements.in
-	pip-compile -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
-	pip-compile -o requirements/test-requirements.txt requirements/test-requirements.in
-	pip-compile -o requirements/dev-requirements.txt requirements/dev-requirements.in
-	scripts/pip-post-compile.sh requirements/*requirements.txt
-
-	cp requirements/*requirements.txt requirements-python3/
-	grep -v '^futures==' requirements-python3/requirements.txt > temp && mv temp requirements-python3/requirements.txt
-	grep -v '^futures==' requirements-python3/prod-requirements.txt > temp && mv temp requirements-python3/prod-requirements.txt
-	grep -v '^futures==' requirements-python3/test-requirements.txt > temp && mv temp requirements-python3/test-requirements.txt
-	grep -v '^futures==' requirements-python3/dev-requirements.txt > temp && mv temp requirements-python3/dev-requirements.txt
+	pip-compile -o $(REQUIREMENTS_TXT_DIR)/requirements.txt requirements/requirements.in
+	pip-compile -o $(REQUIREMENTS_TXT_DIR)/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
+	pip-compile -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in
+	pip-compile -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in
+	scripts/pip-post-compile.sh $(REQUIREMENTS_TXT_DIR)/*requirements.txt
 
 upgrade-requirements: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 upgrade-requirements:
-	pip-compile --upgrade -o requirements/requirements.txt requirements/requirements.in
-	pip-compile --upgrade -o requirements/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
-	pip-compile --upgrade -o requirements/test-requirements.txt requirements/test-requirements.in
-	pip-compile --upgrade -o requirements/dev-requirements.txt requirements/dev-requirements.in
-	scripts/pip-post-compile.sh requirements/*requirements.txt
-
-	cp requirements/*requirements.txt requirements-python3/
-	grep -v '^futures==' requirements-python3/requirements.txt > temp && mv temp requirements-python3/requirements.txt
-	grep -v '^futures==' requirements-python3/prod-requirements.txt > temp && mv temp requirements-python3/prod-requirements.txt
-	grep -v '^futures==' requirements-python3/test-requirements.txt > temp && mv temp requirements-python3/test-requirements.txt
-	grep -v '^futures==' requirements-python3/dev-requirements.txt > temp && mv temp requirements-python3/dev-requirements.txt
+	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/requirements.txt requirements/requirements.in
+	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
+	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in
+	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in
+	scripts/pip-post-compile.sh $(REQUIREMENTS_TXT_DIR)/*requirements.txt
 
 docs:
 	cd docs && $(MAKE) html
