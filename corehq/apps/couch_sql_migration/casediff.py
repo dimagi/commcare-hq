@@ -191,10 +191,13 @@ class BatchProcessor(object):
     by iterating on the processor object.
     """
 
+    MAX_RETRIES = 3
+
     def __init__(self, pool):
         self.pool = pool
         self.batches = {}
         self.key_gen = count()
+        self.retries = defaultdict(int)
 
     def __repr__(self):
         return "<BatchProcessor {}>".format(self.batches)
@@ -212,12 +215,20 @@ class BatchProcessor(object):
             except Exception as err:
                 log.warn("batch processing error: %s: %s",
                     type(err).__name__, err, exc_info=True)
-                raise
+                if self._should_retry(key):
+                    self._process_batch(process, key)
+                else:
+                    raise
             else:
                 self.batches.pop(key)
+                self.retries.pop(key, None)
 
         log.debug("schedule %s key=%s", process.__name__, key)
         self.pool.spawn(process_batch, key)
+
+    def _should_retry(self, key):
+        self.retries[key] += 1
+        return self.retries[key] < self.MAX_RETRIES
 
     def __bool__(self):
         """Return true if there are unprocessed batches else false"""

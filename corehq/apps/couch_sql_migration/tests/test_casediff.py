@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 
 @patch.object(mod.CaseDiffQueue, "BATCH_SIZE", 2)
+@patch.object(mod.BatchProcessor, "MAX_RETRIES", 0)
 @patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
 class TestCaseDiffQueue(SimpleTestCase):
 
@@ -118,7 +119,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.queue() as queue:
             queue.update({"a", "b"}, "f0")
             queue.update({"c", "d"}, "f1")
-            self.flush(queue)
+            flush(queue.pool)
             self.assertDiffed("a c")
             queue.update({"b", "d", "e"}, "f2")
         self.assertDiffed("a b c d e")
@@ -129,12 +130,6 @@ class TestCaseDiffQueue(SimpleTestCase):
         with init_state_db("test") as statedb, \
                 mod.CaseDiffQueue(statedb, self.diff_cases) as queue:
             yield queue
-
-    @staticmethod
-    def flush(queue):
-        pool = queue.pool
-        while not pool.join(timeout=1):
-            log.info('waiting on {} case diff workers'.format(len(pool)))
 
     def add_cases(self, case_ids, xform_ids=()):
         """Add cases with updating form ids
@@ -203,6 +198,38 @@ class TestCaseDiffQueue(SimpleTestCase):
             yield
 
 
+@patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
+class TestBatchProcessor(SimpleTestCase):
+
+    def setUp(self):
+        self.proc = mod.BatchProcessor(mod.Pool())
+
+    def test_retry_batch(self):
+        def do(thing):
+            tries.append(1)
+            if len(tries) < 2:
+                raise Error("cannot do thing the first time")
+            done.append(thing)
+
+        tries = []
+        done = []
+        self.proc.spawn(do, "thing")
+        flush(self.proc.pool)
+        self.assertEqual(len(tries), 2)
+        self.assertEqual(done, ["thing"])
+
+    def test_batch_max_retries(self):
+        def do(thing):
+            tries.append(1)
+            raise Error("cannot do thing... ever")
+
+        tries = []
+        self.proc.spawn(do, "thing")
+        with silence_expected_errors(), self.assertRaises(Error):
+            flush(self.proc.pool)
+        self.assertEqual(len(tries), 3)
+
+
 @attr.s
 class FakeCase(object):
 
@@ -238,3 +265,8 @@ def silence_expected_errors():
     print_exception = hub.print_exception
     with patch.object(hub, "print_exception", print_unexpected):
         yield
+
+
+def flush(pool):
+    while not pool.join(timeout=1):
+        log.info('waiting on {} case diff workers'.format(len(pool)))
