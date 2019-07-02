@@ -45,11 +45,11 @@ class AbstractRateCounter(six.with_metaclass(abc.ABCMeta)):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def increment(self, scope):
+    def increment(self, scope, delta):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def increment_and_get(self, scope):
+    def increment_and_get(self, scope, delta):
         raise NotImplementedError()
 
 
@@ -77,20 +77,22 @@ class FixedWindowRateCounter(AbstractRateCounter):
     def _cache_key(self, scope, timestamp=None):
         if timestamp is None:
             timestamp = time.time()
+        if isinstance(scope, basestring):
+            scope = (scope,)
         return self._digest('fwrc-{}-{}-{}'.format(
             self.key,
-            self._digest(scope),
+            ':'.join(map(self._digest, scope)),
             int((timestamp - self.window_offset) / self.window_duration)
         ))
 
     def get(self, scope, timestamp=None, key_is_active=True):
-        return self.counter.get(self._cache_key(scope, timestamp), key_is_active=key_is_active)
+        return self.counter.get(self._cache_key(scope, timestamp=timestamp), key_is_active=key_is_active)
 
-    def increment_and_get(self, scope, timestamp=None):
-        return self.counter.incr(self._cache_key(scope, timestamp))
+    def increment_and_get(self, scope, delta=1, timestamp=None):
+        return self.counter.incr(self._cache_key(scope, timestamp=timestamp), delta)
 
-    def increment(self, scope, timestamp=None):
-        self.increment_and_get(scope, timestamp)
+    def increment(self, scope, delta=1, timestamp=None):
+        self.increment_and_get(scope, delta, timestamp=timestamp)
 
 
 class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
@@ -148,14 +150,14 @@ class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
         contribution_from_earliest = earliest_grain_count * (1 - progress_in_current_grain)
         return sum(counts) + contribution_from_earliest
 
-    def increment(self, scope, timestamp=None):
+    def increment(self, scope, delta=1, timestamp=None):
         # this intentionally doesn't return because this is the active grain count,
         # not the total that would be returned by get
-        self.grain_counter.increment(scope, timestamp)
+        self.grain_counter.increment(scope, delta, timestamp=timestamp)
 
-    def increment_and_get(self, scope, timestamp=None):
-        self.increment(scope, timestamp)
-        return self.get(scope, timestamp)
+    def increment_and_get(self, scope, delta=1, timestamp=None):
+        self.increment(scope, delta, timestamp=timestamp)
+        return self.get(scope, timestamp=timestamp)
 
 
 week_rate_counter = SlidingWindowOverFixedGrainsRateCounter(

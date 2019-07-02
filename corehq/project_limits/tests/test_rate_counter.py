@@ -43,16 +43,16 @@ def test_fixed_window_rate_counter():
     # this timestamp is chosen to be 6 days into a week window
     timestamp = (1000 * 7 * DAYS + 6 * DAYS)
     counter = _FixedWindowRateCounter('test-week', 7 * DAYS)
-    testil.eq(counter.increment_and_get('alice', timestamp), 1)
-    testil.eq(counter.increment_and_get('alice', timestamp), 2)
-    testil.eq(counter.increment_and_get('alice', timestamp), 3)
+    testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 1)
+    testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 2)
+    testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 3)
 
-    testil.eq(counter.increment_and_get('bob', timestamp), 1)
+    testil.eq(counter.increment_and_get('bob', timestamp=timestamp), 1)
 
-    testil.eq(counter.get('alice', timestamp), 3)
-    testil.eq(counter.get('alice', timestamp - 6 * DAYS), 3)
-    testil.eq(counter.get('alice', timestamp - 7 * DAYS), 0)
-    testil.eq(counter.get('alice', timestamp + 1 * DAYS), 0)
+    testil.eq(counter.get('alice', timestamp=timestamp), 3)
+    testil.eq(counter.get('alice', timestamp=timestamp - 6 * DAYS), 3)
+    testil.eq(counter.get('alice', timestamp=timestamp - 7 * DAYS), 0)
+    testil.eq(counter.get('alice', timestamp=timestamp + 1 * DAYS), 0)
 
 
 def float_eq(f1, f2, text=None):
@@ -66,26 +66,26 @@ def test_sliding_window_with_grains_rate_counter():
 
     timestamp = (1000 * 7 * DAYS + 6 * DAYS)
     counter = _SlidingWindowOverFixedGrainsRateCounter('test-sliding-week', 7 * DAYS)
-    testil.eq(counter.increment_and_get('alice', timestamp), 1)
-    testil.eq(counter.increment_and_get('alice', timestamp), 2)
-    testil.eq(counter.increment_and_get('alice', timestamp), 3)
+    testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 1)
+    testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 2)
+    testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 3)
 
-    testil.eq(counter.increment_and_get('bob', timestamp), 1)
+    testil.eq(counter.increment_and_get('bob', timestamp=timestamp), 1)
 
-    testil.eq(counter.get('alice', timestamp), 3)
-    testil.eq(counter.get('alice', timestamp - 6 * DAYS), 3)
-    testil.eq(counter.get('alice', timestamp - 7 * DAYS), 0)
+    testil.eq(counter.get('alice', timestamp=timestamp), 3)
+    testil.eq(counter.get('alice', timestamp=timestamp - 6 * DAYS), 3)
+    testil.eq(counter.get('alice', timestamp=timestamp - 7 * DAYS), 0)
 
     # As time moves forward beyond the period boundary
     # the value fades linearly to 0 by the end of the following period
-    float_eq(counter.get('alice', timestamp + 1 * DAYS), 3)
-    float_eq(counter.get('alice', timestamp + 2 * DAYS), 3 * 6./7)
-    float_eq(counter.get('alice', timestamp + 3 * DAYS), 3 * 5./7)
-    float_eq(counter.get('alice', timestamp + 4 * DAYS), 3 * 4./7)
-    float_eq(counter.get('alice', timestamp + 5 * DAYS), 3 * 3./7)
-    float_eq(counter.get('alice', timestamp + 6 * DAYS), 3 * 2./7)
-    float_eq(counter.get('alice', timestamp + 7 * DAYS), 3 * 1./7)
-    float_eq(counter.get('alice', timestamp + 8 * DAYS), 0)
+    float_eq(counter.get('alice', timestamp=timestamp + 1 * DAYS), 3)
+    float_eq(counter.get('alice', timestamp=timestamp + 2 * DAYS), 3 * 6./7)
+    float_eq(counter.get('alice', timestamp=timestamp + 3 * DAYS), 3 * 5./7)
+    float_eq(counter.get('alice', timestamp=timestamp + 4 * DAYS), 3 * 4./7)
+    float_eq(counter.get('alice', timestamp=timestamp + 5 * DAYS), 3 * 3./7)
+    float_eq(counter.get('alice', timestamp=timestamp + 6 * DAYS), 3 * 2./7)
+    float_eq(counter.get('alice', timestamp=timestamp + 7 * DAYS), 3 * 1./7)
+    float_eq(counter.get('alice', timestamp=timestamp + 8 * DAYS), 0)
 
-    float_eq(counter.increment_and_get('alice', timestamp + 1 * DAYS), 4)
-    float_eq(counter.get('alice', timestamp + 2 * DAYS), 3 * 6./7 + 1)
+    float_eq(counter.increment_and_get('alice', timestamp=timestamp + 1 * DAYS), 4)
+    float_eq(counter.get('alice', timestamp=timestamp + 2 * DAYS), 3 * 6./7 + 1)
