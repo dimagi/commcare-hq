@@ -693,8 +693,16 @@ class IndexTree(DocumentSchema):
     indices = SchemaDictProperty()
 
     @property
+    @memoized
     def reverse_indices(self):
         return _reverse_index_map(self.indices)
+
+    def _clear_reverse_indices_cache(self):
+        # self.reverse_indices is a memoized property, so we can't just call self.reverse_indices.reset_cache
+        try:
+            self._reverse_indices_cache.clear()
+        except AttributeError:
+            pass
 
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
@@ -761,11 +769,13 @@ class IndexTree(DocumentSchema):
         prior_ids.pop(index_name, None)
         if prior_ids:
             self.indices[from_case_id] = prior_ids
+        self._clear_reverse_indices_cache()
 
     def set_index(self, from_case_id, index_name, to_case_id):
         prior_ids = self.indices.get(from_case_id, {})
         prior_ids[index_name] = to_case_id
         self.indices[from_case_id] = prior_ids
+        self._clear_reverse_indices_cache()
 
     def apply_updates(self, other_tree):
         """
