@@ -71,13 +71,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--check',
-            action='store_true',
-            dest='check',
-            default=False,
-            help="Just print the summary of changes",
-        )
-        parser.add_argument(
             '--cleanup-first',
             action='store_true',
             dest='cleanup',
@@ -86,7 +79,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        check = options['check']
         confirm = input(
             """
             Please make sure you have read https://dimagi.github.io/commcare-cloud/changelog/0007-reorganize-pillows.html.
@@ -111,6 +103,21 @@ class Command(BaseCommand):
         if options['cleanup']:
             new_checkpoints.delete()
 
+        self._create_checkpoints(checkpoint_id_mapping, False)
+        confirm = input(
+            """
+            Please check above reset offsets and make sure all merged checkpoints are relatively close.
+
+            Do you want to proceed resetting per the above output? y/N?
+            """
+        )
+        if confirm != 'y':
+            print("Checkpoint creation cancelled")
+            return
+        else:
+            self._create_checkpoints(checkpoint_id_mapping, True)
+
+    def _create_checkpoints(self, checkpoint_id_mapping, skip_check):
         for new_checkpoint_id, (old_checkpoint_ids, new_topics) in six.iteritems(checkpoint_id_mapping):
             print("\nCalculating checkpoints for {}\n".format(new_checkpoint_id))
             old_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=old_checkpoint_ids, topic__in=new_topics)
@@ -123,7 +130,7 @@ class Command(BaseCommand):
                     checkpoint.topic,
                     checkpoint.partition,
                     checkpoint.offset))
-            msg = "Creating checkpoints for" if check else "Checkpoints to be created for"
+            msg = "Creating checkpoints for" if skip_check else "Checkpoints to be created for"
             print("\n\t### {} - {} ###".format(msg, new_checkpoint_id))
             print("\ttopic, partition, offset")
             for result in topic_partitions:
@@ -131,7 +138,7 @@ class Command(BaseCommand):
                 partition = result['partition']
                 min_offset = old_checkpoints.filter(
                     topic=topic, partition=partition).aggregate(Min('offset'))['offset__min']
-                if not check:
+                if skip_check:
                     KafkaCheckpoint.objects.get_or_create(
                         checkpoint_id=new_checkpoint_id,
                         topic=topic,
