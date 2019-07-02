@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
+import json
 from django.core.management.base import BaseCommand
 from django.db.models import Min
 from six.moves import input
@@ -39,10 +40,10 @@ PILLOW_REORG_MAPPING = {
 }
 
 
-def pillow_to_checkpoint_id_mapping():
+def pillow_to_checkpoint_id_mapping(reorg_mapping):
     checkpoint_mapping = {}
 
-    for new_pillow_name, old_pillows in six.iteritems(PILLOW_REORG_MAPPING):
+    for new_pillow_name, old_pillows in six.iteritems(reorg_mapping):
         new_pillow = get_pillow_by_name(new_pillow_name)
         checkpoint_mapping[new_pillow.checkpoint.checkpoint_id] = []
         checkpoints = []
@@ -71,6 +72,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            '--reorg_file_path',
+            default=False,
+            help="Path to a json spec of pillow reorg, if the env has custom pillows"
+        )
+        parser.add_argument(
             '--cleanup-first',
             action='store_true',
             dest='cleanup',
@@ -92,8 +98,15 @@ class Command(BaseCommand):
             print("Checkpoint creation cancelled")
             return
 
+        path = options['reorg_file_path']
+        if path:
+            with open(path, 'rb') as f:
+                reorg_mapping = json.loads(f.read())
+        else:
+            reorg_mapping = PILLOW_REORG_MAPPING
+
         try:
-            checkpoint_id_mapping = pillow_to_checkpoint_id_mapping()
+            checkpoint_id_mapping = pillow_to_checkpoint_id_mapping(reorg_mapping)
         except PillowNotFoundError as e:
             print(e)
             print("Please make sure that pillows are defined in current release")
