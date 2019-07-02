@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import division
+
 import abc
 import hashlib
 import time
@@ -77,7 +82,7 @@ class FixedWindowRateCounter(AbstractRateCounter):
     def _cache_key(self, scope, timestamp=None):
         if timestamp is None:
             timestamp = time.time()
-        if isinstance(scope, basestring):
+        if isinstance(scope, six.string_types):
             scope = (scope,)
         return self._digest('fwrc-{}-{}-{}'.format(
             self.key,
