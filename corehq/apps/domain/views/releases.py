@@ -8,9 +8,9 @@ from django.utils.translation import ugettext_lazy
 from django.utils.functional import cached_property
 from django.shortcuts import redirect
 from django.http.response import (
-    HttpResponse,
     HttpResponseForbidden,
     HttpResponseBadRequest,
+    JsonResponse,
 )
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
@@ -184,7 +184,7 @@ def update_release_restriction(request, domain, restriction_id, active):
             'deactivated_on': (datetime.strftime(release.deactivated_on, '%Y-%m-%d %H:%M:%S')
                                if release.deactivated_on else None),
         }
-    return HttpResponse(json.dumps(response_content), content_type='application/json')
+    return JsonResponse(data=response_content)
 
 
 def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
@@ -211,4 +211,4 @@ def _update_release_restriction_by_app_profile(release, restriction_id, active):
             'id': restriction_id,
             'success': True,
         }
-    return HttpResponse(json.dumps(response_content), content_type='application/json')
+    return JsonResponse(data=response_content)
