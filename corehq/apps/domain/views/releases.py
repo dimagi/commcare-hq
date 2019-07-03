@@ -158,16 +158,16 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
 @login_and_domain_required
 @require_POST
 def deactivate_release_restriction(request, domain, restriction_id):
-    return update_release_restriction(request, domain, restriction_id, active=False)
+    return _update_release_restriction(request, domain, restriction_id, active=False)
 
 
 @login_and_domain_required
 @require_POST
 def activate_release_restriction(request, domain, restriction_id):
-    return update_release_restriction(request, domain, restriction_id, active=True)
+    return _update_release_restriction(request, domain, restriction_id, active=True)
 
 
-def update_release_restriction(request, domain, restriction_id, active):
+def _update_release_restriction(request, domain, restriction_id, active):
     if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
     release = AppReleaseByLocation.objects.get(id=restriction_id, domain=domain)
