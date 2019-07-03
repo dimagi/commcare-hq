@@ -16,7 +16,7 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     $(function () {
         var AppRelease = function (details) {
             var self = {};
-            assertProperties.assert(details, [], ['id', 'app_id', 'active', 'app_name', 'profile_name',
+            assertProperties.assertRequired(details, ['id', 'app_id', 'active', 'app_name', 'profile_name',
                 'version']);
             self.id = details.id;
             self.active = ko.observable(details.active);
