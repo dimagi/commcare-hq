@@ -338,6 +338,43 @@ class ServiceDeliveryMonthly(models.Model):
         db_table = 'service_delivery_monthly'
 
 
+class TakeHomeRationMonthly(models.Model):
+    """
+    Contains rows for THR report.
+    """
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
+    is_launched = models.TextField(null=True)
+    month = models.DateField(blank=True, null=True)
+    thr_given_21_days = models.IntegerField(null=True)
+    total_thr_candidates = models.IntegerField(null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'thr_report_monthly'
+
+
 class AggAwcMonthly(models.Model):
     """Contains one row for the status of every AWC, Supervisor, Block,
     District and State at the end of each month
