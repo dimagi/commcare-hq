@@ -3,9 +3,16 @@ from __future__ import unicode_literals
 
 import re
 
+from sqlalchemy.exc import OperationalError
 from testil import assert_raises, eq
 
-from ..statedb import Counts, delete_state_db, init_state_db, ResumeError
+from ..statedb import (
+    Counts,
+    ResumeError,
+    delete_state_db,
+    diff_doc_id_idx,
+    init_state_db,
+)
 
 
 def teardown():
@@ -71,3 +78,9 @@ def test_counters():
             "abc": Counts(4, 3),
             "def": Counts(2, 0),
         })
+
+
+def test_diff_doc_id_idx_exists():
+    msg = re.compile("index diff_doc_id_idx already exists")
+    with init_state_db("test") as db, assert_raises(OperationalError, msg=msg):
+        diff_doc_id_idx.create(db.engine)

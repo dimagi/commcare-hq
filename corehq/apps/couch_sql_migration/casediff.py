@@ -58,7 +58,7 @@ class CaseDiffQueue(object):
     def update(self, case_ids, form_id):
         """Update the case diff queue with case ids touched by form
 
-        :param case_ids: set of case ids.
+        :param case_ids: sequence of case ids.
         :param form_id: form id touching case ids.
         """
         log.debug("update: cases=%s form=%s", case_ids, form_id)
@@ -89,17 +89,17 @@ class CaseDiffQueue(object):
             else:
                 case_ids.append(case_id)
         for case in CaseAccessorCouch.get_cases(case_ids):
-            form_ids = get_case_form_ids(case)
-            rec = CaseRecord(case, form_ids)
-            cases[case.case_id] = rec
+            rec = cases[case.case_id] = CaseRecord(case)
             self._try_to_diff(rec, pending[case.case_id])
 
     def _try_to_diff(self, rec, processed_form_ids):
         log.debug("trying case %s forms %s - %s",
             rec.id, rec.remaining_forms, processed_form_ids)
-        for form_id in processed_form_ids:
-            rec.add_processed(form_id)
-        if not rec.remaining_forms:
+        rec.add_processed(processed_form_ids)
+        if rec.is_unexpected:
+            log.info("case %s unexpectedly updated by %s", rec.id, processed_form_ids)
+            self.statedb.add_unexpected_diff(rec.id)
+        if rec.should_diff:
             self.enqueue(rec.case.to_json())
 
     def enqueue(self, case_doc):
@@ -118,13 +118,25 @@ class CaseDiffQueue(object):
         if self.pending_cases:
             self._add_pending_cases(self.pending_cases)
             self.pending_cases = defaultdict(set)
+        self._flush()
+        self._rediff_unexpected()
+        self._flush()
+        self.pool = None
+
+    def _flush(self):
         pool = self.pool
         while self.cases_to_diff or pool:
             if self.cases_to_diff:
                 self._diff_cases()
             while not pool.join(timeout=10):
                 log.info('Waiting on {} case diff workers'.format(len(pool)))
-        self.pool = None
+
+    def _rediff_unexpected(self):
+        unexpected = self.statedb.iter_unexpected_diffs()
+        for case_ids in chunked(unexpected, self.BATCH_SIZE, list):
+            log.debug("re-diff %s", case_ids)
+            self.statedb.discard_case_diffs(case_ids)
+            self._enqueue_cases(case_ids)
 
     def _save_resume_state(self):
         state = {}
@@ -171,16 +183,34 @@ def get_case_form_ids(couch_case):
 class CaseRecord(object):
 
     case = attr.ib()
-    remaining_forms = attr.ib()
+    remaining_forms = attr.ib(factory=set, init=False)
     processed_forms = attr.ib(factory=set, init=False)
+
+    def __attrs_post_init__(self):
+        self.remaining_forms = get_case_form_ids(self.case)
 
     @property
     def id(self):
         return self.case.case_id
 
-    def add_processed(self, form_id):
-        self.remaining_forms.discard(form_id)
-        self.processed_forms.add(form_id)
+    def add_processed(self, form_ids):
+        for form_id in form_ids:
+            try:
+                self.remaining_forms.remove(form_id)
+            except KeyError:
+                pass
+            else:
+                self.processed_forms.add(form_id)
+        if self.is_unexpected:
+            self.remaining_forms.clear()
+
+    @property
+    def should_diff(self):
+        return not self.remaining_forms
+
+    @property
+    def is_unexpected(self):
+        return not self.processed_forms
 
 
 class BatchProcessor(object):

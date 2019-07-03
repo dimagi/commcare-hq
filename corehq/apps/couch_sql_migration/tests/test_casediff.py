@@ -11,6 +11,8 @@ import six
 from django.test import SimpleTestCase
 from mock import patch
 
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+
 from .. import casediff as mod
 from ..statedb import delete_state_db, init_state_db
 
@@ -123,6 +125,40 @@ class TestCaseDiffQueue(SimpleTestCase):
             self.assertDiffed("a c")
             queue.update({"b", "d", "e"}, "f2")
         self.assertDiffed("a b c d e")
+
+    def test_unexpected_case_update_scenario_1(self):
+        self.add_cases("a b", "f0")
+        with self.queue() as queue:
+            queue.update({"a", "b"}, "f0")
+            flush(queue.pool)
+            self.assertDiffed("a b")
+            queue.statedb.add_diffs("CommCareCase", "a", DIFFS)
+            queue.update({"a"}, "f1")  # unexpected update
+        self.assertDiffed({"a": 3, "b": 1})
+        self.assertEqual(queue.statedb.get_diffs(), [])
+
+    def test_unexpected_case_update_scenario_2(self):
+        self.add_cases("a", "f0")
+        self.add_cases("b", "f1")
+        with self.queue() as queue:
+            queue.update({"a", "b"}, "f0")  # unexpected update first time b is seen
+            flush(queue.pool)
+            self.assertDiffed("a b")
+            queue.statedb.add_diffs("CommCareCase", "b", DIFFS)
+            queue.update({"b"}, "f1")
+        self.assertDiffed({"a": 1, "b": 3})
+        self.assertEqual(queue.statedb.get_diffs(), [])
+
+    def test_unexpected_case_update_scenario_3(self):
+        self.add_cases("a b c", "f0")
+        self.add_cases("a b c", "f2")
+        with self.queue() as queue:
+            queue.update(["a", "b", "c"], "f0")
+            self.assertEqual(set(queue.cases), {"a", "b"})
+            # unexpected update after first seen but before diff -> no extra diff
+            queue.update({"a"}, "f1")
+            queue.update({"a", "b", "c"}, "f2")
+        self.assertDiffed("a b c")
 
     @contextmanager
     def queue(self):
@@ -243,6 +279,9 @@ class FakeCase(object):
 
     def to_json(self):
         return {f.name: getattr(self, f.name) for f in attr.fields(type(self))}
+
+
+DIFFS = [FormJsonDiff("diff", ["prop"], "old", "new")]
 
 
 class Error(Exception):

@@ -9,12 +9,13 @@ from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime
 
+import six
 from django.conf import settings
 
 from memoized import memoized
-from sqlalchemy import func, Column, Integer, String, Text
+from sqlalchemy import func, Column, Index, Integer, String, Text
 
-from corehq.apps.tzmigration.planning import Base, DiffDB
+from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 
 
 def init_state_db(domain):
@@ -147,6 +148,37 @@ class StateDB(DiffDB):
                 for doc_id in doc_ids
             ])
 
+    def add_unexpected_diff(self, case_id):
+        """Add case that has been updated by a form it does not reference"""
+        with self.session() as session:
+            sql = (
+                "INSERT INTO {table} (id) VALUES (:id) ON CONFLICT DO NOTHING"
+            ).format(table=UnexpectedCaseUpdate.__tablename__)
+            session.execute(sql, {"id": case_id})
+
+    def iter_unexpected_diffs(self):
+        """Iterate over case ids with unexpected diffs
+
+        An "unexpected diff" is a case that was unexpectedly updated by
+        a form it did not know about. All such case ids having at least
+        one diff record will be yielded by this generator.
+        """
+        unex_id = UnexpectedCaseUpdate.id
+        with self.session() as session:
+            diff_ids = session.query(Diff.doc_id)
+            query = session.query(unex_id).filter(unex_id.in_(diff_ids))
+            for case_id, in iter_large(query, unex_id):
+                yield case_id
+
+    def discard_case_diffs(self, case_ids):
+        assert not isinstance(case_ids, six.text_type), repr(case_ids)
+        with self.session() as session:
+            (
+                session.query(Diff)
+                .filter(Diff.kind == "CommCareCase", Diff.doc_id.in_(case_ids))
+                .delete(synchronize_session=False)
+            )
+
     def increment_counter(self, kind, value):
         self._upsert(DocCount, DocCount.kind, kind, DocCount.value + value, value)
 
@@ -220,6 +252,15 @@ class ProblemForm(Base):
     __tablename__ = "problemform"
 
     id = Column(String(50), nullable=False, primary_key=True)
+
+
+class UnexpectedCaseUpdate(Base):
+    __tablename__ = "unexpectedcaseupdate"
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
+diff_doc_id_idx = Index("diff_doc_id_idx", Diff.doc_id)
 
 
 Counts = namedtuple('Counts', 'total missing')
