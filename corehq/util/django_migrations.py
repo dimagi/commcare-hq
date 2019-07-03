@@ -1,5 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
+import os
+from functools import wraps
+
+from django.conf import settings
 from django.db import migrations
 from django.db.backends.postgresql_psycopg2.schema import DatabaseSchemaEditor
 
@@ -85,3 +89,13 @@ class AlterUniqueTogetherIfNotExists(migrations.AlterUniqueTogether):
                 app_label, schema_editor, from_state, to_state)
         finally:
             schema_editor.__class__ = DatabaseSchemaEditor
+
+
+def skip_on_fresh_install(migration_fn):
+    """Skips the migration if setting up a blank database"""
+    @wraps(migration_fn)
+    def _inner(*args, **kwargs):
+        if settings.UNIT_TESTING or os.environ.get('CCHQ_IS_FRESH_INSTALL') == '1':
+            return
+        return migration_fn(*args, **kwargs)
+    return _inner
