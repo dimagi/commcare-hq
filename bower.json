@@ -79,8 +79,7 @@
     "topojson": "^3.0.0",
     "r.js": "^2.3.5",
     "jquery-memoized-ajax": "^0.5.0",
-    "autotrack": "^2.4.1",
-    "jquery.disableAutoFill": "^1.2.8"
+    "autotrack": "^2.4.1"
   },
   "devDependencies": {
     "chai": "3.3.0",
