@@ -122,24 +122,16 @@ class StateDB(DiffDB):
         with self.session(session) as session:
             session.add(KeyValue(key=key, value=value))
 
-    def _upsert(self, model, key_field, key, value, insert_value=None):
+    def _upsert(self, model, key_field, key, value, incr=False):
         with self.session() as session:
-            updated = (
-                session.query(model)
-                .filter(key_field == key)
-                .update(
-                    {model.value: value},
-                    synchronize_session=False,
-                )
-            )
-            if not updated:
-                if insert_value is None:
-                    insert_value = value
-                obj = model(value=insert_value)
-                key_field.__set__(obj, key)
-                session.add(obj)
-            else:
-                assert updated == 1, (key, updated)
+            session.execute("""
+                INSERT INTO {table} ({key}, value) VALUES (:key, :value)
+                ON CONFLICT ({key}) DO UPDATE SET value = {incr}:value
+            """.format(
+                table=model.__tablename__,
+                key=key_field.name,
+                incr=("value + " if incr else "")
+            ), {"key": key, "value": value})
 
     def add_missing_docs(self, kind, doc_ids):
         with self.session() as session:
@@ -180,7 +172,7 @@ class StateDB(DiffDB):
             )
 
     def increment_counter(self, kind, value):
-        self._upsert(DocCount, DocCount.kind, kind, DocCount.value + value, value)
+        self._upsert(DocCount, DocCount.kind, kind, value, incr=True)
 
     def get_doc_counts(self):
         """Returns a dict of counts by kind
