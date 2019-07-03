@@ -412,13 +412,13 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        from corehq.sql_db.util import run_query_across_partitioned_databases
+        from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
         q_expr = Q(domain=domain) & Q(state=XFormInstanceSQL.NORMAL)
         if xmlns:
             q_expr &= Q(xmlns=xmlns)
 
-        for form_id in run_query_across_partitioned_databases(
+        for pk, form_id in paginate_query_across_partitioned_databases(
                 XFormInstanceSQL, q_expr, values=['form_id']):
             yield form_id
 
