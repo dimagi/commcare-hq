@@ -2,7 +2,7 @@
 set -e
 
 make requirements
-git diff
+git --no-pager diff
 git update-index -q --refresh
 if git diff-index --quiet HEAD --; then
     # No changes
