@@ -228,7 +228,10 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
-        return ['location_id', 'atom_feed_enabled'] + fields
+        return [
+            'location_id',
+            twbscrispy.PrependedText('atom_feed_enabled', ''),
+        ] + fields
 
     def clean(self):
         cleaned_data = super(OpenmrsRepeaterForm, self).clean()

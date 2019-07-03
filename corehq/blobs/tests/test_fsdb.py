@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
@@ -55,10 +56,12 @@ class _BlobDBTests(object):
             timedelta(minutes=60),
         )
 
-    def test_put_and_get_with_unicode_names(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+    def test_put_and_get_with_unicode(self):
+        identifier = new_meta(name='Łukasz')
+        meta = self.db.put(BytesIO(b'\xc5\x81ukasz'), meta=identifier)
+        self.assertEqual(identifier, meta)
         with self.db.get(key=meta.key) as fh:
-            self.assertEqual(fh.read(), b"content")
+            self.assertEqual(fh.read(), b'\xc5\x81ukasz')
 
     def test_put_from_get_stream(self):
         old = self.db.put(BytesIO(b"content"), meta=new_meta())

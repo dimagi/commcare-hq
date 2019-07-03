@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from sqlagg import SumWhen
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 
@@ -47,8 +48,14 @@ class PregnantWomenExport(ExportableMixin, IcdsSqlData):
                 'Percentage Anemia',
                 lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                 [
-                    SumColumn('anemic_moderate'),
-                    SumColumn('anemic_severe'),
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_moderate'},
+                        alias='anemic_moderate'
+                    ),
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_severe'},
+                        alias='anemic_severe'
+                    ),
                     AliasColumn('pregnant')
                 ],
                 slug='percent_anemia'

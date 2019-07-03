@@ -1033,18 +1033,19 @@ SUPPORT = StaticToggle(
 
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
-    'Basic modules can be child modules',
+    'Basic modules can be sub-menus',
     TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Sub-menus',
 )
 
 LEGACY_CHILD_MODULES = StaticToggle(
     'legacy_child_modules',
-    'Legacy, non-nested child modules',
+    'Legacy, non-nested sub-menus',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
-        "Child Menus are now displayed nested under their parent menu. Some "
+        "Sub-menus are now displayed nested under their parent menu. Some "
         "apps built before this change will require that their modules be "
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
@@ -1090,7 +1091,7 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description=("This flag makes failed messages appear in the Message Log "
                  "Report, and adds Status and Event columns"),
@@ -1499,9 +1500,13 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
 
 REGEX_FIELD_VALIDATION = StaticToggle(
     'regex_field_validation',
-    'Enable regex validation for custom data fields',
+    'Regular Expression Validation for Custom Data Fields',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
 REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
@@ -1734,7 +1739,7 @@ LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -1817,7 +1822,7 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
     'Enables location columns to app status report',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(

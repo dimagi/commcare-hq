@@ -1,21 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
+
+from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT
-from corehq.apps.export.views.new import BaseModifyNewCustomView
-from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
+from corehq.apps.export.models import ExportInstance
+from corehq.apps.export.views.new import BaseExportView
+from corehq.apps.export.views.utils import (
+    DailySavedExportMixin,
+    DashboardFeedMixin,
+    ODataFeedMixin,
+)
 
 
-class BaseEditNewCustomExportView(BaseModifyNewCustomView):
+class BaseEditNewCustomExportView(BaseExportView):
 
     @property
     def export_id(self):
@@ -70,11 +75,23 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     page_title = ugettext_lazy("Edit Form Data Export")
     export_type = FORM_EXPORT
 
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import FormExportListView
+        return FormExportListView
+
 
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
     page_title = ugettext_lazy("Edit Case Data Export")
     export_type = CASE_EXPORT
+
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import CaseExportListView
+        return CaseExportListView
 
 
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
@@ -93,3 +110,46 @@ class EditCaseDailySavedExportView(DailySavedExportMixin, EditNewCustomCaseExpor
 
 class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExportView):
     urlname = 'edit_form_daily_saved_export'
+
+
+class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
+    urlname = 'edit_odata_case_feed'
+    page_title = ugettext_lazy("Copy OData Feed")
+
+
+class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
+    urlname = 'edit_odata_form_feed'
+    page_title = ugettext_lazy("Copy OData Feed")
+
+
+class EditExportAttrView(BaseEditNewCustomExportView):
+    export_home_url = None
+
+    @property
+    @memoized
+    def export_type(self):
+        return ExportInstance.get(self.export_id).type
+
+    def get(self, request, *args, **kwargs):
+        raise Http404
+
+    def commit(self, request):
+        raise NotImplementedError
+
+
+class EditExportNameView(EditExportAttrView):
+    urlname = 'edit_export_name'
+
+    def commit(self, request):
+        self.new_export_instance.name = request.POST.get('value')
+        self.new_export_instance.save()
+        return self.new_export_instance.get_id
+
+
+class EditExportDescription(EditExportAttrView):
+    urlname = 'edit_export_description'
+
+    def commit(self, request):
+        self.new_export_instance.description = request.POST.get('value')
+        self.new_export_instance.save()
+        return self.new_export_instance.get_id

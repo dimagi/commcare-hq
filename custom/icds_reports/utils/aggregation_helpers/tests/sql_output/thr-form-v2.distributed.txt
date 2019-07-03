@@ -1,14 +1,7 @@
-DROP TABLE IF EXISTS "icds_db_thr_form_v2_7a197ee47818209780c23ed9"
-{}
+DELETE FROM "icds_dashboard_thr_v2" WHERE month=%(month)s AND state_id = %(state)s
+{"month": "2019-01-01", "state": "st1"}
 
-        CREATE TABLE IF NOT EXISTS "icds_db_thr_form_v2_7a197ee47818209780c23ed9" (
-            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
-            LIKE "icds_dashboard_thr_v2" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
-        ) INHERITS ("icds_dashboard_thr_v2")
-        
-{"month_string": "2019-01-01", "state_id": "st1"}
-
-        INSERT INTO "icds_db_thr_form_v2_7a197ee47818209780c23ed9" (
+        INSERT INTO "icds_dashboard_thr_v2" (
         state_id, supervisor_id, awc_id, thr_distribution_image_count, month
         ) (
             SELECT

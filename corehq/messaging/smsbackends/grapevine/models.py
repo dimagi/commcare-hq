@@ -251,7 +251,8 @@ class GrapevineResource(Resource):
                 response_text = root.find('response').text
                 if six.PY2:
                     phone_number = phone_number.decode('utf-8')
-                    response_text = response_text.decode('utf-8')
+                    if response_text is not None:
+                        response_text = response_text.decode('utf-8')
                 bundle.obj = SmsMessage(phone_number, response_text)
 
         return bundle

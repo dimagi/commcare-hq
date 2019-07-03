@@ -160,13 +160,17 @@ def _is_monday():
     return datetime.utcnow().isoweekday() == 1
 
 
+def _has_docs(accessor, db_name):
+    return bool(list(accessor.get_doc_ids(db_name, limit=1)))
+
+
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_cases_without_existing_domain():
     missing_domains_with_cases = set()
     for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
         accessor = CaseReindexAccessor(domain=domain, include_deleted=True)
         for db_name in accessor.sql_db_aliases:
-            if accessor.get_doc_ids(db_name, limit=1):
+            if _has_docs(accessor, db_name):
                 missing_domains_with_cases |= {domain}
                 break
 
@@ -187,7 +191,7 @@ def check_for_sql_forms_without_existing_domain():
     for domain in set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names()):
         accessor = FormReindexAccessor(domain=domain, include_deleted=True)
         for db_name in accessor.sql_db_aliases:
-            if accessor.get_doc_ids(db_name, limit=1):
+            if _has_docs(accessor, db_name):
                 missing_domains_with_forms |= {domain}
                 break
 

@@ -36,12 +36,14 @@ class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
         super(TestCaseMetadataDocumentCase, cls).tearDownClass()
 
     def test_no_credentials(self):
-        response = self.client.get(self.view_url)
+        with flag_enabled('ODATA'):
+            response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_domain(self):
@@ -49,10 +51,11 @@ class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
         other_domain.save()
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
+        with flag_enabled('ODATA'):
+            response = self.client.get(
+                reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
+                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+            )
         self.assertEqual(response.status_code, 403)
 
     def test_missing_feature_flag(self):
@@ -61,13 +64,10 @@ class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_no_case_types(self):
-        self._test_no_case_types()
-
-    @flag_enabled('ODATA')
-    def _test_no_case_types(self):
         correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_case_type_to_properties', return_value={}):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch('corehq.apps.api.odata.views.get_case_type_to_properties', return_value={}):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertXmlEqual(
             response.content,
@@ -75,19 +75,16 @@ class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
         )
 
     def test_populated_metadata_document(self):
-        self._test_populated_metadata_document()
-
-    @flag_enabled('ODATA')
-    def _test_populated_metadata_document(self):
         correct_credentials = self._get_correct_credentials()
-        with patch(
-            'corehq.apps.api.odata.views.get_case_type_to_properties',
-            return_value=OrderedDict([
-                ('case_type_with_no_case_properties', []),
-                ('case_type_with_case_properties', ['property_1', 'property_2']),
-            ])
-        ):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch(
+                'corehq.apps.api.odata.views.get_case_type_to_properties',
+                return_value=OrderedDict([
+                    ('case_type_with_no_case_properties', []),
+                    ('case_type_with_case_properties', ['property_1', 'property_2']),
+                ])
+            ):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertXmlEqual(
             response.content,
@@ -127,12 +124,14 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
         super(TestFormMetadataDocumentCase, cls).tearDownClass()
 
     def test_no_credentials(self):
-        response = self.client.get(self.view_url)
+        with flag_enabled('ODATA'):
+            response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_domain(self):
@@ -140,10 +139,11 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
         other_domain.save()
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'app_id': 'my_app_id'}),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
+        with flag_enabled('ODATA'):
+            response = self.client.get(
+                reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'app_id': 'my_app_id'}),
+                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+            )
         self.assertEqual(response.status_code, 403)
 
     def test_missing_feature_flag(self):
@@ -152,13 +152,10 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_no_xmlnss(self):
-        self._test_no_xmlnss()
-
-    @flag_enabled('ODATA')
-    def _test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_xmlns_to_properties', return_value={}):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch('corehq.apps.api.odata.views.get_xmlns_to_properties', return_value={}):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertXmlEqual(
             response.content,
@@ -166,19 +163,16 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
         )
 
     def test_populated_metadata_document(self):
-        self._test_populated_metadata_document()
-
-    @flag_enabled('ODATA')
-    def _test_populated_metadata_document(self):
         correct_credentials = self._get_correct_credentials()
-        with patch(
-            'corehq.apps.api.odata.views.get_xmlns_to_properties',
-            return_value=OrderedDict([
-                ('form_with_no_properties', []),
-                ('form_with_properties', ['property_1', 'property_2']),
-            ])
-        ):
-            response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            with patch(
+                'corehq.apps.api.odata.views.get_xmlns_to_properties',
+                return_value=OrderedDict([
+                    ('form_with_no_properties', []),
+                    ('form_with_properties', ['property_1', 'property_2']),
+                ])
+            ):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertXmlEqual(
             response.content,
