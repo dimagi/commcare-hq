@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.sql_db.util import (
+    paginate_query_across_partitioned_databases,
     run_query_across_partitioned_databases,
     get_db_aliases_for_partitioned_query,
 )
@@ -148,7 +149,7 @@ def get_alert_schedule_instances_for_schedule(schedule):
     from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
     _validate_class(schedule, AlertSchedule)
-    return run_query_across_partitioned_databases(
+    return paginate_query_across_partitioned_databases(
         AlertScheduleInstance,
         Q(alert_schedule_id=schedule.schedule_id)
     )
@@ -159,7 +160,7 @@ def get_timed_schedule_instances_for_schedule(schedule):
     from corehq.messaging.scheduling.scheduling_partitioned.models import TimedScheduleInstance
 
     _validate_class(schedule, TimedSchedule)
-    return run_query_across_partitioned_databases(
+    return paginate_query_across_partitioned_databases(
         TimedScheduleInstance,
         Q(timed_schedule_id=schedule.schedule_id)
     )
