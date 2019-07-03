@@ -127,7 +127,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
     def test_missing_value_is_null(self):
         self.assertEqual(
             ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
-                [{'properties': {}}],
+                [{}],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
@@ -146,15 +146,13 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
                     ]
                 )
             ),
-            [{'owner-name-label': None}]
+            [{'owner-name-label': '---'}]
         )
 
     def test_non_standard_case_property(self):
         self.assertEqual(
             ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
-                [{'properties': {
-                    'property_1': 'property-1-value'
-                }}],
+                [{'property_1': 'property-1-value'}],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
@@ -179,7 +177,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
     def test_case_id(self):
         self.assertEqual(
             ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
-                [{'case_id': 'case-id-value'}],
+                [{'_id': 'case-id-value'}],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
@@ -204,9 +202,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
     def test_case_name(self):
         self.assertEqual(
             ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
-                [{'properties': {
-                    'case_name': 'case-name-value'
-                }}],
+                [{'name': 'case-name-value'}],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(

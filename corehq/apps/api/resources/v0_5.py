@@ -38,6 +38,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
+from corehq.apps.export.esaccessors import get_case_export_base_query
 from corehq.apps.export.models import CaseExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
@@ -993,7 +994,7 @@ class ODataXFormInstanceResource(v0_4.XFormInstanceResource):
         ]
 
 
-class ODataCaseFromExportInstanceResource(v0_4.CommCareCaseResource):
+class ODataCaseFromExportInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
 
     config_id = None
 
@@ -1013,9 +1014,13 @@ class ODataCaseFromExportInstanceResource(v0_4.CommCareCaseResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = CaseExportInstance.get(self.config_id)
-        elastic_query_set = super(ODataCaseFromExportInstanceResource, self).obj_get_list(bundle, domain, **kwargs)
-        elastic_query_set.payload['filter']['and'].append({'term': {'type.exact': config.case_type}})
-        return elastic_query_set
+        return get_case_export_base_query(config.domain, config.case_type)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        # Not sure why this is required but the feed 500s without it
+        return {
+            'pk': get_obj(bundle_or_obj)['case_id']
+        }
 
     class Meta(v0_4.CommCareCaseResource.Meta):
         authentication = ODataAuthentication(Permissions.edit_data)

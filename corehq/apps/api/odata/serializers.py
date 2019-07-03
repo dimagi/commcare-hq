@@ -128,7 +128,10 @@ class ODataXFormInstanceSerializer(Serializer):
 class ODataCaseFromExportInstanceSerializer(Serializer):
 
     def to_json(self, data, options=None):
-        data = self.to_simple(data, options)  # Convert bundled objects to JSON
+        # Convert bundled objects to JSON
+        data['objects'] = [
+            bundle.obj for bundle in data['objects']
+        ]
 
         domain = data.pop('domain', None)
         config_id = data.pop('config_id', None)
@@ -157,24 +160,18 @@ class ODataCaseFromExportInstanceSerializer(Serializer):
 
     @staticmethod
     def serialize_cases_using_config(cases, config):
-        selected_columns = config.tables[0].selected_columns
+        table = config.tables[0]
         return [
             {
-                column.label: _get_case_value_by_column(case_data, column)
-                for column in selected_columns
+                col.label: col.get_value(
+                    config.domain,
+                    case_data.get('case_id', None),
+                    case_data,
+                    [],
+                    split_column=config.split_multiselects,
+                    transform_dates=config.transform_dates,
+                )
+                for col in table.selected_columns
             }
             for case_data in cases
         ]
-
-
-def _get_case_value_by_column(case_data, column):
-    lookup_key = _get_lookup_key_from_column(column)
-    return case_data.get(lookup_key, None) or case_data['properties'].get(lookup_key, None)
-
-
-def _get_lookup_key_from_column(column):
-    property_name = column.item.path[0].name
-    return {
-        '_id': 'case_id',
-        'name': 'case_name',
-    }.get(property_name, property_name)
