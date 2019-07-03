@@ -88,9 +88,15 @@ class CaseDiffQueue(object):
                 self._try_to_diff(cases[case_id], processed_form_ids)
             else:
                 case_ids.append(case_id)
+        loaded_case_ids = set()
         for case in CaseAccessorCouch.get_cases(case_ids):
+            loaded_case_ids.add(case.case_id)
             rec = cases[case.case_id] = CaseRecord(case)
             self._try_to_diff(rec, pending[case.case_id])
+        missing = set(case_ids) - loaded_case_ids
+        if missing:
+            log.error("Found %s missing Couch cases", len(missing))
+            self.statedb.add_missing_docs("CommCareCase-couch", missing)
 
     def _try_to_diff(self, rec, processed_form_ids):
         log.debug("trying case %s forms %s - %s",

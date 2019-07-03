@@ -160,6 +160,14 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update({"a", "b", "c"}, "f2")
         self.assertDiffed("a b c")
 
+    def test_missing_couch_case(self):
+        self.add_cases("found", "form")
+        with self.queue() as queue:
+            queue.update({"miss", "found"}, "form")
+        self.assertDiffed("found")
+        missing = queue.statedb.get_missing_doc_ids("CommCareCase-couch")
+        self.assertEqual(missing, {"miss"})
+
     @contextmanager
     def queue(self):
         log.info("init CaseDiffQueue")
@@ -191,11 +199,14 @@ class TestCaseDiffQueue(SimpleTestCase):
             try:
                 case = self.cases[case_id]
                 log.info("get %s", case)
+            except KeyError:
+                case = None
             except Exception as err:
                 log.info("get %s -> %s", case_id, err)
                 raise
             return case
-        return [get(case_id) for case_id in case_ids]
+        cases = (get(case_id) for case_id in case_ids)
+        return [c for c in cases if c is not None]
 
     def diff_cases(self, cases):
         log.info("diff cases %s", list(cases))
