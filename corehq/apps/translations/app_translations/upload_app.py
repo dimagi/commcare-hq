@@ -303,14 +303,13 @@ def _check_for_sheet_warnings(sheet, expected_headers):
     extra_cols = set(sheet.headers) - set(expected_headers)
 
     if len(missing_cols) > 0:
-        warnings.append((_('Sheet "%s" has fewer columns than expected. '
-            'Sheet will be processed but the following translations will be unchanged: %s')
-            % (sheet.worksheet.title, ", ".join(missing_cols))))
+        warnings.append((_('Sheet "{sheet}" has fewer columns than expected. Sheet will be processed but the '
+            'following translations will be unchanged: {columns}').format(sheet=sheet.worksheet.title,
+                                                                          columns=", ".join(missing_cols))))
 
     if len(extra_cols) > 0:
-        warnings.append(_('Sheet "%s" has unrecognized columns. '
-            'Sheet will be processed but ignoring the following columns: %s')
-            % (sheet.worksheet.title, ", ".join(extra_cols)))
+        warnings.append(_('Sheet "{sheet}" has unrecognized columns. Sheet will be processed but will ignore the '
+            'following columns: {columns}').format(sheet=sheet.worksheet.title, columns=", ".join(extra_cols)))
 
     return warnings
 
