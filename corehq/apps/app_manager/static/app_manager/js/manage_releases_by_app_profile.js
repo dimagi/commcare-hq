@@ -21,9 +21,9 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             self.id = details.id;
             self.active = ko.observable(details.active);
             self.status = details.active ? gettext('Active') : gettext('Inactive');
-            self.app_name = details.app_name;
+            self.appName = details.app_name;
             self.version = details.version;
-            self.profile_name = details.profile_name;
+            self.profileName = details.profile_name;
             self.domId = "restriction_" + self.id;
             self.errorMessage = ko.observable();
             self.domId = "restriction_" + self.id;

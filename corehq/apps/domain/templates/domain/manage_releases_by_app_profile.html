@@ -34,8 +34,8 @@
               </thead>
               <tbody data-bind="foreach: appReleasesByAppProfile, visible: appReleasesByAppProfile">
               <tr data-bind="attr: {id: domId}, css: {'bg-success': active }">
-                <td data-bind="text: app_name"></td>
-                <td data-bind="text: profile_name"></td>
+                <td data-bind="text: appName"></td>
+                <td data-bind="text: profileName"></td>
                 <td data-bind="text: version"></td>
                 <td data-bind="text: status"></td>
                 <td>
