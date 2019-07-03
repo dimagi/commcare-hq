@@ -55,7 +55,7 @@ class Command(BaseCommand):
         startdate = options.get('start')
         enddate = options.get('end')
         print("Fetching all form ids...", file=sys.stderr)
-        all_ids = list(iter_form_ids_by_last_modified(startdate, enddate))
+        all_ids = [form_id for pk, form_id in iter_form_ids_by_last_modified(startdate, enddate)]
         print("Woo! Done fetching. Here we go", file=sys.stderr)
         for doc_ids in chunked(all_ids, 100):
             es_ids = (FormES()
@@ -67,13 +67,13 @@ class Command(BaseCommand):
 
 
 def iter_form_ids_by_last_modified(start_datetime, end_datetime):
-    from corehq.sql_db.util import run_query_across_partitioned_databases
+    from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
     annotate = {
         'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
     }
 
-    return run_query_across_partitioned_databases(
+    return paginate_query_across_partitioned_databases(
         XFormInstanceSQL,
         (Q(last_modified__gt=start_datetime, last_modified__lt=end_datetime) &
          Q(state=F('state').bitand(XFormInstanceSQL.DELETED) +
