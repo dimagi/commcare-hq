@@ -5868,7 +5868,6 @@ class LatestEnabledBuildProfiles(models.Model):
         self.expire_cache(self.build.domain)
 
     @property
-    @memoized
     def build(self):
         if not hasattr(self, '_build'):
             self._build = Application.get(self.build_id)
