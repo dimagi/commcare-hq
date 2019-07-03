@@ -296,11 +296,14 @@ hqDefine('app_manager/js/app_manager', function () {
         function initChildModuleUpdateListener() {
             // If a child module is created or removed, update the sidebar
             $('#module-settings-form').on('saved-app-manager-form', function () {
-                var $form = $(this),
-                    modulesByUid = getModulesByUid(),
-                    module = modulesByUid[$form.data('moduleuid')],
+                var $parentModuleSelector = $(this).find('select[name=root_module_id]');
+                if ($parentModuleSelector.length === 0) {
+                    return;
+                }
+                var modulesByUid = getModulesByUid(),
+                    module = modulesByUid[$(this).data('moduleuid')],
                     oldRoot = $(module).data('rootmoduleuid') || null,
-                    newRoot = $form.find('select[name=root_module_id]').val() || null;
+                    newRoot = $parentModuleSelector.val() || null;
 
                 if (newRoot !== oldRoot) {
                     $(module).data('rootmoduleuid', newRoot);
