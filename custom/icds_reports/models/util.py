@@ -70,6 +70,7 @@ class CitusDashboardException(models.Model):
     data_source = models.TextField()
     context = JSONField()
     exception = models.TextField()
+    notes = models.TextField(blank=True)
 
 
 class CitusDashboardDiff(models.Model):
@@ -79,6 +80,7 @@ class CitusDashboardDiff(models.Model):
     control = JSONField()
     candidate = JSONField()
     diff = JSONField()
+    notes = models.TextField(blank=True)
 
 
 class CitusDashboardTiming(models.Model):

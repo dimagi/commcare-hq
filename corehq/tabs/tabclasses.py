@@ -65,6 +65,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds.views.hosted_ccz import (
+    ManageHostedCCZLink,
+    ManageHostedCCZ,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -512,18 +516,21 @@ class ProjectDataTab(UITab):
                 BulkDownloadNewFormExportView,
             )
             from corehq.apps.export.views.edit import (
-                EditNewCustomFormExportView,
-                EditNewCustomCaseExportView,
-                EditFormDailySavedExportView,
                 EditCaseDailySavedExportView,
-                EditFormFeedView,
                 EditCaseFeedView,
+                EditODataCaseFeedView,
+                EditODataFormFeedView,
+                EditFormDailySavedExportView,
+                EditFormFeedView,
+                EditNewCustomCaseExportView,
+                EditNewCustomFormExportView,
             )
             from corehq.apps.export.views.list import (
                 FormExportListView,
                 CaseExportListView,
                 DashboardFeedListView,
                 DailySavedExportListView,
+                ODataFeedListView,
             )
             from corehq.apps.export.views.new import (
                 CreateNewCustomFormExportView,
@@ -532,6 +539,8 @@ class ProjectDataTab(UITab):
                 CreateNewDailySavedCaseExport,
                 CreateNewFormFeedView,
                 CreateNewCaseFeedView,
+                CreateODataCaseFeedView,
+                CreateODataFormFeedView,
             )
             from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
@@ -672,6 +681,31 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
+            if toggles.ODATA.enabled(self.domain):
+                subpages = [
+                    {
+                        'title': _(CreateODataCaseFeedView.page_title),
+                        'urlname': CreateODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataCaseFeedView.page_title),
+                        'urlname': EditODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(CreateODataFormFeedView.page_title),
+                        'urlname': CreateODataFormFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataFormFeedView.page_title),
+                        'urlname': EditODataFormFeedView.urlname,
+                    },
+                ]
+                export_data_views.append({
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': subpages
+                })
 
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
@@ -702,7 +736,8 @@ class ProjectDataTab(UITab):
 
             items.extend(edit_section)
 
-        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+        if (toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
+                and self.can_edit_commcare_data):
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
             explore_data_views = [
                 {
@@ -826,6 +861,11 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
+            ))
+        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                ManageHostedCCZ.page_title,
+                url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
             ))
         if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
@@ -1392,6 +1432,27 @@ class EnterpriseSettingsTab(UITab):
         return items
 
 
+class HostedCCZTab(UITab):
+    title = ugettext_noop('CCZ Hostings')
+    url_prefix_formats = (
+        '/a/{domain}/ccz/hostings/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(HostedCCZTab, self).sidebar_items
+        items.append((_('Manage CCZ Hostings'), [
+            {'url': reverse(ManageHostedCCZLink.urlname, args=[self.domain]),
+             'title': ManageHostedCCZLink.page_title
+             },
+            {'url': reverse(ManageHostedCCZ.urlname, args=[self.domain]),
+             'title': ManageHostedCCZ.page_title
+             },
+        ]))
+        return items
+
+
 class TranslationsTab(UITab):
     title = ugettext_noop('Translations')
 
@@ -1422,6 +1483,14 @@ class TranslationsTab(UITab):
                     {
                         'url': reverse('blacklist_translations', args=[self.domain]),
                         'title': _('Blacklist Translations')
+                    },
+                    {
+                        'url': reverse('download_translations', args=[self.domain]),
+                        'title': _('Download Translations')
+                    },
+                    {
+                        'url': reverse('migrate_transifex_project', args=[self.domain]),
+                        'title': _('Migrate Project')
                     },
                 ]))
         return items
@@ -1908,8 +1977,8 @@ class AdminTab(UITab):
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
-                {'title': _('View raw couch documents'),
-                 'url': reverse('raw_couch')},
+                {'title': _('View raw documents'),
+                 'url': reverse('raw_doc')},
                 {'title': _('View documents in ES'),
                  'url': reverse('doc_in_es')},
             ]

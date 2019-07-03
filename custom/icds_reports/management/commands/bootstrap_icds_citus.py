@@ -16,9 +16,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'engine-id'
-        )
+        parser.add_argument('engine_id')
 
     def handle(self, engine_id, **options):
         db_alias = connection_manager.get_django_db_alias(engine_id)

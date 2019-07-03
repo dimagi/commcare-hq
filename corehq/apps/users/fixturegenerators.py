@@ -60,4 +60,5 @@ class UserGroupsFixtureProvider(FixtureProvider):
 
         return xFixture
 
+
 user_groups = UserGroupsFixtureProvider()

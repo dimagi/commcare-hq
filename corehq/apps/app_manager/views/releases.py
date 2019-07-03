@@ -44,7 +44,6 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_build_doc_by_version,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
@@ -559,7 +558,7 @@ class LanguageProfilesView(View):
         return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain, app_id, *args, **kwargs):
-        profiles = json.loads(request.body).get('profiles')
+        profiles = json.loads(request.body.decode('utf-8')).get('profiles')
         app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:

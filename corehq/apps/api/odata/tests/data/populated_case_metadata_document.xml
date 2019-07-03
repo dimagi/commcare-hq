@@ -1,0 +1,54 @@
+ <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+   <edmx:DataServices>
+     <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
+       <EntityType Name="case_type_with_no_case_properties">
+         <Key>
+           <PropertyRef Name="case_id"/>
+         </Key>
+         <Property Name="case_id" Nullable="false" Type="Edm.String"/>
+         <Property Name="closed" Type="Edm.Boolean"/>
+         <Property Name="domain" Nullable="false" Type="Edm.String"/>
+         <Property Name="date_closed" Type="Edm.DateTimeOffset"/>
+         <Property Name="date_modified" Type="Edm.DateTimeOffset"/>
+         <Property Name="opened_by" Type="Edm.String"/>
+         <Property Name="server_date_modified" Type="Edm.DateTimeOffset"/>
+         <Property Name="server_date_opened" Type="Edm.DateTimeOffset"/>
+         <Property Name="user_id" Type="Edm.String"/>
+         <!-- todo: this isn't working - may be a tableau limitation on list properties -->
+         <Property Name="xform_ids" Type="Collection(Edm.String)"/>
+         <Property Name="backend_id" Type="Edm.String"/>
+         <Property Name="case_name" Type="Edm.String"/>
+         <Property Name="case_type" Type="Edm.String"/>
+         <Property Name="date_opened" Type="Edm.String"/>
+         <Property Name="owner_id" Type="Edm.String"/>
+       </EntityType>
+       <EntityType Name="case_type_with_case_properties">
+         <Key>
+           <PropertyRef Name="case_id"/>
+         </Key>
+         <Property Name="case_id" Nullable="false" Type="Edm.String"/>
+         <Property Name="closed" Type="Edm.Boolean"/>
+         <Property Name="domain" Nullable="false" Type="Edm.String"/>
+         <Property Name="date_closed" Type="Edm.DateTimeOffset"/>
+         <Property Name="date_modified" Type="Edm.DateTimeOffset"/>
+         <Property Name="opened_by" Type="Edm.String"/>
+         <Property Name="server_date_modified" Type="Edm.DateTimeOffset"/>
+         <Property Name="server_date_opened" Type="Edm.DateTimeOffset"/>
+         <Property Name="user_id" Type="Edm.String"/>
+         <!-- todo: this isn't working - may be a tableau limitation on list properties -->
+         <Property Name="xform_ids" Type="Collection(Edm.String)"/>
+         <Property Name="backend_id" Type="Edm.String"/>
+         <Property Name="case_name" Type="Edm.String"/>
+         <Property Name="case_type" Type="Edm.String"/>
+         <Property Name="date_opened" Type="Edm.String"/>
+         <Property Name="owner_id" Type="Edm.String"/>
+         <Property Name="property_1" Type="Edm.String"/>
+         <Property Name="property_2" Type="Edm.String"/>
+       </EntityType>
+       <EntityContainer Name="Container">
+         <EntitySet EntityType="CommCare.case_type_with_no_case_properties" Name="case_type_with_no_case_properties"/>
+         <EntitySet EntityType="CommCare.case_type_with_case_properties" Name="case_type_with_case_properties"/>
+       </EntityContainer>
+     </Schema>
+   </edmx:DataServices>
+ </edmx:Edmx>

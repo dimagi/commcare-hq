@@ -5,7 +5,6 @@ from datetime import datetime
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, underweight_children_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text
@@ -17,12 +16,11 @@ from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, ex
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
 
     def get_data_for_child_health_monthly(date, filters):
 
-        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+        age_filters = {'age_tranche': 72}
 
         moderately_underweight = exclude_records_by_age_for_column(
             {'age_tranche': 72},

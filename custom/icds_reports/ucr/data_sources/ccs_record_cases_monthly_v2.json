@@ -21,6 +21,16 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-ccs_record_cases_monthly_v2",
     "display_name": "Cases - CCS Record (Monthly) (Static) v2",
@@ -404,9 +414,9 @@
           "location_property": "_id",
           "type": "ancestor_location"
         },
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
-        "is_nullable": true,
+        "is_nullable": false,
         "type": "expression",
         "column_id": "supervisor_id"
       },
@@ -2771,13 +2781,11 @@
       }
     ],
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "month",
-          "subtype": "date",
-          "constraint": "month"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "disable_destructive_rebuild": true
   }

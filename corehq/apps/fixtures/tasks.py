@@ -56,8 +56,9 @@ def delete_unneeded_fixture_data_item(self, domain, data_type_id):
         for items in chunked(FixtureDataItem.by_data_type(domain, data_type_id), 1000):
             FixtureDataItem.delete_docs(items)
             item_ids.extend([item.get_id for item in items])
-        for docs in chunked(FixtureOwnership.for_all_item_ids(item_ids, domain), 1000):
-            FixtureOwnership.delete_docs(items)
+        for item_id_chunk in chunked(item_ids, 1000):
+            for docs in chunked(FixtureOwnership.for_all_item_ids(item_id_chunk, domain), 1000):
+                FixtureOwnership.delete_docs(docs)
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as exc:

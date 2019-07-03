@@ -242,6 +242,17 @@ class DataSourceFilterInterpolationTest(SimpleTestCase):
             ["ticket"]
         )
 
+    def test_invalid_expression(self):
+        self._test_helper(
+            self._form_config({
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": 1,
+                "property_value": 2
+            }),
+            [None]
+        )
+
 
 class DataSourceConfigurationDbTest(TestCase):
 

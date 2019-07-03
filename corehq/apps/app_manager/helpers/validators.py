@@ -519,7 +519,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                 'module': self.get_module_info(),
             })
         if self.module.case_list_form.form_id:
-            forms = self.module.forms
+            forms = self.module.get_forms()
 
             case_tag = None
             loaded_case_types = None
@@ -599,7 +599,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                     'module': module_info,
                 }
             if self.module.get_app().commtrack_enabled and not self.module.product_details.short.columns:
-                for form in self.module.forms:
+                for form in self.module.get_forms():
                     if self.module.case_list.show or \
                             any(action.show_product_stock for action in form.actions.load_update_cases):
                         yield {

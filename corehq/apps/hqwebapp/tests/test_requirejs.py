@@ -91,36 +91,3 @@ class TestRequireJS(SimpleTestCase):
 
         if errors:
             self.fail("hqImport used in RequireJS modules: \n{}".format("\n".join(errors)))
-
-
-class TestRequireJSBuild(SimpleTestCase):
-    def test_no_select2_conflicts(self):
-        call_command('collectstatic', noinput=True, verbosity=0)
-        command = BuildRequireJSCommand()
-        command.r_js(local=False, no_optimize=True)
-
-        bad_modules = set()
-        with open(os.path.join(command.root_dir, command.build_txt_filename), 'r') as f:
-            module_name = None
-            has_v3 = False
-            has_v4 = False
-
-            previous_line = None
-            for line in f.readlines():
-                line = line.strip()
-                if not line:
-                    continue
-                if line.startswith('---'):
-                    module_name = previous_line
-                    has_v3 = False
-                    has_v4 = False
-                elif line == 'select2/dist/js/select2.full.min.js':
-                    has_v4 = True
-                elif line == 'select2-3.5.2-legacy/select2.js':
-                    has_v3 = True
-                if has_v3 and has_v4:
-                    bad_modules.add(module_name)
-                previous_line = line
-
-        if bad_modules:
-            self.fail("Bundles includes multiple versions of select2: " + ", ".join(bad_modules))

@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
@@ -11,7 +10,11 @@ from celery.task import task
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
 from django.core.mail.message import EmailMessage
+from django.template.defaultfilters import linebreaksbr
 
+from corehq.apps.translations.generators import AppTranslationsGenerator
+from corehq.apps.translations.integrations.transifex.parser import TranslationsParser
+from corehq.apps.translations.integrations.transifex.project_migrator import ProjectMigrator
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 
@@ -152,3 +155,70 @@ def backup_project_from_transifex(domain, data, email):
         filename = "%s-TransifexBackup.zip" % project_details.get('name')
         email.attach(filename=filename, content=tmp.read())
         email.send()
+
+
+@task
+def email_project_from_hq(domain, data, email):
+    """Emails the requester with an excel file translations to be sent to Transifex.
+
+    Used to verify translations before sending to Transifex
+    """
+    lang = data.get('source_lang')
+    project_slug = data.get('transifex_project_slug')
+    quacks_like_a_transifex = AppTranslationsGenerator(domain, data.get('app_id'), data.get('version'),
+                                                       key_lang=lang, source_lang=lang, lang_prefix='default_')
+    parser = TranslationsParser(quacks_like_a_transifex)
+    try:
+        translation_file, __ = parser.generate_excel_file()
+        with open(translation_file.name, 'rb') as file_obj:
+            email = EmailMessage(
+                subject='[{}] - HQ translation download'.format(settings.SERVER_ENVIRONMENT),
+                body="Translations from HQ",
+                to=[email],
+                from_email=settings.DEFAULT_FROM_EMAIL)
+            filename = "{project}-{lang}-translations.xls".format(project=project_slug, lang=lang)
+            email.attach(filename=filename, content=file_obj.read())
+            email.send()
+    finally:
+        try:
+            os.remove(translation_file.name)
+        except (NameError, OSError):
+            pass
+
+
+@task
+def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, target_app_id, mappings, email):
+    def consolidate_errors_messages():
+        error_messages = []
+        for old_id, response in slug_update_responses.items():
+            if response.status_code != 200:
+                error_messages.append("Slug update failed for %s with message %s" % (old_id, response.content))
+        for lang_code, response in menus_and_forms_sheet_update_responses.items():
+            if response.status_code != 200:
+                error_messages.append(
+                    "Menus and forms sheet update failed for lang %s with message %s" % (
+                        lang_code, response.content))
+        return error_messages
+
+    def generate_email_body():
+        error_messages = consolidate_errors_messages()
+        email_body = "Transifex project migration completed for project %s.\n" % transifex_project_slug
+        if error_messages:
+            email_body += "Following issues were encountered during update:\n"
+            for error_message in error_messages:
+                email_body += error_message + "\n"
+        return email_body
+
+    slug_update_responses, menus_and_forms_sheet_update_responses = ProjectMigrator(
+        domain,
+        transifex_project_slug,
+        source_app_id, target_app_id,
+        mappings
+    ).migrate()
+
+    email = EmailMessage(
+        subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
+        body=linebreaksbr(generate_email_body()),
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL)
+    email.send()

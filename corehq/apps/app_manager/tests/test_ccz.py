@@ -59,7 +59,7 @@ class CCZTest(TestCase):
 
         zip_path = self._create_multimedia_integrity_zip(
             self.factory.app.create_media_suite(),
-            list(self.factory.app.get_media_objects()))
+            list(self.factory.app.get_media_objects(remove_unused=True)))
         errors = check_ccz_multimedia_integrity(self.domain, zip_path)
         self.assertEqual(len(errors), 0)
 

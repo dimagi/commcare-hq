@@ -27,12 +27,14 @@
       <!-- /ko -->
     </legend>
     <div class="col-sm-12" data-bind="slideVisible: table.selected">
-      <div class="form-group">
-        <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Sheet Name" %}</label>
-        <div class="col-sm-9 col-md-8 col-lg-6">
-          <input type="text" class="form-control" data-bind="value: table.label" />
+      {% if not export_instance.is_odata_config %}
+        <div class="form-group">
+          <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Sheet Name" %}</label>
+          <div class="col-sm-9 col-md-8 col-lg-6">
+            <input type="text" class="form-control" data-bind="value: table.label" />
+          </div>
         </div>
-      </div>
+      {% endif %}
       <!-- ko if: table.is_user_defined -->
       <div class="form-group">
         <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Custom Path" %}</label>
@@ -41,7 +43,7 @@
         </div>
       </div>
       <!-- /ko -->
-      <h4>{% trans "Choose the fields you want to export." %}</h4>
+      <h4>{{ terminology.choose_fields_label }}</h4>
       <div class="help-block">
         {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
           {% blocktrans %}
@@ -51,10 +53,18 @@
               <li>To select a range of fields hold the Shift key and select the first and last field in the range.</li>
               <li>To unselect a field hold the CTRL key on a PC, or the Command key on a Mac, and click.</li>
             </ul>
-            <p>You can also rename fields, which will update the headers in the export file.</p>
           {% endblocktrans %}
+          {% if not export_instance.is_odata_config %}
+            {% blocktrans %}
+              <p>You can also rename fields, which will update the headers in the export file.</p>
+            {% endblocktrans %}
+          {% else %}
+            {% blocktrans %}
+              <p>You can also rename fields, which will update the column headers in Power BI or Tableau.</p>
+            {% endblocktrans %}
+          {% endif %}
         {% else %}
-          {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
+          {{ terminology.choose_fields_description }}
         {% endif %}
       </div>
 

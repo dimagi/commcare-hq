@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import inspect
+
 from celery.task import task
 from functools import wraps
 import logging
@@ -82,12 +85,11 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     Lines args and kwargs up with those specified in the definition of fn and
     passes the result to `format_str.format()`.
     """
-    varnames = fn.__code__.co_varnames
-    kwargs.update(dict(zip(varnames, args)))
-    return ("{}-" + format_str).format(fn.__name__, **kwargs)
+    callargs = inspect.getcallargs(fn, *args, **kwargs)
+    return ("{}-" + format_str).format(fn.__name__, **callargs)
 
 
-def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
+def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=3,
                 queue='background_queue', ignore_result=True):
     """
     Define a task to be executed one at a time.  If another serial_task with

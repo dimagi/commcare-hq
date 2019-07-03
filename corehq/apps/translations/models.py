@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from django.contrib import admin
 from django.db import models
+from django.urls import reverse
 from django.utils.functional import cached_property
 
 from dimagi.ext.couchdbkit import (
@@ -21,9 +22,6 @@ from corehq.util.quickcache import quickcache
 
 class TranslationMixin(Document):
     translations = DictProperty()
-
-    def init(self, lang):
-        self.translations[lang] = Translation.get_translations(lang, one=True)
 
     def set_translation(self, lang, key, value):
         if lang not in self.translations:
@@ -174,6 +172,8 @@ class TransifexBlacklist(models.Model):
             module = app['modules'].get(trans['module_id']) if app else None
             r['app_name'] = app['name'] if app else trans['app_id']
             r['module_name'] = module['name'] if module else trans['module_id']
+            r['delete_url'] = reverse('delete_translation_blacklist', args=[domain, trans['id']])
+
             ret.append(r)
         return ret
 

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
+import json
 from django.core.management.base import BaseCommand
 from django.db.models import Min
 from six.moves import input
@@ -39,10 +40,10 @@ PILLOW_REORG_MAPPING = {
 }
 
 
-def pillow_to_checkpoint_id_mapping():
+def pillow_to_checkpoint_id_mapping(reorg_mapping):
     checkpoint_mapping = {}
 
-    for new_pillow_name, old_pillows in six.iteritems(PILLOW_REORG_MAPPING):
+    for new_pillow_name, old_pillows in six.iteritems(reorg_mapping):
         new_pillow = get_pillow_by_name(new_pillow_name)
         checkpoint_mapping[new_pillow.checkpoint.checkpoint_id] = []
         checkpoints = []
@@ -71,11 +72,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--check',
-            action='store_true',
-            dest='check',
+            '--reorg_file_path',
             default=False,
-            help="Just print the summary of changes",
+            help="Path to a json spec of pillow reorg, if the env has custom pillows"
         )
         parser.add_argument(
             '--cleanup-first',
@@ -86,7 +85,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        check = options['check']
         confirm = input(
             """
             Please make sure you have read https://dimagi.github.io/commcare-cloud/changelog/0007-reorganize-pillows.html.
@@ -100,8 +98,15 @@ class Command(BaseCommand):
             print("Checkpoint creation cancelled")
             return
 
+        path = options['reorg_file_path']
+        if path:
+            with open(path, 'rb') as f:
+                reorg_mapping = json.loads(f.read())
+        else:
+            reorg_mapping = PILLOW_REORG_MAPPING
+
         try:
-            checkpoint_id_mapping = pillow_to_checkpoint_id_mapping()
+            checkpoint_id_mapping = pillow_to_checkpoint_id_mapping(reorg_mapping)
         except PillowNotFoundError as e:
             print(e)
             print("Please make sure that pillows are defined in current release")
@@ -111,6 +116,21 @@ class Command(BaseCommand):
         if options['cleanup']:
             new_checkpoints.delete()
 
+        self._create_checkpoints(checkpoint_id_mapping, False)
+        confirm = input(
+            """
+            Please check above reset offsets and make sure all merged checkpoints are relatively close.
+
+            Do you want to proceed resetting per the above output? y/N?
+            """
+        )
+        if confirm != 'y':
+            print("Checkpoint creation cancelled")
+            return
+        else:
+            self._create_checkpoints(checkpoint_id_mapping, True)
+
+    def _create_checkpoints(self, checkpoint_id_mapping, skip_check):
         for new_checkpoint_id, (old_checkpoint_ids, new_topics) in six.iteritems(checkpoint_id_mapping):
             print("\nCalculating checkpoints for {}\n".format(new_checkpoint_id))
             old_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=old_checkpoint_ids, topic__in=new_topics)
@@ -123,7 +143,7 @@ class Command(BaseCommand):
                     checkpoint.topic,
                     checkpoint.partition,
                     checkpoint.offset))
-            msg = "Creating checkpoints for" if check else "Checkpoints to be created for"
+            msg = "Creating checkpoints for" if skip_check else "Checkpoints to be created for"
             print("\n\t### {} - {} ###".format(msg, new_checkpoint_id))
             print("\ttopic, partition, offset")
             for result in topic_partitions:
@@ -131,7 +151,7 @@ class Command(BaseCommand):
                 partition = result['partition']
                 min_offset = old_checkpoints.filter(
                     topic=topic, partition=partition).aggregate(Min('offset'))['offset__min']
-                if not check:
+                if skip_check:
                     KafkaCheckpoint.objects.get_or_create(
                         checkpoint_id=new_checkpoint_id,
                         topic=topic,

@@ -82,8 +82,8 @@ class TextXpathColumnFilter(BaseXpathColumnFilter):
     name = 'xpath_column_text'
     data_type = DataType.TEXT
     choices = [
-        ChoiceMeta(ugettext_lazy("Equals"), 'text_equals', '='),
-        ChoiceMeta(ugettext_lazy("Does not equal"), 'text_not_equals', '!='),
+        ChoiceMeta(ugettext_lazy("Text equals"), 'text_equals', '='),
+        ChoiceMeta(ugettext_lazy("Text does not equal"), 'text_not_equals', '!='),
     ]
 
     def format_value(self, value):
@@ -91,14 +91,14 @@ class TextXpathColumnFilter(BaseXpathColumnFilter):
 
 
 class NumericXpathColumnFilter(BaseXpathColumnFilter):
-    title = ugettext_lazy("Number")
+    title = ugettext_lazy("a Number")
     name = 'xpath_column_number'
     data_type = DataType.NUMERIC
     choices = [
-        ChoiceMeta(ugettext_lazy("Is equal to"), 'num_equals', '='),
-        ChoiceMeta(ugettext_lazy("Is less than"), 'num_less_than', '<'),
-        ChoiceMeta(ugettext_lazy("Is greater than"), 'num_greater_than', '>'),
-        ChoiceMeta(ugettext_lazy("Is not equal to"), 'num_not_equals', '!='),
+        ChoiceMeta(ugettext_lazy("Number is equal to"), 'num_equals', '='),
+        ChoiceMeta(ugettext_lazy("Number is less than"), 'num_less_than', '<'),
+        ChoiceMeta(ugettext_lazy("Number is greater than"), 'num_greater_than', '>'),
+        ChoiceMeta(ugettext_lazy("Number is not equal to"), 'num_not_equals', '!='),
     ]
 
     @staticmethod
@@ -113,7 +113,7 @@ class NumericXpathColumnFilter(BaseXpathColumnFilter):
 
 
 class DateXpathColumnFilter(BaseXpathColumnFilter):
-    title = ugettext_lazy("Date")
+    title = ugettext_lazy("a Date")
     name = 'xpath_column_date'
     data_type = DataType.DATE
     choices = [

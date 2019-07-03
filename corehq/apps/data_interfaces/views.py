@@ -17,6 +17,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.hqwebapp.models import PageInfoContext
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
@@ -116,6 +117,7 @@ class DataInterfaceSection(BaseDomainView):
         return reverse("data_interfaces_default", args=[self.domain])
 
 
+@location_safe
 class ExploreCaseDataView(BaseDomainView):
     template_name = "data_interfaces/explore_case_data.html"
     urlname = "explore_case_data"
@@ -123,6 +125,8 @@ class ExploreCaseDataView(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
+        if hasattr(request, 'couch_user') and not self.report_config.has_permission:
+            raise Http404()
         return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -134,10 +138,22 @@ class ExploreCaseDataView(BaseDomainView):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    @memoized
+    def report_config(self):
+        return ExploreCaseDataReport(self.request, self.domain)
+
+    @property
     def page_context(self):
-        report_config = ExploreCaseDataReport(self.request, self.domain)
         return {
-            'report': report_config.context,
+            'report': self.report_config.context,
+            'section': PageInfoContext(
+                title=DataInterfaceSection.section_name,
+                url=reverse(DataInterfaceSection.urlname, args=[self.domain]),
+            ),
+            'page': PageInfoContext(
+                title=self.page_title,
+                url=reverse(self.urlname, args=[self.domain]),
+            ),
         }
 
 

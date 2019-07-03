@@ -29,7 +29,7 @@ def get_bulk_app_single_sheet_by_name(app, lang):
         for module_row in get_module_rows([lang], module):
             rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
-        for form in module.forms:
+        for form in module.get_forms():
             sheet_name = get_form_sheet_name(form)
             rows.append(get_name_menu_media_row(form, sheet_name, lang))
             for label_name_media in get_form_question_label_name_media([lang], form):
@@ -141,7 +141,9 @@ def get_module_rows(langs, module):
     if isinstance(module, ReportModule):
         return []
 
-    return get_module_case_list_form_rows(langs, module) + get_module_detail_rows(langs, module)
+    return get_module_case_list_form_rows(langs, module) + \
+        get_module_case_list_menu_item_rows(langs, module) + \
+        get_module_detail_rows(langs, module)
 
 
 def get_module_case_list_form_rows(langs, module):
@@ -151,6 +153,19 @@ def get_module_case_list_form_rows(langs, module):
     return [
         ('case_list_form_label', 'list') +
         tuple(module.case_list_form.label.get(lang, '') for lang in langs)
+    ]
+
+
+def get_module_case_list_menu_item_rows(langs, module):
+    if not hasattr(module, 'case_list'):
+        return []
+
+    if not module.case_list.show:
+        return []
+
+    return [
+        ('case_list_menu_item_label', 'list') +
+        tuple(module.case_list.label.get(lang, '') for lang in langs)
     ]
 
 

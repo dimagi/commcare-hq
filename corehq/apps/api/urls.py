@@ -16,7 +16,12 @@ from corehq.apps.api.object_fetch_api import (
     CaseAttachmentAPI,
     FormAttachmentAPI,
 )
-from corehq.apps.api.odata.views import ODataMetadataView, ODataServiceView
+from corehq.apps.api.odata.views import (
+    ODataCaseMetadataView,
+    ODataCaseServiceView,
+    ODataFormMetadataView,
+    ODataFormServiceView,
+)
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.v0_5 import (
     DomainCases,
@@ -79,6 +84,7 @@ API_LIST = (
         sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCommCareCaseResource,
+        v0_5.ODataXFormInstanceResource,
         LookupTableResource,
         LookupTableItemResource,
     )),
@@ -93,8 +99,10 @@ class CommCareHqApi(Api):
 
 def api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
-    yield url(r'v0.5/odata/Cases/$', ODataServiceView.as_view(), name='odata_service')
-    yield url(r'v0.5/odata/Cases/\$metadata$', ODataMetadataView.as_view(), name='odata_meta')
+    yield url(r'v0.5/odata/Cases/$', ODataCaseServiceView.as_view(), name=ODataCaseServiceView.urlname)
+    yield url(r'v0.5/odata/Cases/\$metadata$', ODataCaseMetadataView.as_view(), name=ODataCaseMetadataView.urlname)
+    yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/$', ODataFormServiceView.as_view(), name=ODataFormServiceView.urlname)
+    yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/\$metadata$', ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
