@@ -20,7 +20,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
 
     def get_data_for_child_health_monthly(date, filters):
 
-        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+        age_filters = {'age_tranche': 72}
 
         moderately_underweight = exclude_records_by_age_for_column(
             {'age_tranche': 72},

@@ -1822,7 +1822,7 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
     'Enables location columns to app status report',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(

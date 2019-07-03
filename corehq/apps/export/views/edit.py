@@ -11,6 +11,7 @@ from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
+from corehq.apps.export.models import ExportInstance
 from corehq.apps.export.views.new import BaseExportView
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
@@ -74,11 +75,23 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     page_title = ugettext_lazy("Edit Form Data Export")
     export_type = FORM_EXPORT
 
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import FormExportListView
+        return FormExportListView
+
 
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
     page_title = ugettext_lazy("Edit Case Data Export")
     export_type = CASE_EXPORT
+
+    @property
+    @memoized
+    def report_class(self):
+        from corehq.apps.export.views.list import CaseExportListView
+        return CaseExportListView
 
 
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
@@ -101,9 +114,42 @@ class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExpor
 
 class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
-    page_title = ugettext_lazy("Edit OData Case Feed")
+    page_title = ugettext_lazy("Copy OData Feed")
 
 
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
-    page_title = ugettext_lazy("Edit OData Form Feed")
+    page_title = ugettext_lazy("Copy OData Feed")
+
+
+class EditExportAttrView(BaseEditNewCustomExportView):
+    export_home_url = None
+
+    @property
+    @memoized
+    def export_type(self):
+        return ExportInstance.get(self.export_id).type
+
+    def get(self, request, *args, **kwargs):
+        raise Http404
+
+    def commit(self, request):
+        raise NotImplementedError
+
+
+class EditExportNameView(EditExportAttrView):
+    urlname = 'edit_export_name'
+
+    def commit(self, request):
+        self.new_export_instance.name = request.POST.get('value')
+        self.new_export_instance.save()
+        return self.new_export_instance.get_id
+
+
+class EditExportDescription(EditExportAttrView):
+    urlname = 'edit_export_description'
+
+    def commit(self, request):
+        self.new_export_instance.description = request.POST.get('value')
+        self.new_export_instance.save()
+        return self.new_export_instance.get_id

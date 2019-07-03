@@ -1,0 +1,19 @@
+DELETE FROM "icds_dashboard_thr_v2" WHERE month=%(month)s AND state_id = %(state)s
+{"month": "2019-01-01", "state": "st1"}
+
+        INSERT INTO "icds_dashboard_thr_v2" (
+        state_id, supervisor_id, awc_id, thr_distribution_image_count, month
+        ) (
+            SELECT
+                state_id,
+                supervisor_id,
+                awc_id,
+                COUNT(*) FILTER (WHERE photo_thr_packets_distributed is not null) as thr_distribution_image_count,
+                %(start_date)s::DATE AS month
+                FROM "ucr_icds-cas_static-thr_forms_v2_7f2a03ba"
+                WHERE submitted_on >= %(start_date)s AND submitted_on < %(end_date)s
+                    AND state_id=%(state_id)s
+                GROUP BY state_id, supervisor_id, awc_id
+        )
+        
+{"end_date": "2019-02-01", "start_date": "2019-01-01", "state_id": "st1"}

@@ -101,7 +101,7 @@ AWW_INCENTIVE_TABLE = 'icds_dashboard_aww_incentive'
 AGG_LS_AWC_VISIT_TABLE = 'icds_dashboard_ls_awc_visits_forms'
 AGG_LS_VHND_TABLE = 'icds_dashboard_ls_vhnd_forms'
 AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
-
+AGG_THR_V2_TABLE = 'icds_dashboard_thr_v2'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'

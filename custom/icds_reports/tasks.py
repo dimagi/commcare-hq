@@ -102,6 +102,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsAWCVisitForm,
     AggregateLsVhndForm,
     DailyAttendance,
+    AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
@@ -170,13 +171,23 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
     {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
-    {'type': 'cbe_form', 'name': 'static-cbe_form'}
+    {'type': 'cbe_form', 'name': 'static-cbe_form'},
+    {'type': 'thr_form_v2', 'name': 'static-thr_forms_v2'}
 ]
 
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
 ]
+
+
+# Tasks that are only to be run on ICDS_ENVS should be marked
+# with @only_icds_periodic_task rather than @periodic_task
+if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    only_icds_periodic_task = periodic_task
+else:
+    def only_icds_periodic_task(**kwargs):
+        return lambda fn: fn
 
 
 @periodic_task(run_every=crontab(minute=0, hour=18),
@@ -273,6 +284,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_awc_infra_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                               func_name='_agg_thr_table', force_citus=force_citus)
+                for state_id in state_ids
+            ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table', force_citus=force_citus))
 
             # https://github.com/celery/celery/issues/4274
@@ -307,6 +324,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                                                                 func_name='_agg_beneficiary_form', force_citus=force_citus)
                                  for state_id in state_ids
                                  ])
+
             res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table', force_citus=force_citus))
 
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table', force_citus=force_citus),
@@ -428,6 +446,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
         '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
+        '_agg_thr_table': _agg_thr_table
     }[func_name]
 
     if six.PY2 and isinstance(date, bytes):
@@ -446,10 +465,11 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             None, message="Error occurred during ICDS aggregation",
             details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
         )
+        citus = 'Citus ' if force_citus else ''
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
+            "{}{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
+                citus, func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
             )
         )
         self.retry(exc=exc)
@@ -647,6 +667,12 @@ def _agg_ls_awc_mgt_form(state_id, day):
 def _agg_ls_table(day):
     with transaction.atomic(using=db_for_read_write(AggLs)):
         AggLs.aggregate(force_to_date(day))
+
+
+@track_time
+def _agg_thr_table(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggregateTHRForm)):
+        AggregateTHRForm.aggregate(state_id, force_to_date(day))
 
 
 @track_time
@@ -987,7 +1013,9 @@ def _get_value(data, field):
     return getattr(data, field) or default
 
 
-@periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
+# This task caused memory spikes once a day on the india env
+# before it was switched to icds-only (June 2019)
+@only_icds_periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')

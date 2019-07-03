@@ -66,6 +66,8 @@ hqDefine("export/js/export_list", [
             'isDailySaved',
             'isFeed',
             'isOData',
+            'editNameUrl',
+            'editDescriptionUrl',
             'showLink',
         ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
@@ -82,6 +84,13 @@ hqDefine("export/js/export_list", [
         self.hasEmailedExport = !!options.emailedExport;
         if (self.hasEmailedExport) {
             self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
+        }
+
+        if (options.editNameUrl) {
+            self.editNameUrl = options.editNameUrl;
+        }
+        if (options.editDescriptionUrl) {
+            self.editDescriptionUrl = options.editDescriptionUrl;
         }
 
         if (options.isOData) {
@@ -232,13 +241,18 @@ hqDefine("export/js/export_list", [
         self.showEmpty = ko.computed(function () {
             return !self.isLoadingPanel() && !self.hasError() && !self.exports().length;
         });
-        self.showPagination = ko.computed(function () {
+        self.hasData = ko.computed(function () {
             return !self.isLoadingPanel() && !self.hasError() && self.exports().length;
         });
 
         self.totalItems = ko.observable(0);
         self.itemsPerPage = ko.observable();
         self.goToPage = function (page) {
+            if (self.hasData()) {
+                self.fetchPage(page);
+            }
+        };
+        self.fetchPage = function (page) {
             self.isLoadingPage(true);
             $.ajax({
                 method: 'GET',
@@ -280,7 +294,7 @@ hqDefine("export/js/export_list", [
             });
         };
 
-        self.goToPage(1);
+        self.fetchPage(1);
 
         return self;
     };
