@@ -121,6 +121,13 @@ class CaseDiffQueue(object):
         self._flush()
         self._rediff_unexpected()
         self._flush()
+        assert not self.pending_cases, self.pending_cases
+        for batcher, action in [
+            (self.case_batcher, "loaded"),
+            (self.diff_batcher, "diffed"),
+        ]:
+            if batcher:
+                log.warn("%s batches of cases could not be %s", len(batcher), action)
         self.pool = None
 
     def _flush(self):
@@ -260,11 +267,9 @@ class BatchProcessor(object):
         self.retries[key] += 1
         return self.retries[key] < self.MAX_RETRIES
 
-    def __bool__(self):
-        """Return true if there are unprocessed batches else false"""
-        return bool(self.batches)
-
-    __nonzero__ = __bool__
+    def __len__(self):
+        """Return the number of unprocessed batches"""
+        return len(self.batches)
 
     def __iter__(self):
         return iter(self.batches.values())
