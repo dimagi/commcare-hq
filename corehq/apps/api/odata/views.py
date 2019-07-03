@@ -1,12 +1,21 @@
 from __future__ import absolute_import, unicode_literals
+
+from collections import OrderedDict
+
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views import View
 
 from corehq import toggles
-from corehq.apps.api.odata.utils import get_case_type_to_properties, get_xmlns_by_app, get_xmlns_to_properties
+from corehq.apps.api.odata.utils import (
+    get_case_odata_fields_from_config,
+    get_case_type_to_properties,
+    get_xmlns_by_app,
+    get_xmlns_to_properties,
+)
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
+from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
 
@@ -82,6 +91,44 @@ class ODataFormMetadataView(View):
         xmlns_to_properties = get_xmlns_to_properties(domain, app_id)
         metadata = render_to_string('api/odata_form_metadata.xml', {
             'xmlns_to_properties': xmlns_to_properties,
+        })
+        return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
+
+
+class ODataCaseServiceFromExportInstanceView(View):
+
+    urlname = 'odata_case_service_from_export_instance'
+
+    @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(toggles.ODATA.required_decorator())
+    def get(self, request, domain):
+        service_document_content = {
+            '@odata.context': absolute_reverse(ODataCaseMetadataFromExportInstanceView.urlname, args=[domain]),
+            'value': [
+                {
+                    'name': config.get_id,
+                    'kind': 'EntitySet',
+                    'url': config.get_id,
+                }
+                for config in get_odata_case_configs_by_domain(domain)
+            ]
+        }
+        return add_odata_headers(JsonResponse(service_document_content))
+
+
+class ODataCaseMetadataFromExportInstanceView(View):
+
+    urlname = 'odata_case_metadata_from_export_instance'
+
+    @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(toggles.ODATA.required_decorator())
+    def get(self, request, domain):
+        configs = get_odata_case_configs_by_domain(domain)
+        config_ids_to_properties = OrderedDict()
+        for config in sorted(configs, key=lambda _config: _config.get_id):  # For deterministic tests
+            config_ids_to_properties[config.get_id] = get_case_odata_fields_from_config(config)
+        metadata = render_to_string('api/case_odata_metadata.xml', {
+            'config_ids_to_properties': config_ids_to_properties,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
