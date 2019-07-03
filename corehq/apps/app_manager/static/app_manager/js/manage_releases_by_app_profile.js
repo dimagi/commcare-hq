@@ -26,7 +26,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             self.profileName = details.profile_name;
             self.domId = "restriction_" + self.id;
             self.errorMessage = ko.observable();
-            self.domId = "restriction_" + self.id;
             self.ajaxInProgress = ko.observable(false);
             self.actionText = ko.computed(function () {
                 return (self.active() ? gettext("Remove") : gettext("Add"));
