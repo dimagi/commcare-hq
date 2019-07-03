@@ -157,10 +157,7 @@ class ODataCaseFromExportInstanceSerializer(Serializer):
 
     @staticmethod
     def serialize_cases_using_config(cases, config):
-        selected_columns = [
-            column for column in config.tables[0].columns
-            if column.selected
-        ]
+        selected_columns = config.tables[0].selected_columns
         return [
             {
                 column.label: _get_case_value_by_column(case_data, column)
