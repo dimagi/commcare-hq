@@ -155,7 +155,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         template = get_module_template(request.user, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
-        module_context = get_module_view_context(app, module, lang)
+        module_context = get_module_view_context(request, app, module, lang)
         context.update(module_context)
     elif app:
         context.update(get_app_view_context(request, app))
