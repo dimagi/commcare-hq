@@ -33,7 +33,8 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 
 
-@method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator()], name='dispatch')
+@method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator(),
+                   login_and_domain_required], name='dispatch')
 class ManageReleasesByLocation(BaseProjectSettingsView):
     template_name = 'domain/manage_releases_by_location.html'
     urlname = 'manage_releases_by_location'
@@ -91,7 +92,8 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
             return self.get(request, *args, **kwargs)
 
 
-@method_decorator([toggles.RELEASE_BUILDS_PER_PROFILE.required_decorator()], name='dispatch')
+@method_decorator([toggles.RELEASE_BUILDS_PER_PROFILE.required_decorator(),
+                   login_and_domain_required], name='dispatch')
 class ManageReleasesByAppProfile(BaseProjectSettingsView):
     template_name = 'domain/manage_releases_by_app_profile.html'
     urlname = 'manage_releases_by_app_profile'
@@ -187,6 +189,8 @@ def update_release_restriction(request, domain, restriction_id, active):
     return JsonResponse(data=response_content)
 
 
+@login_and_domain_required
+@require_POST
 def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
     if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(request):
         return HttpResponseForbidden()
