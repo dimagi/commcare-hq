@@ -21,19 +21,6 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         }
     }
 
-    var selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
-    var selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
-
-
-    var isServiceDeliveryDashboard = $location.path().indexOf('service_delivery_dashboard') !== -1;
-    if (isServiceDeliveryDashboard && selectedYear <= 2018) {
-        if (selectedYear < 2018 || (selectedYear === 2018 && selectedMonth === 1)) {
-            $location.search('month', new Date().getMonth() + 1);
-            $location.search('year', new Date().getFullYear());
-            $scope.dateChanged = true;
-        }
-    }
-
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
             $window.location.href = reportAnIssueUrl;
