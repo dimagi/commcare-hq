@@ -74,11 +74,7 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             self.appReleasesByAppProfile = ko.observableArray(appReleasesByAppProfile);
             return self;
         }
-        var appReleasesByAppProfile = _.map(initialPageData.get('app_releases_by_app_profile'), AppRelease);
-        var viewModel = manageReleasesByAppProfileViewModel(appReleasesByAppProfile);
-        if (appReleasesByAppProfile.length) {
-            $('#managed-releases').koApplyBindings(viewModel);
-        }
+
         function manageReleaseSearchViewModel() {
             var self = {};
             self.search = function () {
@@ -92,6 +88,12 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
                 window.location.search = "";
             };
             return self;
+        }
+
+        var appReleasesByAppProfile = _.map(initialPageData.get('app_releases_by_app_profile'), AppRelease);
+        var viewModel = manageReleasesByAppProfileViewModel(appReleasesByAppProfile);
+        if (appReleasesByAppProfile.length) {
+            $('#managed-releases').koApplyBindings(viewModel);
         }
         var searchViewModel = manageReleaseSearchViewModel();
         $("#manage-app-releases").koApplyBindings(searchViewModel);
