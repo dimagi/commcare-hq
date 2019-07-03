@@ -299,8 +299,8 @@ hqDefine('app_manager/js/app_manager', function () {
                 var $form = $(this),
                     modulesByUid = getModulesByUid(),
                     module = modulesByUid[$form.data('moduleuid')],
-                    oldRoot = $(module).data('rootmoduleuid'),
-                    newRoot = $form.find('select[name=root_module_id]').val();
+                    oldRoot = $(module).data('rootmoduleuid') || null,
+                    newRoot = $form.find('select[name=root_module_id]').val() || null;
 
                 if (newRoot !== oldRoot) {
                     $(module).data('rootmoduleuid', newRoot);
