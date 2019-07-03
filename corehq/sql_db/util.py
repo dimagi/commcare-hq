@@ -28,47 +28,6 @@ ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
 
 
-def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
-    """
-    Runs a query across all partitioned databases and produces a generator
-    with the results.
-
-    :param model_class: A Django model class
-
-    :param q_expression: An instance of django.db.models.Q representing the
-    filter to apply
-
-    :param values: (optional) If specified, should be a list of values to retrieve rather
-    than retrieving entire objects. If a list with a single value is given, the result will
-    be a generator of single values. If a list with multiple values is given, the result
-    will be a generator of tuples.
-
-    :param annotate: (optional) If specified, should by a dictionary of annotated fields
-    and their calculations. The dictionary will be splatted into the `.annotate` function
-
-    :return: A generator with the results
-    """
-    db_names = get_db_aliases_for_partitioned_query()
-
-    if values and not isinstance(values, (list, tuple)):
-        raise ValueError("Expected a list or tuple")
-
-    for db_name in db_names:
-        qs = model_class.objects.using(db_name)
-        if annotate:
-            qs = qs.annotate(**annotate)
-
-        qs = qs.filter(q_expression)
-        if values:
-            if len(values) == 1:
-                qs = qs.values_list(*values, flat=True)
-            else:
-                qs = qs.values_list(*values)
-
-        for result in qs.iterator():
-            yield result
-
-
 def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
                                                 values=None):
     """
