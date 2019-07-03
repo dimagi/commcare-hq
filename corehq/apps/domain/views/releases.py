@@ -198,9 +198,9 @@ def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
     if not release:
         return HttpResponseBadRequest()
     if request.POST.get('active') == 'false':
-        return _update_release_restriction_by_app_profile(request, restriction_id, active=False)
+        return _update_release_restriction_by_app_profile(release, restriction_id, active=False)
     elif request.POST.get('active') == 'true':
-        return _update_release_restriction_by_app_profile(request, restriction_id, active=True)
+        return _update_release_restriction_by_app_profile(release, restriction_id, active=True)
 
 
 def _update_release_restriction_by_app_profile(release, restriction_id, active):
