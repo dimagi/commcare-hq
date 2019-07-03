@@ -175,6 +175,11 @@ def overwrite_app(app, master_build, report_map=None):
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = master_json['version']
+    # The meaning of these three fields will change
+    # this just keeps them up-to-date in the meantime
+    app_json['progenitor_id'] = master_json.get('progenitor_id') or master_json['copy_of']
+    app_json['pulled_from_master_version'] = master_json['version']
+    app_json['pulled_from_master_app_id'] = master_json['copy_of']
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
