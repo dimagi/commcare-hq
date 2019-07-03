@@ -106,25 +106,25 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             data=self.request.POST if self.request.method == "POST" else None,
         )
 
-    def _get_initial_app_profile_details(self, version):
-        app_id = self.request.GET.get('app_id')
-        selected_profile_id = self.request.GET.get('profile_id', '')
+    @staticmethod
+    def _get_initial_app_profile_details(domain, version, app_id, build_profile_id):
         # only when performing search populate these initial values
         if app_id and version:
-            build_doc = get_build_doc_by_version(self.domain, self.request.GET.get('app_id'), version)
+            build_doc = get_build_doc_by_version(domain, app_id, version)
             if build_doc:
                 return [{
                     'id': _id,
                     'text': details['name'],
-                    'selected': selected_profile_id == _id
+                    'selected': build_profile_id == _id
                 } for _id, details in build_doc['build_profiles'].items()]
 
     @property
     def page_context(self):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         query = LatestEnabledBuildProfiles.objects.order_by('version')
-        if self.request.GET.get('app_id'):
-            query = query.filter(app_id=self.request.GET.get('app_id'))
+        app_id = self.request.GET.get('app_id')
+        if app_id:
+            query = query.filter(app_id=app_id)
         else:
             query = query.filter(app_id__in=app_names.keys())
         version = self.request.GET.get('version')
@@ -138,7 +138,8 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             'manage_releases_by_app_profile_form': self.form,
             'app_releases_by_app_profile': app_releases_by_app_profile,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'initial_app_profile_details': self._get_initial_app_profile_details(version),
+            'initial_app_profile_details': self._get_initial_app_profile_details(self.domain, version, app_id,
+                                                                                 build_profile_id),
         }
 
     def post(self, request, *args, **kwargs):
