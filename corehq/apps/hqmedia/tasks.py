@@ -270,18 +270,6 @@ def _expose_download_link(fpath, filename, compress_zip, download_id):
                                **common_kwargs)
 
 
-@task(serializer='pickle')
-def build_application_zip(include_multimedia_files, include_index_files, app,
-                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
-                          download_targeted_version=False):
-    DownloadBase.set_progress(build_application_zip, 0, 100)
-    fpath = create_files_for_ccz(app, build_profile_id, include_multimedia_files, include_index_files,
-                                 download_id, compress_zip, filename, download_targeted_version,
-                                 task=build_application_zip, expose_link=True)
-    _expose_download_link(fpath, filename, compress_zip, download_id)
-    DownloadBase.set_progress(build_application_zip, 100, 100)
-
-
 def find_missing_locale_ids_in_ccz(file_cache):
     errors = [
         _("Could not find {file_path} in CCZ").format(file_path)
