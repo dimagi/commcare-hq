@@ -6,6 +6,7 @@ function(doc) {
             doc_type: doc.doc_type,
             is_deidentified: doc.is_deidentified,
             is_daily_saved_export: doc.is_daily_saved_export,
+            is_odata_config: doc.is_odata_config || false,
             export_format: doc.export_format,
             name: doc.name,
             owner_id: doc.owner_id,

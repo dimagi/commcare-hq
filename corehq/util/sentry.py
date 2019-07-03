@@ -6,6 +6,7 @@ from six import string_types
 from six.moves import filter
 import re
 from django.conf import settings
+from django.db.utils import OperationalError
 from raven.contrib.django import DjangoClient
 from raven.processors import SanitizePasswordsProcessor
 
@@ -62,6 +63,11 @@ def _get_rate_limit_key(exc_info):
                 return key
 
 
+def is_pg_cancelled_query_exception(e):
+    PG_QUERY_CANCELLATION_ERR_MSG = "canceling statement due to conflict with recovery"
+    return isinstance(e, OperationalError) and PG_QUERY_CANCELLATION_ERR_MSG in e.message
+
+
 class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
     def __init__(self, client):
         super(HQSanitzeSystemPasswordsProcessor, self).__init__(client)
@@ -114,6 +120,8 @@ class HQSentryClient(DjangoClient):
             datadog_counter('commcare.sentry.errors.rate_limited', tags=[
                 'service:{}'.format(rate_limit_key)
             ])
+            if is_pg_cancelled_query_exception(ex_value):
+                datadog_counter('hq_custom.postgres.standby_query_canellations')
             exponential_backoff_key = '{}_down'.format(rate_limit_key)
             return not is_rate_limited(exponential_backoff_key)
         return True

@@ -24,6 +24,9 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 class TestCaseOdataFeed(TestCase, OdataTestMixin):
 
+    # flag_enabled is used in the test function body because class-level flags in child classes
+    # cancel out class level decorators or decorators on non-overriden functions.
+
     @classmethod
     def setUpClass(cls):
         super(TestCaseOdataFeed, cls).setUpClass()
@@ -37,13 +40,15 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         super(TestCaseOdataFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(wrong_credentials)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_domain(self):
         other_domain = Domain(name='other_domain')
@@ -51,11 +56,12 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            self._odata_feed_url_by_domain(other_domain.name),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(
+                self._odata_feed_url_by_domain(other_domain.name),
+                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+            )
+        self.assertEqual(response.status_code, 401)
 
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
@@ -63,10 +69,6 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
-        self._test_request_succeeded()
-
-    @flag_enabled('ODATA')
-    def _test_request_succeeded(self):
         with trap_extra_setup(ConnectionError):
             elasticsearch_instance = get_es_new()
             initialize_index_and_mapping(elasticsearch_instance, CASE_INDEX_INFO)
@@ -76,7 +78,8 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         self.web_user.save()
 
         correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
 
     @property
@@ -132,13 +135,15 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         super(TestFormOdataFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(wrong_credentials)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_domain(self):
         other_domain = Domain(name='other_domain')
@@ -146,11 +151,12 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            self._odata_feed_url_by_domain(other_domain.name),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
-        self.assertEqual(response.status_code, 404)
+        with flag_enabled('ODATA'):
+            response = self.client.get(
+                self._odata_feed_url_by_domain(other_domain.name),
+                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+            )
+        self.assertEqual(response.status_code, 401)
 
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
@@ -158,10 +164,6 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
-        self._test_request_succeeded()
-
-    @flag_enabled('ODATA')
-    def _test_request_succeeded(self):
         with trap_extra_setup(ConnectionError):
             elasticsearch_instance = get_es_new()
             initialize_index_and_mapping(elasticsearch_instance, XFORM_INDEX_INFO)
@@ -171,7 +173,8 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         self.web_user.save()
 
         correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             json.loads(response.content.decode('utf-8')),

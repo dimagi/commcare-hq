@@ -10,6 +10,7 @@ from corehq.apps.translations.integrations.transifex.views import (
     DownloadTranslations,
     PullResource,
     delete_translation_blacklist,
+    MigrateTransifexProject,
 )
 
 urlpatterns = [
@@ -25,4 +26,6 @@ urlpatterns = [
         name='app_translations'),
     url(r'^dl/', DownloadTranslations.as_view(),
         name='download_translations'),
+    url(r'^migrate/$', MigrateTransifexProject.as_view(),
+        name='migrate_transifex_project'),
 ]

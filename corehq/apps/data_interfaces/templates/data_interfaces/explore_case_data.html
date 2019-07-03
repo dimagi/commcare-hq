@@ -64,6 +64,8 @@
   {% initial_page_data "report.reportFilters" report.report_filters %}
   {% initial_page_data "report.initialReportFilters" report.initial_report_filters %}
 
+  {% initial_page_data "domain" domain %}
+
 
   <p class="lead">
     {% trans "Explore Case Data (Preview)" %}
@@ -78,11 +80,21 @@
       {% trans "Learn more." %}
     </a>
   </p>
-  <div class="ko-loading">
-    <i class="fa fa-spinner fa-spin"></i>
-    {% blocktrans %}
-      Loading...
-    {% endblocktrans %}
+
+  <div id="js-datagrid-initial-loading"
+       class="datagrid-initial-loading">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body text-center">
+          <i class="fa fa-spinner fa-spin fa-2x"></i>
+          <p class="lead">
+            {% blocktrans %}
+              Preparing your case data for exploration...
+            {% endblocktrans %}
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="report-datagrid"
@@ -150,11 +162,6 @@
           <!-- ko foreach: columns -->
           <th data-bind="style: { width: width() + 'px' },
                          columnResize: width">
-            <a class="datagrid-sort"
-               data-bind="click: $root.toggleSortColumn,
-                          visible: $root.isSortableColumn(name())">
-              <i data-bind="attr: { class: sortIconClass }"></i>
-            </a>
             <a class="datagrid-edit-link"
                data-bind="click: $root.editColumnController.set">
               <span data-bind="text: title"></span>

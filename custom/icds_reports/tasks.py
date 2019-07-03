@@ -187,6 +187,15 @@ SQL_FUNCTION_PATHS = [
 ]
 
 
+# Tasks that are only to be run on ICDS_ENVS should be marked
+# with @only_icds_periodic_task rather than @periodic_task
+if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    only_icds_periodic_task = periodic_task
+else:
+    def only_icds_periodic_task(**kwargs):
+        return lambda fn: fn
+
+
 @periodic_task(run_every=crontab(minute=0, hour=18),
                acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task():
@@ -462,10 +471,11 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             None, message="Error occurred during ICDS aggregation",
             details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
         )
+        citus = 'Citus ' if force_citus else ''
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
+            "{}{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
+                citus, func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
             )
         )
         self.retry(exc=exc)
@@ -1032,7 +1042,9 @@ def _get_value(data, field):
     return getattr(data, field) or default
 
 
-@periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
+# This task caused memory spikes once a day on the india env
+# before it was switched to icds-only (June 2019)
+@only_icds_periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -1157,16 +1169,22 @@ def get_dashboard_users_not_logged_in(start_date, end_date, domain='icds-cas'):
     return not_logged_in
 
 
-
-@periodic_task(run_every=crontab(day_of_week=5, hour=19, minute=0), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(day_of_week=5, hour=14, minute=0), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
     # Weekly refresh of disha dumps for current and last month
+    DISHA_NOTIFICATION_EMAIL = '{}@{}'.format('icds-dashboard', 'dimagi.com')
+    _soft_assert = soft_assert(to=[DISHA_NOTIFICATION_EMAIL], send_to_ops=False)
     month = date.today().replace(day=1)
     last_month = month - timedelta(days=1)
     last_month = last_month.replace(day=1)
     celery_task_logger.info("Started dumping DISHA data")
-    build_dumps_for_month(month, rebuild=True)
-    build_dumps_for_month(last_month, rebuild=True)
+    try:
+        build_dumps_for_month(month, rebuild=True)
+        build_dumps_for_month(last_month, rebuild=True)
+    except Exception:
+        _soft_assert(False, "DISHA weekly task has failed.")
+    else:
+        _soft_assert(False, "DISHA weekly task has succeeded.")
     celery_task_logger.info("Finished dumping DISHA data")
 
 
