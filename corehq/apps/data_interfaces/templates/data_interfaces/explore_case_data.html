@@ -203,7 +203,7 @@
     </table>
     <div id="js-datagrid-loading"
          class="datagrid-loading"
-         data-bind="visible: data.isDataLoading">
+         data-bind="visible: data.isDataLoading() && data.hasInitialLoadFinished()">
       <div class="loading-text">
         <i class="fa fa-spinner fa-spin"></i>
         {% blocktrans %}
