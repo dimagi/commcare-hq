@@ -86,13 +86,13 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
-        age_in_days = "({} - child_health.dob)::integer".format(end_month_string)
+        age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
-        age_in_months = "(({} - child_health.dob) / 30.4 )".format(start_month_string)
+        age_in_months = "(({} - person_cases.dob) / 30.4 )".format(start_month_string)
         open_in_month = ("(({} - child_health.opened_on::date)::integer >= 0) AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)").format(end_month_string, start_month_string)
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(start_month_string)
         seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
-        born_in_month = "({} AND child_health.dob BETWEEN {} AND {})".format(seeking_services, start_month_string, end_month_string)
+        born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(seeking_services, start_month_string, end_month_string)
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services, age_in_months)
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
@@ -100,10 +100,10 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         cf_eligible = "({} AND {} > 6 AND {} <= 24)".format(valid_in_month, age_in_months_end, age_in_months)
         cf_initiation_eligible = "({} AND {} > 6 AND {} <= 8)".format(valid_in_month, age_in_months_end, age_in_months)
         thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
-        pnc_eligible = "({} AND {} - child_health.dob > 0 AND {} - child_health.dob <= 20)".format(valid_in_month, end_month_string, start_month_string)
+        pnc_eligible = "({} AND {} - person_cases.dob > 0 AND {} - person_cases.dob <= 20)".format(valid_in_month, end_month_string, start_month_string)
         height_eligible = "({} AND {} > 6 AND {} <= 60)".format(valid_in_month, age_in_months_end, age_in_months)
         fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months_end)
-        immunized_age_in_days = "(child_tasks.immun_one_year_date - child_health.dob)"
+        immunized_age_in_days = "(child_tasks.immun_one_year_date - person_cases.dob)"
         fully_immun_before_month = "(child_tasks.immun_one_year_date < {})".format(end_month_string)
 
         columns = (
@@ -126,7 +126,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("disabled", "child_health.disabled"),
             ("minority", "child_health.minority"),
             ("resident", "child_health.resident"),
-            ("dob", "child_health.dob"),
+            ("dob", "person_cases.dob"),
             ("age_in_months", 'trunc({})'.format(age_in_months_end)),
             ("open_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(open_in_month)),
             ("alive_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(alive_in_month)),
