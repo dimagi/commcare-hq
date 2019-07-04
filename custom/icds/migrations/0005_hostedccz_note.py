@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='hostedccz',
             name='note',
-            field=models.TextField(blank=True, null=True),
+            field=models.TextField(blank=True),
         ),
     ]
