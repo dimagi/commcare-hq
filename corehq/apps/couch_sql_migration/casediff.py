@@ -72,7 +72,7 @@ class CaseDiffQueue(object):
 
     def _add_pending_cases(self, pending_cases):
         log.debug("add pending cases %s", pending_cases)
-        self.case_batcher.spawn(self._load_cases, pending_cases)
+        return self.case_batcher.spawn(self._load_cases, pending_cases)
 
     def _load_cases(self, pending):
         """Load cases and try to diff them as forms are processed
@@ -122,8 +122,11 @@ class CaseDiffQueue(object):
     def _process_remaining_diffs(self):
         log.debug("process remaining diffs")
         if self.pending_cases:
-            self._add_pending_cases(self.pending_cases)
+            add_pending = self._add_pending_cases(self.pending_cases)
             self.pending_cases = defaultdict(set)
+            gevent.joinall([add_pending])
+        for rec in list(self.cases.values()):
+            self.enqueue(rec.case.to_json())
         self._flush()
         self._rediff_unexpected()
         self._flush()
@@ -249,7 +252,7 @@ class BatchProcessor(object):
     def spawn(self, process, batch):
         key = next(self.key_gen)
         self.batches[key] = batch
-        self._process_batch(process, key)
+        return self._process_batch(process, key)
 
     def _process_batch(self, process, key):
         def process_batch(key):
@@ -268,7 +271,7 @@ class BatchProcessor(object):
                 self.retries.pop(key, None)
 
         log.debug("schedule %s key=%s", process.__name__, key)
-        self.pool.spawn(process_batch, key)
+        return self.pool.spawn(process_batch, key)
 
     def _should_retry(self, key):
         self.retries[key] += 1
