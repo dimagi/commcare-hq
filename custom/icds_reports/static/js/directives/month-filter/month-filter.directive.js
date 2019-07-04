@@ -7,7 +7,7 @@ function MonthModalController($location, $uibModalInstance) {
     vm.years = [];
     vm.monthsCopy = [];
 
-    var startDate = $location.path().indexOf('service_delivery_dashboard') === -1 ? 2017 : 2018;
+    var startDate = $location.path().indexOf('service_delivery_dashboard') === -1 ? 2017 : 2019;
 
     window.angular.forEach(moment.months(), function(key, value) {
         vm.monthsCopy.push({
@@ -31,7 +31,7 @@ function MonthModalController($location, $uibModalInstance) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
         });
-    } else if (startDate === 2018 && vm.selectedYear === 2018) {
+    } else if (startDate === 2019 && vm.selectedYear === 2019) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id >= 2;
         });
@@ -57,7 +57,7 @@ function MonthModalController($location, $uibModalInstance) {
                 return month.id <= new Date().getMonth() + 1;
             });
             vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
-        } else if (startDate === 2018 && vm.selectedYear === 2018) {
+        } else if (startDate === 2019 && vm.selectedYear === 2019) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id >= 2;
             });

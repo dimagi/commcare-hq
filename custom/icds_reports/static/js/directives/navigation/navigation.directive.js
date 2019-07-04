@@ -31,8 +31,8 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
         var selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
 
         var isServiceDeliveryDashboard = path.indexOf('service_delivery_dashboard') !== -1;
-        if (isServiceDeliveryDashboard && selectedYear <= 2018) {
-            if (selectedYear < 2018 || (selectedYear === 2018 && selectedMonth === 1)) {
+        if (isServiceDeliveryDashboard && selectedYear <= 2019) {
+            if (selectedYear < 2019 || (selectedYear === 2019 && selectedMonth === 1)) {
                 $location.search('month', new Date().getMonth() + 1);
                 $location.search('year', new Date().getFullYear());
                 $rootScope.dateChanged = true;
