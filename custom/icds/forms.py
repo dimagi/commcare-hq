@@ -110,7 +110,7 @@ class HostedCCZForm(forms.Form):
                 link_id=self.cleaned_data['link_id'], app_id=self.cleaned_data['app_id'],
                 version=self.cleaned_data['version'], profile_id=self.cleaned_data['profile_id'],
                 file_name=self.cleaned_data['file_name'],
-                note=self.cleaned_data['note']
+                note=self.cleaned_data['note'],
             )
         except ValidationError as e:
             return False, ','.join(e.messages)
