@@ -593,7 +593,6 @@ def _new_advanced_module(request, domain, app, name, lang):
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(request, _('Caution: Advanced modules are a labs feature'))
     return response
 
 
