@@ -11,7 +11,7 @@ import codecs
 
 from django.test import TestCase, SimpleTestCase
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_built_app_ids_for_app_id
+from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
 from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module, \
     ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tasks import make_async_build, prune_auto_generated_builds
@@ -268,15 +268,15 @@ class AppManagerTest(TestCase):
         # Build #2, auto-generated
         app.save()
         make_async_build(app, 'someone')
-        build_ids = get_built_app_ids_for_app_id(app.domain, app.id)
+        build_ids = get_build_ids(app.domain, app.id)
         self.assertEqual(len(build_ids), 2)
-        self.assertEqual(build_ids[0], build1.id)
-        build2 = get_app(app.domain, build_ids[1])
+        self.assertEqual(build_ids[1], build1.id)
+        build2 = get_app(app.domain, build_ids[0])
         self.assertTrue(build2.is_auto_generated)
 
         # First prune: delete nothing because the auto build is the most recent
         prune_auto_generated_builds(self.domain, app.id)
-        self.assertEqual(len(get_built_app_ids_for_app_id(app.domain, app.id)), 2)
+        self.assertEqual(len(get_build_ids(app.domain, app.id)), 2)
 
         # Build #3, manually generated
         app.save()
@@ -287,13 +287,13 @@ class AppManagerTest(TestCase):
         build2.is_released = True
         build2.save()
         prune_auto_generated_builds(self.domain, app.id)
-        self.assertEqual(len(get_built_app_ids_for_app_id(app.domain, app.id)), 3)
+        self.assertEqual(len(get_build_ids(app.domain, app.id)), 3)
 
         # Un-release the auto-generated build and prune again, which should delete it
         build2.is_released = False
         build2.save()
         prune_auto_generated_builds(self.domain, app.id)
-        build_ids = get_built_app_ids_for_app_id(app.domain, app.id)
+        build_ids = get_build_ids(app.domain, app.id)
         self.assertEqual(len(build_ids), 2)
         self.assertNotIn(build2.id, build_ids)
 
