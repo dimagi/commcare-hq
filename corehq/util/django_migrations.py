@@ -6,6 +6,7 @@ from functools import wraps
 from django.conf import settings
 from django.db import migrations
 from django.db.backends.postgresql_psycopg2.schema import DatabaseSchemaEditor
+from django.db.migrations import RunPython
 
 
 def add_if_not_exists(string):
@@ -99,3 +100,10 @@ def skip_on_fresh_install(migration_fn):
             return
         return migration_fn(*args, **kwargs)
     return _inner
+
+
+def noop_migration():
+    """
+    A migration that does nothing. Used to replace old migrations that are no longer required e.g moved.
+    """
+    return RunPython(RunPython.noop, RunPython.noop)

@@ -4,7 +4,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.db import migrations
-from corehq.sql_db.operations import RawSQLMigration, noop_migration
+from corehq.sql_db.operations import RawSQLMigration
+from corehq.util.django_migrations import noop_migration
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 

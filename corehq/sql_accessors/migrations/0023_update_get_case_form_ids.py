@@ -5,7 +5,8 @@ from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.form_processor.models import CaseTransaction
-from corehq.sql_db.operations import RawSQLMigration, noop_migration
+from corehq.sql_db.operations import RawSQLMigration
+from corehq.util.django_migrations import noop_migration
 
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
