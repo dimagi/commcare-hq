@@ -259,6 +259,16 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
+
+    def test_missing_config_id(self):
+        correct_credentials = self._get_correct_credentials()
+        with flag_enabled('ODATA'):
+            response = self.client.get(
+                self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
+                HTTP_AUTHORIZATION = 'Basic ' + correct_credentials,
+            )
+        self.assertEqual(response.status_code, 404)
+
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
         response = self._execute_query(correct_credentials)
@@ -294,13 +304,17 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
 
     @staticmethod
     def _odata_feed_url_by_domain(domain_name):
+        return TestCaseOdataFeedFromExportInstance._odata_feed_url_by_domain_and_config_id(domain_name, 'config_id')
+
+    @staticmethod
+    def _odata_feed_url_by_domain_and_config_id(domain_name, config_id):
         return reverse(
             'api_dispatch_detail',
             kwargs={
                 'domain': domain_name,
                 'api_name': 'v0.5',
                 'resource_name': ODataCaseFromExportInstanceResource._meta.resource_name,
-                'pk': 'config_id',
+                'pk': config_id,
             }
         )
 

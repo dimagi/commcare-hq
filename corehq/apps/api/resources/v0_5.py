@@ -1013,9 +1013,7 @@ class ODataCaseFromExportInstanceResource(HqBaseResource, DomainSpecificResource
         return add_odata_headers(response)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        config = CaseExportInstance.get(self.config_id)
-        if config.domain != domain:
-            raise Http404
+        config = get_document_or_404(CaseExportInstance, domain, self.config_id)
         return get_case_export_base_query(domain, config.case_type)
 
     def detail_uri_kwargs(self, bundle_or_obj):
