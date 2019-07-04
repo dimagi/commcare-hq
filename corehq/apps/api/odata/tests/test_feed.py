@@ -6,11 +6,13 @@ import json
 from django.test import TestCase
 from django.urls import reverse
 
-from elasticsearch.exceptions import ConnectionError
-
 from corehq.apps.api.odata.tests.utils import (
     OdataTestMixin,
+    ensure_es_case_index_deleted,
+    ensure_es_form_index_deleted,
     generate_api_key_from_web_user,
+    setup_es_case_index,
+    setup_es_form_index,
 )
 from corehq.apps.api.resources.v0_5 import (
     ODataCaseFromExportInstanceResource,
@@ -19,12 +21,7 @@ from corehq.apps.api.resources.v0_5 import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import CaseExportInstance, TableConfiguration
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import flag_enabled, trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.test_utils import flag_enabled
 
 
 class TestCaseOdataFeed(TestCase, OdataTestMixin):
@@ -37,9 +34,11 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         super(TestCaseOdataFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
+        setup_es_case_index()
 
     @classmethod
     def tearDownClass(cls):
+        ensure_es_case_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestCaseOdataFeed, cls).tearDownClass()
@@ -74,14 +73,6 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
-        with trap_extra_setup(ConnectionError):
-            elasticsearch_instance = get_es_new()
-            initialize_index_and_mapping(elasticsearch_instance, CASE_INDEX_INFO)
-        self.addCleanup(self._ensure_case_index_deleted)
-
-        self.web_user.set_role(self.domain.name, 'admin')
-        self.web_user.save()
-
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
             response = self._execute_query(correct_credentials)
@@ -102,10 +93,6 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
                 'pk': 'my_case_type',
             }
         )
-
-    @staticmethod
-    def _ensure_case_index_deleted():
-        ensure_index_deleted(CASE_INDEX_INFO.index)
 
 
 class TestCaseOdataFeedUsingApiKey(TestCaseOdataFeed):
@@ -132,9 +119,11 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         super(TestFormOdataFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
+        setup_es_form_index()
 
     @classmethod
     def tearDownClass(cls):
+        ensure_es_form_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestFormOdataFeed, cls).tearDownClass()
@@ -169,14 +158,6 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
-        with trap_extra_setup(ConnectionError):
-            elasticsearch_instance = get_es_new()
-            initialize_index_and_mapping(elasticsearch_instance, XFORM_INDEX_INFO)
-        self.addCleanup(self._ensure_xform_index_deleted)
-
-        self.web_user.set_role(self.domain.name, 'admin')
-        self.web_user.save()
-
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
             response = self._execute_query(correct_credentials)
@@ -205,10 +186,6 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
             }
         )
 
-    @staticmethod
-    def _ensure_xform_index_deleted():
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
-
 
 class TestFormOdataFeedUsingApiKey(TestFormOdataFeed):
 
@@ -234,9 +211,11 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
         super(TestCaseOdataFeedFromExportInstance, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
+        setup_es_case_index()
 
     @classmethod
     def tearDownClass(cls):
+        ensure_es_case_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestCaseOdataFeedFromExportInstance, cls).tearDownClass()
@@ -286,14 +265,6 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
-        with trap_extra_setup(ConnectionError):
-            elasticsearch_instance = get_es_new()
-            initialize_index_and_mapping(elasticsearch_instance, CASE_INDEX_INFO)
-        self.addCleanup(self._ensure_case_index_deleted)
-
-        self.web_user.set_role(self.domain.name, 'admin')
-        self.web_user.save()
-
         export_config = CaseExportInstance(
             _id='config_id',
             tables=[TableConfiguration(columns=[])],
@@ -332,10 +303,6 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
                 'pk': 'config_id',
             }
         )
-
-    @staticmethod
-    def _ensure_case_index_deleted():
-        ensure_index_deleted(CASE_INDEX_INFO.index)
 
 
 class TestCaseOdataFeedFromExportInstanceUsingApiKey(TestCaseOdataFeedFromExportInstance):
