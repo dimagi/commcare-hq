@@ -6,14 +6,18 @@ from django.core.serializers.json import DjangoJSONEncoder
 from tastypie.serializers import Serializer
 
 from corehq.apps.api.odata.utils import get_case_type_to_properties, get_odata_property_from_export_item
-from corehq.apps.api.odata.views import ODataCaseMetadataView, ODataFormMetadataView
+from corehq.apps.api.odata.views import (
+    ODataCaseMetadataView,
+    DeprecatedODataCaseMetadataView,
+    DeprecatedODataFormMetadataView,
+)
 from corehq.apps.export.dbaccessors import get_latest_form_export_schema
-from corehq.apps.export.models import ExportItem
+from corehq.apps.export.models import CaseExportInstance, ExportItem
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
 
-class ODataCommCareCaseSerializer(Serializer):
+class DeprecatedODataCaseSerializer(Serializer):
     """
     A custom serializer that converts case data into an odata-compliant format.
     Must be paired with ODataCommCareCaseResource
@@ -28,7 +32,7 @@ class ODataCommCareCaseSerializer(Serializer):
 
         data = self.to_simple(data, options)
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
+            absolute_reverse(DeprecatedODataCaseMetadataView.urlname, args=[domain]),
             case_type
         )
 
@@ -68,7 +72,7 @@ def update_case_json(case_json, case_properties_to_include):
     })
 
 
-class ODataXFormInstanceSerializer(Serializer):
+class DeprecatedODataFormSerializer(Serializer):
     """
     A custom serializer that converts form data into an odata-compliant format.
     Must be paired with ODataXFormInstanceResource
@@ -84,7 +88,7 @@ class ODataXFormInstanceSerializer(Serializer):
 
         data = self.to_simple(data, options)
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataFormMetadataView.urlname, args=[domain, app_id]),
+            absolute_reverse(DeprecatedODataFormMetadataView.urlname, args=[domain, app_id]),
             xmlns
         )
         next_url = data.pop('meta', {}).get('next')
@@ -119,3 +123,55 @@ class ODataXFormInstanceSerializer(Serializer):
                 data['value'][i]['xform_id'] = xform_json['id']
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+
+class ODataCaseSerializer(Serializer):
+
+    def to_json(self, data, options=None):
+        # Convert bundled objects to JSON
+        data['objects'] = [
+            bundle.obj for bundle in data['objects']
+        ]
+
+        domain = data.pop('domain', None)
+        config_id = data.pop('config_id', None)
+        api_path = data.pop('api_path', None)
+        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
+            config_id
+        )
+
+        next_link = self.get_next_url(data.pop('meta'), api_path)
+        if next_link:
+            data['@odata.nextLink'] = next_link
+
+        config = CaseExportInstance.get(config_id)
+        data['value'] = self.serialize_cases_using_config(data.pop('objects'), config)
+
+        return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+    @staticmethod
+    def get_next_url(meta, api_path):
+        next_page = meta['next']
+        if next_page:
+            return '{}{}{}'.format(get_url_base(), api_path, next_page)
+
+    @staticmethod
+    def serialize_cases_using_config(cases, config):
+        table = config.tables[0]
+        return [
+            {
+                col.label: col.get_value(
+                    config.domain,
+                    case_data.get('case_id', None),
+                    case_data,
+                    [],
+                    split_column=config.split_multiselects,
+                    transform_dates=config.transform_dates,
+                )
+                for col in table.selected_columns
+            }
+            for case_data in cases
+        ]

@@ -26,6 +26,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.api.resources.v0_5 import ODataCaseResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -70,6 +71,7 @@ from corehq.apps.users.permissions import (
 )
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
+from corehq.util.view_utils import absolute_reverse
 
 
 class ExportListHelper(object):
@@ -220,6 +222,15 @@ class ExportListHelper(object):
             'lastBuildDuration': '',
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
+            'odataUrl': absolute_reverse(
+                'api_dispatch_detail',
+                kwargs={
+                    'domain': export.domain,
+                    'api_name': 'v0.5',
+                    'resource_name': ODataCaseResource._meta.resource_name,
+                    'pk': export.get_id,
+                }
+            )[:-1]  # Remove trailing forward slash for compatibility with BI tools
         }
 
     def _get_daily_saved_export_metadata(self, export):
