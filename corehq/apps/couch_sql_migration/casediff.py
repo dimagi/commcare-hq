@@ -19,6 +19,21 @@ log = logging.getLogger(__name__)
 class CaseDiffQueue(object):
     """A queue that diffs cases when all relevant forms have been processed
 
+    Cases in the queue are moved through the following phases:
+
+      - Phase 1: Accumulate cases touched by forms as they are
+        processed. When a sufficiently sized batch of cases that have
+        not been seen before has accumulated, move it to phase 2. Cases
+        that have previously been loaded by phase 2 are updated in this
+        phase, and will be directly enqueued to diff (sent to phase 3)
+        when the last form for a case has been processed.
+      - Phase 2: Load full case documents from couch to get the list of
+        forms touched by each case. The cases are updated with processed
+        forms and enqueued to be diffed when all relevant forms have
+        been processed.
+      - Phase 3: Enqueued cases are accumulated to be diffed in batches.
+      - Phase 4: Diff a batch of cases.
+
     Cases and other internal state of this queue are persisted in the
     state db so they will be preserved between invocations when the
     queue is used as a context manager. Some cases may be diffed more
@@ -103,6 +118,11 @@ class CaseDiffQueue(object):
             self.statedb.add_missing_docs("CommCareCase-couch", missing)
 
     def _try_to_diff(self, rec, processed_form_ids):
+        """Add processed forms to case record and enqueue to diff if possible
+
+        :param rec: CaseRecord
+        :param processed_form_ids: sequence of processed form ids.
+        """
         log.debug("trying case %s forms %s - %s",
             rec.id, rec.remaining_forms, processed_form_ids)
         rec.add_processed(processed_form_ids)
