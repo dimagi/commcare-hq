@@ -6,7 +6,7 @@ from mock import patch
 from django.test import SimpleTestCase
 
 from corehq.apps.api.odata.serializers import (
-    ODataCaseFromExportInstanceSerializer,
+    ODataCaseSerializer,
     get_properties_to_include,
     update_case_json,
 )
@@ -19,7 +19,7 @@ from corehq.apps.export.models import (
 )
 
 
-class TestODataCommCareCaseSerializer(SimpleTestCase):
+class TestDeprecatedODataCaseSerializer(SimpleTestCase):
 
     def test_update_case_json(self):
         case_json = {
@@ -72,11 +72,11 @@ class TestODataCommCareCaseSerializer(SimpleTestCase):
         })
 
 
-class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
+class TestODataCaseSerializer(SimpleTestCase):
 
     def test_selected_column_included(self):
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_cases_using_config(
                 [{'owner_name': 'owner-name-value', 'properties': {}}],
                 CaseExportInstance(
                     tables=[
@@ -101,7 +101,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
 
     def test_unselected_column_excluded(self):
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_cases_using_config(
                 [{'owner_name': 'owner-name-value', 'properties': {}}],
                 CaseExportInstance(
                     tables=[
@@ -126,7 +126,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
 
     def test_missing_value_is_null(self):
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_cases_using_config(
                 [{}],
                 CaseExportInstance(
                     tables=[
@@ -151,7 +151,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
 
     def test_non_standard_case_property(self):
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_cases_using_config(
                 [{'property_1': 'property-1-value'}],
                 CaseExportInstance(
                     tables=[
@@ -176,7 +176,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
 
     def test_case_id(self):
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_cases_using_config(
                 [{'_id': 'case-id-value'}],
                 CaseExportInstance(
                     tables=[
@@ -201,7 +201,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
 
     def test_case_name(self):
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_cases_using_config(
                 [{'name': 'case-name-value'}],
                 CaseExportInstance(
                     tables=[
@@ -228,7 +228,7 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
         meta = {'next': '?limit=1&offset=1'}
         api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.get_next_url(meta, api_path),
+            ODataCaseSerializer.get_next_url(meta, api_path),
             'http://localhost:8000/a/odata-test/api/v0.5/odata/cases/config_id?limit=1&offset=1'
         )
 
@@ -236,6 +236,6 @@ class TestODataCaseFromExportInstanceSerializer(SimpleTestCase):
         meta = {'next': None}
         api_path = '/a/odata-test/api/v0.5/odata/cases/config_id'
         self.assertEqual(
-            ODataCaseFromExportInstanceSerializer.get_next_url(meta, api_path),
+            ODataCaseSerializer.get_next_url(meta, api_path),
             None
         )

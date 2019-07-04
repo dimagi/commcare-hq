@@ -7,9 +7,9 @@ from tastypie.serializers import Serializer
 
 from corehq.apps.api.odata.utils import get_case_type_to_properties, get_odata_property_from_export_item
 from corehq.apps.api.odata.views import (
-    ODataCaseMetadataFromExportInstanceView,
     ODataCaseMetadataView,
-    ODataFormMetadataView,
+    DeprecatedODataCaseMetadataView,
+    DeprecatedODataFormMetadataView,
 )
 from corehq.apps.export.dbaccessors import get_latest_form_export_schema
 from corehq.apps.export.models import CaseExportInstance, ExportItem
@@ -17,7 +17,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
 
-class ODataCommCareCaseSerializer(Serializer):
+class DeprecatedODataCaseSerializer(Serializer):
     """
     A custom serializer that converts case data into an odata-compliant format.
     Must be paired with ODataCommCareCaseResource
@@ -32,7 +32,7 @@ class ODataCommCareCaseSerializer(Serializer):
 
         data = self.to_simple(data, options)
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
+            absolute_reverse(DeprecatedODataCaseMetadataView.urlname, args=[domain]),
             case_type
         )
 
@@ -72,7 +72,7 @@ def update_case_json(case_json, case_properties_to_include):
     })
 
 
-class ODataXFormInstanceSerializer(Serializer):
+class DeprecatedODataFormSerializer(Serializer):
     """
     A custom serializer that converts form data into an odata-compliant format.
     Must be paired with ODataXFormInstanceResource
@@ -88,7 +88,7 @@ class ODataXFormInstanceSerializer(Serializer):
 
         data = self.to_simple(data, options)
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataFormMetadataView.urlname, args=[domain, app_id]),
+            absolute_reverse(DeprecatedODataFormMetadataView.urlname, args=[domain, app_id]),
             xmlns
         )
         next_url = data.pop('meta', {}).get('next')
@@ -125,7 +125,7 @@ class ODataXFormInstanceSerializer(Serializer):
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
 
-class ODataCaseFromExportInstanceSerializer(Serializer):
+class ODataCaseSerializer(Serializer):
 
     def to_json(self, data, options=None):
         # Convert bundled objects to JSON
@@ -139,7 +139,7 @@ class ODataCaseFromExportInstanceSerializer(Serializer):
         assert all([domain, config_id, api_path]), [domain, config_id, api_path]
 
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataCaseMetadataFromExportInstanceView.urlname, args=[domain]),
+            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
             config_id
         )
 

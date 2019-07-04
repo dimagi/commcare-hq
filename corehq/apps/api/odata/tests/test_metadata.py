@@ -9,15 +9,15 @@ from django.urls import reverse
 from mock import patch
 
 from corehq.apps.api.odata.tests.utils import (
-    CaseOdataFromExportInstanceTestMixin,
     CaseOdataTestMixin,
-    FormOdataTestMixin,
+    DeprecatedCaseOdataTestMixin,
+    DeprecatedFormOdataTestMixin,
     generate_api_key_from_web_user,
 )
 from corehq.apps.api.odata.views import (
-    ODataCaseMetadataFromExportInstanceView,
     ODataCaseMetadataView,
-    ODataFormMetadataView,
+    DeprecatedODataCaseMetadataView,
+    DeprecatedODataFormMetadataView,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
@@ -27,19 +27,19 @@ from corehq.util.test_utils import flag_enabled
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
 
-class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
+class TestDeprecatedCaseMetadataDocument(TestCase, DeprecatedCaseOdataTestMixin, TestXmlMixin):
 
-    view_urlname = ODataCaseMetadataView.urlname
+    view_urlname = DeprecatedODataCaseMetadataView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseMetadataDocumentCase, cls).setUpClass()
+        super(TestDeprecatedCaseMetadataDocument, cls).setUpClass()
         cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-        super(TestCaseMetadataDocumentCase, cls).tearDownClass()
+        super(TestDeprecatedCaseMetadataDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
         with flag_enabled('ODATA'):
@@ -108,36 +108,36 @@ class TestCaseMetadataDocumentCase(TestCase, CaseOdataTestMixin, TestXmlMixin):
         )
 
 
-class TestCaseMetadataDocumentUsingApiKey(TestCaseMetadataDocumentCase):
+class TestDeprecatedCaseMetadataDocumentUsingApiKey(TestDeprecatedCaseMetadataDocument):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseMetadataDocumentUsingApiKey, cls).setUpClass()
+        super(TestDeprecatedCaseMetadataDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestCaseMetadataDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedCaseMetadataDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestCaseMetadataDocumentWithTwoFactorUsingApiKey(TestCaseMetadataDocumentUsingApiKey):
+class TestDeprecatedCaseMetadataDocumentWithTwoFactorUsingApiKey(TestDeprecatedCaseMetadataDocumentUsingApiKey):
     pass
 
 
-class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
+class TestDeprecatedFormMetadataDocument(TestCase, DeprecatedFormOdataTestMixin, TestXmlMixin):
 
-    view_urlname = ODataFormMetadataView.urlname
+    view_urlname = DeprecatedODataFormMetadataView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestFormMetadataDocumentCase, cls).setUpClass()
+        super(TestDeprecatedFormMetadataDocument, cls).setUpClass()
         cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-        super(TestFormMetadataDocumentCase, cls).tearDownClass()
+        super(TestDeprecatedFormMetadataDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
         with flag_enabled('ODATA'):
@@ -206,36 +206,36 @@ class TestFormMetadataDocumentCase(TestCase, FormOdataTestMixin, TestXmlMixin):
         )
 
 
-class TestFormMetadataDocumentUsingApiKey(TestFormMetadataDocumentCase):
+class TestDeprecatedFormMetadataDocumentUsingApiKey(TestDeprecatedFormMetadataDocument):
 
     @classmethod
     def setUpClass(cls):
-        super(TestFormMetadataDocumentUsingApiKey, cls).setUpClass()
+        super(TestDeprecatedFormMetadataDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestFormMetadataDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedFormMetadataDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestFormMetadataDocumentWithTwoFactorUsingApiKey(TestFormMetadataDocumentUsingApiKey):
+class TestDeprecatedFormMetadataDocumentWithTwoFactorUsingApiKey(TestDeprecatedFormMetadataDocumentUsingApiKey):
     pass
 
 
-class TestCaseMetadataDocumentFromExportInstance(TestCase, CaseOdataFromExportInstanceTestMixin, TestXmlMixin):
+class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
-    view_urlname = ODataCaseMetadataFromExportInstanceView.urlname
+    view_urlname = ODataCaseMetadataView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseMetadataDocumentFromExportInstance, cls).setUpClass()
+        super(TestCaseMetadataDocument, cls).setUpClass()
         cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-        super(TestCaseMetadataDocumentFromExportInstance, cls).tearDownClass()
+        super(TestCaseMetadataDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
         response = self.client.get(self.view_url)
@@ -334,18 +334,18 @@ class TestCaseMetadataDocumentFromExportInstance(TestCase, CaseOdataFromExportIn
         )
 
 
-class TestCaseMetadataDocumentFromExportInstanceUsingApiKey(TestCaseMetadataDocumentFromExportInstance):
+class TestCaseMetadataDocumentUsingApiKey(TestCaseMetadataDocument):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseMetadataDocumentFromExportInstanceUsingApiKey, cls).setUpClass()
+        super(TestCaseMetadataDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestCaseMetadataDocumentFromExportInstance._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestCaseMetadataDocument._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestCaseMetadataDocumentFromExportInstanceWithTwoFactorUsingApiKey(TestCaseMetadataDocumentFromExportInstanceUsingApiKey):
+class TestCaseMetadataDocumentWithTwoFactorUsingApiKey(TestCaseMetadataDocumentUsingApiKey):
     pass

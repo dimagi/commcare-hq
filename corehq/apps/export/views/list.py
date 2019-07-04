@@ -26,7 +26,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.api.resources.v0_5 import ODataCaseFromExportInstanceResource
+from corehq.apps.api.resources.v0_5 import ODataCaseResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -224,7 +224,7 @@ class ExportListHelper(object):
                 kwargs={
                     'domain': export.domain,
                     'api_name': 'v0.5',
-                    'resource_name': ODataCaseFromExportInstanceResource._meta.resource_name,
+                    'resource_name': ODataCaseResource._meta.resource_name,
                     'pk': export.get_id,
                 }
             )[:-1]  # Remove trailing forward slash for compatibility with BI tools

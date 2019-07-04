@@ -22,7 +22,7 @@ from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 
 
-class ODataCaseServiceView(View):
+class DeprecatedODataCaseServiceView(View):
 
     urlname = 'odata_case_service'
 
@@ -31,7 +31,7 @@ class ODataCaseServiceView(View):
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         data = {
-            '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
+            '@odata.context': absolute_reverse(DeprecatedODataCaseMetadataView.urlname, args=[domain]),
             'value': [
                 {
                     'name': case_type,
@@ -44,7 +44,7 @@ class ODataCaseServiceView(View):
         return add_odata_headers(JsonResponse(data))
 
 
-class ODataCaseMetadataView(View):
+class DeprecatedODataCaseMetadataView(View):
 
     urlname = 'odata_case_meta'
 
@@ -64,7 +64,7 @@ class ODataCaseMetadataView(View):
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
-class ODataFormServiceView(View):
+class DeprecatedODataFormServiceView(View):
 
     urlname = 'odata_form_service'
 
@@ -73,7 +73,7 @@ class ODataFormServiceView(View):
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain, app_id):
         data = {
-            '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain, app_id]),
+            '@odata.context': absolute_reverse(DeprecatedODataFormMetadataView.urlname, args=[domain, app_id]),
             'value': [
                 {
                     'name': xmlns,
@@ -86,7 +86,7 @@ class ODataFormServiceView(View):
         return add_odata_headers(JsonResponse(data))
 
 
-class ODataFormMetadataView(View):
+class DeprecatedODataFormMetadataView(View):
 
     urlname = 'odata_form_meta'
 
@@ -101,7 +101,7 @@ class ODataFormMetadataView(View):
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
-class ODataCaseServiceFromExportInstanceView(View):
+class ODataCaseServiceView(View):
 
     urlname = 'odata_case_service_from_export_instance'
 
@@ -110,7 +110,7 @@ class ODataCaseServiceFromExportInstanceView(View):
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         service_document_content = {
-            '@odata.context': absolute_reverse(ODataCaseMetadataFromExportInstanceView.urlname, args=[domain]),
+            '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
             'value': [
                 {
                     'name': config.get_id,
@@ -123,7 +123,7 @@ class ODataCaseServiceFromExportInstanceView(View):
         return add_odata_headers(JsonResponse(service_document_content))
 
 
-class ODataCaseMetadataFromExportInstanceView(View):
+class ODataCaseMetadataView(View):
 
     urlname = 'odata_case_metadata_from_export_instance'
 

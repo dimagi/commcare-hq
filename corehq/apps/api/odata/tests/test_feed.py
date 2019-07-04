@@ -15,23 +15,23 @@ from corehq.apps.api.odata.tests.utils import (
     setup_es_form_index,
 )
 from corehq.apps.api.resources.v0_5 import (
-    ODataCaseFromExportInstanceResource,
-    ODataCommCareCaseResource,
-    ODataXFormInstanceResource,
+    ODataCaseResource,
+    DeprecatedODataCaseResource,
+    DeprecatedODataFormResource,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import CaseExportInstance, TableConfiguration
 from corehq.util.test_utils import flag_enabled
 
 
-class TestCaseOdataFeed(TestCase, OdataTestMixin):
+class TestDeprecatedODataCaseFeed(TestCase, OdataTestMixin):
 
     # flag_enabled is used in the test function body because class-level flags in child classes
     # cancel out class level decorators or decorators on non-overriden functions.
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseOdataFeed, cls).setUpClass()
+        super(TestDeprecatedODataCaseFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
         setup_es_case_index()
@@ -41,7 +41,7 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
         ensure_es_case_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
-        super(TestCaseOdataFeed, cls).tearDownClass()
+        super(TestDeprecatedODataCaseFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
         with flag_enabled('ODATA'):
@@ -89,34 +89,34 @@ class TestCaseOdataFeed(TestCase, OdataTestMixin):
             kwargs={
                 'domain': domain_name,
                 'api_name': 'v0.5',
-                'resource_name': ODataCommCareCaseResource._meta.resource_name,
+                'resource_name': DeprecatedODataCaseResource._meta.resource_name,
                 'pk': 'my_case_type',
             }
         )
 
 
-class TestCaseOdataFeedUsingApiKey(TestCaseOdataFeed):
+class TestDeprecatedODataCaseFeedUsingApiKey(TestDeprecatedODataCaseFeed):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseOdataFeedUsingApiKey, cls).setUpClass()
+        super(TestDeprecatedODataCaseFeedUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestCaseOdataFeedUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedODataCaseFeedUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestCaseOdataFeedWithTwoFactorUsingApiKey(TestCaseOdataFeedUsingApiKey):
+class TestDeprecatedODataCaseFeedWithTwoFactorUsingApiKey(TestDeprecatedODataCaseFeedUsingApiKey):
     pass
 
 
-class TestFormOdataFeed(TestCase, OdataTestMixin):
+class TestDeprecatedODataFormFeed(TestCase, OdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestFormOdataFeed, cls).setUpClass()
+        super(TestDeprecatedODataFormFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
         setup_es_form_index()
@@ -126,7 +126,7 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
         ensure_es_form_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
-        super(TestFormOdataFeed, cls).tearDownClass()
+        super(TestDeprecatedODataFormFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
         with flag_enabled('ODATA'):
@@ -181,34 +181,34 @@ class TestFormOdataFeed(TestCase, OdataTestMixin):
             kwargs={
                 'domain': domain_name,
                 'api_name': 'v0.5',
-                'resource_name': ODataXFormInstanceResource._meta.resource_name,
+                'resource_name': DeprecatedODataFormResource._meta.resource_name,
                 'pk': 'my_app_id/my_xmlns',
             }
         )
 
 
-class TestFormOdataFeedUsingApiKey(TestFormOdataFeed):
+class TestDeprecatedODataFormFeedUsingApiKey(TestDeprecatedODataFormFeed):
 
     @classmethod
     def setUpClass(cls):
-        super(TestFormOdataFeedUsingApiKey, cls).setUpClass()
+        super(TestDeprecatedODataFormFeedUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestFormOdataFeedUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedODataFormFeedUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestFormOdataFeedWithTwoFactorUsingApiKey(TestFormOdataFeedUsingApiKey):
+class TestDeprecatedODataFormFeedWithTwoFactorUsingApiKey(TestDeprecatedODataFormFeedUsingApiKey):
     pass
 
 
-class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
+class TestODataCaseFeed(TestCase, OdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseOdataFeedFromExportInstance, cls).setUpClass()
+        super(TestODataCaseFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
         setup_es_case_index()
@@ -218,7 +218,7 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
         ensure_es_case_index_deleted()
         cls._teardownclass()
         cls._teardown_accounting()
-        super(TestCaseOdataFeedFromExportInstance, cls).tearDownClass()
+        super(TestODataCaseFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
         with flag_enabled('ODATA'):
@@ -325,7 +325,7 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
 
     @staticmethod
     def _odata_feed_url_by_domain(domain_name):
-        return TestCaseOdataFeedFromExportInstance._odata_feed_url_by_domain_and_config_id(domain_name, 'config_id')
+        return TestODataCaseFeed._odata_feed_url_by_domain_and_config_id(domain_name, 'config_id')
 
     @staticmethod
     def _odata_feed_url_by_domain_and_config_id(domain_name, config_id):
@@ -334,24 +334,24 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
             kwargs={
                 'domain': domain_name,
                 'api_name': 'v0.5',
-                'resource_name': ODataCaseFromExportInstanceResource._meta.resource_name,
+                'resource_name': ODataCaseResource._meta.resource_name,
                 'pk': config_id,
             }
         )
 
 
-class TestCaseOdataFeedFromExportInstanceUsingApiKey(TestCaseOdataFeedFromExportInstance):
+class TestODataCaseFeedUsingApiKey(TestODataCaseFeed):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseOdataFeedFromExportInstanceUsingApiKey, cls).setUpClass()
+        super(TestODataCaseFeedUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestFormOdataFeedUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedODataFormFeedUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestCaseOdataFeedFromExportInstanceWithTwoFactorUsingApiKey(TestCaseOdataFeedFromExportInstanceUsingApiKey):
+class TestODataCaseFeedWithTwoFactorUsingApiKey(TestODataCaseFeedUsingApiKey):
     pass

@@ -9,34 +9,34 @@ from django.urls import reverse
 from mock import patch
 
 from corehq.apps.api.odata.tests.utils import (
-    CaseOdataFromExportInstanceTestMixin,
     CaseOdataTestMixin,
-    FormOdataTestMixin,
+    DeprecatedCaseOdataTestMixin,
+    DeprecatedFormOdataTestMixin,
     generate_api_key_from_web_user,
 )
 from corehq.apps.api.odata.views import (
-    ODataCaseServiceFromExportInstanceView,
     ODataCaseServiceView,
-    ODataFormServiceView,
+    DeprecatedODataCaseServiceView,
+    DeprecatedODataFormServiceView,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import CaseExportInstance
 from corehq.util.test_utils import flag_enabled
 
 
-class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
+class TestDeprecatedCaseServiceDocument(TestCase, DeprecatedCaseOdataTestMixin):
 
-    view_urlname = ODataCaseServiceView.urlname
+    view_urlname = DeprecatedODataCaseServiceView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseServiceDocumentCase, cls).setUpClass()
+        super(TestDeprecatedCaseServiceDocument, cls).setUpClass()
         cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-        super(TestCaseServiceDocumentCase, cls).tearDownClass()
+        super(TestDeprecatedCaseServiceDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
         with flag_enabled('ODATA'):
@@ -108,36 +108,36 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
         )
 
 
-class TestCaseServiceDocumentUsingApiKey(TestCaseServiceDocumentCase):
+class TestDeprecatedCaseServiceDocumentUsingApiKey(TestDeprecatedCaseServiceDocument):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseServiceDocumentUsingApiKey, cls).setUpClass()
+        super(TestDeprecatedCaseServiceDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestCaseServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedCaseServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestCaseServiceDocumentWithTwoFactorUsingApiKey(TestCaseServiceDocumentUsingApiKey):
+class TestDeprecatedCaseServiceDocumentWithTwoFactorUsingApiKey(TestDeprecatedCaseServiceDocumentUsingApiKey):
     pass
 
 
-class TestFormServiceDocument(TestCase, FormOdataTestMixin):
+class TestDeprecatedFormServiceDocument(TestCase, DeprecatedFormOdataTestMixin):
 
-    view_urlname = ODataFormServiceView.urlname
+    view_urlname = DeprecatedODataFormServiceView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestFormServiceDocument, cls).setUpClass()
+        super(TestDeprecatedFormServiceDocument, cls).setUpClass()
         cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-        super(TestFormServiceDocument, cls).tearDownClass()
+        super(TestDeprecatedFormServiceDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
         with flag_enabled('ODATA'):
@@ -209,36 +209,36 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         )
 
 
-class TestFormServiceDocumentUsingApiKey(TestFormServiceDocument):
+class TestDeprecatedFormServiceDocumentUsingApiKey(TestDeprecatedFormServiceDocument):
 
     @classmethod
     def setUpClass(cls):
-        super(TestFormServiceDocumentUsingApiKey, cls).setUpClass()
+        super(TestDeprecatedFormServiceDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestFormServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedFormServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestFormServiceDocumentWithTwoFactorUsingApiKey(TestFormServiceDocumentUsingApiKey):
+class TestDeprecatedFormServiceDocumentWithTwoFactorUsingApiKey(TestDeprecatedFormServiceDocumentUsingApiKey):
     pass
 
 
-class TestCaseServiceDocumentFromExportInstance(TestCase, CaseOdataFromExportInstanceTestMixin):
+class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
 
-    view_urlname = ODataCaseServiceFromExportInstanceView.urlname
+    view_urlname = ODataCaseServiceView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseServiceDocumentFromExportInstance, cls).setUpClass()
+        super(TestCaseServiceDocument, cls).setUpClass()
         cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
-        super(TestCaseServiceDocumentFromExportInstance, cls).tearDownClass()
+        super(TestCaseServiceDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
         response = self.client.get(self.view_url)
@@ -328,18 +328,18 @@ class TestCaseServiceDocumentFromExportInstance(TestCase, CaseOdataFromExportIns
         ])
 
 
-class TestCaseServiceDocumentFromExportInstanceUsingApiKey(TestCaseServiceDocumentFromExportInstance):
+class TestCaseServiceDocumentUsingApiKey(TestCaseServiceDocument):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseServiceDocumentFromExportInstanceUsingApiKey, cls).setUpClass()
+        super(TestCaseServiceDocumentUsingApiKey, cls).setUpClass()
         cls.api_key = generate_api_key_from_web_user(cls.web_user)
 
     @classmethod
     def _get_correct_credentials(cls):
-        return TestFormServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
+        return TestDeprecatedFormServiceDocumentUsingApiKey._get_basic_credentials(cls.web_user.username, cls.api_key.key)
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestCaseServiceDocumentFromExportInstanceWithTwoFactorUsingApiKey(TestCaseServiceDocumentFromExportInstanceUsingApiKey):
+class TestCaseServiceDocumentWithTwoFactorUsingApiKey(TestCaseServiceDocumentUsingApiKey):
     pass
