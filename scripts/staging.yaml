@@ -59,5 +59,4 @@ branches:
   - odata-datadog  # Nick June 29
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
   - jls/build-app-ccz-app-id-step-2-of-3 # Jenny July 3
-  - jls/disable-autofill # Jenny July 3
 submodules: {}
