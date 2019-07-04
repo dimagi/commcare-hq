@@ -121,7 +121,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 },
             })
                 .done(function (data) {
-                    self.resetPagination(data.resetPagination);
+                    if (self.hasInitialLoadFinished()) {
+                        self.resetPagination(data.resetPagination);
+                    }
+
                     self.rows(data.rows);
                     self.totalRecords(data.totalRecords);
 
