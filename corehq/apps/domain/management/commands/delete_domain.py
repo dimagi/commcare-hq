@@ -7,6 +7,14 @@ from django.core.management.base import BaseCommand
 from corehq.apps.domain.models import Domain
 from six.moves import input
 
+from corehq.apps.domain.utils import silence_during_tests
+from corehq.form_processor.backends.sql.dbaccessors import (
+    FormAccessorSQL,
+    CaseAccessorSQL,
+)
+from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
+
 
 class Command(BaseCommand):
     help = "Deletes the given domain and its contents"
@@ -41,5 +49,16 @@ class Command(BaseCommand):
                 print("\n\t\tDomain deletion cancelled.")
                 return
         print("Deleting domain {}".format(domain_name))
+
+        print('Hard deleting forms...')
+        deleted_sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain_name)
+        for form_id_chunk in chunked(with_progress_bar(deleted_sql_form_ids, stream=silence_during_tests()), 500):
+            FormAccessorSQL.hard_delete_forms(domain_name, list(form_id_chunk), delete_attachments=True)
+
+        print('Hard deleting cases...')
+        deleted_sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain_name)
+        for case_id_chunk in chunked(with_progress_bar(deleted_sql_case_ids, stream=silence_during_tests()), 500):
+            CaseAccessorSQL.hard_delete_cases(domain_name, list(case_id_chunk))
+
         domain_obj.delete()
         print("Operation completed")
