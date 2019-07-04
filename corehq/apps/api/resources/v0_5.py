@@ -1014,7 +1014,9 @@ class ODataCaseFromExportInstanceResource(HqBaseResource, DomainSpecificResource
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = CaseExportInstance.get(self.config_id)
-        return get_case_export_base_query(config.domain, config.case_type)
+        if config.domain != domain:
+            raise Http404
+        return get_case_export_base_query(domain, config.case_type)
 
     def detail_uri_kwargs(self, bundle_or_obj):
         # Not sure why this is required but the feed 500s without it

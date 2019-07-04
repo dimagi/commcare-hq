@@ -265,6 +265,21 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
             )
         self.assertEqual(response.status_code, 401)
 
+    def test_config_in_different_domain(self):
+        export_config = CaseExportInstance(
+            _id='config_id',
+            tables=[TableConfiguration(columns=[])],
+            case_type='my_case_type',
+            domain='different_domain'
+        )
+        export_config.save()
+        self.addCleanup(export_config.delete)
+
+        correct_credentials = self._get_correct_credentials()
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
+        self.assertEqual(response.status_code, 404)
+
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
         response = self._execute_query(correct_credentials)
@@ -283,6 +298,7 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
             _id='config_id',
             tables=[TableConfiguration(columns=[])],
             case_type='my_case_type',
+            domain=self.domain.name,
         )
         export_config.save()
         self.addCleanup(export_config.delete)
