@@ -106,6 +106,12 @@
   requires: "{$parent.doc_type}='Application'"
   disabled: true
 
+- id: admin_password
+  name: "Admin Password"
+  description: Must correspond to the password format specified below.
+  widget: password
+  hide_if_not_enabled: true
+
 - id: secure_submissions
   name: "Use Secure Submissions"
   widget: bool

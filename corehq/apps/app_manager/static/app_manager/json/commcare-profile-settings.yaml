@@ -71,6 +71,14 @@
   "//value_names": ["Save to the File System"]
   force: true
 
+- name: "Password Format"
+  description: "Determines whether phone keys will type letters or numbers by default when typing in the password field."
+  id: "password_format"
+  values: ["a", "n"]
+  value_names: ["Alphanumeric", "Numeric"]
+  default: "a"
+  force: true
+
 - name: "CommCare Home Screen Logo"
   description: "Choose an image to replace the default CommCare Home Screen logo"
   id: "logo_android_home"

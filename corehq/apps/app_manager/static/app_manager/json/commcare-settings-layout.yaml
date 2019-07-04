@@ -31,6 +31,8 @@
   settings:
     - hq.use_j2me_endpoint  # Use HTTP
     - hq.platform  # J2ME Platform
+    - hq.admin_password  # Admin Password
+    - properties.password_format  # Password Format
     - properties.cc-send-procedure  # Send Data
     - properties.server-tether  # Sync Mode
     - properties.logenabled  # Logging Enabled
