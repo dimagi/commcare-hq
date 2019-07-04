@@ -29,6 +29,9 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.isLoadingError = ko.observable(false);
         self.ajaxPromise = undefined;
 
+        self.numTimeouts = 0;
+        self.showTimeoutError = ko.observable(false);
+
         self.isDataLoading.subscribe(function (isLoading) {
             if (!isLoading) return;
 
@@ -121,11 +124,28 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 },
             })
                 .done(function (data) {
-                    if (self.hasInitialLoadFinished()) {
-                        self.resetPagination(data.resetPagination);
+                    if (data.isTimeout && self.numTimeouts < 6) {
+                        self.numTimeouts ++;
+                        self.isDataLoading(false);
+                        self.ajaxPromise = undefined;
+                        self.refresh();
+                        return;
+                    }
+
+                    if (data.isTimeout) {
+                        self.showTimeoutError(true);
+                        kissmetrics.track.event("ECD Timeout Error After 5 Attempts", {
+                            "Domain": initialPageData.get('domain'),
+                        });
+                    } else {
+                        self.showTimeoutError(false);
+                        self.numTimeouts = 0;
                     }
 
                     self.rows(data.rows);
+                    if (self.hasInitialLoadFinished()) {
+                        self.resetPagination(data.resetPagination);
+                    }
                     self.totalRecords(data.totalRecords);
 
                     if (!self.hasInitialLoadFinished()) {

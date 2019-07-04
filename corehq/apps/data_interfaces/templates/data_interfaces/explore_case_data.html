@@ -211,6 +211,16 @@
         {% endblocktrans %}
       </div>
     </div>
+    <div class="alert alert-warning"
+         data-bind="visible: $root.data.showTimeoutError">
+      <p>
+        {% blocktrans %}
+          Our system is experiencing an unusually large load on resources at the moment,
+          so data is not being received in a timely fashion. We are working on the problem, but
+          if you continue to experience this issue, please contact support.
+        {% endblocktrans %}
+      </p>
+    </div>
     <div class="datagrid-no-records"
          data-bind="visible: $root.data.hasNoData">
       <div class="alert alert-info">
