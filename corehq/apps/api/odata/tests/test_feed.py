@@ -244,6 +244,25 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
             )
         self.assertEqual(response.status_code, 401)
 
+    def test_user_permissions(self):
+        self.web_user.set_role(self.domain.name, 'none')
+        self.web_user.save()
+        self.addCleanup(self._setup_user_permissions)
+
+        export_config = CaseExportInstance(
+            _id='config_id',
+            tables=[TableConfiguration(columns=[])],
+            case_type='my_case_type',
+            domain=self.domain.name,
+        )
+        export_config.save()
+        self.addCleanup(export_config.delete)
+
+        correct_credentials = self._get_correct_credentials()
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
+        self.assertEqual(response.status_code, 403)
+
     def test_config_in_different_domain(self):
         export_config_in_other_domain = CaseExportInstance(
             _id='config_id',

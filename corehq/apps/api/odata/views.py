@@ -17,6 +17,8 @@ from corehq.apps.api.odata.utils import (
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -25,6 +27,7 @@ class ODataCaseServiceView(View):
     urlname = 'odata_case_service'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         data = {
@@ -46,6 +49,7 @@ class ODataCaseMetadataView(View):
     urlname = 'odata_case_meta'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         case_type_to_properties = get_case_type_to_properties(domain)
@@ -65,6 +69,7 @@ class ODataFormServiceView(View):
     urlname = 'odata_form_service'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain, app_id):
         data = {
@@ -86,6 +91,7 @@ class ODataFormMetadataView(View):
     urlname = 'odata_form_meta'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain, app_id):
         xmlns_to_properties = get_xmlns_to_properties(domain, app_id)
@@ -100,6 +106,7 @@ class ODataCaseServiceFromExportInstanceView(View):
     urlname = 'odata_case_service_from_export_instance'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         service_document_content = {
@@ -121,6 +128,7 @@ class ODataCaseMetadataFromExportInstanceView(View):
     urlname = 'odata_case_metadata_from_export_instance'
 
     @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         configs = get_odata_case_configs_by_domain(domain)

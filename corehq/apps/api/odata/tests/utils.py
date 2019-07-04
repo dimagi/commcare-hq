@@ -36,8 +36,7 @@ class OdataTestMixin(object):
         cls.domain = Domain(name='test_domain')
         cls.domain.save()
         cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
-        cls.web_user.set_role(cls.domain.name, 'admin')
-        cls.web_user.save()
+        cls._setup_user_permissions()
 
     @classmethod
     def _teardownclass(cls):
@@ -55,6 +54,11 @@ class OdataTestMixin(object):
         SubscriptionAdjustment.objects.all().delete()
         cls.subscription.delete()
         cls.account.delete()
+
+    @classmethod
+    def _setup_user_permissions(cls):
+        cls.web_user.set_role(cls.domain.name, 'admin')
+        cls.web_user.save()
 
     def _execute_query(self, credentials):
         return self.client.get(self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)

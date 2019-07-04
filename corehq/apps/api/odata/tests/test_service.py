@@ -61,6 +61,16 @@ class TestCaseServiceDocumentCase(TestCase, CaseOdataTestMixin):
             )
         self.assertEqual(response.status_code, 403)
 
+    def test_user_permissions(self):
+        self.web_user.set_role(self.domain.name, 'none')
+        self.web_user.save()
+        self.addCleanup(self._setup_user_permissions)
+
+        correct_credentials = self._get_correct_credentials()
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
+        self.assertEqual(response.status_code, 403)
+
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
         response = self._execute_query(correct_credentials)
@@ -152,6 +162,16 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
             )
         self.assertEqual(response.status_code, 403)
 
+    def test_user_permissions(self):
+        self.web_user.set_role(self.domain.name, 'none')
+        self.web_user.save()
+        self.addCleanup(self._setup_user_permissions)
+
+        correct_credentials = self._get_correct_credentials()
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
+        self.assertEqual(response.status_code, 403)
+
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
         response = self._execute_query(correct_credentials)
@@ -238,6 +258,16 @@ class TestCaseServiceDocumentFromExportInstance(TestCase, CaseOdataFromExportIns
             reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
             HTTP_AUTHORIZATION='Basic ' + correct_credentials,
         )
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_permissions(self):
+        self.web_user.set_role(self.domain.name, 'none')
+        self.web_user.save()
+        self.addCleanup(self._setup_user_permissions)
+
+        correct_credentials = self._get_correct_credentials()
+        with flag_enabled('ODATA'):
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
     def test_missing_feature_flag(self):
