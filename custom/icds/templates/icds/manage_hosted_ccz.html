@@ -42,16 +42,19 @@
               <th class="col-sm-2">
                 {% trans 'Application' %}
               </th>
-              <th class="col-sm-2">
+              <th class="col-sm-1">
                 {% trans 'Profile' %}
               </th>
-              <th class="col-sm-2">
+              <th class="col-sm-1">
                 {% trans 'Version' %}
               </th>
               <th class="col-sm-2">
                 {% trans 'CCZ Name' %}
               </th>
-              <th class="col-sm-2">
+              <th class="col-sm-3">
+                {% trans 'Note' %}
+              </th>
+              <th class="col-sm-1">
                 {% trans 'Action' %}
               </th>
             </tr>
@@ -69,6 +72,8 @@
               <td data-bind="text: version">
               </td>
               <td data-bind="text: fileName">
+              </td>
+              <td data-bind="text: note">
               </td>
               <td>
                 <a data-bind="attr: { href: url}">

@@ -91,6 +91,7 @@ class HostedCCZ(models.Model):
     version = models.IntegerField(null=False)
     profile_id = models.CharField(max_length=255, blank=True)
     file_name = models.CharField(max_length=255, blank=True)
+    note = models.TextField(null=True)
 
     class Meta:
         unique_together = ('link', 'app_id', 'version', 'profile_id')
