@@ -222,16 +222,19 @@ class ExportListHelper(object):
             'lastBuildDuration': '',
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
-            'odataUrl': absolute_reverse(
-                'api_dispatch_detail',
-                kwargs={
-                    'domain': export.domain,
-                    'api_name': 'v0.5',
-                    'resource_name': ODataCaseResource._meta.resource_name,
-                    'pk': export.get_id,
-                }
-            )[:-1]  # Remove trailing forward slash for compatibility with BI tools
+            'odataUrl': self._get_odata_url(export),
         }
+
+    def _get_odata_url(self, export):
+        return absolute_reverse(
+            'api_dispatch_detail',
+            kwargs={
+                'domain': export.domain,
+                'api_name': 'v0.5',
+                'resource_name': ODataCaseResource._meta.resource_name,
+                'pk': export.get_id,
+            }
+        )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 
     def _get_daily_saved_export_metadata(self, export):
         """
