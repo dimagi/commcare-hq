@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import uuid
-from collections import OrderedDict
-
 from lxml import etree
 
 import redis
@@ -175,7 +173,7 @@ class FormProcessorCouch(object):
         # don't process error forms which are being deprecated since they were never processed in the first place.
         # see http://manage.dimagi.com/default.asp?243382
         filtered_sorted_forms = [form for form in sorted_forms if not (form.is_deprecated and form.problem)]
-        touched_cases = OrderedDict()
+        touched_cases = {}
         for xform in filtered_sorted_forms:
             for case_update in get_case_updates(xform):
                 case_update_meta = case_db.get_case_from_case_update(case_update, xform)

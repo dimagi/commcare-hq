@@ -717,7 +717,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "{}" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra'.format(
+                'be processed but will ignore the following columns: default-fra'.format(
                     MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "menu1" has fewer columns than expected. Sheet '
@@ -725,7 +725,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
                 "You must provide at least one translation of the case property 'name'",
 
                 'Sheet "menu1_form1" has fewer columns than expected. Sheet '
@@ -733,7 +733,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1_form1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
 
                 'App Translations Updated!'
             ]
@@ -761,7 +761,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "{}" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra'.format(
+                'be processed but will ignore the following columns: default-fra'.format(
                     MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "menu1" has fewer columns than expected. Sheet '
@@ -769,7 +769,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
                 "You must provide at least one translation of the case property 'name'",
 
                 'Sheet "menu1_form1" has fewer columns than expected. Sheet '
@@ -777,7 +777,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1_form1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
 
                 "Error in menu1_form1: You must provide at least one translation for the label 'question1-label'.",
 

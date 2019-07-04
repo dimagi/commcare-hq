@@ -14,7 +14,7 @@ from corehq.toggles import LOCATION_SAFE_CASE_IMPORTS
 
 
 def location_safe_case_imports_enabled(view_func, request, *args, **kwargs):
-    return LOCATION_SAFE_CASE_IMPORTS.enabled_for_request(request)
+    return LOCATION_SAFE_CASE_IMPORTS.enabled(kwargs['domain'])
 
 
 @conditionally_location_safe(location_safe_case_imports_enabled)

@@ -22,6 +22,7 @@ from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
+from dateutil import parser as date_parser
 from six.moves import range
 
 from couchexport.export import export_from_tables
@@ -68,7 +69,8 @@ from custom.icds_reports.const import (
     PREGNANT_WOMEN_EXPORT,
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
-    INDIA_TIMEZONE
+    INDIA_TIMEZONE,
+    THR_REPORT_EXPORT
 )
 from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
@@ -119,6 +121,9 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
+from custom.icds_reports.reports.take_home_ration import (
+    TakeHomeRationExport
+)
 from custom.icds_reports.sqldata.exports.pregnant_women import (
     PregnantWomenExport,
 )
@@ -128,6 +133,7 @@ from custom.icds_reports.utils import (
     create_excel_file,
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
+    create_thr_report_excel_file,
     create_pdf_file,
     get_performance_report_blob_key,
     icds_pre_release_features,
@@ -839,7 +845,30 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
-    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT):
+    elif indicator == THR_REPORT_EXPORT:
+        loc_level = aggregation_level if location else 0
+        excel_data = TakeHomeRationExport(
+            location=location,
+            month=config['month'],
+            loc_level=loc_level,
+            beta=beta
+        ).get_excel_data()
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'THR Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_thr_report_excel_file(
+                excel_data,
+                data_type,
+                config['month'].strftime("%B %Y"),
+                loc_level,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
