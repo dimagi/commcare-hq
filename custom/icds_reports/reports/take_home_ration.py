@@ -10,9 +10,8 @@ from custom.icds_reports.models.views import TakeHomeRationMonthly
 class TakeHomeRationExport(object):
     title = 'Take Home Ration'
 
-    def __init__(self, location, month, loc_level=0, beta=False):
+    def __init__(self, location, month, beta=False):
         self.location = location
-        self.loc_level = loc_level
         self.month = month
         self.beta = beta
 
@@ -23,20 +22,27 @@ class TakeHomeRationExport(object):
 
         filters = {"month": self.month, "aggregation_level": 5}
 
-        if self.loc_level == 4:
-            filters['supervisor_id'] = self.location
-            order_by = ('awc_name',)
-        elif self.loc_level == 3:
-            filters['block_id'] = self.location
-            order_by = ('supervisor_name', 'awc_name')
-        elif self.loc_level == 2:
-            filters['district_id'] = self.location
-            order_by = ('block_name', 'supervisor_name', 'awc_name')
-        elif self.loc_level == 1:
-            filters['state_id'] = self.location
-            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name')
+        all_order_by_columns = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
+        if not self.location:
+            order_by = all_order_by_columns
         else:
-            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
+            location = SQLLocation.by_location_id(self.location)
+            location_type = location.location_type.name
+            location_id_key = '{}_id'.format(location_type)
+
+            filters[location_id_key] = self.location
+
+            if location_type == 'state':
+                order_by = all_order_by_columns[1:]
+
+            elif location_type == 'district':
+                order_by = all_order_by_columns[2:]
+
+            elif location_type == 'block':
+                order_by = all_order_by_columns[3:]
+
+            elif location_type == 'supervisor':
+                order_by = all_order_by_columns[4:]
 
         query_set = TakeHomeRationMonthly.objects.filter(**filters).order_by(*order_by)
 

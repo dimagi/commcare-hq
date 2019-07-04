@@ -850,7 +850,6 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = TakeHomeRationExport(
             location=location,
             month=config['month'],
-            loc_level=loc_level,
             beta=beta
         ).get_excel_data()
         export_info = excel_data[1][1]
