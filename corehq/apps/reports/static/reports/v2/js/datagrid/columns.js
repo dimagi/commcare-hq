@@ -7,11 +7,15 @@ hqDefine('reports/v2/js/datagrid/columns', [
     'knockout',
     'underscore',
     'reports/v2/js/datagrid/column_filters',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
-    columnFilters
+    columnFilters,
+    kissmetrics,
+    initialPageData
 ) {
     'use strict';
 
@@ -44,7 +48,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         });
 
         self.showAddExpression = ko.computed(function () {
-            return self.appliedFilters().length === 1;
+            return self.appliedFilters().length > 0 && self.appliedFilters().length < 5;
         });
 
         self.unwrap = function () {
@@ -96,6 +100,11 @@ hqDefine('reports/v2/js/datagrid/columns', [
             if (!self.column().name()) return false;
             if (!_.isFunction(self.hideColumnFilterCondition)) return true;
             return !self.hideColumnFilterCondition(self.column());
+        });
+
+        self.showColumnFilterPlaceholder = ko.computed(function () {
+            if (!self.column()) return false;
+            return self.column().name() === undefined || self.column().name().length === 0;
         });
 
         self.showDelete = ko.computed(function () {
@@ -170,6 +179,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
                 self.isNew(true);
                 self.hasFilterUpdate(false);
             }
+
+            kissmetrics.track.event("Clicked Add Column", {
+                "Domain": initialPageData.get('domain'),
+            });
         };
 
         self.set = function (existingColumn) {

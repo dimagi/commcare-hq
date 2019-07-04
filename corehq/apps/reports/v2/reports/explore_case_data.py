@@ -57,12 +57,6 @@ class ExploreCaseDataReport(BaseReport):
             width=200,
             sort='asc',
         ),
-        ColumnMeta(
-            title=ugettext_lazy("Case Type"),
-            name='@case_type',
-            width=200,
-            sort=None,
-        ),
     ]
 
     column_filters = [
@@ -80,7 +74,7 @@ class ExploreCaseDataReport(BaseReport):
 
     @property
     def has_permission(self):
-        return (toggles.EXPLORE_CASE_DATA.enabled(self.domain)
+        return (toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
                 and self.request.couch_user.can_edit_data())
 
     @property

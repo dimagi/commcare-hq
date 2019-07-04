@@ -226,8 +226,7 @@ class ESView(View):
         More powerful ES querying using POST params.
         """
         try:
-            raw_post = request.body
-            raw_query = json.loads(raw_post)
+            raw_query = json.loads(request.body.decode('utf-8'))
         except Exception as e:
             content_response = dict(message="Error parsing query request", exception=six.text_type(e))
             response = HttpResponse(status=406, content=json.dumps(content_response))
@@ -623,18 +622,23 @@ class ElasticAPIQuerySet(object):
             raise TypeError('Unsupported type: %s', type(idx))
 
 
+SUPPORTED_DATE_FORMATS = [
+    ISO_DATE_FORMAT,
+    '%Y-%m-%dT%H:%M:%S',
+    '%Y-%m-%dT%H:%M:%S.%f',
+    '%Y-%m-%dT%H:%MZ',  # legacy Case API date format
+]
+
+
 def validate_date(date):
-    try:
-        datetime.datetime.strptime(date, ISO_DATE_FORMAT)
-    except ValueError:
+    for pattern in SUPPORTED_DATE_FORMATS:
         try:
-            datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            return datetime.datetime.strptime(date, pattern)
         except ValueError:
-            try:
-                datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
-            except ValueError:
-                raise DateTimeError("Date not in the correct format")
-    return date
+            pass
+
+    # No match
+    raise DateTimeError("Unknown date format: {}".format(date))
 
 
 RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
@@ -650,9 +654,9 @@ class DateRangeParams(object):
         start = raw_params.pop(self.start_param, None)
         end = raw_params.pop(self.end_param, None)
         if start:
-            validate_date(start)
+            start = validate_date(start)
         if end:
-            validate_date(end)
+            end = validate_date(end)
 
         if start or end:
             # Note that dates are already in a string format when they arrive as query params
@@ -733,8 +737,8 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
     for consumer in query_param_consumers:
         try:
             payload_filter = consumer.consume_params(query_params)
-        except DateTimeError:
-            raise Http400("Bad query parameter")
+        except DateTimeError as e:
+            raise Http400("Bad query parameter: {}".format(six.text_type(e)))
 
         if payload_filter:
             payload["filter"]["and"].append(payload_filter)

@@ -1,25 +1,32 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from six.moves import range
+from itertools import islice
 
 
-def chunked(it, n):
+def chunked(it, n, collection=tuple):
     """
     >>> for nums in chunked(range(10), 4):
-    ...    print nums
+    ...    print(nums)
+    ...
     (0, 1, 2, 3)
     (4, 5, 6, 7)
     (8, 9)
+    >>> for nums in chunked(range(10), 4, list):
+    ...    print(nums)
+    ...
+    [0, 1, 2, 3]
+    [4, 5, 6, 7]
+    [8, 9]
     """
-    it = iter(it)
+    itr = iter(it)
     while True:
-        buffer = []
-        try:
-            for i in range(n):
-                buffer.append(next(it))
-            yield tuple(buffer)
-        except StopIteration:
-            if buffer:
-                yield tuple(buffer)
+        items = take(n, itr, collection)
+        if not items:
             break
+        yield items
+
+
+def take(n, iterable, collection=list):
+    # https://docs.python.org/2/library/itertools.html#recipes
+    return collection(islice(iterable, n))

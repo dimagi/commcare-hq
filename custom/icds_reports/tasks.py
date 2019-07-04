@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import re
+import pytz
 import tempfile
 import zipfile
 from collections import namedtuple
@@ -21,6 +22,7 @@ from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
+from dateutil import parser as date_parser
 from six.moves import range
 
 from couchexport.export import export_from_tables
@@ -35,6 +37,7 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
     get_primary_db_case_counts,
     get_primary_db_form_counts,
 )
+
 from corehq.apps.es.cases import CaseES, server_modified_range
 from corehq.apps.es.forms import FormES, submitted
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -66,6 +69,8 @@ from custom.icds_reports.const import (
     PREGNANT_WOMEN_EXPORT,
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
+    INDIA_TIMEZONE,
+    THR_REPORT_EXPORT
 )
 from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
@@ -99,6 +104,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsAWCVisitForm,
     AggregateLsVhndForm,
     DailyAttendance,
+    AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
@@ -115,6 +121,9 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
+from custom.icds_reports.reports.take_home_ration import (
+    TakeHomeRationExport
+)
 from custom.icds_reports.sqldata.exports.pregnant_women import (
     PregnantWomenExport,
 )
@@ -124,7 +133,9 @@ from custom.icds_reports.utils import (
     create_excel_file,
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
+    create_thr_report_excel_file,
     create_pdf_file,
+    get_performance_report_blob_key,
     icds_pre_release_features,
     track_time,
     zip_folder,
@@ -166,13 +177,23 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
     {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
-    {'type': 'cbe_form', 'name': 'static-cbe_form'}
+    {'type': 'cbe_form', 'name': 'static-cbe_form'},
+    {'type': 'thr_form_v2', 'name': 'static-thr_forms_v2'}
 ]
 
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
 ]
+
+
+# Tasks that are only to be run on ICDS_ENVS should be marked
+# with @only_icds_periodic_task rather than @periodic_task
+if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    only_icds_periodic_task = periodic_task
+else:
+    def only_icds_periodic_task(**kwargs):
+        return lambda fn: fn
 
 
 @periodic_task(run_every=crontab(minute=0, hour=18),
@@ -185,11 +206,11 @@ def run_move_ucr_data_into_aggregation_tables_task():
 
 @serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
-
     if force_citus:
         force_citus_engine()
 
-    date = date or datetime.utcnow().date()
+    start_time = datetime.now(pytz.utc)
+    date = date or start_time.date()
     monthly_dates = []
 
     # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
@@ -269,6 +290,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_awc_infra_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                               func_name='_agg_thr_table', force_citus=force_citus)
+                for state_id in state_ids
+            ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table', force_citus=force_citus))
 
             # https://github.com/celery/celery/issues/4274
@@ -303,6 +330,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                                                                 func_name='_agg_beneficiary_form', force_citus=force_citus)
                                  for state_id in state_ids
                                  ])
+
             res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table', force_citus=force_citus))
 
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table', force_citus=force_citus),
@@ -317,8 +345,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
         if date.weekday() == 5:
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly', force_citus=force_citus)
         chain(
-            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily', force_citus=force_citus),
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), force_citus=force_citus),
+            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
+                                     force_citus=force_citus),
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
+                                   force_citus=force_citus),
             _bust_awc_cache.si()
         ).delay()
 
@@ -422,6 +452,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
         '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
+        '_agg_thr_table': _agg_thr_table
     }[func_name]
 
     if six.PY2 and isinstance(date, bytes):
@@ -440,10 +471,11 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             None, message="Error occurred during ICDS aggregation",
             details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
         )
+        citus = 'Citus ' if force_citus else ''
         _dashboard_team_soft_assert(
             False,
-            "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
-                func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
+            "{}{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
+                citus, func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
             )
         )
         self.retry(exc=exc)
@@ -644,19 +676,32 @@ def _agg_ls_table(day):
 
 
 @track_time
+def _agg_thr_table(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggregateTHRForm)):
+        AggregateTHRForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
 def _agg_awc_table_weekly(day):
     with transaction.atomic(using=db_for_read_write(AggAwc)):
         AggAwc.weekly_aggregate(force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
-def email_dashboad_team(aggregation_date, force_citus=False):
+def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=False):
+    aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
+    aggregation_finish_time = datetime.now(INDIA_TIMEZONE)
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
+
     # temporary soft assert to verify it's completing
     if not settings.UNIT_TESTING:
         citus = 'Citus ' if force_citus else ''
-        _dashboard_team_soft_assert(False, "{}Aggregation completed on {}".format(citus, settings.SERVER_ENVIRONMENT))
+        timings = "Aggregation Started At : {} IST, Completed At : {} IST".format(aggregation_start_time,
+                                                                                  aggregation_finish_time)
+        _dashboard_team_soft_assert(False, "{}Aggregation completed on {}".format(citus,
+                                                                                  settings.SERVER_ENVIRONMENT),
+                                    timings)
     celery_task_logger.info("Aggregation has completed")
     icds_data_validation.delay(aggregation_date)
 
@@ -769,30 +814,19 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             beta=beta
         ).get_excel_data(location)
     elif indicator == AWW_INCENTIVE_REPORT:
-        data_type = 'AWW_Performance'
-        excel_data = IncentiveReport(
-            location=location,
-            month=config['month'],
-            aggregation_level=aggregation_level,
-            beta=beta
-        ).get_excel_data()
-        if file_format == 'xlsx':
-            cache_key = create_aww_performance_excel_file(
-                excel_data,
-                data_type,
-                config['month'].strftime("%B %Y"),
-                state=SQLLocation.objects.get(
-                    location_id=config['state_id'], domain=config['domain']
-                ).name,
-                district=SQLLocation.objects.get(
-                    location_id=config['district_id'], domain=config['domain']
-                ).name if aggregation_level >= 2 else None,
-                block=SQLLocation.objects.get(
-                    location_id=config['block_id'], domain=config['domain']
-                ).name if aggregation_level == 3 else None
-            )
-        else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
+        today = date.today()
+        data_type = 'AWW_Performance_{}'.format(today.strftime('%Y_%m_%d'))
+        month = config['month'].strftime("%B %Y")
+        state = SQLLocation.objects.get(
+            location_id=config['state_id'], domain=config['domain']
+        ).name
+        district = SQLLocation.objects.get(
+            location_id=config['district_id'], domain=config['domain']
+        ).name if aggregation_level >= 2 else None
+        block = SQLLocation.objects.get(
+            location_id=config['block_id'], domain=config['domain']
+        ).name if aggregation_level == 3 else None
+        cache_key = get_performance_report_blob_key(state, district, block, month, file_format)
     elif indicator == LS_REPORT_EXPORT:
         data_type = 'Lady_Supervisor'
         config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
@@ -811,7 +845,30 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
-    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT):
+    elif indicator == THR_REPORT_EXPORT:
+        loc_level = aggregation_level if location else 0
+        excel_data = TakeHomeRationExport(
+            location=location,
+            month=config['month'],
+            loc_level=loc_level,
+            beta=beta
+        ).get_excel_data()
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'THR Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_thr_report_excel_file(
+                excel_data,
+                data_type,
+                config['month'].strftime("%B %Y"),
+                loc_level,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -985,7 +1042,9 @@ def _get_value(data, field):
     return getattr(data, field) or default
 
 
-@periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
+# This task caused memory spikes once a day on the india env
+# before it was switched to icds-only (June 2019)
+@only_icds_periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -1110,16 +1169,22 @@ def get_dashboard_users_not_logged_in(start_date, end_date, domain='icds-cas'):
     return not_logged_in
 
 
-
-@periodic_task(run_every=crontab(day_of_week=5, hour=19, minute=0), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(day_of_week=5, hour=14, minute=0), acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
     # Weekly refresh of disha dumps for current and last month
+    DISHA_NOTIFICATION_EMAIL = '{}@{}'.format('icds-dashboard', 'dimagi.com')
+    _soft_assert = soft_assert(to=[DISHA_NOTIFICATION_EMAIL], send_to_ops=False)
     month = date.today().replace(day=1)
     last_month = month - timedelta(days=1)
     last_month = last_month.replace(day=1)
     celery_task_logger.info("Started dumping DISHA data")
-    build_dumps_for_month(month, rebuild=True)
-    build_dumps_for_month(last_month, rebuild=True)
+    try:
+        build_dumps_for_month(month, rebuild=True)
+        build_dumps_for_month(last_month, rebuild=True)
+    except Exception:
+        _soft_assert(False, "DISHA weekly task has failed.")
+    else:
+        _soft_assert(False, "DISHA weekly task has succeeded.")
     celery_task_logger.info("Finished dumping DISHA data")
 
 
@@ -1173,11 +1238,48 @@ def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                  .values_list('location_id', flat=True))
+    locations = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name__in=['state', 'district', 'block'])
+                 .select_related('parent__parent', 'location_type'))
     if agg_date is None:
         current_month = date.today().replace(day=1)
         agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
+    for file_format in ['xlsx', 'csv']:
+        for location in locations:
+            if location.location_type.name == 'state':
+                build_incentive_files.delay(location, agg_date, file_format, 1, location)
+            elif location.location_type.name == 'district':
+                build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
+            else:
+                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+
+
+@task(queue='icds_dashboard_reports_queue', serializer='pickle')
+def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
+    data_type = 'AWW_Performance'
+    excel_data = IncentiveReport(
+        location=location.location_id,
+        month=month,
+        aggregation_level=aggregation_level
+    ).get_excel_data()
+    state_name = state.name
+    district_name = district.name if aggregation_level >= 2 else None
+    block_name = location.name if aggregation_level == 3 else None
+    month_string = month.strftime("%B %Y")
+    if file_format == 'xlsx':
+        create_aww_performance_excel_file(
+            excel_data,
+            data_type,
+            month_string,
+            state_name,
+            district_name,
+            block_name
+        )
+    else:
+        blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month_string, file_format)
+        create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
 @task(queue='icds_dashboard_reports_queue')

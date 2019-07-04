@@ -1,23 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from datetime import date, time
-from decimal import Decimal
 import os
 import re
-
-import six
-import sqlalchemy
+from datetime import date, datetime, time
+from decimal import Decimal
 
 from django.test.testcases import TestCase, override_settings
 
-from corehq.sql_db.connections import connection_manager
+import six
+import sqlalchemy
+from freezegun import freeze_time
 from six.moves import zip
 
-from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
-from custom.icds_reports.tests import CSVTestCase, OUTPUT_PATH
+from corehq.sql_db.connections import connection_manager
+from custom.icds_reports.models.aggregate import (
+    AggregateInactiveAWW,
+    get_cursor,
+)
+from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
-from custom.icds_reports.utils.aggregation_helpers.monolith import InactiveAwwsAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    InactiveAwwsAggregationHelper,
+)
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
@@ -464,24 +468,27 @@ class InactiveAWWsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
+        cls.agg_time = datetime(2017, 7, 31, 18)
         helper_class = get_helper(InactiveAwwsAggregationHelper.helper_key)
         cls.helper = helper_class(last_sync)
-        super(InactiveAWWsTest, cls).setUpClass()
 
     def tearDown(self):
         AggregateInactiveAWW.objects.all().delete()
 
     def test_missing_locations_query(self):
-        missing_location_query = self.helper.missing_location_query()
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
         self.assertEquals(records.count(), 0)
 
     def test_aggregate_query(self):
-        missing_location_query = self.helper.missing_location_query()
-        aggregation_query, agg_params = self.helper.aggregate_query()
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
+            aggregation_query, agg_params = self.helper.aggregate_query()
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
@@ -489,8 +496,9 @@ class InactiveAWWsTest(TestCase):
         self.assertEquals(records.count(), 46)
 
     def test_submission_dates(self):
-        missing_location_query = self.helper.missing_location_query()
-        aggregation_query, agg_params = self.helper.aggregate_query()
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
+            aggregation_query, agg_params = self.helper.aggregate_query()
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)

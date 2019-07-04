@@ -25,7 +25,7 @@ from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 
 from corehq import toggles
-from corehq.const import OPENROSA_VERSION_MAP
+from corehq.const import OPENROSA_VERSION_MAP, ONE_DAY
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.builds.utils import get_default_build_spec
@@ -362,7 +362,7 @@ def get_next_id(request, domain):
     return HttpResponse(SerialIdBucket.get_next(domain, bucket_id, session_id))
 
 
-@quickcache(['domain', 'app_id'], timeout=60 * 60 * 24)
+@quickcache(['domain', 'app_id'], timeout=ONE_DAY)
 def get_recovery_measures_cached(domain, app_id):
     return [measure.to_mobile_json() for measure in
             MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]

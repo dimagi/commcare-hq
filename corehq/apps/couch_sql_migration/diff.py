@@ -88,7 +88,7 @@ load_ignore_rules = memoized(lambda: {
         # field was not updated as part of the subsequent rebuild.
         # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
         # opened_by or opened_on (the latter is ignored by has_date_values).
-        Ignore('diff', 'opened_by', check=is_case_without_create_action),
+        Ignore(path='opened_by', check=is_case_without_create_action),
         # form has case block with no actions
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
@@ -130,6 +130,7 @@ load_ignore_rules = memoized(lambda: {
     ],
     'CommCareCase-Deleted': [
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
         Ignore('missing', '-deletion_date', old=MISSING, new=None),
         Ignore('missing', 'deleted_on', old=MISSING),
@@ -159,16 +160,16 @@ def filter_form_diffs(couch_form, sql_form, diffs):
     return _filter_ignored(couch_form, sql_form, diffs, [doc_type, 'XFormInstance*'])
 
 
-def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
+def filter_case_diffs(couch_case, sql_case, diffs, statedb=None):
     doc_type = couch_case['doc_type']
     doc_types = [doc_type, 'CommCareCase*']
     diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    if forms_that_touch_cases_without_actions:
-        diffs = _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions)
+    if statedb is not None:
+        diffs = _filter_forms_touch_case(diffs, statedb)
     return diffs
 
 
-def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
+def _filter_forms_touch_case(diffs, statedb):
     """Legacy bug in case processing would not add the form ID to the list of
     xform_ids for the case if the case block had no actions"""
     other_diffs = []
@@ -181,12 +182,10 @@ def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
 
     if form_id_diffs:
         diffs = other_diffs
+        exclusions = statedb.get_no_action_case_forms()
         for diff in form_id_diffs:
             form_ids = diff.new_value.split(',')
-            diff_ids = [
-                form_id for form_id in form_ids
-                if form_id not in forms_that_touch_cases_without_actions
-            ]
+            diff_ids = [f for f in form_ids if f not in exclusions]
             if diff_ids:
                 diff = diff._replace(new_value=','.join(diff_ids))
                 diffs.append(diff)

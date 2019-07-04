@@ -85,6 +85,7 @@ BENEFICIARY_LIST_EXPORT = 6
 ISSNIP_MONTHLY_REGISTER_PDF = 7
 AWW_INCENTIVE_REPORT = 8
 LS_REPORT_EXPORT = 9
+THR_REPORT_EXPORT = 10
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
 AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
@@ -101,7 +102,7 @@ AWW_INCENTIVE_TABLE = 'icds_dashboard_aww_incentive'
 AGG_LS_AWC_VISIT_TABLE = 'icds_dashboard_ls_awc_visits_forms'
 AGG_LS_VHND_TABLE = 'icds_dashboard_ls_vhnd_forms'
 AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
-
+AGG_THR_V2_TABLE = 'icds_dashboard_thr_v2'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'

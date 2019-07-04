@@ -37,6 +37,7 @@ from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.const import ONE_DAY
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
@@ -57,7 +58,7 @@ from io import open
 
 
 logging = get_task_logger(__name__)
-EXPIRE_TIME = 60 * 60 * 24
+EXPIRE_TIME = ONE_DAY
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')

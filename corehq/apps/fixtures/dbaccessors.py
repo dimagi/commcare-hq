@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from corehq.util.couch_helpers import paginate_view
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
@@ -29,16 +30,30 @@ def get_fixture_data_types_in_domain(domain):
     ))
 
 
-@quickcache(['domain', 'data_type_ids'], timeout=60 * 60, memoize_timeout=60, skip_arg='bypass_cache')
-def get_fixture_items_for_data_types(domain, data_type_ids, bypass_cache=False):
+@quickcache(['domain', 'data_type_id'], timeout=60 * 60, memoize_timeout=60, skip_arg='bypass_cache')
+def get_fixture_items_for_data_type(domain, data_type_id, bypass_cache=False):
     from corehq.apps.fixtures.models import FixtureDataItem
     return list(FixtureDataItem.view(
         'fixtures/data_items_by_domain_type',
-        keys=[[domain, id] for id in data_type_ids],
+        startkey=[domain, data_type_id],
+        endkey=[domain, data_type_id, {}],
         reduce=False,
         include_docs=True,
-        descending=True
     ))
+
+
+def iter_fixture_items_for_data_type(domain, data_type_id):
+    from corehq.apps.fixtures.models import FixtureDataItem
+    for row in paginate_view(
+            FixtureDataItem.get_db(),
+            'fixtures/data_items_by_domain_type',
+            chunk_size=1000,
+            startkey=[domain, data_type_id],
+            endkey=[domain, data_type_id, {}],
+            reduce=False,
+            include_docs=True
+    ):
+        yield FixtureDataItem.wrap(row['doc'])
 
 
 def get_owner_ids_by_type(domain, owner_type, data_item_id):

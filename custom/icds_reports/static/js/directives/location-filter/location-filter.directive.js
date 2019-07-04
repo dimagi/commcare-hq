@@ -273,7 +273,19 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             }
             storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
-                $location.path('awc_reports');
+                var awcReportPath = 'awc_reports';
+                if ($location.path().indexOf('maternal_child') !== -1) {
+                    awcReportPath += '/maternal_child';
+                } else if ($location.path().indexOf('demographics') !== -1) {
+                    awcReportPath += '/demographics';
+                } else if ($location.path().indexOf('awc_infrastructure') !== -1) {
+                    awcReportPath += '/awc_infrastructure';
+                } else if ($location.path().indexOf('beneficiary') !== -1) {
+                    awcReportPath += '/beneficiary';
+                } else {
+                    awcReportPath += '/pse';
+                }
+                $location.path(awcReportPath);
             }
             $scope.$emit('filtersChange');
         });

@@ -62,9 +62,6 @@ def pull_missing_multimedia_for_app(app):
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
     if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
-        def _format_missing_media(media):
-            return {m[0]: m[1].to_json() for m in media}
-
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
             raise MultimediaMissingError(_(

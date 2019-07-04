@@ -395,7 +395,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
         self.revertSavedApp = function (savedApp) {
-            $.postGo(self.reverse('revert_to_copy'), {saved_app: savedApp.id()});
+            $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {

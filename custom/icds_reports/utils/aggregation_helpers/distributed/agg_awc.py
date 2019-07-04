@@ -10,7 +10,7 @@ from six.moves import map
 
 from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from six.moves import range
 
@@ -67,7 +67,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         INSERT INTO "{tablename}"
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
-            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe
+            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
+            thr_distribution_image_count
         )
         (
             SELECT
@@ -85,21 +86,27 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 THEN 1 ELSE 0 END,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
-                THEN 1 ELSE 0 END
+                THEN 1 ELSE 0 END,
+            thr_v2.thr_distribution_image_count
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            LEFT JOIN "{thr_v2_table}" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
+                                                thr_v2.month = %(start_date)s
+                                                )
             group by awc_location.state_id,
             awc_location.district_id,
             awc_location.block_id,
             awc_location.supervisor_id,
-            awc_location.doc_id
+            awc_location.doc_id,
+            thr_distribution_image_count
         )
         """.format(
             tablename=self.tablename,
             ucr_table=self.ucr_tablename,
             cbe_table=self._ucr_tablename('static-cbe_form'),
-            vhnd_table=self._ucr_tablename('static-vhnd_form')
+            vhnd_table=self._ucr_tablename('static-vhnd_form'),
+            thr_v2_table=AGG_THR_V2_TABLE
         ), {
             'start_date': self.month_start
         }
@@ -158,6 +165,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             cases_child_health_all = ut.cases_child_health_all,
             wer_weighed = ut.wer_weighed,
             wer_eligible = ut.wer_eligible,
+            wer_eligible_0_2 = ut.wer_eligible_0_2,
+            wer_weighed_0_2 = ut.wer_weighed_0_2,
             cases_person_beneficiary_v2 = ut.cases_child_health
         FROM (
             SELECT
@@ -166,7 +175,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(valid_in_month) AS cases_child_health,
                 sum(valid_all_registered_in_month) AS cases_child_health_all,
                 sum(nutrition_status_weighed) AS wer_weighed,
-                sum(wer_eligible) AS wer_eligible
+                sum(wer_eligible) AS wer_eligible,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2
             FROM agg_child_health
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
         ) ut
@@ -237,6 +248,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             owner_id,
             sum(open_count) AS cases_household
         FROM "{household_cases}"
+        WHERE opened_on<= %(end_date)s
         GROUP BY owner_id;
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household
@@ -246,7 +258,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         """.format(
             tablename=self.tablename,
             household_cases=self._ucr_tablename('static-household_cases'),
-        ), {}
+        ), {'end_date': self.month_end}
 
         yield """
         CREATE TEMPORARY TABLE "tmp_person" AS SELECT
@@ -554,6 +566,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('awc_num_open',),
             ('wer_weighed',),
             ('wer_eligible',),
+            ('wer_eligible_0_2',),
+            ('wer_weighed_0_2',),
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
@@ -610,6 +624,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('num_awc_infra_last_update',),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
+            ('thr_distribution_image_count',),
             ('electricity_awc', 'COALESCE(sum(electricity_awc), 0)'),
             ('infantometer', 'COALESCE(sum(infantometer), 0)'),
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),

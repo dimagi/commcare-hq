@@ -71,6 +71,8 @@ def check_rabbitmq():
             return ServiceStatus(False, 'RabbitMQ Offline')
         except Exception as e:
             return ServiceStatus(False, "RabbitMQ Error: %s" % e)
+    elif settings.BROKER_URL.startswith('redis'):
+        return ServiceStatus(True, "RabbitMQ Not configured, but not needed")
     else:
         return ServiceStatus(False, "RabbitMQ Not configured")
 

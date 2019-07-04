@@ -50,17 +50,13 @@ trunk: master
 name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
-  #- nh/cdc/one_domain  # Norman March 26
-  - sr-ucr-mirror # Sravan May 1
-  - mk/ccz-hosting-revamp # MK May 6
+  - nh/icds/skip_trans  # Norman June 21
   - fr/case-templates      # FR May 15
-  #- mk/media-version-on-revert   # MK May 16
-  - form-odata  # Nick P May 21
-  - web-user-reports-project-access  # Gabriella May 13
-  - jls/linked-app-incremental-versioning # Jenny May 20
-  - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
-  - test-RestoreConfig-repr-method  # Gabriella May 31
-  
-  # This is being actively QAed. Don't comment it out without warning the QA team.
-  - jls/final-select2-v4 # Jenny May 25
+  - jls/ko-create-mobile-worker # Jenny June 9
+  - jls/draconian-flag # Jenny June 17
+  - jls/ko-create-mobile-worker-debug # Jenny June 17
+  - jls/linked-app-multiple-masters # Jenny June 18
+  - odata-datadog  # Nick June 29
+  - rn_only_select_app_type_when_no_advanced # Rohit June 27 
+  - jls/build-app-ccz-app-id-step-2-of-3 # Jenny July 3
 submodules: {}

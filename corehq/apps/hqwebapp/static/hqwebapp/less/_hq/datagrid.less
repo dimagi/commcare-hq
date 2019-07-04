@@ -38,10 +38,15 @@ for the new reporting grids (tables).
   }
 }
 
-.datagrid-column-filter-clause {
-  padding-left: 10px;
+.datagrid-filter-settings {
+  padding-bottom: 10px;
 
-  select {
+  .filter-type {
+    display: inline-block;
+    width: 80px;
+  }
+
+  .filter-clause {
     display: inline-block;
     width: 100px;
   }
@@ -51,20 +56,14 @@ for the new reporting grids (tables).
 .datagrid-filter {
   padding-bottom: 10px;
 
-  .datagrid-filter-type,
-  .datagrid-filter-type-spacer {
-    display: inline-block;
-    width: 80px;
-  }
-
   .datagrid-filter-choice {
     display: inline-block;
-    width: 120px;
+    width: 197px;
   }
 
   .datagrid-filter-value {
     display: inline-block;
-    width: calc(100% - 220px);
+    width: 354px;
   }
 
   a {
@@ -94,7 +93,7 @@ for the new reporting grids (tables).
 .datagrid-add-link {
   display: block;
   width: 100px%;
-  height: @_header-height;
+  height: auto;
   line-height: @_header-height;
 }
 
@@ -135,4 +134,25 @@ for the new reporting grids (tables).
 .datagrid-save {
   float: right;
   margin-top: -40px;
+}
+
+.datagrid-initial-loading {
+  position: relative;
+  z-index: 1000;
+
+  .modal-dialog {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 300px;
+    margin-left: -150px;
+
+    .modal-content {
+      padding-top: 20px;
+
+      .lead {
+        padding-top: 10px;
+      }
+    }
+  }
 }

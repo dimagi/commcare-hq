@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-from csv342 import csv
+import csv342 as csv
 import re
 from datetime import datetime, timedelta
 
