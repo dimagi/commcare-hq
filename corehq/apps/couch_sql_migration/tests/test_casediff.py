@@ -102,7 +102,7 @@ class TestCaseDiffQueue(SimpleTestCase):
             # HACK mutate queue internal state
             # currently there is no easier way to stop non-empty cases_to_diff
             queue.cases_to_diff["a"] = self.get_cases("a")[0]
-            raise Error("do not _process_remaining_diffs")
+            raise Error("do not process_remaining_diffs")
         self.assertTrue(queue.cases_to_diff)
         with self.queue() as queue:
             pass
@@ -112,7 +112,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         self.add_cases("a b c", "f1")
         self.add_cases("d", "f2")
         with self.assertRaises(Error), self.queue() as queue:
-            mock = patch.object(queue, "_process_remaining_diffs").start()
+            mock = patch.object(queue, "process_remaining_diffs").start()
             mock.side_effect = Error("cannot process remaining diffs")
             queue.update({"a", "b", "c"}, "f1")
         queue.pool.kill()  # simulate end process

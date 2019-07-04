@@ -51,7 +51,7 @@ class CaseDiffQueue(object):
     def __exit__(self, exc_type, exc, exc_tb):
         try:
             if exc_type is None:
-                self._process_remaining_diffs()
+                self.process_remaining_diffs()
         finally:
             self._save_resume_state()
 
@@ -119,7 +119,7 @@ class CaseDiffQueue(object):
         self.diff_batcher.spawn(self.diff_cases, self.cases_to_diff)
         self.cases_to_diff = {}
 
-    def _process_remaining_diffs(self):
+    def process_remaining_diffs(self):
         log.debug("process remaining diffs")
         if self.pending_cases:
             add_pending = self._add_pending_cases(self.pending_cases)
