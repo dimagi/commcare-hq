@@ -168,6 +168,15 @@ class TestCaseDiffQueue(SimpleTestCase):
         missing = queue.statedb.get_missing_doc_ids("CommCareCase-couch")
         self.assertEqual(missing, {"miss"})
 
+    def test_case_action_with_null_xform_id(self):
+        self.add_cases("a", actions=[FakeAction(None), FakeAction("f0")])
+        self.add_cases("b c", "f1")
+        with self.queue() as queue:
+            queue.update({"a"}, "f0")
+            queue.update(["b", "c"], "f1")
+            flush(queue.pool)
+            self.assertDiffed({"a": 1, "b": 1})
+
     @contextmanager
     def queue(self):
         log.info("init CaseDiffQueue")
@@ -175,7 +184,7 @@ class TestCaseDiffQueue(SimpleTestCase):
                 mod.CaseDiffQueue(statedb, self.diff_cases) as queue:
             yield queue
 
-    def add_cases(self, case_ids, xform_ids=()):
+    def add_cases(self, case_ids, xform_ids=(), actions=()):
         """Add cases with updating form ids
 
         `case_ids` and `form_ids` can be either a string (space-
@@ -188,11 +197,12 @@ class TestCaseDiffQueue(SimpleTestCase):
         for case_id in case_ids:
             if case_id in self.cases:
                 case = self.cases[case_id]
-                for fid in xform_ids:
-                    assert fid not in case.xform_ids, (fid, case)
-                    case.xform_ids.append(fid)
             else:
-                self.cases[case_id] = FakeCase(case_id, list(xform_ids) or [])
+                case = self.cases[case_id] = FakeCase(case_id)
+            for fid in xform_ids:
+                assert fid not in case.xform_ids, (fid, case)
+                case.xform_ids.append(fid)
+            case.actions.extend(actions)
 
     def get_cases(self, case_ids):
         def get(case_id):
@@ -289,7 +299,18 @@ class FakeCase(object):
         return self._id
 
     def to_json(self):
-        return {f.name: getattr(self, f.name) for f in attr.fields(type(self))}
+        data = {n: getattr(self, n) for n in ["_id", "xform_ids"]}
+        data["actions"] = [a.to_json() for a in self.actions]
+        return data
+
+
+@attr.s
+class FakeAction(object):
+
+    xform_id = attr.ib()
+
+    def to_json(self):
+        return {"xform_id": self.xform_id}
 
 
 DIFFS = [FormJsonDiff("diff", ["prop"], "old", "new")]
