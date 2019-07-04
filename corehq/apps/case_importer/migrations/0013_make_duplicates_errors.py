@@ -3,12 +3,13 @@ from __future__ import absolute_import, unicode_literals
 from django.db import migrations
 
 import six
+from six.moves import range
 
 from corehq.apps.case_importer.exceptions import TooManyMatches
 from corehq.apps.case_importer.tracking.task_status import (
     TaskStatusResultError,
 )
-from six.moves import range
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
 def iterator(queryset):
@@ -20,6 +21,7 @@ def iterator(queryset):
             yield record
 
 
+@skip_on_fresh_install
 def migrate_record_duplicates(apps, schema_editor):
     CaseUploadRecord = apps.get_model('case_importer', 'CaseUploadRecord')
     for record in iterator(CaseUploadRecord.objects.all()):
