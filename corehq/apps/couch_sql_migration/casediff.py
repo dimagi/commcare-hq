@@ -62,12 +62,16 @@ class CaseDiffQueue(object):
         :param form_id: form id touching case ids.
         """
         log.debug("update: cases=%s form=%s", case_ids, form_id)
+        cases = self.cases
         pending = self.pending_cases
         for case_id in case_ids:
-            pending[case_id].add(form_id)
-            if len(pending) >= self.BATCH_SIZE:
-                self._add_pending_cases(pending)
-                pending = self.pending_cases = defaultdict(set)
+            if case_id in cases:
+                self._try_to_diff(cases[case_id], [form_id])
+            else:
+                pending[case_id].add(form_id)
+                if len(pending) >= self.BATCH_SIZE:
+                    self._add_pending_cases(pending)
+                    pending = self.pending_cases = defaultdict(set)
         task_switch()
 
     def _add_pending_cases(self, pending_cases):
@@ -81,19 +85,19 @@ class CaseDiffQueue(object):
         or set) by case id.
         """
         cases = self.cases
-        case_ids = []
-        for case_id, processed_form_ids in pending.items():
-            if case_id in cases:
-                # try to diff
-                self._try_to_diff(cases[case_id], processed_form_ids)
-            else:
-                case_ids.append(case_id)
         loaded_case_ids = set()
-        for case in CaseAccessorCouch.get_cases(case_ids):
+        for case in CaseAccessorCouch.get_cases(list(pending)):
             loaded_case_ids.add(case.case_id)
-            rec = cases[case.case_id] = CaseRecord(case)
+            if case.case_id not in cases:
+                rec = cases[case.case_id] = CaseRecord(case)
+            else:
+                # It's unlikley, but possible that the case has already
+                # been loaded by a concurrent invocation of `_load_cases`
+                # in which case we use that one so as not to lose its
+                # processed forms.
+                rec = cases[case.case_id]
             self._try_to_diff(rec, pending[case.case_id])
-        missing = set(case_ids) - loaded_case_ids
+        missing = set(pending) - loaded_case_ids
         if missing:
             log.error("Found %s missing Couch cases", len(missing))
             self.statedb.add_missing_docs("CommCareCase-couch", missing)
