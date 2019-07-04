@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/manage_releases', [
+hqDefine('app_manager/js/manage_releases_by_location', [
     'jquery',
     'knockout',
     'underscore',

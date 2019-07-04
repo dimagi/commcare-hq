@@ -5867,9 +5867,11 @@ class LatestEnabledBuildProfiles(models.Model):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
         self.expire_cache(self.build.domain)
 
-    @cached_property
+    @property
     def build(self):
-        return Application.get(self.build_id)
+        if not hasattr(self, '_build'):
+            self._build = Application.get(self.build_id)
+        return self._build
 
     def clean(self):
         if self.active:
@@ -5914,7 +5916,7 @@ class LatestEnabledBuildProfiles(models.Model):
                 build_id=build_id
             )
         # assign it to avoid re-fetching during validations
-        build_profile.build = build
+        build_profile._build = build
         build_profile.activate() if active else build_profile.deactivate()
 
     def activate(self):
@@ -5938,6 +5940,11 @@ class LatestEnabledBuildProfiles(models.Model):
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
         get_latest_enabled_versions_per_profile.clear(self.app_id)
+
+    def to_json(self, app_names):
+        from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
+        return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
+
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

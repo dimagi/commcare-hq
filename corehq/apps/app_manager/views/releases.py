@@ -61,7 +61,10 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
-    no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+)
 from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.download import source_files
