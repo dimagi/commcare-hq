@@ -1,22 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from __future__ import absolute_import
-from django.db import migrations, IntegrityError
+from django.db import migrations
 
-
-
-
-def rename_static_data_source_pillow_errors(apps, schema_editor):
-    PillowError = apps.get_model("pillow_retry", "PillowError")
-    old_name = 'corehq.apps.userreports.pillow.CustomDataSourcePillow'
-    new_name = 'corehq.apps.userreports.pillow.StaticDataSourcePillow'
-    for error_record in PillowError.objects.filter(pillow=old_name):
-        try:
-            error_record.pillow = new_name
-            error_record.save()
-        except IntegrityError:
-            error_record.delete()
+from corehq.util.django_migrations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -26,5 +13,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(rename_static_data_source_pillow_errors)
+        noop_migration(),
     ]

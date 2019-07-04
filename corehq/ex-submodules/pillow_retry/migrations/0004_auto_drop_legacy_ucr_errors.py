@@ -1,20 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from __future__ import absolute_import
 from django.db import migrations
 
-
-
-
-def delete_old_ucr_pillow_errors(apps, schema_editor):
-    PillowError = apps.get_model("pillow_retry", "PillowError")
-    deleted_names = (
-        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
-        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
-    )
-    for name in deleted_names:
-        PillowError.objects.filter(pillow=name).delete()
+from corehq.util.django_migrations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -24,5 +13,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(delete_old_ucr_pillow_errors)
+        noop_migration(),
     ]
