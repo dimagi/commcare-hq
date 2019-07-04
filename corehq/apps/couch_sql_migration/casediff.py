@@ -211,15 +211,6 @@ def task_switch():
     gevent.sleep()
 
 
-def get_case_form_ids(couch_case):
-    """Get the set of form ids that touched the given couch case object"""
-    form_ids = set(couch_case.xform_ids)
-    for action in couch_case.actions:
-        if action.xform_id:
-            form_ids.add(action.xform_id)
-    return form_ids
-
-
 @attr.s(slots=True)
 class CaseRecord(object):
 
@@ -252,6 +243,15 @@ class CaseRecord(object):
     @property
     def is_unexpected(self):
         return not self.processed_forms
+
+
+def get_case_form_ids(couch_case):
+    """Get the set of form ids that touched the given couch case object"""
+    form_ids = set(couch_case.xform_ids)
+    for action in couch_case.actions:
+        if action.xform_id:
+            form_ids.add(action.xform_id)
+    return form_ids
 
 
 class BatchProcessor(object):
