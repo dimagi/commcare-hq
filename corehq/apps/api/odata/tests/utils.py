@@ -22,7 +22,7 @@ from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import flag_enabled, trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
 
 

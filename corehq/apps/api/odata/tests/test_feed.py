@@ -286,7 +286,7 @@ class TestCaseOdataFeedFromExportInstance(TestCase, OdataTestMixin):
         with flag_enabled('ODATA'):
             response = self.client.get(
                 self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
-                HTTP_AUTHORIZATION = 'Basic ' + correct_credentials,
+                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
             )
         self.assertEqual(response.status_code, 404)
 
