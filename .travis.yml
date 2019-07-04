@@ -7,7 +7,6 @@ branches:
     - master
 env:
   matrix:
-    # need node installs for app_manager.XpathValidatorTest
     - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
