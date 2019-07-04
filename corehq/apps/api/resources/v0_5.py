@@ -1026,6 +1026,7 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         authentication = ODataAuthentication(Permissions.edit_data)
         resource_name = 'odata/cases'
         serializer = ODataCaseSerializer()
+        max_limit = 10000
 
     def prepend_urls(self):
         return [
