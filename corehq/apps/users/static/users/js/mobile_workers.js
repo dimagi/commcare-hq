@@ -345,6 +345,8 @@ hqDefine("users/js/mobile_workers", function () {
         };
 
         self.allowSubmit = ko.computed(function () {
+            console.log("in allowSubmit");
+            debugger;
             if (!self.stagedUser()) {
                 return "There is no staged user";
             }
