@@ -43,6 +43,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
+from flaky import flaky
 from mock import patch
 from six.moves.urllib.parse import urlencode
 from six.moves import range
@@ -353,6 +354,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
 
+    @flaky
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request(
