@@ -62,10 +62,10 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
             qs = qs.annotate(**annotate)
 
         qs = qs.filter(q_expression)
-        value = 0
         last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
         if last_value is not None:
             qs = qs.order_by(sort_col)
+            value = qs.order_by(sort_col).values_list(sort_col, flat=True).first()
             if return_values:
                 qs = qs.values_list(*return_values)
             while value < last_value:
