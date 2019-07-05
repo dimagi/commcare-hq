@@ -75,7 +75,7 @@
       This feature allows you to quickly discover the cases of your interest.<br />
       This is a Preview Feature.
     {% endblocktrans %}
-    <a href="https://confluence.dimagi.com/display/commcarepublic/Add-Ons+and+Feature+Previews"
+    <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
        target="_blank">
       {% trans "Learn more." %}
     </a>
@@ -164,7 +164,7 @@
                          columnResize: width">
             <a class="datagrid-edit-link"
                data-bind="click: $root.editColumnController.set">
-              <span data-bind="text: title"></span>
+              <span data-bind="text: displayTitle"></span>
               <i class="fa fa-filter"
                  data-bind="visible: hasFilters"></i>
               <i class="fa fa-pencil edit-icon"></i>
@@ -203,13 +203,23 @@
     </table>
     <div id="js-datagrid-loading"
          class="datagrid-loading"
-         data-bind="visible: data.isDataLoading">
+         data-bind="visible: data.isDataLoading() && data.hasInitialLoadFinished()">
       <div class="loading-text">
         <i class="fa fa-spinner fa-spin"></i>
         {% blocktrans %}
           Loading...
         {% endblocktrans %}
       </div>
+    </div>
+    <div class="alert alert-warning"
+         data-bind="visible: $root.data.showTimeoutError">
+      <p>
+        {% blocktrans %}
+          Our system is experiencing an unusually large load on resources at the moment,
+          so data is not being received in a timely fashion. We are working on the problem, but
+          if you continue to experience this issue, please contact support.
+        {% endblocktrans %}
+      </p>
     </div>
     <div class="datagrid-no-records"
          data-bind="visible: $root.data.hasNoData">
@@ -255,17 +265,6 @@
           </div>
           <div class="modal-body">
             <div class="form form-horizontal">
-              <div class="form-group">
-                <label class="col-xs-3 control-label">
-                  {% trans "Title" %}:
-                </label>
-                <div class="col-xs-9">
-                  <input type="text"
-                         class="form-control"
-                         placeholder="{% trans_html_attr "Title" %}"
-                         data-bind="textInput: title" />
-                </div>
-              </div>
               <div class="form-group"
                    data-bind="visible: $root.editColumnController.showDelete">
 
@@ -286,6 +285,20 @@
                                        getData: $root.editColumnController.getData,
                                        dataObservable: $root.editColumnController.columnNameOptions,
                                      }" ></select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-xs-3 control-label">
+                  {% trans "Title" %}:
+                </label>
+                <div class="col-xs-9">
+                  <input type="text"
+                         class="form-control"
+                         placeholder="{% trans_html_attr "Title" %}"
+                         data-bind="textInput: title,
+                                    attr: {
+                                      placeholder: titlePlaceholder,
+                                    }" />
                 </div>
               </div>
 
