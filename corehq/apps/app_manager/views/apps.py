@@ -160,8 +160,9 @@ def get_app_view_context(request, app):
     context = {}
 
     settings_layout = copy.deepcopy(
-        get_commcare_settings_layout(app.get_doc_type())
+        get_commcare_settings_layout(app)
     )
+
     for section in settings_layout:
         new_settings = []
         for setting in section['settings']:
