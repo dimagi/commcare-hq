@@ -1785,7 +1785,7 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
-    'Allow project to configure ccz hosting',
+    'Allow project to manage ccz hosting',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )

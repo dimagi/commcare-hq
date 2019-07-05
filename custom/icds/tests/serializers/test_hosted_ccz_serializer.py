@@ -38,7 +38,7 @@ class TestHostedCCZSerializer(TestCase):
              'app_id': 'dummy',
              'ccz_details': {'name': self.hosted_ccz.file_name,
                              'download_url': '/a/test/ccz/hostings/None/download/'},
-             'link_name': self.link.identifier, 'link': self.link.pk, 'version': 12, 'id': None}
+             'link_name': self.link.identifier, 'link': self.link.pk, 'version': 12, 'id': None, 'note': ''}
         )
 
     @classmethod
