@@ -65,11 +65,12 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
         last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
         if last_value is not None:
             qs = qs.order_by(sort_col)
-            value = qs.values_list(sort_col, flat=True).first()
             if return_values:
                 qs = qs.values_list(*return_values)
-            while value < last_value:
-                filter_expression = {'{}__gt'.format(sort_col): value}
+
+            value = None
+            filter_expression = {}
+            while value is None or value < last_value:
                 for row in qs.filter(**filter_expression)[:query_size]:
                     if return_values:
                         value = row[0]
@@ -77,6 +78,7 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
                     else:
                         value = row.pk
                         yield row
+                filter_expression = {'{}__gt'.format(sort_col): value}
 
 
 def split_list_by_db_partition(partition_values):
