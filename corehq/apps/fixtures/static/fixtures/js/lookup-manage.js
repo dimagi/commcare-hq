@@ -4,12 +4,14 @@
 hqDefine("fixtures/js/lookup-manage", [
     "jquery",
     "knockout",
+    "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/hq.helpers",
     "hqwebapp/js/knockout_bindings.ko",
 ], function (
     $,
     ko,
+    assertProperties,
     initialPageData
 ) {
     "use strict";
@@ -234,10 +236,11 @@ hqDefine("fixtures/js/lookup-manage", [
         return self;
     }
 
-    function appModel() {
+    function appModel(options) {
+        assertProperties.assertRequired(options, ['data_types']);
+
         var self = {};
-        self.data_types = ko.observableArray([]);
-        self.loading = ko.observable(0);
+        self.data_types = ko.observableArray(_.map(options.data_types, function (t) { return makeDataType(t, self); }));
         self.file = ko.observable();
         self.selectedTables = ko.observableArray([]);
 
@@ -370,30 +373,15 @@ hqDefine("fixtures/js/lookup-manage", [
             }
             return false;
         };
-        self.loadData = function () {
-            self.loading(self.loading() + 3);
-            $.ajax({
-                url: initialPageData.reverse('fixture_data_types'),
-                type: 'get',
-                dataType: 'json',
-                success: function (data) {
-                    var dataType;
-                    for (var i = 0; i < data.length; i += 1) {
-                        self.data_types.push(makeDataType(data[i], self));
-                        dataType = self.data_types()[i];
-                    }
-                    self.loading(self.loading() - 1);
-                },
-            });
-        };
 
         return self;
     }
 
     var el = $('#fixtures-ui');
-    var app = appModel();
+    var app = appModel({
+        data_types: initialPageData.get('data_types'),
+    });
     el.koApplyBindings(app);
-    app.loadData();
     $('#fixture-upload').koApplyBindings(app);
     $("#fixture-download").on("hidden.bs.modal", function () {
         $("#downloading").removeClass('hide');

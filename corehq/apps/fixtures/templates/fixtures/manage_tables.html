@@ -9,9 +9,9 @@
 {% endblock %}
 
 {% block page_content %}
+  {% initial_page_data 'data_types' types %}
   {% registerurl 'download_fixtures' domain %}
   {% registerurl 'fixture_interface_dispatcher' domain 'view_lookup_tables' %}
-  {% registerurl 'fixture_data_types' domain %}
   {% registerurl 'update_lookup_tables' domain %}
   <p>
     {% blocktrans %}
@@ -50,7 +50,7 @@
           </th>
           <th class="col-sm-2">
             {% trans "View Table" %}
-            <i class="fa fa-share"></i>
+            <i class="fa fa-external-link"></i>
           </th>
           <th class="col-sm-3">
             {% trans "Edit or Delete Table" %}
@@ -143,7 +143,7 @@
               <div class="checkbox">
                 <label>
                   <input id="replace" type="checkbox" name="replace"/>
-                  {% trans "Replace Existing Tables" %}
+                  {% trans "Replace existing tables" %}
                 </label>
               </div>
             </div>
