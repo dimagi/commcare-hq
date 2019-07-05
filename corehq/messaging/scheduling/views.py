@@ -1015,7 +1015,6 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
     urlname = 'download_conditional_alert'
     http_method_names = ['get']
 
-    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
 
@@ -1035,10 +1034,9 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'upload_conditional_alert'
-    page_title = ugettext_lazy("Upload Conditional Alerts")
+    page_title = ugettext_lazy("Upload SMS Alert Content")
     template_name = 'hqwebapp/bulk_upload.html'
 
-    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     def dispatch(self, *args, **kwargs):
         return super(UploadConditionalAlertView, self).dispatch(*args, **kwargs)
@@ -1048,9 +1046,9 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
         context = {
             'bulk_upload': {
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
-                "adjective": _("conditional alert"),
-                "plural_noun": _("conditional alerts"),
-                "help_link": "https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts", # noqa
+                "adjective": _("SMS alert content"),
+                "plural_noun": _("SMS alert content"),
+                "help_link": "https://confluence.dimagi.com/display/commcarepublic/Bulk+download+and+upload+of+SMS+content+in+conditional+alerts", # noqa
             },
         }
         context.update({
