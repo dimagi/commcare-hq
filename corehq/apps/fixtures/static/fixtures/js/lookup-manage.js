@@ -393,7 +393,6 @@ hqDefine("fixtures/js/lookup-manage", [
     var el = $('#fixtures-ui');
     var app = appModel();
     el.koApplyBindings(app);
-    el.removeClass('hide');
     app.loadData();
     $('#fixture-upload').koApplyBindings(app);
     $("#fixture-download").on("hidden.bs.modal", function () {
