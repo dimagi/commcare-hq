@@ -60,7 +60,7 @@ django-two-factor-auth==1.6.2
 django-user-agents==0.3.2
 django-websocket-redis==0.5.2
 django==1.11.22
-djangorestframework==3.5.4
+djangorestframework==3.9.4
 dnspython==1.15.0
 docutils==0.14            # via botocore
 dropbox==9.3.0
