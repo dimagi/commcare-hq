@@ -49,6 +49,7 @@ from six.moves.urllib.parse import urlencode
 from six.moves import range
 
 
+@flaky
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @classmethod
@@ -354,7 +355,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
 
-    @flaky
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request(
