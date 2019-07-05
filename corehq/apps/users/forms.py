@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from crispy_forms.bootstrap import StrictButton
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Fieldset, Layout, Submit
@@ -434,8 +434,10 @@ class CommCareAccountForm(forms.Form):
     Form for CommCareAccounts
     """
     username = forms.CharField(required=True)
-    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
-    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
+    password_1 = forms.CharField(label=ugettext_lazy('Password'), widget=PasswordInput(),
+                                 required=True, min_length=1)
+    password_2 = forms.CharField(label=ugettext_lazy('Password (reenter)'), widget=PasswordInput(),
+                                 required=True, min_length=1)
     phone_number = forms.CharField(
         max_length=80,
         required=False,
@@ -456,7 +458,7 @@ class CommCareAccountForm(forms.Form):
             Fieldset(
                 _("Mobile Worker's Primary Information"),
                 'username',
-                'password',
+                'password_1',
                 'password_2',
                 'phone_number',
             )
@@ -479,12 +481,12 @@ class CommCareAccountForm(forms.Form):
 
     def clean(self):
         try:
-            password = self.cleaned_data['password']
+            password_1 = self.cleaned_data['password_1']
             password_2 = self.cleaned_data['password_2']
         except KeyError:
             pass
         else:
-            if password != password_2:
+            if password_1 != password_2:
                 raise forms.ValidationError("Passwords do not match")
 
         return self.cleaned_data
@@ -492,46 +494,28 @@ class CommCareAccountForm(forms.Form):
 validate_username = EmailValidator(message=ugettext_lazy('Username contains invalid characters.'))
 
 
-_username_help = """
-<span ng-if="usernameAvailabilityStatus === 'pending'">
-    <i class="fa fa-circle-o-notch fa-spin"></i>
-    %(checking)s
-</span>
-<span ng-if="usernameAvailabilityStatus === 'taken'"
-      style="word-wrap:break-word;">
-    <i class="fa fa-remove"></i>
-    {{ usernameStatusMessage }}
-</span>
-<span ng-if="usernameAvailabilityStatus === 'available'"
-      style="word-wrap:break-word;">
-    <i class="fa fa-check"></i>
-    {{ usernameStatusMessage }}
-</span>
-<span ng-if="usernameAvailabilityStatus === 'warning'">
-    <i class="fa fa-exclamation-triangle"></i>
-    {{ usernameStatusMessage }}
-</span>
-<span ng-if="usernameAvailabilityStatus === 'error'">
-    <i class="fa fa-exclamation-triangle"></i>
-    %(server_error)s
-</span>
-""" % {
-    'checking': ugettext_noop('Checking Availability...'),
-    'server_error': ugettext_noop('Issue connecting to server. Check Internet connection.')
-}
-
-
 class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(
         max_length=50,
         required=True,
-        help_text=_username_help,
+        help_text="""
+            <span data-bind="visible: $root.usernameAvailabilityStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-circle-o-notch fa-spin"
+                   data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.PENDING"></i>
+                <i class="fa fa-check"
+                   data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS"></i>
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.WARNING ||
+                                       $root.usernameAvailabilityStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
+            </span>
+        """,
         label=ugettext_noop("Username"),
     )
     first_name = forms.CharField(
         max_length=30,
         required=False,
-        label=ugettext_noop("First Name")
+        label=ugettext_noop("First Name"),
     )
     last_name = forms.CharField(
         max_length=30,
@@ -542,7 +526,7 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
-    password = forms.CharField(
+    new_password = forms.CharField(
         widget=forms.PasswordInput(),
         required=True,
         min_length=1,
@@ -561,32 +545,24 @@ class NewMobileWorkerForm(forms.Form):
             self.fields['location_id'].required = True
 
         if self.project.strong_mobile_passwords:
-            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-                validator = "validate_password_draconian"
-            else:
-                validator = "validate_password_standard"
-            self.fields['password'].widget = forms.TextInput(attrs={
-                validator: "",
-                "ng_keydown": "markNonDefault()",
-                "class": "default",
-            })
-            self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
+            # Use normal text input so auto-generated strong password is visible
+            self.fields['new_password'].widget = forms.TextInput()
+            self.fields['new_password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
                 ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
                 '<br />'
             ))
 
         if project.uses_locations:
-            self.fields['location_id'].widget = forms.Select(choices=[('', '')])    # blank option for placeholder
+            self.fields['location_id'].widget = forms.Select()
             location_field = crispy.Field(
                 'location_id',
-                ng_model='mobileWorker.location_id',
-                ng_required="true" if self.fields['location_id'].required else "false",
+                data_bind='value: location_id',
             )
         else:
             location_field = crispy.Hidden(
                 'location_id',
                 '',
-                ng_model='mobileWorker.location_id',
+                data_bind='value: location_id',
             )
 
         self.helper = HQModalFormHelper()
@@ -594,40 +570,78 @@ class NewMobileWorkerForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _('Basic Information'),
-                crispy.Field(
-                    'username',
-                    ng_required="true",
-                    validate_username="",
-                    # What this says is, update as normal or when the element
-                    # loses focus. If the update is normal, wait 300 ms to
-                    # send the request again. If the update is on blur,
-                    # send the request.
-                    ng_model_options="{ "
-                                      " updateOn: 'default blur', "
-                                      " debounce: {'default': 300, 'blur': 0} "
-                                      "}",
-                    ng_model='mobileWorker.username',
-                    ng_maxlength=max_chars_username,
-                    maxlength=max_chars_username,
+                crispy.Div(
+                    crispy.Field(
+                        'username',
+                        data_bind="value: username, valueUpdate: 'keyup'",
+                        maxlength=max_chars_username,
+                    ),
+                    data_bind='''
+                        css: {
+                            'has-pending': $root.usernameAvailabilityStatus() === $root.STATUS.PENDING,
+                            'has-success': $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS,
+                            'has-warning': $root.usernameAvailabilityStatus() === $root.STATUS.WARNING,
+                            'has-error': $root.usernameAvailabilityStatus() === $root.STATUS.ERROR,
+                        },
+                    '''
                 ),
                 crispy.Field(
                     'first_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.first_name',
-                    ng_maxlength="30",
+                    data_bind='value: first_name',
                 ),
                 crispy.Field(
                     'last_name',
-                    ng_required="false",
-                    ng_model='mobileWorker.last_name',
-                    ng_maxlength="30",
+                    data_bind='value: last_name',
                 ),
                 location_field,
-                crispy.Field(
-                    'password',
-                    ng_required="true",
-                    ng_model='mobileWorker.password',
-                    data_bind="value: password, valueUpdate: 'input'",
+                crispy.Div(
+                    hqcrispy.B3MultiField(
+                        _("Password"),
+                        InlineField(
+                            'new_password',
+                            data_bind="value: password, valueUpdate: 'input'",
+                        ),
+                        crispy.HTML('''
+                            <p class="help-block" data-bind="if: $root.isSuggestedPassword">
+                                <i class="fa fa-warning"></i> {suggested}
+                            </p>
+                            <p class="help-block" data-bind="ifnot: $root.isSuggestedPassword()">
+                                <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
+                                    <i class="fa fa-check"></i> {strong}
+                                <!-- /ko -->
+                                <!-- ko ifnot: $root.useDraconianSecurity() -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
+                                        {almost}
+                                    <!-- /ko -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
+                                        <i class="fa fa-warning"></i> {weak}
+                                    <!-- /ko -->
+                                <!-- /ko -->
+
+                                <!-- ko if: $root.useDraconianSecurity() -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
+                                        <i class="fa fa-warning"></i> {rules}
+                                    <!-- /ko -->
+                                <!-- /ko -->
+                            </p>
+                        '''.format(
+                            suggested=_("This password is automatically generated. Please copy it or create "
+                                "your own. It will not be shown again."),
+                            strong=_("Good Job! Your password is strong!"),
+                            almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
+                            weak=_("Your password is too weak! Try adding numbers or symbols!"),
+                            rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
+                                "minimum length of 8 characters."),
+                        )),
+                        required=True,
+                    ),
+                    data_bind='''
+                        css: {
+                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
+                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
+                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
+                        }
+                    '''
                 ),
             )
         )
@@ -644,8 +658,8 @@ class NewMobileWorkerForm(forms.Form):
             raise forms.ValidationError("The username %s is reserved for CommCare." % username)
         return clean_mobile_worker_username(self.domain, username)
 
-    def clean_password(self):
-        cleaned_password = decode_password(self.cleaned_data.get('password'))
+    def clean_new_password(self):
+        cleaned_password = decode_password(self.cleaned_data.get('new_password'))
         if self.project.strong_mobile_passwords:
             return clean_password(cleaned_password)
         return cleaned_password

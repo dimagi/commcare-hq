@@ -22,7 +22,6 @@ from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EX
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -120,7 +119,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
         return get_export(self.model, self.domain, export_id, self.request.couch_user.username)
 
 
-class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
