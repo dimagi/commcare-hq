@@ -5880,11 +5880,10 @@ class LatestEnabledBuildProfiles(models.Model):
                     'version': _("Release the build first. Can not enable profiles for unreleased versions"
                                  ).format(self.build.version)
                 })
-            latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
+            latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
                 app_id=self.build.copy_of,
-                build_profile_id=self.build_profile_id,
-                active=True
-            ).order_by('-version').first()
+                build_profile_id=self.build_profile_id
+            )
             if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
                 raise ValidationError({
                     'version': _("Latest version available for this profile is {}, which is "
