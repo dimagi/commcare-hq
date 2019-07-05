@@ -45,8 +45,7 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     and their calculations. The dictionary will be splatted into the `.annotate` function
 
     :param values: (optional) If specified, should be a list of values to retrieve rather
-    than retrieving entire objects. If `pk` is not defined in `values`, then the values
-    returned will be a tuple of (pk + *values)
+    than retrieving entire objects.
 
     :return: A generator with the results
     """
@@ -54,8 +53,8 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     sort_col = 'pk'
 
     return_values = None
-    if values and sort_col not in values:
-        return_values = ['pk'] + values
+    if values:
+        return_values = [sort_col] + values
 
     for db_name in db_names:
         qs = model_class.objects.using(db_name)
@@ -72,8 +71,12 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
             while value < last_value:
                 filter_expression = {'{}__gt'.format(sort_col): value}
                 for row in qs.filter(**filter_expression)[:query_size]:
-                    value = row[0] if return_values else row.pk
-                    yield row
+                    if return_values:
+                        value = row[0]
+                        yield row[1:]
+                    else:
+                        value = row.pk
+                        yield row
 
 
 def split_list_by_db_partition(partition_values):

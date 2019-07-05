@@ -503,7 +503,7 @@ class AutomaticUpdateRule(models.Model):
             for c_id in CommCareCaseSQL.objects.using(db).filter(q_expression).values_list('case_id', flat=True):
                 yield c_id
         else:
-            for pk, c_id in paginate_query_across_partitioned_databases(
+            for c_id in paginate_query_across_partitioned_databases(
                     CommCareCaseSQL, q_expression, values=['case_id']):
                 yield c_id
 

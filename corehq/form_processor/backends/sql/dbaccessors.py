@@ -418,7 +418,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         if xmlns:
             q_expr &= Q(xmlns=xmlns)
 
-        for pk, form_id in paginate_query_across_partitioned_databases(
+        for form_id in paginate_query_across_partitioned_databases(
                 XFormInstanceSQL, q_expr, values=['form_id']):
             yield form_id
 

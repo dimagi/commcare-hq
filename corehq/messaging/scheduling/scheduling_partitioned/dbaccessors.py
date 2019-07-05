@@ -108,7 +108,7 @@ def get_active_schedule_instance_ids(cls, due_before, due_after=None):
             raise ValueError("Expected due_before > due_after")
         active_filter = active_filter & Q(next_event_due__gt=due_after)
 
-    for pk, domain, schedule_instance_id, next_event_due in paginate_query_across_partitioned_databases(
+    for domain, schedule_instance_id, next_event_due in paginate_query_across_partitioned_databases(
         cls,
         active_filter,
         values=['domain', 'schedule_instance_id', 'next_event_due']
@@ -135,7 +135,7 @@ def get_active_case_schedule_instance_ids(cls, due_before, due_after=None):
             raise ValueError("Expected due_before > due_after")
         active_filter = active_filter & Q(next_event_due__gt=due_after)
 
-    for pk, domain, case_id, schedule_instance_id, next_event_due in paginate_query_across_partitioned_databases(
+    for domain, case_id, schedule_instance_id, next_event_due in paginate_query_across_partitioned_databases(
         cls,
         active_filter,
         values=['domain', 'case_id', 'schedule_instance_id', 'next_event_due']
