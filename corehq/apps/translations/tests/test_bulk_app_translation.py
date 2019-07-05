@@ -1436,6 +1436,11 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
 
 
 class ReportModuleTest(BulkAppTranslationTestBase):
+    headers = [
+        ['Menus_and_forms', ['Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id']],
+        ['menu1', ['case_property', 'list_or_detail', 'default_en']],
+    ]
+
     def setUp(self):
         factory = AppFactory(build_version='2.43.0')
         module = factory.new_report_module('reports')
@@ -1462,10 +1467,7 @@ class ReportModuleTest(BulkAppTranslationTestBase):
         actual_headers = get_bulk_app_sheet_headers(self.app)
         actual_sheets = get_bulk_app_sheets_by_name(self.app)
 
-        self.assertEqual(actual_headers, [
-            ['Menus_and_forms', ['Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id']],
-            ['menu1', ['case_property', 'list_or_detail', 'default_en']],
-        ])
+        self.assertEqual(actual_headers, self.headers)
         self.assertEqual(actual_sheets, OrderedDict({
             'Menus_and_forms': [['Menu', 'menu1', 'reports module', '', '', 'reports_module']],
             'menu1': [
@@ -1474,3 +1476,50 @@ class ReportModuleTest(BulkAppTranslationTestBase):
                 ('Report 1 Display Text', 'list', 'My Other Report'),
             ]
         }))
+
+    def test_upload(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 0 Description', 'list', 'This report still has data'),
+                       ('Report 1 Display Text', 'list', 'My Other Report has also changed'),
+                       ('Report 1 Description', 'list', 'You cannot update this'))),
+        )
+        messages = [
+            "Found row for Report 1 Description, but this report uses an xpath description, "
+            "which is not localizable. Description not updated.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report has changed"})
+        self.assertEqual(module.report_configs[0].localized_description, {"en": "This report still has data"})
+        self.assertEqual(module.report_configs[1].header, {"en": "My Other Report has also changed"})
+
+    def test_upload_unexpected_reports(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 3 Display Text', 'list', 'This is not a real report'))),
+        )
+        messages = [
+            "Expected 2 reports for menu 1 but found row for Report 3. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})
+
+    def test_upload_unexpected_rows(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('some other thing', 'list', 'this is not report-related'))),
+        )
+        messages = [
+            "Found unexpected row \"some other thing\" for menu 1. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})
