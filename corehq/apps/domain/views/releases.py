@@ -109,7 +109,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
 
     @staticmethod
     def _get_initial_app_profile_details(domain, version, app_id, build_profile_id):
-        # only when performing search populate these initial values
+        # only need to set when performing search to populate with initial values in view
         if app_id and version:
             build_doc = get_build_doc_by_version(domain, app_id, version)
             if build_doc:
