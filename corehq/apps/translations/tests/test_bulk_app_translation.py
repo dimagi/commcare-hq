@@ -10,10 +10,11 @@ from django.test import SimpleTestCase
 from mock import patch
 from six.moves import zip
 
+from collections import OrderedDict
 from couchexport.export import export_raw
 from couchexport.models import Format
 
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models import Application, Module, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations.download import (
@@ -1432,3 +1433,44 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
             self.assertEqual(save_xform_patch.call_args[0][2].decode('utf-8'), expected_xform)
+
+
+class ReportModuleTest(BulkAppTranslationTestBase):
+    def setUp(self):
+        factory = AppFactory(build_version='2.43.0')
+        module = factory.new_report_module('reports')
+        module.report_configs = [
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Report"},
+                localized_description={"en": "This report has data"},
+                use_xpath_description=False,
+                uuid='789ghi',
+            ),
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Other Report"},
+                localized_description={"en": "do not use this"},
+                xpath_description="1 + 2",
+                use_xpath_description=True,
+                uuid='345cde',
+            ),
+        ]
+        self.app = factory.app
+
+    def test_download(self):
+        actual_headers = get_bulk_app_sheet_headers(self.app)
+        actual_sheets = get_bulk_app_sheets_by_name(self.app)
+
+        self.assertEqual(actual_headers, [
+            ['Menus_and_forms', ['Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id']],
+            ['menu1', ['case_property', 'list_or_detail', 'default_en']],
+        ])
+        self.assertEqual(actual_sheets, OrderedDict({
+            'Menus_and_forms': [['Menu', 'menu1', 'reports module', '', '', 'reports_module']],
+            'menu1': [
+                ('Report 0 Display Text', 'list', 'My Report'),
+                ('Report 0 Description', 'list', 'This report has data'),
+                ('Report 1 Display Text', 'list', 'My Other Report'),
+            ]
+        }))
