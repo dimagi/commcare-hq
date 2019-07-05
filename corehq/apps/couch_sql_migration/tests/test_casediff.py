@@ -29,12 +29,18 @@ class TestCaseDiffQueue(SimpleTestCase):
             "corehq.form_processor.backends.couch.dbaccessors.CaseAccessorCouch.get_cases",
             self.get_cases,
         )
+        self.get_stock_forms_patcher = patch.object(
+            mod, "get_stock_forms_by_case_id", self.get_stock_forms)
+
         self.get_cases_patcher.start()
+        self.get_stock_forms_patcher.start()
         self.cases = {}
+        self.stock_forms = defaultdict(set)
         self.diffed = defaultdict(int)
 
     def tearDown(self):
         self.get_cases_patcher.stop()
+        self.get_stock_forms_patcher.stop()
         delete_state_db("test")
 
     def test_case_diff(self):
@@ -181,7 +187,19 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update({"a"}, "f0")
             queue.update(["b", "c"], "f1")
             flush(queue.pool)
-            self.assertDiffed({"a": 1, "b": 1})
+            self.assertDiffed("a b")
+
+    def test_case_with_stock_forms(self):
+        self.add_cases("a", "f0", stock_forms="f1")
+        self.add_cases("b c d", "f2")
+        with self.queue() as queue:
+            queue.update({"a"}, "f0")
+            queue.update(["b", "c", "d"], "f2")
+            flush(queue.pool)
+            self.assertDiffed("b c")
+            queue.update({"a"}, "f1")
+            flush(queue.pool)
+            self.assertDiffed("a b c d")
 
     @contextmanager
     def queue(self):
@@ -190,7 +208,7 @@ class TestCaseDiffQueue(SimpleTestCase):
                 mod.CaseDiffQueue(statedb, self.diff_cases) as queue:
             yield queue
 
-    def add_cases(self, case_ids, xform_ids=(), actions=()):
+    def add_cases(self, case_ids, xform_ids=(), actions=(), stock_forms=()):
         """Add cases with updating form ids
 
         `case_ids` and `form_ids` can be either a string (space-
@@ -200,6 +218,8 @@ class TestCaseDiffQueue(SimpleTestCase):
             case_ids = case_ids.split()
         if isinstance(xform_ids, six.text_type):
             xform_ids = xform_ids.split()
+        if isinstance(stock_forms, six.text_type):
+            stock_forms = stock_forms.split()
         for case_id in case_ids:
             if case_id in self.cases:
                 case = self.cases[case_id]
@@ -209,6 +229,7 @@ class TestCaseDiffQueue(SimpleTestCase):
                 assert fid not in case.xform_ids, (fid, case)
                 case.xform_ids.append(fid)
             case.actions.extend(actions)
+            self.stock_forms[case_id].update(stock_forms)
 
     def get_cases(self, case_ids):
         def get(case_id):
@@ -223,6 +244,9 @@ class TestCaseDiffQueue(SimpleTestCase):
             return case
         cases = (get(case_id) for case_id in case_ids)
         return [c for c in cases if c is not None]
+
+    def get_stock_forms(self, case_ids):
+        return dict(self.stock_forms)
 
     def diff_cases(self, cases):
         log.info("diff cases %s", list(cases))

@@ -5,11 +5,11 @@ import logging
 from collections import defaultdict
 from itertools import chain, count
 
-import attr
 import gevent
 import six
 from gevent.pool import Pool
 
+from casexml.apps.stock.models import StockReport
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from dimagi.utils.chunked import chunked
 
@@ -100,11 +100,14 @@ class CaseDiffQueue(object):
         or set) by case id.
         """
         cases = self.cases
+        case_ids = list(pending)
         loaded_case_ids = set()
-        for case in CaseAccessorCouch.get_cases(list(pending)):
+        stock_forms = get_stock_forms_by_case_id(case_ids)
+        for case in CaseAccessorCouch.get_cases(case_ids):
             loaded_case_ids.add(case.case_id)
             if case.case_id not in cases:
-                rec = cases[case.case_id] = CaseRecord(case)
+                case_stock_forms = stock_forms.get(case.case_id, [])
+                rec = cases[case.case_id] = CaseRecord(case, case_stock_forms)
             else:
                 # It's unlikley, but possible that the case has already
                 # been loaded by a concurrent invocation of `_load_cases`
@@ -112,7 +115,7 @@ class CaseDiffQueue(object):
                 # processed forms.
                 rec = cases[case.case_id]
             self._try_to_diff(rec, pending[case.case_id])
-        missing = set(pending) - loaded_case_ids
+        missing = set(case_ids) - loaded_case_ids
         if missing:
             log.error("Found %s missing Couch cases", len(missing))
             self.statedb.add_missing_docs("CommCareCase-couch", missing)
@@ -211,15 +214,13 @@ def task_switch():
     gevent.sleep()
 
 
-@attr.s(slots=True)
 class CaseRecord(object):
 
-    case = attr.ib()
-    remaining_forms = attr.ib(factory=set, init=False)
-    processed_forms = attr.ib(factory=set, init=False)
-
-    def __attrs_post_init__(self):
-        self.remaining_forms = get_case_form_ids(self.case)
+    def __init__(self, case, stock_forms):
+        self.case = case
+        self.remaining_forms = get_case_form_ids(case)
+        self.remaining_forms.update(stock_forms)
+        self.processed_forms = set()
 
     @property
     def id(self):
@@ -252,6 +253,23 @@ def get_case_form_ids(couch_case):
         if action.xform_id:
             form_ids.add(action.xform_id)
     return form_ids
+
+
+def get_stock_forms_by_case_id(case_ids):
+    """Get a dict of form id sets by case id for the given list of case ids
+
+    This function loads Couch stock forms (even though they are
+    technically stored in SQL).
+    """
+    form_ids_by_case_id = defaultdict(set)
+    for case_id, form_id in (
+        StockReport.objects
+        .filter(stocktransaction__case_id__in=case_ids)
+        .values_list("stocktransaction__case_id", "form_id")
+        .distinct()
+    ):
+        form_ids_by_case_id[case_id].add(form_id)
+    return form_ids_by_case_id
 
 
 class BatchProcessor(object):
