@@ -3,11 +3,13 @@ hqDefine('dhis2/js/dhis2_map_settings', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
+    'hqwebapp/js/base_ace',
 ], function (
     $,
     ko,
     initialPageData,
-    alertUser
+    alertUser,
+    baseAce
 ) {
     var dataValueMap = function (properties) {
         var self = {};
@@ -99,7 +101,20 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         return self;
     };
 
-    var dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
+    var jsonDataSetMap = function (dataSetMap) {
+        var self = {};
+
+        self.dataSetMap = ko.observable(dataSetMap)
+
+        self.serialize = function () {
+            return self.dataSetMap();
+        };
+
+        return self;
+    };
+
+
+    var dhis2MapSettings = function (dataSetMaps, sendDataUrl, isJsonUi) {
         var self = {};
 
         self.frequencyOptions = [
@@ -111,8 +126,14 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         self.init = function () {
             if (dataSetMaps.length > 0) {
                 for (var i = 0; i < dataSetMaps.length; i++) {
-                    var map = dataSetMap(dataSetMaps[i]);
-                    map.init();
+                    var data = dataSetMaps[i],
+                        map;
+                    if (isJsonUi) {
+                        map = jsonDataSetMap(data);
+                    } else {
+                        map = dataSetMap(data);
+                        map.init();
+                    }
                     self.dataSetMaps.push(map);
                 }
             } else {
@@ -121,7 +142,14 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         };
 
         self.addDataSetMap = function () {
-            self.dataSetMaps.push(dataSetMap({}));
+            var map = isJsonUi ? jsonDataSetMap('{}') : dataSetMap({});
+            self.dataSetMaps.push(map);
+        };
+
+        self.initDataSetMapTemplate = function (elements) {
+            _.each(elements, function (element) {
+                _.each($(element).find('.jsonwidget'), baseAce.initObservableJsonWidget);
+            });
         };
 
         self.removeDataSetMap = function (dataSetMap) {
@@ -131,8 +159,8 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         self.submit = function (form) {
             var dataSetMaps = [];
             for (var i = 0; i < self.dataSetMaps().length; i++) {
-                var dataSetMap = self.dataSetMaps()[i];
-                dataSetMaps.push(dataSetMap.serialize());
+                var map = self.dataSetMaps()[i];
+                dataSetMaps.push(map.serialize());
             }
             $.post(
                 form.action,
@@ -153,7 +181,11 @@ hqDefine('dhis2/js/dhis2_map_settings', [
     };
 
     $(function () {
-        var viewModel = dhis2MapSettings(initialPageData.get('dataset_maps'), initialPageData.get('send_data_url'));
+        var viewModel = dhis2MapSettings(
+            initialPageData.get('dataset_maps'),
+            initialPageData.get('send_data_url'),
+            initialPageData.get('is_json_ui')
+        );
         viewModel.init();
         $('#dataset-maps').koApplyBindings(viewModel);
     });
