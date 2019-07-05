@@ -1034,7 +1034,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'upload_conditional_alert'
-    page_title = ugettext_lazy("Upload Conditional Alerts")
+    page_title = ugettext_lazy("Upload SMS Alert Content")
     template_name = 'hqwebapp/bulk_upload.html'
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
