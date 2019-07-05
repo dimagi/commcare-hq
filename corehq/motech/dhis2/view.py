@@ -100,6 +100,7 @@ class DataSetMapView(BaseProjectSettingsView):
         return {
             'dataset_maps': dataset_maps,
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
+            'is_json_ui': int(self.request.GET.get('json', 0)),
         }
 
 
