@@ -1823,3 +1823,12 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+
+SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
+    'skip_creating_default_build_files_on_build',
+    'Skips creating the build files for default profile each time a build is made'
+    'which helps speed up the build and revert process',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
