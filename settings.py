@@ -347,7 +347,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.hope',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -1314,7 +1313,6 @@ COUCHDB_APPS = [
     'fluff_filter',
     'hqcase',
     'hqmedia',
-    'hope',
     'case_importer',
     'indicators',
     'locations',
