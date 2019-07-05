@@ -1046,8 +1046,8 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
         context = {
             'bulk_upload': {
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
-                "adjective": _("conditional alert"),
-                "plural_noun": _("conditional alerts"),
+                "adjective": _("SMS alert content"),
+                "plural_noun": _("SMS alert content"),
                 "help_link": "https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts", # noqa
             },
         }
