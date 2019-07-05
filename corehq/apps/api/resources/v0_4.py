@@ -161,7 +161,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'form'
-        ordering = ['received_on', 'server_modified_on']
+        ordering = ['received_on', 'server_modified_on', 'indexed_on']
         serializer = XFormInstanceSerializer(formats=['json'])
 
 
@@ -275,7 +275,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 1000
         serializer = CommCareCaseSerializer()
-        ordering = ['server_date_modified', 'date_modified']
+        ordering = ['server_date_modified', 'date_modified', 'indexed_on']
         object_class = ESCase
 
 
