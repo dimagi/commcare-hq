@@ -4143,6 +4143,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    # use commcare_flavor to avoid checking for none
     target_commcare_flavor = StringProperty(
         default='none',
         choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
@@ -4602,8 +4603,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         del self.uses_master_app_form_ids
 
     @property
-    def has_commcare_flavor(self):
-        return self.target_commcare_flavor != "none"
+    def commcare_flavor(self):
+        return None if self.target_commcare_flavor == "none" else self.target_commcare_flavor
 
 
 def validate_lang(lang):
@@ -4637,9 +4638,9 @@ class SavedAppBuild(ApplicationBase):
             'enable_offline_install': self.enable_offline_install,
             'include_media': self.doc_type != 'RemoteApp',
             'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
-            'target_commcare_flavor': (
-                self.target_commcare_flavor
-                if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else 'none'
+            'commcare_flavor': (
+                self.commcare_flavor
+                if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else None
             ),
         })
         comment_from = data['comment_from']
@@ -4858,7 +4859,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
+                       template='app_manager/profile.xml', build_profile_id=None, commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4916,7 +4917,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         target_package_id = {
             TARGET_COMMCARE: 'org.commcare.dalvik',
             TARGET_COMMCARE_LTS: 'org.commcare.lts',
-        }.get(target_commcare_flavor)
+        }.get(commcare_flavor)
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5060,28 +5061,29 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
-        if self.target_commcare_flavor != 'none':
-            files['{}profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+        # ToDo: should add check for FF?
+        if self.commcare_flavor:
+            files['{}profile-{}.xml'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=False,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
-            files['{}profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+            files['{}profile-{}.ccpr'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=True,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
-            files['{}media_profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+            files['{}media_profile-{}.xml'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=False,
                 with_media=True,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
-            files['{}media_profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+            files['{}media_profile-{}.ccpr'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=True,
                 with_media=True,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
 
         practice_user_restore = self.create_practice_user_restore(build_profile_id)

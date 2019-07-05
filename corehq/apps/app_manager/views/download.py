@@ -218,7 +218,7 @@ def download_file(request, domain, app_id, path):
     if download_target_version:
         parts = path.split('.')
         assert len(parts) == 2
-        target = Application.get(app_id).target_commcare_flavor
+        target = Application.get(app_id).commcare_flavor
         assert target != 'none'
         path = parts[0] + '-' + target + '.' + parts[1]
 
