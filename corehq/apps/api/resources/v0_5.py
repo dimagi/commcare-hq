@@ -29,6 +29,7 @@ from corehq.apps.api.odata.serializers import (
     DeprecatedODataCaseSerializer,
     DeprecatedODataFormSerializer,
 )
+from corehq.apps.api.odata.utils import record_feed_access_in_datadog
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
     ODataAuthentication
@@ -54,6 +55,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUs
 from corehq.apps.users.util import raw_username
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from corehq.util.timer import TimingContext
 from phonelog.models import DeviceReportEntry
 from . import HqBaseResource, DomainSpecificResourceMixin
 from . import v0_1, v0_4, CouchResourceMixin
@@ -1002,7 +1004,10 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         if not toggles.ODATA.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.config_id = kwargs['config_id']
-        return super(ODataCaseResource, self).dispatch(request_type, request, **kwargs)
+        with TimingContext() as timer:
+            response = super(ODataCaseResource, self).dispatch(request_type, request, **kwargs)
+        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
+        return response
 
     def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
         data['domain'] = request.domain
