@@ -2,16 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.test import TestCase
-from mock import patch, Mock
+from mock import patch
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.generators import AppTranslationsGenerator
-
-
-class PropertyMock(Mock):
-    def __get__(self, instance, owner):
-        return self()
 
 
 class TestTransifexBlacklist(TestCase, TestXmlMixin):
@@ -26,8 +21,7 @@ class TestTransifexBlacklist(TestCase, TestXmlMixin):
         module, form = factory.new_basic_module('register', 'case')
         form.source = cls.get_xml('transifex_blacklist').decode('utf-8')
 
-        with patch('corehq.apps.translations.generators.AppTranslationsGenerator.app',
-                   new_callable=PropertyMock) as mock:
+        with patch('corehq.apps.translations.generators.get_current_app') as mock:
             mock.return_value = app
             trans_gen = AppTranslationsGenerator(
                 'domain', 'app_id', 1, 'en', 'en', 'default_'
