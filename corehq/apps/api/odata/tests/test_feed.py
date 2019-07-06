@@ -428,7 +428,8 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
             response = self.client.get(
-                self._odata_feed_url_by_domain_and_config_id(self.domain.name, export_config_in_other_domain.get_id),
+                self._odata_feed_url_by_domain_and_config_id(
+                    self.domain.name, export_config_in_other_domain.get_id),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
             )
         self.assertEqual(response.status_code, 404)
