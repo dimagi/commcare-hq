@@ -507,7 +507,7 @@ def dropbox_upload(request, download_id):
             uploader = DropboxUploadHelper.create(
                 request.session.get(DROPBOX_ACCESS_TOKEN),
                 src=filename,
-                dest=dest,
+                dest=dest, # modify dest if there's a risk of collision
                 download_id=download_id,
                 user=request.user,
             )
