@@ -4601,6 +4601,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         del self.linked_app_attrs
         del self.uses_master_app_form_ids
 
+    @property
+    def has_commcare_flavor(self):
+        return self.target_commcare_flavor != "none"
+
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
