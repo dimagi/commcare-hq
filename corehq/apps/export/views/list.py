@@ -26,7 +26,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.api.resources.v0_5 import ODataCaseResource
+from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -46,7 +46,7 @@ from corehq.apps.export.forms import (
     CreateExportTagForm,
     DashboardFeedFilterForm,
 )
-from corehq.apps.export.models import FormExportInstance
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.tasks import (
     get_saved_export_task_status,
     rebuild_saved_export,
@@ -226,12 +226,13 @@ class ExportListHelper(object):
         }
 
     def _get_odata_url(self, export):
+        resource_class = ODataCaseResource if isinstance(export, CaseExportInstance) else ODataFormResource
         return absolute_reverse(
             'api_dispatch_detail',
             kwargs={
                 'domain': export.domain,
                 'api_name': 'v0.5',
-                'resource_name': ODataCaseResource._meta.resource_name,
+                'resource_name': resource_class._meta.resource_name,
                 'pk': export.get_id,
             }
         )[:-1]  # Remove trailing forward slash for compatibility with BI tools
