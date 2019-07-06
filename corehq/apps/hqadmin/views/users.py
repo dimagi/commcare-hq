@@ -37,7 +37,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
     check_lockout, domain_admin_required, login_or_basic, require_superuser)
-from corehq.apps.hqmedia.tasks import build_application_zip_v2
+from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username
@@ -544,7 +544,7 @@ class AppBuildTimingsView(TemplateView):
             assert not errors, errors
 
             with app.timing_context("build_zip"):
-                build_application_zip_v2(
+                build_application_zip(
                     include_multimedia_files=True,
                     include_index_files=True,
                     domain=app.domain,
