@@ -3,14 +3,25 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy
 
+from corehq import toggles
+from corehq.apps.case_search.const import (
+    SPECIAL_CASE_PROPERTIES_MAP,
+    CASE_COMPUTED_METADATA,
+)
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+)
 from corehq.apps.reports.v2.endpoints.case_owner import CaseOwnerEndpoint
 from corehq.apps.reports.v2.endpoints.case_properties import (
-    CasePropertiesEndpoint
+    CasePropertiesEndpoint,
 )
+from corehq.apps.reports.v2.endpoints.case_type import CaseTypeEndpoint
 from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
-from corehq.apps.reports.v2.filters.case_report import CaseOwnerReportFilter
+from corehq.apps.reports.v2.filters.case_report import (
+    CaseOwnerReportFilter,
+    CaseTypeReportFilter,
+)
 from corehq.apps.reports.v2.filters.xpath_column import (
     TextXpathColumnFilter,
     NumericXpathColumnFilter,
@@ -36,6 +47,7 @@ class ExploreCaseDataReport(BaseReport):
     options_endpoints = (
         CasePropertiesEndpoint,
         CaseOwnerEndpoint,
+        CaseTypeEndpoint,
     )
 
     columns = [
@@ -43,11 +55,7 @@ class ExploreCaseDataReport(BaseReport):
             title=ugettext_lazy("Case Name"),
             name='case_name',
             width=200,
-        ),
-        ColumnMeta(
-            title=ugettext_lazy("Case Type"),
-            name='@case_type',
-            width=200,
+            sort='asc',
         ),
     ]
 
@@ -57,21 +65,37 @@ class ExploreCaseDataReport(BaseReport):
         DateXpathColumnFilter,
     ]
 
+    unsortable_column_names = CASE_COMPUTED_METADATA
+
     report_filters = [
         CaseOwnerReportFilter,
+        CaseTypeReportFilter,
     ]
 
-    initial_report_filters = [
-        ReportFilterData(
-            name=CaseOwnerReportFilter.name,
-            value=[
-                {
-                    'text': "[{}]".format(ugettext_lazy("Project Data")),
-                    'id': 'project_data',
-                },
-            ],
-        ),
-    ]
+    @property
+    def has_permission(self):
+        return (toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
+                and self.request.couch_user.can_edit_data())
+
+    @property
+    def initial_report_filters(self):
+        return [
+            ReportFilterData(
+                name=CaseOwnerReportFilter.name,
+                value=[
+                    {
+                        'text': "[{}]".format(ugettext_lazy("Project Data")),
+                        'id': 'project_data',
+                    },
+                ],
+            ),
+            ReportFilterData(
+                name=CaseTypeReportFilter.name,
+                value=CaseTypeReportFilter.initial_value(
+                    self.request, self.domain
+                ),
+            ),
+        ]
 
     def _get_base_query(self):
         return (CaseSearchES()
@@ -87,6 +111,18 @@ class ExploreCaseDataReport(BaseReport):
 
         expressions = []
         for column_context in endpoint.report_context.get('columns', []):
+            if column_context.get('sort'):
+                descending = column_context['sort'] == 'desc'
+                prop_name = column_context['name']
+
+                try:
+                    special_property = SPECIAL_CASE_PROPERTIES_MAP[prop_name]
+                    query = query.sort(special_property.sort_property,
+                                       desc=descending)
+                except KeyError:
+                    query = query.sort_by_case_property(prop_name,
+                                                        desc=descending)
+
             expression_builder = ColumnXpathExpressionBuilder(
                 self.request,
                 self.domain,

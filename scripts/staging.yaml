@@ -49,18 +49,11 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
-  - nh/cdc/one_domain  # Norman March 26
-  - sr-ucr-mirror # Sravan May 1
-  - mk/ccz-hosting-revamp # MK May 6
+  - nh/icds/skip_trans  # Norman June 21
   - fr/case-templates      # FR May 15
-  #- mk/media-version-on-revert   # MK May 16
-  - form-odata  # Nick P May 21
-  - web-user-reports-project-access  # Gabriella May 13
-  - jls/linked-app-incremental-versioning # Jenny May 20
-  - jls/-bulk-conditional-alerts-add-messages-alternative # Jenny May 23
-  - es/case-import  # Ethan May 23
-  
-  # This is being passively QAed. You can comment it out, just tell me afterwards.
-  - jls/final-select2-v4 # Jenny May 25
+  - jls/ko-create-mobile-worker # Jenny June 9
+  - jls/linked-app-multiple-masters # Jenny June 18
+  - rn_only_select_app_type_when_no_advanced # Rohit June 27 
+  - dropbox-fix # Nick P July 5
+  - mk/skip-files-build # MK July 6
 submodules: {}

@@ -558,7 +558,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').content_md5()
 
-    def archive(self, user_id=None):
+    def archive(self, user_id=None, trigger_signals=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if self.is_archived:
@@ -570,9 +570,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
             FormAccessorSQL.archive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="form_processor", xform=self)
+            if trigger_signals:
+                xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user_id=None):
+    def unarchive(self, user_id=None, trigger_signals=True):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if not self.is_archived:
@@ -584,21 +585,23 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
             FormAccessorSQL.unarchive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_unarchived.send(sender="form_processor", xform=self)
+            if trigger_signals:
+                xform_unarchived.send(sender="form_processor", xform=self)
 
-    def publish_archive_action_to_kafka(self, user_id, archive):
+    def publish_archive_action_to_kafka(self, user_id, archive, trigger_signals=True):
         # Don't update the history, just send to kafka
         from couchforms.models import UnfinishedArchiveStub
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         from corehq.form_processor.change_publishers import publish_form_saved
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive:
-                xform_archived.send(sender="form_processor", xform=self)
-            else:
-                xform_unarchived.send(sender="form_processor", xform=self)
-            publish_form_saved(self)
+        if trigger_signals:
+            with unfinished_archive(instance=self, user_id=user_id, archive=archive):
+                if archive:
+                    xform_archived.send(sender="form_processor", xform=self)
+                else:
+                    xform_unarchived.send(sender="form_processor", xform=self)
+                publish_form_saved(self)
 
     def __str__(self):
         return (
@@ -1754,6 +1757,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

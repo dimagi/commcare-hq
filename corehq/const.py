@@ -25,3 +25,5 @@ OPENROSA_VERSION_MAP = {
 }
 
 GOOGLE_PLAY_STORE_COMMCARE_URL = 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en'
+
+ONE_DAY = 60 * 60 * 24

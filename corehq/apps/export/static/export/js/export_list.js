@@ -23,6 +23,7 @@ hqDefine("export/js/export_list", [
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
     'hqwebapp/js/components.ko',        // pagination widget
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -37,37 +38,65 @@ hqDefine("export/js/export_list", [
     var exportModel = function (options, pageOptions) {
         assertProperties.assert(pageOptions, ['is_deid', 'model_type', 'urls']);
 
-        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'showLink'], function (key) {
+        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData', 'showLink'], function (key) {
             options[key] = options[key] || false;
         });
         options.formname = options.formname || '';
 
+        assertProperties.assert(options, [
+            'addedToBulk',
+            'can_edit',
+            'deleteUrl',
+            'description',
+            'downloadUrl',
+            'editUrl',
+            'emailedExport',
+            'exportType',
+            'filters',
+            'formname',
+            'id',
+            'isDeid',
+            'lastBuildDuration',
+            'name',
+            'owner_username',
+            'sharing',
+            'odataUrl',
+        ], [
+            'case_type',
+            'isAutoRebuildEnabled',
+            'isDailySaved',
+            'isFeed',
+            'isOData',
+            'editNameUrl',
+            'editDescriptionUrl',
+            'showLink',
+        ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
         var self = ko.mapping.fromJS(options);
-        self.prepareExportError = ko.observable('');
-        self.hasEmailedExport = !!options.emailedExport;
 
-        // Unwrap the values in the EMWF filters, turning them into plain {id: ..., text: ...} objects for use with select2
-        if (self.hasEmailedExport) {
-            self.emailedExport.filters.emwf_case_filter(_.map(self.emailedExport.filters.emwf_case_filter(), function (mw) {
-                return _.mapObject(mw, function (observable) {
-                    return observable();
-                });
-            }));
-            self.emailedExport.filters.emwf_form_filter(_.map(self.emailedExport.filters.emwf_form_filter(), function (mw) {
-                return _.mapObject(mw, function (observable) {
-                    return observable();
-                });
-            }));
+        self.showSavedFilters = !!options.filters;
+        if (self.showSavedFilters) {
+            // un-knockoutify case and form filter objects
+            self.filters.emwf_case_filter(options.filters.emwf_case_filter);
+            self.filters.emwf_form_filter(options.filters.emwf_form_filter);
         }
 
-        self.justUpdated = ko.computed(function () {
-            if (self.emailedExport.taskStatus === undefined) {
-                return false;
-            }
-            return self.emailedExport.taskStatus.justFinished() && self.emailedExport.taskStatus.success();
-        });
+        self.hasEmailedExport = !!options.emailedExport;
+        if (self.hasEmailedExport) {
+            self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
+        }
+
+        if (options.editNameUrl) {
+            self.editNameUrl = options.editNameUrl;
+        }
+        if (options.editDescriptionUrl) {
+            self.editDescriptionUrl = options.editDescriptionUrl;
+        }
+
+        if (options.isOData) {
+            self.odataFeedUrl = options.odataUrl;
+        }
 
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
@@ -80,7 +109,7 @@ hqDefine("export/js/export_list", [
             return true;    // allow default click action to process so file is downloaded
         };
         self.copyLinkRequested = function (model, e) {
-            model.showLink(true);
+            self.showLink(true);
             var clipboard = new Clipboard(e.target, {
                 target: function (trigger) {
                     return trigger.nextElementSibling;
@@ -90,68 +119,6 @@ hqDefine("export/js/export_list", [
             clipboard.destroy();
         };
 
-        // Polling
-        self.pollProgressBar = function () {
-            self.emailedExport.updatingData(false);
-            self.emailedExport.taskStatus.percentComplete();
-            self.emailedExport.taskStatus.started(true);
-            self.emailedExport.taskStatus.success(false);
-            self.emailedExport.taskStatus.failed(false);
-            var tick = function () {
-                $.ajax({
-                    method: 'GET',
-                    url: pageOptions.urls.poll,
-                    data: {
-                        export_instance_id: self.id(),
-                        is_deid: self.isDeid,
-                        model_type: self.modelType,
-                    },
-                    success: function (data) {
-                        self.emailedExport.taskStatus.percentComplete(data.taskStatus.percentComplete);
-                        self.emailedExport.taskStatus.started(data.taskStatus.started);
-                        self.emailedExport.taskStatus.success(data.taskStatus.success);
-                        self.emailedExport.taskStatus.failed(data.taskStatus.failed);
-                        self.emailedExport.taskStatus.justFinished(data.taskStatus.justFinished);
-                        if (!data.taskStatus.success && !data.taskStatus.failed) {
-                            // The first few ticks don't yet register the task
-                            self.emailedExport.taskStatus.started(true);
-                            setTimeout(tick, 1500);
-                        } else {
-                            self.emailedExport.taskStatus.justFinished(true);
-                        }
-                    },
-                });
-            };
-            tick();
-        };
-
-        self.updateEmailedExportData = function (model) {
-            $('#modalRefreshExportConfirm-' + model.id() + '-' + model.emailedExport.groupId()).modal('hide');
-            model.emailedExport.updatingData(true);
-            $.ajax({
-                method: 'POST',
-                url: pageOptions.urls.update,
-                data: {
-                    export_id: model.id(),
-                    is_deid: pageOptions.is_deid,
-                    model_type: pageOptions.model_type,
-                },
-                success: function (data) {
-                    if (data.success) {
-                        var exportType = utils.capitalize(model.exportType());
-                        googleAnalytics.track.event(exportType + " Exports", "Update Saved Export", "Saved");
-                        model.pollProgressBar();
-                    } else {
-                        self.handleExportError(data);
-                    }
-                },
-            });
-        };
-
-        self.handleExportError = function (data) {
-            self.prepareExportError(data.error);
-        };
-
         self.updateDisabledState = function (model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
@@ -159,20 +126,96 @@ hqDefine("export/js/export_list", [
                 method: 'POST',
                 url: pageOptions.urls.toggleEnabled,
                 data: {
-                    export_id: model.id(),
-                    is_auto_rebuild_enabled: model.isAutoRebuildEnabled(),
+                    export_id: self.id(),
+                    is_auto_rebuild_enabled: self.isAutoRebuildEnabled(),
                     is_deid: pageOptions.is_deid,
                     model_type: pageOptions.model_type,
                 },
                 success: function (data) {
                     if (data.success) {
-                        var exportType = utils.capitalize(model.exportType());
-                        var event = (model.isAutoRebuildEnabled() ? "Disable" : "Enable") + " Saved Export";
+                        var exportType = utils.capitalize(self.exportType());
+                        var event = (self.isAutoRebuildEnabled() ? "Disable" : "Enable") + " Saved Export";
                         googleAnalytics.track.event(exportType + " Exports", event, "Saved");
-                        model.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
+                        self.isAutoRebuildEnabled(data.isAutoRebuildEnabled);
                     }
                     $button.enableButton();
-                    $('#modalEnableDisableAutoRefresh-' + model.id() + '-' + model.emailedExport.groupId()).modal('hide');
+                    $('#modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId()).modal('hide');
+                },
+            });
+        };
+
+        return self;
+    };
+
+    var emailedExportModel = function (emailedExportOptions, pageOptions, exportId, exportType) {
+        var self = ko.mapping.fromJS(emailedExportOptions);
+        self.prepareExportError = ko.observable('');
+
+        self.justUpdated = ko.computed(function () {
+            if (self.taskStatus === undefined) {
+                return false;
+            }
+            return self.taskStatus.justFinished() && self.taskStatus.success();
+        });
+
+        self.canUpdateData = ko.computed(function () {
+            return (self.prepareExportError() ||
+                    !(self.updatingData() || self.taskStatus && self.taskStatus.started()));
+        });
+
+        self.pollProgressBar = function () {
+            self.updatingData(false);
+            self.taskStatus.percentComplete();
+            self.taskStatus.started(true);
+            self.taskStatus.success(false);
+            self.taskStatus.failed(false);
+            var tick = function () {
+                $.ajax({
+                    method: 'GET',
+                    url: pageOptions.urls.poll,
+                    data: {
+                        export_instance_id: exportId,
+                        is_deid: pageOptions.is_deid,
+                        model_type: pageOptions.model_type,
+                    },
+                    success: function (data) {
+                        self.taskStatus.percentComplete(data.taskStatus.percentComplete);
+                        self.taskStatus.started(data.taskStatus.started);
+                        self.taskStatus.success(data.taskStatus.success);
+                        self.taskStatus.failed(data.taskStatus.failed);
+                        self.taskStatus.justFinished(data.taskStatus.justFinished);
+                        if (!data.taskStatus.success && !data.taskStatus.failed) {
+                            // The first few ticks don't yet register the task
+                            self.taskStatus.started(true);
+                            setTimeout(tick, 1500);
+                        } else {
+                            self.taskStatus.justFinished(true);
+                        }
+                    },
+                });
+            };
+            tick();
+        };
+
+        self.updateData = function () {
+            $('#modalRefreshExportConfirm-' + exportId + '-' + self.groupId()).modal('hide');
+            self.updatingData(true);
+            $.ajax({
+                method: 'POST',
+                url: pageOptions.urls.update,
+                data: {
+                    export_id: exportId,
+                    is_deid: pageOptions.is_deid,
+                    model_type: pageOptions.model_type,
+                },
+                success: function (data) {
+                    if (data.success) {
+                        var exportType_ = utils.capitalize(exportType);
+                        googleAnalytics.track.event(exportType_ + " Exports", "Update Saved Export", "Saved");
+                        self.pollProgressBar();
+                    } else {
+                        self.prepareExportError(data.error);
+                    }
                 },
             });
         };
@@ -181,7 +224,7 @@ hqDefine("export/js/export_list", [
     };
 
     var exportPanelModel = function (options) {
-        assertProperties.assert(options, ['header', 'isDailySavedExport', 'isDeid', 'isFeed', 'modelType', 'myExports', 'showOwnership', 'urls']);
+        assertProperties.assert(options, ['header', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'modelType', 'myExports', 'showOwnership', 'urls']);
 
         var self = _.extend({}, options);
 
@@ -199,13 +242,18 @@ hqDefine("export/js/export_list", [
         self.showEmpty = ko.computed(function () {
             return !self.isLoadingPanel() && !self.hasError() && !self.exports().length;
         });
-        self.showPagination = ko.computed(function () {
+        self.hasData = ko.computed(function () {
             return !self.isLoadingPanel() && !self.hasError() && self.exports().length;
         });
 
         self.totalItems = ko.observable(0);
         self.itemsPerPage = ko.observable();
         self.goToPage = function (page) {
+            if (self.hasData()) {
+                self.fetchPage(page);
+            }
+        };
+        self.fetchPage = function (page) {
             self.isLoadingPage(true);
             $.ajax({
                 method: 'GET',
@@ -215,6 +263,7 @@ hqDefine("export/js/export_list", [
                     model_type: self.modelType,
                     is_daily_saved_export: self.isDailySavedExport ? 1 : 0,
                     is_feed: self.isFeed ? 1 : 0,
+                    is_odata: self.isOData ? 1 : 0,
                     my_exports: self.myExports ? 1 : 0,
                     page: page,
                     limit: self.itemsPerPage(),
@@ -235,7 +284,7 @@ hqDefine("export/js/export_list", [
                     // Set up progress bar polling for any exports with email tasks running
                     _.each(self.exports(), function (exp) {
                         if (exp.hasEmailedExport && exp.emailedExport.taskStatus && exp.emailedExport.taskStatus.started()) {
-                            exp.pollProgressBar();
+                            exp.emailedExport.pollProgressBar();
                         }
                     });
                 },
@@ -246,13 +295,13 @@ hqDefine("export/js/export_list", [
             });
         };
 
-        self.goToPage(1);
+        self.fetchPage(1);
 
         return self;
     };
 
     var exportListModel = function (options) {
-        assertProperties.assert(options, ['headers', 'isDailySavedExport', 'isDeid', 'isFeed', 'modelType', 'urls']);
+        assertProperties.assert(options, ['headers', 'isDailySavedExport', 'isDeid', 'isFeed', 'isOData', 'modelType', 'urls']);
 
         var self = {};
 
@@ -260,6 +309,7 @@ hqDefine("export/js/export_list", [
         self.isDeid = options.isDeid;
         self.isDailySavedExport = options.isDailySavedExport;
         self.isFeed = options.isFeed;
+        self.isOData = options.isOData;
 
         assertProperties.assert(options.urls, ['commitFilters', 'getExportsPage', 'poll', 'toggleEnabled', 'update']);
         self.urls = options.urls;
@@ -362,17 +412,32 @@ hqDefine("export/js/export_list", [
             var newSelectedExport = _.find(self.exports(), function (e) { return e.id() === newValue; });
             self.$filterModal.find("form")[0].reset();
             self.selectedExportModelType(newSelectedExport.exportType());
-            self.emwfCaseFilter(newSelectedExport.emailedExport.filters.emwf_case_filter());
-            self.emwfFormFilter(newSelectedExport.emailedExport.filters.emwf_form_filter());
-            self.dateRange(newSelectedExport.emailedExport.filters.date_range());
-            self.days(newSelectedExport.emailedExport.filters.days());
-            self.startDate(newSelectedExport.emailedExport.filters.start_date());
-            self.endDate(newSelectedExport.emailedExport.filters.end_date());
-            self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
+            self.emwfCaseFilter(newSelectedExport.filters.emwf_case_filter());
+            self.emwfFormFilter(newSelectedExport.filters.emwf_form_filter());
+            self.dateRange(newSelectedExport.filters.date_range());
+            self.days(newSelectedExport.filters.days());
+            self.startDate(newSelectedExport.filters.start_date());
+            self.endDate(newSelectedExport.filters.end_date());
+            if (newSelectedExport.hasEmailedExport) {
+                self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
+            }
+
             // select2s require programmatic update
-            self.$emwfCaseFilter.select2("data", self.emwfCaseFilter());
-            self.$emwfFormFilter.select2("data", self.emwfFormFilter());
+            self._initSelect2Value(self.$emwfCaseFilter, self.emwfCaseFilter());
+            self._initSelect2Value(self.$emwfFormFilter, self.emwfFormFilter());
         });
+
+        // $el is a select element backing a select2.
+        // value is an array of objects, each with properties 'text' and 'id'
+        self._initSelect2Value = function ($el, value) {
+            $el.empty();
+            _.each(value, function (item) {
+                $el.append(new Option(item.text, item.id));
+            });
+            $el.val(_.pluck(value, 'id'));
+            $el.trigger('change.select2');
+        };
+
         self.showEmwfCaseFilter = ko.computed(function () {
             return self.selectedExportModelType() === 'case';
         });
@@ -404,10 +469,10 @@ hqDefine("export/js/export_list", [
 
             var exportType = export_.exportType();
             if (exportType === 'form') {
-                self.emwfFormFilter(self.$emwfFormFilter.select2("data"));
+                self.emwfFormFilter(self.$emwfFormFilter.val());
                 self.emwfCaseFilter(null);
             } else if (exportType === 'case') {
-                self.emwfCaseFilter(self.$emwfCaseFilter.select2("data"));
+                self.emwfCaseFilter(self.$emwfCaseFilter.val());
                 self.emwfFormFilter(null);
             }
 
@@ -431,13 +496,15 @@ hqDefine("export/js/export_list", [
                     self.isSubmittingForm(false);
                     if (data.success) {
                         self.formSubmitErrorMessage('');
-                        export_.emailedExport.filters.emwf_case_filter(self.emwfCaseFilter());
-                        export_.emailedExport.filters.emwf_form_filter(self.emwfFormFilter());
-                        export_.emailedExport.filters.date_range(self.dateRange());
-                        export_.emailedExport.filters.days(self.days());
-                        export_.emailedExport.filters.start_date(self.startDate());
-                        export_.emailedExport.filters.end_date(self.endDate());
-                        export_.pollProgressBar();
+                        export_.filters.emwf_case_filter(self.emwfCaseFilter());
+                        export_.filters.emwf_form_filter(self.emwfFormFilter());
+                        export_.filters.date_range(self.dateRange());
+                        export_.filters.days(self.days());
+                        export_.filters.start_date(self.startDate());
+                        export_.filters.end_date(self.endDate());
+                        if (export_.hasEmailedExport) {
+                            export_.emailedExport.pollProgressBar();
+                        }
                         self.$filterModal.modal('hide');
                     } else {
                         self.formSubmitErrorMessage(data.error);

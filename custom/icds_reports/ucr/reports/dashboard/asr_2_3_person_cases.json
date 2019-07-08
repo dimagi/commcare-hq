@@ -25,7 +25,7 @@
   "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "ASR - 2,3 - Person Cases (Static)",
-    "description": "",
+    "description": "This is used specifically for the MPR Block Report",
     "visible": false,
     "aggregation_columns": [
       "owner_id"
@@ -45,6 +45,10 @@
         "field": "awc_id",
         "choice_provider": {
           "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
         }
       },
       {
@@ -100,16 +104,6 @@
         }
       },
       {
-        "display": "owner_id_1096_1825",
-        "column_id": "owner_id_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
         "display": "open_count",
         "column_id": "open_count",
         "type": "sum_when",
@@ -130,136 +124,6 @@
         }
       },
       {
-        "display": "F_st_count_0_181",
-        "column_id": "F_st_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "F_sc_count_0_181",
-        "column_id": "F_sc_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "F_other_count_0_181",
-        "column_id": "F_other_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "F_minority_count_0_181",
-        "column_id": "F_minority_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "M_st_count_0_181",
-        "column_id": "M_st_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "M_sc_count_0_181",
-        "column_id": "M_sc_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "M_other_count_0_181",
-        "column_id": "M_other_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "M_minority_count_0_181",
-        "column_id": "M_minority_count_0_181",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 0 AND 181": 1
-        }
-      },
-      {
-        "display": "F_st_count_182_364",
-        "column_id": "F_st_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "F_st_count_365_1095",
-        "column_id": "F_st_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "F_st_count_1096_1825",
-        "column_id": "F_st_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "F_st_count_1826_2192",
-        "column_id": "F_st_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "F_st_count_0_2196",
-        "column_id": "F_st_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
-        }
-      },
-      {
         "display": "F_sc_count",
         "column_id": "F_sc_count",
         "type": "sum_when",
@@ -267,57 +131,6 @@
         "calculate_total": true,
         "whens": {
           "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc'": 1
-        }
-      },
-
-      {
-        "display": "F_sc_count_182_364",
-        "column_id": "F_sc_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "F_sc_count_365_1095",
-        "column_id": "F_sc_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "F_sc_count_1096_1825",
-        "column_id": "F_sc_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "F_sc_count_1826_2192",
-        "column_id": "F_sc_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "F_sc_count_0_2196",
-        "column_id": "F_sc_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
         }
       },
       {
@@ -330,57 +143,6 @@
           "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc')": 1
         }
       },
-
-      {
-        "display": "F_other_count_182_364",
-        "column_id": "F_other_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "F_other_count_365_1095",
-        "column_id": "F_other_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "F_other_count_1096_1825",
-        "column_id": "F_other_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "F_other_count_1826_2192",
-        "column_id": "F_other_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "F_other_count_0_2196",
-        "column_id": "F_other_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
-        }
-      },
       {
         "display": "F_minority_count",
         "column_id": "F_minority_count",
@@ -389,57 +151,6 @@
         "calculate_total": true,
         "whens": {
           "closed_on IS NULL AND sex = 'F' and hh_minority = 1": 1
-        }
-      },
-
-      {
-        "display": "F_minority_count_182_364",
-        "column_id": "F_minority_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "F_minority_count_365_1095",
-        "column_id": "F_minority_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "F_minority_count_1096_1825",
-        "column_id": "F_minority_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "F_minority_count_1826_2192",
-        "column_id": "F_minority_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "F_minority_count_0_2196",
-        "column_id": "F_minority_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
         }
       },
       {
@@ -453,26 +164,6 @@
         }
       },
       {
-        "display": "F_disabled_count_lt_1095",
-        "column_id": "F_disabled_count_lt_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and disabled = 1 AND extract(day from now() - dob) <= 1095": 1
-        }
-      },
-      {
-        "display": "F_disabled_count_1096_1825",
-        "column_id": "F_disabled_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and disabled = 1 AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
         "display": "M_st_count",
         "column_id": "M_st_count",
         "type": "sum_when",
@@ -480,57 +171,6 @@
         "calculate_total": true,
         "whens": {
           "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'st'": 1
-        }
-      },
-
-      {
-        "display": "M_st_count_182_364",
-        "column_id": "M_st_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "M_st_count_365_1095",
-        "column_id": "M_st_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "M_st_count_1096_1825",
-        "column_id": "M_st_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "M_st_count_1826_2192",
-        "column_id": "M_st_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "M_st_count_0_2196",
-        "column_id": "M_st_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'st' AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
         }
       },
       {
@@ -541,57 +181,6 @@
         "calculate_total": true,
         "whens": {
           "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'sc'": 1
-        }
-      },
-
-      {
-        "display": "M_sc_count_182_364",
-        "column_id": "M_sc_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "M_sc_count_365_1095",
-        "column_id": "M_sc_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "M_sc_count_1096_1825",
-        "column_id": "M_sc_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "M_sc_count_1826_2192",
-        "column_id": "M_sc_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "M_sc_count_0_2196",
-        "column_id": "M_sc_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and hh_caste = 'sc' AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
         }
       },
       {
@@ -605,56 +194,6 @@
         }
       },
       {
-        "display": "M_other_count_182_364",
-        "column_id": "M_other_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "M_other_count_365_1095",
-        "column_id": "M_other_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "M_other_count_1096_1825",
-        "column_id": "M_other_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "M_other_count_1826_2192",
-        "column_id": "M_other_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "M_other_count_0_2196",
-        "column_id": "M_other_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc') AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
-        }
-      },
-      {
         "display": "M_minority_count",
         "column_id": "M_minority_count",
         "type": "sum_when",
@@ -662,57 +201,6 @@
         "calculate_total": true,
         "whens": {
           "closed_on IS NULL AND sex IN ('M', '0') and hh_minority = 1": 1
-        }
-      },
-
-      {
-        "display": "M_minority_count_182_364",
-        "column_id": "M_minority_count_182_364",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 182 AND 364": 1
-        }
-      },
-      {
-        "display": "M_minority_count_365_1095",
-        "column_id": "M_minority_count_365_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 365 AND 1095": 1
-        }
-      },
-      {
-        "display": "M_minority_count_1096_1825",
-        "column_id": "M_minority_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
-        "display": "M_minority_count_1826_2192",
-        "column_id": "M_minority_count_1826_2192",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 1826 AND 2192": 1
-        }
-      },
-      {
-        "display": "M_minority_count_0_2196",
-        "column_id": "M_minority_count_0_2196",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_minority = 1 AND extract(day from now() - dob) BETWEEN 0 AND 2196": 1
         }
       },
       {
@@ -726,26 +214,6 @@
         }
       },
       {
-        "display": "M_disabled_count_lt_1095",
-        "column_id": "M_disabled_count_lt_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and disabled = 1 AND extract(day from now() - dob) <= 1095": 1
-        }
-      },
-      {
-        "display": "M_disabled_count_1096_1825",
-        "column_id": "M_disabled_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and disabled = 1 AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
         "display": "disabled_movement_count",
         "column_id": "disabled_movement_count",
         "type": "sum_when",
@@ -753,26 +221,6 @@
         "calculate_total": true,
         "whens": {
           "closed_on IS NULL AND disability_type ~ '\\y1\\y'": 1
-        }
-      },
-      {
-        "display": "disabled_movement_count_lt_1095",
-        "column_id": "disabled_movement_count_lt_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y1\\y' AND extract(day from now() - dob) <= 1095": 1
-        }
-      },
-      {
-        "display": "disabled_movement_count_1096_1825",
-        "column_id": "disabled_movement_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y1\\y' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
         }
       },
       {
@@ -786,26 +234,6 @@
         }
       },
       {
-        "display": "disabled_mental_count_lt_1095",
-        "column_id": "disabled_mental_count_lt_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y2\\y' AND extract(day from now() - dob) <= 1095": 1
-        }
-      },
-      {
-        "display": "disabled_mental_count_1096_1825",
-        "column_id": "disabled_mental_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y2\\y' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
         "display": "disabled_seeing_count",
         "column_id": "disabled_seeing_count",
         "type": "sum_when",
@@ -813,26 +241,6 @@
         "calculate_total": true,
         "whens": {
           "closed_on IS NULL AND disability_type ~ '\\y3\\y'": 1
-        }
-      },
-      {
-        "display": "disabled_seeing_count_lt_1095",
-        "column_id": "disabled_seeing_count_lt_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y3\\y' AND extract(day from now() - dob) <= 1095": 1
-        }
-      },
-      {
-        "display": "disabled_seeing_count_1096_1825",
-        "column_id": "disabled_seeing_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y3\\y' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
         }
       },
       {
@@ -846,26 +254,6 @@
         }
       },
       {
-        "display": "disabled_hearing_count_lt_1095",
-        "column_id": "disabled_hearing_count_lt_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y4\\y' AND extract(day from now() - dob) <= 1095": 1
-        }
-      },
-      {
-        "display": "disabled_hearing_count_1096_1825",
-        "column_id": "disabled_hearing_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y4\\y' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
-      },
-      {
         "display": "disabled_speaking_count",
         "column_id": "disabled_speaking_count",
         "type": "sum_when",
@@ -876,24 +264,16 @@
         }
       },
       {
-        "display": "disabled_speaking_count_lt_1095",
-        "column_id": "disabled_speaking_count_lt_1095",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "count_unique",
+        "column_id": "awc_count",
+        "field": "awc_id",
+        "transform": {},
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y5\\y' AND extract(day from now() - dob) <= 1095": 1
-        }
-      },
-      {
-        "display": "disabled_speaking_count_1096_1825",
-        "column_id": "disabled_speaking_count_1096_1825",
-        "type": "sum_when",
-        "aggregation": "sum",
-        "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y5\\y' AND extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
-        }
+        "type": "field",
+        "display": "awc_count"
       }
     ],
     "sort_expression": [],

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-21 19:04+0000\n"
+"POT-Creation-Date: 2019-06-25 19:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -108,17 +108,17 @@ msgstr ""
 msgid "There was an error saving."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:143
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:336
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:392
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:364
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:413
 msgid "You have unsaved changes"
 msgstr ""
 
@@ -489,18 +489,18 @@ msgstr ""
 msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:51
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:67
 msgid "Unidentified Question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:56
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:72
 msgid ""
 "We cannot find this question in the allowed questions for this field. It is "
 "likely that you deleted or renamed the question. Please choose a valid "
 "question from the dropdown."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:66
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js:82
 msgid "Select a Question"
 msgstr ""
 
@@ -716,12 +716,12 @@ msgstr ""
 msgid "View Changed Items"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_models.js:44
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_models.js:57
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:257
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:49
+#: corehq/apps/app_manager/static/app_manager/js/summary/models.js:256
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:50
 msgid "Latest saved"
 msgstr ""
 
@@ -822,7 +822,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:2
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js:62
+#: corehq/apps/reports/static/reports/v2/js/datagrid/binding_handlers.js:69
 msgid "Search..."
 msgstr ""
 
@@ -2395,8 +2395,13 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:34
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:34
 msgid "no comment"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:63
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:72
+msgid "Select profile"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:18
@@ -2684,24 +2689,24 @@ msgstr ""
 msgid "Show previous versions"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:91
+#: corehq/apps/export/static/export/js/create_export.js:92
 msgid "<%= count %> form submission available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:93
+#: corehq/apps/export/static/export/js/create_export.js:94
 msgid "<%= count %> form submissions available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:104
+#: corehq/apps/export/static/export/js/create_export.js:105
 msgid "User Registration"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:275
+#: corehq/apps/export/static/export/js/create_export.js:273
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:310
+#: corehq/apps/export/static/export/js/create_export.js:308
 msgid "There is an issue communicating with the server at this time."
 msgstr ""
 
@@ -2729,16 +2734,16 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:79
+#: corehq/apps/export/static/export/js/export_list.js:80
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:334
-#: corehq/apps/export/static/export/js/export_list.js:341
+#: corehq/apps/export/static/export/js/export_list.js:335
+#: corehq/apps/export/static/export/js/export_list.js:342
 msgid "Invalid date format"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:448
+#: corehq/apps/export/static/export/js/export_list.js:462
 msgid "Problem saving dashboard feed filters"
 msgstr ""
 
@@ -2834,14 +2839,6 @@ msgstr ""
 msgid "Show Only Missing References"
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Replace "
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
-msgid "Upload "
-msgstr ""
-
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7
 msgid ""
 "There was an error processing your file. Please try again or report an issue "
@@ -2872,11 +2869,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:65
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:67
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:96
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:98
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -2936,8 +2933,7 @@ msgstr ""
 msgid "We could not turn off the new feature. Please try again later."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v3.js:82
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler_v4.js:100
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:100
 msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
@@ -3090,6 +3086,12 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/case_details.js:109
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:297
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:345
+msgid "Sorry, there was an issue communicating with the server."
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:23
 msgid "Loading"
 msgstr ""
@@ -3145,12 +3147,12 @@ msgstr ""
 msgid "e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:142
+#: corehq/apps/reports/static/reports/js/filters/main.js:147
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:188
+#: corehq/apps/reports/static/reports/js/filters/main.js:194
 msgid "Select a group"
 msgstr ""
 
@@ -3262,7 +3264,15 @@ msgstr ""
 msgid "Failed to re-process"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:18
+#: corehq/apps/reports/static/reports/v2/js/datagrid.js:131
+msgid "Save Filters"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid.js:135
+msgid "Export Data"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:35
 msgid "Select <%= title %>..."
 msgstr ""
 
@@ -3454,11 +3464,6 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:266
 msgid "Username is available."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:297
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:345
-msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:446
@@ -3723,4 +3728,20 @@ msgstr ""
 
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "show"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "hide"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "toggle"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/main-components.js:30
+msgid "6.0.65"
 msgstr ""

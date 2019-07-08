@@ -226,7 +226,7 @@
                     width: '100%',
                     placeholder: gettext("Select location"),
                     ajax: {
-                        quietMillis: 100,
+                        delay: 100,
                         url: location_url,
                         data: function (params) {
                             return {

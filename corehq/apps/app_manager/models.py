@@ -12,7 +12,9 @@ import random
 import re
 import types
 import uuid
-from collections import Counter, defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter, OrderedDict
+from functools import wraps
+
 from copy import deepcopy
 from distutils.version import LooseVersion
 from functools import wraps
@@ -4564,6 +4566,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
+        if self.copy_of:
+            cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 
@@ -4596,6 +4600,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         del self.linked_app_logo_refs
         del self.linked_app_attrs
         del self.uses_master_app_form_ids
+
+    @property
+    def has_commcare_flavor(self):
+        return self.target_commcare_flavor != "none"
 
 
 def validate_lang(lang):
@@ -5155,10 +5163,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         return self.get_module(-1)
 
     def delete_module(self, module_unique_id):
-        try:
-            module = self.get_module_by_unique_id(module_unique_id)
-        except ModuleNotFoundException:
-            return None
+        module = self.get_module_by_unique_id(module_unique_id)
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,
@@ -5216,28 +5221,39 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
 
-    def rearrange_modules(self, i, j):
+    def rearrange_modules(self, from_index, to_index):
         modules = self.modules
         try:
-            modules.insert(i, modules.pop(j))
+            if toggles.LEGACY_CHILD_MODULES.enabled(self.domain):
+                modules.insert(to_index, modules.pop(from_index))
+            else:
+                # remove module
+                moving_module = modules.pop(from_index)
+
+                # remove its children
+                children = [m for m in modules if m.root_module_id == moving_module.unique_id]
+                modules = [m for m in modules if m.root_module_id != moving_module.unique_id]
+
+                # add back in module and children
+                modules = modules[:to_index] + [moving_module] + children + modules[to_index:]
         except IndexError:
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+    def rearrange_forms(self, from_module_uid, to_module_uid, from_index, to_index):
         """
         The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
-        to_module = self.get_module(to_module_id)
-        from_module = self.get_module(from_module_id)
+        from_module = self.get_module_by_unique_id(from_module_uid)
+        to_module = self.get_module_by_unique_id(to_module_uid)
         try:
-            from_module.forms[j].pre_move_hook(from_module, to_module)
+            from_module.forms[from_index].pre_move_hook(from_module, to_module)
         except NotImplementedError:
             pass
         try:
-            form = from_module.forms.pop(j)
+            form = from_module.forms.pop(from_index)
             if not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
@@ -5248,9 +5264,25 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                         form.requires = "none"
                         form.actions.update_case = UpdateCaseAction(
                             condition=FormActionCondition(type='never'))
-            to_module.add_insert_form(from_module, form, index=i, with_source=True)
+            to_module.add_insert_form(from_module, form, index=to_index, with_source=True)
         except IndexError:
             raise RearrangeError()
+
+    def move_child_modules_after_parents(self):
+        # This makes the module ordering compatible with the front-end display
+        modules_by_parent_id = OrderedDict(
+            (m.unique_id, [m]) for m in self.modules if not m.root_module_id
+        )
+        orphaned_modules = []
+        for module in self.modules:
+            if module.root_module_id:
+                if module.root_module_id in modules_by_parent_id:
+                    modules_by_parent_id[module.root_module_id].append(module)
+                else:
+                    orphaned_modules.append(module)
+
+        normal_modules = [m for modules in modules_by_parent_id.values() for m in modules]
+        self.modules = normal_modules + orphaned_modules
 
     def scrub_source(self, source):
         source = update_form_unique_ids(source)
@@ -5551,7 +5583,7 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
-    SUPPORTED_SETTINGS = ['target_commcare_flavor']
+    SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
 
     # if `uses_master_app_form_ids` is True, the form id might match the master's form id
     # from a bug years ago. These should be fixed when mobile can handle the change
@@ -5580,6 +5612,7 @@ class LinkedApplication(Application):
             raise ActionNotPermitted
 
     def reapply_overrides(self):
+        # Used by app_manager.views.utils.update_linked_app()
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
         for attribute, value in self.linked_app_attrs.items():

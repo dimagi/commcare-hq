@@ -1,3 +1,3 @@
 {# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
-तुमच्या मुलाचे {{ child_name }} वजन मागील महिन्यात वाढलेले नाही. कृपया त्वरित अंगणवाडी केंद्राशी संपर्क साधा.
+आपल्या अंगणवाडी केंद्रातील नोंदीनुसार, आपल्या मुलाचे {{ child_name }} वजन गेल्या महिन्यात स्थिर राहिले आहे. आवश्यक सल्ला घेण्यासाठी कृपया आपल्या अंगणवाडी सेविकेशी संपर्क साधा.

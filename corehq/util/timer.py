@@ -8,6 +8,8 @@ from functools import wraps
 from memoized import memoized
 import itertools
 
+from dimagi.utils.logging import notify_exception
+
 
 class NestableTimer(object):
     """Timer object that can be nested. Used by ``TimingContext``.
@@ -140,8 +142,12 @@ class TimingContext(object):
             name = self.root.name
         timer = self.peek()
         if timer.name != name:
-            raise TimerError("stopping wrong timer: {} (expected {})".format(
-                             timer.name, name))
+            notify_exception(
+                None,
+                "stopping wrong timer: {} (expected {})".format(timer.name, name),
+                details={"self": self, "timer": timer},
+            )
+            return
         if timer.beginning is None:
             raise TimerError("timer not started")
         assert timer.end is None, "timer already ended"
@@ -181,6 +187,12 @@ class TimingContext(object):
     def to_list(self, exclude_root=False):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""
         return self.root.to_list(exclude_root)
+
+    def __repr__(self):
+        return "TimingContext(root='{}', root_dict='{}')".format(
+            self.root,
+            self.root.to_dict()
+        )
 
 
 class TimerError(Exception):

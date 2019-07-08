@@ -102,6 +102,62 @@ class TestFilterDsl(SimpleTestCase):
         }
         self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
 
+    def test_numeric_comparison_negative(self):
+        parsed = parse_xpath("number <= -100.32")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key.exact": "number"
+                            }
+                        },
+                        "query": {
+                            "range": {
+                                "case_properties.value.numeric": {
+                                    "lte": -100.32,
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
+
+    def test_numeric_equality_negative(self):
+        parsed = parse_xpath("number = -100.32")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "query": {
+                            "match_all": {}
+                        },
+                        "filter": {
+                            "and": (
+                                {
+                                    "term": {
+                                        "case_properties.key.exact": "number"
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "case_properties.value.exact": -100.32,
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        built_filter = build_filter_from_ast("domain", parsed)
+        self.assertEqual(expected_filter, built_filter)
+
     def test_case_property_existence(self):
         parsed = parse_xpath("property != ''")
         expected_filter = {

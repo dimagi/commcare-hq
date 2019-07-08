@@ -236,6 +236,10 @@ class GrapevineResource(Resource):
             date_string = root.find('smsDateTime').text
             phone_number = root.find('cellNumber').text
             content_text = root.find('content').text
+            if six.PY2:
+                phone_number = phone_number.decode('utf-8')
+                if content_text is not None:
+                    content_text = content_text.decode('utf-8')
             bundle.obj = SmsMessage(phone_number, content_text)
 
         elif root.tag == 'gviSmsResponse':
@@ -245,6 +249,10 @@ class GrapevineResource(Resource):
 
             if resp_type == 'reply':
                 response_text = root.find('response').text
+                if six.PY2:
+                    phone_number = phone_number.decode('utf-8')
+                    if response_text is not None:
+                        response_text = response_text.decode('utf-8')
                 bundle.obj = SmsMessage(phone_number, response_text)
 
         return bundle

@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "hqwebapp/js/widgets_v4" %}
+{% requirejs_main "hqwebapp/js/widgets" %}
 
 {% block page_content %}
   <div id="blacklist-trans-form" class="tab-pane">
@@ -13,7 +13,8 @@
         <th class="col-sm-2">{% trans "Module" %}</th>
         <th class="col-sm-2">{% trans "Detail/List/UI" %}</th>
         <th class="col-sm-2">{% trans "Field Name" %}</th>
-        <th class="col-sm-4">{% trans "Default Display Text" %}</th>
+        <th class="col-sm-3">{% trans "Default Display Text" %}</th>
+        <th class="col-sm-1">{% trans "Delete" %}</th>
       </thead>
       <tbody>
       {% for translation in blacklisted_translations %}
@@ -27,6 +28,12 @@
           <td>{{ translation.field_type }}</td>
           <td>{{ translation.field_name }}</td>
           <td>{{ translation.display_text }}</td>
+          <td>
+            <a href="{{ translation.delete_url }}" class="btn btn-danger">
+              <i class="fa fa-trash-o"></i>
+              {% trans "Delete" %}
+            </a>
+          </td>
         </tr>
       {% endfor %}
       </tbody>

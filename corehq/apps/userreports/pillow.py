@@ -1,31 +1,13 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, unicode_literals
 
 import hashlib
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
+
+from django.conf import settings
 
 import six
 
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
-from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
-from corehq.apps.userreports.const import KAFKA_TOPICS
-from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.exceptions import (
-    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
-)
-from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
-from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import get_metadata
-from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager
-from corehq.util.datadog.gauges import datadog_histogram
-from corehq.util.soft_assert import soft_assert
-from corehq.util.timer import TimingContext
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.dao.exceptions import DocumentMismatchError
@@ -33,7 +15,39 @@ from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import BulkPillowProcessor
-from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
+from pillowtop.utils import ensure_document_exists, ensure_matched_revisions
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
+from corehq.apps.userreports.const import KAFKA_TOPICS
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    StaleRebuildError,
+    TableRebuildError,
+    UserReportsWarning,
+)
+from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.rebuild import (
+    get_table_diffs,
+    get_tables_rebuild_migrate,
+    migrate_tables,
+)
+from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.sql import get_metadata
+from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.sql_db.connections import connection_manager
+from corehq.util.datadog.gauges import datadog_bucket_timer, datadog_histogram
+from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
@@ -80,7 +94,8 @@ def _filter_missing_domains(configs):
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
+                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL,
+                 run_migrations=True):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -90,6 +105,8 @@ class ConfigurableReportTableManagerMixin(object):
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
         bootstrap_interval -- time in seconds when the pillow checks for any data source changes
+        run_migrations -- If True, rebuild tables if the data source changes.
+                          Otherwise, do not attempt to change database
         """
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
@@ -98,6 +115,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
         self.bootstrap_interval = bootstrap_interval
+        self.run_migrations = run_migrations
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -145,7 +163,9 @@ class ConfigurableReportTableManagerMixin(object):
                 get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
             )
 
-        self.rebuild_tables_if_necessary()
+        if self.run_migrations:
+            self.rebuild_tables_if_necessary()
+
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
@@ -180,11 +200,11 @@ class ConfigurableReportTableManagerMixin(object):
 
             diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
 
-            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
                 pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
-                table_diffs = [diff for diff in diffs.formatted if diff.table_name == table_name]
+                table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
                         self.rebuild_table(sql_adapter, table_diffs)
@@ -193,12 +213,12 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter, table_diffs)
 
-            migration_diffs = diffs.filter(tables_to_act_on.migrate)
-            self.migrate_tables(engine, migration_diffs.raw, tables_to_act_on.migrate, table_map)
+            self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
         pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
-        changes = migrate_tables(engine, diffs, table_names)
+        migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
+        changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
@@ -264,47 +284,77 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         rows_to_save_by_adapter = defaultdict(list)
         async_configs_by_doc_id = defaultdict(list)
         to_update = {change for change in changes_chunk if not change.deleted}
-        retry_changes, docs = self.get_docs_for_changes(to_update, domain)
+        with self._datadog_timing('extract'):
+            retry_changes, docs = self.get_docs_for_changes(to_update, domain)
         change_exceptions = []
 
-        for doc in docs:
-            eval_context = EvaluationContext(doc)
-            for adapter in adapters:
-                if adapter.config.filter(doc, eval_context):
-                    if adapter.run_asynchronous:
-                        async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
-                    else:
-                        try:
-                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
-                        except Exception as e:
-                            change_exceptions.append((changes_by_id[doc["_id"]], e))
-                        eval_context.reset_iteration()
-                else:
-                    # Delete regardless whether doc exists or not to avoid individual doc lookups
-                    to_delete_by_adapter[adapter].append(doc['_id'])
+        with self._datadog_timing('single_batch_transform'):
+            for doc in docs:
+                change = changes_by_id[doc['_id']]
+                doc_subtype = change.metadata.document_subtype
+                eval_context = EvaluationContext(doc)
+                with self._datadog_timing('single_doc_transform'):
+                    for adapter in adapters:
+                        with self._datadog_timing('transform', adapter.config._id):
+                            if adapter.config.filter(doc, eval_context):
+                                if adapter.run_asynchronous:
+                                    async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                                else:
+                                    try:
+                                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                                    except Exception as e:
+                                        change_exceptions.append((change, e))
+                                    eval_context.reset_iteration()
+                            elif (doc_subtype is None
+                                    or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
+                                # Delete if the subtype is unknown or
+                                # if the subtype matches our filters, but the full filter no longer applies
+                                to_delete_by_adapter[adapter].append(doc)
 
-        # bulk delete by adapter
-        to_delete = [c.id for c in changes_chunk if c.deleted]
-        for adapter in adapters:
-            delete_ids = to_delete_by_adapter[adapter] + to_delete
-            try:
-                adapter.bulk_delete(delete_ids)
-            except Exception:
-                retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
-        # bulk update by adapter
-        for adapter, rows in six.iteritems(rows_to_save_by_adapter):
-            try:
-                adapter.save_rows(rows)
-            except Exception:
-                retry_changes.update(to_update)
+        with self._datadog_timing('single_batch_delete'):
+            # bulk delete by adapter
+            to_delete = [{'_id': c.id} for c in changes_chunk if c.deleted]
+            for adapter in adapters:
+                delete_docs = to_delete_by_adapter[adapter] + to_delete
+                if not delete_docs:
+                    continue
+                with self._datadog_timing('delete', adapter.config._id):
+                    try:
+                        adapter.bulk_delete(delete_docs)
+                    except Exception:
+                        delete_ids = [doc['_id'] for doc in delete_docs]
+                        retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
+
+        with self._datadog_timing('single_batch_load'):
+            # bulk update by adapter
+            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+                with self._datadog_timing('load', adapter.config._id):
+                    try:
+                        adapter.save_rows(rows)
+                    except Exception:
+                        retry_changes.update(to_update)
+
         if async_configs_by_doc_id:
-            doc_type_by_id = {
-                _id: changes_by_id[_id].metadata.document_type
-                for _id in async_configs_by_doc_id.keys()
-            }
-            AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
+            with self._datadog_timing('async_config_load'):
+                doc_type_by_id = {
+                    _id: changes_by_id[_id].metadata.document_type
+                    for _id in async_configs_by_doc_id.keys()
+                }
+                AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
 
         return retry_changes, change_exceptions
+
+    def _datadog_timing(self, step, config_id=None):
+        tags = [
+            'action:{}'.format(step),
+            'index:ucr',
+        ]
+        if config_id and settings.ENTERPRISE_MODE:
+            tags.append('config_id:{}'.format(config_id))
+        return datadog_bucket_timer(
+            'commcare.change_feed.processor.timing',
+            tags=tags, timing_buckets=(.03, .1, .3, 1, 3, 10)
+        )
 
     @staticmethod
     def get_docs_for_changes(changes, domain):
@@ -366,6 +416,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             eval_context = EvaluationContext(doc)
             # make copy to avoid modifying list during iteration
             adapters = list(self.table_adapters_by_domain[domain])
+            doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
                     if table.run_asynchronous:
@@ -373,7 +424,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     else:
                         self._save_doc_to_table(domain, table, doc, eval_context)
                         eval_context.reset_iteration()
-                elif table.config.deleted_filter(doc) or table.doc_exists(doc):
+                elif (doc_subtype is None
+                        or doc_subtype in table.config.get_case_type_or_xmlns_filter()):
                     table.delete(doc)
 
             if async_tables:
@@ -451,6 +503,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            run_migrations=(process_num == 0)  # only first process runs migrations
         ),
         pillow_name=pillow_id,
         topics=topics,
@@ -473,7 +526,8 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            bootstrap_interval=7 * 24 * 60 * 60  # 1 week
+            bootstrap_interval=7 * 24 * 60 * 60,  # 1 week
+            run_migrations=(process_num == 0)  # only first process runs migrations
         ),
         pillow_name=pillow_id,
         topics=topics,

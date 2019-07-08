@@ -12,5 +12,8 @@ indent_size = 4
 [*.html]
 indent_size = 2
 
+[*.less]
+indent_size = 2
+
 [Makefile]
 indent_style = tab

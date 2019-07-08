@@ -16,6 +16,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.management.commands.create_citus_child_tables import keep_child_tables, plain_tables, \
     drop_child_tables, get_parent_child_mapping
 from custom.icds_reports.models import AggregateSQLProfile
+from six.moves import filter
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,8 @@ CREATE_TABLE = """
         source_table text NOT NULL,
         date text,
         target_table text,
-        migrated integer
+        migrated integer,
+        errored integer
     ); """
 
 
@@ -52,6 +54,7 @@ class Command(BaseCommand):
 
     def handle(self, output_database, source_engine_id, **options):
         with connection_manager.get_engine(source_engine_id).begin() as conn:
+            self.all_tables = get_all_tables(conn)
             self.parent_child_mapping = get_parent_child_mapping(conn)
             self.child_parent_mapping = {
                 child: parent
@@ -88,14 +91,16 @@ class Command(BaseCommand):
         with source_engine.begin() as source_conn:
             insp = sqlinspect(source_conn)
             for table in keep_child_tables + plain_tables:
-                for line in self.get_table_date_target(insp, table):
-                    self.insert_row(line)
+                if table in self.all_tables:
+                    for line in self.get_table_date_target(insp, table):
+                        self.insert_row(line)
 
             # direct dump and load from parent
             # dump from all child tables into parent table
             for table in drop_child_tables:
-                for line in self.get_table_date_target(insp, table, all_in_parent=True):
-                    self.insert_row(line)
+                if table in self.all_tables:
+                    for line in self.get_table_date_target(insp, table, all_in_parent=True):
+                        self.insert_row(line)
 
             for datasource in StaticDataSourceConfiguration.by_domain(DASHBOARD_DOMAIN):
                 if source_engine_id == datasource.engine_id or source_engine_id in datasource.mirrored_engine_ids:
@@ -109,8 +114,7 @@ class Command(BaseCommand):
                     for line in self.get_table_date_target(insp, table_name, all_in_parent=True):
                         self.insert_row(line)
 
-            all_tables = get_all_tables(source_conn)
-            remaining_tables = all_tables - self.seen_tables - IGNORE_TABLES
+            remaining_tables = self.all_tables - self.seen_tables - IGNORE_TABLES
             icds_ucr_prefix = '{}{}_'.format(UCR_TABLE_PREFIX, DASHBOARD_DOMAIN)
 
             def keep_table(table):

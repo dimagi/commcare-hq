@@ -1,5 +1,3 @@
-/* global ko */
-
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {
         $(element).select2(valueAccessor());
@@ -11,7 +9,7 @@ ko.bindingHandlers.select2 = {
         var allBindings = allBindingsAccessor(),
             value = ko.utils.unwrapObservable(allBindings.value || allBindings.selectedOptions);
         if (value) {
-            $(element).select2('val', value).trigger('change');
+            $(element).val(value).trigger('change');
         } else {
             $(element).select2();
         }

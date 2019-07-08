@@ -336,7 +336,7 @@ def revert_to_copy(request, domain, app_id):
 
     """
     app = get_app(domain, app_id)
-    copy = get_app(domain, request.POST['saved_app'])
+    copy = get_app(domain, request.POST['build_id'])
     if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
         copy.convert_to_application()
     app = app.make_reversion_to_copy(copy)
@@ -558,7 +558,7 @@ class LanguageProfilesView(View):
         return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain, app_id, *args, **kwargs):
-        profiles = json.loads(request.body).get('profiles')
+        profiles = json.loads(request.body.decode('utf-8')).get('profiles')
         app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:

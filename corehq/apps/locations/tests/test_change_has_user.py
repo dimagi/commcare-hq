@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from flaky import flaky
 from mock import patch, MagicMock
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
@@ -66,6 +67,7 @@ class TestChangeHasUser(TestCase):
         self.assertTrue(form.is_valid())
         form.save()
 
+    @flaky
     def test(self, existing_users_mock):
         # starting off, no users
         self.assertUserState(active=[], inactive=[])

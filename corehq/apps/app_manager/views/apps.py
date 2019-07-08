@@ -160,8 +160,9 @@ def get_app_view_context(request, app):
     context = {}
 
     settings_layout = copy.deepcopy(
-        get_commcare_settings_layout(app.get_doc_type())
+        get_commcare_settings_layout(app)
     )
+
     for section in settings_layout:
         new_settings = []
         for setting in section['settings']:
@@ -693,7 +694,7 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-    app.smart_lang_display = json.loads(request.body)['smart_lang_display']
+    app.smart_lang_display = json.loads(request.body.decode('utf-8'))['smart_lang_display']
     app.save()
     return json_response(langs)
 
@@ -712,13 +713,15 @@ def edit_app_ui_translations(request, domain, app_id):
     translations.pop('modules.m0', None)
 
     app.set_translations(lang, translations)
-    response = {}
-    app.save(response)
-    return json_response(response)
+    app.save(response_json={})  # Updates the app version without updating app properties
+    return json_response({})
 
 
 @require_GET
 def get_app_ui_translations(request, domain):
+    """
+    Retrieves translations from all domains
+    """
     params = json_request(request.GET)
     lang = params.get('lang', 'en')
     key = params.get('key', None)
@@ -742,7 +745,7 @@ def edit_app_attr(request, domain, app_id, attr):
     app = get_app(domain, app_id)
 
     try:
-        hq_settings = json.loads(request.body)['hq']
+        hq_settings = json.loads(request.body.decode('utf-8'))['hq']
     except ValueError:
         hq_settings = request.POST
 
@@ -885,17 +888,17 @@ def rearrange(request, domain, app_id, key):
     """
     app = get_app(domain, app_id)
     ajax = json.loads(request.POST.get('ajax', 'false'))
-    i, j = (int(x) for x in (request.POST['to'], request.POST['from']))
+    from_index, to_index = (int(x) for x in (request.POST['from'], request.POST['to']))
     resp = {}
     module_id = None
 
     try:
         if "forms" == key:
-            to_module_id = int(request.POST['to_module_id'])
-            from_module_id = int(request.POST['from_module_id'])
-            app.rearrange_forms(to_module_id, from_module_id, i, j)
+            from_module_uid = request.POST['from_module_uid']
+            to_module_uid = request.POST['to_module_uid']
+            app.rearrange_forms(from_module_uid, to_module_uid, from_index, to_index)
         elif "modules" == key:
-            app.rearrange_modules(i, j)
+            app.rearrange_modules(from_index, to_index)
     except IncompatibleFormTypeException as e:
         error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
@@ -917,6 +920,15 @@ def rearrange(request, domain, app_id, key):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def move_child_modules_after_parents(request, domain, app_id):
+    app = get_app(domain, app_id)
+    app.move_child_modules_after_parents()
+    app.save()
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
 @require_GET
