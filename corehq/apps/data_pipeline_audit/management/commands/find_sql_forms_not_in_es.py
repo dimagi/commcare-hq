@@ -55,7 +55,7 @@ class Command(BaseCommand):
         startdate = options.get('start')
         enddate = options.get('end')
         print("Fetching all form ids...", file=sys.stderr)
-        all_ids = list(iter_form_ids_by_last_modified(startdate, enddate))
+        all_ids = list(form[0] for form in iter_form_ids_by_last_modified(startdate, enddate))
         print("Woo! Done fetching. Here we go", file=sys.stderr)
         for doc_ids in chunked(all_ids, 100):
             es_ids = (FormES()

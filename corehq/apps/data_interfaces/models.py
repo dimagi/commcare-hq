@@ -505,7 +505,7 @@ class AutomaticUpdateRule(models.Model):
         else:
             for c_id in paginate_query_across_partitioned_databases(
                     CommCareCaseSQL, q_expression, values=['case_id']):
-                yield c_id
+                yield c_id[0]
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):

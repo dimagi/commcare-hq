@@ -420,7 +420,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         for form_id in paginate_query_across_partitioned_databases(
                 XFormInstanceSQL, q_expr, values=['form_id']):
-            yield form_id
+            yield form_id[0]
 
     @staticmethod
     def get_with_attachments(form_id):
