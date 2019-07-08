@@ -177,17 +177,17 @@ hqDefine('reports/v2/js/datagrid', [
         self.unsupportedTaskName = ko.observable();
 
         self.saveFilters = function () {
-            kissmetrics.event.track("Clicked Fake Save button", {
+            self.unsupportedTaskName(gettext("Save Filters"));
+            kissmetrics.track.event("Clicked Fake Save button", {
                 "Domain": initialPageData.get('domain'),
             });
-            self.unsupportedTaskName(gettext("Save Filters"));
         };
 
         self.exportData = function () {
-            kissmetrics.event.track("Clicked Export Data button", {
+            self.unsupportedTaskName(gettext("Export Data"));
+            kissmetrics.track.event("Clicked Export Data button", {
                 "Domain": initialPageData.get('domain'),
             });
-            self.unsupportedTaskName(gettext("Export Data"));
         };
 
         $('#js-modal-unsupported-task').on('hide.bs.modal', function () {

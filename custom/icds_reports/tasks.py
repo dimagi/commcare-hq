@@ -31,16 +31,11 @@ from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
-
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
     get_primary_db_case_counts,
     get_primary_db_form_counts,
 )
-
-from corehq.apps.es.cases import CaseES, server_modified_range
-from corehq.apps.es.forms import FormES, submitted
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -1186,51 +1181,6 @@ def build_disha_dump():
     else:
         _soft_assert(False, "DISHA weekly task has succeeded.")
     celery_task_logger.info("Finished dumping DISHA data")
-
-
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
-def push_missing_docs_to_es():
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-        return
-
-    current_date = date.today() - timedelta(weeks=12)
-    interval = timedelta(days=1)
-    case_doc_type = 'CommCareCase'
-    xform_doc_type = 'XFormInstance'
-    doc_differences = dict()
-    while current_date <= date.today() + interval:
-        end_date = current_date + interval
-        primary_xforms = get_primary_db_form_counts(
-            'icds-cas', current_date, end_date
-        ).get(xform_doc_type, -1)
-        es_xforms = get_es_counts_by_doc_type(
-            'icds-cas', (FormES,), (submitted(gte=current_date, lt=end_date),)
-        ).get(xform_doc_type.lower(), -2)
-        if primary_xforms != es_xforms:
-            doc_differences[(current_date, xform_doc_type)] = primary_xforms - es_xforms
-
-        primary_cases = get_primary_db_case_counts(
-            'icds-cas', current_date, end_date
-        ).get(case_doc_type, -1)
-        es_cases = get_es_counts_by_doc_type(
-            'icds-cas', (CaseES,), (server_modified_range(gte=current_date, lt=end_date),)
-        ).get(case_doc_type, -2)
-        if primary_cases != es_cases:
-            doc_differences[(current_date, case_doc_type)] = primary_xforms - es_xforms
-
-        current_date += interval
-
-    if doc_differences:
-        message = "\n".join([
-            "{}, {}: {}".format(k[0], k[1], v)
-            for k, v in doc_differences.items()
-        ])
-        send_mail_async.delay(
-            subject="Results from push_missing_docs_to_es",
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
-        )
 
 
 @periodic_task(run_every=crontab(hour=17, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')

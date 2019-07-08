@@ -1243,10 +1243,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         forms_missing_transactions = list(updated_xform_ids - form_ids)
         for form_id in forms_missing_transactions:
             # Add in any transactions that aren't already present
-            soft_assert('{}@dimagi.com'.format('skelly'))(False, 'Missing form transaction during rebuild', {
-                'form_id': form_id,
-                'case_id': case.case_id
-            })
             form = updated_xforms_map[form_id]
             case_updates = [update for update in get_case_updates(form) if update.id == case.case_id]
             types = [

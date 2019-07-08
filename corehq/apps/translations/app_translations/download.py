@@ -139,11 +139,24 @@ def get_question_row(question_label_name_media, sheet_name):
 
 def get_module_rows(langs, module):
     if isinstance(module, ReportModule):
-        return []
+        return get_module_report_rows(langs, module)
 
     return get_module_case_list_form_rows(langs, module) + \
         get_module_case_list_menu_item_rows(langs, module) + \
         get_module_detail_rows(langs, module)
+
+
+def get_module_report_rows(langs, module):
+    rows = []
+
+    for index, config in enumerate(module.report_configs):
+        header_columns = tuple(config.header.get(lang, "") for lang in langs)
+        rows.append(("Report {} Display Text".format(index), 'list') + header_columns)
+        if not config.use_xpath_description:
+            description_columns = tuple(config.localized_description.get(lang, "") for lang in langs)
+            rows.append(("Report {} Description".format(index), 'list') + description_columns)
+
+    return rows
 
 
 def get_module_case_list_form_rows(langs, module):

@@ -12,13 +12,14 @@ hqDefine('icds/js/manage_hosted_ccz', [
 ) {
     'use strict';
     $(function () {
-        var hostedCCZ = function (id, link, appName, version, profileName, fileName) {
+        var hostedCCZ = function (id, link, appName, version, profileName, fileName, note) {
             var self = {};
             self.link = link;
             self.appName = appName;
             self.version = version;
             self.profileName = profileName;
             self.fileName = fileName;
+            self.note = note;
             self.url = initialPageData.reverse("remove_hosted_ccz", id);
             self.viewUrl = initialPageData.reverse("hosted_ccz", link);
             return self;
@@ -27,7 +28,7 @@ hqDefine('icds/js/manage_hosted_ccz', [
             var self = {};
             self.hostings = _.map(hostings, function (hosting) {
                 return hostedCCZ(hosting.id, hosting.link_name, hosting.app_name, hosting.version,
-                    hosting.profile_name, hosting.file_name);
+                    hosting.profile_name, hosting.file_name, hosting.note);
             });
             self.search = function () {
                 var linkId = $("#link-id-select").val();

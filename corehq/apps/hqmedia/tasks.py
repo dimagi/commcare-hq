@@ -127,14 +127,27 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 def build_application_zip_v2(include_multimedia_files, include_index_files, domain, app_id,
                              download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                              download_targeted_version=False):
-    app = get_app(domain, app_id)
-    return build_application_zip(include_multimedia_files, include_index_files, app, download_id,
+    return build_application_zip(include_multimedia_files, include_index_files, domain, app_id, download_id,
                                  build_profile_id, compress_zip, filename, download_targeted_version)
+
+
+@task(serializer='pickle')
+def build_application_zip(include_multimedia_files, include_index_files, domain, app_id,
+                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
+                          download_targeted_version=False):
+    DownloadBase.set_progress(build_application_zip, 0, 100)
+    app = get_app(domain, app_id)
+    fpath = create_files_for_ccz(app, build_profile_id, include_multimedia_files, include_index_files,
+                                 download_id, compress_zip, filename, download_targeted_version,
+                                 task=build_application_zip, expose_link=True)
+    _expose_download_link(fpath, filename, compress_zip, download_id)
+    DownloadBase.set_progress(build_application_zip, 100, 100)
 
 
 def _get_file_path(app, include_multimedia_files, include_index_files, build_profile_id,
                    download_targeted_version):
     if settings.SHARED_DRIVE_CONF.transfer_enabled:
+
         fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}{}{}{}".format(
             app._id,
             'mm' if include_multimedia_files else '',
@@ -255,18 +268,6 @@ def _expose_download_link(fpath, filename, compress_zip, download_id):
         expose_cached_download(FileWrapper(open(fpath, 'rb')),
                                file_extension=file_extention_from_filename(filename),
                                **common_kwargs)
-
-
-@task(serializer='pickle')
-def build_application_zip(include_multimedia_files, include_index_files, app,
-                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
-                          download_targeted_version=False):
-    DownloadBase.set_progress(build_application_zip, 0, 100)
-    fpath = create_files_for_ccz(app, build_profile_id, include_multimedia_files, include_index_files,
-                                 download_id, compress_zip, filename, download_targeted_version,
-                                 task=build_application_zip, expose_link=True)
-    _expose_download_link(fpath, filename, compress_zip, download_id)
-    DownloadBase.set_progress(build_application_zip, 100, 100)
 
 
 def find_missing_locale_ids_in_ccz(file_cache):

@@ -205,17 +205,6 @@ def _handle_duplicate(new_doc):
             #    but a different ID and a doc_type of XFormDeprecated
             #  - Save the new instance to the previous document to preserve the ID
             existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
-            device_id = new_doc.metadata.deviceID
-            # we expect edits from formplayer so exclude those
-            _soft_assert(
-                device_id == FORMPLAYER_DEVICE_ID, "Form edit", {
-                    'form_id': new_doc.form_id,
-                    'deprecated_form': existing_doc.form_id,
-                    'domain': new_doc.domain,
-                    'device_id': device_id,
-                    'cc_version': new_doc.metadata.appVersion,
-                }
-            )
             return new_doc, existing_doc
     else:
         # follow standard dupe handling, which simply saves a copy of the form
