@@ -105,7 +105,7 @@ class ProjectMigrator(object):
         responses = {}
         # the project source lang, which is the app default language should be the first to update.
         # HQ keeps the default lang on top and hence it should be the first one here
-        assert translations.keys()[0] == self.target_app_default_lang
+        assert list(translations.keys())[0] == self.target_app_default_lang
         for lang_code in translations:
             responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
         return responses
