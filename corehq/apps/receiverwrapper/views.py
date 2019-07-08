@@ -156,7 +156,7 @@ def _submission_error(request, message, count_metric, metric_tags,
         notify_exception(request, message, details)
     response = HttpResponseBadRequest(
         message, status=status, content_type="text/plain")
-    _record_metrics(metric_tags, 'unknown', response)
+    _record_metrics(metric_tags, 'error', response)
     return response
 
 
