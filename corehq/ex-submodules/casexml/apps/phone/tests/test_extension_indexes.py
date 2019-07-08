@@ -97,7 +97,6 @@ class TestSequenceMeta(type):
             tests_to_run = run_single_tests
 
         for test in tests_to_run:
-            continue
             # Create a new testcase that the test runner is able to find
             test_name = get_test_name(test['name'])
             assert test_name not in dict, "duplicate test name: %s" % test_name
