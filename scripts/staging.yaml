@@ -49,7 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
   - nh/icds/skip_trans  # Norman June 21
   - fr/case-templates      # FR May 15
   - jls/ko-create-mobile-worker # Jenny June 9
