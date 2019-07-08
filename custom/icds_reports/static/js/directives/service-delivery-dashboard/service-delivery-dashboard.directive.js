@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
+function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
@@ -11,9 +11,6 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.showTable = true;
     vm.dataAgeSDD = '0_3';
     vm.dataAggregationLevel = 1;
-
-    vm.showMessage = $rootScope.dateChanged;
-    $rootScope.dateChanged = false;
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -251,7 +248,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
     return {

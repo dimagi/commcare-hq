@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures) {
+function NavigationController($window, $scope, $route, $routeParams, $location, stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -26,25 +26,10 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     };
 
     $scope.goToStep = function(path, params) {
-
-        var selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
-        var selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
-
-        var isServiceDeliveryDashboard = path.indexOf('service_delivery_dashboard') !== -1;
-        if (isServiceDeliveryDashboard && selectedYear <= 2019) {
-            if (selectedYear < 2019 || (selectedYear === 2019 && selectedMonth === 1)) {
-                $location.search('month', new Date().getMonth() + 1);
-                $location.search('year', new Date().getFullYear());
-                $rootScope.dateChanged = true;
-                params = $location.search();
-            }
-        }
-
         var page_path = "#/" + path;
         if (Object.keys(params).length > 0) {
             page_path += '?';
         }
-
         window.angular.forEach(params, function(v, k) {
             if (v === undefined || v === null) {
                 v = '';
@@ -55,7 +40,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     };
 }
 
-NavigationController.$inject = ['$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
+NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('navigation', function() {
     return {

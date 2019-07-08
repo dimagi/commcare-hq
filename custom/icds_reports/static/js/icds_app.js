@@ -9,7 +9,6 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
-    $scope.dateChanged = false;
 
     var locationParams = $location.search();
     var newKey;
