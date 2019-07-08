@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 class TestCaseDiffQueue(SimpleTestCase):
 
     def setUp(self):
+        self.diff_cases_patcher = patch.object(mod, "diff_cases", self.diff_cases)
         self.get_cases_patcher = patch(
             "corehq.form_processor.backends.couch.dbaccessors.CaseAccessorCouch.get_cases",
             self.get_cases,
@@ -32,6 +33,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         self.get_stock_forms_patcher = patch.object(
             mod, "get_stock_forms_by_case_id", self.get_stock_forms)
 
+        self.diff_cases_patcher.start()
         self.get_cases_patcher.start()
         self.get_stock_forms_patcher.start()
         self.cases = {}
@@ -39,6 +41,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         self.diffed = defaultdict(int)
 
     def tearDown(self):
+        self.diff_cases_patcher.stop()
         self.get_cases_patcher.stop()
         self.get_stock_forms_patcher.stop()
         delete_state_db("test")
@@ -204,8 +207,7 @@ class TestCaseDiffQueue(SimpleTestCase):
     @contextmanager
     def queue(self):
         log.info("init CaseDiffQueue")
-        with init_state_db("test") as statedb, \
-                mod.CaseDiffQueue(statedb, self.diff_cases) as queue:
+        with init_state_db("test") as statedb, mod.CaseDiffQueue(statedb) as queue:
             yield queue
 
     def add_cases(self, case_ids, xform_ids=(), actions=(), stock_forms=()):
@@ -248,7 +250,7 @@ class TestCaseDiffQueue(SimpleTestCase):
     def get_stock_forms(self, case_ids):
         return dict(self.stock_forms)
 
-    def diff_cases(self, cases):
+    def diff_cases(self, cases, statedb):
         log.info("diff cases %s", list(cases))
         for case in six.itervalues(cases):
             case_id = case["_id"]

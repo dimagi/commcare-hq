@@ -9,9 +9,23 @@ import gevent
 import six
 from gevent.pool import Pool
 
+from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
-from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.tzmigration.timezonemigration import json_diff
+from corehq.form_processor.backends.couch.dbaccessors import (
+    CaseAccessorCouch,
+    FormAccessorCouch,
+)
+from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    LedgerAccessorSQL,
+)
+from corehq.form_processor.parsers.ledgers.form import MissingFormXml
 from dimagi.utils.chunked import chunked
+
+from .diff import filter_case_diffs, filter_ledger_diffs
 
 log = logging.getLogger(__name__)
 
@@ -42,9 +56,8 @@ class CaseDiffQueue(object):
 
     BATCH_SIZE = 100
 
-    def __init__(self, statedb, diff_cases):
+    def __init__(self, statedb):
         self.statedb = statedb
-        self.diff_cases = diff_cases
         self.pending_cases = defaultdict(set)  # case id -> processed form ids
         self.cases_to_diff = {}  # case id -> case doc (JSON)
         self.pool = Pool(5)
@@ -143,8 +156,11 @@ class CaseDiffQueue(object):
             self._diff_cases()
 
     def _diff_cases(self):
-        self.diff_batcher.spawn(self.diff_cases, self.cases_to_diff)
+        self.diff_batcher.spawn(self._diff, self.cases_to_diff)
         self.cases_to_diff = {}
+
+    def _diff(self, couch_cases):
+        diff_cases(couch_cases, statedb=self.statedb)
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
@@ -325,3 +341,90 @@ class BatchProcessor(object):
 
     def __iter__(self):
         return iter(self.batches.values())
+
+
+def diff_cases(couch_cases, statedb):
+    log.debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
+    counts = defaultdict(int)
+    case_ids = list(couch_cases)
+    sql_cases = CaseAccessorSQL.get_cases(case_ids)
+    sql_case_ids = set()
+    for sql_case in sql_cases:
+        sql_case_ids.add(sql_case.case_id)
+        couch_case = couch_cases[sql_case.case_id]
+        sql_case_json = sql_case.to_json()
+        diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
+        diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
+        if diffs and not sql_case.is_deleted:
+            try:
+                couch_case, diffs = rebuild_couch_case_and_re_diff(
+                    couch_case, sql_case_json, statedb)
+            except Exception as err:
+                log.warning('Case {} rebuild -> {}: {}'.format(
+                    sql_case.case_id, type(err).__name__, err))
+        if diffs:
+            statedb.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+        counts[couch_case['doc_type']] += 1
+
+    diff_ledgers(case_ids, statedb)
+
+    if len(case_ids) != len(sql_case_ids):
+        couch_ids = set(case_ids)
+        assert not (sql_case_ids - couch_ids), sql_case_ids - couch_ids
+        missing_cases = [couch_cases[x] for x in couch_ids - sql_case_ids]
+        log.debug("Found %s missing SQL cases", len(missing_cases))
+        for doc_type, doc_ids in filter_missing_cases(missing_cases):
+            statedb.add_missing_docs(doc_type, doc_ids)
+            counts[doc_type] += len(doc_ids)
+
+    for doc_type, count_ in six.iteritems(counts):
+        statedb.increment_counter(doc_type, count_)
+
+
+def rebuild_couch_case_and_re_diff(couch_case, sql_case_json, statedb):
+    assert couch_case["domain"] == sql_case_json["domain"], \
+        (couch_case["domain"], sql_case_json["domain"])
+    rebuilt_case = FormProcessorCouch.hard_rebuild_case(
+        couch_case["domain"], couch_case['_id'], None, save=False, lock=False
+    )
+    rebuilt_case_json = rebuilt_case.to_json()
+    diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
+    diffs = filter_case_diffs(rebuilt_case_json, sql_case_json, diffs, statedb)
+    return rebuilt_case_json, diffs
+
+
+def diff_ledgers(case_ids, statedb):
+    log.debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
+    couch_state_map = {
+        state.ledger_reference: state
+        for state in StockState.objects.filter(case_id__in=case_ids)
+    }
+    for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
+        couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
+        diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
+        statedb.add_diffs(
+            'stock state', ledger_value.ledger_reference.as_id(),
+            filter_ledger_diffs(diffs)
+        )
+
+
+def filter_missing_cases(missing_cases):
+    result = defaultdict(list)
+    for couch_case in missing_cases:
+        if is_orphaned_case(couch_case):
+            log.info("Ignoring orphaned case: %s", couch_case["_id"])
+        else:
+            result[couch_case["doc_type"]].append(couch_case["_id"])
+    return six.iteritems(result)
+
+
+def is_orphaned_case(couch_case):
+    def references_case(form_id):
+        form = FormAccessorCouch.get_form(form_id)
+        try:
+            return case_id in get_case_ids_from_form(form)
+        except MissingFormXml:
+            return True  # assume case is referenced if form XML is missing
+
+    case_id = couch_case["_id"]
+    return not any(references_case(x) for x in couch_case["xform_ids"])
