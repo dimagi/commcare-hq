@@ -63,9 +63,9 @@ class TestPaginateReleases(TestCase):
     def test_commcare_flavor(self):
         self.client.login(username=self.username, password=self.password)
         # Couch View Test
-        self.assertEqual(self.get_commcare_flavor_on_releases_page(), '')
+        self.assertEqual(self.get_commcare_flavor_on_releases_page(), None)
         # ES Search Test
-        self.assertEqual(self.get_commcare_flavor_on_releases_page(only_released=True), '')
+        self.assertEqual(self.get_commcare_flavor_on_releases_page(only_released=True), None)
         with flag_enabled('TARGET_COMMCARE_FLAVOR'):
             # Couch View Test
             self.assertEqual(self.get_commcare_flavor_on_releases_page(), 'commcare_lts')
