@@ -37,7 +37,7 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         """
 
         :param key: short description of the window e.g. "week"
-        :param window_duration: length in seconds of the window
+        :param window_duration: length of the window in seconds
         :param window_offset: offset from epoch of window boundary
         :param grains_per_window: How many grains the window should be divided into
             (higher number = more accuracy)
@@ -89,7 +89,7 @@ class FixedWindowRateCounter(AbstractRateCounter):
                  memoize_timeout=15.0, _CounterCache=None):
         """
         :param key: short description of the window e.g. "week"
-        :param window_duration: length in seconds of the window
+        :param window_duration: length of the window in seconds
         :param window_offset: offset of window boundary in seconds from the epoch
         :param keep_windows: number of windows to retain (including current one)
         :param memoize_timeout: how long to memoize the information in memory
