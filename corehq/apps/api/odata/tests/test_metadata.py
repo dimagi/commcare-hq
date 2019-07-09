@@ -23,6 +23,7 @@ from corehq.apps.api.odata.views import (
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain, get_odata_form_configs_by_domain
 from corehq.apps.export.models import CaseExportInstance, ExportColumn, FormExportInstance, TableConfiguration
 from corehq.util.test_utils import flag_enabled
 
@@ -323,7 +324,14 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
-            response = self._execute_query(correct_credentials)
+            with patch(
+                'corehq.apps.api.odata.views.get_odata_case_configs_by_domain',
+                return_value=sorted(
+                    get_odata_case_configs_by_domain(self.domain.name),
+                    key=lambda _config: _config.get_id
+                )
+            ):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
         self.assertEqual(response['OData-Version'], '4.0')
@@ -451,7 +459,14 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
 
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
-            response = self._execute_query(correct_credentials)
+            with patch(
+                'corehq.apps.api.odata.views.get_odata_form_configs_by_domain',
+                return_value=sorted(
+                    get_odata_form_configs_by_domain(self.domain.name),
+                    key=lambda _config: _config.get_id
+                )
+            ):
+                response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
         self.assertEqual(response['OData-Version'], '4.0')
