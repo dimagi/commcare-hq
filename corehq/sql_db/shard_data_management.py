@@ -105,24 +105,7 @@ def delete_unmatched_shard_data(database, model):
 
     Returns number of records deleted
     """
-    field_type = model._meta.get_field(model.partition_attr)
-    if isinstance(field_type, UUIDField):
-        # magic: https://gist.github.com/cdmckay/a82261e48a42a3bbd78a
-        shard_id_function = (
-            "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24')"
-            " & {total_shard_count}"
-        ).format(
-            total_shard_count=partition_config.num_shards - 1,
-            id_field=model.partition_attr,
-        )
-    elif _is_a_string_field(field_type):
-        # todo: are there any other types we need to worry about?
-        shard_id_function = "hash_string({id_field}, 'siphash24') & {total_shard_count}".format(
-            total_shard_count=partition_config.num_shards - 1,
-            id_field=model.partition_attr,
-        )
-    else:
-        raise Exception('Tried to shard based on an unexpected field type: {}'.format(type(field_type)))
+    shard_id_function = _get_shard_id_function(model)
     query = """
     DELETE FROM {table_name}
     WHERE NOT ({shard_id_function}) = ANY(%s);
@@ -159,25 +142,7 @@ def _get_unmatched_shard_count_query_for_testing(model):
 
 
 def _get_counts_by_shard_query_for_testing(model):
-    # have to cast to varchar because some tables have uuid types
-    field_type = model._meta.get_field(model.partition_attr)
-    if isinstance(field_type, UUIDField):
-        # magic: https://gist.github.com/cdmckay/a82261e48a42a3bbd78a
-        shard_id_function = (
-            "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24')"
-            " & {total_shard_count}"
-        ).format(
-            total_shard_count=partition_config.num_shards - 1,
-            id_field=model.partition_attr,
-        )
-    elif _is_a_string_field(field_type):
-        # todo: are there any other types we need to worry about?
-        shard_id_function = "hash_string({id_field}, 'siphash24') & {total_shard_count}".format(
-            total_shard_count=partition_config.num_shards - 1,
-            id_field=model.partition_attr,
-        )
-    else:
-        raise Exception('Tried to shard based on an unexpected field type: {}'.format(type(field_type)))
+    shard_id_function = _get_shard_id_function(model)
     return """
         select {shard_id_function} as shard_id, count(*)
         from {table_name}
@@ -186,6 +151,26 @@ def _get_counts_by_shard_query_for_testing(model):
         shard_id_function=shard_id_function,
         table_name=model._meta.db_table,
     )
+
+
+def _get_shard_id_function(model):
+    # have to cast to varchar because some tables have uuid types
+    field_type = model._meta.get_field(model.partition_attr)
+    if isinstance(field_type, UUIDField):
+        # magic: https://gist.github.com/cdmckay/a82261e48a42a3bbd78a
+        return (
+            "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24')"
+            " & {total_shard_count}"
+        ).format(
+            total_shard_count=partition_config.num_shards - 1,
+            id_field=model.partition_attr,
+        )
+    elif _is_a_string_field(field_type):
+        return "hash_string({id_field}, 'siphash24') & {total_shard_count}".format(
+            total_shard_count=partition_config.num_shards - 1,
+            id_field=model.partition_attr,
+        )
+    raise Exception('Tried to shard based on an unexpected field type: {}'.format(type(field_type)))
 
 
 def _is_a_string_field(field_type):
