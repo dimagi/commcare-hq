@@ -34,8 +34,6 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     Runs a query across all partitioned databases in small chunks and produces a generator
     with the results.
 
-    Iteration logic adopted from https://djangosnippets.org/snippets/1949/
-
     :param model_class: A Django model class
 
     :param q_expression: An instance of django.db.models.Q representing the
@@ -56,6 +54,25 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
 
 
 def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None):
+    """
+    Runs a query on the given database in small chunks and produces a generator
+    with the results.
+
+    Iteration logic adopted from https://djangosnippets.org/snippets/1949/
+
+    :param model_class: A Django model class
+
+    :param q_expression: An instance of django.db.models.Q representing the
+    filter to apply
+
+    :param annotate: (optional) If specified, should be a dictionary of annotated fields
+    and their calculations. The dictionary will be splatted into the `.annotate` function
+
+    :param values: (optional) If specified, should be a list of values to retrieve rather
+    than retrieving entire objects.
+
+    :return: A generator with the results
+    """
     sort_col = 'pk'
 
     return_values = None
