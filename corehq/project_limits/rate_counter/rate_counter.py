@@ -16,22 +16,25 @@ LOCMEM = caches['locmem']
 
 
 class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
+    """
+    A "Sliding Window Over Fixed Grains" approach that approximates perfect sliding window
+
+    The "Sliding Window Over Fixed Grains" approach approximates
+    the perfect sliding window approach (where you keep the timestamp of every event
+    and count the number that fall between now and now - window_duration)
+    by dividing time up into fixed "grains", i.e. sub-windows,
+    over which we slide the larger window.
+    For the earliest grain which is sliding out of the window,
+    we assume linear distribution of events over time, and thus compute its contribution
+    to the total as (% overlap of grain with our window) * (events in grain).
+
+    See a description of this approach (with grains_per_window=1) here:
+    https://konghq.com/blog/how-to-design-a-scalable-rate-limiting-algorithm/
+
+    """
     def __init__(self, key, window_duration, window_offset=0, grains_per_window=1,
                  memoize_timeout=15.0, _FixedWindowRateCounter=None):
         """
-        A "Sliding Window Over Fixed Grains" approach that approximates perfect sliding window
-
-        The "Sliding Window Over Fixed Grains" approach approximates
-        the perfect sliding window approach (where you keep the timestamp of every event
-        and count the number that fall between now and now - window_duration)
-        by dividing time up into fixed "grains", i.e. sub-windows,
-        over which we slide the larger window.
-        For the earliest grain which is sliding out of the window,
-        we assume linear distribution of events over time, and thus compute its contribution
-        to the total as (% overlap of grain with our window) * (events in grain).
-
-        See a description of this approach (with grains_per_window=1) here:
-        https://konghq.com/blog/how-to-design-a-scalable-rate-limiting-algorithm/
 
         :param key: short description of the window e.g. "week"
         :param window_duration: length in seconds of the window
