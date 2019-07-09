@@ -3,13 +3,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import division
 
-import abc
 import hashlib
 import time
-from datetime import timedelta
 
 import six
 from django.core.cache import caches
+
+from corehq.project_limits.rate_counter.interfaces import AbstractRateCounter
 
 REDIS = caches['default']
 LOCMEM = caches['locmem']
@@ -42,20 +42,6 @@ class CounterCache(object):
             self.local_cache.set(key, value, timeout=local_timeout)
         assert value is not None
         return value
-
-
-class AbstractRateCounter(six.with_metaclass(abc.ABCMeta)):
-    @abc.abstractmethod
-    def get(self, scope):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def increment(self, scope, delta):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def increment_and_get(self, scope, delta):
-        raise NotImplementedError()
 
 
 class FixedWindowRateCounter(AbstractRateCounter):
@@ -163,39 +149,3 @@ class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
     def increment_and_get(self, scope, delta=1, timestamp=None):
         self.increment(scope, delta, timestamp=timestamp)
         return self.get(scope, timestamp=timestamp)
-
-
-week_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
-    'week',
-    timedelta(days=7).total_seconds(),
-    grains_per_window=7,
-    memoize_timeout=timedelta(hours=6).total_seconds()
-)
-
-day_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
-    'day',
-    timedelta(days=1).total_seconds(),
-    grains_per_window=4,
-    memoize_timeout=timedelta(hours=6).total_seconds()
-)
-
-hour_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
-    'hour',
-    timedelta(hours=1).total_seconds(),
-    grains_per_window=3,
-    memoize_timeout=timedelta(hours=1).total_seconds()
-)
-
-minute_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
-    'minute',
-    timedelta(minutes=1).total_seconds(),
-    grains_per_window=2,
-    memoize_timeout=timedelta(minutes=1).total_seconds()
-)
-
-second_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
-    'second',
-    timedelta(seconds=1).total_seconds(),
-    grains_per_window=1,
-    memoize_timeout=timedelta(seconds=1).total_seconds()
-)
