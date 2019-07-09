@@ -1066,8 +1066,8 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         definition.save()
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
-            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.get_case_ids') as case_ids_patch:
-                case_ids_patch.return_value = [case.case_id]
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.iter_cases') as iter_cases_patch:
+                iter_cases_patch.return_value = [case]
                 self.assertRuleRunCount(0)
 
                 # Case does not match, nothing to update

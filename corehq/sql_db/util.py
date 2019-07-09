@@ -92,32 +92,36 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     :return: A generator with the results
     """
     db_names = get_db_aliases_for_partitioned_query()
+    for db_name in db_names:
+        for row in paginate_query(db_name, model_class, q_expression, annotate, query_size, values):
+            yield row
+
+
+def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None):
     sort_col = 'pk'
 
     return_values = None
     if values and sort_col not in values:
         return_values = ['pk'] + values
 
-    for db_name in db_names:
-        qs = model_class.objects.using(db_name)
-        if annotate:
-            qs = qs.annotate(**annotate)
-
-        qs = qs.filter(q_expression)
-        value = 0
-        last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
-        if last_value is not None:
-            qs = qs.order_by(sort_col)
-            if return_values:
-                qs = qs.values_list(*return_values)
-            while value < last_value:
-                filter_expression = {'{}__gt'.format(sort_col): value}
-                for row in qs.filter(**filter_expression)[:query_size]:
-                    if return_values:
-                        value = row[0]
-                    else:
-                        value = row.pk
-                    yield row
+    qs = model_class.objects.using(db_name)
+    if annotate:
+        qs = qs.annotate(**annotate)
+    qs = qs.filter(q_expression)
+    value = 0
+    last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
+    if last_value is not None:
+        qs = qs.order_by(sort_col)
+        if return_values:
+            qs = qs.values_list(*return_values)
+        while value < last_value:
+            filter_expression = {'{}__gt'.format(sort_col): value}
+            for row in qs.filter(**filter_expression)[:query_size]:
+                if return_values:
+                    value = row[0]
+                else:
+                    value = row.pk
+                yield row
 
 
 def split_list_by_db_partition(partition_values):
