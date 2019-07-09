@@ -34,6 +34,30 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     Runs a query across all partitioned databases in small chunks and produces a generator
     with the results.
 
+    :param model_class: A Django model class
+
+    :param q_expression: An instance of django.db.models.Q representing the
+    filter to apply
+
+    :param annotate: (optional) If specified, should be a dictionary of annotated fields
+    and their calculations. The dictionary will be splatted into the `.annotate` function
+
+    :param values: (optional) If specified, should be a list of values to retrieve rather
+    than retrieving entire objects.
+
+    :return: A generator with the results
+    """
+    db_names = get_db_aliases_for_partitioned_query()
+    for db_name in db_names:
+        for row in paginate_query(db_name, model_class, q_expression, annotate, query_size, values):
+            yield row
+
+
+def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None):
+    """
+    Runs a query on the given database in small chunks and produces a generator
+    with the results.
+
     Iteration logic adopted from https://djangosnippets.org/snippets/1949/
 
     :param model_class: A Django model class
@@ -49,36 +73,34 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
 
     :return: A generator with the results
     """
-    db_names = get_db_aliases_for_partitioned_query()
     sort_col = 'pk'
 
     return_values = None
     if values:
         return_values = [sort_col] + values
 
-    for db_name in db_names:
-        qs = model_class.objects.using(db_name)
-        if annotate:
-            qs = qs.annotate(**annotate)
+    qs = model_class.objects.using(db_name)
+    if annotate:
+        qs = qs.annotate(**annotate)
 
-        qs = qs.filter(q_expression)
-        last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
-        if last_value is not None:
-            qs = qs.order_by(sort_col)
-            if return_values:
-                qs = qs.values_list(*return_values)
+    qs = qs.filter(q_expression)
+    last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
+    if last_value is not None:
+        qs = qs.order_by(sort_col)
+        if return_values:
+            qs = qs.values_list(*return_values)
 
-            value = None
-            filter_expression = {}
-            while value is None or value < last_value:
-                for row in qs.filter(**filter_expression)[:query_size]:
-                    if return_values:
-                        value = row[0]
-                        yield row[1:]
-                    else:
-                        value = row.pk
-                        yield row
-                filter_expression = {'{}__gt'.format(sort_col): value}
+        value = None
+        filter_expression = {}
+        while value is None or value < last_value:
+            for row in qs.filter(**filter_expression)[:query_size]:
+                if return_values:
+                    value = row[0]
+                    yield row[1:]
+                else:
+                    value = row.pk
+                    yield row
+            filter_expression = {'{}__gt'.format(sort_col): value}
 
 
 def split_list_by_db_partition(partition_values):
