@@ -433,6 +433,14 @@ class LocationFormSet(object):
     def is_valid(self):
         return all(form.is_valid() for form in self.forms)
 
+    @property
+    @memoized
+    def errors(self):
+        errors = {}
+        for form in self.forms:
+            errors.update(form.errors)
+        return errors
+
     def save(self):
         if not self.is_valid():
             raise ValueError('Form is not valid')

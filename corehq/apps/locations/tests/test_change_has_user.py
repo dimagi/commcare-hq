@@ -64,7 +64,7 @@ class TestChangeHasUser(TestCase):
             request_user=MagicMock(),
             is_new=True,
         )
-        self.assertTrue(form.is_valid())
+        self.assertTrue(form.is_valid(), form.errors)
         form.save()
 
     @flaky
