@@ -64,7 +64,7 @@ class FixedWindowRateCounter(AbstractRateCounter):
         """
         :param key: short description of the window e.g. "week"
         :param window_duration: length in seconds of the window
-        :param window_offset: offset from epoch of window boundary
+        :param window_offset: offset of window boundary in seconds from the epoch
         :param keep_windows: number of windows to retain (including current one)
         :param memoize_timeout: how long to memoize the information in memory
             This is the upper limit on how long a `get` could return a stale value.
