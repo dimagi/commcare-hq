@@ -22,6 +22,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.tests.test_dbaccessors_p
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.models import PartitionedModel
 from corehq.sql_db.shard_data_management import (
+    delete_unmatched_shard_data,
     get_count_of_unmatched_models_by_shard,
 )
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
@@ -73,6 +74,18 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         self.assertEqual(1, len(matches))
         self.assertEqual((0, 1), matches[0])
 
+    def test_uuid_partitioning_delete(self):
+        instance = BaseSchedulingPartitionedDBAccessorsTest.make_alert_schedule_instance(
+            self.p1_uuid, domain=self.domain
+        )
+        super(PartitionedModel, instance).save(using=self.db2)
+        self.assertEqual(AlertScheduleInstance.objects.using(self.db2).count(), 1)
+        # database 1 should not delete anything
+        num_deleted = delete_unmatched_shard_data(self.db1, AlertScheduleInstance)
+        self.assertEqual(0, num_deleted)
+        num_deleted = delete_unmatched_shard_data(self.db2, AlertScheduleInstance)
+        self.assertEqual(1, num_deleted)
+
     def test_text_partitioning_correct(self):
         from corehq.sql_db.shard_data_management import get_count_of_models_by_shard_for_testing
         form = self._make_form_instance(str(self.p2_uuid))
@@ -91,6 +104,17 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         matches = get_count_of_unmatched_models_by_shard(self.db1, XFormInstanceSQL)
         self.assertEqual(1, len(matches))
         self.assertEqual((2, 1), matches[0])
+
+    def test_text_partitioning_delete(self):
+        form = self._make_form_instance(str(self.p2_uuid))
+        super(PartitionedModel, form).save(using=self.db1)
+        self.assertEqual(XFormInstanceSQL.objects.using(self.db1).count(), 1)
+
+        num_deleted = delete_unmatched_shard_data(self.db1, XFormInstanceSQL)
+        self.assertEqual(1, num_deleted)
+        # database 2 should not delete anything
+        num_deleted = delete_unmatched_shard_data(self.db2, XFormInstanceSQL)
+        self.assertEqual(0, num_deleted)
 
     @classmethod
     def _make_form_instance(cls, form_id):
