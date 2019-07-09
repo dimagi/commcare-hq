@@ -6,6 +6,7 @@ import logging
 from collections import namedtuple
 
 from ddtrace import tracer
+from django.db import IntegrityError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -507,8 +508,12 @@ def _transform_instance_to_error(interface, exception, instance):
 
 def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
+    try:
+        FormAccessors(interface.domain).save_new_form(instance)
+    except IntegrityError:
+        instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
+        FormAccessors(interface.domain).save_new_form(instance)
     notify_submission_error(instance, exception, instance.problem)
-    FormAccessors(interface.domain).save_new_form(instance)
 
 
 def notify_submission_error(instance, exception, message):
