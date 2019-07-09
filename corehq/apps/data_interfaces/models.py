@@ -45,7 +45,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_timed_schedule_instances_for_schedule_id,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
-from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
+from corehq.sql_db.util import paginate_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
@@ -503,8 +503,9 @@ class AutomaticUpdateRule(models.Model):
             for c_id in CommCareCaseSQL.objects.using(db).filter(q_expression).values_list('case_id', flat=True):
                 yield c_id
         else:
-            for c_id in run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id']):
-                yield c_id
+            for c_id in paginate_query_across_partitioned_databases(
+                    CommCareCaseSQL, q_expression, values=['case_id']):
+                yield c_id[0]
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
