@@ -163,7 +163,7 @@ class ApplicationBaseValidator(object):
 
     def _check_password_charset(self):
         errors = []
-        if hasattr(self.app, 'profile'):
+        if self.app.build_spec.supports_j2me() and hasattr(self.app, 'profile'):
             password_format = self.app.profile.get('properties', {}).get('password_format', 'n')
             message = _(
                 'Your app requires {0} passwords but the admin password is not '
