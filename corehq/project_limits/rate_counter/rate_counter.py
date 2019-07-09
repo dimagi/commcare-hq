@@ -41,7 +41,7 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         :param window_offset: offset from epoch of window boundary
         :param grains_per_window: How many grains the window should be divided into
             (higher number = more accuracy)
-        :param memoize_timeout: how long to memoize the information in memory
+        :param memoize_timeout: how long to memoize the information in memory in seconds
             This is the upper limit on how long a `get` could return a stale value.
         """
         _FixedWindowRateCounter = _FixedWindowRateCounter or FixedWindowRateCounter
@@ -92,7 +92,7 @@ class FixedWindowRateCounter(AbstractRateCounter):
         :param window_duration: length of the window in seconds
         :param window_offset: offset of window boundary in seconds from the epoch
         :param keep_windows: number of windows to retain (including current one)
-        :param memoize_timeout: how long to memoize the information in memory
+        :param memoize_timeout: how long to memoize the information in memory in seconds
             This is the upper limit on how long a `get` could return a stale value.
         """
         _CounterCache = _CounterCache or CounterCache
