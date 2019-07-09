@@ -104,7 +104,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
     var jsonDataSetMap = function (dataSetMap) {
         var self = {};
 
-        self.dataSetMap = ko.observable(dataSetMap)
+        self.dataSetMap = ko.observable(dataSetMap);
 
         self.serialize = function () {
             return self.dataSetMap();
