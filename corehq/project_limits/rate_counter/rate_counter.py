@@ -15,80 +15,9 @@ REDIS = caches['default']
 LOCMEM = caches['locmem']
 
 
-class CounterCache(object):
-    def __init__(self, memoized_timeout, timeout, local_cache=LOCMEM, shared_cache=REDIS):
-        self.memoized_timeout = memoized_timeout
-        self.timeout = timeout
-        self.local_cache = local_cache
-        self.shared_cache = shared_cache
-
-    def incr(self, key, delta=1):
-        value = self.shared_cache.incr(key, delta)
-        if value == 1:
-            self.shared_cache.expire(key, timeout=self.timeout)
-        self.local_cache.set(key, value, timeout=self.memoized_timeout)
-        return value
-
-    def get(self, key, key_is_active=True):
-        """
-        :param key: Cache key
-        :param key_is_active: Whether you believe the key is being actively updated
-            If not, then use the longer timeout for local memory cache as well.
-        """
-        local_timeout = self.memoized_timeout if key_is_active else self.timeout
-        value = self.local_cache.get(key, default=None)
-        if value is None:
-            value = self.shared_cache.get(key, default=0)
-            self.local_cache.set(key, value, timeout=local_timeout)
-        assert value is not None
-        return value
-
-
-class FixedWindowRateCounter(AbstractRateCounter):
-    def __init__(self, key, window_duration, window_offset=0, keep_windows=1,
-                 memoize_timeout=15.0, _CounterCache=CounterCache):
-        """
-        :param key: short description of the window e.g. "week"
-        :param window_duration: length in seconds of the window
-        :param window_offset: offset of window boundary in seconds from the epoch
-        :param keep_windows: number of windows to retain (including current one)
-        :param memoize_timeout: how long to memoize the information in memory
-            This is the upper limit on how long a `get` could return a stale value.
-        """
-        assert keep_windows >= 1
-        self.key = key
-        self.window_duration = window_duration
-        self.window_offset = window_offset
-        self.counter = _CounterCache(memoize_timeout, timeout=keep_windows * window_duration)
-
-    @staticmethod
-    def _digest(string):
-        return hashlib.sha1(string).hexdigest()
-
-    def _cache_key(self, scope, timestamp=None):
-        if timestamp is None:
-            timestamp = time.time()
-        if isinstance(scope, six.string_types):
-            scope = (scope,)
-        return self._digest('fwrc-{}-{}-{}'.format(
-            self.key,
-            ':'.join(map(self._digest, scope)),
-            int((timestamp - self.window_offset) / self.window_duration)
-        ))
-
-    def get(self, scope, timestamp=None, key_is_active=True):
-        return self.counter.get(self._cache_key(scope, timestamp=timestamp), key_is_active=key_is_active)
-
-    def increment_and_get(self, scope, delta=1, timestamp=None):
-        return self.counter.incr(self._cache_key(scope, timestamp=timestamp), delta)
-
-    def increment(self, scope, delta=1, timestamp=None):
-        self.increment_and_get(scope, delta, timestamp=timestamp)
-
-
 class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
     def __init__(self, key, window_duration, window_offset=0, grains_per_window=1,
-                 memoize_timeout=15.0, _FixedWindowRateCounter=FixedWindowRateCounter):
+                 memoize_timeout=15.0, _FixedWindowRateCounter=None):
         """
         A "Sliding Window Over Fixed Grains" approach that approximates perfect sliding window
 
@@ -112,6 +41,7 @@ class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
         :param memoize_timeout: how long to memoize the information in memory
             This is the upper limit on how long a `get` could return a stale value.
         """
+        _FixedWindowRateCounter = _FixedWindowRateCounter or FixedWindowRateCounter
         self.key = key
         self.window_duration = window_duration
         self.window_offset = window_offset
@@ -149,3 +79,75 @@ class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
     def increment_and_get(self, scope, delta=1, timestamp=None):
         self.increment(scope, delta, timestamp=timestamp)
         return self.get(scope, timestamp=timestamp)
+
+
+class FixedWindowRateCounter(AbstractRateCounter):
+    def __init__(self, key, window_duration, window_offset=0, keep_windows=1,
+                 memoize_timeout=15.0, _CounterCache=None):
+        """
+        :param key: short description of the window e.g. "week"
+        :param window_duration: length in seconds of the window
+        :param window_offset: offset of window boundary in seconds from the epoch
+        :param keep_windows: number of windows to retain (including current one)
+        :param memoize_timeout: how long to memoize the information in memory
+            This is the upper limit on how long a `get` could return a stale value.
+        """
+        _CounterCache = _CounterCache or CounterCache
+        assert keep_windows >= 1
+        self.key = key
+        self.window_duration = window_duration
+        self.window_offset = window_offset
+        self.counter = _CounterCache(memoize_timeout, timeout=keep_windows * window_duration)
+
+    @staticmethod
+    def _digest(string):
+        return hashlib.sha1(string).hexdigest()
+
+    def _cache_key(self, scope, timestamp=None):
+        if timestamp is None:
+            timestamp = time.time()
+        if isinstance(scope, six.string_types):
+            scope = (scope,)
+        return self._digest('fwrc-{}-{}-{}'.format(
+            self.key,
+            ':'.join(map(self._digest, scope)),
+            int((timestamp - self.window_offset) / self.window_duration)
+        ))
+
+    def get(self, scope, timestamp=None, key_is_active=True):
+        return self.counter.get(self._cache_key(scope, timestamp=timestamp), key_is_active=key_is_active)
+
+    def increment_and_get(self, scope, delta=1, timestamp=None):
+        return self.counter.incr(self._cache_key(scope, timestamp=timestamp), delta)
+
+    def increment(self, scope, delta=1, timestamp=None):
+        self.increment_and_get(scope, delta, timestamp=timestamp)
+
+
+class CounterCache(object):
+    def __init__(self, memoized_timeout, timeout, local_cache=LOCMEM, shared_cache=REDIS):
+        self.memoized_timeout = memoized_timeout
+        self.timeout = timeout
+        self.local_cache = local_cache
+        self.shared_cache = shared_cache
+
+    def incr(self, key, delta=1):
+        value = self.shared_cache.incr(key, delta)
+        if value == 1:
+            self.shared_cache.expire(key, timeout=self.timeout)
+        self.local_cache.set(key, value, timeout=self.memoized_timeout)
+        return value
+
+    def get(self, key, key_is_active=True):
+        """
+        :param key: Cache key
+        :param key_is_active: Whether you believe the key is being actively updated
+            If not, then use the longer timeout for local memory cache as well.
+        """
+        local_timeout = self.memoized_timeout if key_is_active else self.timeout
+        value = self.local_cache.get(key, default=None)
+        if value is None:
+            value = self.shared_cache.get(key, default=0)
+            self.local_cache.set(key, value, timeout=local_timeout)
+        assert value is not None
+        return value
