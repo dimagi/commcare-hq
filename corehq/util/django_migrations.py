@@ -104,6 +104,7 @@ def skip_on_fresh_install(migration_fn):
 
 def noop_migration():
     """
-    A migration that does nothing. Used to replace old migrations that are no longer required e.g moved.
+    Used as a fallback when dynamically determining whether to run a migration
+    Old migrations can be simply removed. `operations = []` is perfectly valid
     """
     return RunPython(RunPython.noop, RunPython.noop)
