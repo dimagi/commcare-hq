@@ -16,11 +16,13 @@ class Command(BaseCommand):
     help = "Print out all shard data that exists in databases that don't contain the associated shards."
 
     def add_arguments(self, parser):
+        parser.add_argument('--database', action='store')
         parser.add_argument('--delete', action='store_true')
 
     def handle(self, **options):
         sharded_models = list(get_all_sharded_models())
-        for database in get_db_aliases_for_partitioned_query():
+        databases = [options.get('database')] or get_db_aliases_for_partitioned_query()
+        for database in databases:
             for model in sharded_models:
                 if options['delete']:
                     count = delete_unmatched_shard_data(database, model)
