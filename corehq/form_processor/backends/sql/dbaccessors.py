@@ -58,9 +58,12 @@ from corehq.form_processor.utils.sql import (
     fetchone_as_namedtuple,
     fetchall_as_namedtuple
 )
-from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
+from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
-from corehq.sql_db.util import split_list_by_db_partition
+from corehq.sql_db.util import (
+    split_list_by_db_partition,
+    get_db_aliases_for_partitioned_query,
+)
 from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.soft_assert import soft_assert
@@ -220,7 +223,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     @property
     def sql_db_aliases(self):
-        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() \
+        all_db_aliases = get_db_aliases_for_partitioned_query() if self.is_sharded() \
             else [db_for_read_write(self.model_class)]
         if self.limit_db_aliases:
             db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
@@ -1095,7 +1098,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return []
 
         extension_case_ids = set()
-        for db_name in get_sql_db_aliases_in_use():
+        for db_name in get_db_aliases_for_partitioned_query():
             query = CommCareCaseIndexSQL.objects.using(db_name).filter(
                 domain=domain,
                 relationship_id=CommCareCaseIndexSQL.EXTENSION,
