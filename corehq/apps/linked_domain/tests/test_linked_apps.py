@@ -220,7 +220,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.linked_app_logo_refs = logo_refs
         self.linked_app.create_mapping(image, image_path, save=False)
         self.linked_app.linked_app_attrs = {
-            # ToDo: check why is this even a linked app attr? its not overridden
             'target_commcare_flavor': 'commcare_lts',
         }
         self.linked_app.save()
@@ -235,7 +234,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(self.linked_app.logo_refs, logo_refs)
         self.assertEqual(self.linked_app.commcare_flavor, 'commcare_lts')
         self.assertEqual(self.linked_app.linked_app_attrs, {
-            # ToDo: check why is this even a linked app attr? its not overridden
             'target_commcare_flavor': 'commcare_lts',
         })
 
