@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import Counter, defaultdict
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 from django.db.models import Q, Count
 
 import dateutil
