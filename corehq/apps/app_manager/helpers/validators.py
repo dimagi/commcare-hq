@@ -52,6 +52,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import interpolate_xpath, LocationXpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.models import Domain
 
 
@@ -163,7 +164,10 @@ class ApplicationBaseValidator(object):
 
     def _check_password_charset(self):
         errors = []
-        if hasattr(self.app, 'profile'):
+        j2me_enabled = self.app.build_spec.version in [
+            i.build.version for i in CommCareBuildConfig.j2me_enabled_configs()
+        ]
+        if j2me_enabled and hasattr(self.app, 'profile'):
             password_format = self.app.profile.get('properties', {}).get('password_format', 'n')
             message = _(
                 'Your app requires {0} passwords but the admin password is not '
