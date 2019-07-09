@@ -187,14 +187,14 @@ hour_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
 )
 
 minute_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
-    'hour',
+    'minute',
     timedelta(minutes=1).total_seconds(),
     grains_per_window=2,
     memoize_timeout=timedelta(minutes=1).total_seconds()
 )
 
 second_rate_counter = SlidingWindowOverFixedGrainsRateCounter(
-    'hour',
+    'second',
     timedelta(seconds=1).total_seconds(),
     grains_per_window=1,
     memoize_timeout=timedelta(seconds=1).total_seconds()
