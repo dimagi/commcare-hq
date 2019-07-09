@@ -1723,7 +1723,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     'location_safe_case_imports',
     'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
