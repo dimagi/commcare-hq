@@ -1,20 +1,29 @@
 from __future__ import absolute_import, unicode_literals
-from unittest import skipUnless, SkipTest
+
 import uuid
 from datetime import datetime
+from unittest import SkipTest, skipUnless
+
 from django.conf import settings
 from django.test import TestCase
+
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL
-
 from corehq.form_processor.tests.utils import use_sql_backend
-from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import save_alert_schedule_instance
-from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
-from corehq.messaging.scheduling.scheduling_partitioned.tests.test_dbaccessors_partitioned import \
-    BaseSchedulingPartitionedDBAccessorsTest
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    save_alert_schedule_instance,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.tests.test_dbaccessors_partitioned import (
+    BaseSchedulingPartitionedDBAccessorsTest,
+)
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.models import PartitionedModel
-from corehq.sql_db.shard_data_management import get_count_of_unmatched_models_by_shard
+from corehq.sql_db.shard_data_management import (
+    get_count_of_unmatched_models_by_shard,
+)
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
 
 
