@@ -31,10 +31,12 @@ from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
 
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
     get_primary_db_case_counts,
     get_primary_db_form_counts,
+    xform_counts_for_app_in_last_month,
 )
 
 from corehq.apps.es.cases import CaseES, server_modified_range
@@ -1285,6 +1287,29 @@ def run_citus_experiment_raw_sql(parameterized_sql, params, data_source="Unknown
 
     objects = experiment.run()
     return objects
+
+
+def last_month_form_submissions_for_aww_app():
+    """
+    This is used by GS team in an internal monthly report out.
+    Original request https://dimagi-dev.atlassian.net/browse/ICDS-676
+    """
+    AWW_APP_ID = '48cc1709b7f62ffea24cc6634a004745'
+    app = get_app('icds-cas', AWW_APP_ID)
+    celery_task_logger.info("Started calculating last month form counts")
+    result = xform_counts_for_app_in_last_month(app)
+    celery_task_logger.info("Ended calculating last month form counts")
+
+    csv_file = io.StringIO()
+    csv_writer = csv.writer(csv_file)
+    for row in result:
+        csv_writer.writerow(row)
+    send_HTML_email(
+        "Last month AWW form submissions",
+        DASHBOARD_TEAM_EMAILS,
+        "Please see attached the CSV file containing form submission counts for last month",
+        file_attachments=[{'file_obj': csv_file, 'title': "submissions.csv", 'mimetype': 'text/csv'}],
+    )
 
 
 def _dictfetchall(cursor):

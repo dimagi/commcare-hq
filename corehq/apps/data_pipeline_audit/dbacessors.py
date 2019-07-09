@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import Counter
+from collections import Counter, defaultdict
+from datetime import date, timedelta, datetime
+from django.db.models import Q, Count
 
 import dateutil
+import six
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps import es
@@ -256,3 +259,24 @@ def _get_user_base_doc_filter(doc_type):
         return {"term": {
             "base_doc": "couchuser-deleted" if deleted else "couchuser"
         }}
+
+
+def xform_counts_for_app_in_last_month(app):
+    """
+    Count number of submissions grouped by module, form in a given app.
+    """
+    last_month_end = date.today().replace(day=1) - timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+    q = Q(app_id=app._id, received_on__gte=last_month_start, received_on__lte=last_month_end)
+    count_by_xmlns = defaultdict(int)
+    for db_alias in get_sql_db_aliases_in_use():
+        result = XFormInstanceSQL.objects.using(db_alias).filter(q).values('xmlns').annotate(total=Count('xmlns'))
+        for r in result:
+            count_by_xmlns[r['xmlns']] += r['total']
+    ret = [('Module Name', 'Form Name', 'Number of forms')]
+    for module in app.modules:
+        for form in module.get_forms():
+            ret.append((module.default_name(), form.default_name(), count_by_xmlns.pop(form.xmlns, 0)))
+    for xmlns, count in six.iteritems(count_by_xmlns):
+        ret.append(("Unknown module", xmlns, count))
+    return ret
