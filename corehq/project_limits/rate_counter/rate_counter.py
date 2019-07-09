@@ -15,7 +15,7 @@ REDIS = caches['default']
 LOCMEM = caches['locmem']
 
 
-class SlidingWindowOverFixedGrainsRateCounter(AbstractRateCounter):
+class SlidingWindowRateCounter(AbstractRateCounter):
     """
     A "Sliding Window Over Fixed Grains" approach that approximates perfect sliding window
 

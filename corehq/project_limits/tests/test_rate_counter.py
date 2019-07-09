@@ -8,8 +8,8 @@ from datetime import timedelta
 import testil
 from django.core.cache.backends.locmem import LocMemCache
 
-from corehq.project_limits.rate_counter import CounterCache, FixedWindowRateCounter, \
-    SlidingWindowOverFixedGrainsRateCounter
+from corehq.project_limits.rate_counter.rate_counter import CounterCache, \
+    FixedWindowRateCounter, SlidingWindowRateCounter
 
 
 class CacheForTesting(LocMemCache):
@@ -35,8 +35,8 @@ _FixedWindowRateCounter = functools.partial(
     FixedWindowRateCounter,
     _CounterCache=_CounterCache
 )
-_SlidingWindowOverFixedGrainsRateCounter = functools.partial(
-    SlidingWindowOverFixedGrainsRateCounter,
+_SlidingWindowRateCounter = functools.partial(
+    SlidingWindowRateCounter,
     _FixedWindowRateCounter=_FixedWindowRateCounter
 )
 
@@ -70,7 +70,7 @@ def test_sliding_window_with_grains_rate_counter():
     # this timestamp is chosen to be 6 days into a week window
 
     timestamp = (1000 * 7 * DAYS + 6 * DAYS)
-    counter = _SlidingWindowOverFixedGrainsRateCounter('test-sliding-week', 7 * DAYS)
+    counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS)
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 1)
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 2)
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 3)
