@@ -134,7 +134,7 @@ class ODataCaseMetadataView(View):
     def get(self, request, domain):
         configs = get_odata_case_configs_by_domain(domain)
         config_ids_to_properties = OrderedDict()
-        for config in sorted(configs, key=lambda _config: _config.get_id):  # For deterministic tests
+        for config in configs:
             config_ids_to_properties[config.get_id] = get_case_odata_fields_from_config(config)
         metadata = render_to_string('api/case_odata_metadata.xml', {
             'config_ids_to_properties': config_ids_to_properties,
@@ -174,7 +174,7 @@ class ODataFormMetadataView(View):
     def get(self, request, domain):
         configs = get_odata_form_configs_by_domain(domain)
         config_ids_to_properties = OrderedDict()
-        for config in sorted(configs, key=lambda _config: _config.get_id):  # For deterministic tests
+        for config in configs:
             config_ids_to_properties[config.get_id] = get_form_odata_fields_from_config(config)
         metadata = render_to_string('api/form_odata_metadata.xml', {
             'config_ids_to_properties': config_ids_to_properties,
