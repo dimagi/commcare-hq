@@ -61,8 +61,8 @@ def test_fixed_window_rate_counter():
 
 
 def float_eq(f1, f2, text=None):
-    f1 = int(f1 * 1000000) / 1000000.
-    f2 = int(f2 * 1000000) / 1000000.
+    f1 = round(f1, 6)
+    f2 = round(f2, 6)
     testil.eq(f1, f2, text)
 
 
