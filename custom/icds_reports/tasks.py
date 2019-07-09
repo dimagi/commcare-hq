@@ -1307,7 +1307,7 @@ def last_month_form_submissions_for_aww_app():
         csv_writer.writerow(row)
     send_HTML_email(
         "Last month AWW form submissions",
-        DASHBOARD_TEAM_EMAILS,
+        ["icds-coredeck@dimagi.com"],
         "Please see attached the CSV file containing form submission counts for last month",
         file_attachments=[{'file_obj': csv_file, 'title': "submissions.csv", 'mimetype': 'text/csv'}],
     )
