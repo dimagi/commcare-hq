@@ -1289,6 +1289,7 @@ def run_citus_experiment_raw_sql(parameterized_sql, params, data_source="Unknown
     return objects
 
 
+@task(queue='background_queue', run_every=crontab(hour=5, minute=0, day_of_month='3'))
 def last_month_form_submissions_for_aww_app():
     """
     This is used by GS team in an internal monthly report out.
