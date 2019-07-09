@@ -22,6 +22,7 @@ from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
+from dateutil import parser as date_parser
 from six.moves import range
 
 from couchexport.export import export_from_tables
@@ -30,7 +31,6 @@ from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
-
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
@@ -38,10 +38,6 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
     get_primary_db_form_counts,
     xform_counts_for_app_in_last_month,
 )
-
-from corehq.apps.es.cases import CaseES, server_modified_range
-from corehq.apps.es.forms import FormES, submitted
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -70,7 +66,8 @@ from custom.icds_reports.const import (
     PREGNANT_WOMEN_EXPORT,
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
-    INDIA_TIMEZONE
+    INDIA_TIMEZONE,
+    THR_REPORT_EXPORT
 )
 from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
@@ -104,6 +101,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateLsAWCVisitForm,
     AggregateLsVhndForm,
     DailyAttendance,
+    AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
@@ -120,6 +118,9 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
+from custom.icds_reports.reports.take_home_ration import (
+    TakeHomeRationExport
+)
 from custom.icds_reports.sqldata.exports.pregnant_women import (
     PregnantWomenExport,
 )
@@ -129,6 +130,7 @@ from custom.icds_reports.utils import (
     create_excel_file,
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
+    create_thr_report_excel_file,
     create_pdf_file,
     get_performance_report_blob_key,
     icds_pre_release_features,
@@ -172,7 +174,8 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'ls_vhnd', 'name': 'static-ls_vhnd_form'},
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
     {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
-    {'type': 'cbe_form', 'name': 'static-cbe_form'}
+    {'type': 'cbe_form', 'name': 'static-cbe_form'},
+    {'type': 'thr_form_v2', 'name': 'static-thr_forms_v2'}
 ]
 
 SQL_FUNCTION_PATHS = [
@@ -284,6 +287,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_awc_infra_forms', force_citus=force_citus)
                 for state_id in state_ids
             ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
+                                               func_name='_agg_thr_table', force_citus=force_citus)
+                for state_id in state_ids
+            ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table', force_citus=force_citus))
 
             # https://github.com/celery/celery/issues/4274
@@ -318,6 +327,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                                                                 func_name='_agg_beneficiary_form', force_citus=force_citus)
                                  for state_id in state_ids
                                  ])
+
             res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table', force_citus=force_citus))
 
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table', force_citus=force_citus),
@@ -439,6 +449,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
         '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
+        '_agg_thr_table': _agg_thr_table
     }[func_name]
 
     if six.PY2 and isinstance(date, bytes):
@@ -662,6 +673,12 @@ def _agg_ls_table(day):
 
 
 @track_time
+def _agg_thr_table(state_id, day):
+    with transaction.atomic(using=db_for_read_write(AggregateTHRForm)):
+        AggregateTHRForm.aggregate(state_id, force_to_date(day))
+
+
+@track_time
 def _agg_awc_table_weekly(day):
     with transaction.atomic(using=db_for_read_write(AggAwc)):
         AggAwc.weekly_aggregate(force_to_date(day))
@@ -825,7 +842,30 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
-    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT):
+    elif indicator == THR_REPORT_EXPORT:
+        loc_level = aggregation_level if location else 0
+        excel_data = TakeHomeRationExport(
+            location=location,
+            month=config['month'],
+            loc_level=loc_level,
+            beta=beta
+        ).get_excel_data()
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'THR Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_thr_report_excel_file(
+                excel_data,
+                data_type,
+                config['month'].strftime("%B %Y"),
+                loc_level,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -1143,51 +1183,6 @@ def build_disha_dump():
     else:
         _soft_assert(False, "DISHA weekly task has succeeded.")
     celery_task_logger.info("Finished dumping DISHA data")
-
-
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
-def push_missing_docs_to_es():
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-        return
-
-    current_date = date.today() - timedelta(weeks=12)
-    interval = timedelta(days=1)
-    case_doc_type = 'CommCareCase'
-    xform_doc_type = 'XFormInstance'
-    doc_differences = dict()
-    while current_date <= date.today() + interval:
-        end_date = current_date + interval
-        primary_xforms = get_primary_db_form_counts(
-            'icds-cas', current_date, end_date
-        ).get(xform_doc_type, -1)
-        es_xforms = get_es_counts_by_doc_type(
-            'icds-cas', (FormES,), (submitted(gte=current_date, lt=end_date),)
-        ).get(xform_doc_type.lower(), -2)
-        if primary_xforms != es_xforms:
-            doc_differences[(current_date, xform_doc_type)] = primary_xforms - es_xforms
-
-        primary_cases = get_primary_db_case_counts(
-            'icds-cas', current_date, end_date
-        ).get(case_doc_type, -1)
-        es_cases = get_es_counts_by_doc_type(
-            'icds-cas', (CaseES,), (server_modified_range(gte=current_date, lt=end_date),)
-        ).get(case_doc_type, -2)
-        if primary_cases != es_cases:
-            doc_differences[(current_date, case_doc_type)] = primary_xforms - es_xforms
-
-        current_date += interval
-
-    if doc_differences:
-        message = "\n".join([
-            "{}, {}: {}".format(k[0], k[1], v)
-            for k, v in doc_differences.items()
-        ])
-        send_mail_async.delay(
-            subject="Results from push_missing_docs_to_es",
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
-        )
 
 
 @periodic_task(run_every=crontab(hour=17, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')

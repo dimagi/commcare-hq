@@ -356,6 +356,10 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         factory.form_requires_case(m4f2, case_type='patient')
         factory.form_requires_case(m4f2, case_type='patient')
         factory.advanced_form_autoloads(m4f2, AUTO_SELECT_RAW, 'case_id')
+
+        m5, m5f0 = factory.new_basic_module('m5', 'patient', parent_module=m1)
+        factory.form_requires_case(m5f0)
+
         for module in factory.app.get_modules():
             for form in module.get_forms():
                 form.post_form_workflow = mode

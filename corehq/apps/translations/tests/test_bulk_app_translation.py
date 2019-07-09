@@ -10,10 +10,11 @@ from django.test import SimpleTestCase
 from mock import patch
 from six.moves import zip
 
+from collections import OrderedDict
 from couchexport.export import export_raw
 from couchexport.models import Format
 
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models import Application, Module, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations.download import (
@@ -717,7 +718,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "{}" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra'.format(
+                'be processed but will ignore the following columns: default-fra'.format(
                     MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "menu1" has fewer columns than expected. Sheet '
@@ -725,7 +726,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
                 "You must provide at least one translation of the case property 'name'",
 
                 'Sheet "menu1_form1" has fewer columns than expected. Sheet '
@@ -733,7 +734,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1_form1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
 
                 'App Translations Updated!'
             ]
@@ -761,7 +762,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "{}" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra'.format(
+                'be processed but will ignore the following columns: default-fra'.format(
                     MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "menu1" has fewer columns than expected. Sheet '
@@ -769,7 +770,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
                 "You must provide at least one translation of the case property 'name'",
 
                 'Sheet "menu1_form1" has fewer columns than expected. Sheet '
@@ -777,7 +778,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1_form1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
 
                 "Error in menu1_form1: You must provide at least one translation for the label 'question1-label'.",
 
@@ -1432,3 +1433,93 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
             self.assertEqual(save_xform_patch.call_args[0][2].decode('utf-8'), expected_xform)
+
+
+class ReportModuleTest(BulkAppTranslationTestBase):
+    headers = [
+        ['Menus_and_forms', ['Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id']],
+        ['menu1', ['case_property', 'list_or_detail', 'default_en']],
+    ]
+
+    def setUp(self):
+        factory = AppFactory(build_version='2.43.0')
+        module = factory.new_report_module('reports')
+        module.report_configs = [
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Report"},
+                localized_description={"en": "This report has data"},
+                use_xpath_description=False,
+                uuid='789ghi',
+            ),
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Other Report"},
+                localized_description={"en": "do not use this"},
+                xpath_description="1 + 2",
+                use_xpath_description=True,
+                uuid='345cde',
+            ),
+        ]
+        self.app = factory.app
+
+    def test_download(self):
+        actual_headers = get_bulk_app_sheet_headers(self.app)
+        actual_sheets = get_bulk_app_sheets_by_name(self.app)
+
+        self.assertEqual(actual_headers, self.headers)
+        self.assertEqual(actual_sheets, OrderedDict({
+            'Menus_and_forms': [['Menu', 'menu1', 'reports module', '', '', 'reports_module']],
+            'menu1': [
+                ('Report 0 Display Text', 'list', 'My Report'),
+                ('Report 0 Description', 'list', 'This report has data'),
+                ('Report 1 Display Text', 'list', 'My Other Report'),
+            ]
+        }))
+
+    def test_upload(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 0 Description', 'list', 'This report still has data'),
+                       ('Report 1 Display Text', 'list', 'My Other Report has also changed'),
+                       ('Report 1 Description', 'list', 'You cannot update this'))),
+        )
+        messages = [
+            "Found row for Report 1 Description, but this report uses an xpath description, "
+            "which is not localizable. Description not updated.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report has changed"})
+        self.assertEqual(module.report_configs[0].localized_description, {"en": "This report still has data"})
+        self.assertEqual(module.report_configs[1].header, {"en": "My Other Report has also changed"})
+
+    def test_upload_unexpected_reports(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 3 Display Text', 'list', 'This is not a real report'))),
+        )
+        messages = [
+            "Expected 2 reports for menu 1 but found row for Report 3. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})
+
+    def test_upload_unexpected_rows(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('some other thing', 'list', 'this is not report-related'))),
+        )
+        messages = [
+            "Found unexpected row \"some other thing\" for menu 1. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})

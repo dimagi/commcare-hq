@@ -29,6 +29,7 @@ from .postnatal_care_forms_ccs_record import PostnatalCareFormsCcsRecordAggregat
 from .postnatal_care_forms_child_health import PostnatalCareFormsChildHealthAggregationHelper
 from .thr_forms_child_health import THRFormsChildHealthAggregationHelper
 from .thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
+from .thr_form_v2 import  THRFormV2AggHelper
 
 if six.PY3:
     __all__ = (
@@ -60,6 +61,7 @@ if six.PY3:
         'PostnatalCareFormsChildHealthAggregationHelper',
         'THRFormsCcsRecordAggregationHelper',
         'THRFormsChildHealthAggregationHelper',
+        'THRFormV2AggHelper',
     )
 
 else:
@@ -92,4 +94,5 @@ else:
         b'PostnatalCareFormsChildHealthAggregationHelper',
         b'THRFormsCcsRecordAggregationHelper',
         b'THRFormsChildHealthAggregationHelper',
+        b'THRFormV2AggHelper'
     )

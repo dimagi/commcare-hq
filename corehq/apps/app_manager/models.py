@@ -4601,6 +4601,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         del self.linked_app_attrs
         del self.uses_master_app_form_ids
 
+    @property
+    def has_commcare_flavor(self):
+        return self.target_commcare_flavor != "none"
+
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
@@ -5579,7 +5583,7 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
-    SUPPORTED_SETTINGS = ['target_commcare_flavor']
+    SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
 
     # if `uses_master_app_form_ids` is True, the form id might match the master's form id
     # from a bug years ago. These should be fixed when mobile can handle the change

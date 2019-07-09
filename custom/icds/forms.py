@@ -53,6 +53,7 @@ class HostedCCZForm(forms.Form):
     profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
                                  required=False, widget=Select(choices=[]))
     file_name = forms.CharField(label=ugettext_lazy("CCZ File Name"), required=False)
+    note = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3, 'cols': 15}))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
@@ -70,6 +71,7 @@ class HostedCCZForm(forms.Form):
             crispy.Field('version', id='version-input'),
             crispy.Field('profile_id', id='app-profile-id-input'),
             crispy.Field('file_name'),
+            crispy.Field('note'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
@@ -107,7 +109,8 @@ class HostedCCZForm(forms.Form):
             HostedCCZ.objects.create(
                 link_id=self.cleaned_data['link_id'], app_id=self.cleaned_data['app_id'],
                 version=self.cleaned_data['version'], profile_id=self.cleaned_data['profile_id'],
-                file_name=self.cleaned_data['file_name']
+                file_name=self.cleaned_data['file_name'],
+                note=self.cleaned_data['note'],
             )
         except ValidationError as e:
             return False, ','.join(e.messages)
