@@ -4,8 +4,6 @@ from __future__ import absolute_import, unicode_literals
 
 from django.db import migrations
 
-from corehq.util.django_migrations import noop_migration
-
 
 class Migration(migrations.Migration):
 
@@ -15,6 +13,4 @@ class Migration(migrations.Migration):
         ('linked_domain', '0004_domainlinkhistory'),
     ]
 
-    operations = [
-        noop_migration(),
-    ]
+    operations = []

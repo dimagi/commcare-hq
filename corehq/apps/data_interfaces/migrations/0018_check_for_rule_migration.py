@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from django.db import migrations
+from __future__ import absolute_import, unicode_literals
 
-from corehq.util.django_migrations import noop_migration
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -12,6 +10,4 @@ class Migration(migrations.Migration):
         ('data_interfaces', '0017_alter_domaincaserulerun'),
     ]
 
-    operations = [
-        noop_migration(),
-    ]
+    operations = []

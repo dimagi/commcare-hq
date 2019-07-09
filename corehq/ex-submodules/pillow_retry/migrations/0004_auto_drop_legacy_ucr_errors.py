@@ -3,8 +3,6 @@ from __future__ import absolute_import, unicode_literals
 
 from django.db import migrations
 
-from corehq.util.django_migrations import noop_migration
-
 
 class Migration(migrations.Migration):
 
@@ -12,6 +10,4 @@ class Migration(migrations.Migration):
         ('pillow_retry', '0003_auto_20151002_0944'),
     ]
 
-    operations = [
-        noop_migration(),
-    ]
+    operations = []

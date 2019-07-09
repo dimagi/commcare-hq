@@ -4,8 +4,6 @@ from __future__ import absolute_import, unicode_literals
 
 from django.db import migrations
 
-from corehq.util.django_migrations import noop_migration
-
 
 class Migration(migrations.Migration):
 
@@ -13,6 +11,4 @@ class Migration(migrations.Migration):
         ('case_search', '0004_auto_20170518_2018'),
     ]
 
-    operations = [
-        noop_migration(),
-    ]
+    operations = []
