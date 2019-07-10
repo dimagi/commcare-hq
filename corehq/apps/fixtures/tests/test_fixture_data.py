@@ -377,7 +377,7 @@ class TestFixtureOrdering(TestCase):
             data_type_id=cls.data_type._id,
             fields={
                 "name": field_list(name),
-                "set": field_list(seat),
+                "seat": field_list(seat),
                 "sigil": field_list(sigil),
             },
             item_attributes={},
