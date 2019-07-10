@@ -1044,8 +1044,8 @@ class TestAWCReport(TestCase):
         for kpi in data['kpi']:
             for el in kpi:
                 del el['help_text']
-        self.assertEqual(
-            list(data.keys()),
+        self.assertItemsEqual(
+            data,
             ["images", "kpi", "charts", "map"]
         )
 
@@ -1700,8 +1700,8 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_demographics_monthly_keys(self):
-        self.assertEqual(
-            list(get_awc_report_demographics(
+        self.assertItemsEqual(
+            get_awc_report_demographics(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -1712,7 +1712,7 @@ class TestAWCReport(TestCase):
                 },
                 (2017, 6, 1),
                 (2017, 5, 1),
-            ).keys()),
+            ),
             ['kpi', 'chart']
         )
 
@@ -1941,8 +1941,8 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_demographics_daily_keys(self):
-        self.assertEqual(
-            list(get_awc_report_demographics(
+        self.assertItemsEqual(
+            get_awc_report_demographics(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -1953,7 +1953,7 @@ class TestAWCReport(TestCase):
                 },
                 (2017, 5, 29),
                 (2017, 5, 1),
-            ).keys()),
+            ),
             ['kpi', 'chart']
         )
 
@@ -2182,8 +2182,8 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_demographics_daily_if_aggregation_script_fail_keys(self):
-        self.assertEqual(
-            list(get_awc_report_demographics(
+        self.assertItemsEqual(
+            get_awc_report_demographics(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -2194,7 +2194,7 @@ class TestAWCReport(TestCase):
                 },
                 (2017, 5, 30),
                 (2017, 5, 1),
-            ).keys()),
+            ),
             ['kpi', 'chart']
         )
 
@@ -2482,12 +2482,9 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_keys(self):
         data = get_awc_report_beneficiary(0, 10, 1, 'dob', {'awc_id': 'a18'}, (2017, 5, 1), (2017, 3, 1), False)
-        self.assertJSONEqual(
-            json.dumps(list(data.keys()), cls=DjangoJSONEncoder),
-            json.dumps(
-                ['draw', 'last_month', 'recordsTotal', 'months', 'recordsFiltered', 'data'],
-                cls=DjangoJSONEncoder
-            )
+        self.assertItemsEqual(
+            data,
+            ['draw', 'last_month', 'recordsTotal', 'months', 'recordsFiltered', 'data']
         )
 
     def test_awc_report_pregnant_first_record(self):

@@ -1,13 +1,22 @@
 {% extends "hqwebapp/base_page.html" %}
+{% load i18n %}
 {% block title %}Error {% endblock %}
 {% block page_name %}Error{% endblock %}
 {% block page_content %}
-<div id="bigfail"><p>:(</p></div>
-<p class="error">
-{% if error_message %}
-    {{ error_message|safe }}
-{% else %} 
-    500! Sorry, something went wrong, and we're very sorry about it. This problem has been logged and we're already hard at work figuring out the issue! 
-{% endif %}
-</p>
+  <div id="bigfail">
+    <p>
+      :(
+    </p>
+  </div>
+  <p class="error">
+    {% if error_message %}
+      {{ error_message|safe }}
+    {% else %}
+      {% blocktrans %}
+        500! Sorry, something went wrong, and we're very sorry about it.
+        This problem has been logged and we're already hard at work figuring
+        out the issue!
+      {% endblocktrans %}
+    {% endif %}
+  </p>
 {% endblock %}

@@ -2,107 +2,120 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="form-settings">
-    <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
-        {% csrf_token %}
-        <div class="save-button-holder clearfix"></div>
-        <div class="section-changer btn-group" data-collapse-key="form-view-settings">
-            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-                <i class="fa fa-reorder"></i>
-                <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-right checklist">
-                <li class="dropdown-header">{% trans "Show" %}</li>
-                <li>
-                    <a href="#" data-slug="multimedia">
-                        <i class="fa fa-check"></i>{% trans "Multimedia" %}
-                    </a>
-                </li>
-                <li>
-                    <a href="#" data-slug="logic" data-collapse="1">
-                        <i class="fa fa-check"></i>{% trans "Logic" %}
-                    </a>
-                </li>
-                <li>
-                    <a href="#" data-slug="advanced" data-collapse="1">
-                        <i class="fa fa-check"></i>{% trans "Advanced" %}
-                    </a>
-                </li>
-            </ul>
+  <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
+    {% csrf_token %}
+    <div class="save-button-holder clearfix"></div>
+    <div class="section-changer btn-group" data-collapse-key="form-view-settings">
+      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+        <i class="fa fa-reorder"></i>
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-right checklist">
+        <li class="dropdown-header">{% trans "Show" %}</li>
+        <li>
+          <a href="#" data-slug="multimedia">
+            <i class="fa fa-check"></i>{% trans "Multimedia" %}
+          </a>
+        </li>
+        <li>
+          <a href="#" data-slug="logic" data-collapse="1">
+            <i class="fa fa-check"></i>{% trans "Logic" %}
+          </a>
+        </li>
+        <li>
+          <a href="#" data-slug="advanced" data-collapse="1">
+            <i class="fa fa-check"></i>{% trans "Advanced" %}
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="panel-group" id="form-tab-settings-options">
+
+      <div class="panel panel-appmanager" data-slug="multimedia">
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">{%  trans "Multimedia" %}</h4>
         </div>
-        <div class="panel-group" id="form-tab-settings-options">
+        <div class="panel-body" data-bind="visible: visible, css: {error: hasError()}">
+          {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" custom_icon=form_icon %}
+        </div>
+      </div>
 
-            <div class="panel panel-appmanager" data-slug="multimedia">
-                <div class="panel-heading">
-                    <h4 class="panel-title panel-title-nolink">{%  trans "Multimedia" %}</h4>
-                </div>
-                <div class="panel-body" data-bind="visible: visible, css: {error: hasError()}">
-                    {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" custom_icon=form_icon %}
-                </div>
+      <div class="panel panel-appmanager" data-slug="logic">
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">{%  trans "Logic" %}</h4>
+        </div>
+        <div class="panel-body" data-bind=" visible: visible, css: {error: hasError()}">
+
+          {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
+            <div class="form-group">
+              <label class="{% css_label_class %} control-label">
+                {% trans "Name Mapping" %}
+              </label>
+              <div class="{% css_field_class %}" id="name-enum-mapping">
+                <input name="name_enum" type="hidden" value="{% html_attr form.name_enum %}" />
+              </div>
             </div>
+          {% endif %}
 
-            <div class="panel panel-appmanager" data-slug="logic">
-                <div class="panel-heading">
-                    <h4 class="panel-title panel-title-nolink">{%  trans "Logic" %}</h4>
-                </div>
-                <div class="panel-body" data-bind=" visible: visible, css: {error: hasError()}">
-                    {% if allow_form_filtering %}
-                        {% include "app_manager/partials/forms/form_filter.html" %}
-                    {% else %}
-                        <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
-                    {% endif %}
-                    {% if allow_form_workflow %}
-                        {% include "app_manager/partials/forms/form_workflow.html" %}
-                    {% else %}
-                        <div class="alert alert-info">{% trans 'Form workflows are disabled for this form' %}</div>
-                    {% endif %}
-                </div>
-            </div>
+          {% if allow_form_filtering %}
+            {% include "app_manager/partials/forms/form_filter.html" %}
+          {% else %}
+            <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
+          {% endif %}
 
-            <div class="panel panel-appmanager" data-slug="advanced">
-                <div class="panel-heading">
-                    <h4 class="panel-title panel-title-nolink">{%  trans "Advanced" %}</h4>
-                </div>
-                <div class="panel-body">
-                    {% if is_training_module %}
-                        {% include "app_manager/partials/forms/release_notes_setting.html" %}
-                    {% endif %}
-                    <div class="form-group" data-bind="visible: visible, css: {error: hasError()}">
-                        {% include "app_manager/partials/forms/form_gps_capture.html" %}
-                    </div>
+          {% if allow_form_workflow %}
+            {% include "app_manager/partials/forms/form_workflow.html" %}
+          {% else %}
+            <div class="alert alert-info">{% trans 'Form workflows are disabled for this form' %}</div>
+          {% endif %}
+        </div>
+      </div>
 
-                    {% if form.doc_type == "ShadowForm" %}
-                        {% include "app_manager/partials/forms/shadow_parent_select.html" %}
-                    {% endif %}
+      <div class="panel panel-appmanager" data-slug="advanced">
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">{%  trans "Advanced" %}</h4>
+        </div>
+        <div class="panel-body">
+          {% if is_training_module %}
+            {% include "app_manager/partials/forms/release_notes_setting.html" %}
+          {% endif %}
+          <div class="form-group" data-bind="visible: visible, css: {error: hasError()}">
+            {% include "app_manager/partials/forms/form_gps_capture.html" %}
+          </div>
 
-                    {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
-                        <div class="form-group">
-                            <label class="control-label col-sm-2">
-                                {% trans "Disallow editing form in Form Builder" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "Disallow editing form in Form Builder" %}"
-                                      data-content="{% blocktrans %}For custom forms that the Form Builder breaks,
+          {% if form.doc_type == "ShadowForm" %}
+            {% include "app_manager/partials/forms/shadow_parent_select.html" %}
+          {% endif %}
+
+          {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
+            <div class="form-group">
+              <label class="control-label col-sm-2">
+                {% trans "Disallow editing form in Form Builder" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Disallow editing form in Form Builder" %}"
+                      data-content="{% blocktrans %}For custom forms that the Form Builder breaks,
                                                     use this option to disallow editing in the Form Builder.{% endblocktrans %}"
-                                ></span>
-                            </label>
-                            <div class="col-sm-4" id="no-vellum">
-                                 <input type="checkbox" value="true"
-                                        data-bind="checked: no_vellum"/>
-                                 <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
-                            </div>
-                        </div>
-                    {% endif %}
-
-                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
-                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
-                        {% include "app_manager/partials/forms/custom_instances.html" %}
-                    {% endif %}
-                    {{ request|toggle_tag_info:"CUSTOM_ASSERTIONS" }}
-                    {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
-                        {% include "app_manager/partials/forms/custom_assertions.html" %}
-                    {% endif %}
-                </div>
+                ></span>
+              </label>
+              <div class="col-sm-4" id="no-vellum">
+                <input type="checkbox" value="true"
+                       data-bind="checked: no_vellum"/>
+                <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
+              </div>
             </div>
-        </div>
+          {% endif %}
 
-    </form>
+          {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
+          {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
+            {% include "app_manager/partials/forms/custom_instances.html" %}
+          {% endif %}
+          {{ request|toggle_tag_info:"CUSTOM_ASSERTIONS" }}
+          {% if request|toggle_enabled:'CUSTOM_ASSERTIONS' %}
+            {% include "app_manager/partials/forms/custom_assertions.html" %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </form>
 </div>

@@ -3,47 +3,47 @@
 {% load i18n %}
 
 <form class="form form-horizontal" name="user_information" method="post">
-    <input type="hidden" name="form_type" value="update-user" />
-    <fieldset>
-        <legend>{{ edit_user_form_title }}</legend>
-        <div class="form-group">
-            <label class="control-label col-sm-3 col-md-2">{% trans 'Username' %}</label>
-            <div class="col-sm-9 col-md-8 col-lg-6">
-                <p class="form-control-static">{{ couch_user.html_username|safe }}</p>
-            </div>
+  <input type="hidden" name="form_type" value="update-user" />
+  <fieldset>
+    <legend>{{ edit_user_form_title }}</legend>
+    <div class="form-group">
+      <label class="control-label col-sm-3 col-md-2">{% trans 'Username' %}</label>
+      <div class="col-sm-9 col-md-8 col-lg-6">
+        <p class="form-control-static">{{ couch_user.html_username|safe }}</p>
+      </div>
+    </div>
+    {% crispy form_user_update.user_form %}
+    {% if data_fields_form.fields or data_fields_form.data %}
+      {% crispy data_fields_form %}
+    {% endif %}
+    {% if not request.is_view_only %}
+      <div class="form-actions">
+        <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+          <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
         </div>
-        {% crispy form_user_update.user_form %}
-        {% if data_fields_form.fields or data_fields_form.data %}
-            {% crispy data_fields_form %}
-        {% endif %}
-        {% if not request.is_view_only %}
-            <div class="form-actions">
-                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                    <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
-                </div>
-            </div>
-        {% endif %}
-    </fieldset>
+      </div>
+    {% endif %}
+  </fieldset>
 </form>
 
 {% include 'users/partials/manage_phone_numbers.html' %}
 
 {% if update_form %}
-<form id="commtrack_form" class="form form-horizontal" name="" method="post">
+  <form id="commtrack_form" class="form form-horizontal" name="" method="post">
     {% csrf_token %}
     <input type="hidden" name="form_type" value="commtrack" />
     <fieldset>
-        {% if commtrack_enabled %}
+      {% if commtrack_enabled %}
         <legend>{% trans 'CommCare Supply Settings' %}</legend>
-        {% else %}
+      {% else %}
         <legend>{% trans 'Location Settings' %}</legend>
-        {% endif %}
-        {% crispy update_form %}
+      {% endif %}
+      {% crispy update_form %}
     </fieldset>
     <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommCare Supply Settings' %}</button>
-        </div>
+      <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+        <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommCare Supply Settings' %}</button>
+      </div>
     </div>
-</form>
+  </form>
 {% endif %}

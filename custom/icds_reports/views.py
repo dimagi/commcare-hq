@@ -37,11 +37,12 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
+    THR_REPORT_EXPORT
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -53,18 +54,15 @@ from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scal
     get_adult_weight_scale_data_map, get_adult_weight_scale_sector_data
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
     get_awc_daily_status_data_map, get_awc_daily_status_sector_data
-from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics, \
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
     get_awc_report_infrastructure, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
     get_awcs_covered_data_chart
-from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_chart, \
     get_children_initiated_data_map, get_children_initiated_sector_data
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
-from custom.icds_reports.reports.demographics_data import get_demographics_data
 from custom.icds_reports.reports.disha import DishaDump
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
@@ -86,7 +84,6 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from custom.icds_reports.reports.lady_supervisor import get_lady_supervisor_data
-from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
 from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_with_low_birth_weight_chart, \
@@ -106,6 +103,8 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
     get_datatables_ordering_info
+from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
+    get_program_summary_data_with_retrying
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -279,7 +278,6 @@ class BaseReportView(View):
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
@@ -294,33 +292,14 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
-
-        data = {}
-        if step == 'maternal_child':
-            data = get_maternal_child_data(
-                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
-            )
-        elif step == 'icds_cas_reach':
-            data = get_cas_reach_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-            )
-        elif step == 'demographics':
-            data = get_demographics_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-                beta=icds_pre_release_features(request.couch_user)
-            )
-        elif step == 'awc_infrastructure':
-            data = get_awc_infrastructure_data(domain, config, include_test)
+        now = tuple(now.date().timetuple())[:3]
+        pre_release_features = icds_pre_release_features(self.request.couch_user)
+        data = get_program_summary_data_with_retrying(
+            step, domain, config, now, include_test, pre_release_features
+        )
         return JsonResponse(data=data)
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LadySupervisorView(BaseReportView):
 
@@ -341,7 +320,6 @@ class LadySupervisorView(BaseReportView):
         return JsonResponse(data=data)
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ServiceDeliveryDashboardView(BaseReportView):
 
@@ -358,6 +336,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
         reversed_order = True if order_dir == 'desc' else False
 
         data = get_service_delivery_data(
+            domain,
             start,
             length,
             order_by_name_column,
@@ -366,11 +345,11 @@ class ServiceDeliveryDashboardView(BaseReportView):
             year,
             month,
             age_sdd,
+            include_test
         )
         return JsonResponse(data=data)
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfUndernutritionView(BaseReportView):
 
@@ -572,7 +551,6 @@ class HaveAccessToLocation(View):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AwcReportsView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -799,7 +777,7 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT):
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -814,7 +792,6 @@ class ExportIndicatorView(View):
             return JsonResponse(data={'task_id': task_id})
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -845,7 +822,6 @@ class FactSheetsView(BaseReportView):
         return JsonResponse(data=data)
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfSevereView(BaseReportView):
 
@@ -892,7 +868,6 @@ class PrevalenceOfSevereView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfStuntingView(BaseReportView):
 
@@ -942,7 +917,6 @@ class PrevalenceOfStuntingView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class NewbornsWithLowBirthWeightView(BaseReportView):
 
@@ -981,7 +955,6 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EarlyInitiationBreastfeeding(BaseReportView):
 
@@ -1020,7 +993,6 @@ class EarlyInitiationBreastfeeding(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExclusiveBreastfeedingView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1058,7 +1030,6 @@ class ExclusiveBreastfeedingView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ChildrenInitiatedView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1096,7 +1067,6 @@ class ChildrenInitiatedView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InstitutionalDeliveriesView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1134,7 +1104,6 @@ class InstitutionalDeliveriesView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ImmunizationCoverageView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1210,7 +1179,6 @@ class AWCDailyStatusView(View):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCsCoveredView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1243,7 +1211,6 @@ class AWCsCoveredView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class RegisteredHouseholdView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1276,7 +1243,6 @@ class RegisteredHouseholdView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledChildrenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1319,7 +1285,6 @@ class EnrolledChildrenView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1353,7 +1318,6 @@ class EnrolledWomenView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LactatingEnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1386,7 +1350,6 @@ class LactatingEnrolledWomenView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdolescentGirlsView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1419,7 +1382,6 @@ class AdolescentGirlsView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdhaarBeneficiariesView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1451,7 +1413,6 @@ class AdhaarBeneficiariesView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CleanWaterView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1484,7 +1445,6 @@ class CleanWaterView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FunctionalToiletView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1517,7 +1477,6 @@ class FunctionalToiletView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class MedicineKitView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1550,7 +1509,6 @@ class MedicineKitView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InfantsWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1583,7 +1541,6 @@ class InfantsWeightScaleView(BaseReportView):
         })
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdultWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1616,7 +1573,7 @@ class AdultWeightScaleView(BaseReportView):
         })
 
 
-@location_safe
+
 @method_decorator([login_and_domain_required], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
@@ -1654,7 +1611,6 @@ class AggregationScriptPage(BaseDomainView):
 
 
 class ICDSBugReportView(BugReportView):
-
     @property
     def recipients(self):
         return [ICDS_SUPPORT_EMAIL]
@@ -1668,7 +1624,7 @@ class DownloadExportReport(View):
         file_format = self.request.GET.get('file_format', 'xlsx')
         content_type = Format.from_format(file_format)
         data_type = self.request.GET.get('data_type')
-        icds_file = IcdsFile.objects.get(blob_id=uuid)
+        icds_file = get_object_or_404(IcdsFile, blob_id=uuid)
         response = HttpResponse(
             icds_file.get_file_from_blobdb().read(),
             content_type=content_type.mimetype
@@ -1683,7 +1639,7 @@ class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         format = self.request.GET.get('format', None)
-        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type='issnip_monthly')
+        icds_file = get_object_or_404(IcdsFile, blob_id=uuid, data_type='issnip_monthly')
         if format == 'one':
             response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
@@ -1750,6 +1706,22 @@ class InactiveAWW(View):
 
 
 @location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class InactiveDashboardUsers(View):
+    def get(self, request, *args, **kwargs):
+        sync_date = request.GET.get('date', None)
+        if sync_date:
+            sync = IcdsFile.objects.filter(file_added=sync_date).first()
+        else:
+            sync = IcdsFile.objects.filter(data_type='inactive_dashboard_users').order_by('-file_added').first()
+        zip_name = 'inactive_dashboard_users_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'zip', zip_name)
+        except NotFound:
+            raise Http404
+
+
+@location_safe
 class DishaAPIView(View):
 
     def message(self, message_name):
@@ -1785,7 +1757,7 @@ class DishaAPIView(View):
         return dump.get_export_as_http_response(request)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
@@ -1862,8 +1834,8 @@ class CasDataExportAPIView(View):
 
         query_month = date(year, month, 1)
         today = date.today()
-        current_month = today - relativedelta(months=1) if today.day <= 15 else today
-        if query_month > current_month:
+        available_month = today - relativedelta(months=2) if today.day <= 15 else today - relativedelta(months=1)
+        if query_month > available_month:
             return JsonResponse(self.message('invalid_month'), status=400)
 
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
@@ -1874,7 +1846,7 @@ class CasDataExportAPIView(View):
 
         user_states = [loc.name
                        for loc in self.request.couch_user.get_sql_locations(self.request.domain)
-                       if loc.location_type__name == 'state']
+                       if loc.location_type.name == 'state']
         if state_name not in user_states and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
             return JsonResponse(self.message('no_access'), status=403)
 
@@ -1893,7 +1865,7 @@ class CasDataExportAPIView(View):
             return JsonResponse(self.message('not_available'), status=400)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 

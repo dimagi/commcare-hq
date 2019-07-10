@@ -433,6 +433,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                             fixture_variable: '',
                             case_property: '',
                             auto_select: false,
+                            auto_select_fixture: false,
                             arbitrary_datum_id: '',
                             arbitrary_datum_function: '',
                         };

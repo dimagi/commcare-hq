@@ -1,13 +1,13 @@
 <p>Two-Factor authentication for your account on CommCare HQ has been reset.</p>
 
 <p>
-{% if until %}
-You have until <b>{{ until }}</b> to re-enable Two-Factor Authentication
-{% else %}
-You will need to reconfigure Two-Factor Authentication before you can start using CommCare HQ again.
-{% endif %}
+  {% if until %}
+    You have until <b>{{ until }}</b> to re-enable Two-Factor Authentication
+  {% else %}
+    You will need to reconfigure Two-Factor Authentication before you can start using CommCare HQ again.
+  {% endif %}
 </p>
 
 <p>If you did not request this please contact <a href="mailto:{{ support_email }}?subject={{ email_subject|urlencode }}&body={{ email_body|urlencode }}">
-    CommCareHQ Support</a> immediately.
+  CommCareHQ Support</a> immediately.
 </p>

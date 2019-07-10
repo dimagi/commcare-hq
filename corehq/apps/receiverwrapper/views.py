@@ -10,7 +10,10 @@ from django.http import (
     HttpResponseForbidden,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
+from corehq.apps.domain.auth import (
+    determine_authtype_from_request,
+    BASIC, DIGEST, NOAUTH
+)
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex,
     two_factor_exempt,
@@ -128,7 +131,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             'Response is: \n{0}\n'
         )
 
-    _record_metrics(metric_tags, result.submission_type, response, result, timer)
+    _record_metrics(metric_tags, result.submission_type, response, timer)
 
     return response
 
@@ -153,21 +156,19 @@ def _submission_error(request, message, count_metric, metric_tags,
         notify_exception(request, message, details)
     response = HttpResponseBadRequest(
         message, status=status, content_type="text/plain")
-    _record_metrics(metric_tags, 'unknown', response)
+    _record_metrics(metric_tags, 'error', response)
     return response
 
 
-def _record_metrics(tags, submission_type, response, result=None, timer=None):
+def _record_metrics(tags, submission_type, response, timer=None):
     tags += [
         'submission_type:{}'.format(submission_type),
         'status_code:{}'.format(response.status_code)
     ]
 
-    if response.status_code == 201 and timer and result:
+    if response.status_code == 201 and timer:
         tags += [
             'duration:%s' % bucket_value(timer.duration, (1, 5, 20, 60, 120, 300, 600), 's'),
-            'case_count:%s' % bucket_value(len(result.cases), (2, 5, 10)),
-            'ledger_count:%s' % bucket_value(len(result.ledgers), (2, 5, 10)),
         ]
 
     datadog_counter('commcare.xform_submissions.count', tags=tags)
@@ -294,9 +295,9 @@ def _secure_post_basic(request, domain, app_id=None):
 @check_domain_migration
 def secure_post(request, domain, app_id=None):
     authtype_map = {
-        'digest': _secure_post_digest,
-        'basic': _secure_post_basic,
-        'noauth': _noauth_post,
+        DIGEST: _secure_post_digest,
+        BASIC: _secure_post_basic,
+        NOAUTH: _noauth_post,
     }
 
     if request.GET.get('authtype'):

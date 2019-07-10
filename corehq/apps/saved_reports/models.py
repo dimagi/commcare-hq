@@ -20,12 +20,13 @@ from couchdbkit.ext.django.schema import StringProperty, StringListProperty, Boo
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.http import Http404
+from django.http import Http404, HttpRequest, QueryDict
 from django.utils.translation import ugettext as _
 from django_prbac.exceptions import PermissionDenied
 from memoized import memoized
 from sqlalchemy.util import immutabledict
 
+from corehq.elastic import ESError
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -36,6 +37,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
 from corehq.apps.reports.exceptions import InvalidDaterangeException
 from corehq.apps.saved_reports.exceptions import UnsupportedSavedReportError, \
     UnsupportedScheduledReportError
+from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.userreports.util import default_language as ucr_default_language, \
     localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
@@ -46,6 +48,9 @@ from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
@@ -346,7 +351,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 None,
             )
 
-        from django.http import HttpRequest, QueryDict
         mock_request = HttpRequest()
         mock_request.couch_user = self.owner
         mock_request.user = self.owner.get_django_user()
@@ -446,10 +450,19 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return self.report_type == ConfigurableReportView.prefix
 
     @property
+    def supports_translations(self):
+        if self.report_type == CustomProjectReportDispatcher.prefix:
+            return self.report.get_supports_translations()
+        else:
+            return self.is_configurable_report
+
+    @property
     @memoized
     def languages(self):
         if self.is_configurable_report:
             return frozenset(self.report.spec.get_languages())
+        elif self.supports_translations:
+            return frozenset(self.report.languages)
         return frozenset()
 
     @property
@@ -492,7 +505,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
     attach_excel = BooleanProperty()
-    # language is only used if some of the config_ids refer to UCRs.
+    # language is only used if some of the config_ids refer to UCRs or custom reports
     language = StringProperty()
     email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
@@ -623,7 +636,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for user in get_user_docs_by_username(self.all_recipient_emails)
             if 'username' in user and 'language' in user
         }
-        fallback_language = user_languages.get(self.owner_email, 'en')
+        if self.language:
+            fallback_language = self.language
+        else:
+            fallback_language = user_languages.get(self.owner_email, 'en')
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
@@ -667,22 +683,68 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             )
 
             attach_excel = getattr(self, 'attach_excel', False)
-            content, excel_files = get_scheduled_report_response(
-                self.owner, self.domain, self._id, attach_excel=attach_excel,
-                send_only_active=True
-            )
+            try:
+                content, excel_files = get_scheduled_report_response(
+                    self.owner, self.domain, self._id, attach_excel=attach_excel,
+                    send_only_active=True
+                )
 
-            # Will be False if ALL the ReportConfigs in the ReportNotification
-            # have a start_date in the future.
-            if content is False:
-                return
+                # Will be False if ALL the ReportConfigs in the ReportNotification
+                # have a start_date in the future.
+                if content is False:
+                    return
 
-            for email in emails:
-                body = render_full_report_notification(None, content, email, self).content
-                send_html_email_async.delay(
-                    title, email, body,
-                    email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=excel_files)
+                for email in emails:
+                    body = render_full_report_notification(None, content, email, self).content
+                    send_html_email_async(
+                        title, email, body,
+                        email_from=settings.DEFAULT_FROM_EMAIL,
+                        file_attachments=excel_files,
+                        smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+            except Exception as er:
+                notify_exception(
+                    None,
+                    message="Encountered error while generating report or sending email",
+                    details={
+                        'subject': title,
+                        'recipients': str(emails),
+                        'error': er,
+                    }
+                )
+                if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+                    # If the email doesn't work because it is too large to fit in the HTML body,
+                    # send it as an excel attachment, by creating a mock request with the right data.
+
+                    for report_config in self.configs:
+                        mock_request = HttpRequest()
+                        mock_request.couch_user = self.owner
+                        mock_request.user = self.owner.get_django_user()
+                        mock_request.domain = self.domain
+                        mock_request.couch_user.current_domain = self.domain
+                        mock_request.couch_user.language = self.language
+                        mock_request.method = 'GET'
+                        mock_request.bypass_two_factor = True
+
+                        mock_query_string_parts = [report_config.query_string, 'filterSet=true']
+                        if report_config.is_configurable_report:
+                            mock_query_string_parts.append(urlencode(report_config.filters, True))
+                            mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
+                        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
+                        date_range = report_config.get_date_range()
+                        start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
+                        end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
+
+                        datespan = DateSpan(start_date, end_date)
+                        request_data = vars(mock_request)
+                        request_data['couch_user'] = mock_request.couch_user.userID
+                        request_data['datespan'] = datespan
+
+                        full_request = {'request': request_data,
+                                        'domain': request_data['domain'],
+                                        'context': {},
+                                        'request_params': json_request(request_data['GET'])}
+
+                        export_all_rows_task(report_config.report, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:

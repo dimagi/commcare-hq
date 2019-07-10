@@ -3,19 +3,19 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "hqwebapp/js/widgets_v4" %}
+{% requirejs_main "hqwebapp/js/widgets" %}
 
 {% block page_content %}
-    {% if not transifex_details_available %}
-        <p class="text-error">
-            <span class="label label-danger">
-                {% trans 'Transifex integration not set for this domain' %}
-            </span>
-        </p>
-    {% else %}
-        <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
-            <legend>{% trans "Pull Resource" %}</legend>
-            {% crispy pull_resource_form %}
-        </form>
-    {% endif %}
+  {% if not transifex_details_available %}
+    <p class="text-error">
+      <span class="label label-danger">
+          {% trans 'Transifex integration not set for this domain' %}
+      </span>
+    </p>
+  {% else %}
+    <form class="form form-horizontal" name="product" method="post" enctype="multipart/form-data">
+      <legend>{% trans "Pull Resource" %}</legend>
+      {% crispy pull_resource_form %}
+    </form>
+  {% endif %}
 {% endblock %}

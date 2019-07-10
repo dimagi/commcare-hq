@@ -10,8 +10,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, \
     TimePeriodAggregationWindow, get_time_period_class
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
-
+from corehq.apps.userreports.util import get_indicator_adapter
 
 AggregationParam = namedtuple('AggregationParam', 'name value mapped_column_id')
 AggregationWindow = namedtuple('AggregationWindow', 'start end')
@@ -89,7 +88,7 @@ def get_aggregation_end_period(aggregate_table_definition, last_update=None):
 
 def _get_aggregation_from_primary_table(aggregate_table_definition, column_id, sqlalchemy_agg_fn, last_update):
     primary_data_source = aggregate_table_definition.data_source
-    primary_data_source_adapter = IndicatorSqlAdapter(primary_data_source)
+    primary_data_source_adapter = get_indicator_adapter(primary_data_source)
     with primary_data_source_adapter.session_helper.session_context() as session:
         primary_table = primary_data_source_adapter.get_table()
         aggregation_sql_column = primary_table.c[column_id]
@@ -112,12 +111,12 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         aggregation_params = {}
 
     primary_column_adapters = list(aggregate_table_adapter.config.get_primary_column_adapters())
-    primary_table = IndicatorSqlAdapter(aggregate_table_adapter.config.data_source).get_table()
+    primary_table = get_indicator_adapter(aggregate_table_adapter.config.data_source).get_table()
     all_query_columns = [
         pca.to_sqlalchemy_query_column(primary_table, aggregation_params) for pca in primary_column_adapters
     ]
     for secondary_table in aggregate_table_adapter.config.secondary_tables.all():
-        sqlalchemy_secondary_table = IndicatorSqlAdapter(secondary_table.data_source).get_table()
+        sqlalchemy_secondary_table = get_indicator_adapter(secondary_table.data_source).get_table()
         for column_adapter in secondary_table.get_column_adapters():
             all_query_columns.append(
                 column_adapter.to_sqlalchemy_query_column(sqlalchemy_secondary_table, aggregation_params)
@@ -130,7 +129,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
     # now construct join
     select_table = primary_table
     for secondary_table in aggregate_table_adapter.config.secondary_tables.all():
-        sqlalchemy_secondary_table = IndicatorSqlAdapter(secondary_table.data_source).get_table()
+        sqlalchemy_secondary_table = get_indicator_adapter(secondary_table.data_source).get_table()
         # apply join filters along with period start/end filters (if necessary) for related model
         join_conditions = [
             (primary_table.c[secondary_table.join_column_primary] ==

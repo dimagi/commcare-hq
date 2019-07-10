@@ -38,6 +38,13 @@ hqDefine('aaa/js/filters/filters_modal', [
                             filter.applyFilter();
                         }
                     });
+                    var urlParams = [];
+                    _.each(self.postData, function (value, key) {
+                        var val = _.isFunction(value) ? value() : value;
+                        urlParams.push(key + '=' + (val || ''));
+                    });
+                    history.pushState('', '', '?' + urlParams.join('&'));
+
                     self.localStorage.showModal(false);
                     params.callback();
                 }
@@ -46,6 +53,13 @@ hqDefine('aaa/js/filters/filters_modal', [
             self.hideFilter = function (filterSlug) {
                 return !self.filters.hasOwnProperty(filterSlug);
             };
+
+            var paramsString = window.location.href.split("?")[1];
+            if (paramsString !== void(0)) {
+                self.localStorage.showModal(false);
+                params.callback();
+            }
+
             return self;
         },
         template: '<div data-bind="template: { name: \'filters-modal-template\' }"></div>',

@@ -1,4 +1,5 @@
 language: python
+python: 2.7
 sudo: required
 group: edge
 branches:
@@ -6,11 +7,14 @@ branches:
     - master
 env:
   matrix:
-    # need node installs for app_manager.XpathValidatorTest
     - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
-    - TEST=python-sharded-and-javascript JS_SETUP=yes TEST_MAKE_REQUIREMENTS=yes
+    - TEST=python-sharded-and-javascript JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes PYTHON3=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes PYTHON3=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes PYTHON3=yes
+    - TEST=python-sharded-and-javascript JS_SETUP=yes PYTHON3=yes
   global:
     - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
     # TRAVIS_HQ_USERNAME
@@ -34,12 +38,10 @@ script:
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
   - export DATADOG_API_KEY=$DATADOG_API_KEY
-  - |
-    if [[ "$TEST_MAKE_REQUIREMENTS" == "yes" ]]
-    then
-      bash scripts/test-make-requirements.sh
+  - if [ $PYTHON3 == "yes" ];
+    then scripts/docker py3test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10;
+    else scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10;
     fi
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro

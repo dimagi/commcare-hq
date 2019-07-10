@@ -47,12 +47,6 @@ STOCK_QUESTION_TAG_NAMES = [
 ]
 
 
-APP_TRANSLATION_UPLOAD_FAIL_MESSAGE = (
-    "Translation Upload Failed! "
-    "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
-    "Error details: {}."
-)
-
 MOBILE_UCR_VERSION_1 = '1.0'
 MOBILE_UCR_MIGRATING_TO_2 = '1.5'
 MOBILE_UCR_VERSION_2 = '2.0'

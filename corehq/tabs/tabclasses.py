@@ -19,6 +19,7 @@ from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_tria
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
+from corehq.apps.domain.views.releases import ManageReleases
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
@@ -53,6 +54,7 @@ from corehq.messaging.scheduling.views import (
     ConditionalAlertListView,
     CreateConditionalAlertView,
     EditConditionalAlertView,
+    UploadConditionalAlertView,
 )
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.messaging.util import show_messaging_dashboard
@@ -63,6 +65,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds.views.hosted_ccz import (
+    ManageHostedCCZLink,
+    ManageHostedCCZ,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -510,18 +516,21 @@ class ProjectDataTab(UITab):
                 BulkDownloadNewFormExportView,
             )
             from corehq.apps.export.views.edit import (
-                EditNewCustomFormExportView,
-                EditNewCustomCaseExportView,
-                EditFormDailySavedExportView,
                 EditCaseDailySavedExportView,
-                EditFormFeedView,
                 EditCaseFeedView,
+                EditODataCaseFeedView,
+                EditODataFormFeedView,
+                EditFormDailySavedExportView,
+                EditFormFeedView,
+                EditNewCustomCaseExportView,
+                EditNewCustomFormExportView,
             )
             from corehq.apps.export.views.list import (
                 FormExportListView,
                 CaseExportListView,
                 DashboardFeedListView,
                 DailySavedExportListView,
+                ODataFeedListView,
             )
             from corehq.apps.export.views.new import (
                 CreateNewCustomFormExportView,
@@ -530,6 +539,8 @@ class ProjectDataTab(UITab):
                 CreateNewDailySavedCaseExport,
                 CreateNewFormFeedView,
                 CreateNewCaseFeedView,
+                CreateODataCaseFeedView,
+                CreateODataFormFeedView,
             )
             from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
@@ -670,6 +681,31 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
+            if toggles.ODATA.enabled(self.domain):
+                subpages = [
+                    {
+                        'title': _(CreateODataCaseFeedView.page_title),
+                        'urlname': CreateODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataCaseFeedView.page_title),
+                        'urlname': EditODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(CreateODataFormFeedView.page_title),
+                        'urlname': CreateODataFormFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataFormFeedView.page_title),
+                        'urlname': EditODataFormFeedView.urlname,
+                    },
+                ]
+                export_data_views.append({
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': subpages
+                })
 
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
@@ -690,8 +726,7 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain)
 
-            from corehq.apps.data_interfaces.views \
-                import ArchiveFormView, AutomaticUpdateRuleListView
+            from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
 
             if self.can_use_data_cleanup:
                 edit_section[0][1].append({
@@ -699,14 +734,10 @@ class ProjectDataTab(UITab):
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
                 })
 
-            if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
-                edit_section[0][1].append({
-                    'title': _(ArchiveFormView.page_title),
-                    'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
-                })
             items.extend(edit_section)
 
-        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+        if (toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
+                and self.can_edit_commcare_data):
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
             explore_data_views = [
                 {
@@ -830,6 +861,16 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
+            ))
+        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                ManageHostedCCZ.page_title,
+                url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
+            ))
+        if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Manage Releases'),
+                url=(reverse(ManageReleases.urlname, args=[self.domain])),
             ))
         return submenu_context
 
@@ -973,6 +1014,10 @@ class MessagingTab(UITab):
                         {
                             'title': _("Edit"),
                             'urlname': EditConditionalAlertView.urlname,
+                        },
+                        {
+                            'title': UploadConditionalAlertView.page_title,
+                            'urlname': UploadConditionalAlertView.urlname,
                         },
                     ],
                 },
@@ -1387,6 +1432,27 @@ class EnterpriseSettingsTab(UITab):
         return items
 
 
+class HostedCCZTab(UITab):
+    title = ugettext_noop('CCZ Hostings')
+    url_prefix_formats = (
+        '/a/{domain}/ccz/hostings/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(HostedCCZTab, self).sidebar_items
+        items.append((_('Manage CCZ Hostings'), [
+            {'url': reverse(ManageHostedCCZLink.urlname, args=[self.domain]),
+             'title': ManageHostedCCZLink.page_title
+             },
+            {'url': reverse(ManageHostedCCZ.urlname, args=[self.domain]),
+             'title': ManageHostedCCZ.page_title
+             },
+        ]))
+        return items
+
+
 class TranslationsTab(UITab):
     title = ugettext_noop('Translations')
 
@@ -1417,6 +1483,14 @@ class TranslationsTab(UITab):
                     {
                         'url': reverse('blacklist_translations', args=[self.domain]),
                         'title': _('Blacklist Translations')
+                    },
+                    {
+                        'url': reverse('download_translations', args=[self.domain]),
+                        'title': _('Download Translations')
+                    },
+                    {
+                        'url': reverse('migrate_transifex_project', args=[self.domain]),
+                        'title': _('Migrate Project')
                     },
                 ]))
         return items
@@ -1903,21 +1977,25 @@ class AdminTab(UITab):
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
-                {'title': _('View raw couch documents'),
-                 'url': reverse('raw_couch')},
+                {'title': _('View raw documents'),
+                 'url': reverse('raw_doc')},
                 {'title': _('View documents in ES'),
                  'url': reverse('doc_in_es')},
             ]
             system_operations = [
                 {'title': _('System Info'),
-                 'url': reverse('system_info')},
+                 'url': reverse('system_info'),
+                 'icon': 'fa fa-heartbeat'},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',))},
+                                args=('pillow_errors',)),
+                 'icon': 'fa fa-bed'},
                 {'title': RecentCouchChangesView.page_title,
-                 'url': reverse(RecentCouchChangesView.urlname)},
+                 'url': reverse(RecentCouchChangesView.urlname),
+                 'icon': 'fa fa-newspaper-o'},
                 {'title': _('Branches on Staging'),
-                 'url': reverse('branches_on_staging')},
+                 'url': reverse('branches_on_staging'),
+                 'icon': 'fa fa-tree'},
             ]
             user_operations = [
                 {'title': _('Login as another user'),

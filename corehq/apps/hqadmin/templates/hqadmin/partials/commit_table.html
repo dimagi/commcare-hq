@@ -1,16 +1,16 @@
 <table class="table table-striped">
-    <thead>
-    <tr>
-        <th>Date</th>
-        <th>Author</th>
-        <th>Message</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for commit in commits %}
+  <thead>
+  <tr>
+    <th>Date</th>
+    <th>Author</th>
+    <th>Message</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for commit in commits %}
 
-        {% include "hqadmin/partials/commit_tr.html" %}
+    {% include "hqadmin/partials/commit_tr.html" %}
 
-    {% endfor %}
-    </tbody>
+  {% endfor %}
+  </tbody>
 </table>

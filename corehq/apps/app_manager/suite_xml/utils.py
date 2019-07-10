@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from lxml import etree
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteValidationError
-from corehq.apps.app_manager.suite_xml.xml_models import Suite
+from corehq.apps.app_manager.suite_xml.xml_models import Suite, Text, XpathEnum
+from corehq import toggles
 import six
 
 
@@ -64,3 +66,53 @@ def validate_suite(suite):
                   if field and field.sort_node]
         if not is_unique_list(orders):
             raise SuiteValidationError('field/sort/@order must be unique per detail')
+
+
+def _module_uses_name_enum(module):
+    if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(module.get_app().domain):
+        return False
+    return bool(module.name_enum)
+
+
+def _form_uses_name_enum(form):
+    if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(form.get_app().domain):
+        return False
+    return bool(form.name_enum)
+
+
+def get_module_locale_id(module):
+    if not _module_uses_name_enum(module):
+        return id_strings.module_locale(module)
+
+
+def get_form_locale_id(form):
+    if not _form_uses_name_enum(form):
+        return id_strings.form_locale(form)
+
+
+def get_module_enum_text(module):
+    if not _module_uses_name_enum(module):
+        return None
+
+    return Text(xpath=XpathEnum.build(
+        enum=module.name_enum,
+        template='if({key_as_condition}, {key_as_var_name}',
+        get_template_context=lambda item, i: {
+            'key_as_condition': item.key_as_condition(),
+            'key_as_var_name': item.ref_to_key_variable(i, 'display')
+        },
+        get_value=lambda key: id_strings.module_name_enum_variable(module, key)))
+
+
+def get_form_enum_text(form):
+    if not _form_uses_name_enum(form):
+        return None
+
+    return Text(xpath=XpathEnum.build(
+        enum=form.name_enum,
+        template='if({key_as_condition}, {key_as_var_name}',
+        get_template_context=lambda item, i: {
+            'key_as_condition': item.key_as_condition(),
+            'key_as_var_name': item.ref_to_key_variable(i, 'display')
+        },
+        get_value=lambda key: id_strings.form_name_enum_variable(form, key)))

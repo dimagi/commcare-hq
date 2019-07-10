@@ -23,6 +23,7 @@ describe('Reach Location Filter', function () {
             mock = sinon.stub(pageData, 'get');
             mock.withArgs('user_role_type').returns(reachUtils.USERROLETYPES.MWCD);
             mock.withArgs('user_location_ids').returns([]);
+            mock.withArgs('selected_location_ids').returns([]);
         });
 
         afterEach(function () {
@@ -75,6 +76,7 @@ describe('Reach Location Filter', function () {
             mock = sinon.stub(pageData, 'get');
             mock.withArgs('user_role_type').returns(reachUtils.USERROLETYPES.MOHFW);
             mock.withArgs('user_location_ids').returns(['s1', 'd1', 't1']);
+            mock.withArgs('selected_location_ids').returns([]);
         });
 
         afterEach(function () {
@@ -111,6 +113,61 @@ describe('Reach Location Filter', function () {
                 assert.equal(model.hierarchyConfig()[idx].slug, element.slug);
                 assert.equal(model.hierarchyConfig()[idx].name, element.name);
                 assert.equal(model.hierarchyConfig()[idx].userLocationId, element.userLocationId);
+                if (element.parent !== '') {
+                    assert.equal(model.hierarchyConfig()[idx].parent.slug, element.parent.slug);
+                    assert.equal(model.hierarchyConfig()[idx].parent.name, element.parent.name);
+                }
+                if (element.child !== null) {
+                    assert.equal(model.hierarchyConfig()[idx].child.slug, element.child.slug);
+                    assert.equal(model.hierarchyConfig()[idx].child.name, element.child.name);
+                }
+            });
+        });
+    });
+
+    describe('when selectedLocation is a url parameter', function () {
+        var mock;
+
+        beforeEach(function () {
+            mock = sinon.stub(pageData, 'get');
+            mock.withArgs('user_role_type').returns(reachUtils.USERROLETYPES.MOHFW);
+            mock.withArgs('user_location_ids').returns([]);
+            mock.withArgs('selected_location_ids').returns(['s1', 'd1', 't1']);
+        });
+
+        afterEach(function () {
+            mock.restore();
+        });
+
+        it('test filter initialization', function () {
+            var model = locationFilter.viewModel({
+                filters: {'location-filter': {}},
+                localStorage: localStorage,
+            });
+            assert.equal(model.userRoleType, reachUtils.USERROLETYPES.MOHFW);
+            assert.deepEqual(model.selectedLocationIds, ['s1', 'd1', 't1']);
+            var state = locationModel.locationModel({slug: 'state', name: 'State', parent: '', userLocationId: 's1', postData: {}});
+            var district = locationModel.locationModel({slug: 'district', name: 'District', parent: state, userLocationId: 'd1', postData: {}});
+            state.setChild(district);
+            var taluka = locationModel.locationModel({slug: 'taluka', name: 'Taluka', parent: district, userLocationId: 't1', postData: {}});
+            district.setChild(taluka);
+            var phc = locationModel.locationModel({slug: 'phc', name: 'Primary Health Centre (PHC)', parent: taluka, userLocationId: void(0), postData: {}});
+            taluka.setChild(phc);
+            var sc = locationModel.locationModel({slug: 'sc', name: 'Sub-centre (SC)', parent: phc, userLocationId: void(0), postData: {}});
+            phc.setChild(sc);
+            var village = locationModel.locationModel({slug: 'village', name: 'Village', parent: sc, userLocationId: void(0), postData: {}});
+            sc.setChild(village);
+            var expectedHierarchy = [
+                state,
+                district,
+                taluka,
+                phc,
+                sc,
+                village,
+            ];
+            _.each(expectedHierarchy, function (element, idx) {
+                assert.equal(model.hierarchyConfig()[idx].slug, element.slug);
+                assert.equal(model.hierarchyConfig()[idx].name, element.name);
                 if (element.parent !== '') {
                     assert.equal(model.hierarchyConfig()[idx].parent.slug, element.parent.slug);
                     assert.equal(model.hierarchyConfig()[idx].parent.name, element.parent.name);

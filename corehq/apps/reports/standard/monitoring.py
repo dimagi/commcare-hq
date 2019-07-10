@@ -691,7 +691,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     def rows(self):
-        export = self.rendered_as == 'export'
+        export = self.rendered_as in ('email', 'export')
         if util.is_query_too_big(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
         ) and not export:

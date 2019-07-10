@@ -1,16 +1,16 @@
 {% load i18n %}
 <a class="btn btn-primary track-usage-link" id="edit-report-link"
-    {% if report.spec.report_meta.created_by_builder %}
-        href="{% url 'edit_report_in_builder' domain report.report_config_id %}"
-        data-category="Report Builder"
-        data-action="Edit Report"
-        data-label="{{ builder_report_type }}"
-    {% else %}
-        href="{% url 'edit_configurable_report' domain report.report_config_id %}"
-        data-category="Edit UCR"
-        data-action="Edit UCR"
-    {% endif %}
+  {% if report.spec.report_meta.created_by_builder %}
+   href="{% url 'edit_report_in_builder' domain report.report_config_id %}"
+   data-category="Report Builder"
+   data-action="Edit Report"
+   data-label="{{ builder_report_type }}"
+  {% else %}
+   href="{% url 'edit_configurable_report' domain report.report_config_id %}"
+   data-category="Edit UCR"
+   data-action="Edit UCR"
+  {% endif %}
 >
-    <i class="fa fa-pencil"></i>&nbsp;
-    {% trans "Edit Report" %}
+  <i class="fa fa-pencil"></i>&nbsp;
+  {% trans "Edit Report" %}
 </a>

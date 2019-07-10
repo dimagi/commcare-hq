@@ -1,27 +1,37 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import copy
-from functools import cmp_to_key
 import logging
-from PIL import Image
-from io import BytesIO
-from couchdbkit import BadValueError
 import sys
 from datetime import date, datetime
+from functools import cmp_to_key
+from io import BytesIO
+
+from django.utils.translation import ugettext as _
+
+import six
+from couchdbkit import BadValueError
+from ddtrace import tracer
+from PIL import Image
+
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
-from casexml.apps.case.exceptions import ReconciliationError, MissingServerDate, UsesReferrals
+from casexml.apps.case.exceptions import (
+    MissingServerDate,
+    ReconciliationError,
+    UsesReferrals,
+)
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
-from django.utils.translation import ugettext as _
-from corehq.form_processor.update_strategy_base import UpdateStrategy
-from corehq.util.datadog.gauges import datadog_counter
 from couchforms.models import XFormInstance
-from ddtrace import tracer
-from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
-import six
+from dimagi.utils.logging import notify_exception
+
+from corehq.form_processor.update_strategy_base import UpdateStrategy
+from corehq.util import cmp
+from corehq.util.datadog.gauges import datadog_counter
 
 
 def coerce_to_datetime(v):
@@ -392,45 +402,46 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
 
 def _action_sort_key_function(case):
-    def _action_cmp(first_action, second_action):
-        # if the forms aren't submitted by the same user, just default to server dates
+
+    def action_cmp(first_action, second_action):
+        # compare server dates if the forms aren't submitted by the same user
         if first_action.user_id != second_action.user_id:
             return cmp(first_action.server_date, second_action.server_date)
-        else:
-            form_ids = list(case.xform_ids)
 
-            if first_action.xform_id and first_action.xform_id == second_action.xform_id:
-                # short circuit if they are from the same form
-                return cmp(
-                    _type_sort(first_action.action_type),
-                    _type_sort(second_action.action_type)
-                )
+        if first_action.xform_id and first_action.xform_id == second_action.xform_id:
+            # short circuit if they are from the same form
+            return cmp(
+                type_index(first_action.action_type),
+                type_index(second_action.action_type)
+            )
 
-            def _sortkey(action):
-                if not action.server_date or not action.date:
-                    raise MissingServerDate()
+        if not (first_action.server_date and second_action.server_date
+                and first_action.date and second_action.date):
+            raise MissingServerDate()
 
-                def form_cmp(form_id):
-                    return form_ids.index(form_id) if form_id in form_ids else sys.maxsize
+        if abs(first_action.server_date - second_action.server_date) > const.SIGNIFICANT_TIME:
+            return cmp(first_action.server_date, second_action.server_date)
 
-                # if the user is the same you should compare with the special logic below
-                # if the user is not the same you should compare just using received_on
-                return (
-                    # this is sneaky - it's designed to use just the date for the
-                    # server time in case the phone submits two forms quickly out of order
-                    action.server_date.date(),
-                    action.date,
-                    form_cmp(action.xform_id),
-                    _type_sort(action.action_type),
-                )
+        return cmp(sort_key(first_action), sort_key(second_action))
 
-            return cmp(_sortkey(first_action), _sortkey(second_action))
+    def type_index(action_type):
+        """Consistent ordering for action types"""
+        return const.CASE_ACTIONS.index(action_type)
 
-    return cmp_to_key(_action_cmp)
+    def sort_key(action):
+        # if the user is the same you should compare with the special logic below
+        return (
+            action.date,
+            form_index(action.xform_id),
+            type_index(action.action_type),
+        )
 
+    class cache(object):
+        ids = None
 
-def _type_sort(action_type):
-    """
-    Consistent ordering for action types
-    """
-    return const.CASE_ACTIONS.index(action_type)
+    def form_index(form_id):
+        if cache.ids is None:
+            cache.ids = {form_id: i for i, form_id in enumerate(case.xform_ids)}
+        return cache.ids.get(form_id, sys.maxsize)
+
+    return cmp_to_key(action_cmp)

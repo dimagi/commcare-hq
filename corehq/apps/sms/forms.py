@@ -574,11 +574,9 @@ class SettingsForm(Form):
 
         return result
 
-    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False, new_reminders_migrator=False,
-            *args, **kwargs):
+    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False, *args, **kwargs):
         self._cchq_domain = cchq_domain
         self._cchq_is_previewer = cchq_is_previewer
-        self.new_reminders_migrator = new_reminders_migrator
         super(SettingsForm, self).__init__(data, *args, **kwargs)
 
         self.helper = HQFormHelper()

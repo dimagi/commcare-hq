@@ -297,6 +297,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.languages = options.languages;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
+        self.moduleNameEnum = ko.observableArray(options.moduleNameEnum || []);
         self.moduleFilter = options.moduleFilter || "";
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
         self.currentModuleFilter = ko.observable(self.moduleFilter);
@@ -351,6 +352,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     dataType: 'json',
                     data: {
                         name: JSON.stringify(self.moduleName),
+                        name_enum: JSON.stringify(self.moduleNameEnum()),
                         module_filter: self.moduleFilter,
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
                         multimedia: JSON.stringify(self.multimedia()),

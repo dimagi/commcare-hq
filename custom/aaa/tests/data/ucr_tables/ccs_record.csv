@@ -2,5 +2,5 @@ doc_id,inserted_at,person_case_id,opened_on,closed_on,modified_on,edd,add,lmp,pr
 pregnant_woman_ccs_record_1,2019-01-01,pregnant_woman,2018-08-01,,2019-01-01,2019-05-01,,,,,,,,,,,,,,
 high_risk_pregnant_woman_ccs_record,2019-01-01,high_risk_pregnant_woman,2018-09-14,,2019-01-01,2019-05-01,,,,,yes,,,,,,,,,
 institutional_delivery_ccs_record,2019-01-01,institutional_delivery,2018-10-14,,2019-01-01,2019-01-21,2019-02-04,,,,,,,,,,,,,hospital
-non_institutional_delivery_ccs_record,2019-01-01,non_institutional_delivery,2018-07-14,,2019-01-01,2019-02-01,2019-01-23,,,,,,,,,,,,,home
+non_institutional_delivery_ccs_record,2019-01-26,non_institutional_delivery,2018-07-14,,2019-01-01,2019-02-01,2019-01-23,,,,,,,,,,,,,home
 add_before_opened_on,2019-01-01,pregnant_woman,2018-07-14,,2019-01-01,2019-02-01,2017-01-23,,,,,,,,,,,,,home

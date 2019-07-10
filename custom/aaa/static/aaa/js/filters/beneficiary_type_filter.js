@@ -16,7 +16,7 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
                 {id: 'child', name: 'Child'},
             ]);
 
-            self.selectedType = ko.observable();
+            self.selectedType = ko.observable(params.postData.selectedBeneficiaryType() || null);
             self.showErrorMessage = ko.observable(false);
 
             params.filters[self.slug].applyFilter = function () {

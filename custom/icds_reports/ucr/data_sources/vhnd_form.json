@@ -21,6 +21,16 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-vhnd_form",
     "display_name": "Forms - VHND (Static)",
@@ -39,6 +49,24 @@
         "http://openrosa.org/formdesigner/A1C9EF1B-8B42-43AB-BA81-9484DB9D8293"
       ]
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "AWC ID",

@@ -4,42 +4,42 @@
 {% load i18n %}
 
 {% block page_content %}
-    <h2>{% trans "Renew Plan" %}</h2>
-    <p class="lead">
-        {% blocktrans with next_plan.name as p_name%}
-            You are renewing your plan to the <strong>{{ p_name }}</strong> plan
-        {% endblocktrans %}
-        {% if next_plan.name == plan.name %}
-            {% trans "— which matches your current feature usage." %}
-        {% endif %}
-    </p>
-    <dl class="dl-horizontal">
-        <dt>{% trans 'Monthly Fee' %}</dt>
-        <dd>{{ next_plan.monthly_fee }}</dd>
-    </dl>
-    <dl class="dl-horizontal">
-        <dt>{% trans 'Start Date' %}</dt>
-        <dd>{{ subscription.date_end }}</dd>
-    </dl>
-    <h4>{% trans 'Included each month' %}</h4>
-    <div class="well well-sm">
-        <dl class="dl-horizontal" style="margin-bottom: 0;">
-            {% for rate in plan.rates %}
-                <dt>{{ rate.name }}</dt>
-                <dd>{{ rate.included }}</dd>
-            {% endfor %}
-        </dl>
-    </div>
-    <p>{{ next_plan.description }}</p>
-    {% if next_plan.name != plan.name %}
-    <div class="alert alert-warning">
-    {% blocktrans with next_plan.monthly_fee as monthly_fee and subscription.date_end as start_date %}
-    <h4>Note: You are renewing to a different plan</h4>
-    <p>The new plan will take effect on <strong>{{ start_date }}</strong> and will cost <strong>{{ monthly_fee }}</strong>/month.</p>
+  <h2>{% trans "Renew Plan" %}</h2>
+  <p class="lead">
+    {% blocktrans with next_plan.name as p_name%}
+      You are renewing your plan to the <strong>{{ p_name }}</strong> plan
     {% endblocktrans %}
-    </div>
+    {% if next_plan.name == plan.name %}
+      {% trans "— which matches your current feature usage." %}
     {% endif %}
-    <hr />
-    <h3>{% trans 'Confirm Billing Information' %}</h3>
-    {% crispy confirm_form %}
+  </p>
+  <dl class="dl-horizontal">
+    <dt>{% trans 'Monthly Fee' %}</dt>
+    <dd>{{ next_plan.monthly_fee }}</dd>
+  </dl>
+  <dl class="dl-horizontal">
+    <dt>{% trans 'Start Date' %}</dt>
+    <dd>{{ subscription.date_end }}</dd>
+  </dl>
+  <h4>{% trans 'Included each month' %}</h4>
+  <div class="well well-sm">
+    <dl class="dl-horizontal" style="margin-bottom: 0;">
+      {% for rate in plan.rates %}
+        <dt>{{ rate.name }}</dt>
+        <dd>{{ rate.included }}</dd>
+      {% endfor %}
+    </dl>
+  </div>
+  <p>{{ next_plan.description }}</p>
+  {% if next_plan.name != plan.name %}
+    <div class="alert alert-warning">
+      {% blocktrans with next_plan.monthly_fee as monthly_fee and subscription.date_end as start_date %}
+        <h4>Note: You are renewing to a different plan</h4>
+        <p>The new plan will take effect on <strong>{{ start_date }}</strong> and will cost <strong>{{ monthly_fee }}</strong>/month.</p>
+      {% endblocktrans %}
+    </div>
+  {% endif %}
+  <hr />
+  <h3>{% trans 'Confirm Billing Information' %}</h3>
+  {% crispy confirm_form %}
 {% endblock %}

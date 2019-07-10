@@ -1,14 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import hashlib
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import (
+    transform_day_to_month, month_formatter, AggregationHelper
+)
 
 
-class BaseICDSAggregationHelper(object):
+class BaseICDSAggregationHelper(AggregationHelper):
     """Defines an interface for aggregating data from UCRs to specific tables
     for the dashboard.
 
@@ -22,7 +25,6 @@ class BaseICDSAggregationHelper(object):
     ucr_data_source_id = None
     aggregate_parent_table = None
     aggregate_child_table_prefix = None
-    ccs_record_monthly_ucr_id = 'static-ccs_record_cases_monthly_tableau_v2'
 
     def __init__(self, state_id, month):
         self.state_id = state_id

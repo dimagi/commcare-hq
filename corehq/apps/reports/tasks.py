@@ -36,12 +36,15 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
+from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.const import ONE_DAY
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
     get_es_new, ES_META)
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.view_utils import absolute_reverse
+from corehq.blobs import CODES, get_blob_db
 
 from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
@@ -55,14 +58,32 @@ from io import open
 
 
 logging = get_task_logger(__name__)
-EXPIRE_TIME = 60 * 60 * 24
+EXPIRE_TIME = ONE_DAY
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
+    success = False
+    try:
+        _update_calculated_properties()
+        success = True
+    except Exception:
+        notify_exception(
+            None,
+            message="update_calculated_properties task has errored",
+        )
+    send_mail_async.delay(
+        subject="Calculated properties report task was " + ("successful" if success else "unsuccessful"),
+        message="Sentry will have relevant exception in case of failure",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=["{}@{}.com".format("dmore", "dimagi")]
+    )
+
+
+def _update_calculated_properties():
     results = DomainES().filter(
         get_domains_to_update_es_filter()
-    ).fields(["name", "_id", "cp_last_updated"]).scroll()
+    ).fields(["name", "_id"]).run().hits
 
     all_stats = all_domain_stats()
     for r in results:
@@ -119,41 +140,46 @@ def apps_update_calculated_properties():
 
 
 @task(serializer='pickle', ignore_result=True)
-def export_all_rows_task(ReportClass, report_state, recipient_list=None):
+def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 
-    # need to set request
     setattr(report.request, 'REQUEST', {})
-
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
-    hash_id = _store_excel_in_redis(report_class, file)
-
+    hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
-
     for recipient in recipient_list:
-        _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
+        _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
 
 
-def _send_email(user, report, hash_id, recipient):
+def _send_email(user, report, hash_id, recipient, subject=None):
     domain = report.domain or user.get_domains()[0]
     link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
-    send_report_download_email(report.name, recipient, link)
+    send_report_download_email(report.name, recipient, link, subject)
 
 
-def _store_excel_in_redis(report_class, file):
-    hash_id = uuid.uuid4().hex
+def _store_excel_in_blobdb(report_class, file, domain):
 
-    r = get_redis_client()
-    r.set(hash_id, [report_class, file.getvalue()])
-    r.expire(hash_id, EXPIRE_TIME)
+    key = uuid.uuid4().hex
+    expired = 60 * 24 * 7  # 7 days
+    db = get_blob_db()
 
-    return hash_id
+    kw = {
+        "domain": domain,
+        "parent_id": key,
+        "type_code": CODES.tempfile,
+        "key": key,
+        "timeout": expired,
+        "properties": {"report_class": report_class}
+    }
+    file.seek(0)
+    db.put(file, **kw)
+    return key
 
 
 @task(serializer='pickle')

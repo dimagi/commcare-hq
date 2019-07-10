@@ -7,39 +7,39 @@
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
 {% block head %}{{ block.super }}
-    {% if is_saas_environment %}
+  {% if is_saas_environment %}
     <!-- Facebook Pixel Code -->
     {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
     <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-    document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '301081893674207');
-    fbq('track', 'PageView');
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+        document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '301081893674207');
+      fbq('track', 'PageView');
     </script>
     <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=301081893674207&ev=PageView&noscript=1"
+                   src="https://www.facebook.com/tr?id=301081893674207&ev=PageView&noscript=1"
     /></noscript>
     <!-- DO NOT MODIFY -->
     <!-- End Facebook Pixel Code -->
-    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
-        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
-        <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
-        <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
-        <script src="{% static 'registration/js/register_new_user.js' %}"></script>
-    {% endcompress %}
-    {% if is_saas_environment %}
-      <!-- Google Code for Destination Lead Conversion Page -->
-      <script>
+  {% compress js %}
+    <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
+    <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
+    <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
+    <script src="{% static 'registration/js/register_new_user.js' %}"></script>
+  {% endcompress %}
+  {% if is_saas_environment %}
+    <!-- Google Code for Destination Lead Conversion Page -->
+    <script>
       /* <![CDATA[ */
       var google_conversion_id = 941515958;
       var google_conversion_language = "en";
@@ -48,76 +48,76 @@
       var google_conversion_label = "glkzCMmv73UQtsn5wAM";
       var google_remarketing_only = false;
       /* ]]> */
-      </script>
-      <script src="//www.googleadservices.com/pagead/conversion.js"></script>
-      <noscript>
-        <div style="display:inline;">
-          <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"/>
-        </div>
-      </noscript>
+    </script>
+    <script src="//www.googleadservices.com/pagead/conversion.js"></script>
+    <noscript>
+      <div style="display:inline;">
+        <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"/>
+      </div>
+    </noscript>
 
-      <!-- linked in -->
-      <script>
+    <!-- linked in -->
+    <script>
       _linkedin_data_partner_id = "63907";
-      </script><script>
-      (function(){var s = document.getElementsByTagName("script")[0];
+    </script><script>
+    (function(){var s = document.getElementsByTagName("script")[0];
       var b = document.createElement("script");
       b.type = "text/javascript";b.async = true;
       b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
       s.parentNode.insertBefore(b, s);})();
-      </script>
-      <noscript>
+  </script>
+    <noscript>
       <img height="1" width="1" style="display:none;" alt="" src="https://dc.ads.linkedin.com/collect/?pid=63907&fmt=gif" />
-      </noscript>
-      <!-- end linked in -->
-    {% endif %}
+    </noscript>
+    <!-- end linked in -->
+  {% endif %}
 {% endblock %}
 
 {% block content %}
-{% initial_page_data 'hide_password_feedback' hide_password_feedback %}
-{% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
-{% initial_page_data 'reg_form_defaults' reg_form_defaults %}
+  {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
+  {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
+  {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
 
-{% registerurl 'process_registration' %}
+  {% registerurl 'process_registration' %}
 
-<div class="container">
-  <div class="row">
-    <div class="col-xs-12">
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-12">
 
-      {% if is_saas_environment %}
-        {% include 'registration/partials/start_options.html' %}
-      {% endif %}
+        {% if is_saas_environment %}
+          {% include 'registration/partials/start_options.html' %}
+        {% endif %}
 
-      <div id="registration-form-container"
-           class="reg-form-container"
-           {% if is_saas_environment %}style="display: none;"{% endif %}>
-        <ul class="form-step-progress">
-          <li class="active">{% trans "Create Account" %}</li>
-          <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
-        </ul>
-        <form method="post"
-              action=""
-              autocomplete="off"
-              class="form form-with-steps form-with-steps-primary form-with-steps-centered">
-          <div class="form-bubble form-step loading-form-step">
-            <h2>{% trans 'Loading...just a second!' %}</h2>
-            <p class="commcare-icon">
-              <i class="fcc fcc-flower fa-spin"></i>
-            </p>
-          </div>
-          {% crispy reg_form %}
-          <div class="form-bubble form-step final-step" style="display: none;">
+        <div id="registration-form-container"
+             class="reg-form-container"
+             {% if is_saas_environment %}style="display: none;"{% endif %}>
+          <ul class="form-step-progress">
+            <li class="active">{% trans "Create Account" %}</li>
+            <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
+          </ul>
+          <form method="post"
+                action=""
+                autocomplete="off"
+                class="form form-with-steps form-with-steps-primary form-with-steps-centered">
+            <div class="form-bubble form-step loading-form-step">
+              <h2>{% trans 'Loading...just a second!' %}</h2>
+              <p class="commcare-icon">
+                <i class="fcc fcc-flower fa-spin"></i>
+              </p>
+            </div>
+            {% crispy reg_form %}
+            <div class="form-bubble form-step final-step" style="display: none;">
 
-            {% include "registration/partials/register_new_user/submit_info.html" %}
-            {% include "registration/partials/register_new_user/submit_errors.html" %}
-            {% include "registration/partials/register_new_user/server_errors.html" %}
-            {% include "registration/partials/register_new_user/success.html" %}
+              {% include "registration/partials/register_new_user/submit_info.html" %}
+              {% include "registration/partials/register_new_user/submit_errors.html" %}
+              {% include "registration/partials/register_new_user/server_errors.html" %}
+              {% include "registration/partials/register_new_user/success.html" %}
 
-          </div>
-        </form>
+            </div>
+          </form>
 
-        {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
-          <div class="form-bubble form-bubble-purple text-center">
+          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+            <div class="form-bubble form-bubble-purple text-center">
               {% blocktrans %}
                 Want to learn more before signing up?
               {% endblocktrans %}
@@ -129,11 +129,11 @@
                  class="btn btn-purple ">{% trans 'Schedule a Demo' %}</a>
 
             </div>
-        {% endif %}
+          {% endif %}
 
-      </div> {# registration-form-container #}
+        </div> {# registration-form-container #}
 
-    </div> {# .col-xs-12 #}
-  </div> {# .row #}
-</div> {# .container #}
+      </div> {# .col-xs-12 #}
+    </div> {# .row #}
+  </div> {# .container #}
 {% endblock %}

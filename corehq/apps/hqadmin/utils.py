@@ -120,8 +120,7 @@ def parse_celery_workers(celery_workers):
     return expect_running, expect_stopped
 
 
-def get_django_user_from_session_key(session_key):
-    session = _get_session(session_key)
+def get_django_user_from_session(session):
     if not session:
         return None
 
@@ -137,7 +136,7 @@ def get_django_user_from_session_key(session_key):
             return None
 
 
-def _get_session(session_key):
+def get_session(session_key):
     engine = import_module(settings.SESSION_ENGINE)
     session = engine.SessionStore(session_key)
     try:

@@ -328,7 +328,10 @@ class FormattedRow(object):
         def coerce_to_list_of_rows(rows):
             rows = iter(rows)
             # peek at the first element, then add it back
-            first_entry = next(rows)
+            try:
+                first_entry = next(rows)
+            except StopIteration:
+                return rows
             rows = itertools.chain([first_entry], rows)
             if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, six.string_types)):
                 soft_assert_type_text(first_entry)

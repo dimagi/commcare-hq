@@ -18,6 +18,16 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "dashboard_child_health_daily_feeding_forms",
     "display_name": "Forms - Daily Feeding (child_health) for Dashboard",
@@ -48,6 +58,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "timeend",
@@ -87,6 +115,8 @@
         "datatype": "string",
         "column_id": "supervisor_id",
         "type": "expression",
+        "is_primary_key": true,
+        "is_nullable": false,
         "expression": {
           "type": "ancestor_location",
           "location_id": {
@@ -245,16 +275,14 @@
         }
       }
     },
-    "named_filters": { },
+    "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "timeend",
-          "subtype": "date",
-          "constraint": "month"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "disable_destructive_rebuild": true
   }

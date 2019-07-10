@@ -1,20 +1,20 @@
 {% load i18n %}
 {% blocktrans %}
-I have read and agree to the <a data-toggle="modal" data-target="#cda-modal" href="#cda-modal">CommCare HQ Content Distribution Agreement</a>.
+  I have read and agree to the <a data-toggle="modal" data-target="#cda-modal" href="#cda-modal">CommCare HQ Content Distribution Agreement</a>.
 {% endblocktrans %}
 <div class="modal fade remote-modal" id="cda-modal" data-url="{% url "cda_basic" %}">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h4 class="modal-title">{% blocktrans %}CommCare HQ Content Distribution Agreement{% endblocktrans %}</h4>
-            </div>
-            <div class="modal-body fetched-data">
-                {% blocktrans %}Loading Content Distribution Agreement...{% endblocktrans %}
-            </div>
-            <div class="modal-footer">
-                <a href="#" data-dismiss="modal" class="btn btn-default">Close</a>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h4 class="modal-title">{% blocktrans %}CommCare HQ Content Distribution Agreement{% endblocktrans %}</h4>
+      </div>
+      <div class="modal-body fetched-data">
+        {% blocktrans %}Loading Content Distribution Agreement...{% endblocktrans %}
+      </div>
+      <div class="modal-footer">
+        <a href="#" data-dismiss="modal" class="btn btn-default">Close</a>
+      </div>
     </div>
+  </div>
 </div>

@@ -6,48 +6,52 @@
 {% load xforms_extras %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
+  {% compress js %}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
+    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/report_module.js' %}"></script>
-    <script src="{% static 'reports_core/js/choice_list_utils_v4.js' %}"></script>
-    {% endcompress %}
-    {% include "app_manager/partials/xpathValidator.html" %}
+    <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
+  {% endcompress %}
+  {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include 'hqmedia/partials/multimedia_js.html' %}
-    {% compress js %}
+  {% include 'hqmedia/partials/multimedia_js.html' %}
+  {% compress js %}
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/module_view_report.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
+  {% include 'hqwebapp/partials/key_value_mapping.html' %}
 {% endblock %}
 {% block form-view %}
-    {% initial_page_data 'lang' lang %}
-    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
-    {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
-    {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
-    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
-    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
-    {% initial_page_data 'report_module_options' report_module_options %}
-    {% initial_page_data 'static_data_options' static_data_options %}
-    {% initial_page_data 'uuids_by_instance_id' uuids_by_instance_id %}
-    {% initial_page_data 'default_language' app.default_language %}
-    {% initial_page_data 'current_language' lang %}
-    {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
-    {% registerurl "edit_report_module" domain app.id module.unique_id %}
-    {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
-    {% include 'app_manager/partials/modules/module_view_heading.html' %}
-    {% include 'app_manager/partials/modules/mobile_report_configs.html' %}
+  {% initial_page_data 'lang' lang %}
+  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+  {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
+  {% initial_page_data 'name_enum' module.name_enum %}
+  {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+  {% initial_page_data 'report_module_options' report_module_options %}
+  {% initial_page_data 'static_data_options' static_data_options %}
+  {% initial_page_data 'uuids_by_instance_id' uuids_by_instance_id %}
+  {% initial_page_data 'default_language' app.default_language %}
+  {% initial_page_data 'current_language' lang %}
+  {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
+  {% registerurl "edit_report_module" domain app.id module.unique_id %}
+  {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
+
+  {% include 'app_manager/partials/modules/module_view_heading.html' %}
+  {% include 'app_manager/partials/modules/mobile_report_configs.html' %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include "app_manager/partials/nav_menu_media_modals.html" %}
-{% include 'hqwebapp/partials/key_value_mapping.html' %}
-{% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
+  {% include "app_manager/partials/nav_menu_media_modals.html" %}
+  {% include 'hqwebapp/partials/key_value_mapping.html' %}
+  {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
-    {{ block.super }}
-    {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
+  {{ block.super }}
+  {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
 {% endblock %}

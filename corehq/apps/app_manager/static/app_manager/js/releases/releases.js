@@ -32,9 +32,13 @@ hqDefine('app_manager/js/releases/releases', function () {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
         self.build_profiles = function () {
-            var profiles = [{'label': gettext('(Default)'), 'value': ''}];
-            _.each(_.sortBy(appData.build_profiles, 'name'), function (value, key) {
-                profiles.push({label: value.name, value: key});
+            var profiles = [{'label': gettext('(Default)'), 'value': ''}],
+                appProfilesList = _.map(appData.build_profiles, function (profile, key) {
+                    return _.extend(profile, {id: key});
+                });
+            appProfilesList = _.sortBy(appProfilesList, 'name');
+            _.each(appProfilesList, function (profile) {
+                profiles.push({label: profile.name, value: profile.id});
             });
             return profiles;
         };
@@ -391,7 +395,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
         self.revertSavedApp = function (savedApp) {
-            $.postGo(self.reverse('revert_to_copy'), {saved_app: savedApp.id()});
+            $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {

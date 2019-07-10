@@ -3,14 +3,14 @@
 {% load i18n %}
 
 {% block filter_content %}
-    <div id="{{ css_id }}_container" class="report-filter-optional" data-show-filter-name="{{ showFilterName|BOOL }}">
-        <label class="checkbox">
-            <input name="{{ css_id }}_use_filter" type="checkbox" data-bind="checked: showFilterName" />
-            {% trans "Use Filter" %}
-        </label>
+  <div id="{{ css_id }}_container" class="report-filter-optional" data-show-filter-name="{{ showFilterName|BOOL }}">
+    <label class="checkbox">
+      <input name="{{ css_id }}_use_filter" type="checkbox" data-bind="checked: showFilterName" />
+      {% trans "Use Filter" %}
+    </label>
 
-        <div class="well" data-bind="visible: showFilterName">
-            {{ block.super }}
-        </div>
+    <div class="well" data-bind="visible: showFilterName">
+      {{ block.super }}
     </div>
+  </div>
 {% endblock %}

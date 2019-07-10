@@ -6,22 +6,22 @@
 {% endcomment %}
 
 <table id="timingTable" class="table">
-    <thead>
-        <tr>
-            <th>Timer name</th>
-            <th>Duration</th>
-            <th>Percent of Parent</th>
-            <th>Percent of Total</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for timer in timing_data %}
-        <tr data-tt-id="{{ timer.uuid }}" {% if timer.parent %}data-tt-parent-id="{{ timer.parent.uuid }}"{% endif %}>
-            <td>{{ timer.name }}</td>
-            <td>{{ timer.duration|stringformat:".3f" }}</td>
-            <td>{{ timer.percent_of_parent|stringformat:".1f" }}</td>
-            <td>{{ timer.percent_of_total|stringformat:".1f" }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+  <thead>
+  <tr>
+    <th>Timer name</th>
+    <th>Duration</th>
+    <th>Percent of Parent</th>
+    <th>Percent of Total</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for timer in timing_data %}
+    <tr data-tt-id="{{ timer.uuid }}" {% if timer.parent %}data-tt-parent-id="{{ timer.parent.uuid }}"{% endif %}>
+      <td>{{ timer.name }}</td>
+      <td>{{ timer.duration|stringformat:".3f" }}</td>
+      <td>{{ timer.percent_of_parent|stringformat:".1f" }}</td>
+      <td>{{ timer.percent_of_total|stringformat:".1f" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
 </table>

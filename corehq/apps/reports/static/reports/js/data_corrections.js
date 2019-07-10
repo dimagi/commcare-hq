@@ -101,9 +101,16 @@ hqDefine("reports/js/data_corrections", [
 
     // Controls the full modal UI
     var DataCorrectionsModel = function (options) {
-        assertProperties.assert(options, ['saveUrl', 'properties'],
-            ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix', 'analyticsDescriptor']);
+        assertProperties.assert(options, ['saveUrl', 'properties','$modal'],[
+            'propertyNames',
+            'propertyNamesUrl',
+            'displayProperties',
+            'propertyPrefix',
+            'propertySuffix',
+            'analyticsDescriptor',
+        ]);
         var self = {};
+        self.$modal = options.$modal;
 
         // Core data, and the order in which it should be displayed
         self.properties = {};                       // map of name => PropertyModel, populated in init
@@ -193,14 +200,17 @@ hqDefine("reports/js/data_corrections", [
         self.matchesQuery = function (propertyName) {
             return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
-        self.filter = function () {
+        self.filter = function (initial) {
             self.currentPage(1);
             self.totalFilteredItems(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length) || 1);
             self.render();
+            if (!initial) {
+                setupSelect2(self.$modal);
+            }
         };
-        self.clearQuery = function () {
+        self.clearQuery = function (initial) {
             self.query('');
-            self.filter();
+            self.filter(initial);
         };
 
         // Because of how search is implemented, it's useful to store a list of the values that we're going to
@@ -292,7 +302,7 @@ hqDefine("reports/js/data_corrections", [
                 }));
             }));
             self.generateSearchableNames();
-            self.clearQuery();
+            self.clearQuery(true);
             self.currentPage(1);
             self.showError(false);
             self.showRetry(false);
@@ -326,35 +336,41 @@ hqDefine("reports/js/data_corrections", [
     var init = function ($trigger, $modal, options) {
         var model = undefined;
         if ($trigger.length && $modal.length) {
+            options.$modal = $modal;
             model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
             $trigger.click(function () {
                 $modal.modal();
+                setupSelect2($modal);
 
-                $modal.find(".modal-body select").each(function () {
-                    var $el = $(this),
-                        multiple = !!$el.attr("multiple"),
-                        select2Options = {
-                            width: '100%',
-                            tags: true,
-                        };
-                    if (!multiple) {
-                        // Allow clearing in a single select, including adding a blank option
-                        // so placeholder and allowClear work properly
-                        select2Options = _.extend(select2Options, {
-                            allowClear: true,
-                            placeholder: gettext('Select a value'),
-                        });
-                    }
-                    $el.select2(select2Options);
-                    if (multiple) {
-                        var $input = $el.siblings("input");
-                        $el.val($input.val().split(" ")).trigger("change");
-                    }
-                });
             });
         }
         return model;
+    };
+
+    var setupSelect2 = function ($modal) {
+        $modal.find(".modal-body select").each(function () {
+            var $el = $(this),
+                multiple = !!$el.attr("multiple"),
+                select2Options = {
+                    width: '100%',
+                    tags: true,
+                };
+            if (!multiple) {
+                // Allow clearing in a single select, including adding a blank option
+                // so placeholder and allowClear work properly
+                select2Options = _.extend(select2Options, {
+                    allowClear: true,
+                    placeholder: gettext('Select a value'),
+                    dropdownParent: $modal,
+                });
+            }
+            $el.select2(select2Options);
+            if (multiple) {
+                var $input = $el.siblings("input");
+                $el.val($input.val().split(" ")).trigger("change");
+            }
+        });
     };
 
     return {

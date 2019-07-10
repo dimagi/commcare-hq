@@ -5,24 +5,24 @@
 {% block title %}App Build Times - "{{ app.name }}"{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
+  <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 {% endblock stylesheets %}
 
 {% requirejs_main 'hqadmin/js/app_build_timings' %}
 
 {% block content %}
-<div class="container-fluid">
+  <div class="container-fluid">
     <h1>App Build Timings</h1>
     <h4>
-        <a href="{% url 'view_app' app.domain app.master_id %}">
-            {{ app.name }}
-        </a>
-        <small>{{ app.master_id }}</small>
+      <a href="{% url 'view_app' app.domain app.master_id %}">
+        {{ app.name }}
+      </a>
+      <small>{{ app.master_id }}</small>
     </h4>
 
     <div class="row">
-        {% include 'hqadmin/partials/timing_data_table.html' with timing_data=timing_data %}
+      {% include 'hqadmin/partials/timing_data_table.html' with timing_data=timing_data %}
     </div>
 
-</div>
+  </div>
 {% endblock content %}

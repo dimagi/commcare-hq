@@ -2,12 +2,25 @@
 {% load hq_shared_tags %}
 
 {% compress css %}
-  {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+  {# Explicitly include this because app manager doesn't do class-based views, so it doesn't use @use_jquery_ui #}
   <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
 {% endcompress %}
-<link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
 
-  {% if less_debug %}
+{% if less_debug %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/font-workflow.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/app_manager.debug.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+{% else %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
@@ -15,24 +28,10 @@
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'app_manager/less/app_manager.debug.less' %}" />
+          href="{% static 'app_manager/less/app_manager.less' %}" />
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
-    {% else %}
-    {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/font-workflow.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/app_manager.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/preview_app.less' %}"/>
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'app_manager/less/preview_app.less' %}"/>
+  {% endcompress %}
+{% endif %}

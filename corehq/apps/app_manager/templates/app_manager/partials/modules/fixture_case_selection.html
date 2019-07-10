@@ -4,87 +4,87 @@
 
 <div data-bind="with: fixtureSelect, DetailScreenConfig_notifyShortScreenOnChange: $root"
      class="panel panel-appmanager">
-    <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-            {% trans "Lookup Table Case Selection" %}
-        </h4>
-    </div>
-    <div class="panel-body">
-        <form class="form form-horizontal">
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">{% trans "Enable Lookup Table Filtering" %}
-                    <span class="hq-help-template"
-                          data-title="{% trans "Lookup Table Case Selection" %}"
-                          data-content="{% trans "Enabling this allows you to filter the case list based on a lookup table selection and an xpath expression that consumes that selection" %}"
-                ></span>
-                </label>
-                <div class="{% css_field_class %}">
-                    <input type="checkbox" data-bind="checked: active"/>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">
-                    {% trans "Lookup Table Type" %}
-                    <span class="hq-help-template"
-                          data-title="{% trans "Lookup Table Type" %}"
-                          data-content="{% trans "Lookup Table Type refers to the lookup table that should be used in selection" %}"
-                    ></span>
-                </label>
-                <div class="{% css_field_class %}">
-                    <select class="form-control" name="fixture_type" data-bind="value: fixtureType">
-                        <option value="">{% trans "Select One" %}</option>
-                        {% for fixture_type in js_options.fixture_columns_by_type %}
-                            <option value="{{ fixture_type }}">{{ fixture_type }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">
-                    {% trans "Display Column" %}
-                    <span class="hq-help-template" data-title="{% trans "Display Column" %}"
-                          data-content="{% trans "This Column will be displayed as the choice for the user to select from" %}">
+  <div class="panel-heading">
+    <h4 class="panel-title panel-title-nolink">
+      {% trans "Lookup Table Case Selection" %}
+    </h4>
+  </div>
+  <div class="panel-body">
+    <form class="form form-horizontal">
+      <div class="form-group">
+        <label class="control-label {% css_label_class %}">{% trans "Enable Lookup Table Filtering" %}
+          <span class="hq-help-template"
+                data-title="{% trans "Lookup Table Case Selection" %}"
+                data-content="{% trans "Enabling this allows you to filter the case list based on a lookup table selection and an xpath expression that consumes that selection" %}"
+          ></span>
+        </label>
+        <div class="{% css_field_class %}">
+          <input type="checkbox" data-bind="checked: active"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label {% css_label_class %}">
+          {% trans "Lookup Table Type" %}
+          <span class="hq-help-template"
+                data-title="{% trans "Lookup Table Type" %}"
+                data-content="{% trans "Lookup Table Type refers to the lookup table that should be used in selection" %}"
+          ></span>
+        </label>
+        <div class="{% css_field_class %}">
+          <select class="form-control" name="fixture_type" data-bind="value: fixtureType">
+            <option value="">{% trans "Select One" %}</option>
+            {% for fixture_type in js_options.fixture_columns_by_type %}
+              <option value="{{ fixture_type }}">{{ fixture_type }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label {% css_label_class %}">
+          {% trans "Display Column" %}
+          <span class="hq-help-template" data-title="{% trans "Display Column" %}"
+                data-content="{% trans "This Column will be displayed as the choice for the user to select from" %}">
                     </span>
-                </label>
-                <div class="{% css_field_class %}">
-                    <select class="form-control" name="display_column" data-bind="value: displayColumn, options: fixture_columns">
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">{% trans "Localize Display Column" %}
-                    <span class="hq-help-template"
-                          data-title="{% trans "Localize Display Column" %}"
-                          data-content="{% trans "Set this checkbox to indicate that the lookup table does not contain the display string, but a reference to the localization string" %}"
-                    ></span>
-                </label>
-                <div class="{% css_field_class %}">
-                    <input type="checkbox" data-bind="checked: localize"/>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">
-                    {% trans "Variable Column" %}
-                    <span class="hq-help-template" data-title="{% trans "Variable Column" %}"
-                          data-content="{% trans "This column will be used as the variable which is input into the xpath expression below" %}">
+        </label>
+        <div class="{% css_field_class %}">
+          <select class="form-control" name="display_column" data-bind="value: displayColumn, options: fixture_columns">
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label {% css_label_class %}">{% trans "Localize Display Column" %}
+          <span class="hq-help-template"
+                data-title="{% trans "Localize Display Column" %}"
+                data-content="{% trans "Set this checkbox to indicate that the lookup table does not contain the display string, but a reference to the localization string" %}"
+          ></span>
+        </label>
+        <div class="{% css_field_class %}">
+          <input type="checkbox" data-bind="checked: localize"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label {% css_label_class %}">
+          {% trans "Variable Column" %}
+          <span class="hq-help-template" data-title="{% trans "Variable Column" %}"
+                data-content="{% trans "This column will be used as the variable which is input into the xpath expression below" %}">
                     </span>
-                </label>
-                <div class="{% css_field_class %}">
-                    <select class="form-control" name="variable_column" data-bind="value: variableColumn, options: fixture_columns">
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">{% trans "XPath filtering expression" %}
-                    <span class="hq-help-template"
-                          data-title="{% trans "Lookup Table Type" %}"
-                          data-content="{% trans "The XPath filtering expression will be added to the list of conditions that filter the case list" %}"
-                    ></span>
-                </label>
-                <div class="controls {% css_field_class %}">
-                    <input type="text" class="form-control" name="case_type" data-bind="value: xpath" />
-                </div>
-            </div>
-        </form>
-    </div>
+        </label>
+        <div class="{% css_field_class %}">
+          <select class="form-control" name="variable_column" data-bind="value: variableColumn, options: fixture_columns">
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label {% css_label_class %}">{% trans "XPath filtering expression" %}
+          <span class="hq-help-template"
+                data-title="{% trans "Lookup Table Type" %}"
+                data-content="{% trans "The XPath filtering expression will be added to the list of conditions that filter the case list" %}"
+          ></span>
+        </label>
+        <div class="controls {% css_field_class %}">
+          <input type="text" class="form-control" name="case_type" data-bind="value: xpath" />
+        </div>
+      </div>
+    </form>
+  </div>
 </div>

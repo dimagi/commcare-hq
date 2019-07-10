@@ -2,16 +2,16 @@
 {% load hq_shared_tags %}
 
 {% block dependencies %}
-    <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
-    <script src="{% static 'locations/js/location_types.js' %}"></script>
-    <script src="{% static 'locations/js/location_drilldown.js' %}"></script>
+  <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+  <script src="{% static 'locations/js/location_types.js' %}"></script>
+  <script src="{% static 'locations/js/location_drilldown.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}
-    <script src="{% static 'locations/spec/data/locations_data.js' %}"></script>
+  <script src="{% static 'locations/spec/data/locations_data.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
-    <script src="{% static 'locations/spec/types_spec.js' %}"></script>
-    <script src="{% static 'locations/spec/location_drilldown_spec.js' %}"></script>
+  <script src="{% static 'locations/spec/types_spec.js' %}"></script>
+  <script src="{% static 'locations/spec/location_drilldown_spec.js' %}"></script>
 {% endblock %}

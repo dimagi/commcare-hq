@@ -681,7 +681,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_all_names(cls):
-        return [d['key'] for d in cls.get_all(include_docs=False)]
+        return sorted({d['key'] for d in cls.get_all(include_docs=False)})
 
     @classmethod
     def get_all_ids(cls):
@@ -963,13 +963,14 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 assert isinstance(response, list)
                 dynamic_deletion_operations.extend(response)
 
-        # delete all associated objects
+        # delete SQL models first because UCR tables are indexed by configs in couch
+        apply_deletion_operations(self.name, dynamic_deletion_operations)
+
+        # delete couch docs
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-        apply_deletion_operations(self.name, dynamic_deletion_operations)
-
-    def all_media(self, from_apps=None):  # todo add documentation or refactor
+    def all_media(self, from_apps=None):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
 
@@ -987,7 +988,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             for app in apps:
                 if app.doc_type != 'Application':
                     continue
-                for _, m in app.get_media_objects():
+                for _, m in app.get_media_objects(remove_unused=True):
                     if m.get_id not in media_ids:
                         media.append(m)
                         media_ids.add(m.get_id)

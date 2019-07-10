@@ -1,19 +1,30 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 import io
+import re
 from collections import defaultdict
 from distutils.version import StrictVersion
-import re
+
 from django.utils.translation import ugettext as _
-from commcare_translations import load_translations
-from corehq.apps.app_manager import app_strings
-from corehq.apps.app_manager.ui_translations.commcare_versioning import \
-    get_commcare_version_from_workbook, set_commcare_version_in_workbook
-from corehq.util.workbook_json.excel import WorkbookJSONReader, WorksheetNotFound
-from couchexport.export import export_raw_to_writer
+
 import six
 from six.moves import range
+
+from couchexport.export import export_raw_to_writer
+
+from commcare_translations import load_translations
+from corehq.apps.app_manager import app_strings
+from corehq.apps.app_manager.ui_translations.commcare_versioning import (
+    get_commcare_version_from_workbook,
+    set_commcare_version_in_workbook,
+)
+from corehq.apps.translations.models import TransifexBlacklist
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONError,
+    WorksheetNotFound,
+    get_workbook,
+)
 
 
 def process_ui_translation_upload(app, trans_file):
@@ -23,7 +34,12 @@ def process_ui_translation_upload(app, trans_file):
     # Use this to pass warnings without failing hard
     warnings = []
 
-    workbook = WorkbookJSONReader(trans_file)
+    try:
+        workbook = get_workbook(trans_file)
+    except WorkbookJSONError as e:
+        error_properties.append(six.text_type(e))
+        return trans_dict, error_properties, warnings
+
     commcare_version = get_commcare_version_from_workbook(workbook.wb)
     try:
         translations = workbook.get_worksheet(title='translations')
@@ -52,8 +68,18 @@ def process_ui_translation_upload(app, trans_file):
     return trans_dict, error_properties, warnings
 
 
-def build_ui_translation_download_file(app):
+def _get_ui_blacklist(app):
+    blacklist = TransifexBlacklist.objects.filter(
+        domain=app.domain,
+        app_id=app._id,
+        module_id='',
+        field_type='ui',
+    ).all()
+    return {b.field_name for b in blacklist}
 
+
+def build_ui_translation_download_file(app):
+    blacklist = _get_ui_blacklist(app)
     properties = tuple(["property"] + app.langs)
     temp = io.BytesIO()
     headers = (("translations", properties),)
@@ -63,6 +89,8 @@ def build_ui_translation_download_file(app):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
         for prop, trans in six.iteritems(trans_dict):
+            if prop in blacklist:
+                continue
             if prop not in row_dict:
                 row_dict[prop] = [prop]
             num_to_fill = index - len(row_dict[prop])
@@ -76,7 +104,7 @@ def build_ui_translation_download_file(app):
         commcare_version = None
 
     all_prop_trans = get_default_translations_for_download(app, commcare_version)
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict and t not in blacklist])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)

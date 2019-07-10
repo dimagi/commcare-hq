@@ -23,6 +23,40 @@
       },
       "property_value": "household"
     },
+    "validations": [
+      {
+        "name": "not_owned_by_same_district",
+        "error_message": "All cases must be owned by descendants from the same state and district",
+        "expression": {
+          "operator": "eq",
+          "expression": {
+            "location_id": {
+              "type": "icds_village_owner_id",
+              "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+              }
+            },
+            "location_property": "_id",
+            "type": "ancestor_location",
+            "location_type": "district"
+          },
+          "type": "boolean_expression",
+          "property_value": {
+            "location_id": {
+              "type": "icds_awc_owner_id",
+              "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+              }
+            },
+            "location_property": "_id",
+            "type": "ancestor_location",
+            "location_type": "district"
+          }
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "awc_owner_id",

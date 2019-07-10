@@ -37,6 +37,7 @@ from corehq.form_processor.exceptions import UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -518,10 +519,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSQLSerializer
-        serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
+        from .serializers import XFormInstanceSQLSerializer, lazy_serialize_form_attachments, \
+            lazy_serialize_form_history
+        serializer = XFormInstanceSQLSerializer(self)
         data = dict(serializer.data)
-        data['history'] = [dict(op) for op in data['history']]
+        if include_attachments:
+            data['external_blobs'] = lazy_serialize_form_attachments(self)
+        data['history'] = lazy_serialize_form_history(self)
         data['backend_id'] = 'sql'
         return data
 
@@ -554,7 +558,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').content_md5()
 
-    def archive(self, user_id=None):
+    def archive(self, user_id=None, trigger_signals=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if self.is_archived:
@@ -566,9 +570,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
             FormAccessorSQL.archive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="form_processor", xform=self)
+            if trigger_signals:
+                xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user_id=None):
+    def unarchive(self, user_id=None, trigger_signals=True):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if not self.is_archived:
@@ -580,27 +585,31 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
             FormAccessorSQL.unarchive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_unarchived.send(sender="form_processor", xform=self)
+            if trigger_signals:
+                xform_unarchived.send(sender="form_processor", xform=self)
 
-    def publish_archive_action_to_kafka(self, user_id, archive):
+    def publish_archive_action_to_kafka(self, user_id, archive, trigger_signals=True):
         # Don't update the history, just send to kafka
         from couchforms.models import UnfinishedArchiveStub
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         from corehq.form_processor.change_publishers import publish_form_saved
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive:
-                xform_archived.send(sender="form_processor", xform=self)
-            else:
-                xform_unarchived.send(sender="form_processor", xform=self)
-            publish_form_saved(self)
+        if trigger_signals:
+            with unfinished_archive(instance=self, user_id=user_id, archive=archive):
+                if archive:
+                    xform_archived.send(sender="form_processor", xform=self)
+                else:
+                    xform_unarchived.send(sender="form_processor", xform=self)
+                publish_form_saved(self)
 
     def __str__(self):
         return (
-            "XFormInstance("
+            "{f.doc_type}("
             "form_id='{f.form_id}', "
-            "domain='{f.domain}')"
+            "domain='{f.domain}', "
+            "xmlns='{f.xmlns}', "
+            ")"
         ).format(f=self)
 
     class Meta(object):
@@ -813,10 +822,16 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return serializer.data
 
     def to_json(self):
-        from .serializers import CommCareCaseSQLSerializer
+        from .serializers import (
+            CommCareCaseSQLSerializer, lazy_serialize_case_indices, lazy_serialize_case_transactions,
+            lazy_serialize_case_xform_ids, lazy_serialize_case_attachments
+        )
         serializer = CommCareCaseSQLSerializer(self)
         ret = dict(serializer.data)
-        ret['indices'] = [dict(index) for index in ret['indices']]
+        ret['indices'] = lazy_serialize_case_indices(self)
+        ret['actions'] = lazy_serialize_case_transactions(self)
+        ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
+        ret['case_attachments'] = lazy_serialize_case_attachments(self)
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
@@ -825,7 +840,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
-        return json.dumps(self.to_json(), indent=indent)
+        return json.dumps(self.to_json(), indent=indent, cls=CommCareJSONEncoder)
 
     def pprint(self):
         print(self.dumps(pretty=True))
@@ -1226,6 +1241,9 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
 
@@ -1485,6 +1503,14 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     def __str__(self):
         return (
+            "{self.form_id}: "
+            "{self.client_date} "
+            "({self.server_date}) "
+            "{self.readable_type}"
+        ).format(self=self)
+
+    def __repr__(self):
+        return (
             "CaseTransaction("
             "case_id='{self.case_id}', "
             "form_id='{self.form_id}', "
@@ -1502,6 +1528,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ('case', 'server_date', 'sync_log_id'),
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
@@ -1516,6 +1543,8 @@ class CaseTransactionDetail(JsonObject):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    __hash__ = None
 
 
 class RebuildWithReason(CaseTransactionDetail):
@@ -1650,9 +1679,9 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
 
     # change from previous balance
-    delta = models.IntegerField(default=0)
+    delta = models.BigIntegerField(default=0)
     # new balance
-    updated_balance = models.IntegerField(default=0)
+    updated_balance = models.BigIntegerField(default=0)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
@@ -1730,6 +1759,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

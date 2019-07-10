@@ -1,4 +1,4 @@
-doc_id,inserted_at,state_id,awc_id,ccs_record_case_id,tasks_type,num_anc_complete,tt_complete_date,due_list_date_anc_1,due_list_date_anc_2,due_list_date_anc_3,due_list_date_anc_4,due_list_date_tt_1,due_list_date_tt_2,due_list_date_tt_booster
-task_case_id1,2017-04-01,state2,a40,bfc8681e-bd2d-45f2-a811-cdffa41ddf32,pregnancy,,,2017-04-02,2017-04-07,,,,,
-task_case_id2,2017-04-01,state1,a12,3a9c23af-0a21-475c-a9b8-1de4c1ed68b8,pregnancy,,,2017-03-02,,,,,,
-task_case_id3,2017-04-01,state2,a39,45e84a85-9944-4027-b0eb-866a79cbe955,pregnancy,,,2017-05-02,,,,,,
+doc_id,inserted_at,state_id,awc_id,ccs_record_case_id,tasks_type,num_anc_complete,tt_complete_date,due_list_date_anc_1,due_list_date_anc_2,due_list_date_anc_3,due_list_date_anc_4,due_list_date_tt_1,due_list_date_tt_2,due_list_date_tt_booster,supervisor_id
+task_case_id1,2017-04-01,state2,a40,bfc8681e-bd2d-45f2-a811-cdffa41ddf32,pregnancy,,,2017-04-02,2017-04-07,,,,,,s8
+task_case_id2,2017-04-01,state1,a12,3a9c23af-0a21-475c-a9b8-1de4c1ed68b8,pregnancy,,,2017-03-02,,,,,,,s4
+task_case_id3,2017-04-01,state2,a39,45e84a85-9944-4027-b0eb-866a79cbe955,pregnancy,,,2017-05-02,,,,,,,s7

@@ -2,61 +2,61 @@
 {% load hq_shared_tags %}
 <!--ko if: state() == states.SUCCESS && !_.isEmpty(case_uploads())-->
 <table class="table table-striped">
-    <tr>
-        <th class="col-md-1">{% trans "Status" %}</th>
-        <th class="col-md-1">{% trans "Time" %}</th>
-        <th class="col-md-1">{% trans "Case Type" %}</th>
-        <th class="col-md-4">{% trans "Details" %}</th>
-        <th class="col-md-3">{% trans "Comment" %}</th>
-        <th class="col-md-2">{% trans "File" %}</th>
-        {% if request|toggle_enabled:"SUPPORT" %}
-            <th>Form IDs</th>
-            <th>Case IDs</th>
-        {% endif %}
+  <tr>
+    <th class="col-md-1">{% trans "Status" %}</th>
+    <th class="col-md-1">{% trans "Time" %}</th>
+    <th class="col-md-1">{% trans "Case Type" %}</th>
+    <th class="col-md-4">{% trans "Details" %}</th>
+    <th class="col-md-3">{% trans "Comment" %}</th>
+    <th class="col-md-2">{% trans "File" %}</th>
+    {% if request|toggle_enabled:"SUPPORT" %}
+      <th>Form IDs</th>
+      <th>Case IDs</th>
+    {% endif %}
 
-    </tr>
-    <!--ko foreach: case_uploads-->
-    <tr>
-        <td class="col-md-1">
-            <!--ko if: task_status().state == $root.states.SUCCESS && task_status().result-->
-                <!--ko if: _.isEmpty(task_status().result.errors)-->
-                <span class="label label-success">{% trans "Success" %}</span>
-                <!--/ko-->
-                <!--ko if: !_.isEmpty(task_status().result.errors)-->
-                <span class="label label-warning">{% trans "Success with warnings" %}</span>
-                <!--/ko-->
-            <!--/ko-->
-            {# The following failed state is necessary to handle legacy errors #}
-            <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
-            <span class="label label-danger">{% trans "Failed" %}</span>
-            <!--/ko-->
-            <!--ko if: task_status().state == $root.states.FAILED-->
-            <span class="label label-danger">{% trans "Failed" %}</span>
-            <!--/ko-->
-            <!--ko if: task_status().state == $root.states.MISSING || task_status().state == $root.states.NOT_STARTED -->
-            {% trans "Waiting to start" %}
-            <!--/ko-->
-            <!--ko if: task_status().state == $root.states.STARTED-->
-            <div class="progress">
-                <div class="progress-bar progress-bar-info"
-                     role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
-                     data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
+  </tr>
+  <!--ko foreach: case_uploads-->
+  <tr>
+    <td class="col-md-1">
+      <!--ko if: task_status().state == $root.states.SUCCESS && task_status().result-->
+      <!--ko if: _.isEmpty(task_status().result.errors)-->
+      <span class="label label-success">{% trans "Success" %}</span>
+      <!--/ko-->
+      <!--ko if: !_.isEmpty(task_status().result.errors)-->
+      <span class="label label-warning">{% trans "Success with warnings" %}</span>
+      <!--/ko-->
+      <!--/ko-->
+      {# The following failed state is necessary to handle legacy errors #}
+      <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
+      <span class="label label-danger">{% trans "Failed" %}</span>
+      <!--/ko-->
+      <!--ko if: task_status().state == $root.states.FAILED-->
+      <span class="label label-danger">{% trans "Failed" %}</span>
+      <!--/ko-->
+      <!--ko if: task_status().state == $root.states.MISSING || task_status().state == $root.states.NOT_STARTED -->
+      {% trans "Waiting to start" %}
+      <!--/ko-->
+      <!--ko if: task_status().state == $root.states.STARTED-->
+      <div class="progress">
+        <div class="progress-bar progress-bar-info"
+             role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+             data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
                     <span><span data-bind="text: task_status().progress.percent"></span>%
-                        {% trans "Complete" %}</span>
-                  </div>
-            </div>
-            <!--/ko-->
-        </td>
-        <td class="col-md-1" data-bind="text: created"></td>
-        <td class="col-md-1" data-bind="text: case_type">
-        </td>
-        <td class="col-md-4" data-bind="with: task_status()">
-            {% include 'case_importer/partials/ko_import_status.html' %}
-        </td>
-        <td class="col-md-3">
-            <strong data-bind="text: user_name"></strong>
-            <!--ko if: upload_comment_edit_allowed-->
-            <inline-edit data-apply-bindings="false" params="
+                      {% trans "Complete" %}</span>
+        </div>
+      </div>
+      <!--/ko-->
+    </td>
+    <td class="col-md-1" data-bind="text: created"></td>
+    <td class="col-md-1" data-bind="text: case_type">
+    </td>
+    <td class="col-md-4" data-bind="with: task_status()">
+      {% include 'case_importer/partials/ko_import_status.html' %}
+    </td>
+    <td class="col-md-3">
+      <strong data-bind="text: user_name"></strong>
+      <!--ko if: upload_comment_edit_allowed-->
+      <inline-edit data-apply-bindings="false" params="
                 value: comment,
                 url: commentUrl(),
                 rows: 1,
@@ -64,15 +64,15 @@
                 saveValueName: 'comment',
                 errorMessage: '{% trans "Error updating comment.  Please try again."|escapejs %}'
             "></inline-edit>
-            <!--/ko-->
-            <!--ko if: !upload_comment_edit_allowed-->
-            <span data-bind="text: comment"></span>
-            <!--/ko-->
-        </td>
-        <td class="col-md-2">
-            <!--ko if: upload_file_name-->
-            <!--ko if: !upload_file_download_allowed-->
-                <a style="cursor: pointer" data-bind="
+      <!--/ko-->
+      <!--ko if: !upload_comment_edit_allowed-->
+      <span data-bind="text: comment"></span>
+      <!--/ko-->
+    </td>
+    <td class="col-md-2">
+      <!--ko if: upload_file_name-->
+      <!--ko if: !upload_file_download_allowed-->
+      <a style="cursor: pointer" data-bind="
                     text: upload_file_name,
                     popover: {
                         title: '{% trans_html_attr 'You may not download this file yourself' %}',
@@ -80,29 +80,29 @@
                         placement: 'top'
                     }
                 "></a>
-            <!--/ko-->
-            <!--ko if: upload_file_download_allowed-->
-                <i class="fa fa-download"></i>
-                <a data-bind="attr: {href: downloadUrl()}">
-                    <span data-bind="text: upload_file_name"></span>
-                </a>
-            <!--/ko-->
-            <!--/ko-->
-        </td>
-        {% if request|toggle_enabled:"SUPPORT" %}
-            <td>
-                <a data-bind="attr: {href: formIdsUrl()}" target="_blank">
-                    <i class="fa fa-download"></i>
-                </a>
-            </td>
-            <td>
-                <a data-bind="attr: {href: caseIdsUrl()}" target="_blank">
-                    <i class="fa fa-download"></i>
-                </a>
-            </td>
-        {% endif %}
-    </tr>
-    <!--/ko-->
+      <!--/ko-->
+      <!--ko if: upload_file_download_allowed-->
+      <i class="fa fa-download"></i>
+      <a data-bind="attr: {href: downloadUrl()}">
+        <span data-bind="text: upload_file_name"></span>
+      </a>
+      <!--/ko-->
+      <!--/ko-->
+    </td>
+    {% if request|toggle_enabled:"SUPPORT" %}
+      <td>
+        <a data-bind="attr: {href: formIdsUrl()}" target="_blank">
+          <i class="fa fa-download"></i>
+        </a>
+      </td>
+      <td>
+        <a data-bind="attr: {href: caseIdsUrl()}" target="_blank">
+          <i class="fa fa-download"></i>
+        </a>
+      </td>
+    {% endif %}
+  </tr>
+  <!--/ko-->
 </table>
 <pagination data-apply-bindings="false"
             params="goToPage: goToPage,
@@ -113,7 +113,7 @@
 <!--/ko-->
 <!--ko if: state() === states.SUCCESS && _.isEmpty(case_uploads())-->
 <div class="alert alert-info">
-    You have no recent uploads.
+  You have no recent uploads.
 </div>
 <!--/ko-->
 <!--ko if: state() === states.STARTED -->

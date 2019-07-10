@@ -7,6 +7,7 @@ hqDefine("aaa/js/models/pregnant_women", [
     'aaa/js/models/child',
     'aaa/js/models/person',
     'aaa/js/models/model_utils',
+    'aaa/js/utils/reach_utils',
 ], function (
     $,
     ko,
@@ -15,16 +16,32 @@ hqDefine("aaa/js/models/pregnant_women", [
     initialPageData,
     childUtils,
     personUtils,
-    modelUtils
+    modelUtils,
+    reachUtils
 ) {
     var pregnantWomenList = function (options, postData) {
         var self = {};
         self.id = options.id;
         self.name = ko.observable(options.name);
-        self.age = ko.observable(options.age);
+        self.dob = ko.observable(options.dob);
         self.pregMonth = ko.observable(options.pregMonth);
         self.highRiskPregnancy = ko.observable(options.highRiskPregnancy);
         self.noOfAncCheckUps = ko.observable(options.noOfAncCheckUps);
+
+        self.age = ko.computed(function () {
+            if (self.dob() === 'N/A') {
+                return self.dob();
+            }
+            var age = Math.floor(moment(postData.selectedDate()).diff(
+                moment(self.dob(), "YYYY-MM-DD"),'months',true)
+            );if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
+        });
 
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
@@ -37,6 +54,10 @@ hqDefine("aaa/js/models/pregnant_women", [
         self.highRiskPregnancy = ko.computed(function () {
             return self.highRiskPregnancy() === 'yes' ? 'Yes' : 'No';
         });
+
+        self.noOfAncCheckUps = ko.computed(function () {
+            return self.noOfAncCheckUps() === null ? 0 : self.noOfAncCheckUps();
+        });
         return self;
     };
 
@@ -44,7 +65,7 @@ hqDefine("aaa/js/models/pregnant_women", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'pregMonth()', name: 'pregMonth', title: 'Preg. Month'},
             {data: 'highRiskPregnancy()', name: 'highRiskPregnancy', title: 'High Risk Pregnancy'},
             {data: 'noOfAncCheckUps()', name: 'noOfAncCheckUps', title: 'No. Of ANC Check-Ups'},
@@ -55,7 +76,6 @@ hqDefine("aaa/js/models/pregnant_women", [
     var pregnantWomenDetails = function () {
         var self = {};
         // pregnancy_details
-        self.dateOfLmp = ko.observable();
         self.weightOfPw = ko.observable();
         self.dateOfRegistration = ko.observable();
         self.edd = ko.observable();
@@ -156,6 +176,21 @@ hqDefine("aaa/js/models/pregnant_women", [
                 return 2;
             } else {
                 return 1;
+            }
+        });
+
+        self.personBloodGroup = ko.computed(function () {
+            if (!reachUtils.BLOODGROUPS.hasOwnProperty(self.bloodGroup())) {
+                return 'N/A';
+            }
+            return reachUtils.BLOODGROUPS[self.bloodGroup()];
+        });
+
+        self.abortionWeeks = ko.computed(function () {
+            if (self.abortionDays() !== undefined) {
+                return self.abortionDays() === parseInt(self.abortionDays()) ? parseInt(self.abortionDays() / 7) : self.abortionDays();
+            } else {
+                return 'N/A';
             }
         });
 

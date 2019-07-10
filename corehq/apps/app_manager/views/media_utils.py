@@ -28,15 +28,17 @@ def interpolate_media_path(val):
     return val
 
 
-def handle_media_edits(request, item, should_edit, resp, lang):
+def handle_media_edits(request, item, should_edit, resp, lang, prefix=''):
     if 'corrections' not in resp:
         resp['corrections'] = {}
+
     for attribute in ('media_image', 'media_audio'):
-        if should_edit(attribute):
-            media_path = process_media_attribute(attribute, resp, request.POST.get(attribute))
+        param = prefix + attribute
+        if should_edit(param):
+            media_path = process_media_attribute(param, resp, request.POST.get(param))
             item._set_media(attribute, lang, media_path)
 
-    if should_edit('use_default_image_for_all'):
-        item.use_default_image_for_all = request.POST.get('use_default_image_for_all') == 'true'
-    if should_edit('use_default_audio_for_all'):
-        item.use_default_audio_for_all = request.POST.get('use_default_audio_for_all') == 'true'
+    for attribute in ('use_default_image_for_all', 'use_default_audio_for_all'):
+        param = prefix + attribute
+        if should_edit(param):
+            setattr(item, attribute, request.POST.get(param) == 'true')

@@ -2,12 +2,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block breadcrumbs %}
-<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section breadcrumb-mobile">
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section breadcrumb-mobile">
     <li>{% trans title %}</li>
     {% block crumb %}
     {% endblock %}
-</ol>
+  </ol>
 {% endblock %}
 {% block content %}
-    {{ report }}
+  {{ report }}
 {% endblock %}

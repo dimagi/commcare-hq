@@ -206,7 +206,7 @@ def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
             parent[key] = six.text_type(json_format_datetime(
                 adjust_text_to_datetime(data, process_timezones=process_timezones)
             ))
-        except iso8601.ParseError:
+        except (iso8601.ParseError, ValueError):
             pass
     elif isinstance(data, dict):
         for key, value in data.items():

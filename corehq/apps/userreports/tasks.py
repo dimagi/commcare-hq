@@ -36,8 +36,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     id_is_static,
-    get_report_config,
-)
+    get_report_config)
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
@@ -64,7 +63,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids):
-    adapter = get_indicator_adapter(config, raise_errors=True)
+    adapter = get_indicator_adapter(config, raise_errors=True, load_source='build_indicators')
 
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
@@ -77,7 +76,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
@@ -86,6 +85,16 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
         send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config)
+
+        if engine_id:
+            if getattr(adapter, 'all_adapters', None):
+                adapter = [
+                    adapter_ for adapter_ in adapter.all_adapters
+                    if adapter_.engine_id == engine_id
+                ][0]
+            elif adapter.engine_id != engine_id:
+                raise AssertionError("Engine ID does not match adapter")
+
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
@@ -94,12 +103,13 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
-        adapter.rebuild_table()
+        skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
+        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
         _iteratively_build_table(config, limit=limit)
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
@@ -112,7 +122,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
-        adapter.build_table()
+        adapter.build_table(initiated_by=initiated_by, source=source)
         _iteratively_build_table(config, in_place=True)
 
 
@@ -124,7 +134,11 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         resume_helper = DataSourceResumeHelper(config)
-
+        adapter = get_indicator_adapter(config)
+        adapter.log_table_build(
+            initiated_by=initiated_by,
+            source='resume_building_indicators',
+        )
         _iteratively_build_table(config, resume_helper)
 
 
@@ -179,19 +193,39 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True)
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
-    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
-
-    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
-    if new_report_config_id is None:
+    if report_config_id not in settings.UCR_COMPARISONS:
         return
 
-    def _run_report(spec):
+    control_report, unused = get_report_config(report_config_id, domain)
+    candidate_report = None
+
+    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
+    if new_report_config_id is not None:
+        # a report is configured to be compared against
+        candidate_report, unused = get_report_config(new_report_config_id, domain)
+        _compare_ucr_reports(
+            domain, control_report, candidate_report, filter_values, sort_column, sort_order, params)
+    else:
+        # no report is configured. Assume we should try mirrored engine_ids
+        # report_config.config is a DataSourceConfiguration
+        for engine_id in control_report.config.mirrored_engine_ids:
+            _compare_ucr_reports(
+                domain, control_report, control_report, filter_values, sort_column,
+                sort_order, params, candidate_engine_id=engine_id)
+
+
+def _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params,
+                         candidate_engine_id=None):
+    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
+
+    def _run_report(spec, engine_id=None):
         data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
+        if engine_id:
+            data_source.data_source.override_engine_id(engine_id)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(
@@ -215,20 +249,18 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
             json_response["total_row"] = total_row
         return json_response
 
-    old_spec, unused = get_report_config(report_config_id, domain)
-    new_spec, unused = get_report_config(new_report_config_id, domain)
     experiment_context = {
         "domain": domain,
-        "report_config_id": report_config_id,
-        "new_report_config_id": new_report_config_id,
+        "report_config_id": control_report._id,
+        "new_report_config_id": candidate_report._id,
         "filter_values": filter_values,
     }
     experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
     with experiment.control() as c:
-        c.record(_run_report(old_spec))
+        c.record(_run_report(control_report))
 
     with experiment.candidate() as c:
-        c.record(_run_report(new_spec))
+        c.record(_run_report(candidate_report, candidate_engine_id))
 
     objects = experiment.run()
     return objects
@@ -413,7 +445,7 @@ def _build_async_indicators(indicator_doc_ids):
                         continue
                     adapter = None
                     try:
-                        adapter = get_indicator_adapter(config)
+                        adapter = get_indicator_adapter(config, load_source='build_async_indicators')
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         eval_context.reset_iteration()
                     except Exception as e:

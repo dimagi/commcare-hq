@@ -1,89 +1,139 @@
 {% extends 'hqwebapp/base_page.html' %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% requirejs_main "hqwebapp/js/maintenance_alerts" %}
 
 {% block page_content %}
-    {% initial_page_data 'alerts' alerts %}
+  {% initial_page_data 'alerts' alerts %}
 
-    <div id="ko-alert-container">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    Create Alert
-                </h3>
-            </div>
-            <div class="panel-body">
-                <p>
-                    Enter alert text below and preview in the table below.  Alerts will not be public until the
-                    "activate alert" button is pressed. Links will be properly wrapped with anchor tags. Only one alert will be
-                    shown at a time, and the most recently modified alert will be displayed.
-                </p>
+  <div id="ko-alert-container">
 
-                <form method="post" action="{% url 'create_alert' %}" class="form-horizontal" id="alertForm">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="alert_text" class="control-label col-sm-2">
-                            Message
-                        </label>
-                        <div class="col-sm-8">
-                            <textarea name="alert_text" id="alert_text" placeholder="Alert text..." form="alertForm" class="form-control"></textarea>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="alert_text" class="control-label col-sm-2">
-                            Affected domains
-                        </label>
-                        <div class="col-sm-8">
-                            <textarea name="domains" id="domains" placeholder="Affected domains (space separated). Leave blank to show to everyone." form="alertForm" class="form-control"></textarea>
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <div class="col-sm-offset-2">
-                            <button type="submit" class="btn btn-primary">Preview Alert</button>
-                        </div>
-                    </div>
-                </form>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {% trans 'Create Alert' %}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <p>
+          {% blocktrans %}
+            Enter alert text below and preview in the table below.
+            Alerts will not be public until the "activate alert" button is
+            pressed. Links will be properly wrapped with anchor tags. Only one
+            alert will be shown at a time, and the most recently modified alert
+            will be displayed.
+          {% endblocktrans %}
+        </p>
+        <form id="alertForm"
+              class="form-horizontal"
+              method="post"
+              action="{% url 'create_alert' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="alert_text"
+                   class="control-label col-sm-2">
+              {% trans "Message" %}
+            </label>
+            <div class="col-sm-8">
+              <textarea name="alert_text"
+                        id="alert_text"
+                        class="form-control"
+                        placeholder="Alert text..."
+                        form="alertForm"></textarea>
             </div>
-        </div>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    Available Alerts
-                </h3>
+          </div>
+          <div class="form-group">
+            <label for="alert_text"
+                   class="control-label col-sm-2">
+              {% trans "Affected domains" %}
+            </label>
+            <div class="col-sm-8">
+              <textarea name="domains"
+                        id="domains"
+                        class="form-control"
+                        placeholder="Affected domains (space separated). Leave blank to show to everyone."
+                        form="alertForm" ></textarea>
             </div>
-            <div class="panel-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Created</th>
-                            <th>Message</th>
-                            <th>Affected domains</th>
-                            <th>Activate or De-activate</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: alerts">
-                        <tr>
-                            <td data-bind="text: created"></td>
-                            <td><div class="alert alert-warning" data-bind="html: html"></div></td>
-                            <td><div data-bind="text: domains"></div></td>
-                            <td>
-                                <form method="post" action="{% url 'activate_alert' %}" data-bind="visible: !active">
-                                    {% csrf_token %}
-                                    <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" class="btn btn-primary ">Activate Alert</button>
-                                </form>
-                                <form method="post" action="{% url 'deactivate_alert' %}" data-bind="visible: active">
-                                    {% csrf_token %}
-                                    <input name="alert_id" type="hidden" data-bind="value: id">
-                                    <button type="submit" class="btn btn-danger">De-activate Alert</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+          </div>
+          <div class="form-actions">
+            <div class="col-sm-offset-2">
+              <button type="submit"
+                      class="btn btn-primary">
+                {% trans "Preview Alert" %}
+              </button>
             </div>
-        </div>
+          </div>
+        </form>
+      </div>
     </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {% trans "Available Alerts" %}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>
+                {% trans "Created" %}
+              </th>
+              <th>
+                {% trans "Message" %}
+              </th>
+              <th>
+                {% trans "Affected domains" %}
+              </th>
+              <th>
+                {% trans "Activate or De-activate" %}
+              </th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: alerts">
+            <tr>
+              <td data-bind="text: created"></td>
+              <td>
+                <div class="alert alert-warning"
+                     data-bind="html: html"></div>
+              </td>
+              <td>
+                <div data-bind="text: domains"></div>
+              </td>
+              <td>
+                <form method="post"
+                      action="{% url 'activate_alert' %}"
+                      data-bind="visible: !active">
+                  {% csrf_token %}
+                  <input name="alert_id"
+                         type="hidden"
+                         data-bind="value: id">
+                  <button type="submit"
+                          class="btn btn-primary ">
+                    {% trans "Activate Alert" %}
+                  </button>
+                </form>
+                <form method="post"
+                      action="{% url 'deactivate_alert' %}"
+                      data-bind="visible: active">
+                  {% csrf_token %}
+                  <input name="alert_id"
+                         type="hidden"
+                         data-bind="value: id">
+                  <button type="submit"
+                          class="btn btn-danger">
+                    {% trans "De-activate Alert" %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
 {% endblock %}

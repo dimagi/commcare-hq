@@ -258,9 +258,9 @@ class TestInfantsWeightScale(TestCase):
             [
                 {"loc_name": "st2", "percent": 84.61538461538461},
                 {"loc_name": "st1", "percent": 76.47058823529412},
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
-                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -276,11 +276,11 @@ class TestInfantsWeightScale(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -309,11 +309,11 @@ class TestInfantsWeightScale(TestCase):
             [
                 {"loc_name": "st2", "percent": 84.61538461538461},
                 {"loc_name": "st1", "percent": 76.47058823529412},
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 

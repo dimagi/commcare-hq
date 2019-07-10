@@ -6,335 +6,335 @@
 {% requirejs_main 'appstore/js/project_info' %}
 
 {% block stylesheets %}{{ block.super }}
-    <style type="text/css">
-        #video-container {
-            position: relative;
-            padding-bottom: 56.25%; /* 16/9 ratio */
-            height: 0;
-            overflow: hidden;
-            margin-bottom: 1em;
-        }
+  <style type="text/css">
+    #video-container {
+      position: relative;
+      padding-bottom: 56.25%; /* 16/9 ratio */
+      height: 0;
+      overflow: hidden;
+      margin-bottom: 1em;
+    }
 
-        #video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        .app-pic-container img {
-            margin: 0 auto;
-            display: block;
-        }
+    #video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .app-pic-container img {
+      margin: 0 auto;
+      display: block;
+    }
 
-        .dl-horizontal-exchange dt,
-        .dl-horizontal-exchange dd{
-            margin-bottom: 5px;
-        }
-    </style>
+    .dl-horizontal-exchange dt,
+    .dl-horizontal-exchange dd{
+      margin-bottom: 5px;
+    }
+  </style>
 {%  endblock %}
 
 {% block breadcrumb %}
-<li>{{ project.title }}</li>
+  <li>{{ project.title }}</li>
 {% endblock %}
 
 {% block content %}
-{% block page_breadcrumbs %}
+  {% block page_breadcrumbs %}
     {{ block.super }}
-{% endblock page_breadcrumbs %}
-{% initial_page_data 'project' project %}
-<div class="container">
+  {% endblock page_breadcrumbs %}
+  {% initial_page_data 'project' project %}
+  <div class="container">
     <div class="row" style="margin-top: 20px; margin-bottom:20px;">
-        <div class="col-sm-4 app-pic-container">
-            {% if project.image_path %}
-                <img class="app-pic" src="{% url "appstore_project_image" project.get_id %}" />
-            {% else %}
-                <img class="app-pic opacity65" src="{% static 'hqstyle/images/commcarehq-icon-large.png' %}" />
-            {% endif %}
-        </div>
-        <div class="col-sm-8">
-            <h1>
-                {{ project.title }}
-                <small>{% trans "by" %}
-                    {{ project.author|default:project.name_of_publisher|default:"*Publisher's name*" }}
-                </small>
-            </h1>
-            <p class="lead">{{ project.short_description }}</p>
-        </div>
+      <div class="col-sm-4 app-pic-container">
+        {% if project.image_path %}
+          <img class="app-pic" src="{% url "appstore_project_image" project.get_id %}" />
+        {% else %}
+          <img class="app-pic opacity65" src="{% static 'hqstyle/images/commcarehq-icon-large.png' %}" />
+        {% endif %}
+      </div>
+      <div class="col-sm-8">
+        <h1>
+          {{ project.title }}
+          <small>{% trans "by" %}
+            {{ project.author|default:project.name_of_publisher|default:"*Publisher's name*" }}
+          </small>
+        </h1>
+        <p class="lead">{{ project.short_description }}</p>
+      </div>
     </div>
-</div>
+  </div>
 
-<div class="container">
+  <div class="container">
     <div class="row">
-        <div class="col-sm-12">
-            <dl class="dl-horizontal dl-horizontal-exchange">
-                {% if project.yt_id %}
-                    <dt>{% trans 'Video' %}</dt>
-                    <dd id="video-container">
-                        <iframe id="yt-video"
-                                src="https://www.youtube.com/embed/{{ project.yt_id }}"
-                                frameborder="0"
-                                height="100%"
-                                width="100%"
-                                webkitAllowFullScreen mozallowfullscreen allowFullScreen>
-                        </iframe>
-                    </dd>
+      <div class="col-sm-12">
+        <dl class="dl-horizontal dl-horizontal-exchange">
+          {% if project.yt_id %}
+            <dt>{% trans 'Video' %}</dt>
+            <dd id="video-container">
+              <iframe id="yt-video"
+                      src="https://www.youtube.com/embed/{{ project.yt_id }}"
+                      frameborder="0"
+                      height="100%"
+                      width="100%"
+                      webkitAllowFullScreen mozallowfullscreen allowFullScreen>
+              </iframe>
+            </dd>
+          {% endif %}
+          <dt>{% trans 'Description' %}</dt>
+          <dd>
+            {% if project.description %}
+              {{ project.description|linebreaks }}
+            {% else %}
+              <span class="label label-default">{% trans "None" %}</span>
+            {% endif %}
+          </dd>
+          <dt>{% trans 'Category' %}</dt>
+          <dd>
+            {% if project.project_type %}
+              {{ project.project_type }}
+            {% else %}
+              <span class="label label-default">{% trans "None" %}</span>
+            {% endif %}
+          </dd>
+          {% if request.couch_user.is_superuser %}
+            <dt> {% trans 'Published by' %}</dt>
+            <dd>
+              {% if project.published_by %}
+                {{ project.published_by.username }}
+              {% else %}
+                <span class="label label-default">{% trans "No Data" %}</span>
+              {% endif %}
+            </dd>
+          {% endif %}
+          <dt> {% trans 'Published on' %}</dt>
+          <dd>
+            {{ project.snapshot_time|date:"N j, Y" }}
+          </dd>
+          <dt>{% trans 'Languages' %}</dt>
+          <dd>
+            {% if project.languages %}
+              {{ project.readable_languages }}
+            {% else %}
+              <span class="label label-default">{% trans "None" %}</span>
+            {% endif %}
+          </dd>
+          <dt>{% trans 'License' %}</dt>
+          <dd><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </dd>
+          <dt>{% trans 'Downloads' %}</dt>
+          <dd>
+            <!-- This version: -->
+            {% if project.copies and request.couch_user.is_superuser %}
+              <button class="btn btn-xs btn-default"
+                      data-open='false'
+                      id="downloads-btn"
+                      data-toggle="collapse"
+                      data-target="#downloadsInfo">
+                {{ project.download_count }} {% trans "Downloads" %}
+              </button>
+              <div style="margin-top: 1em;" class="well well-small collapse" id="downloadsInfo">
+                <div class="alert alert-info">
+                  <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  <strong>Note:</strong> <p>This a beta feature displayed to super users only</p>
+                  <p>Currently this list only shows new projects that were copied directly from this publication.
+                    It does not yet show projects who downloaded apps from this publication.</p>
+                  <p>We also don't have 'Downloaded By' data for many existing domains.</p>
+                </div>
+
+                {% if copies %}
+                  <table class="table">
+                    <tr>
+                      <th>{% trans "Project" %}</th>
+                      <th>{% trans "Downloaded by" %}</th></tr>
+                    {% for copy in copies %}
+                      <tr>
+                        <td>{{ copy.display_name }}</td>
+                        <td>{{ copy.creating_user|default:"No data" }}</td>
+                      </tr>
+                    {% endfor %}
+                  </table>
+                {% else %}
+                  <span class="label label-default">{% trans "No Downloads Information" %}</span>
                 {% endif %}
+              </div>
+            {% else %}
+              {{ project.copied_from.total_downloads }}
+            {% endif %}
+          </dd>
+
+          {% if project.documentation_file_path %}
+            <dt>{% trans 'Project Documentation' %}</dt>
+            <dd>
+              <a href="{% url "appstore_project_documentation_file" project.get_id %}"
+                 download="{{ project.documentation_file_path }}">
+                {{ project.documentation_file_path }}
+              </a>
+            </dd>
+          {% endif %}
+          {% if project.multimedia_included and project.has_media %}
+            <dd>
+              <a class="btn btn-default" style="margin-top: .4em" href="{% url "media_files" project.get_id %}">{% trans "Browse Multimedia" %}</a>
+            </dd>
+          {% endif %}
+        </dl>
+        <hr />
+        {% for app in applications %}
+          <div id="application-{{ app.id }}">
+            <dl class="dl-horizontal">
+              <dt>
+                <h4 style="display: inline-block;">Application</h4>
+              </dt>
+              <dd>
+                <h4 style="display: inline-block;">{{ app.name }}</h4>
+              </dd>
+              <dt>{% trans 'Media' %}</dt>
+              <dd>
+                {{ app.has_media|yesno:"Yes,No" }}
+              </dd>
+              {% if app.user_type %}
+                <dt>{% trans 'User type' %}</dt>
+                <dd>{{ app.user_type }}</dd>
+              {% endif %}
+              {% if app.phone_model %}
+                <dt>{% trans 'Phone model' %}</dt>
+                <dd>{{ app.phone_model }}</dd>
+              {% endif %}
+              {% if app.description %}
                 <dt>{% trans 'Description' %}</dt>
                 <dd>
-                    {% if project.description %}
-                        {{ project.description|linebreaks }}
-                    {% else %}
-                        <span class="label label-default">{% trans "None" %}</span>
-                    {% endif %}
+                  {{ app.description|linebreaks }}
                 </dd>
-                <dt>{% trans 'Category' %}</dt>
-                <dd>
-                    {% if project.project_type %}
-                        {{ project.project_type }}
-                    {% else %}
-                        <span class="label label-default">{% trans "None" %}</span>
-                    {% endif %}
-                </dd>
-                {% if request.couch_user.is_superuser %}
-                    <dt> {% trans 'Published by' %}</dt>
-                    <dd>
-                        {% if project.published_by %}
-                            {{ project.published_by.username }}
-                        {% else %}
-                            <span class="label label-default">{% trans "No Data" %}</span>
-                        {% endif %}
-                    </dd>
-                {% endif %}
-                <dt> {% trans 'Published on' %}</dt>
-                <dd>
-                    {{ project.snapshot_time|date:"N j, Y" }}
-                </dd>
-                <dt>{% trans 'Languages' %}</dt>
-                <dd>
-                    {% if project.languages %}
-                        {{ project.readable_languages }}
-                    {% else %}
-                        <span class="label label-default">{% trans "None" %}</span>
-                    {% endif %}
-                </dd>
-                <dt>{% trans 'License' %}</dt>
-                <dd><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </dd>
-                <dt>{% trans 'Downloads' %}</dt>
-                <dd>
-                    <!-- This version: -->
-                    {% if project.copies and request.couch_user.is_superuser %}
-                        <button class="btn btn-xs btn-default"
-                                data-open='false'
-                                id="downloads-btn"
-                                data-toggle="collapse"
-                                data-target="#downloadsInfo">
-                            {{ project.download_count }} {% trans "Downloads" %}
-                        </button>
-                        <div style="margin-top: 1em;" class="well well-small collapse" id="downloadsInfo">
-                            <div class="alert alert-info">
-                                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                                <strong>Note:</strong> <p>This a beta feature displayed to super users only</p>
-                                <p>Currently this list only shows new projects that were copied directly from this publication.
-                                It does not yet show projects who downloaded apps from this publication.</p>
-                                <p>We also don't have 'Downloaded By' data for many existing domains.</p>
-                            </div>
-
-                            {% if copies %}
-                            <table class="table">
-                                <tr>
-                                    <th>{% trans "Project" %}</th>
-                                    <th>{% trans "Downloaded by" %}</th></tr>
-                                {% for copy in copies %}
-                                    <tr>
-                                        <td>{{ copy.display_name }}</td>
-                                        <td>{{ copy.creating_user|default:"No data" }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </table>
-                            {% else %}
-                                <span class="label label-default">{% trans "No Downloads Information" %}</span>
-                            {% endif %}
-                        </div>
-                    {% else %}
-                        {{ project.copied_from.total_downloads }}
-                    {% endif %}
-                </dd>
-
-                {% if project.documentation_file_path %}
-                    <dt>{% trans 'Project Documentation' %}</dt>
-                    <dd>
-                        <a href="{% url "appstore_project_documentation_file" project.get_id %}"
-                            download="{{ project.documentation_file_path }}">
-                            {{ project.documentation_file_path }}
-                        </a>
-                    </dd>
-                {% endif %}
-                {% if project.multimedia_included and project.has_media %}
-                    <dd>
-                        <a class="btn btn-default" style="margin-top: .4em" href="{% url "media_files" project.get_id %}">{% trans "Browse Multimedia" %}</a>
-                    </dd>
-                {% endif %}
+              {% endif %}
+              {% if app.attribution_notes %}
+                <dt>{% trans 'Attribution notes' %}</dt>
+                <dd>{{ app.attribution_notes }}</dd>
+              {% endif %}
             </dl>
-            <hr />
-            {% for app in applications %}
-                <div id="application-{{ app.id }}">
-                    <dl class="dl-horizontal">
-                        <dt>
-                            <h4 style="display: inline-block;">Application</h4>
-                        </dt>
-                        <dd>
-                            <h4 style="display: inline-block;">{{ app.name }}</h4>
-                        </dd>
-                        <dt>{% trans 'Media' %}</dt>
-                        <dd>
-                            {{ app.has_media|yesno:"Yes,No" }}
-                        </dd>
-                        {% if app.user_type %}
-                            <dt>{% trans 'User type' %}</dt>
-                            <dd>{{ app.user_type }}</dd>
-                        {% endif %}
-                        {% if app.phone_model %}
-                            <dt>{% trans 'Phone model' %}</dt>
-                            <dd>{{ app.phone_model }}</dd>
-                        {% endif %}
-                        {% if app.description %}
-                            <dt>{% trans 'Description' %}</dt>
-                            <dd>
-                                {{ app.description|linebreaks }}
-                            </dd>
-                        {% endif %}
-                        {% if app.attribution_notes %}
-                            <dt>{% trans 'Attribution notes' %}</dt>
-                            <dd>{{ app.attribution_notes }}</dd>
-                        {% endif %}
-                    </dl>
-                </div>
-            {% endfor %}
-            {% for fixture in fixtures %}
-                <div id="fixtures-{{ fixture.id }}">
-                    <dl class="dl-horizontal">
-                        <dt>
-                            <h4 style="display: inline-block;">Lookup Table</h4>
-                        </dt>
-                        <dd>
-                            <h4 style="display: inline-block;">{{ fixture.tag }}</h4>
-                        </dd>
-                        {% if fixture.description %}
-                            <dt>{% trans 'Description' %}</dt>
-                            <dd>
-                                {{ fixture.description|linebreaks }}
-                            </dd>
-                        {% endif %}
-                    </dl>
-                </div>
-            {% endfor %}
-            {% if fixtures %}
-                <div class='alert alert-warning'>
-                    Lookup Tables are not supported on our Community plan.
-                    <a href="https://www.commcarehq.org/pricing/">Learn more
-                        about our pricing plans here</a>
-                </div>
-            {% endif %}
+          </div>
+        {% endfor %}
+        {% for fixture in fixtures %}
+          <div id="fixtures-{{ fixture.id }}">
+            <dl class="dl-horizontal">
+              <dt>
+                <h4 style="display: inline-block;">Lookup Table</h4>
+              </dt>
+              <dd>
+                <h4 style="display: inline-block;">{{ fixture.tag }}</h4>
+              </dd>
+              {% if fixture.description %}
+                <dt>{% trans 'Description' %}</dt>
+                <dd>
+                  {{ fixture.description|linebreaks }}
+                </dd>
+              {% endif %}
+            </dl>
+          </div>
+        {% endfor %}
+        {% if fixtures %}
+          <div class='alert alert-warning'>
+            Lookup Tables are not supported on our Community plan.
+            <a href="https://www.commcarehq.org/pricing/">Learn more
+              about our pricing plans here</a>
+          </div>
+        {% endif %}
         {% if applications %}
-            <form id="new-project-form"
-                  method="post"
-                  class="form-inline"
-                  action="{% url "domain_copy_snapshot" project.get_id %}"
-                  style="margin-bottom: 20px;">
-                {% csrf_token %}
-                <fieldset>
-                    <legend>{% trans "Download" %}</legend>
-                    {% if request.couch_user %}
-                        {% if request.couch_user.is_commcare_user %}
-                            {% trans "You are currently logged in as a CloudCare user. Please sign out and login as a normal user to download apps" %}
-                        {% else %}
-                        <div{% if error_message %} class="error"{% endif %}>
-                            <input type="text" class="form-control" id="new_project_name"
-                                   name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
-                            {% if error_message %}
-                                <span class="help-inline">{{ error_message }}</span>
-                            {% endif %}
-                            <a class="btn btn-primary disable-on-submit"
-                               data-form="new-project-form"
-                               data-toggle="modal"
-                               data-target="#licenseAgreement"
-                               href="#licenseAgreement"
-                               id="download-new-project"
-                            >
-                                {% trans "Download As New Project" %}
-                            </a>
-                            {% if display_import %}
-                                {% trans "or" %}
-                                <a class="btn btn-default"
-                                   id="import-app-button">
-                                    {% trans "Download to Existing Project" %}
-                                </a>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                    {% else %}
-                        {% url "login" login_url %}
-                        {% url "register_user" %}
-                        {% blocktrans %}
-                            Please <a href="{{ login_url }}">sign in</a>
-                            or <a href="{{ register_url }}">register</a>
-                            to download an app from Exchange
-                        {% endblocktrans %}
+          <form id="new-project-form"
+                method="post"
+                class="form-inline"
+                action="{% url "domain_copy_snapshot" project.get_id %}"
+                style="margin-bottom: 20px;">
+            {% csrf_token %}
+            <fieldset>
+              <legend>{% trans "Download" %}</legend>
+              {% if request.couch_user %}
+                {% if request.couch_user.is_commcare_user %}
+                  {% trans "You are currently logged in as a CloudCare user. Please sign out and login as a normal user to download apps" %}
+                {% else %}
+                  <div{% if error_message %} class="error"{% endif %}>
+                    <input type="text" class="form-control" id="new_project_name"
+                           name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
+                    {% if error_message %}
+                      <span class="help-inline">{{ error_message }}</span>
                     {% endif %}
-                </fieldset>
-            </form>
-            <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project.get_id %}">
-                {% csrf_token %}
-                <div class="hide" id="import-app">
-                    <select name="project" class="form-control" id="project_select">
-                        {% for p in request.couch_user.projects %}
-                            <option value="{{ p.name }}">{{ p.display_name }}</option>
-                        {% endfor %}
-                    </select>
-                    <a class="btn btn-primary" id="import-into-button" data-form="import-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">
-                        {% trans "Import into" %}
+                    <a class="btn btn-primary disable-on-submit"
+                       data-form="new-project-form"
+                       data-toggle="modal"
+                       data-target="#licenseAgreement"
+                       href="#licenseAgreement"
+                       id="download-new-project"
+                    >
+                      {% trans "Download As New Project" %}
                     </a>
-                </div>
-            </form>
+                    {% if display_import %}
+                      {% trans "or" %}
+                      <a class="btn btn-default"
+                         id="import-app-button">
+                        {% trans "Download to Existing Project" %}
+                      </a>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% else %}
+                {% url "login" login_url %}
+                {% url "register_user" %}
+                {% blocktrans %}
+                  Please <a href="{{ login_url }}">sign in</a>
+                  or <a href="{{ register_url }}">register</a>
+                  to download an app from Exchange
+                {% endblocktrans %}
+              {% endif %}
+            </fieldset>
+          </form>
+          <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project.get_id %}">
+            {% csrf_token %}
+            <div class="hide" id="import-app">
+              <select name="project" class="form-control" id="project_select">
+                {% for p in request.couch_user.projects %}
+                  <option value="{{ p.name }}">{{ p.display_name }}</option>
+                {% endfor %}
+              </select>
+              <a class="btn btn-primary" id="import-into-button" data-form="import-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">
+                {% trans "Import into" %}
+              </a>
+            </div>
+          </form>
         {% else %}
-            <p>{% trans "No applications available." %}</p>
+          <p>{% trans "No applications available." %}</p>
         {% endif %}
         <hr style="margin-bottom: 30px;" />
-        </div>
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}
 
 
 {% block modals %}{{ block.super }}
-<div class="modal fade" id="licenseAgreement">
+  <div class="modal fade" id="licenseAgreement">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h4 class="modal-title">{% trans "You're about to download " %}{{ project.title }}</h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
-                </p>
-                {% if project.multimedia_included and project.has_media %}
-                <p>
-                    {% trans "Please view the" %} <a target="_blank" href="{% url "media_files" project.get_id %}">{% trans "licenses for this app's media files" %}</a>
-                </p>
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <div class="pull-left" style="line-height: 2em;">
-                    {% trans "I have read and agree to the terms of this license." %}
-                </div>
-                <a id="agree-button" data-dismiss="modal" data-form="" href="#" class="btn btn-primary">{% trans "Agree" %}</a>
-                <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Disagree" %}</a>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <a class="close" data-dismiss="modal">&times;</a>
+          <h4 class="modal-title">{% trans "You're about to download " %}{{ project.title }}</h4>
         </div>
+        <div class="modal-body">
+          <p>
+            {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
+          </p>
+          {% if project.multimedia_included and project.has_media %}
+            <p>
+              {% trans "Please view the" %} <a target="_blank" href="{% url "media_files" project.get_id %}">{% trans "licenses for this app's media files" %}</a>
+            </p>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <div class="pull-left" style="line-height: 2em;">
+            {% trans "I have read and agree to the terms of this license." %}
+          </div>
+          <a id="agree-button" data-dismiss="modal" data-form="" href="#" class="btn btn-primary">{% trans "Agree" %}</a>
+          <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Disagree" %}</a>
+        </div>
+      </div>
     </div>
 
-</div>
+  </div>
 {% endblock %}
 

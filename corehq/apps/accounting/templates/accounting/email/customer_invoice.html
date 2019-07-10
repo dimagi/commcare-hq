@@ -3,256 +3,256 @@
 <p>{{ greeting }}</p>
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Your {{ month_name }} Billing Statement is now available for Customer Account {{ account_name }}.
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>
 
 <table cellpadding="2">
+  <tr>
+    <th align="right">
+      {% trans 'Statement No.' %}:
+    </th>
+    <td>
+      {{ statement_number }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Account' %}:
+    </th>
+    <td>
+      {{ account_name }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Status' %}:
+    </th>
+    <td>
+      {{ payment_status }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Amount Due this Month' %}:
+    </th>
+    <td>
+      {{ amount_due }}
+    </td>
+  </tr>
+  <tr>
+    <th align="right">
+      {% trans 'Total Balance' %}:
+    </th>
+    <td>
+      {{ total_balance }}
+    </td>
+  </tr>
+  {% if total_balance > 0 %}
     <tr>
-        <th align="right">
-            {% trans 'Statement No.' %}:
-        </th>
-        <td>
-            {{ statement_number }}
-        </td>
+      <th align="right">
+        {% trans 'Payment Due Date' %}:
+      </th>
+      <td>
+        {{ date_due }}
+      </td>
     </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Account' %}:
-        </th>
-        <td>
-            {{ account_name }}
-        </td>
-    </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Status' %}:
-        </th>
-        <td>
-            {{ payment_status }}
-        </td>
-    </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Amount Due this Month' %}:
-        </th>
-        <td>
-            {{ amount_due }}
-        </td>
-    </tr>
-    <tr>
-        <th align="right">
-            {% trans 'Total Balance' %}:
-        </th>
-        <td>
-            {{ total_balance }}
-        </td>
-    </tr>
-    {% if total_balance > 0 %}
-    <tr>
-        <th align="right">
-            {% trans 'Payment Due Date' %}:
-        </th>
-        <td>
-            {{ date_due }}
-        </td>
-    </tr>
-    {% endif %}
+  {% endif %}
 
-    {% if credits.subscription %}
+  {% if credits.subscription %}
     <tr>
-        <th align="right">
-            <span style="text-decoration:underline;">{% trans 'Subscription Credits Remaining' %}</span>
-        </th>
+      <th align="right">
+        <span style="text-decoration:underline;">{% trans 'Subscription Credits Remaining' %}</span>
+      </th>
     </tr>
-    {% endif %}
-    {% if credits.subscription.product %}
+  {% endif %}
+  {% if credits.subscription.product %}
     <tr>
-        <th align="right">
-            {% trans 'Plan Credits' %}:
-        </th>
-        <td>
-            {{ credits.subscription.product.amount }}
-        </td>
+      <th align="right">
+        {% trans 'Plan Credits' %}:
+      </th>
+      <td>
+        {{ credits.subscription.product.amount }}
+      </td>
     </tr>
-    {% endif %}
-    {% if credits.subscription.user %}
+  {% endif %}
+  {% if credits.subscription.user %}
     <tr>
-        <th align="right">
-            {% trans 'User Credits' %}:
-        </th>
-        <td>
-            {{ credits.subscription.user.amount }}
-        </td>
+      <th align="right">
+        {% trans 'User Credits' %}:
+      </th>
+      <td>
+        {{ credits.subscription.user.amount }}
+      </td>
     </tr>
-    {% endif %}
-    {% if credits.subscription.sms %}
+  {% endif %}
+  {% if credits.subscription.sms %}
     <tr>
-        <th align="right">
-            {% trans 'SMS Credits' %}:
-        </th>
-        <td>
-            {{ credits.subscription.sms.amount }}
-        </td>
+      <th align="right">
+        {% trans 'SMS Credits' %}:
+      </th>
+      <td>
+        {{ credits.subscription.sms.amount }}
+      </td>
     </tr>
-    {% endif %}
-    {% if credits.subscription.general %}
+  {% endif %}
+  {% if credits.subscription.general %}
     <tr>
-        <th align="right">
-            {% trans 'General Credits' %}:
-        </th>
-        <td>
-            {{ credits.subscription.general.amount }}
-        </td>
+      <th align="right">
+        {% trans 'General Credits' %}:
+      </th>
+      <td>
+        {{ credits.subscription.general.amount }}
+      </td>
     </tr>
-    {% endif %}
+  {% endif %}
 
-    {% if credits.account %}
+  {% if credits.account %}
     <tr>
-        <th align="right">
-            <span style="text-decoration:underline;">{% trans 'Account Credits Remaining' %}</span>
-        </th>
+      <th align="right">
+        <span style="text-decoration:underline;">{% trans 'Account Credits Remaining' %}</span>
+      </th>
     </tr>
-    {% endif %}
-    {% if credits.account.product %}
+  {% endif %}
+  {% if credits.account.product %}
     <tr>
-        <th align="right">
-            {% trans 'Plan Credits' %}:
-        </th>
-        <td>
-            {{ credits.account.product.amount }}
-        </td>
+      <th align="right">
+        {% trans 'Plan Credits' %}:
+      </th>
+      <td>
+        {{ credits.account.product.amount }}
+      </td>
     </tr>
-    {% endif %}
-    {% if credits.account.user %}
+  {% endif %}
+  {% if credits.account.user %}
     <tr>
-        <th align="right">
-            {% trans 'User Credits' %}:
-        </th>
-        <td>
-            {{ credits.account.user.amount }}
-        </td>
+      <th align="right">
+        {% trans 'User Credits' %}:
+      </th>
+      <td>
+        {{ credits.account.user.amount }}
+      </td>
     </tr>
-    {% endif %}
-    {% if credits.account.sms %}
+  {% endif %}
+  {% if credits.account.sms %}
     <tr>
-        <th align="right">
-            {% trans 'SMS Credits' %}:
-        </th>
-        <td>
-            {{ credits.account.sms.amount }}
-        </td>
+      <th align="right">
+        {% trans 'SMS Credits' %}:
+      </th>
+      <td>
+        {{ credits.account.sms.amount }}
+      </td>
     </tr>
-    {% endif %}
-    {% if credits.account.general %}
+  {% endif %}
+  {% if credits.account.general %}
     <tr>
-        <th align="right">
-            {% trans 'General Credits' %}:
-        </th>
-        <td>
-            {{ credits.account.general.amount }}
-        </td>
+      <th align="right">
+        {% trans 'General Credits' %}:
+      </th>
+      <td>
+        {{ credits.account.general.amount }}
+      </td>
     </tr>
-    {% endif %}
+  {% endif %}
 </table>
 
 {% if is_total_balance_due %}
-    <p>
-        {% if is_small_invoice %}
-            {% blocktrans %}
-            Please note that the due date for this {{ month_name }} payment has been
-            postponed, as the amount due this month is less than $100. However as
-            your total balance is now beyond $100, please note that you have to pay
-            your balance within the next 30 days.
-            {% endblocktrans %}
-        {% else  %}
-            {% blocktrans %}
-            Your total balance is now beyond $100, please note that you have to pay
-            your balance within the next 30 days.
-            {% endblocktrans %}
-        {% endif %}
-    </p>
+  <p>
+    {% if is_small_invoice %}
+      {% blocktrans %}
+        Please note that the due date for this {{ month_name }} payment has been
+        postponed, as the amount due this month is less than $100. However as
+        your total balance is now beyond $100, please note that you have to pay
+        your balance within the next 30 days.
+      {% endblocktrans %}
+    {% else  %}
+      {% blocktrans %}
+        Your total balance is now beyond $100, please note that you have to pay
+        your balance within the next 30 days.
+      {% endblocktrans %}
+    {% endif %}
+  </p>
 
-    <p>
-        {% if can_view_statement %}
-            {% blocktrans %}
-            To view the full billing statement, log into your project space on
-            CommCareHQ and navigate to <a href="{{ statements_url }}">
-            Billing Statements</a>.
-            {% endblocktrans %}
-        {% else %}
-            {% blocktrans %}
-            Your project's administrator can view the full billing statement by
-            logging into your project space on CommCareHQ and navigating to
-            <a href="{{ statements_url }}">Billing Statements</a>.
-            {% endblocktrans %}
-        {% endif %}
-    </p>
+  <p>
+    {% if can_view_statement %}
+      {% blocktrans %}
+        To view the full billing statement, log into your project space on
+        CommCareHQ and navigate to <a href="{{ statements_url }}">
+        Billing Statements</a>.
+      {% endblocktrans %}
+    {% else %}
+      {% blocktrans %}
+        Your project's administrator can view the full billing statement by
+        logging into your project space on CommCareHQ and navigating to
+        <a href="{{ statements_url }}">Billing Statements</a>.
+      {% endblocktrans %}
+    {% endif %}
+  </p>
 
-    <p>
-        {% blocktrans %}
-        You can pay this bill by credit card or by wire:
-        <ul>
-            <li>
-                To pay by credit card, please go to your
-                <a href="{{ statements_url }}">Billing Statements</a> page, click
-                on the green "Make Payment" button in front of your unpaid
-                invoice(s), and fill in the amount you want to pay as well as your
-                credit card details.
-            </li>
-            <li>
-                To pay by wire, find Dimagi's bank account details on your invoice.
-                Please include the invoice number in your wire payment and make
-                sure to send an email to {{ accounts_email }} after you have made
-                the payment, mentioning the date of the payment, the amount, the
-                invoice number, and the project space.
-            </li>
-        </ul>
-        {% endblocktrans %}
-    </p>
+  <p>
+    {% blocktrans %}
+      You can pay this bill by credit card or by wire:
+      <ul>
+        <li>
+          To pay by credit card, please go to your
+          <a href="{{ statements_url }}">Billing Statements</a> page, click
+          on the green "Make Payment" button in front of your unpaid
+          invoice(s), and fill in the amount you want to pay as well as your
+          credit card details.
+        </li>
+        <li>
+          To pay by wire, find Dimagi's bank account details on your invoice.
+          Please include the invoice number in your wire payment and make
+          sure to send an email to {{ accounts_email }} after you have made
+          the payment, mentioning the date of the payment, the amount, the
+          invoice number, and the project space.
+        </li>
+      </ul>
+    {% endblocktrans %}
+  </p>
 {% else %}
-    <p>
-        {% if total_balance > 0 %}
-        {% blocktrans %}
-            Please note that the due date for this payment has been postponed, as
-            the amount due this month is less than $100.  You will start receiving
-            reminder emails for payments once your total balance reaches $100.
-        {% endblocktrans %}
-        {% endif %}
+  <p>
+    {% if total_balance > 0 %}
+      {% blocktrans %}
+        Please note that the due date for this payment has been postponed, as
+        the amount due this month is less than $100.  You will start receiving
+        reminder emails for payments once your total balance reaches $100.
+      {% endblocktrans %}
+    {% endif %}
 
-        {% if can_view_statement %}
-            {% blocktrans %}
-            To view and pay invoices, you can log into your project space on
-            CommCareHQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
-            {% endblocktrans %}
-        {% else %}
-            {% blocktrans %}
-            To view and pay invoices, your project's administrator can log into your project space on
-            CommCareHQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
-            {% endblocktrans %}
-        {% endif %}
-    </p>
+    {% if can_view_statement %}
+      {% blocktrans %}
+        To view and pay invoices, you can log into your project space on
+        CommCareHQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
+      {% endblocktrans %}
+    {% else %}
+      {% blocktrans %}
+        To view and pay invoices, your project's administrator can log into your project space on
+        CommCareHQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
+      {% endblocktrans %}
+    {% endif %}
+  </p>
 {% endif %}
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Best regards,<br />
     The CommCare HQ Team<br />
     www.commcarehq.org
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
+  {% blocktrans %}
     Statement From:
     CommCare HQ and the corporation Dimagi, Inc.
     585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
-    {% endblocktrans %}
+  {% endblocktrans %}
 </p>

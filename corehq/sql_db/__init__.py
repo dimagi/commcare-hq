@@ -32,7 +32,7 @@ def custom_db_checks(app_configs, **kwargs):
 
 @register(Tags.database, deploy=True)
 def check_db_tables(app_configs, **kwargs):
-    from corehq.sql_db.routers import ICDS_REPORTS_APP, ICDS_MODEL
+    from corehq.sql_db.routers import ICDS_REPORTS_APP
     from corehq.sql_db.models import PartitionedModel
     from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
@@ -40,7 +40,6 @@ def check_db_tables(app_configs, **kwargs):
 
     # some apps only apply to specific envs
     env_specific_apps = {
-        ICDS_MODEL: settings.ICDS_ENVS,
         ICDS_REPORTS_APP: settings.ICDS_ENVS
     }
 

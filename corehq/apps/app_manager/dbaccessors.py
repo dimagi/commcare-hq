@@ -5,10 +5,12 @@ from itertools import chain
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from django.http import Http404
 from django.core.cache import cache
+from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import TermsAggregation, NestedAggregation
@@ -108,16 +110,24 @@ def get_latest_build_version(domain, app_id):
     return res['value']['version'] if res else None
 
 
-def get_build_doc_by_version(domain, app_id, version):
+def _get_build_by_version(domain, app_id, version, return_doc=False):
     from .models import Application
+    kwargs = {}
+    if version:
+        version = int(version)
+    if return_doc:
+        kwargs = {'include_docs': True, 'reduce': False}
     res = Application.get_db().view(
         'app_manager/saved_app',
         key=[domain, app_id, version],
-        include_docs=True,
-        reduce=False,
         limit=1,
+        **kwargs
     ).first()
-    return res['doc'] if res else None
+    return res['doc'] if return_doc and res else res
+
+
+def get_build_doc_by_version(domain, app_id, version):
+    return _get_build_by_version(domain, app_id, version, return_doc=True)
 
 
 def wrap_app(app_doc, wrap_cls=None):
@@ -471,11 +481,10 @@ def get_available_versions_for_app(domain, app_id):
 
 
 def get_version_build_id(domain, app_id, version):
-    built_app_ids = get_all_built_app_ids_and_versions(domain, app_id)
-    for app_built_version in built_app_ids:
-        if app_built_version.version == version:
-            return app_built_version.build_id
-    raise Exception("Build for version requested not found")
+    build = _get_build_by_version(domain, app_id, version)
+    if not build:
+        raise BuildNotFoundException(_("Build for version requested not found"))
+    return build['id']
 
 
 def get_case_types_from_apps(domain):

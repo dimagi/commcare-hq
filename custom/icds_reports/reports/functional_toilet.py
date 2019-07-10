@@ -10,7 +10,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import awcs_reported_functional_toilet_help_text
 from custom.icds_reports.models import AggAwcMonthly
@@ -18,7 +18,7 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indi
     get_child_locations
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_functional_toilet_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -80,7 +80,7 @@ def get_functional_toilet_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -128,16 +128,16 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
         data['blue'][date_in_miliseconds]['all'] += (valid or 0)
         data['blue'][date_in_miliseconds]['in_month'] += in_month
 
-    top_locations = sorted(
-        [
-            dict(
-                loc_name=key,
-                percent=(value['in_month'] * 100) / float(value['all'] or 1)
-            ) for key, value in six.iteritems(best_worst)
-        ],
-        key=lambda x: x['percent'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': (value['in_month'] * 100) / float(value['all'] or 1)
+        }
+        for key, value in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
 
     return {
         "chart_data": [
@@ -155,14 +155,14 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_functional_toilet_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 

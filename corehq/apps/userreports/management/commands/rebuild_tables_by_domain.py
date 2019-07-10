@@ -11,6 +11,10 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument(
+            '--initiated-by', required=True, action='store',
+            dest='initiated', help='Who initiated the rebuild'
+        )
 
     def handle(self, domain, **options):
         tables = StaticDataSourceConfiguration.by_domain(domain)
@@ -19,4 +23,6 @@ class Command(BaseCommand):
         print("Rebuilding {} tables".format(len(tables)))
 
         for table in tables:
-            tasks.rebuild_indicators(table._id)
+            tasks.rebuild_indicators(
+                table._id, initiated_by=options['initiated'], source='rebuild_tables_by_domain'
+            )

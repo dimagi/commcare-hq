@@ -63,24 +63,19 @@ def is_midnight_for_domain(midnight_form_domain, error_margin=15, current_time=N
 
 
 def get_call_center_domains():
-    try:
-        result = (
-            DomainES()
-            .is_active()
-            .filter(filters.term('call_center_config.enabled', True))
-            .source([
-                'name',
-                'default_timezone',
-                'call_center_config.case_type',
-                'call_center_config.case_owner_id',
-                'call_center_config.use_user_location_as_owner',
-                'call_center_config.use_fixtures'])
-            .run()
-        )
-    except ESError as e:
-        if 'IndexMissingException' in str(e) and settings.UNIT_TESTING:
-            return []
-        raise
+    result = (
+        DomainES()
+        .is_active()
+        .filter(filters.term('call_center_config.enabled', True))
+        .source([
+            'name',
+            'default_timezone',
+            'call_center_config.case_type',
+            'call_center_config.case_owner_id',
+            'call_center_config.use_user_location_as_owner',
+            'call_center_config.use_fixtures'])
+        .run()
+    )
 
     def to_domain_lite(hit):
         config = hit.get('call_center_config', {})

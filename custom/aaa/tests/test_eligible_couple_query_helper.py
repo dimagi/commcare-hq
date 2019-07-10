@@ -5,9 +5,12 @@ from datetime import date
 
 from django.test.testcases import TestCase
 
-from custom.aaa.dbaccessors import EligibleCoupleQueryHelper
-from custom.aaa.models import Child, Woman, WomanHistory
 from six.moves import range
+
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.util import get_indicator_adapter
+from custom.aaa.dbaccessors import EligibleCoupleQueryHelper
+from custom.aaa.models import Child, Woman
 
 
 class TestEligibleCoupleBeneficiarySections(TestCase):
@@ -21,11 +24,28 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
             person_case_id='person_case_id',
             opened_on='2019-01-01',
         )
+        cls.adapters = []
+        cls._init_table('reach-eligible_couple_forms')
 
     @classmethod
     def tearDownClass(cls):
+        for adapter in cls.adapters:
+            adapter.drop_table()
         Woman.objects.all().delete()
         super(TestEligibleCoupleBeneficiarySections, cls).tearDownClass()
+
+    @classmethod
+    def _get_adapter(cls, data_source_id):
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, data_source_id)
+        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
+        return get_indicator_adapter(datasource)
+
+    @classmethod
+    def _init_table(cls, data_source_id):
+        adapter = cls._get_adapter(data_source_id)
+        adapter.build_table()
+        cls.adapters.append(adapter)
+        return adapter
 
     @property
     def helper(self):
@@ -47,16 +67,33 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
             })
 
     def test_eligible_couple_details_with_history(self):
-        history = WomanHistory.objects.create(
-            person_case_id='person_case_id',
-            fp_current_method_history=[
-                ['2019-01-01', 'iud'],
-                ['2019-04-01', 'future stuff'],
-                ['2018-08-01', 'pill'],
-                ['2019-03-01', 'condom'],
-            ]
-        )
-        self.addCleanup(history.delete)
+        add_preg_adapter = self._get_adapter('reach-eligible_couple_forms')
+        self.addCleanup(add_preg_adapter.clear_table)
+        for _id, _date, method in (
+            ('ec_form_1', '2019-01-01', 'iud'),
+            ('ec_form_2', '2019-04-01', 'future stuff'),
+            ('ec_form_3', '2018-08-01', 'pill'),
+            ('ec_form_4', '2019-03-01', 'condom'),
+        ):
+            add_preg_adapter.save({
+                '_id': _id,
+                'domain': self.domain,
+                'doc_type': "XFormInstance",
+                'xmlns': 'http://openrosa.org/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647',
+                'form': {
+                    "person_case_id": 'person_case_id',
+                    "create_eligible_couple": {
+                        "create_eligible_couple": {
+                            "case": {
+                                'update': {
+                                    'fp_current_method': method,
+                                }
+                            },
+                        },
+                    },
+                    "meta": {"timeEnd": _date},
+                },
+            })
         self.assertEqual(
             self.helper.eligible_couple_details(),
             {
@@ -65,8 +102,8 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
                 'maleChildrenAlive': 0,
                 'femaleChildrenAlive': 0,
                 'familyPlaningMethod': 'condom',
-                'familyPlanningMethodDate': '2019-03-01',
-                'ashaVisit': 'N/A',
+                'familyPlanningMethodDate': date(2019, 3, 1),
+                'ashaVisit': date(2019, 3, 1),
                 'previousFamilyPlanningMethod': 'iud',
                 'preferredFamilyPlaningMethod': 'N/A',
             })
@@ -205,6 +242,18 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
 class TestEligibleCoupleBeneficiaryList(TestCase):
     domain = 'reach-test'
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestEligibleCoupleBeneficiaryList, cls).setUpClass()
+        cls.adapters = []
+        cls._init_table('reach-eligible_couple_forms')
+
+    @classmethod
+    def tearDownClass(cls):
+        for adapter in cls.adapters:
+            adapter.drop_table()
+        super(TestEligibleCoupleBeneficiaryList, cls).tearDownClass()
+
     def tearDown(self):
         Woman.objects.all().delete()
         super(TestEligibleCoupleBeneficiaryList, self).tearDown()
@@ -220,30 +269,43 @@ class TestEligibleCoupleBeneficiaryList(TestCase):
             pregnant_ranges=pregnant_ranges,
         )
 
+    @classmethod
+    def _get_adapter(cls, data_source_id):
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, data_source_id)
+        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
+        return get_indicator_adapter(datasource)
+
+    @classmethod
+    def _init_table(cls, data_source_id):
+        adapter = cls._get_adapter(data_source_id)
+        adapter.build_table()
+        cls.adapters.append(adapter)
+        return adapter
+
     def test_fourteen_year_old(self):
         self._create_woman('2005-01-01')
-        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+        self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 0)
 
     def test_fifteen_year_old(self):
         self._create_woman('2004-01-01')
-        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
+        self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 1)
 
     def test_49_year_old(self):
         self._create_woman('1970-12-01')
-        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
+        self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 1)
 
     def test_50_year_old(self):
         self._create_woman('1970-1-1')
-        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+        self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 0)
 
     def test_migrated_49_year_old(self):
-        self._create_woman('1970-12-01', migration_status='yes')
-        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+        self._create_woman('1970-12-01', migration_status='migrated')
+        self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 0)
 
     def test_unmarried_49_year_old(self):
         self._create_woman('1970-12-01', marital_status=None)
-        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+        self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 0)
 
     def test_previously_pregnant(self):
         self._create_woman('1990-12-01', pregnant_ranges=[['2010-01-01', '2010-10-01']])
-        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
+        self.assertEqual(len(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id')), 1)

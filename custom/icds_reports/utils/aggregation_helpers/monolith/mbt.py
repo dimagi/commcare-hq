@@ -4,11 +4,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.models import CcsRecordMonthly, ChildHealthMonthly, AggAwc
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import AggregationHelper
 
 
-class MBTHelper(object):
-
+class MBTHelper(AggregationHelper):
     def __init__(self, state_id, month):
         self.state_id = state_id
         self.month = month
@@ -52,7 +51,12 @@ class MBTHelper(object):
 
 
 class CcsMbtHelper(MBTHelper):
-    base_class = CcsRecordMonthly
+    helper_key = 'css-mbt'
+
+    @property
+    def base_class(self):
+        from custom.icds_reports.models import CcsRecordMonthly
+        return CcsRecordMonthly
 
     @property
     def columns(self):
@@ -147,17 +151,16 @@ class CcsMbtHelper(MBTHelper):
 
 
 class ChildHealthMbtHelper(MBTHelper):
-    base_class = ChildHealthMonthly
+    helper_key = 'child-health-mbt'
+
+    @property
+    def base_class(self):
+        from custom.icds_reports.models import ChildHealthMonthly
+        return ChildHealthMonthly
 
     @property
     def person_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
-    @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases_monthly_tableau_v2')
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
@@ -255,13 +258,17 @@ class ChildHealthMbtHelper(MBTHelper):
             state_id=self.state_id,
             month=self.month,
             person_cases_ucr=self.person_case_ucr_tablename,
-            ccs_record_monthly=self.ccs_record_monthly_ucr_tablename,
             state_id_last_3=self.state_id[-3:]
         )
 
 
 class AwcMbtHelper(MBTHelper):
-    base_class = AggAwc
+    helper_key = 'awc-mbt'
+
+    @property
+    def base_class(self):
+        from custom.icds_reports.models import AggAwc
+        return AggAwc
 
     @property
     def columns(self):

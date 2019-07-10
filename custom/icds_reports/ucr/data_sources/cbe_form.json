@@ -22,6 +22,16 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-cbe_form",
     "display_name": "Forms - Community Based Events",
@@ -40,6 +50,24 @@
         "http://openrosa.org/formdesigner/61238C23-7059-446D-8A9C-34107642CBB2"
       ]
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "AWC ID",

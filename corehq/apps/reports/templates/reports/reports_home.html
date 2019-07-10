@@ -8,108 +8,108 @@
 {% requirejs_main 'reports/js/saved_reports_main' %}
 
 {% block page_content %}
-{% initial_page_data 'configs' configs %}
-{% registerurl 'add_report_config' domain %}
+  {% initial_page_data 'configs' configs %}
+  {% registerurl 'add_report_config' domain %}
 
-<ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+  <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
     <li><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
     <li><a href="#scheduled-reports" data-toggle="tab">
-        {% if others_scheduled_reports %}
-            {% trans "Scheduled Reports" %}
-        {% else %}
-            {% trans "My Scheduled Reports" %}
-        {% endif %}
+      {% if others_scheduled_reports %}
+        {% trans "Scheduled Reports" %}
+      {% else %}
+        {% trans "My Scheduled Reports" %}
+      {% endif %}
     </a></li>
-</ul>
-<div class="tab-content">
+  </ul>
+  <div class="tab-content">
     <div class="tab-pane" id="ko-report-config-list">
-        <div class="row">
-            <div class="col-sm-12">
-                <div style="display: none"
-                     data-bind="visible: !reportConfigs().length"
-                     class="alert alert-info">
-                    <p>
-                        {% blocktrans %}
-                            You don't have any saved reports.  You can store your favorite
-                            filters in a saved report and then easily navigate to that
-                            report with the filters already applied.  Saved reports can
-                            also be sent by email on a recurring basis.
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans %}
-                            To create a new saved report, navigate to a report,
-                            select the filters you want to save, and click "Save".
-                        {% endblocktrans %}
-                    </p>
-                </div>
-                <table data-bind="visible: reportConfigs().length"
-                       class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th class="col-sm-2">{% trans "Report" %}</th>
-                            <th class="col-sm-3">{% trans "Saved Report Name" %}</th>
-                            <th class="col-sm-3">{% trans "Description" %}</th>
-                            <th class="col-sm-2">{% trans "Date Range" %}</th>
-                            <th class="col-sm-2"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- ko foreach: reportConfigs -->
-                        <tr>
-                            <td data-bind="text: report_name"></td>
-                            <td><a data-bind="attr: { href: url }, text: name"></a></td>
-                            <td data-bind="text: description"></td>
-                            <td data-bind="text: date_description"></td>
-                            <td>
-                                <button class="btn btn-default"
-                                    data-bind="click: $root.setConfigBeingEdited">
-                                    <i class="fa fa-edit"></i>
-                                    {% trans "Edit" %}
-                                </button>
-                                <button class="btn btn-danger add-spinner-on-click"
-                                    data-bind="click: $root.deleteConfig">
-                                    <i class="fa fa-trash"></i>
-                                    {% trans "Delete" %}
-                                </button>
-                            </td>
-                        </tr>
-                        <!-- /ko -->
-                    </tbody>
-                </table>
-            </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div style="display: none"
+               data-bind="visible: !reportConfigs().length"
+               class="alert alert-info">
+            <p>
+              {% blocktrans %}
+                You don't have any saved reports.  You can store your favorite
+                filters in a saved report and then easily navigate to that
+                report with the filters already applied.  Saved reports can
+                also be sent by email on a recurring basis.
+              {% endblocktrans %}
+            </p>
+            <p>
+              {% blocktrans %}
+                To create a new saved report, navigate to a report,
+                select the filters you want to save, and click "Save".
+              {% endblocktrans %}
+            </p>
+          </div>
+          <table data-bind="visible: reportConfigs().length"
+                 class="table table-striped table-bordered">
+            <thead>
+            <tr>
+              <th class="col-sm-2">{% trans "Report" %}</th>
+              <th class="col-sm-3">{% trans "Saved Report Name" %}</th>
+              <th class="col-sm-3">{% trans "Description" %}</th>
+              <th class="col-sm-2">{% trans "Date Range" %}</th>
+              <th class="col-sm-2"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- ko foreach: reportConfigs -->
+            <tr>
+              <td data-bind="text: report_name"></td>
+              <td><a data-bind="attr: { href: url }, text: name"></a></td>
+              <td data-bind="text: description"></td>
+              <td data-bind="text: date_description"></td>
+              <td>
+                <button class="btn btn-default"
+                        data-bind="click: $root.setConfigBeingEdited">
+                  <i class="fa fa-edit"></i>
+                  {% trans "Edit" %}
+                </button>
+                <button class="btn btn-danger add-spinner-on-click"
+                        data-bind="click: $root.deleteConfig">
+                  <i class="fa fa-trash"></i>
+                  {% trans "Delete" %}
+                </button>
+              </td>
+            </tr>
+            <!-- /ko -->
+            </tbody>
+          </table>
         </div>
-        {% include "reports/partials/save_reports_modal.html" %}
+      </div>
+      {% include "reports/partials/save_reports_modal.html" %}
     </div>
 
     {% if report.show %}
-    <div class="tab-pane" id="scheduled-reports">
+      <div class="tab-pane" id="scheduled-reports">
         <p><a class="btn btn-primary track-usage-link"
               href="{% url "edit_scheduled_report" domain %}"
               data-category="Scheduled Reports"
               data-action="Configure a scheduled report">
-            <i class="fa fa-plus"></i>
-            {% trans "Create a New Scheduled Report" %}
+          <i class="fa fa-plus"></i>
+          {% trans "Create a New Scheduled Report" %}
         </a></p>
         {% if scheduled_reports or others_scheduled_reports %}
-            {% if others_scheduled_reports %}
-                <h3>{% trans "My Scheduled Reports" %}</h3>
-            {% endif %}
-            {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True scheduled_reports=scheduled_reports %}
-            {% if others_scheduled_reports %}
-                <h3>{% trans "Other Scheduled Reports" %}</h3>
-                {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False scheduled_reports=others_scheduled_reports %}
-            {% endif %}
+          {% if others_scheduled_reports %}
+            <h3>{% trans "My Scheduled Reports" %}</h3>
+          {% endif %}
+          {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True scheduled_reports=scheduled_reports %}
+          {% if others_scheduled_reports %}
+            <h3>{% trans "Other Scheduled Reports" %}</h3>
+            {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False scheduled_reports=others_scheduled_reports %}
+          {% endif %}
         {% else %}
-            <div class="alert alert-info">
-                {% blocktrans %}
-                    You don't have any scheduled reports.  You can create a scheduled
-                    report based on a saved report to have a report delivered by email
-                    on a regular basis.
-                {% endblocktrans %}
-            </div>
+          <div class="alert alert-info">
+            {% blocktrans %}
+              You don't have any scheduled reports.  You can create a scheduled
+              report based on a saved report to have a report delivered by email
+              on a regular basis.
+            {% endblocktrans %}
+          </div>
         {% endif %}
-    </div>
+      </div>
     {% endif %}
-</div>
+  </div>
 {% endblock %}

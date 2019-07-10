@@ -6,23 +6,23 @@
 {% requirejs_main 'integration/js/biometric' %}
 
 {% block page_content %}
-    {% initial_page_data 'simprintsFormData' simprints_form.initial_data %}
+  {% initial_page_data 'simprintsFormData' simprints_form.initial_data %}
 
-    <p class="lead">
-      {% blocktrans %}
-        Biometric Integration lets you... #todo write lead text
-      {% endblocktrans %}
-    </p>
+  <p class="lead">
+    {% blocktrans %}
+      Biometric Integration lets you... #todo write lead text
+    {% endblocktrans %}
+  </p>
 
-    <div class="panel panel-modern-gray">
-      <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-          {% trans 'Simprints Integration' %}
-        </h4>
-      </div>
-      <div class="panel-body" id="simprints-form">
-        {% crispy simprints_form %}
-      </div>
+  <div class="panel panel-modern-gray">
+    <div class="panel-heading">
+      <h4 class="panel-title panel-title-nolink">
+        {% trans 'Simprints Integration' %}
+      </h4>
     </div>
+    <div class="panel-body" id="simprints-form">
+      {% crispy simprints_form %}
+    </div>
+  </div>
 
 {% endblock %}

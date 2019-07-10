@@ -22,6 +22,16 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-child_delivery_forms",
     "display_name": "Forms - Children from Delivery (Static)",
@@ -45,6 +55,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "AWC ID",
@@ -65,8 +93,8 @@
         "datatype": "string",
         "type": "expression",
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "supervisor_id",
         "create_index": true,
         "expression": {
@@ -767,6 +795,13 @@
       }
     },
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
+    }
   }
 }

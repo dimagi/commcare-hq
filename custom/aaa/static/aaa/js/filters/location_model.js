@@ -42,8 +42,10 @@ hqDefine('aaa/js/filters/location_model', [
                     return item.id === self.userLocationId;
                 });
                 self.selectedLocation(location.id);
+            } else {
+                self.selectedLocation(params.selectedLocation || reachUtils.DEFAULTLOCATION.id);
             }
-            self.loc(self.userLocationId || reachUtils.DEFAULTLOCATION.id);
+            self.loc(params.selectedLocation || self.userLocationId || reachUtils.DEFAULTLOCATION.id);
         };
 
         self.setChild = function (child) {

@@ -4,76 +4,76 @@
 {% load crispy_forms_tags %}
 
 {% block stylesheets %} {{ block.super }}
-    <style type="text/css">
-        .enum-pairs > div {
-            line-height: 18px;
-        }
-    </style>
+  <style type="text/css">
+    .enum-pairs > div {
+      line-height: 18px;
+    }
+  </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {% include 'hqwebapp/includes/ui_element_js.html' %}
-    <script src="{% static 'hqwebapp/js/select_2_ajax_widget_v4.js' %}"></script>
-    <script src="{% static 'groups/js/group_members.js' %}"></script>
+  {% include 'hqwebapp/includes/ui_element_js.html' %}
+  <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
+  <script src="{% static 'groups/js/group_members.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}
   {% if request.is_view_only %}
-      {% trans "Viewing Group" %}
+    {% trans "Viewing Group" %}
   {% else %}
-      {% trans "Editing Group" %}
+    {% trans "Editing Group" %}
   {% endif %}
   "{{ group.name }}"{% if group.case_sharing %} ({% trans 'Case Sharing' %}){% endif %} ({% blocktrans count num_users=num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data "group_id" group.get_id %}
-    {% initial_page_data "group_metadata" group.metadata %}
-    {% initial_page_data "domain_uses_case_sharing" domain_uses_case_sharing %}
-    <p id="save-alert" class="alert" hidden="hidden">
-    </p>
-    {% if group.is_deleted %}
-        <div class="alert alert-info">
-            {% blocktrans%}
-            This group has been deleted already.
+  {% initial_page_data "group_id" group.get_id %}
+  {% initial_page_data "group_metadata" group.metadata %}
+  {% initial_page_data "domain_uses_case_sharing" domain_uses_case_sharing %}
+  <p id="save-alert" class="alert" hidden="hidden">
+  </p>
+  {% if group.is_deleted %}
+    <div class="alert alert-info">
+      {% blocktrans%}
+        This group has been deleted already.
+      {% endblocktrans %}
+      {% if not request.is_view_only %}
+        {% blocktrans %}
+          If you would like to undelete it you can do so below.
+        {% endblocktrans %}
+        <form name="restore_group" action="{% url "restore_group" domain group.get_id %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-primary disable-on-submit" type="submit">
+            {% blocktrans with group.name as group_name %}
+              Restore Group "{{group_name}}"
             {% endblocktrans %}
-            {% if not request.is_view_only %}
-                {% blocktrans %}
-                If you would like to undelete it you can do so below.
-                {% endblocktrans %}
-                <form name="restore_group" action="{% url "restore_group" domain group.get_id %}" method="post">
-                    {% csrf_token %}
-                    <button class="btn btn-primary disable-on-submit" type="submit">
-                        {% blocktrans with group.name as group_name %}
-                            Restore Group "{{group_name}}"
-                        {% endblocktrans %}
-                    </button>
-                </form>
-            {% endif %}
-        </div>
-    {% else %}
-        {% if not request.is_view_only %}
-        <div class="btn-toolbar">
-            <a href="#editGroupSettings" class="btn btn-default" data-toggle="modal"><i class="fa fa-pencil"></i> {% trans "Edit Settings" %}</a>
-            <a class="btn btn-danger pull-right" style="margin-right: 45px;" data-toggle="modal" href="#delete_group_modal">
-                <i class="fa fa-remove"></i>
-                {% blocktrans with group.name as group_name %}
-                    Delete Group "{{group_name}}"
-                {% endblocktrans %}
-            </a>
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  {% else %}
+    {% if not request.is_view_only %}
+      <div class="btn-toolbar">
+        <a href="#editGroupSettings" class="btn btn-default" data-toggle="modal"><i class="fa fa-pencil"></i> {% trans "Edit Settings" %}</a>
+        <a class="btn btn-danger pull-right" style="margin-right: 45px;" data-toggle="modal" href="#delete_group_modal">
+          <i class="fa fa-remove"></i>
+          {% blocktrans with group.name as group_name %}
+            Delete Group "{{group_name}}"
+          {% endblocktrans %}
+        </a>
 
-            {% if bulk_sms_verification_enabled %}
-            <form id="initiate-verification-workflow"
-                  class="form-inline"
-                  method="post"
-                  action="{% url "bulk_sms_verification" domain group.get_id %}">
-                {% csrf_token %}
-                <button id="submit-verification" type="submit" class="btn btn-default">
-                    <i class="fa fa-signal"></i> {% trans 'Verify Phone Numbers' %}
-                </button>
-                <span class="hq-help-template"
-                    data-title="{% trans 'Initiate Phone Number Verification for All Mobile Workers In This Group' %}"
-                    data-content="{% blocktrans %}
+        {% if bulk_sms_verification_enabled %}
+          <form id="initiate-verification-workflow"
+                class="form-inline"
+                method="post"
+                action="{% url "bulk_sms_verification" domain group.get_id %}">
+            {% csrf_token %}
+            <button id="submit-verification" type="submit" class="btn btn-default">
+              <i class="fa fa-signal"></i> {% trans 'Verify Phone Numbers' %}
+            </button>
+            <span class="hq-help-template"
+                  data-title="{% trans 'Initiate Phone Number Verification for All Mobile Workers In This Group' %}"
+                  data-content="{% blocktrans %}
                         For all active mobile workers in this group, and for each phone number, this will
                         initiate an SMS verification workflow. If the phone number is already verified or
                         if the phone number is already in use by another contact in the system, nothing
@@ -81,197 +81,197 @@
                         will be resent.
                         {% endblocktrans %}">
                 </span>
-            </form>
-            {% endif %}
-        </div>
-        <hr />
+          </form>
         {% endif %}
-
-        <ul class="nav nav-tabs sticky-tabs" role="tablist" style="margin-bottom: 20px;">
-            <li role="presentation">
-                <a href="#membership-tab" aria-controls="home" role="tab" data-toggle="tab">
-                    {% trans "Group Membership" %}
-                </a>
-            </li>
-            <li role="presentation">
-                <a href="#groupdata-tab" aria-controls="profile" role="tab" data-toggle="tab">
-                    {% trans "Group Data" %}
-                </a>
-            </li>
-        </ul>
-
-        <!-- Tab panes -->
-        <div class="tab-content">
-            <div role="tabpanel" class="tab-pane" id="membership-tab">
-                <div class="panel-body">
-                    {% if request.is_view_only or not can_edit_group_membership %}
-                        <div class="form form-horizontal">
-                            <legend>
-                                {% trans "View Group Membership" %}
-                            </legend>
-                            <div class="form-group">
-                                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
-                                    {% trans "Group Membership" %}
-                                </label>
-                                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
-                                    {% if not group_members %}
-                                        {% blocktrans %}
-                                            No Mobile Workers are currently assigned to this group.
-                                        {% endblocktrans %}
-                                    {% else %}
-                                        <ul>
-                                            {% for member in group_members %}
-                                                <li>{{ member.username_in_report }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% if not can_edit_group_membership %}
-                            <div class="alert alert-info">
-                                {% blocktrans %}
-                                    Your permissions allow you to <strong>create, update, and delete groups</strong>
-                                    and <strong>update group details &amp; data</strong>. However, your project administrator
-                                    has not granted you permission to change the group membership.
-                                {% endblocktrans %}
-                            </div>
-                        {% endif %}
-                    {% else %}
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="alert alert-info" id="membership_updating" style="display: none">
-                                  <p class="lead">
-                                    <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
-                                  </p>
-                                </div>
-
-                                <form class="form-horizontal disable-on-submit"
-                                      id="edit_membership"
-                                      action="{% url "update_group_membership" domain group.get_id %}" method='post'>
-                                        {% crispy group_membership_form %}
-                                </form>
-
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div role="tabpanel" class="tab-pane" id="groupdata-tab">
-                <div class="panel-body">
-                    {% if request.is_view_only %}
-                        <div class="form form-horizontal">
-                            <legend>
-                                {% trans "View Group Data" %}
-                            </legend>
-                            <div class="form-group">
-                                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
-                                    {% trans "Group Data" %}
-                                </label>
-                                <div class="controls-text col-xs-12 col-sm-8 col-md-8 col-lg-6">
-                                    {% if not group.metadata %}
-                                        {% trans "No Data Provided" %}
-                                    {% else %}
-                                        <ul>
-                                            {% for key, val in group.metadata.items %}
-                                            <li>
-                                                <strong>{{ key }}</strong>
-                                                &rarr;
-                                                {{ val }}
-                                            </li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    {% else %}
-                        <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
-                            {% csrf_token %}
-                            <fieldset>
-                                <legend>{% trans "Edit Group Data" %}</legend>
-                                <div class="form-group">
-                                    <label class="control-label col-sm-2">
-                                        {% trans "Group Data" %}
-                                    </label>
-                                    <div class="col-sm-9">
-                                        <div id="group-data-ui-editor"></div>
-                                    </div>
-                                </div>
-                                <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
-                                <div class="form-actions">
-                                    <div class="col-sm-9 col-sm-offset-2">
-                                        <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
-                                    </div>
-                                </div>
-
-                            </fieldset>
-                        </form>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
+      </div>
+      <hr />
     {% endif %}
+
+    <ul class="nav nav-tabs sticky-tabs" role="tablist" style="margin-bottom: 20px;">
+      <li role="presentation">
+        <a href="#membership-tab" aria-controls="home" role="tab" data-toggle="tab">
+          {% trans "Group Membership" %}
+        </a>
+      </li>
+      <li role="presentation">
+        <a href="#groupdata-tab" aria-controls="profile" role="tab" data-toggle="tab">
+          {% trans "Group Data" %}
+        </a>
+      </li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <div role="tabpanel" class="tab-pane" id="membership-tab">
+        <div class="panel-body">
+          {% if request.is_view_only or not can_edit_group_membership %}
+            <div class="form form-horizontal">
+              <legend>
+                {% trans "View Group Membership" %}
+              </legend>
+              <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+                  {% trans "Group Membership" %}
+                </label>
+                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
+                  {% if not group_members %}
+                    {% blocktrans %}
+                      No Mobile Workers are currently assigned to this group.
+                    {% endblocktrans %}
+                  {% else %}
+                    <ul>
+                      {% for member in group_members %}
+                        <li>{{ member.username_in_report }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% if not can_edit_group_membership %}
+              <div class="alert alert-info">
+                {% blocktrans %}
+                  Your permissions allow you to <strong>create, update, and delete groups</strong>
+                  and <strong>update group details &amp; data</strong>. However, your project administrator
+                  has not granted you permission to change the group membership.
+                {% endblocktrans %}
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="alert alert-info" id="membership_updating" style="display: none">
+                  <p class="lead">
+                    <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
+                  </p>
+                </div>
+
+                <form class="form-horizontal disable-on-submit"
+                      id="edit_membership"
+                      action="{% url "update_group_membership" domain group.get_id %}" method='post'>
+                  {% crispy group_membership_form %}
+                </form>
+
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      <div role="tabpanel" class="tab-pane" id="groupdata-tab">
+        <div class="panel-body">
+          {% if request.is_view_only %}
+            <div class="form form-horizontal">
+              <legend>
+                {% trans "View Group Data" %}
+              </legend>
+              <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+                  {% trans "Group Data" %}
+                </label>
+                <div class="controls-text col-xs-12 col-sm-8 col-md-8 col-lg-6">
+                  {% if not group.metadata %}
+                    {% trans "No Data Provided" %}
+                  {% else %}
+                    <ul>
+                      {% for key, val in group.metadata.items %}
+                        <li>
+                          <strong>{{ key }}</strong>
+                          &rarr;
+                          {{ val }}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
+              {% csrf_token %}
+              <fieldset>
+                <legend>{% trans "Edit Group Data" %}</legend>
+                <div class="form-group">
+                  <label class="control-label col-sm-2">
+                    {% trans "Group Data" %}
+                  </label>
+                  <div class="col-sm-9">
+                    <div id="group-data-ui-editor"></div>
+                  </div>
+                </div>
+                <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
+                <div class="form-actions">
+                  <div class="col-sm-9 col-sm-offset-2">
+                    <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
+                  </div>
+                </div>
+
+              </fieldset>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  {% endif %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% if not request.is_view_only %}
+  {% if not request.is_view_only %}
     <div id="delete_group_modal" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">
-                        {% blocktrans with group.name as group_name %}
-                            Delete Group "{{group_name}}"?
-                        {% endblocktrans %}
-                    </h4>
-                </div>
-                <form name="delete_group" action="{% url "delete_group" domain group.get_id %}" method="post">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        <p>
-                        {% blocktrans with group.name as group_name %}
-                            Are you sure you want to delete the group "{{group_name}}"?
-                        {% endblocktrans %}
-                        </p>
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-                        <button class="btn btn-danger disable-on-submit" type="submit">
-                            <i class="fa fa-remove"></i>
-                            {% trans 'Delete' %}
-                        </button>
-                    </div>
-                </form>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">
+              {% blocktrans with group.name as group_name %}
+                Delete Group "{{group_name}}"?
+              {% endblocktrans %}
+            </h4>
+          </div>
+          <form name="delete_group" action="{% url "delete_group" domain group.get_id %}" method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+              <p>
+                {% blocktrans with group.name as group_name %}
+                  Are you sure you want to delete the group "{{group_name}}"?
+                {% endblocktrans %}
+              </p>
             </div>
+            <div class="modal-footer">
+              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+              <button class="btn btn-danger disable-on-submit" type="submit">
+                <i class="fa fa-remove"></i>
+                {% trans 'Delete' %}
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
     <div class="modal fade" id="editGroupSettings">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">
-                        {% blocktrans with group.name as group_name %}
-                            Edit Settings for Group "{{ group_name }}"
-                        {% endblocktrans %}
-                    </h4>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">
+              {% blocktrans with group.name as group_name %}
+                Edit Settings for Group "{{ group_name }}"
+              {% endblocktrans %}
+            </h4>
+          </div>
+          <form id="edit-group-settings" class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
+            {% csrf_token %}
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="control-label col-sm-3" for="group-name-input">{% trans "Group Name" %}</label>
+                <div class="col-sm-9">
+                  <input type="text" value="{{ group.name }}" class="form-control" name="name" id="group-name-input" />
                 </div>
-                <form id="edit-group-settings" class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label class="control-label col-sm-3" for="group-name-input">{% trans "Group Name" %}</label>
-                            <div class="col-sm-9">
-                                <input type="text" value="{{ group.name }}" class="form-control" name="name" id="group-name-input" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-sm-3" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
-                            <div class="col-sm-9">
-                                <select-toggle params="name: 'case_sharing',
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-3" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
+                <div class="col-sm-9">
+                  <select-toggle params="name: 'case_sharing',
                                                        id: 'group-case-sharing-input',
                                                        options: [{
                                                                     id: 'true',
@@ -281,19 +281,19 @@
                                                                     text: '{% trans_html_attr 'Off' %}',
                                                                 }],
                                                        value: '{% if group.case_sharing %}true{% else %}false{% endif %}'"></select-toggle>
-                                <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
-                                <div id="group-case-sharing-warning" hidden="true">
-                                    <p class="help-block alert alert-warning">
-                                        {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
-                                        <a href="https://help.commcarehq.org/display/commcarepublic/Case+Sharing" target="_blank">Case Sharing</a>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-sm-3" for="group-reporting-input">{% trans "Reporting" %}</label>
-                            <div class="col-sm-6">
-                                <select-toggle params="name: 'reporting',
+                  <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
+                  <div id="group-case-sharing-warning" hidden="true">
+                    <p class="help-block alert alert-warning">
+                      {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
+                      <a href="https://help.commcarehq.org/display/commcarepublic/Case+Sharing" target="_blank">Case Sharing</a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-3" for="group-reporting-input">{% trans "Reporting" %}</label>
+                <div class="col-sm-6">
+                  <select-toggle params="name: 'reporting',
                                                        id: 'group-reporting-input',
                                                        options: [{
                                                                     id: 'true',
@@ -303,18 +303,18 @@
                                                                     text: '{% trans_html_attr 'Off' %}',
                                                                 }],
                                                        value: '{% if group.reporting %}true{% else %}false{% endif %}'"></select-toggle>
-                                <p class="help-block">{% trans "Indicate whether this group's name should appear in the group filter for reports." %}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-                        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
-                    </div>
-                </form>
+                  <p class="help-block">{% trans "Indicate whether this group's name should appear in the group filter for reports." %}</p>
+                </div>
+              </div>
             </div>
+            <div class="modal-footer">
+              <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+              <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
     <div id="hq-modal-home"></div>
-{% endif %}
+  {% endif %}
 {% endblock modals %}

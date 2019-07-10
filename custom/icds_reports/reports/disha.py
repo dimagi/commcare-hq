@@ -10,6 +10,7 @@ import re
 from corehq.apps.reports.util import batch_qs
 from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
+from corehq.util.sentry import is_pg_cancelled_query_exception
 from couchexport.export import Format
 
 from custom.icds_reports.const import AggregationLevels
@@ -102,7 +103,7 @@ class DishaDump(object):
                 file_obj.write(",")
             logger.info("Processed {count}/{batches} batches. Total records:{total}".format(
                 count=count, total=total, batches=num_batches))
-        file_obj.write("]}")
+        file_obj.write("]}".encode('utf-8'))
 
     def build_export_json(self):
         with TransientTempfile() as temp_path:
@@ -122,5 +123,19 @@ def build_dumps_for_month(month, rebuild=False):
             logger.info("Skipping, export is already generated for state {}".format(state_name))
         else:
             logger.info("Generating for state {}".format(state_name))
-            dump.build_export_json()
+            MAX_RETRY_COUNT = 5
+            retry_count = 0
+            while True:
+                try:
+                    dump.build_export_json()
+                except Exception as e:
+                    # The DISHA sql query that runs on aggregate tables can be cancelled by Postgres
+                    #   if the query is routed to standby and that standby needs to alter the matching rows
+                    if not is_pg_cancelled_query_exception(e) or retry_count == MAX_RETRY_COUNT:
+                        raise e
+                    else:
+                        retry_count += 1
+                        logger.info("Postgres cancelled the DISHA query. Retry count: {}".format(str(retry_count)))
+                else:
+                    break
             logger.info("Finished for state {}".format(state_name))

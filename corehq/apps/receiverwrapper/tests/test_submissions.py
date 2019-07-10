@@ -9,6 +9,7 @@ from django.test.utils import override_settings
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 from django.test.client import Client
 from django.urls import reverse
@@ -74,7 +75,7 @@ class SubmissionTest(TestCase):
                 del foo[key]
 
         # normalize the json
-        foo = json.loads(json.dumps(foo))
+        foo = json.loads(json.dumps(foo, cls=CommCareJSONEncoder))
         expected = self._get_expected_json(xform_id, xmlns)
         self.assertEqual(foo, expected)
 

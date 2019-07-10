@@ -43,6 +43,7 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     Form,
+    LinkedApplication,
     Module,
     ModuleNotFoundException,
     app_template_dir,
@@ -73,7 +74,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
-from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm, MultimediaTranslationsBulkUploadForm
+from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -159,8 +160,9 @@ def get_app_view_context(request, app):
     context = {}
 
     settings_layout = copy.deepcopy(
-        get_commcare_settings_layout(app.get_doc_type())
+        get_commcare_settings_layout(app)
     )
+
     for section in settings_layout:
         new_settings = []
         for setting in section['settings']:
@@ -173,6 +175,10 @@ def get_app_view_context(request, app):
             disable_if_true = setting.get('disable_if_true')
             if disable_if_true and getattr(app, setting['id']):
                 continue
+            if app.get_doc_type() == 'LinkedApplication':
+                if setting['id'] in app.SUPPORTED_SETTINGS:
+                    if setting['id'] not in app.linked_app_attrs:
+                        setting['is_inherited'] = True
             new_settings.append(setting)
         section['settings'] = new_settings
 
@@ -256,15 +262,8 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
-            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
-        },
-        'bulk_app_multimedia_upload': {
-            'action': reverse('upload_bulk_app_translations',   # TODO
-                              args=(app.domain, app.get_id)),
-            'download_url': reverse('download_bulk_multimedia_translations',
-                                    args=(app.domain, app.get_id)),
-            'adjective': _("multimedia"),
-            'plural_noun': _("multimedia references"),
+            'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
+            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
     })
     context.update({
@@ -276,12 +275,6 @@ def get_app_view_context(request, app):
             context,
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
-            app=app,
-        ),
-        'bulk_multimedia_translation_form': get_bulk_upload_form(
-            context,
-            context_key="bulk_app_multimedia_upload",
-            form_class=MultimediaTranslationsBulkUploadForm,
         ),
     })
     context.update({
@@ -457,13 +450,7 @@ def _create_linked_app(request, master_app, link_domain, link_app_name):
 
 def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name, app_id):
     extra_properties = {'name': copy_to_app_name}
-    try:
-        app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties)
-    except ReportConfigurationNotFoundError:
-        messages.error(request, _("Copying the application failed because "
-                                  "your application contains a Report Module "
-                                  "that references a static UCR configuration."))
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, app_id]))
+    app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties, request)
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -707,7 +694,7 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-    app.smart_lang_display = json.loads(request.body)['smart_lang_display']
+    app.smart_lang_display = json.loads(request.body.decode('utf-8'))['smart_lang_display']
     app.save()
     return json_response(langs)
 
@@ -726,13 +713,15 @@ def edit_app_ui_translations(request, domain, app_id):
     translations.pop('modules.m0', None)
 
     app.set_translations(lang, translations)
-    response = {}
-    app.save(response)
-    return json_response(response)
+    app.save(response_json={})  # Updates the app version without updating app properties
+    return json_response({})
 
 
 @require_GET
 def get_app_ui_translations(request, domain):
+    """
+    Retrieves translations from all domains
+    """
     params = json_request(request.GET)
     lang = params.get('lang', 'en')
     key = params.get('key', None)
@@ -756,7 +745,7 @@ def edit_app_attr(request, domain, app_id, attr):
     app = get_app(domain, app_id)
 
     try:
-        hq_settings = json.loads(request.body)['hq']
+        hq_settings = json.loads(request.body.decode('utf-8'))['hq']
     except ValueError:
         hq_settings = request.POST
 
@@ -815,16 +804,13 @@ def edit_app_attr(request, domain, app_id, attr):
         ('mobile_ucr_restore_version', None),
         ('location_fixture_restore', None),
     )
-    linked_app_attrs = [
-        'target_commcare_flavor',
-    ]
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
             value = hq_settings[attribute]
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
-            if hasattr(app, 'linked_app_attrs') and attribute in linked_app_attrs:
+            if app.get_doc_type() == 'LinkedApplication' and attribute in app.SUPPORTED_SETTINGS:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })
@@ -902,17 +888,17 @@ def rearrange(request, domain, app_id, key):
     """
     app = get_app(domain, app_id)
     ajax = json.loads(request.POST.get('ajax', 'false'))
-    i, j = (int(x) for x in (request.POST['to'], request.POST['from']))
+    from_index, to_index = (int(x) for x in (request.POST['from'], request.POST['to']))
     resp = {}
     module_id = None
 
     try:
         if "forms" == key:
-            to_module_id = int(request.POST['to_module_id'])
-            from_module_id = int(request.POST['from_module_id'])
-            app.rearrange_forms(to_module_id, from_module_id, i, j)
+            from_module_uid = request.POST['from_module_uid']
+            to_module_uid = request.POST['to_module_uid']
+            app.rearrange_forms(from_module_uid, to_module_uid, from_index, to_index)
         elif "modules" == key:
-            app.rearrange_modules(i, j)
+            app.rearrange_modules(from_index, to_index)
     except IncompatibleFormTypeException as e:
         error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
@@ -934,6 +920,15 @@ def rearrange(request, domain, app_id, key):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def move_child_modules_after_parents(request, domain, app_id):
+    app = get_app(domain, app_id)
+    app.move_child_modules_after_parents()
+    app.save()
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
 @require_GET

@@ -2,16 +2,16 @@
 {% load i18n %}
 
 {% block page_content %}
-    <h2>{% trans "Request Access to Messaging Features" %}</h2>
-    <p>
+  <h2>{% trans "Request Access to Messaging Features" %}</h2>
+  <p>
     {% blocktrans with next_plan.name as p_name%}
-        To enable messaging features, please request access by sending an email
-        to <a href="mailto:sales@dimagi.com">sales@dimagi.com</a> from your work
-        email address containing the following information:
+      To enable messaging features, please request access by sending an email
+      to <a href="mailto:sales@dimagi.com">sales@dimagi.com</a> from your work
+      email address containing the following information:
     {% endblocktrans %}
-    </p>
-    <ul>
-        <li>{% trans 'Your full name' %}</li>
-        <li>{% trans 'The organization you work for' %}</li>
-    </ul>
+  </p>
+  <ul>
+    <li>{% trans 'Your full name' %}</li>
+    <li>{% trans 'The organization you work for' %}</li>
+  </ul>
 {% endblock %}

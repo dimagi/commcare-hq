@@ -1,0 +1,28 @@
+DROP TABLE IF EXISTS "icds_db_child_thr_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_child_thr_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_child_health_thr_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_child_health_thr_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_child_thr_form_7a197ee47818209780c23ed9" (
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, days_ration_given_child
+        ) (
+          SELECT DISTINCT ON (child_health_case_id)
+            %(state_id)s AS state_id,
+            LAST_VALUE(supervisor_id) over w AS supervisor_id,
+            %(month)s AS month,
+            child_health_case_id AS case_id,
+            MAX(timeend) over w AS latest_time_end_processed,
+            SUM(days_ration_given_child) over w AS days_ration_given_child
+          FROM "ucr_icds-cas_static-dashboard_thr_forms_b8bca6ea"
+          WHERE state_id = %(state_id)s AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+                child_health_case_id IS NOT NULL
+          WINDOW w AS (PARTITION BY child_health_case_id)
+        )
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

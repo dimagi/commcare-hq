@@ -1,23 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import datetime
 import os
 import re
 import tempfile
-from collections import namedtuple, OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, namedtuple
+
+from django.utils.functional import cached_property
 
 import polib
-from django.utils.functional import cached_property
+import six
 from memoized import memoized
 
+from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.models import TransifexBlacklist
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
-HQ_MODULE_SHEET_NAME = re.compile(r'^module(\d+)$')
-HQ_FORM_SHEET_NAME = re.compile(r'^module(\d+)_form(\d+)$')
+HQ_MODULE_SHEET_NAME = re.compile(r'^menu(\d+)$')
+HQ_FORM_SHEET_NAME = re.compile(r'^menu(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
 SKIP_TRANSFEX_STRING = "SKIP TRANSIFEX"
 
@@ -59,6 +61,13 @@ class AppTranslationsGenerator(object):
         self._build_translations()
 
     @cached_property
+    def build_id(self):
+        if self.version:
+            return get_version_build_id(self.domain, self.app_id, self.version)
+        else:
+            return self.app_id
+
+    @cached_property
     def _get_labels_to_skip(self):
         """Returns the labels of questions that have the skip string in the comment,
         so that those labels are not sent to transifex later.
@@ -81,7 +90,7 @@ class AppTranslationsGenerator(object):
         necessary_labels = defaultdict(set)
 
         for module in self.app.modules:
-            for form in module.forms:
+            for form in module.get_forms():
                 questions = form.get_questions(self.app.langs, include_triggers=True,
                                                include_groups=True, include_translations=True)
                 for question in questions:
@@ -99,16 +108,16 @@ class AppTranslationsGenerator(object):
 
     def _translation_data(self, app):
         # get the translations data
-        from corehq.apps.translations.app_translations import get_bulk_app_sheet_rows
+        from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
         # simply the rows of data per sheet name
-        rows = get_bulk_app_sheet_rows(
+        rows = get_bulk_app_sheets_by_name(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
         )
 
         # get the translation data headers
-        from corehq.apps.translations.app_translations import get_bulk_app_sheet_headers
+        from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
@@ -121,7 +130,7 @@ class AppTranslationsGenerator(object):
 
     def _set_sheet_name_to_module_or_form_mapping(self, all_module_and_form_details):
         # iterate the first sheet to get unique ids for forms/modules
-        sheet_name_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'sheet_name')
+        sheet_name_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
         unique_id_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
         type_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
         for row in all_module_and_form_details:
@@ -161,10 +170,10 @@ class AppTranslationsGenerator(object):
 
     def _update_sheet_name_with_unique_id(self, sheet_name):
         """
-        update sheet name with HQ format like module0 or module1_form1 to
+        update sheet name with HQ format like menu0 or menu1_form1 to
         a name with unique id of module or form instead
 
-        :param sheet_name: name like module0 or module1_form1
+        :param sheet_name: name like menu0 or menu1_form1
         :return: name like module_moduleUniqueID or form_formUniqueId
         """
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
@@ -185,7 +194,7 @@ class AppTranslationsGenerator(object):
         receive sheet name in HQ format and return the name that should be used
         to upload on transifex along with module/form unique ID and version postfix
 
-        :param sheet_name: name like module0 or module1_form1
+        :param sheet_name: name like menu0 or menu1_form1
         :return: name like module_moduleUniqueID or form_formUniqueId
         """
         sheet_name = self._update_sheet_name_with_unique_id(sheet_name)
@@ -250,14 +259,19 @@ class AppTranslationsGenerator(object):
         default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
             type_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
-            sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'sheet_name')
+            sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
             unique_id_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
 
             def occurrence(_row):
-                return ':'.join([_row[type_index], _row[sheet_name_index], _row[unique_id_index]])
+                # keep legacy notation to use module to avoid expiring translations already present
+                # caused by changing the context on the translation which is populated by this method
+                return ':'.join(
+                    [_row[type_index].replace("Menu", "Module"),
+                     _row[sheet_name_index].replace("menu", "module"),
+                     _row[unique_id_index]])
         else:
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
-            if type_and_id.type == "Module":
+            if type_and_id.type == "Menu":
                 case_property_index = self._get_header_index(sheet_name, 'case_property')
                 list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
                 rows = self._filter_invalid_rows_for_module(rows, type_and_id.id, case_property_index,
@@ -274,7 +288,7 @@ class AppTranslationsGenerator(object):
 
                 def occurrence(_row):
                     return _row[label_index]
-        is_module = type_and_id and type_and_id.type == "Module"
+        is_module = type_and_id and type_and_id.type == "Menu"
         for index, row in enumerate(rows, 1):
             source = row[key_lang_index]
             translation = row[source_lang_index]
@@ -298,6 +312,12 @@ class AppTranslationsGenerator(object):
                 [('', index)],
                 occurrence_row)
         return list(translations.values())
+
+    def get_translations(self):
+        return OrderedDict(
+            (filename, _translations_to_po_entries(translations))
+            for filename, translations in six.iteritems(self.translations)
+        )
 
     @property
     @memoized
@@ -357,23 +377,28 @@ class PoFileGenerator(object):
             po = polib.POFile()
             po.check_for_duplicates = False
             po.metadata = self.metadata
-            for translation in sheet_translations:
-                source = translation.key
-                if source:
-                    entry = polib.POEntry(
-                        msgid=translation.key,
-                        msgstr=translation.translation or '',
-                        occurrences=translation.occurrences,
-                        msgctxt=translation.msgctxt
-                    )
-                    po.append(entry)
+            po.extend(_translations_to_po_entries(sheet_translations))
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             po.save(temp_file.name)
             self._generated_files.append(POFileInfo(file_name, temp_file.name))
+
         return self._generated_files
 
     def _cleanup(self):
         for resource_name, filepath in self._generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
-        self.generated_files = []
+        self._generated_files = []
+
+
+def _translations_to_po_entries(translations):
+    return [
+        polib.POEntry(
+            msgid=translation.key,
+            msgstr=translation.translation or '',
+            occurrences=translation.occurrences,
+            msgctxt=translation.msgctxt,
+        )
+        for translation in translations
+        if translation.key
+    ]

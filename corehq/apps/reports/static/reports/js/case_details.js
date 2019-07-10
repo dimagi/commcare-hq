@@ -82,11 +82,11 @@ hqDefine("reports/js/case_details", [
         };
 
         self.get_xform_data = function (xformId) {
+            var $panel = $("#xform_data_panel");
             $.memoizedAjax({
                 "type": "GET",
                 "url": initialPageData.reverse('case_form_data', xformId),
                 "success": function (data) {
-                    var $panel = $("#xform_data_panel");
                     $panel.html(data.html);
 
                     // form data panel uses sticky tabs when it's its own page
@@ -100,6 +100,15 @@ hqDefine("reports/js/case_details", [
                         ordered_question_values: data.ordered_question_values,
                         container: $panel,
                     });
+                },
+                "error": function (jqXHR, textStatus, errorThrown) {
+                    var message;
+                    if (jqXHR.status === 403) {
+                        message = jqXHR.responseJSON.html;
+                    } else {
+                        message = gettext("Sorry, there was an issue communicating with the server.");
+                    }
+                    $panel.html(message);
                 },
             });
         };
@@ -184,7 +193,7 @@ hqDefine("reports/js/case_details", [
         };
 
         self.clickRow = function (item) {
-            $("#xform_data_panel").html("<img src='/static/hqwebapp/images/ajax-loader.gif' alt='loading indicator' />");
+            $("#xform_data_panel").html("<i class='fa fa-spin fa-spinner'></i>");
             var idx = self.xforms().indexOf(item);
 
             self.get_xform_data(self.xforms()[idx].id());

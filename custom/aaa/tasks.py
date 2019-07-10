@@ -16,11 +16,24 @@ from custom.aaa.models import (
     CcsRecord,
     Child,
     ChildHistory,
+    DenormalizedAWC,
+    DenormalizedVillage,
     Woman,
-    WomanHistory,
 )
 from custom.aaa.utils import build_location_filters, create_excel_file
 from dimagi.utils.dates import force_to_date
+
+
+@task
+def run_aggregation(domain, month=None):
+    update_location_tables(domain)
+    update_child_table(domain)
+    update_child_history_table(domain)
+    update_woman_table(domain)
+    update_ccs_record_table(domain)
+    if month:
+        update_agg_awc_table(domain, month)
+        update_agg_village_table(domain, month)
 
 
 def update_table(domain, slug, method):
@@ -51,6 +64,12 @@ def update_table(domain, slug, method):
 
 
 @task
+def update_location_tables(domain):
+    DenormalizedAWC.build(domain)
+    DenormalizedVillage.build(domain)
+
+
+@task
 def update_child_table(domain):
     for agg_query in Child.aggregation_queries:
         update_table(domain, Child.__name__ + agg_query.__name__, agg_query)
@@ -65,12 +84,6 @@ def update_child_history_table(domain):
 @task
 def update_woman_table(domain):
     for agg_query in Woman.aggregation_queries:
-        update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
-
-
-@task
-def update_woman_history_table(domain):
-    for agg_query in WomanHistory.aggregation_queries:
         update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
 
 
@@ -125,7 +138,7 @@ def prepare_export_reports(domain, selected_date, next_month_start, selected_loc
     if beneficiary_type == 'child':
         columns = (
             ('name', 'Name'),
-            ('age', 'Age'),
+            ('age_in_months', 'Age (in Months)'),
             ('gender', 'Gender'),
             ('lastImmunizationType', 'Last Immunization Type'),
             ('lastImmunizationDate', 'Last Immunization Date'),
@@ -134,23 +147,20 @@ def prepare_export_reports(domain, selected_date, next_month_start, selected_loc
     elif beneficiary_type == 'eligible_couple':
         columns = (
             ('name', 'Name'),
-            ('age', 'Age'),
+            ('age_in_months', 'Age (in Months)'),
             ('currentFamilyPlanningMethod', 'Current Family Planing Method'),
             ('adoptionDateOfFamilyPlaning', 'Adoption Date Of Family Planning'),
         )
         data = EligibleCoupleQueryHelper.list(domain, selected_date, location_filters, sort_column)
-        month_end = selected_date + relativedelta(months=1) - relativedelta(days=1)
-        data = EligibleCoupleQueryHelper.update_list(data, month_end)
     elif beneficiary_type == 'pregnant_women':
         columns = (
             ('name', 'Name'),
-            ('age', 'Age'),
+            ('age_in_months', 'Age (in Months)'),
             ('pregMonth', 'Preg. Month'),
             ('highRiskPregnancy', 'High Risk Pregnancy'),
             ('noOfAncCheckUps', 'No. Of ANC Check-Ups'),
         )
         data = PregnantWomanQueryHelper.list(domain, selected_date, location_filters, sort_column)
-        data = PregnantWomanQueryHelper.update_list(data)
 
     export_columns = [col[1] for col in columns]
 

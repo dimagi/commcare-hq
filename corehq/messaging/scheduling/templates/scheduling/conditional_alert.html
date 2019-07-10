@@ -4,101 +4,101 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    {% requirejs_main 'scheduling/js/conditional_alert_main' %}
+  {% requirejs_main 'scheduling/js/conditional_alert_main' %}
 
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-<style>
+  <style>
     .nav-tabs li.has-error a, .nav-tabs li.has-error a:focus, .nav-tabs li.has-error a:hover {
-        background-color: #f2dede;
+      background-color: #f2dede;
     }
     .nav-tabs li.has-error.active a, .nav-tabs li.has-error.active a:focus, .nav-tabs li.has-error.active a:hover {
-        border-left: 2px solid #b88;
-        border-top: 2px solid #b88;
-        border-right: 2px solid #b88;
+      border-left: 2px solid #b88;
+      border-top: 2px solid #b88;
+      border-right: 2px solid #b88;
     }
     .tab-pane {
-        margin-top: 15px;
+      margin-top: 15px;
     }
-</style>
+  </style>
 {% endblock %}
 
 {% block page_content %}{{ block.super }}
-{% initial_page_data 'read_only_mode' read_only_mode %}
-{% initial_page_data 'rule_name' rule_name %}
+  {% initial_page_data 'read_only_mode' read_only_mode %}
+  {% initial_page_data 'rule_name' rule_name %}
 
-<p class="lead">
+  <p class="lead">
     {{ current_page.page_name }}
-</p>
+  </p>
 
-<p class="help-block">
+  <p class="help-block">
     {% blocktrans %}
-    For information on Conditional Alerts, see the
-    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">Conditional Alerts</a>
-    help page.
+      For information on Conditional Alerts, see the
+      <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">Conditional Alerts</a>
+      help page.
     {% endblocktrans %}
-</p>
+  </p>
 
-{% if is_system_admin %}
-<p class="help-block alert alert-info">
-    <i class="fa fa-info-circle"></i>
-    {% blocktrans %}
-    Since you are a Superuser, you will see additional options. See
-    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts+-+Superuser+Options">Superuser Options</a>
-    for more information.
-    {% endblocktrans %}
-</p>
-{% endif %}
-{% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
+  {% if is_system_admin %}
+    <p class="help-block alert alert-info">
+      <i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+        Since you are a Superuser, you will see additional options. See
+        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts+-+Superuser+Options">Superuser Options</a>
+        for more information.
+      {% endblocktrans %}
+    </p>
+  {% endif %}
+  {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 
-<div class="row">
+  <div class="row">
     <div class="col-sm-12">
-        {% if read_only_mode %}
-            {% if criteria_form.requires_system_admin_to_edit or schedule_form.requires_system_admin_to_edit %}
-            <p class="alert alert-block alert-warning">
-                {% trans "NOTE: A system administrator is required to edit this alert." %}
-            </p>
-            {% endif %}
+      {% if read_only_mode %}
+        {% if criteria_form.requires_system_admin_to_edit or schedule_form.requires_system_admin_to_edit %}
+          <p class="alert alert-block alert-warning">
+            {% trans "NOTE: A system administrator is required to edit this alert." %}
+          </p>
         {% endif %}
-        {% include 'scheduling/partials/custom_event_templates.html' %}
-        <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">
-            <ul class="nav nav-tabs">
-                <li id="basic-nav" class="{% if not criteria_form_active and not schedule_form_active %}active{% endif %}">
-                    <a href="#basic" data-toggle="tab">{% trans "Basic Information" %}</a>
-                </li>
-                <li id="rule-nav" class="{% if criteria_form.errors %}has-error{% endif %} {% if criteria_form_active %}active{% endif %} {% if new_rule %}hidden{% endif %}">
-                    <a href="#rule" data-toggle="tab">{% trans "Rule Criteria" %}</a>
-                </li>
-                <li id="schedule-nav" class="{% if schedule_form.errors %}has-error{% endif %} {% if schedule_form_active %}active{% endif %} {% if new_rule %}hidden{% endif %}">
-                    <a href="#schedule" data-toggle="tab">{% trans "Schedule & Recipients" %}</a>
-                </li>
-            </ul>
-            <div class="tab-content">
-                <div class="tab-pane {% if not criteria_form_active and not schedule_form_active %}active{% endif %}" id="basic">
-                    <div class="row">
-                        <div class="panel-body" id="conditional-alert-basic-info-panel">
-                            {% crispy basic_info_form %}
-                            {% include 'scheduling/partials/conditional_alert_continue.html' with click_event="handleBasicNavContinue" enable_when="basicTabValid" %}
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane {% if criteria_form_active %}active{% endif %}" id="rule">
-                    <div class="row">
-                        <div class="panel-body" id="rule-criteria-panel">
-                            {% crispy criteria_form %}
-                            {% include 'scheduling/partials/conditional_alert_continue.html' with click_event="handleRuleNavContinue" enable_when="ruleTabValid" %}
-                        </div>
-                    </div>
-                </div>
-                <div class="tab-pane {% if schedule_form_active %}active{% endif %}" id="schedule">
-                    <div class="panel-body">
-                        {% include 'scheduling/partials/schedule_form.html' %}
-                    </div>
-                    {% include 'scheduling/partials/conditional_alert_save.html' %}
-                </div>
+      {% endif %}
+      {% include 'scheduling/partials/custom_event_templates.html' %}
+      <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">
+        <ul class="nav nav-tabs">
+          <li id="basic-nav" class="{% if not criteria_form_active and not schedule_form_active %}active{% endif %}">
+            <a href="#basic" data-toggle="tab">{% trans "Basic Information" %}</a>
+          </li>
+          <li id="rule-nav" class="{% if criteria_form.errors %}has-error{% endif %} {% if criteria_form_active %}active{% endif %} {% if new_rule %}hidden{% endif %}">
+            <a href="#rule" data-toggle="tab">{% trans "Rule Criteria" %}</a>
+          </li>
+          <li id="schedule-nav" class="{% if schedule_form.errors %}has-error{% endif %} {% if schedule_form_active %}active{% endif %} {% if new_rule %}hidden{% endif %}">
+            <a href="#schedule" data-toggle="tab">{% trans "Schedule & Recipients" %}</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane {% if not criteria_form_active and not schedule_form_active %}active{% endif %}" id="basic">
+            <div class="row">
+              <div class="panel-body" id="conditional-alert-basic-info-panel">
+                {% crispy basic_info_form %}
+                {% include 'scheduling/partials/conditional_alert_continue.html' with click_event="handleBasicNavContinue" enable_when="basicTabValid" %}
+              </div>
             </div>
-        </form>
+          </div>
+          <div class="tab-pane {% if criteria_form_active %}active{% endif %}" id="rule">
+            <div class="row">
+              <div class="panel-body" id="rule-criteria-panel">
+                {% crispy criteria_form %}
+                {% include 'scheduling/partials/conditional_alert_continue.html' with click_event="handleRuleNavContinue" enable_when="ruleTabValid" %}
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane {% if schedule_form_active %}active{% endif %}" id="schedule">
+            <div class="panel-body">
+              {% include 'scheduling/partials/schedule_form.html' %}
+            </div>
+            {% include 'scheduling/partials/conditional_alert_save.html' %}
+          </div>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 {% endblock %}

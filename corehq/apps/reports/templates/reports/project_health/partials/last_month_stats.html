@@ -3,46 +3,46 @@
 {% load i18n %}
 <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
-    <thead>
-        <tr>
-            <th>{% trans "Category" %}</th>
-            <th>{{ last_month.month|date:"F 'y" }}</th>
-            <th>
-                {% blocktrans with prev_month=last_month.previous_month|date:"F" %}
-                    Change from {{ prev_month }}
-                {% endblocktrans %}</th>
-        </tr>
-    </thead>
-    <tr>
-        <td>{% trans "High Performing Users" %}
-            <p class="text-muted"><small>{% blocktrans %}Users who submitted {{ threshold }} or more forms last month.{% endblocktrans %}</small></p>
-        </td>
-        <td>{{ last_month.number_of_performing_users }}</td>
-        <td>
-            {% chevron last_month.delta_performing_pct %}
-            {{ last_month.delta_high_performing_pct|floatformat }} %
-        </td>
-    </tr>
-    <tr>
-        <td>
-            {% trans "Low Performing Users" %}
-            <p class="text-muted"><small>{% blocktrans %}Active users who submitted less than {{ threshold }} forms last month.{% endblocktrans %}</small></p>
-        </td>
-        <td>{{ last_month.number_of_low_performing_users }}</td>
-        <td>
-            {% reverse_chevron last_month.delta_low_performing_pct %}
-            {{ last_month.delta_low_performing_pct|floatformat }} %
-        </td>
-    </tr>
-    <tr>
-        <td>
-            {% trans "Inactive Users" %}
-            <p class="text-muted"><small>{% blocktrans %}Users who submitted no forms last month.{% endblocktrans %}</small></p>
-        </td>
-        <td>{{ last_month.inactive }}</td>
-        <td>
-            {% reverse_chevron last_month.delta_inactive_pct %}
-            {{ last_month.delta_inactive_pct|floatformat }} %
-        </td>
-    </tr>
+  <thead>
+  <tr>
+    <th>{% trans "Category" %}</th>
+    <th>{{ last_month.month|date:"F 'y" }}</th>
+    <th>
+      {% blocktrans with prev_month=last_month.previous_month|date:"F" %}
+        Change from {{ prev_month }}
+      {% endblocktrans %}</th>
+  </tr>
+  </thead>
+  <tr>
+    <td>{% trans "High Performing Users" %}
+      <p class="text-muted"><small>{% blocktrans %}Users who submitted {{ threshold }} or more forms last month.{% endblocktrans %}</small></p>
+    </td>
+    <td>{{ last_month.number_of_performing_users }}</td>
+    <td>
+      {% chevron last_month.delta_performing_pct %}
+      {{ last_month.delta_high_performing_pct|floatformat }} %
+    </td>
+  </tr>
+  <tr>
+    <td>
+      {% trans "Low Performing Users" %}
+      <p class="text-muted"><small>{% blocktrans %}Active users who submitted less than {{ threshold }} forms last month.{% endblocktrans %}</small></p>
+    </td>
+    <td>{{ last_month.number_of_low_performing_users }}</td>
+    <td>
+      {% reverse_chevron last_month.delta_low_performing_pct %}
+      {{ last_month.delta_low_performing_pct|floatformat }} %
+    </td>
+  </tr>
+  <tr>
+    <td>
+      {% trans "Inactive Users" %}
+      <p class="text-muted"><small>{% blocktrans %}Users who submitted no forms last month.{% endblocktrans %}</small></p>
+    </td>
+    <td>{{ last_month.inactive }}</td>
+    <td>
+      {% reverse_chevron last_month.delta_inactive_pct %}
+      {{ last_month.delta_inactive_pct|floatformat }} %
+    </td>
+  </tr>
 </table>

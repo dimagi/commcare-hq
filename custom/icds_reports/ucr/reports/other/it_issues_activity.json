@@ -1,11 +1,11 @@
 {
-    "server_environment": [
-        "india",
-        "icds-new",
-        "icds"
-    ],
-    "domains": [
-        "icds-dashboard-qa",
+  "server_environment": [
+    "india",
+    "icds-new",
+    "icds"
+  ],
+  "domains": [
+    "icds-dashboard-qa",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -13,106 +13,107 @@
     "priyanka-app",
     "shrena-dev",
     "aparatest",
-        "reach-sandbox",
+    "reach-sandbox",
     "reach-dashboard-qa",
-        "reach-test",
-        "icds-test",
-        "icds-cas",
-        "cas-lab"
+    "reach-test",
+    "icds-test",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "cas-lab"
+  ],
+  "report_id": "static-it_issues_activity",
+  "data_source_table": "static-it_report_follow_issue",
+  "config": {
+    "description": "Report to see form submission at different levels for Issue Tracker",
+    "title": "Issue Tracker Activity",
+    "visible": false,
+    "aggregation_columns": [
+      "user_location_id"
     ],
-    "report_id": "static-it_issues_activity",
-    "data_source_table": "static-it_report_follow_issue",
-    "config": {
-        "description": "Report to see form submission at different levels for Issue Tracker",
-        "title": "Issue Tracker Activity",
-        "visible": false,
-        "aggregation_columns": [
-            "user_location_id"
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "display": "Date Submitted",
+        "field": "timeEnd",
+        "required": false,
+        "slug": "timeEnd",
+        "type": "date"
+      },
+      {
+        "choices": [
+          {
+            "display": "Supervisor",
+            "value": "supervisor"
+          },
+          {
+            "display": "Block",
+            "value": "block"
+          },
+          {
+            "display": "District",
+            "value": "district"
+          },
+          {
+            "display": "State",
+            "value": "state"
+          },
+          {
+            "display": "CPMU",
+            "value": "cpmu"
+          }
         ],
-        "filters": [
-            {
-                "compare_as_string": false,
-                "datatype": "string",
-                "display": "Date Submitted",
-                "field": "timeEnd",
-                "required": false,
-                "slug": "timeEnd",
-                "type": "date"
-            },
-            {
-                "choices": [
-                    {
-                        "display": "Supervisor",
-                        "value": "supervisor"
-                    },
-                    {
-                        "display": "Block",
-                        "value": "block"
-                    },
-                    {
-                        "display": "District",
-                        "value": "district"
-                    },
-                    {
-                        "display": "State",
-                        "value": "state"
-                    },
-                    {
-                        "display": "CPMU",
-                        "value": "cpmu"
-                    }
-                ],
-                "compare_as_string": false,
-                "datatype": "string",
-                "display": "User Level",
-                "field": "user_level",
-                "show_all": true,
-                "slug": "user_level",
-                "type": "choice_list"
-            }
-        ],
-        "columns": [
-            {
-                "aggregation": "simple",
-                "calculate_total": false,
-                "column_id": "user_location_id",
-                "description": null,
-                "display": "user_location_id",
-                "field": "user_location_id",
-                "format": "default",
-                "sortable": false,
-                "transform": {
-                    "custom_type": "owner_display",
-                    "type": "custom"
-                },
-                "type": "field"
-            },
-            {
-                "aggregation": "sum",
-                "calculate_total": true,
-                "column_id": "report_issue",
-                "description": null,
-                "display": "report_issue",
-                "field": "report_issue",
-                "format": "default",
-                "sortable": false,
-                "transform": {},
-                "type": "field"
-            },
-            {
-                "aggregation": "sum",
-                "calculate_total": true,
-                "column_id": "follow_issue",
-                "description": null,
-                "display": "follow_issue",
-                "field": "follow_issue",
-                "format": "default",
-                "sortable": false,
-                "transform": {},
-                "type": "field"
-            }
-        ],
-        "configured_charts": [],
-        "sort_expression": []
-    }
+        "compare_as_string": false,
+        "datatype": "string",
+        "display": "User Level",
+        "field": "user_level",
+        "show_all": true,
+        "slug": "user_level",
+        "type": "choice_list"
+      }
+    ],
+    "columns": [
+      {
+        "aggregation": "simple",
+        "calculate_total": false,
+        "column_id": "user_location_id",
+        "description": null,
+        "display": "user_location_id",
+        "field": "user_location_id",
+        "format": "default",
+        "sortable": false,
+        "transform": {
+          "custom_type": "owner_display",
+          "type": "custom"
+        },
+        "type": "field"
+      },
+      {
+        "aggregation": "sum",
+        "calculate_total": true,
+        "column_id": "report_issue",
+        "description": null,
+        "display": "report_issue",
+        "field": "report_issue",
+        "format": "default",
+        "sortable": false,
+        "transform": {},
+        "type": "field"
+      },
+      {
+        "aggregation": "sum",
+        "calculate_total": true,
+        "column_id": "follow_issue",
+        "description": null,
+        "display": "follow_issue",
+        "field": "follow_issue",
+        "format": "default",
+        "sortable": false,
+        "transform": {},
+        "type": "field"
+      }
+    ],
+    "configured_charts": [],
+    "sort_expression": []
+  }
 }

@@ -2,22 +2,22 @@ from __future__ import absolute_import, division
 
 from __future__ import unicode_literals
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SumColumn, SimpleColumn
+from sqlagg.columns import SumColumn, SimpleColumn, SumWhen
 from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils import percent_num
 from custom.icds_reports.utils.mixins import ProgressReportMixIn
 from custom.utils.utils import clean_IN_filter_value
 
 
-class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, SqlData):
+class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_ccs_record_monthly'
-    engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
@@ -55,8 +55,15 @@ class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent of pregnant women who are anemic in given month',
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
-                    SumColumn('anemic_moderate'),
-                    SumColumn('anemic_severe'),
+
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_moderate'},
+                        alias='anemic_moderate'
+                    ),
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_severe'},
+                        alias='anemic_severe'
+                    ),
                     SumColumn('pregnant', alias='pregnant')
                 ],
                 slug='severe_anemic'

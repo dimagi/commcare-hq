@@ -5,11 +5,10 @@ import json
 import six
 from datetime import date
 
-from couchexport.writers import XlsLengthException
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from django.http import HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
+    HttpResponseServerError, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -22,8 +21,7 @@ from soil.util import get_download_context, process_email_request
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, track_workflow
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.decorators import use_select2, use_daterangepicker
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -121,7 +119,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
         return get_export(self.model, self.domain, export_id, self.request.couch_user.username)
 
 
-class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
@@ -131,7 +129,6 @@ class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
     export_filter_class = None
 
     @use_daterangepicker
-    @use_select2
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
@@ -313,20 +310,14 @@ def prepare_custom_export(request, domain):
     else:
         filename = "{} {}".format(export_instances[0].name, date.today().isoformat())
 
-    try:
-        download = get_export_download(
-            domain,
-            export_ids,
-            view_helper.model,
-            request.couch_user.username,
-            filters=export_filters,
-            filename=filename,
-        )
-    except XlsLengthException:
-        return json_response({
-            'error': _('This file has more than 256 columns, which is not supported by xls. '
-                       'Please change the output type to csv or xlsx to export this file.')
-        })
+    download = get_export_download(
+        domain,
+        export_ids,
+        view_helper.model,
+        request.couch_user.username,
+        filters=export_filters,
+        filename=filename,
+    )
 
     view_helper.send_preparation_analytics(export_instances, export_filters)
 
@@ -355,11 +346,22 @@ def poll_custom_export_download(request, domain):
     try:
         context = get_download_context(download_id)
     except TaskFailedError as e:
-        notify_exception(request, "Export download failed",
-                         details={'download_id': download_id, 'errors': e.errors})
-        return json_response({
-            'error': _("Download task failed to start."),
-        })
+        if e.exception_name == 'XlsLengthException':
+            return JsonResponse({
+                'error': _(
+                    'This file has more than 256 columns, which is not supported by xls. '
+                    'Please change the output type to csv or xlsx to export this file.')
+            })
+        else:
+            notify_exception(
+                request, "Export download failed",
+                details={'download_id': download_id, 'errors': e.errors,
+                         'exception_name': e.exception_name})
+
+            return JsonResponse({
+                'error': _("Download task failed to start."),
+            })
+
     if context.get('is_ready', False):
         context.update({
             'dropbox_url': reverse('dropbox_upload', args=(download_id,)),

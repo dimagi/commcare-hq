@@ -4,41 +4,41 @@
 {% registerurl 'app_form_summary_diff' domain '---' '---' %}
 <div class="page-header ko-template" style="margin-top: 0;" id="form-summary-header">
 
-    <h3>
-        <i class="fa fa-file-text-o"></i>
-        {% if page_type == 'form_summary' %}
-            {% trans "Form Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
-        {% elif page_type == 'form_diff' %}
-            {% trans "Form Changes" %}  -
-            {% trans "Version" %} <select id="first-version-selector" class="form-control" data-bind="value: firstAppId"></select> vs.
-            {% trans "Version" %} <select id="second-version-selector" class="form-control" data-bind="value: secondAppId"></select>
-        {% endif %}
-        <a class="btn btn-default" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
-    </h3>
+  <h3>
+    <i class="fa fa-file-text-o"></i>
+    {% if page_type == 'form_summary' %}
+      {% trans "Form Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
+    {% elif page_type == 'form_diff' %}
+      {% trans "Form Changes" %}  -
+      {% trans "Version" %} <select id="first-version-selector" class="form-control" data-bind="value: firstAppId"></select> vs.
+      {% trans "Version" %} <select id="second-version-selector" class="form-control" data-bind="value: secondAppId"></select>
+    {% endif %}
+    <a class="btn btn-default" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
+  </h3>
 
-    <div class="row" id="app-summary-controls">
-        <div class="col-xs-3">
-            <search-box data-apply-bindings="false"
-                        params="value: query, action: onQuery, immediate: true, placeholder: queryLabel"></search-box>
-        </div>
-        <div class="col-xs-9">
-            <div class="btn-toolbar pull-right" role="toolbar">
-                <!-- ko template: 'label-id-toggle' --><!-- /ko -->
-                <div class="btn-group btn-group-separated" role="group">
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
-                         icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleRelevance, activeObs: showRelevance,
-                         icon: 'fa fa-code-fork', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleConstraints, activeObs: showConstraints,
-                         icon: 'fa fa-ban', text: '{% trans "Validation"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleComments, activeObs: showComments,
-                         icon: 'fa fa-quote-left', text: '{% trans "Comments"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleDefaultValues, activeObs: showDefaultValues,
-                         icon: 'fa fa-home', text: '{% trans "Default Values"|escapejs %}' } }--><!-- /ko -->
-                    <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCaseProperties, activeObs: showCaseProperties,
-                         icon: 'fa fa-briefcase', text: '{% trans "Cases"|escapejs %}' } }--><!-- /ko -->
-                </div>
-            </div>
-        </div>
+  <div class="row" id="app-summary-controls">
+    <div class="col-xs-3">
+      <search-box data-apply-bindings="false"
+                  params="value: query, action: onQuery, immediate: true, placeholder: queryLabel"></search-box>
     </div>
+    <div class="col-xs-9">
+      <div class="btn-toolbar pull-right" role="toolbar">
+        <!-- ko template: 'label-id-toggle' --><!-- /ko -->
+        <div class="btn-group btn-group-separated" role="group">
+          <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
+                         icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
+          <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleRelevance, activeObs: showRelevance,
+                         icon: 'fa fa-code-fork', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
+          <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleConstraints, activeObs: showConstraints,
+                         icon: 'fa fa-ban', text: '{% trans "Validation"|escapejs %}' } }--><!-- /ko -->
+          <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleComments, activeObs: showComments,
+                         icon: 'fa fa-quote-left', text: '{% trans "Comments"|escapejs %}' } }--><!-- /ko -->
+          <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleDefaultValues, activeObs: showDefaultValues,
+                         icon: 'fa fa-home', text: '{% trans "Default Values"|escapejs %}' } }--><!-- /ko -->
+          <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCaseProperties, activeObs: showCaseProperties,
+                         icon: 'fa fa-briefcase', text: '{% trans "Cases"|escapejs %}' } }--><!-- /ko -->
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

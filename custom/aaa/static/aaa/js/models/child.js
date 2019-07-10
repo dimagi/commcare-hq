@@ -21,7 +21,7 @@ hqDefine("aaa/js/models/child", [
         var self = {};
         self.id = options.id;
         self.name = ko.observable(options.name);
-        self.age = ko.observable(options.age);
+        self.dob = ko.observable(options.dob);
         self.gender = ko.observable(options.gender);
         self.lastImmunizationType = ko.observable(options.lastImmunizationType);
         self.lastImmunizationDate = ko.observable(options.lastImmunizationDate);
@@ -35,7 +35,12 @@ hqDefine("aaa/js/models/child", [
         });
 
         self.age = ko.computed(function () {
-            var age = parseInt(self.age());
+            if (self.dob() === 'N/A') {
+                return self.dob();
+            }
+            var age = Math.floor(moment(postData.selectedDate()).diff(
+                moment(self.dob(), "YYYY-MM-DD"),'months',true)
+            );
             if (age < 12) {
                 return age + " Mon";
             } else if (age % 12 === 0) {
@@ -60,7 +65,7 @@ hqDefine("aaa/js/models/child", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'gender()', name: 'gender', title: 'Gender'},
             {data: 'lastImmunizationType()', name: 'lastImmunizationType', title: 'Last Immunization Type'},
             {data: 'lastImmunizationDate()', name: 'lastImmunizationDate', title: 'Last Immunization Date'},
@@ -123,7 +128,7 @@ hqDefine("aaa/js/models/child", [
         self.linkName = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'child');
-            url = url.replace('beneficiary_id', 1);
+            url = url.replace('beneficiary_id', self.id);
             url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
             return '<a href="' + url + '">' + self.name + ' (' + self.age()  + ')</a>';
         });

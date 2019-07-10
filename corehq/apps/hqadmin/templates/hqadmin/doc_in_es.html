@@ -4,44 +4,44 @@
 {% block title %}Doc {{ doc_id }} {{ es_info.status }}{% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
-        <div class="page-header">
-            <h1>Enter a doc id</h1>
-            <form class="form-inline" method="GET" action="">
-                <input name="id" type="text" style="width: 30em" class="form-control" />
-                <input class="btn btn-primary" type="submit"/>
-            </form>
-            <br>
-            <div class="alert alert-warning">
-                Hey there!  This page is primarily for comparing documents in elasticsearch and couch.
-                Are you sure you don't want
-                <a href="{% url "raw_couch" %}?id={{ doc_id }}">raw_couch</a>?
-            </div>
-        </div>
-        {% if doc_id %}
-            <h3>Doc {{ doc_id }} {{ es_info.status }}</h3>
-            <p>Doc type: {{ couch_info.doc_type }}
-                (<a href="{% url 'global_quick_find' %}?q={{ doc_id }}">View on CommCareHQ</a>)
-            </p>
-            {% for index, es_doc in es_info.found_indices.items %}
-                <p>Found in index: {{ index }}</p>
-                <div class="row">
-                    <div class="col-xs-6">
-                        <h3>Elasticsearch Doc:</h3>
-                        <pre>{{ es_doc }}</pre>
-                    </div>
-                    <div class="col-xs-6">
-                        <h3>Couch Doc:</h3>
-                        <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
-                    </div>
-                </div>
-            {% endfor %}
-            {% if not found_indices %}
-                <div class="col-xs-6">
-                    <h3>Couch Doc:</h3>
-                    <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
-                </div>
-            {% endif %}
-        {% endif %}
+  <div class="container-fluid">
+    <div class="page-header">
+      <h1>Enter a doc id</h1>
+      <form class="form-inline" method="GET" action="">
+        <input name="id" type="text" style="width: 30em" class="form-control" />
+        <input class="btn btn-primary" type="submit"/>
+      </form>
+      <br>
+      <div class="alert alert-warning">
+        Hey there!  This page is primarily for comparing documents in elasticsearch and couch/sql.
+        Are you sure you don't want
+        <a href="{% url "raw_doc" %}?id={{ doc_id }}">raw_doc</a>?
+      </div>
     </div>
+    {% if doc_id %}
+      <h3>Doc {{ doc_id }} {{ es_info.status }}</h3>
+      <p>Doc type: {{ couch_info.doc_type }}
+        (<a href="{% url 'global_quick_find' %}?q={{ doc_id }}">View on CommCareHQ</a>)
+      </p>
+      {% for index, es_doc in es_info.found_indices.items %}
+        <p>Found in index: {{ index }}</p>
+        <div class="row">
+          <div class="col-xs-6">
+            <h3>Elasticsearch Doc:</h3>
+            <pre>{{ es_doc }}</pre>
+          </div>
+          <div class="col-xs-6">
+            <h3>Couch/SQL Doc:</h3>
+            <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
+          </div>
+        </div>
+      {% endfor %}
+      {% if not found_indices %}
+        <div class="col-xs-6">
+          <h3>Couch/SQL Doc:</h3>
+          <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
 {% endblock content %}

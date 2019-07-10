@@ -4,16 +4,16 @@
 {% load crispy_forms_tags %}
 
 {% block head %}{{ block.super }}
-    {% include 'analytics/fullstory.html' %}
+  {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'userreports/js/data_source_select.js' %}"></script>
+  <script src="{% static 'userreports/js/data_source_select.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}{% trans "Step 1 of 2 - Select Data Source" %}{% endblock page_title %}
 
 {% block page_content %}{{ block.super }}
-    {% crispy form %}
-    {% initial_page_data 'sources_map' sources_map %}
+  {% crispy form %}
+  {% initial_page_data 'sources_map' sources_map %}
 {% endblock %}

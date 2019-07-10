@@ -10,6 +10,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_0_3(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             None,
@@ -35,15 +36,15 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered',
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
-                    'valid_visits': 0,
-                    'expected_visits': 185,
+                    'valid_visits': 3,
+                    'expected_visits': 304,
                     'thr': '28.67 %',
                     'num_launched_awcs': 9,
                     'block_name': 'Data Not Entered',
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.00 %'
+                    'home_visits': '0.99 %'
                 },
                 {
                     'state_name': 'st2',
@@ -55,7 +56,7 @@ class TestServiceDelivery(TestCase):
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 181,
                     'valid_visits': 0,
-                    'expected_visits': 193,
+                    'expected_visits': 333,
                     'thr': '56.92 %',
                     'num_launched_awcs': 11,
                     'block_name': 'Data Not Entered',
@@ -90,6 +91,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_state_0_3(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             'district_name',
@@ -116,15 +118,15 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered',
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
-                    'valid_visits': 0,
-                    'expected_visits': 185,
+                    'valid_visits': 3,
+                    'expected_visits': 304,
                     'thr': '28.67 %',
                     'num_launched_awcs': 9,
                     'block_name': 'Data Not Entered',
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'd1',
-                    'home_visits': '0.00 %'
+                    'home_visits': '0.99 %'
                 }
             ],
             'ageSDD': '0_3',
@@ -133,6 +135,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_3_6(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             None,
@@ -162,7 +165,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '70.48 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 9
                 },
                 {
                     'gm_3_5': 240,
@@ -171,13 +175,14 @@ class TestServiceDelivery(TestCase):
                     'children_3_5': 343,
                     'pse': '12.05 %',
                     'block_name': 'Data Not Entered',
-                    'sn': '2.61 %',
+                    'sn': '2.41 %',
                     'district_name': 'Data Not Entered',
-                    'lunch_count_21_days': 13,
+                    'lunch_count_21_days': 12,
                     'gm': '69.97 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 60,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 11
                 },
                 {
                     'gm_3_5': 0,
@@ -192,7 +197,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '0.00 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 0,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 1,
                 }
             ],
             'ageSDD': '3_6',
@@ -201,6 +207,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_state_3_6(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             'district_name',
@@ -231,7 +238,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '70.48 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 9
                 }
             ],
             'ageSDD': '3_6',

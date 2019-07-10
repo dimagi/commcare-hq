@@ -1,16 +1,16 @@
 {% extends "hqwebapp/partials/download_status.html" %}
 {% load i18n %}
 {% block results %}
-    <div class="alert alert-success">
-        <h3>{{ on_complete_long }}</h3>
-        <p>{% blocktrans with count=result.success_count %}Successfully uploaded {{ count }} mobile workers.{% endblocktrans %}</p>
-    </div>
-{% if result.has_errors %}
+  <div class="alert alert-success">
+    <h3>{{ on_complete_long }}</h3>
+    <p>{% blocktrans with count=result.success_count %}Successfully uploaded {{ count }} mobile workers.{% endblocktrans %}</p>
+  </div>
+  {% if result.has_errors %}
     <div class="alert alert-danger">
-    <h3>{% trans "However, we ran into problems with the following users:" %}</h3>
-        {% for e in result.errors %}
+      <h3>{% trans "However, we ran into problems with the following users:" %}</h3>
+      {% for e in result.errors %}
         <p>{{ e }}</p>
-        {% endfor %}
+      {% endfor %}
     </div>
-{% endif %}
+  {% endif %}
 {% endblock results %}

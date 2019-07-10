@@ -1,50 +1,74 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from contextlib import contextmanager
+from __future__ import absolute_import, unicode_literals
+
 import json
-from tempfile import NamedTemporaryFile
-from couchdbkit import ResourceNotFound
 from collections import OrderedDict
+from contextlib import contextmanager
+from copy import deepcopy
+from io import open
+from tempfile import NamedTemporaryFile
 
 from django.contrib import messages
-from django.urls import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import (
+    Http404,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
-from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
-from corehq.apps.fixtures.download import prepare_fixture_download, prepare_fixture_html
-from corehq.apps.fixtures.exceptions import (
-    FixtureDownloadError,
-    FixtureUploadError,
-    FixtureAPIRequestError)
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.upload import upload_fixture_file, validate_fixture_file_format
-from corehq.apps.fixtures.utils import clear_fixture_cache, is_identifier_invalid
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.models import Permissions
-from corehq.util.files import file_extention_from_filename
-from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-from dimagi.utils.decorators.view import get_file
+import six
+from couchdbkit import ResourceNotFound
+from six.moves import range
 
-from copy import deepcopy
+from dimagi.utils.couch.bulk import CouchTransaction
+from dimagi.utils.decorators.view import get_file
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base, json_response
 from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-import six
-from six.moves import range
+
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
+from corehq.apps.fixtures.download import prepare_fixture_html
+from corehq.apps.fixtures.exceptions import (
+    FixtureAPIRequestError,
+    FixtureDownloadError,
+    FixtureUploadError,
+)
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureTypeField,
+)
+from corehq.apps.fixtures.tasks import (
+    async_fixture_download,
+    fixture_upload_async,
+)
+from corehq.apps.fixtures.upload import (
+    upload_fixture_file,
+    validate_fixture_file_format,
+)
+from corehq.apps.fixtures.utils import (
+    clear_fixture_cache,
+    is_identifier_invalid,
+)
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.users.models import Permissions
+from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
+from corehq.util.files import file_extention_from_filename
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -72,16 +96,7 @@ def _to_kwargs(req):
 
 
 @require_can_edit_fixtures
-def tables(request, domain):
-    if request.method == 'GET':
-        return json_response(
-            [strip_json(x) for x in
-             sorted(FixtureDataType.by_domain(domain), key=lambda data_type: data_type.tag)]
-        )
-
-
-@require_can_edit_fixtures
-def update_tables(request, domain, data_type_id, test_patch=None):
+def update_tables(request, domain, data_type_id):
     """
     receives a JSON-update patch like following
     {
@@ -92,16 +107,14 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         "fields":{"genderr":{"update":"gender"},"grade":{}}
     }
     """
-    if test_patch is None:
-        test_patch = {}
     if data_type_id:
         try:
             data_type = FixtureDataType.get(data_type_id)
         except ResourceNotFound:
             raise Http404()
 
-        assert(data_type.doc_type == FixtureDataType._doc_type)
-        assert(data_type.domain == domain)
+        if data_type.domain != domain:
+            raise Http404()
 
         if request.method == 'GET':
             return json_response(strip_json(data_type))
@@ -115,10 +128,11 @@ def update_tables(request, domain, data_type_id, test_patch=None):
             return HttpResponseBadRequest()
 
     if request.method == 'POST' or request.method == "PUT":
-        fields_update = test_patch or _to_kwargs(request)
+        fields_update = _to_kwargs(request)
         fields_patches = fields_update["fields"]
         data_tag = fields_update["tag"]
         is_global = fields_update["is_global"]
+        description = fields_update["description"]
 
         # validate tag and fields
         validation_errors = []
@@ -147,26 +161,27 @@ def update_tables(request, domain, data_type_id, test_patch=None):
 
         with CouchTransaction() as transaction:
             if data_type_id:
-                data_type = update_types(fields_patches, domain, data_type_id, data_tag, is_global, transaction)
-                update_items(fields_patches, domain, data_type_id, transaction)
+                data_type = _update_types(
+                    fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
+                _update_items(fields_patches, domain, data_type_id, transaction)
             else:
                 if FixtureDataType.fixture_tag_exists(domain, data_tag):
                     return HttpResponseBadRequest("DuplicateFixture")
                 else:
-                    data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
+                    data_type = _create_types(
+                        fields_patches, domain, data_tag, is_global, description, transaction)
         clear_fixture_cache(domain)
         return json_response(strip_json(data_type))
 
 
-def update_types(patches, domain, data_type_id, data_tag, is_global, transaction):
+def _update_types(patches, domain, data_type_id, data_tag, is_global, description, transaction):
     data_type = FixtureDataType.get(data_type_id)
     fields_patches = deepcopy(patches)
-    assert(data_type.doc_type == FixtureDataType._doc_type)
-    assert(data_type.domain == domain)
     old_fields = data_type.fields
     new_fixture_fields = []
-    setattr(data_type, "tag", data_tag)
-    setattr(data_type, "is_global", is_global)
+    data_type.tag = data_tag
+    data_type.is_global = is_global
+    data_type.description = description
     for old_field in old_fields:
         patch = fields_patches.pop(old_field.field_name, {})
         if not any(patch):
@@ -184,18 +199,18 @@ def update_types(patches, domain, data_type_id, data_tag, is_global, transaction
                 field_name=new_field_name,
                 properties=[]
             ))
-    setattr(data_type, "fields", new_fixture_fields)
+    data_type.fields = new_fixture_fields
     transaction.save(data_type)
     return data_type
 
 
-def update_items(fields_patches, domain, data_type_id, transaction):
+def _update_items(fields_patches, domain, data_type_id, transaction):
     data_items = FixtureDataItem.by_data_type(domain, data_type_id)
     for item in data_items:
         fields = item.fields
         updated_fields = {}
         patches = deepcopy(fields_patches)
-        for old_field in fields.keys():
+        for old_field in list(fields):
             patch = patches.pop(old_field, {})
             if not any(patch):
                 updated_fields[old_field] = fields.pop(old_field)
@@ -205,7 +220,7 @@ def update_items(fields_patches, domain, data_type_id, transaction):
             if "remove" in patch:
                 continue
                 # destroy_field(field_to_delete, transaction)
-        for new_field_name in patches.keys():
+        for new_field_name in list(patches):
             patch = patches.pop(new_field_name, {})
             if "is_new" in patch:
                 updated_fields[new_field_name] = FieldList(
@@ -218,13 +233,14 @@ def update_items(fields_patches, domain, data_type_id, transaction):
     )
 
 
-def create_types(fields_patches, domain, data_tag, is_global, transaction):
+def _create_types(fields_patches, domain, data_tag, is_global, description, transaction):
     data_type = FixtureDataType(
         domain=domain,
         tag=data_tag,
         is_global=is_global,
         fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches],
         item_attributes=[],
+        description=description,
     )
     transaction.save(data_type)
     return data_type
@@ -267,8 +283,7 @@ def download_item_lists(request, domain):
     """Asynchronously serve excel download for edit_lookup_tables
     """
     download = DownloadBase()
-    download.set_task(fixture_download_async.delay(
-        prepare_fixture_download,
+    download.set_task(async_fixture_download.delay(
         table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,
@@ -341,6 +356,7 @@ class UploadItemLists(TemplateView):
             self.domain,
             file_ref.download_id,
             replace,
+            SKIP_ORM_FIXTURE_UPLOAD.enabled(self.domain),
         )
         file_ref.set_task(task)
         return HttpResponseRedirect(
@@ -404,6 +420,27 @@ class UploadFixtureAPIResponse(object):
     def code(self):
         return self.response_codes[self.status]
 
+    def get_response(self):
+        return {
+            'message': self.message,
+            'code': self.code,
+        }
+
+
+class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
+    def __init__(self, status, message, download_id, status_url):
+        super(AsyncUploadFixtureAPIResponse, self).__init__(status, message)
+        self.download_id = download_id
+        self.status_url = status_url
+
+    def get_response(self):
+        return {
+            'message': self.message,
+            'code': self.code,
+            'status_url': self.status_url,
+            'download_id': self.download_id,
+        }
+
 
 @csrf_exempt
 @require_POST
@@ -418,17 +455,81 @@ def upload_fixture_api(request, domain, **kwargs):
     """
 
     upload_fixture_api_response = _upload_fixture_api(request, domain)
-    return json_response({'message': upload_fixture_api_response.message,
-                          'code': upload_fixture_api_response.code})
+    return JsonResponse(upload_fixture_api_response.get_response())
+
+
+@csrf_exempt
+@api_auth
+@require_can_edit_fixtures
+def fixture_api_upload_status(request, domain, download_id, **kwargs):
+    """
+        Use following curl-command to test.
+        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/status/<download_id>/
+               -u user@domain.com:password
+    """
+    try:
+        context = get_download_context(download_id, require_result=True)
+    except TaskFailedError as e:
+        notify_exception(request, message=six.text_type(e))
+        response = {
+            'message': _("Upload did not complete. Reason: '{}'".format(six.text_type(e))),
+            'error': True,
+        }
+        return json_response(response)
+
+    if context.get('is_ready', False):
+        response = {
+            'complete': True,
+            'message': _("Upload complete."),
+        }
+    elif context.get('error'):
+        response = {
+            'error': True,
+            'message': context.get('error') or _("An unknown error occurred."),
+        }
+    else:
+        progress = context.get('progress', {}).get('percent')
+        response = {
+            'message': _("Task in progress. {}% complete").format(progress),
+            'progress': progress,
+        }
+    return json_response(response)
 
 
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async, skip_orm = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', six.text_type(e))
 
     with excel_file as filename:
+
+        if is_async:
+            with open(filename, 'rb') as f:
+                file_ref = expose_cached_download(
+                    f.read(),
+                    file_extension=file_extention_from_filename(filename),
+                    expiry=1 * 60 * 60,
+                )
+                download_id = file_ref.download_id
+                task = fixture_upload_async.delay(
+                    domain,
+                    download_id,
+                    replace,
+                    skip_orm
+                )
+                file_ref.set_task(task)
+
+                status_url = "{}{}".format(
+                    get_url_base(),
+                    reverse('fixture_api_status', args=(domain, download_id))
+                )
+
+                return AsyncUploadFixtureAPIResponse(
+                    'success', _("File has been uploaded successfully and is queued for processing."),
+                    download_id, status_url
+                )
+
         try:
             validate_fixture_file_format(filename)
         except FixtureUploadError as e:
@@ -476,12 +577,18 @@ def _get_fixture_upload_args_from_request(request, domain):
             "Invalid post request."
             "Submit the form with field 'file-to-upload' and POST parameter 'replace'")
 
+    is_async = request.POST.get("async", "").lower() == "true"
+
     if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
         raise FixtureAPIRequestError(
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
-    return _excel_upload_file(upload_file), replace
+    skip_orm = False
+    if request.POST.get('skip_orm') == 'true' and SKIP_ORM_FIXTURE_UPLOAD.enabled(domain):
+        skip_orm = True
+
+    return _excel_upload_file(upload_file), replace, is_async, skip_orm
 
 
 @login_and_domain_required

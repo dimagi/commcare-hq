@@ -22,9 +22,9 @@
             <p class="text-center">
               <a class="btn btn-purple btn-lg"
                 {% if allow_domain_requests %}
-                  href="{% url "domain_request" domain %}"
+                 href="{% url "domain_request" domain %}"
                 {% else %}
-                  href="{% url "register_user" %}"
+                 href="{% url "register_user" %}"
                 {% endif %}
               >
                 {% if allow_domain_requests %}

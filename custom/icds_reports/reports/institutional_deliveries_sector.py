@@ -10,7 +10,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import institutional_deliveries_help_text
 from custom.icds_reports.models import AggCcsRecordMonthly
@@ -18,7 +18,7 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indi
     get_child_locations
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_institutional_deliveries_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -87,7 +87,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -151,7 +151,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -201,16 +201,16 @@ def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test
         data_for_month['in_month'] += in_month
         data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
-    top_locations = sorted(
-        [
-            dict(
-                loc_name=key,
-                percent=(value['in_month'] * 100) / float(value['all'] or 1)
-            ) for key, value in six.iteritems(best_worst)
-        ],
-        key=lambda x: x['percent'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': (value['in_month'] * 100) / float(value['all'] or 1)
+        }
+        for key, value in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
 
     return {
         "chart_data": [
@@ -229,8 +229,8 @@ def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }

@@ -13,12 +13,23 @@
     "reach-test",
     "icds-test",
     "icds-cas",
+    "icds-cas-sandbox",
     "cas-lab"
   ],
   "server_environment": [
     "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-it_report_follow_issue",

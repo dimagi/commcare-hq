@@ -5,7 +5,6 @@ from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (
     CaseGroupListView,
     CaseGroupCaseManagementView,
-    ArchiveFormView,
     XFormManagementView,
     XFormManagementStatusView,
     AutomaticUpdateRuleListView,
@@ -20,7 +19,6 @@ from .interfaces import FormManagementMode
 
 
 edit_data_urls = [
-    url(r'^archive_forms/$', ArchiveFormView.as_view(), name=ArchiveFormView.urlname),
     url(r'^xform_management/$', XFormManagementView.as_view(), name=XFormManagementView.urlname),
     url(
         r'^xform_management/status/(?P<mode>{archive}|{restore})/(?P<download_id>{id_regex})/$'.format(

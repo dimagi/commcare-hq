@@ -19,15 +19,6 @@ class SessionDetailsViewTest(TestCase):
         cls.couch_user = CommCareUser.create('toyland', 'bunkey', '123')
         cls.sql_user = cls.couch_user.get_django_user()
 
-        client = Client()
-        client.login(username='bunkey', password='123')
-
-        session = client.session
-        session.save()
-        cls.session_key = session.session_key
-
-        cls.url = reverse('session_details')
-
         cls.expected_response = {
             'username': cls.sql_user.username,
             'djangoUserId': cls.sql_user.pk,
@@ -36,6 +27,16 @@ class SessionDetailsViewTest(TestCase):
             'domains': ['toyland'],
             'anonymous': False
         }
+        cls.url = reverse('session_details')
+
+    def setUp(self):
+        # logs in the mobile worker every test so a new session is setup
+        client = Client()
+        client.login(username='bunkey', password='123')
+
+        self.session = client.session
+        self.session.save()
+        self.session_key = self.session.session_key
 
     @classmethod
     def tearDownClass(cls):
@@ -49,6 +50,24 @@ class SessionDetailsViewTest(TestCase):
         response = Client().post(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertJSONEqual(response.content, self.expected_response)
+
+    @override_settings(DEBUG=True)
+    @softer_assert()
+    def test_session_details_view_expired_session(self):
+        self.session.set_expiry(-1)  # 1 second in the past
+        self.session.save()
+        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        response = Client().post(self.url, data, content_type="application/json")
+        self.assertEqual(404, response.status_code)
+
+    @override_settings(DEBUG=True)
+    @softer_assert()
+    def test_session_details_view_updates_session(self):
+        expired_date = self.session.get_expiry_date()
+        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
+        response = Client().post(self.url, data, content_type="application/json")
+        self.assertEqual(200, response.status_code)
+        self.assertGreater(self.session.get_expiry_date(), expired_date)
 
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing(self):

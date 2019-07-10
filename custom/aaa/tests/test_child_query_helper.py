@@ -73,6 +73,7 @@ class TestChildBeneficiarySections(TestCase):
                 'domain': cls.domain,
                 'doc_type': "CommCareCase",
                 'type': 'tasks',
+                'owner_id': '-',
             })
         pnc_adapter = cls._init_table('reach-postnatal_care')
         pnc_adapter.save({

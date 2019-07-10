@@ -1,62 +1,52 @@
 {% load i18n %}
 <!--ko if: state === $root.states.SUCCESS && result-->
-    <div class="text-success">
-        <!--ko if: result.match_count-->
-            <p>
-                {% blocktrans with match_count='result.match_count' %}
-                    <strong data-bind="text: {{ match_count }}"></strong> rows were matched and
-                    updated.
-                {% endblocktrans %}
-            </p>
-        <!--/ko-->
+<div class="text-success">
+  <!--ko if: result.match_count-->
+  <p>
+    {% blocktrans with match_count='result.match_count' %}
+      <strong data-bind="text: {{ match_count }}"></strong> rows were matched and
+      updated.
+    {% endblocktrans %}
+  </p>
+  <!--/ko-->
 
-        <!--ko if: result.created_count > 0-->
-            <p>
-                {% blocktrans with created_count='result.created_count' %}
-                    <strong data-bind="text: {{ created_count }}"></strong> rows did
-                    not match any existing cases and had new cases created
-                    for them. If case_id's were used, these were ignored.
-                {% endblocktrans %}
-            </p>
-        <!--/ko-->
+  <!--ko if: result.created_count > 0-->
+  <p>
+    {% blocktrans with created_count='result.created_count' %}
+      <strong data-bind="text: {{ created_count }}"></strong> rows did
+      not match any existing cases and had new cases created
+      for them. If case_id's were used, these were ignored.
+    {% endblocktrans %}
+  </p>
+  <!--/ko-->
 
-        <!--ko if: result.match_count === 0 && result.created_count === 0-->
-            <p>
-                {% trans "No cases were created or updated during this import." %}
-            </p>
-        <!--/ko-->
-
-        <!--ko if: result.too_many_matches > 0-->
-            <p>
-                {% blocktrans with too_many_matches='result.too_many_matches' %}
-                    <strong data-bind="text: {{ too_many_matches }}"></strong> rows matched more
-                    than one case at the same time - this means that there are cases
-                    in your system with the same external ID.
-                {% endblocktrans %}
-            </p>
-        <!--/ko-->
-    </div>
-    <!--ko if: !_.isEmpty(result.errors)-->
-    <div class="alert alert-warning">
-        <ul class="list-unstyled">
-        <!--ko foreach: result.errors-->
-            <!--ko if: rows-->
-            <li>
-                <p>
-                    <strong data-bind="text: title"></strong>
-                    <!--ko if: column--> {% trans 'in column' %}
-                        <strong data-bind="text: column"></strong><!--/ko-->
-                </p>
-                <p data-bind="text: description">
-                </p>
-                <p>
-                    <span>{% trans "Affected rows:" %}</span>
-                    <span data-bind="text: rows.join(', ')"></span>
-                </p>
-            </li>
-            <!--/ko-->
-        <!--/ko-->
-        </ul>
-    </div>
+  <!--ko if: result.match_count === 0 && result.created_count === 0-->
+  <p>
+    {% trans "No cases were created or updated during this import." %}
+  </p>
+  <!--/ko-->
+</div>
+<!--ko if: !_.isEmpty(result.errors)-->
+<div class="alert alert-warning">
+  <ul class="list-unstyled">
+    <!--ko foreach: result.errors-->
+    <!--ko if: rows-->
+    <li>
+      <p>
+        <strong data-bind="text: title"></strong>
+        <!--ko if: column--> {% trans 'in column' %}
+        <strong data-bind="text: column"></strong><!--/ko-->
+      </p>
+      <p data-bind="text: description">
+      </p>
+      <p>
+        <span>{% trans "Affected rows:" %}</span>
+        <span data-bind="text: rows.join(', ')"></span>
+      </p>
+    </li>
     <!--/ko-->
+    <!--/ko-->
+  </ul>
+</div>
+<!--/ko-->
 <!--/ko-->

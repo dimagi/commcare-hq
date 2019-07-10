@@ -13,7 +13,9 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, _make_elem
-from corehq.apps.reports.formdetails.readable import FormQuestion
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    FormQuestion
+)
 from custom.ucla.forms import TaskCreationForm
 
 

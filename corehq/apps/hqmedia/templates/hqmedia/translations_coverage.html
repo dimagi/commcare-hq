@@ -4,84 +4,83 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
-        <script src="{% static 'app_manager/js/widgets_v4.js' %}"></script>
-    {% endcompress js %}
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+    <script src="{% static 'app_manager/js/widgets.js' %}"></script>
+  {% endcompress js %}
 {% endblock js %}
 
 {% block page_content %}
-    {% registerurl "paginate_releases" domain app.get_id %}
+  {% registerurl "paginate_releases" domain app.get_id %}
 
-    <p class="lead">{{ current_page.page_name }}</p>
+  <p class="lead">{{ current_page.page_name }}</p>
 
-    {% url "hqmedia_references" domain app.get_id as checker_url %}
-    {% url "manage_multimedia_paths" domain app.get_id as paths_url %}
-    {% blocktrans %}
-        <p class="help-block">
-            This page allows you to check if your non-default languages are missing any multimedia <strong>references</strong>
-            and therefore will display the default language's multimedia.
-            <br>
-            If any references are missing, visit <a href="{{ paths_url }}">Manage Multimedia Paths</a> to identify
-            where those references are used and add translated multimedia.
-            <br>
-            This page does not check if your app is missing any <strong>files</strong>; visit the
-            <a href="{{ reference_checker }}">Multimedia Reference Checker</a> to identify missing files.
-        </p>
-    {% endblocktrans %}
+  {% url "hqmedia_references" domain app.get_id as checker_url %}
+  {% url "manage_multimedia_paths" domain app.get_id as paths_url %}
+  {% blocktrans %}
+    <p class="help-block">
+      This page allows you to check if your non-default languages are missing any multimedia <strong>references</strong>
+      and therefore will display the default language's multimedia.
+      <br>
+      If any references are missing, visit <a href="{{ paths_url }}">Manage Multimedia Paths</a> to identify
+      where those references are used and add translated multimedia.
+      <br>
+      This page does not check if your app is missing any <strong>files</strong>; visit the
+      <a href="{{ reference_checker }}">Multimedia Reference Checker</a> to identify missing files.
+    </p>
+  {% endblocktrans %}
 
-    <form class="form-horizontal" method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label class="{% css_label_class %} control-label">
-                {% trans "Version" %}
-            </label>
-            <div class="{% css_field_class %} controls">
-                <select class="form-control app-manager-version-dropdown" name="build_id">
-                    <option value="">{% trans "Latest" %}</option>
-                    {% if selected_build_id %}
-                        <option selected value="{{ selected_build_id }}">
-                            {{ selected_build_text }}
-                        </option>
-                    {% endif %}
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="{% css_label_class %} control-label">
-                {% trans "Language(s)" %}
-            </label>
-            <div class="{% css_field_class %} controls">
-                <select multiple name="langs" class="form-control hqwebapp-select2">
-                    {% for lang in app.langs %}
-                        {% if lang != app.default_language %}
-                            <option{% if lang in selected_langs %} selected{% endif %}>{{ lang }}</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="{% css_label_class %} control-label">
-                {% trans "Media Type(s)" %}
-            </label>
-            <div class="{% css_field_class %} controls">
-                <select multiple name="media_types" class="form-control hqwebapp-select2">
-                    {% for type, name in media_types.items %}
-                        <option{% if type in selected_media_types %} selected{% endif %} value="{{ type }}">{{ name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="{% css_action_class %} controls">
-                <button class="btn btn btn-primary disable-on-submit" type="submit">
-                    <i class="fa fa-check"></i>
-                    Check
-                </button>
-            </div>
-        </div>
-    </form>
-    <div id="results"></div>
+  <form class="form-horizontal" method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="{% css_label_class %} control-label">
+        {% trans "Version" %}
+      </label>
+      <div class="{% css_field_class %} controls">
+        <select class="form-control app-manager-version-dropdown" name="build_id">
+          <option value="">{% trans "Latest" %}</option>
+          {% if selected_build_id %}
+            <option selected value="{{ selected_build_id }}">
+              {{ selected_build_text }}
+            </option>
+          {% endif %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="{% css_label_class %} control-label">
+        {% trans "Language(s)" %}
+      </label>
+      <div class="{% css_field_class %} controls">
+        <select multiple name="langs" class="form-control hqwebapp-select2">
+          {% for lang in app.langs %}
+            {% if lang != app.default_language %}
+              <option{% if lang in selected_langs %} selected{% endif %}>{{ lang }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="{% css_label_class %} control-label">
+        {% trans "Media Type(s)" %}
+      </label>
+      <div class="{% css_field_class %} controls">
+        <select multiple name="media_types" class="form-control hqwebapp-select2">
+          {% for type, name in media_types.items %}
+            <option{% if type in selected_media_types %} selected{% endif %} value="{{ type }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="{% css_action_class %} controls">
+        <button class="btn btn btn-primary disable-on-submit" type="submit">
+          <i class="fa fa-check"></i>
+          Check
+        </button>
+      </div>
+    </div>
+  </form>
+  <div id="results"></div>
 {% endblock %}

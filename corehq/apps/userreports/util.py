@@ -5,11 +5,14 @@ import hashlib
 
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util.couch import DocumentNotFound
+from corehq.util.datadog.utils import ucr_load_counter
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
@@ -127,15 +130,17 @@ def number_of_ucr_reports(domain):
     return len(ucr_reports)
 
 
-def get_indicator_adapter(config, raise_errors=False):
-    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
-    if raise_errors:
-        return ErrorRaisingIndicatorSqlAdapter(config)
-    return IndicatorSqlAdapter(config)
-
-
-def get_legacy_table_name(domain, table_id):
-    return get_table_name(domain, table_id, max_length=63, prefix=LEGACY_UCR_TABLE_PREFIX)
+def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
+    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter, \
+        MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
+    requires_mirroring = config.mirrored_engine_ids
+    if requires_mirroring and ENABLE_UCR_MIRRORS.enabled(config.domain):
+        adapter_cls = ErrorRaisingMultiDBAdapter if raise_errors else MultiDBSqlAdapter
+    else:
+        adapter_cls = ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
+    adapter = adapter_cls(config)
+    track_load = ucr_load_counter(config.engine_id, load_source, config.domain)
+    return IndicatorAdapterLoadTracker(adapter, track_load)
 
 
 def get_table_name(domain, table_id, max_length=50, prefix=UCR_TABLE_PREFIX):

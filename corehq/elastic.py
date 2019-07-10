@@ -1,15 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import json
 from collections import namedtuple
 import copy
 import logging
 import time
 from io import open
+
 from six.moves.urllib.parse import unquote
 
+from corehq.util.json import CommCareJSONEncoder
 from dimagi.utils.chunked import chunked
 from django.conf import settings
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, SerializationError
 from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
@@ -31,6 +35,29 @@ from memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 import six
 from six.moves import range
+
+
+class ESJSONSerializer(object):
+    """Modfied version of ``elasticsearch.serializer.JSONSerializer``
+    that uses the CommCareJSONEncoder for serializing to JSON.
+    """
+    mimetype = 'application/json'
+
+    def loads(self, s):
+        try:
+            return json.loads(s)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(s, e)
+
+    def dumps(self, data):
+        # don't serialize strings
+        if isinstance(data, six.string_types):
+            return data
+
+        try:
+            return json.dumps(data, cls=CommCareJSONEncoder)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(data, e)
 
 
 def _es_hosts():
@@ -55,7 +82,7 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts, timeout=30)
+    return Elasticsearch(hosts, timeout=30, serializer=ESJSONSerializer())
 
 
 @memoized
@@ -71,7 +98,9 @@ def get_es_export():
         max_retries=3,
         # Timeout in seconds for an elasticsearch query
         timeout=300,
+        serializer=ESJSONSerializer(),
     )
+
 
 ES_DEFAULT_INSTANCE = 'default'
 ES_EXPORT_INSTANCE = 'export'

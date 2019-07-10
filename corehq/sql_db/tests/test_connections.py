@@ -88,7 +88,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 alias: weight * total_requests // total_weighting
                 for alias, weight in reporting_dbs['ucr']['READ']
             }
-            balanced = Counter(manager.get_load_balanced_read_db_alais('ucr') for i in range(total_requests))
+            balanced = Counter(manager.get_load_balanced_read_db_alias('ucr') for i in range(total_requests))
             for db, requests in balanced.items():
                 self.assertAlmostEqual(requests, expected[db], delta=randomness_margin)
 
@@ -96,7 +96,7 @@ class ConnectionManagerTests(SimpleTestCase):
             manager = ConnectionManager()
             self.assertEqual(
                 ['default', 'default', 'default'],
-                [manager.get_load_balanced_read_db_alais('default') for i in range(3)]
+                [manager.get_load_balanced_read_db_alias('default') for i in range(3)]
             )
 
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'ucr': 4}.get(x, 0))
@@ -112,7 +112,7 @@ class ConnectionManagerTests(SimpleTestCase):
             manager = ConnectionManager()
             self.assertEqual(
                 ['other', 'other', 'other'],
-                [manager.get_load_balanced_read_db_alais('ucr_engine') for i in range(3)]
+                [manager.get_load_balanced_read_db_alias('ucr_engine') for i in range(3)]
             )
 
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
@@ -130,20 +130,20 @@ class ConnectionManagerTests(SimpleTestCase):
                 'users_db1': _get_db_config('users_db1')}):
             manager = ConnectionManager()
             self.assertEqual(
-                manager.get_load_balanced_read_db_alais('users', default="default_option"),
+                manager.get_load_balanced_read_db_alias('users', default="default_option"),
                 'users_db1'
             )
 
         with override_settings(LOAD_BALANCED_APPS=load_balanced_apps):
             # load_balanced_db should be part of settings.DATABASES
             with self.assertRaises(AssertionError):
-                ConnectionManager().get_load_balanced_read_db_alais('users')
+                ConnectionManager().get_load_balanced_read_db_alias('users')
 
 
         # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
         manager = ConnectionManager()
         self.assertEqual(
-            manager.get_load_balanced_read_db_alais('users', default='default_option'),
+            manager.get_load_balanced_read_db_alias('users', default='default_option'),
             'default_option'
         )
 

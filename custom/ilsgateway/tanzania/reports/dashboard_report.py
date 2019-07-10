@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.hqwebapp.decorators import use_daterangepicker, use_datatables, use_select2, use_jquery_ui, \
-    use_nvd3
+from corehq.apps.hqwebapp.decorators import (
+    use_daterangepicker,
+    use_datatables,
+    use_jquery_ui,
+    use_nvd3,
+)
 from custom.ilsgateway.filters import (
     ProgramFilter,
     B3ILSDateFilter,
@@ -26,7 +30,6 @@ class DashboardReport(MultiReport):
     @use_datatables
     @use_daterangepicker
     @use_jquery_ui
-    @use_select2
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         pass

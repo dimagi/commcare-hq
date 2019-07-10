@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from django.utils.functional import lazy
 from jsonfield import JSONField
 from rest_framework import serializers
 
@@ -41,24 +43,28 @@ class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
         fields = ('id', 'content_type', 'content_length')
 
 
+def _serialize_form_attachments(form):
+    return form.serialized_attachments
+
+
+def _serialize_form_history(form):
+    return list(XFormOperationSQLSerializer(form.history, many=True).data)
+
+
+lazy_serialize_form_attachments = lazy(_serialize_form_attachments, dict)
+lazy_serialize_form_history = lazy(_serialize_form_history, dict)
+
+
 class XFormInstanceSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='form_id')
     doc_type = serializers.CharField()
-    history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
     openrosa_headers = serializers.DictField()
-    external_blobs = serializers.JSONField(source='serialized_attachments')
 
     class Meta(object):
         model = XFormInstanceSQL
         exclude = ('id', 'form_id', 'time_end', 'time_start', 'commcare_version', 'app_version')
-
-    def __init__(self, *args, **kwargs):
-        include_attachments = kwargs.pop('include_attachments', False)
-        if not include_attachments:
-            self.fields.pop('external_blobs')
-        super(XFormInstanceSQLSerializer, self).__init__(*args, **kwargs)
 
 
 class XFormStateField(serializers.ChoiceField):
@@ -137,15 +143,33 @@ class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
         )
 
 
+def _serialize_case_indices(case):
+    return list(CommCareCaseIndexSQLSerializer(case.indices, many=True).data)
+
+
+def _serialize_case_transactions(case):
+    return list(CaseTransactionActionSerializer(case.non_revoked_transactions, many=True).data)
+
+
+def _serialize_case_xform_ids(case):
+    return list(case.xform_ids)
+
+
+def _serialize_case_attachments(case):
+    return dict(case.serialized_attachments)
+
+
+lazy_serialize_case_indices = lazy(_serialize_case_indices, list)
+lazy_serialize_case_transactions = lazy(_serialize_case_transactions, list)
+lazy_serialize_case_xform_ids = lazy(_serialize_case_xform_ids, list)
+lazy_serialize_case_attachments = lazy(_serialize_case_attachments, dict)
+
+
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
-    indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
-    actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
-    case_attachments = serializers.JSONField(source='serialized_attachments')
     case_json = serializers.JSONField()
-    xform_ids = serializers.ListField()
 
     class Meta(object):
         model = CommCareCaseSQL

@@ -12,10 +12,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from corehq.apps.domain.forms import (
-    NoAutocompleteMixin,
-    tuple_of_copies,
-)
+from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
 from crispy_forms import layout as crispy
@@ -75,12 +72,11 @@ class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
     action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
 
-    def __init__(self, plural_noun, action, form_id, context, app, *args, **kwargs):
+    def __init__(self, plural_noun, action, form_id, context, *args, **kwargs):
         super(BulkUploadForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_id = form_id
         self.helper.form_method = 'post'
-        self.app = app
         if action:
             self.helper.form_action = action
         self.helper.layout = crispy.Layout(
@@ -89,8 +85,7 @@ class BulkUploadForm(forms.Form):
                 *self.crispy_form_fields(context)
             ),
             StrictButton(
-                ('<i class="fa fa-cloud-upload"></i> Upload %s'
-                 % plural_noun.title()),
+                ('<i class="fa fa-cloud-upload"></i> Upload %s' % plural_noun),
                 css_class='btn-primary',
                 data_bind='disable: !file()',
                 onclick='this.disabled=true;this.form.submit();',
@@ -111,34 +106,20 @@ class BulkUploadForm(forms.Form):
 
 
 class AppTranslationsBulkUploadForm(BulkUploadForm):
+    language = forms.CharField(widget=forms.HiddenInput)
     validate = forms.BooleanField(label="Just validate and not update translations", required=False,
                                   initial=False)
-    language = forms.ChoiceField(label=_("Language to validate"), choices=(), required=False)
 
     def crispy_form_fields(self, context):
         crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        if context.get('can_select_language'):
+            crispy_form_fields.extend([
+                InlineField('language', data_bind="value: lang")
+            ])
         if context.get('can_validate_app_translations'):
             crispy_form_fields.extend([
-                InlineField('validate', data_bind="checked: validate"),
-                crispy.Div(
-                    crispy.Field('language'),
-                    css_class='col-sm-2',
-                    data_bind="visible: validate"
-                ),
+                crispy.Div(InlineField('validate'))
             ])
-            self.fields['language'].choices = tuple_of_copies(self.app.langs, blank=False)
-            self.fields['language'].initial = self.app.default_language
-        return crispy_form_fields
-
-
-class MultimediaTranslationsBulkUploadForm(BulkUploadForm):
-    language = forms.CharField(widget=forms.HiddenInput)
-
-    def crispy_form_fields(self, context):
-        crispy_form_fields = super(MultimediaTranslationsBulkUploadForm, self).crispy_form_fields(context)
-        crispy_form_fields.extend([
-            InlineField('language', data_bind="value: lang")
-        ])
         return crispy_form_fields
 
 

@@ -1,19 +1,15 @@
 {% load i18n %}
 <header>
-    <div class="row-fluid">
-        <div class="span12">
-            <div class="alert alert-warning" data-bind="visible: hasCaseHistoryTable()">
-                {% blocktrans %}
-                Case history exports are no longer available.  They will be removed when you save this export. Please contact support@dimagi.com if this change is affecting your project
-                {% endblocktrans %}
-            </div>
-            <h3>{% trans "Export Settings" %}</h3>
-            <p>
-                {% blocktrans %}
-                Learn more about exports on our <a href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview" target="_blank">Help Site</a>.
-                {% endblocktrans %}
-            </p>
-            <hr/>
-        </div>
+  <div class="row-fluid">
+    <div class="span12">
+      <div class="alert alert-warning" data-bind="visible: hasCaseHistoryTable()">
+        {% blocktrans %}
+          Case history exports are no longer available.  They will be removed when you save this export. Please contact support@dimagi.com if this change is affecting your project
+        {% endblocktrans %}
+      </div>
+      <h3>{{ terminology.page_header }}</h3>
+      <p>{{ terminology.help_text }}</p>
+      <hr/>
     </div>
+  </div>
 </header>

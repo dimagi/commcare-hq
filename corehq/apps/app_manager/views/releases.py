@@ -30,7 +30,7 @@ from phonelog.models import UserErrorEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_or_api_key, track_domain_request
@@ -44,14 +44,17 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_build_doc_by_version,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
     get_latest_build_version,
     get_latest_released_app_version,
 )
-from corehq.apps.app_manager.models import BuildProfile, LatestEnabledBuildProfiles
+from corehq.apps.app_manager.models import (
+    BuildProfile,
+    LatestEnabledBuildProfiles,
+    AppReleaseByLocation,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
@@ -230,8 +233,10 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists():
-            return json_response({'error': _('Please disable any enabled profiles to un-release this build.')})
+        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists() or
+                AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
+            return json_response({'error': _('Please disable any enabled profiles/location restriction '
+                                             'to un-release this build.')})
     ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
@@ -264,7 +269,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    track_built_app_on_hubspot_v2.delay(request.couch_user)
+    track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
@@ -331,7 +336,7 @@ def revert_to_copy(request, domain, app_id):
 
     """
     app = get_app(domain, app_id)
-    copy = get_app(domain, request.POST['saved_app'])
+    copy = get_app(domain, request.POST['build_id'])
     if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
         copy.convert_to_application()
     app = app.make_reversion_to_copy(copy)
@@ -553,7 +558,7 @@ class LanguageProfilesView(View):
         return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain, app_id, *args, **kwargs):
-        profiles = json.loads(request.body).get('profiles')
+        profiles = json.loads(request.body.decode('utf-8')).get('profiles')
         app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:

@@ -28,6 +28,7 @@ from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
+from corehq.blobs import get_blob_db, NotFound, models
 import langcodes
 import pytz
 import re
@@ -142,7 +143,6 @@ from corehq.apps.saved_reports.tasks import send_delayed_report, send_email_repo
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
-    use_select2_v4,
     use_datatables,
     use_multiselect,
     use_jquery_ui
@@ -412,9 +412,10 @@ class AddSavedReportConfigView(View):
     @property
     @memoized
     def config(self):
-        config = ReportConfig.get_or_create(
-            self.saved_report_config_form.cleaned_data['_id']
-        )
+        _id = self.saved_report_config_form.cleaned_data['_id']
+        if not _id:
+            _id = None  # make sure we pass None not a blank string
+        config = ReportConfig.get_or_create(_id)
         if config.owner_id:
             # in case a user maliciously tries to edit another user's config
             assert config.owner_id == self.user_id
@@ -442,7 +443,7 @@ class AddSavedReportConfigView(View):
 
     @property
     def post_data(self):
-        return json.loads(self.request.body)
+        return json.loads(self.request.body.decode('utf-8'))
 
     @property
     def user_id(self):
@@ -529,7 +530,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     template_name = 'reports/edit_scheduled_report.html'
 
     @use_multiselect
-    @use_select2_v4
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
@@ -666,6 +666,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             return context
 
         is_configurable_map = {c._id: c.is_configurable_report for c in self.configs}
+        supports_translations = {c._id: c.supports_translations for c in self.configs}
         languages_map = {c._id: list(c.languages | set(['en'])) for c in self.configs}
         languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
 
@@ -676,6 +677,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'monthly_day_options': [(i, i) for i in range(1, 32)],
             'form_action': _("Create a new") if self.is_new else _("Edit"),
             'is_configurable_map': is_configurable_map,
+            'supports_translations': supports_translations,
             'languages_map': languages_map,
             'languages_for_select': languages_for_select,
             'is_owner': self.is_new or self.request.couch_user._id == self.owner_id,
@@ -809,7 +811,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   email=True, attach_excel=False,
-                                  send_only_active=False):
+                                  send_only_active=False, request=None):
     """
     This function somewhat confusingly returns a tuple of: (response, excel_files)
     If attach_excel is false, excel_files will always be an empty list.
@@ -819,13 +821,12 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     """
     # todo: clean up this API?
     from django.http import HttpRequest
-
-    request = HttpRequest()
-    request.couch_user = couch_user
-    request.user = couch_user.get_django_user()
-    request.domain = domain
-    request.couch_user.current_domain = domain
-
+    if not request:
+        request = HttpRequest()
+        request.couch_user = couch_user
+        request.user = couch_user.get_django_user()
+        request.domain = domain
+        request.couch_user.current_domain = domain
     notification = ReportNotification.get(scheduled_report_id)
     return _render_report_configs(
         request,
@@ -921,6 +922,15 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     return render_full_report_notification(request, content)
 
 
+def safely_get_case(request, domain, case_id):
+    """Get case if accessible else raise a 404 or 403"""
+    case = get_case_or_404(domain, case_id)
+    if not (request.can_access_all_locations or
+            user_can_access_case(domain, request.couch_user, case)):
+        raise location_restricted_exception(request)
+    return case
+
+
 @location_safe
 class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_data'
@@ -929,7 +939,6 @@ class CaseDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
-    @use_select2_v4
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
@@ -1086,10 +1095,7 @@ def form_to_json(domain, form, timezone):
 @login_and_domain_required
 @require_GET
 def case_forms(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
-    if not (request.can_access_all_locations or
-                user_can_access_case(domain, request.couch_user, case)):
-        raise location_restricted_exception(request)
+    case = safely_get_case(request, domain, case_id)
     try:
         start_range = int(request.GET['start_range'])
         end_range = int(request.GET['end_range'])
@@ -1111,8 +1117,7 @@ def case_forms(request, domain, case_id):
 def case_property_changes(request, domain, case_id, case_property_name):
     """Returns all changes to a case property
     """
-
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     timezone = get_timezone_for_user(request.couch_user, domain)
     next_transaction = int(request.GET.get('next_transaction', 0))
 
@@ -1140,7 +1145,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 @login_and_domain_required
 @require_GET
 def download_case_history(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     track_workflow(request.couch_user.username, "Case Data Page: Case History csv Downloaded")
     history = get_case_history(case)
     properties = set()
@@ -1188,11 +1193,12 @@ def case_xml(request, domain, case_id):
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_GET
 def case_property_names(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
 
     # We need to look at the export schema in order to remove any case properties that
     # have been deleted from the app. When the data dictionary is fully public, we can use that
@@ -1204,19 +1210,19 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-    try:
-        # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
-        if case.external_id:
-            all_property_names.add('external_id')
-        all_property_names.remove('name')
-    except KeyError:
-        pass
+
+    # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
+    if case.external_id:
+        all_property_names.add('external_id')
+
+    all_property_names = all_property_names.difference({'name', 'case_name', 'type', 'case_type'})
     all_property_names = list(all_property_names)
     all_property_names.sort()
 
     return json_response(all_property_names)
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -1224,7 +1230,7 @@ def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     user = request.couch_user
 
     old_properties = case.dynamic_case_properties()
@@ -1277,11 +1283,12 @@ def resave_case_view(request, domain, case_id):
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
 def close_case_view(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     if case.closed:
         messages.info(request, 'Case {} is already closed.'.format(case.name))
     else:
@@ -1298,11 +1305,12 @@ def close_case_view(request, domain, case_id):
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
+@location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
 def undo_close_case_view(request, domain, case_id, xform_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     if not case.closed:
         messages.info(request, 'Case {} is not closed.'.format(case.name))
     else:
@@ -1314,11 +1322,12 @@ def undo_close_case_view(request, domain, case_id, xform_id):
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
+@location_safe
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
 def export_case_transactions(request, domain, case_id):
-    case = get_case_or_404(domain, case_id)
+    case = safely_get_case(request, domain, case_id)
     products_by_id = dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
 
     headers = [
@@ -1605,11 +1614,11 @@ def _get_display_options(request, domain, user, form, support_enabled):
     }
 
 
-def _get_location_safe_form(domain, user, instance_id):
+def safely_get_form(request, domain, instance_id):
     """Fetches a form and verifies that the user can access it."""
     form = get_form_or_404(domain, instance_id)
-    if not can_edit_form_location(domain, user, form):
-        raise PermissionDenied()
+    if not can_edit_form_location(domain, request.couch_user, form):
+        raise location_restricted_exception(request)
     return form
 
 
@@ -1621,7 +1630,6 @@ class FormDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_form_view_permission)
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(FormDataView, self).dispatch(request, *args, **kwargs)
 
@@ -1636,8 +1644,7 @@ class FormDataView(BaseProjectReportSectionView):
     @property
     @memoized
     def xform_instance(self):
-        return _get_location_safe_form(
-            self.domain, self.request.couch_user, self.instance_id)
+        return safely_get_form(self.request, self.domain, self.instance_id)
 
     @property
     @memoized
@@ -1670,11 +1677,17 @@ class FormDataView(BaseProjectReportSectionView):
         return page_context
 
 
+@location_safe
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
     instance = get_form_or_404(domain, xform_id)
+    if not can_edit_form_location(domain, request.couch_user, instance):
+        # This can happen if a user can view the case but not a particular form
+        return JsonResponse({
+            'html': _("You do not have permission to view this form."),
+        }, status=403)
     context = _get_form_render_context(request, domain, instance, case_id)
     return JsonResponse({
         'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
@@ -1738,7 +1751,7 @@ class EditFormInstance(View):
         if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
             raise Http404()
 
-        instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+        instance = safely_get_form(request, domain, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
             deviceID = instance.metadata.deviceID
@@ -1836,7 +1849,7 @@ def restore_edit(request, domain, instance_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     if instance.is_deprecated:
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _('Form was restored from a previous version.'))
@@ -1851,7 +1864,7 @@ def restore_edit(request, domain, instance_id):
 @require_POST
 @location_safe
 def archive_form(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
 
@@ -1938,7 +1951,7 @@ def _get_case_id_and_redirect_url(domain, request):
 @require_permission(Permissions.edit_data)
 @location_safe
 def unarchive_form(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     if instance.is_archived:
         instance.unarchive(user_id=request.couch_user._id)
@@ -1966,7 +1979,7 @@ def _get_data_cleaning_updates(request, old_properties):
 @require_POST
 @location_safe
 def edit_form(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
@@ -1993,7 +2006,7 @@ def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
     from corehq.form_processor.change_publishers import publish_form_saved
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     resave_form(domain, instance)
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
@@ -2019,27 +2032,40 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
 
 
 def _is_location_safe_report_class(view_fn, request, domain, export_hash, format):
-    cache = get_redis_client()
+    db = get_blob_db()
 
-    content = cache.get(export_hash)
-    if content is not None:
-        report_class, report_file = content
-        return report_class_is_location_safe(report_class)
+    try:
+        meta = db.metadb.get(parent_id=export_hash, key=export_hash)
+    except models.BlobMeta.DoesNotExist:
+        # The report doesn't exist, so let the export code handle the response
+        return True
+
+    return report_class_is_location_safe(meta.properties["report_class"])
 
 
 @conditionally_location_safe(_is_location_safe_report_class)
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
-    cache = get_redis_client()
+    db = get_blob_db()
+    report_not_found = HttpResponseNotFound(_("That report was not found. Please remember "
+                                              "that download links expire after 24 hours."))
 
-    content = cache.get(export_hash)
-    if content is not None:
-        report_class, report_file = content
+    try:
+        meta = db.metadb.get(parent_id=export_hash, key=export_hash)
+    except models.BlobMeta.DoesNotExist:
+        return report_not_found
+    report_class = meta.properties["report_class"]
+
+    try:
+        report_file = db.get(export_hash)
+    except NotFound:
+        return report_not_found
+    with report_file:
         if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
             raise PermissionDenied()
         if format in Format.VALID_FORMATS:
-            file = ContentFile(report_file)
+            file = ContentFile(report_file.read())
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
@@ -2049,9 +2075,6 @@ def export_report(request, domain, export_hash, format):
             return response
         else:
             return HttpResponseNotFound(_("We don't support this format"))
-    else:
-        return HttpResponseNotFound(_("That report was not found. Please remember"
-                                      " that download links expire after 24 hours."))
 
 
 @login_or_digest

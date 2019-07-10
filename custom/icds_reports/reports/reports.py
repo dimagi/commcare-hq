@@ -20,7 +20,7 @@ from memoized import memoized
 @location_safe
 class MPRReport(IcdsBaseReport):
 
-    title = 'MPR Report'
+    title = 'Monthly Progress Report (MPR)'
     slug = 'mpr_report'
     name = 'Block MPR'
 
@@ -50,7 +50,7 @@ class MPRReport(IcdsBaseReport):
 @location_safe
 class ASRReport(IcdsBaseReport):
 
-    title = 'ASR Report'
+    title = 'Annual Status Report (ASR)'
     slug = 'asr_report'
     name = 'Block ASR'
 
@@ -67,10 +67,6 @@ class ASRReport(IcdsBaseReport):
             Infrastructure,
             Equipment
         ]
-        if toggles.IMPROVED_ASR_REPORT.enabled_for_request(self.request):
-            for cls in cls_list:
-                if getattr(cls, 'resource_file', None):
-                    cls.resource_file = ('custom', 'icds_reports', 'resources', 'block_asr_qa.json')
         return cls_list
 
 

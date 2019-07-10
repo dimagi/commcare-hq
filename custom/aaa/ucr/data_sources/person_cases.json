@@ -23,6 +23,21 @@
       },
       "property_value": "person"
     },
+    "validations": [
+      {
+        "name": "directly_owned",
+        "error_message": "This case has an owner_id and does not default to ownership by extension",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "property_value": "-"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "household_case_id",

@@ -22,6 +22,16 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-child_health_cases",
     "display_name": "Cases - Child Health (Static)",
@@ -38,6 +48,24 @@
       "type": "boolean_expression",
       "property_value": "child_health"
     },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "Person name",
@@ -180,9 +208,9 @@
         "display_name": null,
         "datatype": "string",
         "type": "expression",
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
-        "is_nullable": true,
+        "is_nullable": false,
         "expression": {
           "location_id": {
             "expression": {
@@ -1610,13 +1638,11 @@
     },
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+     "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {

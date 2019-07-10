@@ -19,6 +19,7 @@ from custom.utils.utils import clean_IN_filter_value
 import six
 
 NUM_LAUNCHED_AWCS = 'Number of launched AWCs (ever submitted at least one HH reg form)'
+NUM_OF_DAYS_AWC_WAS_OPEN = 'Number of days AWC was open in the given month'
 
 FILTER_BY_LIST = {
     'unweighed': 'Data not Entered for weight (Unweighed)',
@@ -36,7 +37,7 @@ FILTER_BY_LIST = {
 
 
 class ExportableMixin(object):
-    engine_id = 'icds-test-ucr'
+    engine_id = 'icds-ucr'
 
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         self.config = config
@@ -89,7 +90,8 @@ class ExportableMixin(object):
         export_from_tables(excel_data, export_file, format)
         return export_response(export_file, format, self.title)
 
-    def get_excel_data(self, location, system_usage_num_launched_awcs_formatting_at_awc_level=False):
+    def get_excel_data(self, location, system_usage_num_launched_awcs_formatting_at_awc_level=False,
+                       system_usage_num_of_days_awc_was_open_formatting=False):
         excel_rows = []
         headers = []
         for column in self.columns:
@@ -136,6 +138,12 @@ class ExportableMixin(object):
                 else:
                     record[num_launched_awcs_column] = \
                         'Launched' if record[num_launched_awcs_column] else 'Not Launched'
+        if system_usage_num_of_days_awc_was_open_formatting and \
+                self.loc_level <= 4 and NUM_OF_DAYS_AWC_WAS_OPEN in excel_rows[0]:
+            num_of_days_awc_was_open_column = excel_rows[0].index(NUM_OF_DAYS_AWC_WAS_OPEN)
+            for record in excel_rows[1:]:
+                if record[num_of_days_awc_was_open_column] == DATA_NOT_ENTERED:
+                    record[num_of_days_awc_was_open_column] = 'Applicable at only AWC level'
         return [
             [
                 self.title,

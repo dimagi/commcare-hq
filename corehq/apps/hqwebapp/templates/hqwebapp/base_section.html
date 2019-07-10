@@ -4,17 +4,13 @@
 {% block title %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} :: {% endblock %}
 
 {% block page_breadcrumbs %}
-{% captureas page_actions_block %}{% block page_actions %}{% endblock page_actions %}{% endcaptureas %}
-{% if page_actions_block %}
-<div class="pull-right page-actions-toolbar">
-    {{ page_actions_block }}
-</div>
-{% endif %}
-<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-    <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
-    {% for parent in current_page.parents %}
-        <li><a href="{{ parent.url }}">{{ parent.title }}</a></li>
-    {% endfor %}
-    <li class="active">{{ current_page.page_name }}</li>
-</ol>
+  {% captureas page_actions_block %}{% block page_actions %}{% endblock page_actions %}{% endcaptureas %}
+  {% if page_actions_block %}
+    <div class="pull-right page-actions-toolbar">
+      {{ page_actions_block }}
+    </div>
+  {% endif %}
+
+  {% breadcrumbs current_page section current_page.parents %}
+
 {% endblock %}

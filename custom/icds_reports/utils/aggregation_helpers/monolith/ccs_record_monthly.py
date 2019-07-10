@@ -16,6 +16,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'ccs-record-monthly'
     base_tablename = 'ccs_record_monthly'
 
     def __init__(self, month):
@@ -23,19 +24,27 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     def aggregate(self, cursor):
+        create_query, create_params = self.create_table_query()
         agg_query, agg_params = self.aggregation_query()
         index_queries = self.indexes()
 
         cursor.execute(self.drop_table_query())
+        cursor.execute(create_query, create_params)
         cursor.execute(agg_query, agg_params)
         for query in index_queries:
             cursor.execute(query)
 
-    @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+    def create_table_query(self):
+        return """
+        CREATE TABLE IF NOT EXISTS "{tablename}" (
+            CHECK (month = DATE %(date)s)
+        ) INHERITS ("{parent_tablename}")
+        """.format(
+            parent_tablename=self.base_tablename,
+            tablename=self.tablename,
+        ), {
+            "date": self.month.strftime("%Y-%m-%d"),
+        }
 
     @property
     def ccs_record_case_ucr_tablename(self):
@@ -60,7 +69,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
 
     @property
     def person_case_ucr_tablename(self):
@@ -71,7 +80,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def aggregation_query(self):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
-        age_in_days = "({} - case_list.dob)::integer".format(end_month_string)
+        age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         open_in_month = ("({} - case_list.opened_on::date)::integer >= 0"
                          " AND (case_list.closed = 0"
@@ -97,7 +106,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         valid_in_month = "( {} OR {})".format(pregnant_to_consider, lactating)
 
         add_in_month = "(case_list.add>= {} AND case_list.add<={})".format(start_month_string, end_month_string)
-        delivered_in_month = "({} AND {})".format(seeking_services, add_in_month)
+        add_in_month_after_opened_on = "({} AND case_list.opened_on<=case_list.add)".format(add_in_month)
+        delivered_in_month = "({} AND {})".format(seeking_services, add_in_month_after_opened_on)
         extra_meal = "(agg_bp.eating_extra=1 AND {})".format(pregnant_to_consider)
         b1_complete = "(case_list.bp1_date <= {})".format(end_month_string)
         b2_complete = "(case_list.bp2_date <= {})".format(end_month_string)
@@ -227,7 +237,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('bp_date', 'agg_bp.latest_time_end_processed::DATE'),
             ('is_ebf', 'agg_pnc.is_ebf'),
             ('breastfed_at_birth', 'agg_delivery.breastfed_at_birth'),
-            ('person_name', 'case_list.person_name'),
+            ('person_name', 'person_cases.name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
             ('mobile_number', 'person_cases.phone_number'),
@@ -242,7 +252,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
-            ('dob', 'case_list.dob'),
+            ('dob', 'person_cases.dob'),
             ('closed', 'case_list.closed'),
             ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),
@@ -258,24 +268,24 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             FROM "{ccs_record_case_ucr}" case_list
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON case_list.person_case_id = person_cases.doc_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON case_list.doc_id = ut.ccs_record_case_id
-            LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id 
+            LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON case_list.doc_id = agg_bp.case_id 
+            LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON case_list.doc_id = agg_bp.case_id
                 AND agg_bp.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON case_list.doc_id = agg_pnc.case_id 
+            LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON case_list.doc_id = agg_pnc.case_id
                 AND agg_pnc.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON case_list.doc_id = agg_cf.case_id 
+            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON case_list.doc_id = agg_cf.case_id
                 AND agg_cf.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id 
+            LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
             WHERE {open_in_month} AND (case_list.add is NULL OR %(start_date)s-case_list.add<=183)
+                AND case_list.supervisor_id IS NOT NULL
             ORDER BY case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         """.format(
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            ucr_ccs_record_monthly_table=self.ccs_record_monthly_ucr_tablename,
             agg_thr_table=AGG_CCS_RECORD_THR_TABLE,
             ccs_record_case_ucr=self.ccs_record_case_ucr_tablename,
             agg_pnc_table=AGG_CCS_RECORD_PNC_TABLE,

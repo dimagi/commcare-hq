@@ -11,6 +11,10 @@
     width: inherit;
 }
 
+.fixed-title-with-alert {
+    top: 50px;
+}
+
 .fixes-filters {
     position: fixed;
     z-index: 1;
@@ -18,6 +22,10 @@
     background-color: white;
     width: 83%;
     padding: 10px 0;
+}
+
+.fixes-filters-with-alert {
+    top: 92px;
 }
 
 .fixed-dots {
@@ -86,6 +94,24 @@ nvd3 > svg {
 nvd3#sectorChart > div.title.h4 {
     text-align: center !important;
 }
+
+.dataTables_scrollHeadInner {
+    width: 100% !important;
+}
+
+.dataTables_scrollHeadInner table {
+    width: 100% !important;
+}
+
+.scrollStyle {
+    overflow-x:auto !important;
+}
+
+.factSheetTable td {
+    white-space: inherit !important;
+}
+
+
 
 @media print {
     .white, .fa, .fa-info-circle:before, .number, .second_number {
@@ -260,6 +286,10 @@ nvd3#sectorChart > div.title.h4 {
     z-index: 1;
 }
 
+.left-menu-with-alert {
+    top: 50px;
+}
+
 .navbar-default {
     margin-bottom: 0;
     height: 50px;
@@ -275,7 +305,17 @@ nvd3#sectorChart > div.title.h4 {
     right: 0;
 }
 
-.alert-container {
+.main-container-with-alert {
+    top: 50px;
+}
+
+.alert-maintenance {
+    position: fixed;
+    z-index: 1;
+    width: 100%;
+}
+
+.info-message {
     margin-top: 130px;
 }
 

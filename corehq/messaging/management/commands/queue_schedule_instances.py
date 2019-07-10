@@ -18,7 +18,6 @@ from corehq.messaging.scheduling.tasks import (
     handle_case_timed_schedule_instance,
 )
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
-from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import datetime
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.logging import notify_exception
@@ -27,10 +26,7 @@ from time import sleep
 
 
 def skip_domain(domain):
-    return (
-        any_migrations_in_progress(domain) or
-        REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain)
-    )
+    return any_migrations_in_progress(domain)
 
 
 class Command(BaseCommand):

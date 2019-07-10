@@ -4,49 +4,49 @@
 {% load timezone_tags %}
 
 {% block page_content %}
-    <table class="table table-striped datatable">
-        <thead>
-            <tr>
-                <th>{% trans "Forward Type" %}</th>
-                <th>{% trans "Keyword" %}</th>
-                <th>{% trans "Backend ID" %}</th>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for rule in forwarding_rules %}
-            <tr>
-                <td>{% if rule.forward_type == "ALL" %}{% trans "All messages" %}{% else %}{% if rule.forward_type == "KEYWORD" %}{% trans "All messages starting with a keyword" %}{% endif %}{% endif %}</td>
-                <td>{% if rule.forward_type == "KEYWORD" %}{{ rule.keyword }}{% else %}n/a{% endif %}</td>
-                <td>{{ rule.backend_id }}</td>
-                <td><a href="{% url "edit_forwarding_rule" domain rule.get_id %}" class="btn btn-primary"><i class="fa fa-pencil"></i> {% trans "Edit" %}</a></td>
-                <td>
-                    <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ rule.get_id }}"><i class="fa fa-remove"></i> {% trans "Delete" %}</a>
-                    <div id="delete_{{ rule.get_id }}" class="modal fade">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                    <h4 class="modal-title">{% trans "Delete Forwarding Rule?" %}</h4>
-                                </div>
-                                <form class="form form-horizontal" name="delete_forwarding_rule" action="{% url "delete_forwarding_rule" domain rule.get_id %}" method="post">
-                                    {% csrf_token %}
-                                    <div class="modal-body">
-                                        <p>{% trans "Are you sure you want to delete this forwarding rule?" %}</p>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-                                        <button type="submit" class="btn btn-danger"><i class="fa fa-remove"></i> {% trans "Delete" %}</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <a href="{% url "add_forwarding_rule" domain %}"><span class="btn btn-primary"><i class="fa fa-plus"></i> {% trans "Add Forwarding Rule" %}</span></a>
+  <table class="table table-striped datatable">
+    <thead>
+    <tr>
+      <th>{% trans "Forward Type" %}</th>
+      <th>{% trans "Keyword" %}</th>
+      <th>{% trans "Backend ID" %}</th>
+      <th></th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for rule in forwarding_rules %}
+      <tr>
+        <td>{% if rule.forward_type == "ALL" %}{% trans "All messages" %}{% else %}{% if rule.forward_type == "KEYWORD" %}{% trans "All messages starting with a keyword" %}{% endif %}{% endif %}</td>
+        <td>{% if rule.forward_type == "KEYWORD" %}{{ rule.keyword }}{% else %}n/a{% endif %}</td>
+        <td>{{ rule.backend_id }}</td>
+        <td><a href="{% url "edit_forwarding_rule" domain rule.get_id %}" class="btn btn-primary"><i class="fa fa-pencil"></i> {% trans "Edit" %}</a></td>
+        <td>
+          <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ rule.get_id }}"><i class="fa fa-remove"></i> {% trans "Delete" %}</a>
+          <div id="delete_{{ rule.get_id }}" class="modal fade">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <h4 class="modal-title">{% trans "Delete Forwarding Rule?" %}</h4>
+                </div>
+                <form class="form form-horizontal" name="delete_forwarding_rule" action="{% url "delete_forwarding_rule" domain rule.get_id %}" method="post">
+                  {% csrf_token %}
+                  <div class="modal-body">
+                    <p>{% trans "Are you sure you want to delete this forwarding rule?" %}</p>
+                  </div>
+                  <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-danger"><i class="fa fa-remove"></i> {% trans "Delete" %}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url "add_forwarding_rule" domain %}"><span class="btn btn-primary"><i class="fa fa-plus"></i> {% trans "Add Forwarding Rule" %}</span></a>
 {% endblock %}

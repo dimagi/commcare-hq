@@ -5,184 +5,183 @@
 {% requirejs_main "fixtures/js/lookup-manage" %}
 
 {% block page_title %}
-    {% trans 'Manage Tables' %}
+  {% trans 'Manage Tables' %}
 {% endblock %}
 
 {% block page_content %}
-{% registerurl 'download_fixtures' domain %}
-{% registerurl 'fixture_interface_dispatcher' domain 'view_lookup_tables' %}
-{% registerurl 'fixture_data_types' domain %}
-{% registerurl 'update_lookup_tables' domain %}
-<p>
+  {% initial_page_data 'data_types' types %}
+  {% registerurl 'download_fixtures' domain %}
+  {% registerurl 'fixture_interface_dispatcher' domain 'view_lookup_tables' %}
+  {% registerurl 'update_lookup_tables' domain %}
+  <p>
     {% blocktrans %}
-        Lookup tables are used in applications to provide data that is not directly stored in the application and may change over time.  For example, you can use them for a list of villages that changes over the time of your project.  They also allow you to assign certain data (ex. villages) to certain users
+      Lookup tables are used in applications to provide data that is not directly stored in the application and may change over time.
+      For example, you can use them for a list of villages that changes over the time of your project.
+      They also allow you to assign certain data (ex. villages) to certain users.
+      <br>
+      Read more about lookup tables on our
+      <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>Help Site</a>.
     {% endblocktrans %}
-</p>
-<p class="alert alert-info">
-    <i class="fa fa-info-circle"></i>
-    {% blocktrans %}
-        For more info see the <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>Lookup Tables</a> help page
-    {% endblocktrans %}
-</p>
-<p class="alert fade in hide page-level-alert alert-danger" id="editFailure">
+  </p>
+  <p class="alert fade in hide page-level-alert alert-danger" id="editFailure">
     <a class="close" href="#">×</a>
     <span id="FailText">
     {% blocktrans %}
-        Something went wrong! Your edit has not been applied, please try again. If you see this error repeatedly please report it as issue.
+      Something went wrong! Your edit has not been applied, please try again. If you see this error repeatedly please report it as issue.
     {% endblocktrans %}
     </span>
-</p>
+  </p>
 
-<div class="row" id="fixtures-ui">
+  <div class="row ko-template" id="fixtures-ui">
     <div class="col-sm-12">
-        <p class="pull-right">
-            <a href="#" class="btn btn-primary"
-               data-bind="click: downloadExcels, attr: {'disabled': selectedTables().length < 1}">
-                <i class="fa fa-cloud-download"></i> {% trans "Download Lookup Tables" %}
-            </a>
-        </p>
+      <p class="pull-right">
+        <a href="#" class="btn btn-primary"
+           data-bind="click: downloadExcels, attr: {'disabled': selectedTables().length < 1}">
+          <i class="fa fa-cloud-download"></i> {% trans "Download Lookup Tables" %}
+        </a>
+      </p>
     </div>
     <div class="col-sm-12">
-        <table class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th class="col-sm-4">
-                        {% trans "Table ID" %}
-                    </th>
-                    <th class="col-sm-2">
-                        {% trans "View Table" %}
-                        <i class="fa fa-share"></i>
-                    </th>
-                    <th class="col-sm-3">
-                        {% trans "Edit or Delete Table" %}
-                    </th>
-                    <th class="col-sm-3">
-                        {% trans "Include in Download" %}
-                        <a href="#" class="btn btn-xs btn-default toggle" data-all="true" data-bind="click: updateSelectedTables">{% trans "all" %}</a>
-                        <a href="#" class="btn btn-xs btn-default toggle" data-all="false" data-bind="click: updateSelectedTables">{% trans "none" %}</a>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- ko foreach: data_types -->
-                    <tr data-bind="visible: isVisible">
-                        <td>
-                            <span data-bind="text: tag"></span>
-                        </td>
-                        <td>
-                            <a data-bind="attr: {href: view_link}" target='_blank'>{% trans "View Table" %}</a>
-                        </td>
-                        <td>
-                            <button class="btn btn-default" data-bind="click: startEditing, visible: saveState() === 'saved'">
-                                <i class="fa fa-edit"></i>
-                                {% trans "Edit" %}
-                            </button>
-                            <button class="btn btn-default disabled" data-bind="visible: saveState() === 'saving'">
-                                {% trans "Saving..." %}
-                            </button>
-                            {% include "fixtures/partials/edit_table_modal.html" %}
-                            <button class="btn btn-danger" data-bind="click: $root.removeDataType">
-                                <i class="fa fa-trash"></i>
-                                {% trans "Delete" %}
-                            </button>
-                        </td>
-                        <td>
-                            <label>
-                                <input type="checkbox" class="select-bulk" data-bind="event: {change: $root.updateSelectedTables}, value: _id" />
-                            </label>
-                        </td>
-                    </tr>
-                <!-- /ko -->
-                <tr>
-                    <td colspan="4">
-                    <button class="btn btn-default" data-bind="click: $root.addDataType">
-                        <i class="fa fa-plus"></i>
-                        {% trans "Add Table" %}
-                    </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+      <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+          <th class="col-sm-4">
+            {% trans "Table ID" %}
+          </th>
+          <th class="col-sm-2">
+            {% trans "View Table" %}
+            <i class="fa fa-external-link"></i>
+          </th>
+          <th class="col-sm-3">
+            {% trans "Edit or Delete Table" %}
+          </th>
+          <th class="col-sm-3">
+            {% trans "Include in Download" %}
+            <a href="#" class="btn btn-xs btn-default toggle" data-all="true" data-bind="click: updateSelectedTables">{% trans "all" %}</a>
+            <a href="#" class="btn btn-xs btn-default toggle" data-all="false" data-bind="click: updateSelectedTables">{% trans "none" %}</a>
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- ko foreach: data_types -->
+        <tr data-bind="visible: isVisible">
+          <td>
+            <span data-bind="text: tag"></span>
+          </td>
+          <td>
+            <a data-bind="attr: {href: view_link}" target='_blank'>{% trans "View Table" %}</a>
+          </td>
+          <td>
+            <button class="btn btn-default" data-bind="click: startEditing, visible: saveState() === 'saved'">
+              <i class="fa fa-edit"></i>
+              {% trans "Edit" %}
+            </button>
+            <button class="btn btn-default disabled" data-bind="visible: saveState() === 'saving'">
+              {% trans "Saving..." %}
+            </button>
+            {% include "fixtures/partials/edit_table_modal.html" %}
+            <button class="btn btn-danger" data-bind="click: $root.removeDataType">
+              <i class="fa fa-trash"></i>
+              {% trans "Delete" %}
+            </button>
+          </td>
+          <td>
+            <label>
+              <input type="checkbox" class="select-bulk" data-bind="event: {change: $root.updateSelectedTables}, value: _id" />
+            </label>
+          </td>
+        </tr>
+        <!-- /ko -->
+        <tr>
+          <td colspan="4">
+            <button class="btn btn-default" data-bind="click: $root.addDataType">
+              <i class="fa fa-plus"></i>
+              {% trans "Add Table" %}
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
     </div>
-</div>
-<div class="row">
+  </div>
+  <div class="row">
     <div class="col-sm-12">
-        <h3>
-            {% blocktrans %}
-                Upload Lookup Tables
-            {% endblocktrans %}
-        </h3>
-        <p>
-            {% blocktrans %}
-                Create new tables or update existing ones by uploading a new or existing Excel file.
-                See the
-                <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>
-                    Lookup Tables help page
-                </a> for instructions on setting up your Excel file.
-            {% endblocktrans %}
-        </p>
+      <h3>
+        {% blocktrans %}
+          Upload Lookup Tables
+        {% endblocktrans %}
+      </h3>
+      <p>
+        {% blocktrans %}
+          Create new tables or update existing ones by uploading a new or existing Excel file.
+          See the
+          <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>
+            Lookup Tables help page
+          </a> for instructions on setting up your Excel file.
+        {% endblocktrans %}
+      </p>
     </div>
-</div>
-<div class="row" id="fixture-upload">
+  </div>
+  <div class="row ko-template" id="fixture-upload">
     <div class="col-sm-12">
-        <form class="form-horizontal"
-              id="uploadForm"
-              action="{% url "upload_fixtures" domain %}"
-              method="post"
-              enctype="multipart/form-data">
-            {% csrf_token %}
-            <fieldset>
-                <div class="form-group">
-                    <label for="bulk_upload_file" class="control-label col-sm-3">{% trans "Lookup Tables File" %}</label>
-                    <div class="col-sm-6">
-                        <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="replace" class="control-label col-sm-3">{% trans "Existing Tables" %}</label>
-                    <div class="col-sm-6">
-                        <div class="checkbox">
-                            <label>
-                                <input id="replace" type="checkbox" name="replace"/>
-                                {% trans "Replace Existing Tables" %}
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-            <div class="form-actions">
-                <div class="col-sm-offset-3">
-                    <button type="submit" class="btn btn-primary disable-on-submit" data-bind="attr: {'disabled': !file()}">
-                        <i class="fa fa-cloud-upload"></i> {% trans 'Upload Tables' %}
-                    </button>
-                </div>
+      <form class="form-horizontal"
+            id="uploadForm"
+            action="{% url "upload_fixtures" domain %}"
+            method="post"
+            enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset>
+          <div class="form-group">
+            <label for="bulk_upload_file" class="control-label col-sm-3">{% trans "Lookup Tables File" %}</label>
+            <div class="col-sm-6">
+              <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
             </div>
-        </form>
-    </div>
-</div>
-<div class="modal fade" id="fixture-download">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">{% trans "Downloading Lookup Tables" %}</h4>
+          </div>
+          <div class="form-group">
+            <label for="replace" class="control-label col-sm-3">{% trans "Existing Tables" %}</label>
+            <div class="col-sm-6">
+              <div class="checkbox">
+                <label>
+                  <input id="replace" type="checkbox" name="replace"/>
+                  {% trans "Replace existing tables" %}
+                </label>
+              </div>
             </div>
-            <div class="modal-body">
-                <p id="downloading">
-                  <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                  {% trans 'Processing data. Please wait...' %}
-                </p>
-                <div class="hide" id="download-progress"></div>
-                <div class="hide" id="download-complete">
-                    <p class="alert alert-success">{% trans "Your file is ready." %}</p>
-                        <a href="#" id="file-download-url">
-                        <button type="submit" class="btn btn-primary" data-bind="attr:">
-                            <i class="fa fa-cloud-download"></i> {% trans 'Download File Now' %}
-                        </button>
-                    </a>
-                </div>
-            </div>
+          </div>
+        </fieldset>
+        <div class="form-actions">
+          <div class="col-sm-offset-3">
+            <button type="submit" class="btn btn-primary disable-on-submit" data-bind="attr: {'disabled': !file()}">
+              <i class="fa fa-cloud-upload"></i> {% trans 'Upload Tables' %}
+            </button>
+          </div>
         </div>
+      </form>
     </div>
-</div>
+  </div>
+  <div class="modal fade" id="fixture-download">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{% trans "Downloading Lookup Tables" %}</h4>
+        </div>
+        <div class="modal-body">
+          <p id="downloading">
+            <i class="fa fa-spin fa-spinner"></i>
+            {% trans 'Processing data. Please wait...' %}
+          </p>
+          <div class="hide" id="download-progress"></div>
+          <div class="hide" id="download-complete">
+            <p class="alert alert-success">{% trans "Your file is ready." %}</p>
+            <a href="#" id="file-download-url">
+              <button type="submit" class="btn btn-primary" data-bind="attr:">
+                <i class="fa fa-cloud-download"></i> {% trans 'Download File Now' %}
+              </button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

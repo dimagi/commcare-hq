@@ -21,6 +21,16 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-visitorbook_forms",
     "display_name": "Forms - Visitor Book (Static)",
@@ -39,6 +49,24 @@
         "http://openrosa.org/formdesigner/08583F46-ED60-4864-B54F-CA725D5C230E"
       ]
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "AWC ID",
@@ -64,12 +92,11 @@
           },
           "location_type": "supervisor",
           "location_property": "_id",
-          "location_property": "_id",
           "type": "ancestor_location"
         },
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
-        "is_nullable": true,
+        "is_nullable": false,
         "type": "expression",
         "column_id": "supervisor_id",
         "create_index": true
@@ -191,6 +218,13 @@
     },
     "named_filters": {},
     "engine_id": "icds-ucr-non-dashboard",
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    },
     "disable_destructive_rebuild": true
   }
 }

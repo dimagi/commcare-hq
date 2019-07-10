@@ -61,7 +61,7 @@
   </head>
   <body bgcolor="#f2f2f1" marginheight="0" marginwidth="0" topmargin="0" style="background-color: #f2f2f1; margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
 
-{#  Preview Text is the text that appears right after the subject #}
+    {#  Preview Text is the text that appears right after the subject #}
     <div class="preview-text" style="display: none !important;">
       {% block preview_text %}{% endblock %}
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -117,11 +117,11 @@
         </div>
 
         {% block content %}
-        <div style="text-align: center; line-height: 1.2em; margin: 15px 0;">
-          {% block secondary_text %}
-            Secondary Text -- Replace!
-          {% endblock %}
-        </div>
+          <div style="text-align: center; line-height: 1.2em; margin: 15px 0;">
+            {% block secondary_text %}
+              Secondary Text -- Replace!
+            {% endblock %}
+          </div>
         {% endblock %}
 
       </div>{# /content #}
@@ -135,8 +135,8 @@
         <p>
           {% block reason_for_email %}{% endblock %}
           {% blocktrans %}
-          on <a href="http://www.commcarehq.org/" style="color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a>
-          with your email address.
+            on <a href="http://www.commcarehq.org/" style="color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a>
+            with your email address.
           {% endblocktrans %}
         </p>
 

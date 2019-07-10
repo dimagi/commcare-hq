@@ -3,54 +3,54 @@
 {% load hq_shared_tags %}
 
 <form class="form form-horizontal form-notice-container" name="exportFiltersForm" data-bind="submit: prepareExport">
-    <div class="form-notice-container">
-        {% if dynamic_filters %}
-            <div class="form-group">
-                {{ dynamic_filters }}
-            </div>
-        {% endif %}
-        {% crispy download_export_form %}
-        <div class="form-notice" data-bind="visible: downloadInProgress()">
-            <div class="row">
-                <div class="col-sm-9 col-lg-5 col-sm-offset-3">
-                    <div class="label label-default label-lg">
-                        <i class="fa fa-info-circle"></i>
-                        {% trans "Filters inactive while download in progress. " %}
-                    </div>
-                </div>
-            </div>
+  <div class="form-notice-container">
+    {% if dynamic_filters %}
+      <div class="form-group">
+        {{ dynamic_filters }}
+      </div>
+    {% endif %}
+    {% crispy download_export_form %}
+    <div class="form-notice" data-bind="visible: downloadInProgress()">
+      <div class="row">
+        <div class="col-sm-9 col-lg-5 col-sm-offset-3">
+          <div class="label label-default label-lg">
+            <i class="fa fa-info-circle"></i>
+            {% trans "Filters inactive while download in progress. " %}
+          </div>
         </div>
+      </div>
     </div>
-    <div class="form-actions form-actions-exports" data-bind="visible: !downloadInProgress()">
-        <div class="col-sm-9 col-sm-offset-3">
-            <div class="alert alert-warning" data-bind="visible: prepareExportError()">
-                <i class="fa fa-exclamation-triangle"></i>
-                <span data-bind="text: prepareExportError"></span>
-            </div>
-            <div class="row">
-                <div class="col-xs-6 col-sm-4 col-md-3">
-                    <button type="submit" class="btn btn-primary btn-full-width" data-bind="disable: disablePrepareExport">
-                        <i data-bind="visible: !preparingExport()" class="fa fa-cloud-download"></i>
-                        <span data-bind="visible: !preparingExport()">{% trans "Prepare Export" %}</span>
+  </div>
+  <div class="form-actions form-actions-exports" data-bind="visible: !downloadInProgress()">
+    <div class="col-sm-9 col-sm-offset-3">
+      <div class="alert alert-warning" data-bind="visible: prepareExportError()">
+        <i class="fa fa-exclamation-triangle"></i>
+        <span data-bind="text: prepareExportError"></span>
+      </div>
+      <div class="row">
+        <div class="col-xs-6 col-sm-4 col-md-3">
+          <button type="submit" class="btn btn-primary btn-full-width" data-bind="disable: disablePrepareExport">
+            <i data-bind="visible: !preparingExport()" class="fa fa-cloud-download"></i>
+            <span data-bind="visible: !preparingExport()">{% trans "Prepare Export" %}</span>
 
-                        <i data-bind="visible: preparingExport()" class="fa-spin fa fa-spinner"></i>
-                        <span data-bind="visible: preparingExport()">{% trans "Preparing Export" %}</span>
-                    </button>
-                </div>
-                <div class="col-xs-6 col-sm-4 col-md-3" data-bind="visible: hasMultimedia">
-                    <button type="button" class="btn btn-default btn-full-width"
-                            data-bind="
+            <i data-bind="visible: preparingExport()" class="fa-spin fa fa-spinner"></i>
+            <span data-bind="visible: preparingExport()">{% trans "Preparing Export" %}</span>
+          </button>
+        </div>
+        <div class="col-xs-6 col-sm-4 col-md-3" data-bind="visible: hasMultimedia">
+          <button type="button" class="btn btn-default btn-full-width"
+                  data-bind="
                                 click: prepareMultimediaExport,
                                 disable: disablePrepareMultimediaExport,
                             ">
-                        <i data-bind="visible: !preparingMultimediaExport()" class="fa fa-cloud-download"></i>
-                        <span data-bind="visible: !preparingMultimediaExport()">{% trans "Prepare Multimedia" %}</span>
+            <i data-bind="visible: !preparingMultimediaExport()" class="fa fa-cloud-download"></i>
+            <span data-bind="visible: !preparingMultimediaExport()">{% trans "Prepare Multimedia" %}</span>
 
-                        <i data-bind="visible: preparingMultimediaExport()" class="fa-spin fa fa-spinner"></i>
-                        <span data-bind="visible: preparingMultimediaExport()">{% trans "Preparing Multimedia" %}</span>
-                    </button>
-                </div>
-            </div>
+            <i data-bind="visible: preparingMultimediaExport()" class="fa-spin fa fa-spinner"></i>
+            <span data-bind="visible: preparingMultimediaExport()">{% trans "Preparing Multimedia" %}</span>
+          </button>
         </div>
+      </div>
     </div>
+  </div>
 </form>

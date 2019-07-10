@@ -3,17 +3,14 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 
-from corehq.apps.sms.api import send_sms_to_verified_number
-from corehq.util.translation import localize
 from dimagi.utils.dates import get_business_day_of_month_before
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_HELP, TEST_HANDLER_BAD_CODE, SOH_HELP_MESSAGE, \
-    SUPERVISION_REMINDER, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, DELIVERY_LATE_DISTRICT, TEST_HANDLER_CONFIRM, \
-    REMINDER_MONTHLY_RANDR_SUMMARY, reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
-    SOH_THANK_YOU, LOSS_ADJUST_HELP
+    reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
+    LOSS_ADJUST_HELP
 from custom.ilsgateway.utils import send_translated_message
 
 
@@ -65,25 +62,6 @@ class MessageInitiatior(KeywordHandler):
                                              status_type=SupplyPointStatusTypes.LOSS_ADJUSTMENT_FACILITY,
                                              status_value=SupplyPointStatusValues.REMINDER_SENT,
                                              status_date=now)
-        elif command in ['supervision']:
-            self.send_message(sql_location, SUPERVISION_REMINDER)
-            now = datetime.utcnow()
-            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
-                                             status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                                             status_value=SupplyPointStatusValues.REMINDER_SENT,
-                                             status_date=now)
-        elif command in ['randr']:
-            if sql_location.location_type.name == 'DISTRICT':
-                self.send_message(sql_location, SUBMITTED_REMINDER_DISTRICT)
-                status_type = SupplyPointStatusTypes.R_AND_R_DISTRICT
-            else:
-                self.send_message(sql_location, SUBMITTED_REMINDER_FACILITY)
-                status_type = SupplyPointStatusTypes.R_AND_R_FACILITY
-            now = datetime.utcnow()
-            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
-                                             status_type=status_type,
-                                             status_value=SupplyPointStatusValues.REMINDER_SENT,
-                                             status_date=now)
         elif command in ['delivery']:
             if sql_location.location_type.name == 'DISTRICT':
                 self.send_message(sql_location, DELIVERY_REMINDER_DISTRICT)
@@ -102,14 +80,6 @@ class MessageInitiatior(KeywordHandler):
         elif command in ["latedelivery"]:
             self.send_message(sql_location, DELIVERY_LATE_DISTRICT, group_name="changeme", group_total=1,
                               not_responded_count=2, not_received_count=3)
-        elif command in ["randr_report"]:
-            now = datetime.utcnow()
-            self.respond(REMINDER_MONTHLY_RANDR_SUMMARY, **reports.construct_summary(
-                sql_location,
-                SupplyPointStatusTypes.R_AND_R_FACILITY,
-                [SupplyPointStatusValues.SUBMITTED, SupplyPointStatusValues.NOT_SUBMITTED],
-                get_business_day_of_month_before(now.year, now.month, 5)
-            ))
         elif command in ["soh_report"]:
             now = datetime.utcnow()
             last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
@@ -130,8 +100,5 @@ class MessageInitiatior(KeywordHandler):
                                                      [SupplyPointStatusValues.RECEIVED,
                                                      SupplyPointStatusValues.NOT_RECEIVED],
                                                      get_business_day_of_month_before(now.year, now.month, 15)))
-        elif command in ["soh_thank_you"]:
-            self.send_message(sql_location, SOH_THANK_YOU)
-
         self.respond(TEST_HANDLER_CONFIRM)
         return True

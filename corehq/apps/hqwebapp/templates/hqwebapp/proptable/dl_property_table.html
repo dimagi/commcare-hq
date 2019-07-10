@@ -1,51 +1,51 @@
 {% load i18n %}
 
 <div class="property-table-row">
-    {% for table in tables %}
+  {% for table in tables %}
     <div class="property-table-container inherit-float">
 
-        {% if table.name %}
+      {% if table.name %}
         <div class="table-tab">
-            {{ table.name }}
+          {{ table.name }}
         </div>
-        {% endif %}
+      {% endif %}
 
-        <div class="form-case-changes well
+      <div class="form-case-changes well
             {% with table_count=tables|length column_count=table.columns|length %}
             {% if not table.name and table_count == 1 and column_count == 1 %} 
                 well-loner
             {% endif %}
             {% endwith %}">
 
-            {% for column in table.columns %}
-            <dl>
-                {% for cell in column %}
-                {% if cell.name or cell.value %}
+        {% for column in table.columns %}
+          <dl>
+            {% for cell in column %}
+              {% if cell.name or cell.value %}
                 <dt title="{{ cell.expr }}">
-                    {{ cell.name }}
+                  {{ cell.name }}
                 </dt>
                 <dd>
-                    {{ cell.value }}
+                  {{ cell.value }}
                 </dd>
-                {% else %} {# empty row #}
+              {% else %} {# empty row #}
                 <dt></dt><dd></dd>
-                {% endif %}
-                {% endfor %}
-            </dl>
-            {% empty %}
-            <dl>
-                <dt>
-                    {% trans "No data" %}
-                </dt>
-                <dd>
+              {% endif %}
+            {% endfor %}
+          </dl>
+        {% empty %}
+          <dl>
+            <dt>
+              {% trans "No data" %}
+            </dt>
+            <dd>
                     <span class="text-muted">
                         {% trans "No properties found." %}
                     </span>
-                </dd>
-            </dl>
-            {% endfor %}
-            <div class="clearfix"></div>
-        </div>
+            </dd>
+          </dl>
+        {% endfor %}
+        <div class="clearfix"></div>
+      </div>
     </div>
-    {% endfor %}
+  {% endfor %}
 </div>

@@ -24,7 +24,7 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties_v2, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
+from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -58,7 +58,6 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
@@ -102,7 +101,6 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     resume_building_indicators,
@@ -232,7 +230,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
                             "app_url": app_url,
                             "app_name": app.name,
                             "module_url": module_url,
-                            "module_name": module.name['en']
+                            "module_name": module.default_name()
                         })
         return to_ret
 
@@ -280,7 +278,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_select2
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -388,7 +385,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
-        update_hubspot_properties_v2.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
@@ -626,7 +623,7 @@ class ConfigureReport(ReportBuilderView):
         if not has_report_builder_access(request):
             raise Http404
 
-        report_data = json.loads(request.body)
+        report_data = json.loads(request.body.decode('utf-8'))
         if report_data['existing_report'] and not self.existing_report:
             # This is the case if the user has clicked "Save" for a second time from the new report page
             # i.e. the user created a report with the first click, but didn't navigate to the report view page
@@ -762,7 +759,7 @@ def delete_report(request, domain, report_id):
     else:
         if data_source.get_report_count() <= 1:
             # No other reports reference this data source.
-            data_source.deactivate()
+            data_source.deactivate(initiated_by=request.user.username)
 
     soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
@@ -1130,7 +1127,9 @@ def delete_data_source(request, domain, config_id):
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
-    adapter.drop_table()
+    username = request.user.username if request else None
+    skip = not request  # skip logging when we remove temporary tables
+    adapter.drop_table(initiated_by=username, source='delete_data_source', skip_log=skip)
     soft_delete(config)
     if request:
         messages.success(
@@ -1228,7 +1227,7 @@ def build_data_source_in_place(request, domain, config_id):
         )
     )
 
-    rebuild_indicators_in_place.delay(config_id, request.user.username)
+    rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1337,7 +1336,7 @@ def process_url_params(params, columns):
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    adapter = IndicatorSqlAdapter(config)
+    adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
     return export_sql_adapter_view(request, domain, adapter, url)
 
@@ -1382,6 +1381,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     def get_table(q):
         yield list(table.columns.keys())
         for row in q:
+            adapter.track_load()
             yield row
 
     fd, path = tempfile.mkstemp()

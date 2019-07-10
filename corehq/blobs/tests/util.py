@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from shutil import rmtree
 from tempfile import mkdtemp
 from uuid import uuid4
+from contextlib import contextmanager
 
 from django.conf import settings
 
@@ -35,6 +36,21 @@ def get_meta(meta, deleted=False):
     if deleted:
         return DeletedBlobMeta.objects.using(db).get(id=meta.id)
     return BlobMeta.objects.using(db).get(id=meta.id)
+
+
+@contextmanager
+def temporary_blob_db(db):
+    """Temporarily install the given blob db globally
+
+    `get_blob_db()` will return the given blob db until the context
+    manager exits.
+    """
+    blobs._db.append(db)
+    try:
+        assert blobs.get_blob_db() is db, 'got wrong blob db'
+        yield
+    finally:
+        blobs._db.remove(db)
 
 
 class TemporaryBlobDBMixin(object):

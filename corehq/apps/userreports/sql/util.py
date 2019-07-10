@@ -35,13 +35,3 @@ def decode_column_name(column):
     if isinstance(column_name, bytes):
         column_name = column_name.decode('utf-8')
     return column_name
-
-
-def table_exists(connection, table_name):
-    res = connection.execute("select 1 from pg_tables where tablename = %s", table_name)
-    return bool(list(res))
-
-
-def view_exists(connection, view_name):
-    res = connection.execute("select 1 from pg_views where viewname = %s", view_name)
-    return bool(list(res))

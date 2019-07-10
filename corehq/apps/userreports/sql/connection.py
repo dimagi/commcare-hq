@@ -11,5 +11,5 @@ def get_engine_id(an_object, allow_read_replicas=False):
     from corehq.apps.userreports.models import AbstractUCRDataSource
     assert isinstance(an_object, AbstractUCRDataSource)
     if allow_read_replicas:
-        return connection_manager.get_load_balanced_read_db_alais(an_object.engine_id)
+        return connection_manager.get_load_balanced_read_db_alias(an_object.engine_id)
     return an_object.engine_id

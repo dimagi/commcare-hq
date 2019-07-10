@@ -334,365 +334,78 @@ Coalesce Expression
 Array Index Expression
 ''''''''''''''''''''''
 
-This expression returns ``doc["siblings"][0]``:
-
-.. code:: json
-
-   {
-       "type": "array_index",
-       "array_expression": {
-           "type": "property_name",
-           "property_name": "siblings"
-       },
-       "index_expression": {
-           "type": "constant",
-           "constant": 0
-       }
-   }
-
-It will return nothing if the siblings property is not a list, the index
-isn't a number, or the indexed item doesn't exist.
+.. autoclass:: corehq.apps.userreports.expressions.specs.ArrayIndexExpressionSpec
 
 Split String Expression
 '''''''''''''''''''''''
 
-This expression returns ``(doc["foo bar"]).split(' ')[0]``:
-
-.. code:: json
-
-   {
-       "type": "split_string",
-       "string_expression": {
-           "type": "property_name",
-           "property_name": "multiple_value_string"
-       },
-       "index_expression": {
-           "type": "constant",
-           "constant": 0
-       },
-       "delimiter": ","
-   }
-
-The delimiter is optional and is defaulted to a space. It will return
-nothing if the string_expression is not a string, or if the index isn't
-a number or the indexed item doesn't exist. The index_expression is also
-optional. Without it, the expression will return the list of elements.
+.. autoclass:: corehq.apps.userreports.expressions.specs.SplitStringExpressionSpec
 
 Iterator Expression
 '''''''''''''''''''
 
-.. code:: json
-
-   {
-       "type": "iterator",
-       "expressions": [
-           {
-               "type": "property_name",
-               "property_name": "p1"
-           },
-           {
-               "type": "property_name",
-               "property_name": "p2"
-           },
-           {
-               "type": "property_name",
-               "property_name": "p3"
-           },
-       ],
-       "test": {}
-   }
-
-This will emit ``[doc.p1, doc.p2, doc.p3]``. You can add a ``test``
-attribute to filter rows from what is emitted - if you don't specify
-this then the iterator will include one row per expression it contains
-regardless of what is passed in. This can be used/combined with the
-``base_item_expression`` to emit multiple rows per document.
+.. autoclass:: corehq.apps.userreports.expressions.specs.IteratorExpressionSpec
 
 Base iteration number expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-These are very simple expressions with no config. They return the index
-of the repeat item starting from 0 when used with a
-``base_item_expression``.
-
-.. code:: json
-
-   {
-       "type": "base_iteration_number"
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.IterationNumberExpressionSpec
 
 Related document expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This can be used to lookup a property in another document. Here's an
-example that lets you look up ``form.case.owner_id`` from a form.
-
-.. code:: json
-
-   {
-       "type": "related_doc",
-       "related_doc_type": "CommCareCase",
-       "doc_id_expression": {
-           "type": "property_path",
-           "property_path": ["form", "case", "@case_id"]
-       },
-       "value_expression": {
-           "type": "property_name",
-           "property_name": "owner_id"
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.RelatedDocExpressionSpec
 
 Ancestor location expression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is used to return a json object representing the ancestor of the
-given type of the given location. For instance, if we had locations
-configured with a hierarchy like ``country -> state -> county -> city``,
-we could pass the location id of Cambridge and a location type of state
-to this expression to get the Massachusetts location.
-
-.. code:: json
-
-   {
-       "type": "ancestor_location",
-       "location_id": {
-           "type": "property_name",
-           "name": "owner_id"
-       },
-       "location_type": {
-           "type": "constant",
-           "constant": "state"
-       }
-   }
+.. autoclass:: corehq.apps.locations.ucr_expressions.AncestorLocationExpression
 
 Nested expressions
 ^^^^^^^^^^^^^^^^^^
 
-These can be used to nest expressions. This can be used, e.g. to pull a
-specific property out of an item in a list of objects.
-
-The following nested expression is the equivalent of a ``property_path``
-expression to ``["outer", "inner"]`` and demonstrates the functionality.
-More examples can be found in the `practical examples`_.
-
-.. code:: json
-
-   {
-       "type": "nested",
-       "argument_expression": {
-           "type": "property_name",
-           "property_name": "outer"
-       },
-       "value_expression": {
-           "type": "property_name",
-           "property_name": "inner"
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.NestedExpressionSpec
 
 Dict expressions
 ^^^^^^^^^^^^^^^^
 
-These can be used to create dictionaries of key/value pairs. This is
-only useful as an intermediate structure in another expression since the
-result of the expression is a dictionary that cannot be saved to the
-database.
-
-See the `practical examples`_
-for a way this can be used in a ``base_item_expression`` to emit
-multiple rows for a single form/case based on different properties.
-
-Here is a simple example that demonstrates the structure. The keys of
-``properties`` must be text, and the values must be valid expressions
-(or constants):
-
-.. code:: json
-
-   {
-       "type": "dict",
-       "properties": {
-           "name": "a constant name",
-           "value": {
-               "type": "property_name",
-               "property_name": "prop"
-           },
-           "value2": {
-               "type": "property_name",
-               "property_name": "prop2"
-           }
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.DictExpressionSpec
 
 "Add Days" expressions
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Below is a simple example that demonstrates the structure. The
-expression below will add 28 days to a property called "dob". The
-date_expression and count_expression can be any valid expressions, or
-simply constants.
+.. autoclass:: corehq.apps.userreports.expressions.date_specs.AddDaysExpressionSpec
 
-.. code:: json
-
-   {
-       "type": "add_days",
-       "date_expression": {
-           "type": "property_name",
-           "property_name": "dob",
-       },
-       "count_expression": 28
-   }
 
 "Add Months" expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-``add_months`` offsets given date by given number of calendar months. If
-offset results in an invalid day (for e.g. Feb 30, April 31), the day of
-resulting date will be adjusted to last day of the resulting calendar
-month.
-
-The date_expression and months_expression can be any valid expressions,
-or simply constants, including negative numbers.
-
-.. code:: json
-
-   {
-       "type": "add_months",
-       "date_expression": {
-           "type": "property_name",
-           "property_name": "dob",
-       },
-       "months_expression": 28
-   }
+.. autoclass:: corehq.apps.userreports.expressions.date_specs.AddMonthsExpressionSpec
 
 "Diff Days" expressions
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-``diff_days`` returns number of days between dates specified by
-``from_date_expression`` and ``to_date_expression``. The
-from_date_expression and to_date_expression can be any valid
-expressions, or simply constants.
-
-.. code:: json
-
-   {
-       "type": "diff_days",
-       "from_date_expression": {
-           "type": "property_name",
-           "property_name": "dob",
-       },
-       "to_date_expression": "2016-02-01"
-   }
-
-"Evaluator" expression
-^^^^^^^^^^^^^^^^^^^^^^
-
-``evaluator`` expression can be used to evaluate statements that contain
-arithmetic (and simple python like statements). It evaluates the
-statement specified by ``statement`` which can contain variables as
-defined in ``context_variables``.
-
-.. code:: json
-
-   {
-       "type": "evaluator",
-       "statement": "a + b - c + 6",
-       "context_variables": {
-           "a": 1,
-           "b": 20,
-           "c": 2
-       }
-   }
-
-This returns 25 (1 + 20 - 2 + 6).
-
-``statement`` can be any statement that returns a valid number. All
-python math
-`operators <https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators>`__
-except power operator are available for use.
-
-``context_variables`` is a dictionary of Expressions where keys are
-names of variables used in the ``statement`` and values are expressions
-to generate those variables. Variables can be any valid numbers (Python
-datatypes ``int``, ``float`` and ``long`` are considered valid numbers.)
-or also expressions that return numbers. In addition to numbers the
-following types are supported:
-
--  ``date``
--  ``datetime``
-
-Function calls within evaluator expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Only the following functions are permitted:
-
--  ``rand()``: generate a random number between 0 and 1
--  ``randint(max)``: generate a random integer between 0 and ``max``
--  ``int(value)``: convert ``value`` to an int. Value can be a number or
-   a string representation of a number
--  ``float(value)``: convert ``value`` to a floating point number
--  ``str(value)``: convert ``value`` to a string
--  ``timedelta_to_seconds(time_delta)``: convert a TimeDelta object into
-   seconds. This is useful for getting the number of seconds between two
-   dates.
-
-   -  e.g. ``timedelta_to_seconds(time_end - time_start)``
-
--  ``range(start, [stop], [skip])``: the same as the python ```range``
-   function <https://docs.python.org/2/library/functions.html#range>`__.
-   Note that for performance reasons this is limited to 100 items or
-   less.
+.. autoclass:: corehq.apps.userreports.expressions.date_specs.DiffDaysExpressionSpec
 
 "Month Start Date" and "Month End Date" expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``month_start_date`` returns date of first day in the month of given
-date and ``month_end_date`` returns date of last day in the month of
-given date.
+.. autoclass:: corehq.apps.userreports.expressions.date_specs.MonthStartDateExpressionSpec
 
-The ``date_expression`` can be any valid expression, or simply constant
+"Evaluator" expression
+^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: json
-
-   {
-       "type": "month_start_date",
-       "date_expression": {
-           "type": "property_name",
-           "property_name": "dob",
-       },
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.EvalExpressionSpec
 
 ‘Get Case Sharing Groups' expression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-‘get_case_sharing_groups' will return an array of the case sharing
-groups that are assigned to a provided user ID. The array will contain
-one document per case sharing group.
-
-.. code:: json
-
-   {
-       "type": "get_case_sharing_groups",
-       "user_id_expression": {
-           "type": "property_path",
-           "property_path": ["form", "meta", "userID"]
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.CaseSharingGroupsExpressionSpec
 
 ‘Get Reporting Groups' expression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-‘get_reporting_groups' will return an array of the reporting groups that
-are assigned to a provided user ID. The array will contain one document
-per reporting group.
-
-.. code:: json
-
-   {
-       "type": "get_reporting_groups",
-       "user_id_expression": {
-           "type": "property_path",
-           "property_path": ["form", "meta", "userID"]
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.ReportingGroupsExpressionSpec
 
 Filter, Sort, Map and Reduce Expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -706,207 +419,32 @@ fail or return one of empty list or ``None`` value.
 map_items Expression
 ''''''''''''''''''''
 
-``map_items`` performs a calculation specified by ``map_expression`` on
-each item of the list specified by ``items_expression`` and returns a
-list of the calculation results. The ``map_expression`` is evaluated
-relative to each item in the list and not relative to the parent
-document from which the list is specified. For e.g. if
-``items_expression`` is a path to repeat-list of children in a form
-document, ``map_expression`` is a path relative to the repeat item.
-
-``items_expression`` can be any valid expression that returns a list. If
-this doesn't evaluate to a list an empty list is returned. It may be
-necessary to specify a ``datatype`` of ``array`` if the expression could
-return a single element.
-
-``map_expression`` can be any valid expression relative to the items in
-above list.
-
-.. code:: json
-
-   {
-       "type": "map_items",
-       "items_expression": {
-           "datatype": "array",
-           "type": "property_path",
-           "property_path": ["form", "child_repeat"]
-       },
-       "map_expression": {
-           "type": "property_path",
-           "property_path": ["age"]
-       }
-   }
-
-Above returns list of ages. Note that the ``property_path`` in
-``map_expression`` is relative to the repeat item rather than to the
-form.
+.. autoclass:: corehq.apps.userreports.expressions.list_specs.MapItemsExpressionSpec
 
 filter_items Expression
 '''''''''''''''''''''''
 
-``filter_items`` performs filtering on given list and returns a new
-list. If the boolean expression specified by ``filter_expression``
-evaluates to a ``True`` value, the item is included in the new list and
-if not, is not included in the new list.
-
-``items_expression`` can be any valid expression that returns a list. If
-this doesn't evaluate to a list an empty list is returned. It may be
-necessary to specify a ``datatype`` of ``array`` if the expression could
-return a single element.
-
-``filter_expression`` can be any valid boolean expression relative to
-the items in above list.
-
-.. code:: json
-
-   {
-       "type": "filter_items",
-       "items_expression": {
-           "datatype": "array",
-           "type": "property_name",
-           "property_name": "family_repeat"
-       },
-       "filter_expression": {
-          "type": "boolean_expression",
-           "expression": {
-               "type": "property_name",
-               "property_name": "gender"
-           },
-           "operator": "eq",
-           "property_value": "female"
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.list_specs.FilterItemsExpressionSpec
 
 sort_items Expression
 '''''''''''''''''''''
 
-``sort_items`` returns a sorted list of items based on sort value of
-each item.The sort value of an item is specified by ``sort_expression``.
-By default, list will be in ascending order. Order can be changed by
-adding optional ``order`` expression with one of ``DESC`` (for
-descending) or ``ASC`` (for ascending) If a sort-value of an item is
-``None``, the item will appear in the start of list. If sort-values of
-any two items can't be compared, an empty list is returned.
-
-``items_expression`` can be any valid expression that returns a list. If
-this doesn't evaluate to a list an empty list is returned. It may be
-necessary to specify a ``datatype`` of ``array`` if the expression could
-return a single element.
-
-``sort_expression`` can be any valid expression relative to the items in
-above list, that returns a value to be used as sort value.
-
-.. code:: json
-
-   {
-       "type": "sort_items",
-       "items_expression": {
-           "datatype": "array",
-           "type": "property_path",
-           "property_path": ["form", "child_repeat"]
-       },
-       "sort_expression": {
-           "type": "property_path",
-           "property_path": ["age"]
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.list_specs.SortItemsExpressionSpec
 
 reduce_items Expression
 '''''''''''''''''''''''
 
-``reduce_items`` returns aggregate value of the list specified by
-``aggregation_fn``.
-
-``items_expression`` can be any valid expression that returns a list. If
-this doesn't evaluate to a list, ``aggregation_fn`` will be applied on
-an empty list. It may be necessary to specify a ``datatype`` of
-``array`` if the expression could return a single element.
-
-``aggregation_fn`` is one of following supported functions names.
-
-+----------------+-----------------------+
-| Function Name  | Example               |
-+================+=======================+
-| ``count``      | ``['a', 'b']`` -> 2   |
-+----------------+-----------------------+
-| ``sum``        | ``[1, 2, 4]`` -> 7    |
-+----------------+-----------------------+
-| ``min``        | ``[2, 5, 1]`` -> 1    |
-+----------------+-----------------------+
-| ``max``        | ``[2, 5, 1]`` -> 5    |
-+----------------+-----------------------+
-| ``first_item`` | ``['a', 'b']`` -> ‘a' |
-+----------------+-----------------------+
-| ``last_item``  | ``['a', 'b']`` -> ‘b' |
-+----------------+-----------------------+
-
-.. code:: json
-
-   {
-       "type": "reduce_items",
-       "items_expression": {
-           "datatype": "array",
-           "type": "property_name",
-           "property_name": "family_repeat"
-       },
-       "aggregation_fn": "count"
-   }
-
-This returns number of family members
+.. autoclass:: corehq.apps.userreports.expressions.list_specs.ReduceItemsExpressionSpec
 
 flatten expression
 ''''''''''''''''''
 
-``flatten`` takes list of list of objects specified by
-``items_expression`` and returns one list of all objects.
-
-``items_expression`` is any valid expression that returns a list of
-lists. It this doesn't evaluate to a list of lists an empty list is
-returned. It may be necessary to specify a ``datatype`` of ``array`` if
-the expression could return a single element.
-
-.. code:: json
-
-   {
-       "type": "flatten",
-       "items_expression": {},
-   }
+.. autoclass:: corehq.apps.userreports.expressions.list_specs.FlattenExpressionSpec
 
 Named Expressions
 ^^^^^^^^^^^^^^^^^
 
-Last, but certainly not least, are named expressions. These are special
-expressions that can be defined once in a data source and then used
-throughout other filters and indicators in that data source. This allows
-you to write out a very complicated expression a single time, but still
-use it in multiple places with a simple syntax.
-
-Named expressions are defined in a special section of the data source.
-To reference a named expression, you just specify the type of
-``"named"`` and the name as follows:
-
-.. code:: json
-
-   {
-       "type": "named",
-       "name": "my_expression"
-   }
-
-This assumes that your named expression section of your data source
-includes a snippet like the following:
-
-.. code:: json
-
-   {
-       "my_expression": {
-           "type": "property_name",
-           "property_name": "test"
-       }
-   }
-
-This is just a simple example - the value that ``"my_expression"`` takes
-on can be as complicated as you want *as long as it doesn't reference
-any other named expressions*.
+.. autoclass:: corehq.apps.userreports.expressions.specs.NamedExpressionSpec
 
 Boolean Expression Filters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2700,4 +2238,4 @@ The naming convention for tables is:
 In postgres, you can see all tables by typing ``\dt`` and use sql
 commands to inspect the appropriate tables.
 
-.. _practical examples: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md
+.. _practical examples: ./ucr/examples.html

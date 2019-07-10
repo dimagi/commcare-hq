@@ -55,33 +55,32 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
             locationLevelNameField
         ).withTitle(
             locationLevelName
-        ).renderWith(simpleRender(
-            locationLevelNameField
-        )).withClass('medium-col')];
+        ).renderWith(renderCellValue('raw', locationLevelNameField)
+        ).withClass('medium-col')];
         if (vm.dataAgeSDD === '0_3') {
             if (vm.dataAggregationLevel <= 4) {
                 vm.dtColumns = vm.dtColumns.concat([
-                    DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(simpleRender('num_launched_awcs')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderHomeVisits).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderGrowthMonitoring03).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltip()).renderWith(simpleRender('num_awcs_conducted_cbe')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltip()).renderWith(simpleRender('num_awcs_conducted_vhnd')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderTakeHomeRation).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(renderCellValue('raw','num_launched_awcs')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltip()).renderWith(renderCellValue('raw','num_awcs_conducted_cbe')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltip()).renderWith(renderCellValue('raw','num_awcs_conducted_vhnd')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
                 ]);
             } else {
                 vm.dtColumns = vm.dtColumns.concat([
-                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderHomeVisits).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderGrowthMonitoring03).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltipAWC()).renderWith(simpleYesNoRender('num_awcs_conducted_cbe')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltipAWC()).renderWith(simpleYesNoRender('num_awcs_conducted_vhnd')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderTakeHomeRation).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltipAWC()).renderWith(renderCellValue('booleanRaw','num_awcs_conducted_cbe')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltipAWC()).renderWith(renderCellValue('booleanRaw','num_awcs_conducted_vhnd')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
                 ]);
             }
         } else {
             vm.dtColumns = vm.dtColumns.concat([
-                DTColumnBuilder.newColumn('sn').withTitle(renderSupplementaryNutritionTooltip()).renderWith(renderSupplementaryNutrition).withClass('medium-col'),
-                DTColumnBuilder.newColumn('pse').withTitle(renderPreSchoolEducationTooltip()).renderWith(renderPreSchoolEducation).withClass('medium-col'),
-                DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoring36Tooltip()).renderWith(renderGrowthMonitoring36).withClass('medium-col'),
+                DTColumnBuilder.newColumn('sn').withTitle(renderSupplementaryNutritionTooltip()).renderWith(renderCellValue('percentage','supNutrition')).withClass('medium-col'),
+                DTColumnBuilder.newColumn('pse').withTitle(renderPreSchoolEducationTooltip()).renderWith(renderCellValue('percentage','pse')).withClass('medium-col'),
+                DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoring36Tooltip()).renderWith(renderCellValue('percentage','gm36')).withClass('medium-col'),
             ]);
         }
     };
@@ -96,7 +95,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         return '<i class="fa fa-info-circle headerTooltip" style="float: right;" ><div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
     }
     function renderNumLaunchedAwcsTooltip() {
-        return renderHeaderTooltip('Number of AWC', 'Total Number of Anganwadi Centers launched in the selected location.');
+        return renderHeaderTooltip('Number of AWCs launched', 'Total Number of Anganwadi Centers launched in the selected location.');
     }
     function renderHomeVisitsTooltip() {
         return renderHeaderTooltip('Home Visits', 'Of the total number of expected home visits, the percentage of home visits completed by AWW.');
@@ -111,7 +110,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         return renderHeaderTooltip('VHSND', 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.');
     }
     function renderTakeHomeRationTooltip() {
-        return renderHeaderTooltip('Take Home Ration', 'Of the total number of pregnant women, lactating women and 0-3 years old children enrolled for Anganwadi services, the percentage of pregnant women, lactating women and 0-3 years old children who were provided THR for at least 21 days in the current month.');
+        return renderHeaderTooltip('Take Home Ration', 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.');
     }
     function renderCommunityBasedEventsTooltipAWC() {
         return renderHeaderTooltip('Community Based Events', 'If the AWC conducted at least 1 CBE in the current month then Yes otherwise No.');
@@ -129,46 +128,66 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         return renderHeaderTooltip('Growth Monitoring', 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>');
     }
 
-    function renderPercentageAndPartials(percentage, nominator, denominator) {
-        if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
-        if (percentage === vm.dataNotEntered) {
-            return '<div><span>(' + nominator + ' / ' + denominator + ')</span></div>';
+    function isZeroNullUnassignedOrDataNotEntered(value) {
+        return value === 0 || value === null || value === void(0) || value === vm.dataNotEntered;
+    }
+
+    function renderPercentageAndPartials(percentage, nominator, denominator, indicator) {
+        if (isZeroNullUnassignedOrDataNotEntered(denominator)) {
+            return '<div> No expected ' + indicator + ' </div>';
         }
-        return '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator +
-            ')</span></div>';
+        else {
+            if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
+            if (percentage === vm.dataNotEntered) {
+                if (nominator === 0 && denominator === 0) {
+                    return '<div><span>100 %<br>(' + nominator + ' / ' + denominator + ')</span></div>';
+                }
+                return '<div><span>(' + nominator + ' / ' + denominator + ')</span></div>';
+            }
+        }
+
+        return '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator + ')</span></div>';
     }
-    function simpleRender(indicator) {
-        return function simpleRenderer(data, type, full) {
-            return '<div>' + (
-                full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered
-            ) + '</div>';
+
+
+    function renderCellValue(CellType, indicator) {
+
+        return function (data, type, full) {
+
+            if (['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs'].indexOf(indicator) === -1 && isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+                return '<div>Not Launched</div>';
+            }
+
+            switch (CellType) {
+                case "raw": return simpleRender(full, indicator, 'raw');
+                case "booleanRaw": return simpleRender(full, indicator, 'booleanRaw');
+                case "percentage":
+                    switch (indicator) {
+                        case "homeVisits": return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits, 'Home visits');
+                        case "gm03": return  renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3, 'Weight measurement');
+                        case "gm36": return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5, 'Weight measurement');
+                        case "thr": return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates, 'THR');
+                        case "pse": return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6, 'beneficiaries');
+                        case "supNutrition": return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6, 'beneficiaries');
+
+                    }
+                    break;
+            }
+
         };
+
     }
-    function simpleYesNoRender(indicator) {
-        return function simpleRenderer(data, type, full) {
-            return '<div>' + (
-                full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered
-            ) + '</div>';
-        };
+
+    function simpleRender(full, indicator, outputType) {
+        var output;
+        if (outputType === 'raw') {
+            output = full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered;
+        } else if (outputType === 'booleanRaw') {
+            output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
+        }
+        return '<div>' + output + '</div>';
     }
-    function renderHomeVisits(data, type, full) {
-        return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits);
-    }
-    function renderGrowthMonitoring03(data, type, full) {
-        return renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3);
-    }
-    function renderTakeHomeRation(data, type, full) {
-        return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates);
-    }
-    function renderSupplementaryNutrition(data, type, full) {
-        return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6);
-    }
-    function renderPreSchoolEducation(data, type, full) {
-        return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6);
-    }
-    function renderGrowthMonitoring36(data, type, full) {
-        return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5);
-    }
+
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));

@@ -101,12 +101,12 @@ def get_docs_in_domain_by_class(domain, doc_class):
 
 
 def get_domain_ids_by_names(names):
-    return [result['id'] for result in Domain.view(
+    return {result['key']: result['id'] for result in Domain.view(
         "domain/domains",
         keys=names,
         reduce=False,
         include_docs=False
-    )]
+    )}
 
 
 def iter_domains():

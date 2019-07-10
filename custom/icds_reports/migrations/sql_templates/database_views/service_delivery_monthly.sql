@@ -21,7 +21,7 @@ SELECT
 "awc_location_months"."state_map_location_name" AS "state_map_location_name",
 "awc_location_months"."aggregation_level" AS "aggregation_level",
 agg_awc.month as month,
-agg_awc.num_launched_awcs AS num_launched_awcs,
+COALESCE(agg_awc.num_launched_awcs, 0) AS num_launched_awcs,
 agg_awc.valid_visits AS valid_visits,
 agg_awc.expected_visits AS expected_visits,
 agg_awc.num_awcs_conducted_cbe AS num_awcs_conducted_cbe,
@@ -31,12 +31,12 @@ SUM( CASE WHEN agg_child_health.age_tranche::integer >36 AND agg_child_health.ag
 SUM( CASE WHEN agg_child_health.age_tranche::integer <=36 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_0_3,
 SUM( CASE WHEN agg_child_health.age_tranche::integer BETWEEN 37 AND 60 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_3_5,
 SUM( CASE WHEN agg_child_health.age_tranche::integer BETWEEN 37 AND 72 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_3_6,
-SUM(agg_child_health.pse_attended_21_days) as pse_attended_21_days,
-SUM(agg_child_health.lunch_count_21_days) as lunch_count_21_days,
-SUM(agg_child_health.rations_21_plus_distributed) + COALESCE(ccr.mother_thr,0) as thr_given_21_days,
-SUM(agg_child_health.thr_eligible) + COALESCE(ccr.mother_thr_eligible,0) as total_thr_candidates
+COALESCE(SUM(agg_child_health.pse_attended_21_days),0) as pse_attended_21_days,
+COALESCE(SUM(agg_child_health.lunch_count_21_days),0) as lunch_count_21_days,
+COALESCE(SUM(agg_child_health.rations_21_plus_distributed),0) + COALESCE(ccr.mother_thr,0) as thr_given_21_days,
+COALESCE(SUM(agg_child_health.thr_eligible),0) + COALESCE(ccr.mother_thr_eligible,0) as total_thr_candidates
 
-FROM "public"."awc_location_months" "awc_location_months"
+FROM "public"."awc_location_months_local" "awc_location_months"
 LEFT join agg_awc on (
         ("agg_awc"."month" = "awc_location_months"."month") AND
         ("agg_awc"."state_id" = "awc_location_months"."state_id") AND

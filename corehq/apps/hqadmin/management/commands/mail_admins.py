@@ -20,7 +20,6 @@ class Command(BaseCommand):
         parser.add_argument('--subject', help='Subject', default='Mail from the console'),
         parser.add_argument('--stdin', action='store_true', default=False, help='Read message body from stdin'),
         parser.add_argument('--html', action='store_true', default=False, help='HTML payload'),
-        parser.add_argument('--slack', action='store_true', default=False, help='Whether to send subject to slack'),
         parser.add_argument('--environment', default='', help='The environment we are mailing about'),
 
     def handle(self, message, **options):
@@ -34,14 +33,3 @@ class Command(BaseCommand):
             html = message
 
         mail_admins(options['subject'], message, html_message=html)
-
-        if options['slack'] and hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
-            if options.get('environment') == 'staging':
-                channel = '#staging'
-            else:
-                channel = '#hq-ops'
-            requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
-                "channel": channel,
-                "username": "Igor the Iguana",
-                "text": options['subject'],
-            }))

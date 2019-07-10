@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
+
 from celery import states
 from celery.exceptions import Ignore
 from django.test import TestCase
@@ -9,13 +11,15 @@ from mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.case_importer.const import ImportErrors
-from corehq.apps.case_importer.tasks import bulk_import_async, do_import
+from corehq.apps.case_importer import exceptions
+from corehq.apps.case_importer.do_import import do_import
+from corehq.apps.case_importer.tasks import bulk_import_async
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import restrict_user_by_location
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -283,6 +287,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
+    @patch('corehq.apps.case_importer.do_import.CASEBLOCK_CHUNKSIZE', 2)
     def testBasicChunking(self):
         config = self._config(['case_id', 'age', 'sex', 'location'])
         file = make_worksheet_wrapper(
@@ -293,7 +298,7 @@ class ImporterTest(TestCase):
             ['case_id-3', 'age-3', 'sex-3', 'location-3'],
             ['case_id-4', 'age-4', 'sex-4', 'location-4'],
         )
-        res = do_import(file, config, self.domain, chunksize=2)
+        res = do_import(file, config, self.domain)
         # 5 cases in chunks of 2 = 3 chunks
         self.assertEqual(3, res['num_chunks'])
         self.assertEqual(5, res['created_count'])
@@ -357,7 +362,7 @@ class ImporterTest(TestCase):
         res = do_import(file_missing, config, self.domain)
         error_column_name = 'parent_id'
         self.assertEqual(rows,
-                         len(res['errors'][ImportErrors.InvalidParentId][error_column_name]['rows']),
+                         len(res['errors'][exceptions.InvalidParentId.title][error_column_name]['rows']),
                          "All cases should have missing parent")
 
     def import_mock_file(self, rows):
@@ -395,12 +400,12 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['location-owner-code'].owner_id, location.group_id)
         self.assertEqual(cases['location-owner-name'].owner_id, location.group_id)
 
-        error_message = ImportErrors.DuplicateLocationName
+        error_message = exceptions.DuplicateLocationName.title
         error_column_name = None
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
-        error_message = ImportErrors.InvalidOwnerId
+        error_message = exceptions.InvalidOwnerId.title
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
@@ -434,6 +439,75 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
         self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
 
+    def test_user_can_access_location(self):
+        with make_business_units(self.domain) as (inc, dsi, dsa), \
+                restrict_user_to_location(self, dsa):
+            res = self.import_mock_file([
+                ['case_id', 'name', 'owner_id'],
+                ['', 'Leonard Nimoy', inc.group_id],
+                ['', 'Kapil Dev', dsi.group_id],
+                ['', 'Quinton Fortune', dsa.group_id],
+            ])
+
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.group_id)
+        self.assertTrue(res['errors'])
+        error_message = exceptions.InvalidLocation.title
+        error_col = 'owner_id'
+        self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
+
+    def test_user_can_access_owner(self):
+        with make_business_units(self.domain) as (inc, dsi, dsa), \
+                restrict_user_to_location(self, dsa):
+            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
+            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
+            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
+
+            res = self.import_mock_file([
+                ['case_id', 'name', 'owner_id'],
+                ['', 'Leonard Nimoy', inc_owner._id],
+                ['', 'Kapil Dev', dsi_owner._id],
+                ['', 'Quinton Fortune', dsa_owner._id],
+            ])
+
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa_owner._id)
+        self.assertTrue(res['errors'])
+        error_message = exceptions.InvalidLocation.title
+        error_col = 'owner_id'
+        self.assertEqual(res['errors'][error_message][error_col]['rows'], [2, 3])
+
 
 def make_worksheet_wrapper(*rows):
     return WorksheetWrapper(make_worksheet(rows))
+
+
+@contextmanager
+def restrict_user_to_location(test_case, location):
+    orig_user = test_case.couch_user
+
+    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t")
+    restricted_user.set_location(test_case.domain, location)
+    restrict_user_by_location(test_case.domain, restricted_user)
+    test_case.couch_user = restricted_user
+    try:
+        yield
+    finally:
+        test_case.couch_user = orig_user
+        restricted_user.delete()
+
+
+@contextmanager
+def make_business_units(domain, shares_cases=True):
+    bu = LocationType.objects.create(domain=domain, name='bu', shares_cases=shares_cases)
+    dimagi = make_loc('dimagi', 'Dimagi', domain, bu.code)
+    inc = make_loc('inc', 'Inc', domain, bu.code, parent=dimagi)
+    dsi = make_loc('dsi', 'DSI', domain, bu.code, parent=dimagi)
+    dsa = make_loc('dsa', 'DSA', domain, bu.code, parent=dimagi)
+    try:
+        yield inc, dsi, dsa
+    finally:
+        for obj in dsa, dsi, inc, dimagi, bu:
+            obj.delete()

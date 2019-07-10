@@ -10,13 +10,14 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
-    'app_manager/js/widgets_v4',       // version dropdown
-], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets) {
-
+    'app_manager/js/widgets',       // version dropdown
+    'analytix/js/kissmetrix',
+], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics) {
     var menuItemModel = function (options) {
-        assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
+        assertProperties.assert(options, ['unique_id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
         var self = _.extend({
             has_errors: false,
+            has_changes: false,
         }, options);
 
         self.isSelected = ko.observable(false);
@@ -28,7 +29,7 @@ hqDefine('app_manager/js/summary/models',[
     };
 
     var menuModel = function (options) {
-        assertProperties.assert(options, ['items', 'viewAllItems'], []);
+        assertProperties.assert(options, ['items', 'viewAllItems'], ['viewChanged']);
 
         var self = {};
 
@@ -36,16 +37,15 @@ hqDefine('app_manager/js/summary/models',[
         self.viewAllItems = options.viewAllItems;
 
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
-        self.viewAllSelected = ko.computed(function () {
-            return !self.selectedItemId();
-        });
+        self.selectedItemId.extend({ notify: 'always' });
 
         self.select = function (item) {
-            self.selectedItemId(item.id);
+            self.selectedItemId(item.unique_id);
+            self.viewChangedOnlySelected(false);
             _.each(self.items, function (i) {
-                i.isSelected(item.id === i.id);
+                i.isSelected(item.unique_id === i.unique_id);
                 _.each(i.subitems, function (s) {
-                    s.isSelected(item.id === s.id);
+                    s.isSelected(item.unique_id === s.unique_id);
                 });
             });
         };
@@ -53,17 +53,47 @@ hqDefine('app_manager/js/summary/models',[
             self.select('');
         };
 
+        self.viewChanged = options.viewChanged;
+        self.viewChangedOnlySelected = ko.observable(false);
+        self.viewChangedOnly = function () {
+            self.viewChangedOnlySelected(true);
+            _.each(self.items, function (i) {
+                i.isSelected(i.has_changes);
+                _.each(i.subitems, function (s) {
+                    s.isSelected(s.has_changes);
+                });
+            });
+        };
+
+        self.viewAllSelected = ko.computed(function () {
+            return !self.selectedItemId() && !self.viewChangedOnlySelected();
+        });
+
+
         return self;
     };
 
     var contentItemModel = function (options) {
         var self = _.extend({}, options);
 
+        self.children = _.map(options.children, function (child) { return contentItemModel(child); });
         self.isSelected = ko.observable(true);  // based on what's selected in menu
         self.matchesQuery = ko.observable(true);   // based on what's entered in search box
         self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
+        self.getDiffClass = function (attribute) {
+            return self.changes[attribute] ? 'diff-' + self.changes[attribute] : '';
+        };
+        self.getOptionsDiffClass = function (option) {
+            return self.changes['options'][option] ? 'diff-' + self.changes['options'][option] : '';
+        };
+        self.getLoadSaveDiffClass = function (attribute, caseType, caseProperty) {
+            if (self.changes[attribute][caseType] && self.changes[attribute][caseType][caseProperty]) {
+                return 'diff-' + self.changes[attribute][caseType][caseProperty];
+            }
+            return '';
+        };
 
         return self;
     };
@@ -74,9 +104,13 @@ hqDefine('app_manager/js/summary/models',[
 
         // Connection to menu
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
+        self.selectedItemId.extend({ notify: 'always' });
         self.selectedItemId.subscribe(function (selectedId) {
             options.onSelectMenuItem(selectedId);
         });
+        self.selectChangedOnly = function () {
+            options.onSelectChangesOnlyMenuItem();
+        };
 
         // Search box behavior
         self.query = ko.observable('');
@@ -105,6 +139,7 @@ hqDefine('app_manager/js/summary/models',[
         });
         self.changeVersions = function () {
             if (self.firstAppId && self.secondAppId()) {
+                kissmetricsAnalytics.track.event("Compare App Versions: Change Version Using Dropdown");
                 window.location.href =  initialPageData.reverse(options.versionUrlName, self.firstAppId(), self.secondAppId());
             } else {
                 window.location.href = initialPageData.reverse(options.versionUrlName, self.firstAppId());
@@ -171,7 +206,7 @@ hqDefine('app_manager/js/summary/models',[
     var moduleModel = function (module) {
         var self = contentItemModel(module);
 
-        self.url = initialPageData.reverse("view_module", self.id);
+        self.url = initialPageData.reverse("view_module", self.unique_id);
         self.icon = utils.moduleIcon(self) + ' hq-icon';
         self.forms = _.map(self.forms, formModel);
 
@@ -181,7 +216,7 @@ hqDefine('app_manager/js/summary/models',[
     var formModel = function (form) {
         var self = contentItemModel(form);
 
-        self.url = initialPageData.reverse("form_source", self.id);
+        self.url = initialPageData.reverse("form_source", self.unique_id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function (question) {
             return contentItemModel(_.defaults(question, {
@@ -198,6 +233,13 @@ hqDefine('app_manager/js/summary/models',[
                 contentInstance.selectedItemId(newValue);
             });
         });
+        menuInstance.viewChangedOnlySelected.subscribe(function (newValue) {
+            if (newValue) {
+                _.each(contentInstances, function (contentInstance) {
+                    contentInstance.selectChangedOnly();
+                });
+            }
+        });
         $("#hq-sidebar > nav").koApplyBindings(menuInstance);
     };
 
@@ -210,8 +252,8 @@ hqDefine('app_manager/js/summary/models',[
     var initVersionsBox = function ($dropdown, initialValue) {
         widgets.initVersionDropdown($dropdown, {
             initialValue: initialValue,
-            width: "100px",
-            extraValues: [{id: initialPageData.get("latest_app_id"), text: gettext("Latest")}],
+            width: "150px",
+            extraValues: [{id: initialPageData.get("latest_app_id"), text: gettext("Latest saved")}],
         });
     };
 

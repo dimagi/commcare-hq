@@ -1,21 +1,32 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+from io import open
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.test import TestCase
-from django.test import override_settings
 from django.core.management.base import CommandError
+from django.test import TestCase, override_settings
+
+import attr
+import mock
+import six
+from couchdbkit.exceptions import ResourceNotFound
+from six.moves import zip
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
+from couchforms.models import XFormInstance
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
+
+from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
+    BAD_FORM_PROBLEM_TEMPLATE,
+    FIXED_FORM_PROBLEM_TEMPLATE,
+)
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db, PartiallyLockingQueue
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -23,32 +34,72 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.blobs import get_blob_db
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
+from corehq.blobs import get_blob_db, NotFound as BlobNotFound
 from corehq.blobs.tests.util import TemporaryS3BlobDB
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+    LedgerAccessorSQL,
+)
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+    LedgerAccessors,
+)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
+from corehq.form_processor.utils.general import (
+    clear_local_domain_sql_backend_override,
+)
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.test_utils import (
-    create_and_save_a_form, create_and_save_a_case, set_parent_case,
-    trap_extra_setup, TestFileMixin,
-    softer_assert)
-from couchforms.models import XFormInstance
-from corehq.util.test_utils import patch_datadog, flag_enabled
-from io import open
+    TestFileMixin,
+    create_and_save_a_case,
+    create_and_save_a_form,
+    flag_enabled,
+    patch_datadog,
+    set_parent_case,
+    softer_assert,
+    trap_extra_setup,
+)
+
+from ..couchsqlmigration import (
+    MigrationRestricted,
+    PartiallyLockingQueue,
+    get_case_ids,
+    sql_form_to_json,
+)
+from ..diffrule import ANY
+from ..management.commands.migrate_domain_from_couch_to_sql import (
+    COMMIT,
+    MIGRATE,
+    RESET,
+)
+from ..statedb import open_state_db
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
     file_path = 'data',
     root = os.path.dirname(__file__)
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls):
+        super(BaseMigrationTestCase, cls).setUpClass()
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+            cls.s3db = TemporaryS3BlobDB(config)
+            assert get_blob_db() is cls.s3db, (get_blob_db(), cls.s3db)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.s3db.close()
+        super(BaseMigrationTestCase, cls).tearDownClass()
 
     def setUp(self):
         super(BaseMigrationTestCase, self).setUp()
-        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
-            config = settings.S3_BLOB_DB_SETTINGS
-            self.s3db = TemporaryS3BlobDB(config)
-            assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
 
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain_name = uuid.uuid4().hex
@@ -63,16 +114,25 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
     def _do_migration(self, domain):
         self.assertFalse(should_use_sql_backend(domain))
-        call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE, no_input=True)
 
     def _do_migration_and_assert_flags(self, domain):
         self._do_migration(domain)
         self.assertTrue(should_use_sql_backend(domain))
 
-    def _compare_diffs(self, expected):
-        diffs = get_diff_db(self.domain_name).get_diffs()
+    def _compare_diffs(self, expected_diffs=None, missing=None):
+        def diff_key(diff):
+            return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
+
+        state = open_state_db(self.domain_name)
+        diffs = sorted(state.get_diffs(), key=diff_key)
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
-        self.assertEqual(expected, json_diffs)
+        self.assertEqual(json_diffs, expected_diffs or [])
+        self.assertEqual({
+            kind: counts.missing
+            for kind, counts in six.iteritems(state.get_doc_counts())
+            if counts.missing
+        }, missing or {})
 
     def _get_form_ids(self, doc_type='XFormInstance'):
         return FormAccessors(domain=self.domain_name).get_all_form_ids_in_domain(doc_type=doc_type)
@@ -80,16 +140,19 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
     def _get_case_ids(self):
         return CaseAccessors(domain=self.domain_name).get_case_ids_in_domain()
 
+    def _get_case(self, case_id):
+        return CaseAccessors(domain=self.domain_name).get_case(case_id)
+
 
 class MigrationTestCase(BaseMigrationTestCase):
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(MigrationRestricted):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
     def test_migration_custom_report(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(MigrationRestricted):
             self._do_migration("up-nrhm")
 
     def test_basic_form_migration(self):
@@ -249,17 +312,17 @@ class MigrationTestCase(BaseMigrationTestCase):
                 'property': 'edited value'
             }
         ).as_text()
-        submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
+        new_form = submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)[0]
+        deprecated_id = new_form.deprecated_form_id
 
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        def assertState():
+            self.assertEqual(self._get_form_ids(), [form_id])
+            self.assertEqual(self._get_form_ids('XFormDeprecated'), [deprecated_id])
+            self.assertEqual(self._get_case_ids(), [case_id])
 
+        assertState()
         self._do_migration_and_assert_flags(self.domain_name)
-
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        assertState()
         self._compare_diffs([])
 
     def test_old_form_metadata_migration(self):
@@ -295,6 +358,26 @@ class MigrationTestCase(BaseMigrationTestCase):
         ))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)))
+        self._compare_diffs([])
+
+    def test_edited_deleted_form(self):
+        form = create_and_save_a_form(self.domain_name)
+        form.edited_on = datetime.utcnow() - timedelta(days=400)
+        form.save()
+        FormAccessors(self.domain.name).soft_delete_forms(
+            [form.form_id], datetime.utcnow(), 'test-deletion'
+        )
+        self.assertEqual(
+            get_doc_ids_in_domain_by_type(
+                form.domain, "XFormInstance-Deleted", XFormInstance.get_db()
+            ),
+            [form.form_id],
+        )
+        self._do_migration_and_assert_flags(form.domain)
+        self.assertEqual(
+            FormAccessorSQL.get_deleted_form_ids_in_domain(form.domain),
+            [form.form_id],
+        )
         self._compare_diffs([])
 
     def test_submission_error_log_migration(self):
@@ -492,7 +575,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_commit(self):
         self._do_migration_and_assert_flags(self.domain_name)
         clear_local_domain_sql_backend_override(self.domain_name)
-        call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT, no_input=True)
         self.assertTrue(Domain.get_by_name(self.domain_name).use_sql_backend)
 
     def test_v1_case(self):
@@ -565,20 +648,23 @@ class MigrationTestCase(BaseMigrationTestCase):
             'commcare.couch_sql_migration.count.duration:',
         ]
         for t_stat in tracked_stats:
-            self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
+            self.assertTrue(
+                any(r_stat.startswith(t_stat) for r_stat in received_stats),
+                "missing stat %r" % t_stat,
+            )
 
     def test_dry_run(self):
         self.assertFalse(should_use_sql_backend(self.domain_name))
         call_command(
             'migrate_domain_from_couch_to_sql',
             self.domain_name,
-            MIGRATE=True,
+            MIGRATE,
             no_input=True,
             dry_run=True
         )
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.assertRaises(CommandError):
-            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
+            call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
 
         xml = """<?xml version="1.0" ?>
@@ -597,8 +683,102 @@ class MigrationTestCase(BaseMigrationTestCase):
         couch_form_ids = self._get_form_ids()
         self.assertEqual(1, len(couch_form_ids))
 
-        call_command('migrate_domain_from_couch_to_sql', self.domain_name, blow_away=True, no_input=True)
+        call_command('migrate_domain_from_couch_to_sql', self.domain_name, RESET, no_input=True)
         self.assertFalse(Domain.get_by_name(self.domain_name).use_sql_backend)
+
+    def test_case_forms_list_order(self):
+        SERVER_DATES = [
+            datetime.strptime("2015-07-13T11:21:00.639795Z", ISO_DATETIME_FORMAT),
+            datetime.strptime("2015-07-13T11:24:27.467774Z", ISO_DATETIME_FORMAT),
+            datetime.strptime("2015-07-13T11:21:00.639795Z", ISO_DATETIME_FORMAT),
+            datetime.strptime("2017-04-27T14:23:14.683602Z", ISO_DATETIME_FORMAT),
+        ]
+        for xml, server_date in zip(LIST_ORDER_FORMS, SERVER_DATES):
+            result = submit_form_locally(xml.strip(), self.domain_name)
+            form = result.xform
+            form.received_on = server_date
+            form.save()
+
+        case = self._get_case("89da")
+        self.assertEqual(case.xform_ids, ["f1-9017", "f2-b1ce", "f3-7c38", "f4-3226"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        case = self._get_case("89da")
+        self.assertEqual(set(case.xform_ids), {"f1-9017", "f2-b1ce", "f3-7c38", "f4-3226"})
+        self._compare_diffs([])
+
+    def test_normal_form_with_problem_and_case_updates(self):
+        bad_form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        assert bad_form._id == "test-form", bad_form
+
+        form = XFormInstance.wrap(bad_form.to_json())
+        form._id = "new-form"
+        form._rev = None
+        form.problem = FIXED_FORM_PROBLEM_TEMPLATE.format(
+            id_="test-form", datetime_="a day long ago")
+        assert len(form.external_blobs) == 1, form.external_blobs
+        form.external_blobs.pop("form.xml")
+        form.initial_processing_complete = False
+        with bad_form.fetch_attachment("form.xml", stream=True) as xml:
+            form.put_attachment(xml, "form.xml", content_type="text/xml")
+        form.save()
+
+        bad_form.doc_type = "XFormDuplicate"
+        bad_form.problem = BAD_FORM_PROBLEM_TEMPLATE.format("new-form", "a day long ago")
+        bad_form.save()
+
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["new-form"])
+        self._compare_diffs([])
+        form = FormAccessors(self.domain_name).get_form('new-form')
+        self.assertEqual(form.deprecated_form_id, "test-form")
+        self.assertIsNone(form.problem)
+
+    def test_missing_case(self):
+        # This can happen when a form is edited, removing the last
+        # remaining reference to a case. The case effectively becomes
+        # orphaned, and will be ignored by the migration.
+        from corehq.apps.cloudcare.const import DEVICE_ID
+        # replace device id to avoid edit form soft assert
+        test_form = TEST_FORM.replace("cloudcare", DEVICE_ID)
+        submit_form_locally(test_form, self.domain_name)
+        edited_form = test_form.replace("test-case", "other-case")
+        submit_form_locally(edited_form, self.domain_name)
+        self.assertEqual(self._get_case("test-case").xform_ids, ["test-form"])
+        self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
+        with self.assertRaises(CaseNotFound):
+            self._get_case("test-case")
+        self._compare_diffs([])
+
+    def test_form_with_missing_xml(self):
+        create_form_with_missing_xml(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+
+        # This may change in the future: it may be possible to rebuild the
+        # XML using parsed form JSON from couch.
+        with self.assertRaises(CaseNotFound):
+            self._get_case("test-case")
+        self._compare_diffs([
+            ('XFormInstance', Diff('missing', ['form', '#type'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@name'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@uiVersion'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@version'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', '@xmlns'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'age'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'case'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'first_name'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form', 'meta'], new=MISSING)),
+        ], missing={'CommCareCase': 1})
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
@@ -658,7 +838,7 @@ class LedgerMigrationTests(BaseMigrationTestCase):
 
 class TestLockingQueues(TestCase):
     def setUp(self):
-        self.queues = PartiallyLockingQueue()
+        self.queues = PartiallyLockingQueue("id", max_size=-1)
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
         self.queues._add_item(lock_ids, DummyObject(queue_obj_id))
@@ -774,9 +954,248 @@ class TestLockingQueues(TestCase):
         self.assertTrue(self.queues.full)  # full when over full
 
 
+class TestHelperFunctions(TestCase):
+
+    def setUp(self):
+        super(TestHelperFunctions, self).setUp()
+
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        self.domain_name = uuid.uuid4().hex
+        self.domain = create_domain(self.domain_name)
+        self.assertFalse(should_use_sql_backend(self.domain_name))
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        self.domain.delete()
+
+    def get_form_with_missing_xml(self):
+        return create_form_with_missing_xml(self.domain_name)
+
+    def test_sql_form_to_json_with_missing_xml(self):
+        self.domain.use_sql_backend = True
+        self.domain.save()
+        form = self.get_form_with_missing_xml()
+        data = sql_form_to_json(form)
+        self.assertEqual(data["form"], {})
+
+    def test_get_case_ids_with_missing_xml(self):
+        form = self.get_form_with_missing_xml()
+        self.assertEqual(get_case_ids(form), ["test-case"])
+
+
+def create_form_with_missing_xml(domain_name):
+    form = submit_form_locally(TEST_FORM, domain_name).xform
+    form = FormAccessors(domain_name).get_form(form.form_id)
+    blobs = get_blob_db()
+    with mock.patch.object(blobs.metadb, "delete"):
+        if isinstance(form, XFormInstance):
+            # couch
+            form.delete_attachment("form.xml")
+            assert form.get_xml() is None, form.get_xml()
+        else:
+            # sql
+            blobs.delete(form.get_attachment_meta("form.xml").key)
+            try:
+                form.get_xml()
+                assert False, "expected BlobNotFound exception"
+            except BlobNotFound:
+                pass
+    return form
+
+
+@attr.s(cmp=False)
+class Diff(object):
+
+    type = attr.ib(default=ANY)
+    path = attr.ib(default=ANY)
+    old = attr.ib(default=ANY)
+    new = attr.ib(default=ANY)
+
+    def __eq__(self, other):
+        if type(other) == FormJsonDiff:
+            return (
+                self.type == other.diff_type
+                and self.path == other.path
+                and self.old == other.old_value
+                and self.new == other.new_value
+            )
+        return NotImplemented
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    __hash__ = None
+
+
 class DummyObject(object):
     def __init__(self, id=None):
         self.id = id or uuid.uuid4().hex
 
     def __repr__(self):
         return "DummyObject<id={}>".format(self.id)
+
+
+TEST_FORM = """
+<?xml version="1.0" ?>
+<data
+    name="Registration"
+    uiVersion="1"
+    version="11"
+    xmlns="http://openrosa.org/formdesigner/test-form"
+    xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+>
+    <first_name>Xeenax</first_name>
+    <age>27</age>
+    <n0:case
+        case_id="test-case"
+        date_modified="2015-08-04T18:25:56.656Z"
+        user_id="3fae4ea4af440efaa53441b5"
+        xmlns:n0="http://commcarehq.org/case/transaction/v2"
+    >
+        <n0:create>
+            <n0:case_name>Xeenax</n0:case_name>
+            <n0:owner_id>3fae4ea4af440efaa53441b5</n0:owner_id>
+            <n0:case_type>testing</n0:case_type>
+        </n0:create>
+        <n0:update>
+            <n0:age>27</n0:age>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>cloudcare</n1:deviceID>
+        <n1:timeStart>2015-07-13T11:20:11.381Z</n1:timeStart>
+        <n1:timeEnd>2015-08-04T18:25:56.656Z</n1:timeEnd>
+        <n1:username>jeremy</n1:username>
+        <n1:userID>3fae4ea4af440efaa53441b5</n1:userID>
+        <n1:instanceID>test-form</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    </n1:meta>
+</data>
+""".strip()
+
+
+LIST_ORDER_FORMS = ["""
+<?xml version="1.0" ?>
+<data
+    name="Visit"
+    uiVersion="1" version="9"
+    xmlns="http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065"
+    xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+>
+    <cur_num_anc>3</cur_num_anc>
+    <health_id>Z1234</health_id>
+    <n0:case
+       case_id="89da"
+       date_modified="2015-07-13T11:23:42.485Z"
+       user_id="3fae4ea4af440efaa53441b5"
+       xmlns:n0="http://commcarehq.org/case/transaction/v2"
+    >
+        <n0:update>
+            <n0:num_anc>3</n0:num_anc>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>cloudcare</n1:deviceID>
+        <n1:timeStart>2015-07-13T11:22:58.234Z</n1:timeStart>
+        <n1:timeEnd>2015-07-13T11:23:42.485Z</n1:timeEnd>
+        <n1:username>jeremy</n1:username>
+        <n1:userID>3fae4ea4af440efaa53441b5</n1:userID>
+        <n1:instanceID>f1-9017</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    </n1:meta>
+</data>
+""", """
+<?xml version="1.0" ?>
+<data
+    name="Close"
+    uiVersion="1"
+    version="11"
+    xmlns="http://openrosa.org/formdesigner/01EB3014-71CE-4EBE-AE34-647EF70A55DE"
+    xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+>
+    <close_reason>pregnancy_ended</close_reason>
+    <health_id>Z1234</health_id>
+    <n0:case
+        case_id="89da"
+        date_modified="2015-07-13T11:24:26.614Z"
+        user_id="3fae4ea4af440efaa53441b5"
+        xmlns:n0="http://commcarehq.org/case/transaction/v2"
+    >
+        <n0:close/>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>cloudcare</n1:deviceID>
+        <n1:timeStart>2015-07-13T11:24:03.544Z</n1:timeStart>
+        <n1:timeEnd>2015-07-13T11:24:26.614Z</n1:timeEnd>
+        <n1:username>jeremy</n1:username>
+        <n1:userID>3fae4ea4af440efaa53441b5</n1:userID>
+        <n1:instanceID>f2-b1ce</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    </n1:meta>
+</data>
+""", """
+<?xml version="1.0" ?>
+<data
+    name="Register
+    Pregnancy"
+    uiVersion="1"
+    version="11"
+    xmlns="http://openrosa.org/formdesigner/882FC273-E436-4BA1-B8CC-9CA526FFF8C2"
+    xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+>
+    <health_id>Z1234</health_id>
+    <first_name>Xeenax</first_name>
+    <age>27</age>
+    <n0:case
+        case_id="89da"
+        date_modified="2015-08-04T18:25:56.656Z"
+        user_id="3fae4ea4af440efaa53441b5"
+        xmlns:n0="http://commcarehq.org/case/transaction/v2"
+    >
+        <n0:create>
+            <n0:case_name>Xeenax</n0:case_name>
+            <n0:owner_id>3fae4ea4af440efaa53441b5</n0:owner_id>
+            <n0:case_type>pregnancy</n0:case_type>
+        </n0:create>
+        <n0:update>
+            <n0:age>27</n0:age>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>cloudcare</n1:deviceID>
+        <n1:timeStart>2015-07-13T11:20:11.381Z</n1:timeStart>
+        <n1:timeEnd>2015-08-04T18:25:56.656Z</n1:timeEnd>
+        <n1:username>jeremy</n1:username>
+        <n1:userID>3fae4ea4af440efaa53441b5</n1:userID>
+        <n1:instanceID>f3-7c38</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    </n1:meta>
+</data>
+""", """
+<?xml version="1.0" ?>
+<system
+    uiVersion="1"
+    version="1"
+    xmlns="http://commcarehq.org/case"
+    xmlns:orx="http://openrosa.org/jr/xforms"
+>
+    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+        <orx:deviceID/>
+        <orx:timeStart>2017-04-27T14:23:14.628725Z</orx:timeStart>
+        <orx:timeEnd>2017-04-27T14:23:14.628725Z</orx:timeEnd>
+        <orx:username>jwacksman@dimagi.com</orx:username>
+        <orx:userID>743501c499f5f9e9843ffabc1919cea2</orx:userID>
+        <orx:instanceID>f4-3226</orx:instanceID>
+        <cc:appVersion/>
+    </orx:meta>
+    <case
+        case_id="89da"
+        date_modified="2017-04-27T14:23:14.143507Z"
+        xmlns="http://commcarehq.org/case/transaction/v2"
+    >
+        <update>
+            <health_id>Z12340</health_id>
+        </update>
+    </case>
+</system>
+"""]

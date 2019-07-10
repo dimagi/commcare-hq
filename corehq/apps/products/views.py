@@ -29,7 +29,6 @@ from corehq.apps.programs.models import Program
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -216,10 +215,6 @@ class NewProductView(BaseCommTrackManageView):
     page_title = ugettext_noop("New Product")
     template_name = 'products/manage/product.html'
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewProductView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def product(self):
@@ -270,7 +265,7 @@ class NewProductView(BaseCommTrackManageView):
 class UploadProductView(BaseCommTrackManageView):
     urlname = 'commtrack_upload_products'
     page_title = ugettext_noop("Import Products")
-    template_name = 'products/manage/upload_products.html'
+    template_name = 'hqwebapp/bulk_upload.html'
 
     @property
     def page_context(self):

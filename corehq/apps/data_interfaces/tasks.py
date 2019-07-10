@@ -21,7 +21,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
+from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_or_restore_forms
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
@@ -40,20 +40,6 @@ HALT_AFTER = 23 * 60 * 60
 def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
     results = add_cases_to_case_group(domain, case_group_id, cases)
     cache.set(download_id, results, ONE_HOUR)
-
-
-@task(serializer='pickle', ignore_result=True)
-def bulk_archive_forms(domain, couch_user, uploaded_data):
-    # archive using Excel-data
-    response = archive_forms_old(domain, couch_user.user_id, couch_user.username, uploaded_data)
-
-    for msg in response['success']:
-        logger.info("[Data interfaces] %s", msg)
-    for msg in response['errors']:
-        logger.info("[Data interfaces] %s", msg)
-
-    html_content = render_to_string('data_interfaces/archive_email.html', response)
-    send_HTML_email(_('Your archived forms'), couch_user.email, html_content)
 
 
 @task(serializer='pickle')
@@ -151,9 +137,7 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
 
     for case_type, rules in six.iteritems(rules_by_case_type):
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date, db=db))
-
-        for case in CaseAccessors(domain).iter_cases(case_ids):
+        for case in AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db):
             migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
                 last_migration_check_time)
 

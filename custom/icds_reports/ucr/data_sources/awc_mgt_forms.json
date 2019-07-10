@@ -22,6 +22,16 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-awc_mgt_forms",
     "display_name": "Forms - AWC Management (Static)",
@@ -38,6 +48,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551"
     },
+    "validations": [
+      {
+        "name": "submitted_by_supervisor",
+        "error_message": "Form not submitted by supervisor",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "supervisor"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "User ID",
@@ -75,7 +103,7 @@
         "column_id": "awc_id"
       },
       {
-        "display_name": "",
+        "display_name": "[DEPRECATED] TO BE REMOVED",
         "datatype": "string",
         "type": "expression",
         "expression": {
@@ -97,8 +125,8 @@
           "name": "user_location_id"
         },
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "location_id",
         "type": "expression"
       },
@@ -463,6 +491,13 @@
     },
     "named_filters": {},
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "location_id"
+      },
+      "primary_key": ["location_id","doc_id"]
+    }
   }
 }

@@ -1,13 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import json
-from django.http import HttpResponseBadRequest, Http404, JsonResponse
+
+from django.conf import settings
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from corehq.apps.domain.auth import formplayer_auth
-from corehq.apps.hqadmin.utils import get_django_user_from_session_key
+from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser
 
 
@@ -30,7 +32,7 @@ class SessionDetailsView(View):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except ValueError:
             return HttpResponseBadRequest()
 
@@ -41,13 +43,20 @@ class SessionDetailsView(View):
         if not session_id:
             return HttpResponseBadRequest()
 
-        user = get_django_user_from_session_key(session_id)
+        session = get_session(session_id)
+        user = get_django_user_from_session(session)
         if user:
             couch_user = CouchUser.get_by_username(user.username)
             if not couch_user:
                 raise Http404
         else:
             raise Http404
+
+        # reset the session's expiry if there's some formplayer activity
+        secure_session = session.get('secure_session')
+        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
+        session.set_expiry(timeout * 60)
+        session.save()
 
         return JsonResponse({
             'username': user.username,

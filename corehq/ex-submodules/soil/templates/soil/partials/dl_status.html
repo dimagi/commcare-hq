@@ -1,54 +1,54 @@
 {% load i18n %}
 {% if error %}
-    <h4>{% trans "There was an error processing your request" %}</h4>
-    <div id="error_{{ download_id }}" class="alert alert-danger">
-        <ul>
-            {{ error|unordered_list}}
-        </ul>
-    </div>
+  <h4>{% trans "There was an error processing your request" %}</h4>
+  <div id="error_{{ download_id }}" class="alert alert-danger">
+    <ul>
+      {{ error|unordered_list}}
+    </ul>
+  </div>
 {% elif is_ready %}
-    <div id="ready_{{ download_id }}">
+  <div id="ready_{{ download_id }}">
     {% if has_file %}
-        <p class="lead">
+      <p class="lead">
         {% if custom_message %}
-            <i class="fa fa-check"></i>&nbsp;{{ custom_message }}
+          <i class="fa fa-check"></i>&nbsp;{{ custom_message }}
         {% else %}
-            <i class="fa fa-check"></i>&nbsp;{% trans 'Your export is ready.' %}
+          <i class="fa fa-check"></i>&nbsp;{% trans 'Your export is ready.' %}
         {% endif %}
+      </p>
+      {% if allow_dropbox_sync %}
+        <p class="alert alert-info">
+          <small>
+            <i class="fa fa-info-circle"></i>&nbsp;{% blocktrans %}
+            If you are downloading a large file over a slow or unstable connection, we recommend syncing to Dropbox. Learn more about
+            <a href="https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox">Sync to Dropbox</a>.
+          {% endblocktrans %}
+          </small>
         </p>
+      {% endif %}
+      <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}
+        <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
+          <i class="fa fa-download"></i>
+          {% trans "Download File Now" %}
+        </a>
         {% if allow_dropbox_sync %}
-            <p class="alert alert-info">
-            <small>
-                <i class="fa fa-info-circle"></i>&nbsp;{% blocktrans %}
-                If you are downloading a large file over a slow or unstable connection, we recommend syncing to Dropbox. Learn more about
-                <a href="https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox">Sync to Dropbox</a>.
-                {% endblocktrans %}
-            </small>
-            </p>
+          <button type="submit" class="btn btn-default disable-on-submit" id="dropbox-sync-submit">
+            <i class="fa fa-envelope"></i> {% trans 'Sync to Dropbox' %}
+          </button>
         {% endif %}
-        <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}
-            <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
-                <i class="fa fa-download"></i>
-                {% trans "Download File Now" %}
-            </a>
-            {% if allow_dropbox_sync %}
-                <button type="submit" class="btn btn-default disable-on-submit" id="dropbox-sync-submit">
-                    <i class="fa fa-envelope"></i> {% trans 'Sync to Dropbox' %}
-                </button>
-            {% endif %}
-        </form>
+      </form>
     {% else %}
-        <p class="alert alert-success">{% trans "Process complete." %}</p>
+      <p class="alert alert-success">{% trans "Process complete." %}</p>
     {% endif %}
     {% if result %}
-        <h4>{% trans "Results" %}</h4>
-        <ul>
+      <h4>{% trans "Results" %}</h4>
+      <ul>
         {% for message in result %}
-            <li>{{ message }}</li>
+          <li>{{ message }}</li>
         {% endfor %}
-        </ul>
+      </ul>
     {% endif %}
-    </div>
+  </div>
 {% else %}
-    {% include 'soil/partials/download_in_progress.html' %}
+  {% include 'soil/partials/download_in_progress.html' %}
 {% endif %}

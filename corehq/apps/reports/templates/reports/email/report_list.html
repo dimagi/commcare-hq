@@ -1,10 +1,10 @@
 {% extends base_template %}
 
 {% block content %}
-<h3>To view a report formatted for email, click one of the links below</h3>
-<ul>
-{% for config in configs %}
-<li><a href="{% url "test_config" domain config.get_id %}">{{ config.name }} ({{ config.report_name }})</a></li>
-{% endfor %}
-</ul>
+  <h3>To view a report formatted for email, click one of the links below</h3>
+  <ul>
+    {% for config in configs %}
+      <li><a href="{% url "test_config" domain config.get_id %}">{{ config.name }} ({{ config.report_name }})</a></li>
+    {% endfor %}
+  </ul>
 {% endblock %}

@@ -13,6 +13,7 @@ from six.moves import range
 
 
 class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-ccs-record'
     base_tablename = 'agg_ccs_record'
 
     def __init__(self, month):
@@ -33,12 +34,6 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             cursor.execute(query)
         for query in index_queries:
             cursor.execute(query)
-
-    @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
 
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
@@ -129,7 +124,6 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            ucr_ccs_record_table=self.ccs_record_monthly_ucr_tablename,
             ccs_record_monthly_table='ccs_record_monthly'
         ), {
             "start_date": self.month

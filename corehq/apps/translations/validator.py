@@ -5,16 +5,18 @@ import ghdiff
 from memoized import memoized
 from six.moves import zip
 
-from corehq.apps.translations.app_translations import (
+from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
+from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
-    get_bulk_app_sheet_rows,
     get_unicode_dicts,
+    is_form_sheet,
+    is_module_sheet,
+    is_modules_and_forms_sheet,
 )
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
 
 COLUMNS_TO_COMPARE = {
-    'module_and_form': ['Type', 'sheet_name'],
+    'module_and_form': ['Type', 'menu_or_form'],
     'module': ['case_property', 'list_or_detail'],
     'form': ['label'],
 }
@@ -34,17 +36,23 @@ class UploadedTranslationsValidator(object):
         self.expected_rows = None
         self.lang_prefix = lang_prefix
         self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
-        if lang_to_compare != self.app.default_language:
-            self.lang_cols_to_compare.append(self.lang_prefix + lang_to_compare)
         self.default_language_column = self.lang_prefix + self.app.default_language
-        target_lang = lang_to_compare or self.app.default_language
+        if lang_to_compare in app.langs and lang_to_compare != self.app.default_language:
+            self.lang_cols_to_compare.append(self.lang_prefix + lang_to_compare)
+            target_lang = lang_to_compare
+        else:
+            target_lang = self.app.default_language
         self.app_translation_generator = AppTranslationsGenerator(
             self.app.domain, self.app.get_id, None, self.app.default_language, target_lang,
             self.lang_prefix)
 
     def _generate_expected_headers_and_rows(self):
-        self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(self.app)}
-        self.expected_rows = get_bulk_app_sheet_rows(
+        self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
+            self.app,
+            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
+            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
+        )}
+        self.expected_rows = get_bulk_app_sheets_by_name(
             self.app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
@@ -108,12 +116,13 @@ class UploadedTranslationsValidator(object):
             # from transifex integration
             if sheet_name not in self.expected_rows:
                 continue
+
             rows = get_unicode_dicts(sheet)
-            if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
+            if is_modules_and_forms_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module_and_form')
-            elif 'module' in sheet_name and 'form' not in sheet_name:
+            elif is_module_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module')
-            elif 'module' in sheet_name and 'form' in sheet_name:
+            elif is_form_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'form')
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)

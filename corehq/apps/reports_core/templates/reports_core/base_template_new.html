@@ -4,32 +4,32 @@
 {% load compress %}
 
 {% block stylesheets %}{{ block.super }}
-    {% compress css %}
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
-        <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
-    {% endcompress %}
+  {% compress css %}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
+    <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
+  {% endcompress %}
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v3.ko.js' %}"></script>
-    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'reports_core/js/choice_list_utils_v3.js' %}"></script>
-    <script src="{% static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-    <script src="{% static 'reports/js/maps_utils.js' %}"></script><!-- depends on leaflet -->
-    <script src="{% static 'reports_core/js/maps.js' %}"></script>
-    <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-    {% include 'reports/partials/filters_js.html' %}
-    {% include 'reports/partials/graphs/charts_js.html' %}
-    <script src="{% static 'reports_core/js/base_template_new.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+  <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
+  <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
+  <script src="{% static 'reports_core/js/charts.js' %}"></script>
+  <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+  <script src="{% static 'reports/js/maps_utils.js' %}"></script><!-- depends on leaflet -->
+  <script src="{% static 'reports_core/js/maps.js' %}"></script>
+  <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
+  {% include 'reports/partials/filters_js.html' %}
+  {% include 'reports/partials/graphs/charts_js.html' %}
+  <script src="{% static 'reports_core/js/base_template_new.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
-    <style>
-        #map-container {
-            height: 500px;
-        }
-    </style>
+  <style>
+    #map-container {
+      height: 500px;
+    }
+  </style>
 {% endblock %}
 
 
@@ -38,86 +38,86 @@
 {% block page_title %}{% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'left_col_fixed_width' report_table.left_col.fixed.width %}
-    {% initial_page_data 'left_col_fixed_num' report_table.left_col.fixed.num %}
-    {% initial_page_data 'left_col_is_fixed' report_table.left_col.is_fixed %}
-    {% initial_page_data 'ajax_method' method %}
-    {% initial_page_data 'custom_sort' headers.custom_sort %}
-    {% initial_page_data 'render_aoColumns' headers.render_aoColumns %}
-    {% initial_page_data 'header_auto_width' headers.auto_width %}
-    {% initial_page_data 'table_show_all_rows' report_table.show_all_rows %}
-    {% initial_page_data 'table_start_at_row' report_table.start_at_row|default:0 %}
-    {% initial_page_data 'table_default_rows' report_table.default_rows|default:10 %}
-    {% initial_page_data 'report_slug' report.slug %}
-    {% initial_page_data 'MAPBOX_ACCESS_TOKEN' MAPBOX_ACCESS_TOKEN %}
-    {% initial_page_data 'map_config' report.spec.map_config %}
-    {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
-    {% initial_page_data 'charts' report.spec.charts %}
-    {% initial_page_data 'url' url %}
+  {% initial_page_data 'left_col_fixed_width' report_table.left_col.fixed.width %}
+  {% initial_page_data 'left_col_fixed_num' report_table.left_col.fixed.num %}
+  {% initial_page_data 'left_col_is_fixed' report_table.left_col.is_fixed %}
+  {% initial_page_data 'ajax_method' method %}
+  {% initial_page_data 'custom_sort' headers.custom_sort %}
+  {% initial_page_data 'render_aoColumns' headers.render_aoColumns %}
+  {% initial_page_data 'header_auto_width' headers.auto_width %}
+  {% initial_page_data 'table_show_all_rows' report_table.show_all_rows %}
+  {% initial_page_data 'table_start_at_row' report_table.start_at_row|default:0 %}
+  {% initial_page_data 'table_default_rows' report_table.default_rows|default:10 %}
+  {% initial_page_data 'report_slug' report.slug %}
+  {% initial_page_data 'MAPBOX_ACCESS_TOKEN' MAPBOX_ACCESS_TOKEN %}
+  {% initial_page_data 'map_config' report.spec.map_config %}
+  {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
+  {% initial_page_data 'charts' report.spec.charts %}
+  {% initial_page_data 'url' url %}
 
-    {% block report_alerts %}
+  {% block report_alerts %}
     <div id="report-error" class="alert alert-danger hide">
-        {% blocktrans %}
+      {% blocktrans %}
         There was an error rendering your report.
-        {% endblocktrans %}
-        <div id="error-message"></div>
+      {% endblocktrans %}
+      <div id="error-message"></div>
     </div>
     <div id="report-warning" class="alert alert-warning hide">
-        {% blocktrans %}
+      {% blocktrans %}
         Warning:
-        {% endblocktrans %}
-        <div id="warning-message"></div>
+      {% endblocktrans %}
+      <div id="warning-message"></div>
     </div>
-    {% endblock report_alerts %}
-    {% block main_column_content %}
+  {% endblock report_alerts %}
+  {% block main_column_content %}
     {% block filter_panel %}
-        {% include "reports_core/partials/filter_panel.html" %}
+      {% include "reports_core/partials/filter_panel.html" %}
     {% endblock %}
 
     <hr />
     <div id="reportHint" class="alert alert-info">
-        <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
-        <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
+      <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+      <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
     </div>
     <div id="reportContent" class="hide">
-        {% block reportcharts %}
+      {% block reportcharts %}
         <section id="chart-container" style="display: none;">
         </section>
         <section id="chart-warning" class="alert alert-warning hide">
-        {% blocktrans %}
+          {% blocktrans %}
             Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
-        {% endblocktrans %}
+          {% endblocktrans %}
         </section>
         <section id="map-container" style="display: none;" >
         </section>
         <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
-            <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+          <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
         </div>
 
         <div id="report-info" class="alert alert-info hide">
-            {% blocktrans %}
+          {% blocktrans %}
             Note:
-            {% endblocktrans %}
-            <span id="info-message"></span>
+          {% endblocktrans %}
+          <span id="info-message"></span>
         </div>
-        {% endblock %}
-        {% block reporttable %}
+      {% endblock %}
+      {% block reporttable %}
         <div class="panel panel-default">
-            <div class="panel-heading">
-                <h4>{{ report.title }}</h4>
-            </div>
-            <div class="panel-body hq-datatable-container">
-                <table id="report_table_{{ report.slug }}" class="table table-striped">
-                    <thead>
-                    {{ headers.render_html|safe }}
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
+          <div class="panel-heading">
+            <h4>{{ report.title }}</h4>
+          </div>
+          <div class="panel-body hq-datatable-container">
+            <table id="report_table_{{ report.slug }}" class="table table-striped">
+              <thead>
+              {{ headers.render_html|safe }}
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
         </div>
-        {% endblock reporttable %}
+      {% endblock reporttable %}
     </div>
 
-    {% endblock main_column_content %}
+  {% endblock main_column_content %}
 {% endblock %}

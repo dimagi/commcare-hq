@@ -1,50 +1,50 @@
 {% load i18n %}
 {% if email %}
-    <p>
-        {% blocktrans %}
-        This is a {{ report_type }} from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
-        {% endblocktrans %}
-    </p>
-    {% endif %}
+  <p>
+    {% blocktrans %}
+      This is a {{ report_type }} from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
+    {% endblocktrans %}
+  </p>
+{% endif %}
 
-    {% if notes %}
-        <p>
-            <strong>{% trans "Report Notes" %}</strong><br/>
-            {{ notes }}
-        </p>
+{% if notes %}
+  <p>
+    <strong>{% trans "Report Notes" %}</strong><br/>
+    {{ notes }}
+  </p>
 {% endif %}
 
 {% for report in reports %}
-    <div class="pagebreak">
-        <h2><a href="{{ report.url }}">{{ report.title }}</a></h2>
-        {% if report.description %}
-        <p>
-            {{ report.description }}
-        </p>
+  <div class="pagebreak">
+    <h2><a href="{{ report.url }}">{{ report.title }}</a></h2>
+    {% if report.description %}
+      <p>
+        {{ report.description }}
+      </p>
+    {% endif %}
+    {% if report.startdate %}
+      <p>
+        {% trans "Date range" %}: {{ report.startdate }} - {{ report.enddate }}
+        {% if not report.is_active %}
+          <br />
+          <strong>
+            {% blocktrans %}
+              Note: This report will not appear in emails because the start
+              date for the report is still in the future.
+            {% endblocktrans %}
+          </strong>
         {% endif %}
-        {% if report.startdate %}
-        <p>
-            {% trans "Date range" %}: {{ report.startdate }} - {{ report.enddate }}
-            {% if not report.is_active %}
-              <br />
-              <strong>
-                {% blocktrans %}
-                  Note: This report will not appear in emails because the start
-                  date for the report is still in the future.
-                {% endblocktrans %}
-              </strong>
-            {% endif %}
-        </p>
-        {% endif %}
-        {{ report.content|safe }}
-    </div>
+      </p>
+    {% endif %}
+    {{ report.content|safe }}
+  </div>
 {% endfor %}
 
 {% if email %}
-    <p>
-        {% blocktrans %}
-        You are receiving this automated email from <a href="{{ DNS_name }}">CommCareHQ</a>
-        because the user {{ owner_name }} added you as a recipient of their report.
-        {% endblocktrans %}
-    </p>
+  <p>
+    {% blocktrans %}
+      You are receiving this automated email from <a href="{{ DNS_name }}">CommCareHQ</a>
+      because the user {{ owner_name }} added you as a recipient of their report.
+    {% endblocktrans %}
+  </p>
 {% endif %}

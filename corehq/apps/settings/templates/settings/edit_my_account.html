@@ -6,27 +6,27 @@
 {% load i18n %}
 
 {% block stylesheets %}
-    <style>
-        #phone-numbers-list form {
-            display: inline;
-            padding-left: .1em;
-        }
-    </style>
+  <style>
+    #phone-numbers-list form {
+      display: inline;
+      padding-left: .1em;
+    }
+  </style>
 {% endblock %}
 
 {% requirejs_main 'settings/js/edit_my_account' %}
 
 {% block modals %}{{ block.super }}
-{% if user_type == 'web' %}
+  {% if user_type == 'web' %}
     {% include 'users/partials/basic_info_modals.html' %}
-{% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block page_content %}
-    {% registerurl 'new_api_key' %}
+  {% registerurl 'new_api_key' %}
 
-    {% crispy form form.new_helper %}
-    {% if user_type == 'web' %}
-        {% include 'users/partials/manage_my_numbers.html' %}
-    {% endif %}
+  {% crispy form form.new_helper %}
+  {% if user_type == 'web' %}
+    {% include 'users/partials/manage_my_numbers.html' %}
+  {% endif %}
 {% endblock %}

@@ -4,7 +4,7 @@
 {% load i18n %}
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
@@ -36,21 +36,21 @@
 
     {% block js %}
     {% endblock %}
-</head>
-<body>
+  </head>
+  <body>
 
-<div id="aaa-dashboard" class="wrapper">
-    {% include 'aaa/menus/left_menu.html' %}
-    <div class="col-xs-10 col-md-10 main-container" >
+    <div id="aaa-dashboard" class="wrapper">
+      {% include 'aaa/menus/left_menu.html' %}
+      <div class="col-xs-10 col-md-10 main-container" >
         {% include 'aaa/menus/top_menu.html' %}
 
         <div class="row no-margin">
-            {% if not is_details %}
-                {% include 'aaa/menus/selected_filters.html' %}
-            {% endif %}
-            {% block content %}
+          {% if not is_details %}
+            {% include 'aaa/menus/selected_filters.html' %}
+          {% endif %}
+          {% block content %}
 
-            {% endblock %}
+          {% endblock %}
         </div>
         {% registerurl 'program_overview_api' domain %}
         {% registerurl 'unified_beneficiary_api' domain %}
@@ -63,30 +63,31 @@
         {% initial_page_data 'user_role_type' user_role_type %}
         {% initial_page_data 'user_location_id' user_location_id %}
         {% initial_page_data 'user_location_ids' user_location_ids %}
+        {% initial_page_data 'selected_location_ids' selected_location_ids %}
         {% initial_page_data 'is_web_user' is_web_user %}
         {% initial_page_data 'is_details' is_details %}
+      </div>
     </div>
-</div>
 
-<div class="commcarehq-urls hide">
-{% block registered_urls %}
-    {# do not override this block, use registerurl template tag to populate #}
-{% endblock %}
-</div>
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
 
-{% include 'analytics/initial/global.html' %}
-{% include 'analytics/initial/google.html' %}
-<div class="initial-analytics-data hide">
-{% block initial_analytics_data %}
-     do not override this block, use initial_analytics_data template tag to populate
-{% endblock %}
+    {% include 'analytics/initial/global.html' %}
+    {% include 'analytics/initial/google.html' %}
+    <div class="initial-analytics-data hide">
+      {% block initial_analytics_data %}
+        do not override this block, use initial_analytics_data template tag to populate
+      {% endblock %}
 
-<div class="initial-page-data hide">
-{% block initial_page_data %}
-    {# do not override this block, use initial_page_data template tag to populate #}
-{% endblock %}
-</div>
+      <div class="initial-page-data hide">
+        {% block initial_page_data %}
+          {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+      </div>
 
-</div>
-</body>
+    </div>
+  </body>
 </html>

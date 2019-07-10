@@ -12,12 +12,23 @@
     "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
+    "icds-cas-sandbox",
     "cas-lab"
   ],
   "server_environment": [
     "india",
     "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-infrastructure_form_v2",
@@ -34,6 +45,24 @@
       "type": "boolean_expression",
       "property_value": "http://openrosa.org/formdesigner/BEB94AFD-E063-46CC-AA75-BECD3C0FC20C"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "awc_id",

@@ -21,6 +21,40 @@ def _evaluate_items_expression(itemx_ex, doc, context):
 
 
 class FilterItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    ``filter_items`` performs filtering on given list and returns a new
+    list. If the boolean expression specified by ``filter_expression``
+    evaluates to a ``True`` value, the item is included in the new list and
+    if not, is not included in the new list.
+
+    ``items_expression`` can be any valid expression that returns a list. If
+    this doesn't evaluate to a list an empty list is returned. It may be
+    necessary to specify a ``datatype`` of ``array`` if the expression could
+    return a single element.
+
+    ``filter_expression`` can be any valid boolean expression relative to
+    the items in above list.
+
+    .. code:: json
+
+       {
+           "type": "filter_items",
+           "items_expression": {
+               "datatype": "array",
+               "type": "property_name",
+               "property_name": "family_repeat"
+           },
+           "filter_expression": {
+              "type": "boolean_expression",
+               "expression": {
+                   "type": "property_name",
+                   "property_name": "gender"
+               },
+               "operator": "eq",
+               "property_value": "female"
+           }
+       }
+    """
     type = TypeProperty('filter_items')
     items_expression = DefaultProperty(required=True)
     filter_expression = DictProperty(required=True)
@@ -45,6 +79,42 @@ class FilterItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
 
 class MapItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    ``map_items`` performs a calculation specified by ``map_expression`` on
+    each item of the list specified by ``items_expression`` and returns a
+    list of the calculation results. The ``map_expression`` is evaluated
+    relative to each item in the list and not relative to the parent
+    document from which the list is specified. For e.g. if
+    ``items_expression`` is a path to repeat-list of children in a form
+    document, ``map_expression`` is a path relative to the repeat item.
+
+    ``items_expression`` can be any valid expression that returns a list. If
+    this doesn't evaluate to a list an empty list is returned. It may be
+    necessary to specify a ``datatype`` of ``array`` if the expression could
+    return a single element.
+
+    ``map_expression`` can be any valid expression relative to the items in
+    above list.
+
+    .. code:: json
+
+       {
+           "type": "map_items",
+           "items_expression": {
+               "datatype": "array",
+               "type": "property_path",
+               "property_path": ["form", "child_repeat"]
+           },
+           "map_expression": {
+               "type": "property_path",
+               "property_path": ["age"]
+           }
+       }
+
+    Above returns list of ages. Note that the ``property_path`` in
+    ``map_expression`` is relative to the repeat item rather than to the
+    form.
+    """
     type = TypeProperty('map_items')
     items_expression = DefaultProperty(required=True)
     map_expression = DefaultProperty(required=True)
@@ -64,6 +134,47 @@ class MapItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
 
 class ReduceItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    ``reduce_items`` returns aggregate value of the list specified by
+    ``aggregation_fn``.
+
+    ``items_expression`` can be any valid expression that returns a list. If
+    this doesn't evaluate to a list, ``aggregation_fn`` will be applied on
+    an empty list. It may be necessary to specify a ``datatype`` of
+    ``array`` if the expression could return a single element.
+
+    ``aggregation_fn`` is one of following supported functions names.
+
+    +----------------+-----------------------+
+    | Function Name  | Example               |
+    +================+=======================+
+    | ``count``      | ``['a', 'b']`` -> 2   |
+    +----------------+-----------------------+
+    | ``sum``        | ``[1, 2, 4]`` -> 7    |
+    +----------------+-----------------------+
+    | ``min``        | ``[2, 5, 1]`` -> 1    |
+    +----------------+-----------------------+
+    | ``max``        | ``[2, 5, 1]`` -> 5    |
+    +----------------+-----------------------+
+    | ``first_item`` | ``['a', 'b']`` -> 'a' |
+    +----------------+-----------------------+
+    | ``last_item``  | ``['a', 'b']`` -> 'b' |
+    +----------------+-----------------------+
+
+    .. code:: json
+
+       {
+           "type": "reduce_items",
+           "items_expression": {
+               "datatype": "array",
+               "type": "property_name",
+               "property_name": "family_repeat"
+           },
+           "aggregation_fn": "count"
+       }
+
+    This returns number of family members
+    """
     type = TypeProperty('reduce_items')
     items_expression = DefaultProperty(required=True)
     aggregation_fn = StringProperty(required=True)
@@ -86,6 +197,22 @@ class ReduceItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
 
 class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    ``flatten`` takes list of list of objects specified by
+    ``items_expression`` and returns one list of all objects.
+
+    ``items_expression`` is any valid expression that returns a list of
+    lists. It this doesn't evaluate to a list of lists an empty list is
+    returned. It may be necessary to specify a ``datatype`` of ``array`` if
+    the expression could return a single element.
+
+    .. code:: json
+
+       {
+           "type": "flatten",
+           "items_expression": {},
+   }
+    """
     type = TypeProperty('flatten')
     items_expression = DefaultProperty(required=True)
 
@@ -108,6 +235,38 @@ class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
 
 class SortItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
+    """
+    ``sort_items`` returns a sorted list of items based on sort value of
+    each item.The sort value of an item is specified by ``sort_expression``.
+    By default, list will be in ascending order. Order can be changed by
+    adding optional ``order`` expression with one of ``DESC`` (for
+    descending) or ``ASC`` (for ascending) If a sort-value of an item is
+    ``None``, the item will appear in the start of list. If sort-values of
+    any two items can't be compared, an empty list is returned.
+
+    ``items_expression`` can be any valid expression that returns a list. If
+    this doesn't evaluate to a list an empty list is returned. It may be
+    necessary to specify a ``datatype`` of ``array`` if the expression could
+    return a single element.
+
+    ``sort_expression`` can be any valid expression relative to the items in
+    above list, that returns a value to be used as sort value.
+
+    .. code:: json
+
+       {
+           "type": "sort_items",
+           "items_expression": {
+               "datatype": "array",
+               "type": "property_path",
+               "property_path": ["form", "child_repeat"]
+           },
+           "sort_expression": {
+               "type": "property_path",
+               "property_path": ["age"]
+           }
+       }
+    """
     ASC, DESC = "ASC", "DESC"
     type = TypeProperty('sort_items')
     items_expression = DefaultProperty(required=True)

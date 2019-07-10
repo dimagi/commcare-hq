@@ -1137,6 +1137,18 @@ class ScheduleForm(Form):
 
     use_advanced_user_data_filter = True
 
+    @classmethod
+    def get_send_frequency_by_ui_type(cls, ui_type):
+        return {
+            Schedule.UI_TYPE_IMMEDIATE: cls.SEND_IMMEDIATELY,
+            Schedule.UI_TYPE_DAILY: cls.SEND_DAILY,
+            Schedule.UI_TYPE_WEEKLY: cls.SEND_WEEKLY,
+            Schedule.UI_TYPE_MONTHLY: cls.SEND_MONTHLY,
+            Schedule.UI_TYPE_CUSTOM_DAILY: cls.SEND_CUSTOM_DAILY,
+            Schedule.UI_TYPE_CUSTOM_IMMEDIATE: cls.SEND_CUSTOM_IMMEDIATE,
+            Schedule.UI_TYPE_UNKNOWN: None,
+        }[ui_type]
+
     def is_valid(self):
         # Make sure .is_valid() is called on all appropriate forms before returning.
         # Don't let the result of one short-circuit the expression and prevent calling the others.
@@ -2341,21 +2353,13 @@ class ScheduleForm(Form):
         else:
             raise ValueError("Unexpected send_time_type: %s" % event_type)
 
-    def assert_alert_schedule(self, schedule):
-        if not isinstance(schedule, AlertSchedule):
-            raise TypeError("Expected AlertSchedule")
-
-    def assert_timed_schedule(self, schedule):
-        if not isinstance(schedule, TimedSchedule):
-            raise TypeError("Expected TimedSchedule")
-
     def save_immediate_schedule(self):
         content = self.standalone_content_form.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_alert_schedule(schedule)
+            AlertSchedule.assert_is(schedule)
             schedule.set_simple_alert(content, extra_options=extra_scheduling_options)
         else:
             schedule = AlertSchedule.create_simple_alert(self.domain, content,
@@ -2371,7 +2375,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_daily_schedule(
                 self.distill_model_timed_event(),
                 content,
@@ -2402,7 +2406,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_weekly_schedule(
                 self.distill_model_timed_event(),
                 content,
@@ -2439,7 +2443,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_simple_monthly_schedule(
                 self.distill_model_timed_event(),
                 sorted_days_of_month,
@@ -2478,7 +2482,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_timed_schedule(schedule)
+            TimedSchedule.assert_is(schedule)
             schedule.set_custom_daily_schedule(
                 event_and_content_objects,
                 total_iterations=total_iterations,
@@ -2507,7 +2511,7 @@ class ScheduleForm(Form):
 
         if self.initial_schedule:
             schedule = self.initial_schedule
-            self.assert_alert_schedule(schedule)
+            AlertSchedule.assert_is(schedule)
             schedule.set_custom_alert(event_and_content_objects, extra_options=extra_scheduling_options)
         else:
             schedule = AlertSchedule.create_custom_alert(self.domain, event_and_content_objects,
@@ -2802,15 +2806,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
-    skip_running_rule_post_save = BooleanField(
-        required=False,
-        label=ugettext_lazy("Skip running rule post save"),
-    )
-
     allow_custom_immediate_schedule = True
 
     def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
-        self.new_reminders_migrator = kwargs.pop('new_reminders_migrator', False)
         self.initial_rule = rule
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
@@ -3120,6 +3118,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
                     css_class='col-sm-4',
                 ),
+                crispy.Div(
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("This cannot be changed after initial configuration."),
+                    ),
+                    css_class='col-sm-12',
+                ),
             ),
             hqcrispy.B3MultiField(
                 _("Use case property stop date"),
@@ -3166,9 +3171,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: capture_custom_metadata_item() === 'Y'",
                 ),
             ])
-
-        if self.new_reminders_migrator:
-            result.append(crispy.Field('skip_running_rule_post_save'))
 
         return result
 

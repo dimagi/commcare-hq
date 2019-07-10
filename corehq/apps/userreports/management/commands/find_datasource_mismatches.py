@@ -25,12 +25,13 @@ class Command(BaseCommand):
 
     def handle(self, domain, data_source_id, *args, **kwargs):
         config, _ = get_datasource_config(data_source_id, domain)
-        adapter = get_indicator_adapter(config)
+        adapter = get_indicator_adapter(config, load_source='find_datasource_mismatches')
         q = adapter.get_query_object()
         document_store = get_document_store_for_doc_type(
             domain, config.referenced_doc_type, load_source="find_datasource_mismatches")
         bad_rows = []
         for row in with_progress_bar(q, length=q.count()):
+            adapter.track_load()
             doc_id = row.doc_id
             doc = document_store.get_document(doc_id)
 

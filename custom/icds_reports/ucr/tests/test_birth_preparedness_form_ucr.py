@@ -1,10 +1,17 @@
 from __future__ import absolute_import, unicode_literals
 
-from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
+from mock import patch
+
+from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 
 
+@patch('custom.icds_reports.ucr.expressions._get_user_location_id',
+       lambda user_id: 'qwe56poiuytr4xcvbnmkjfghwerffdaa')
+@patch('corehq.apps.locations.ucr_expressions._get_location_type_name',
+       lambda loc_id, context: 'awc')
 class TestBirthPreparednessForms(BaseFormsTest):
     ucr_name = "static-icds-cas-static-dashboard_birth_preparedness_forms"
 

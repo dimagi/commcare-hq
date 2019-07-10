@@ -2,25 +2,25 @@
 {% load i18n %}
 
 {% if add_ons.display_conditions %}
-    <div class="form-group" id="module-filter">
-        <label class="{% css_label_class %} control-label">
-            {% trans "Display Condition" %}
-        </label>
-        <div class="{% css_field_class %} commcare-feature" data-since-version="2.20">
+  <div class="form-group" id="module-filter">
+    <label class="{% css_label_class %} control-label">
+      {% trans "Display Condition" %}
+    </label>
+    <div class="{% css_field_class %} commcare-feature" data-since-version="2.20">
             <textarea
-                class="form-control"
-                placeholder="{% trans "XPath expression" %}"
-                name="module_filter"
-                data-bind="xpathValidator: {
+              class="form-control"
+              placeholder="{% trans "XPath expression" %}"
+              name="module_filter"
+              data-bind="xpathValidator: {
                     text: {% if ko_value %}{{ ko_value }}{% else %}xpath{% endif %},
                     allowCaseHashtags: false,
                     errorHtml: $('#module-filter-xpath-error-html').html()
                 }"></textarea>
-            <script type="text/html" id="module-filter-xpath-error-html" class="hide">
-                There is something wrong with the logic in the filter.
-                Check to make sure your parentheses match.
-                Read more about filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
-            </script>
-        </div>
+      <script type="text/html" id="module-filter-xpath-error-html" class="hide">
+        There is something wrong with the logic in the filter.
+        Check to make sure your parentheses match.
+        Read more about filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
+      </script>
     </div>
+  </div>
 {% endif %}

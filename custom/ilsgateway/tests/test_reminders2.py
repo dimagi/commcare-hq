@@ -4,18 +4,13 @@ from datetime import datetime
 
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.util.translation import localize
-from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SupplyPointStatusTypes, \
-    SupplyPointStatusValues, SLABConfig
+from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SLABConfig
 from custom.ilsgateway.slab.messages import REMINDER_STOCKOUT
 from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
-from custom.ilsgateway.tanzania.reminders import update_statuses
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
-from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
-from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
-from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc
 from custom.ilsgateway.tests.utils import bootstrap_user
@@ -40,6 +35,11 @@ class RemindersTest(ILSTestScript):
             first_name='test', last_name='Test'
         )
         create_products(cls, TEST_DOMAIN, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user1.delete()
+        super(RemindersTest, cls).tearDownClass()
 
     def tearDown(self):
         SupplyPointStatus.objects.all().delete()
@@ -123,110 +123,6 @@ class TestDeliveryReminder(RemindersTest):
         self.assertEqual(len(people), 1)
 
 
-class TestRandRReminder(RemindersTest):
-
-    def setUp(self):
-        super(TestRandRReminder, self).setUp()
-        self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
-        self.facility.save()
-
-    def test_group_exclusion(self):
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 1)
-        self.assertEqual(people[0].get_id, self.user1.get_id)
-
-        self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
-        self.facility.save()
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 0)
-
-        self.facility.metadata['group'] = DeliveryGroups().current_processing_group()
-        self.facility.save()
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 0)
-
-    def test_report_exclusion(self):
-        now = datetime.utcnow()
-        people = list(RandrReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 1)
-
-        # reports for a different type shouldn't update status
-        script = """
-            5551234 > nimepokea
-        """
-        self.run_script(script)
-        people = list(RandrReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 1)
-
-        script = """
-            5551234 > nimetuma
-        """
-        self.run_script(script)
-        people = list(RandrReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 0)
-
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 1)
-
-
-class TestSupervisionStatusSet(RemindersTest):
-
-    def setUp(self):
-        super(TestSupervisionStatusSet, self).setUp()
-        self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
-        self.facility.save()
-
-    def test_reminder_set(self):
-        now = datetime.utcnow()
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 1)
-        self.assertEqual(people[0].get_id, self.user1.get_id)
-
-        self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
-        self.facility.save()
-        people = list(SupervisionReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 1)
-
-        update_statuses(
-            [self.facility.get_id],
-            SupplyPointStatusTypes.SUPERVISION_FACILITY,
-            SupplyPointStatusValues.REMINDER_SENT
-        )
-
-        people = list(SupervisionReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 0)
-
-        SupplyPointStatus.objects.all().delete()
-
-        people = list(SupervisionReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 1)
-
-        SupplyPointStatus.objects.create(
-            status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
-            status_value=SupplyPointStatusValues.RECEIVED,
-            location_id=self.facility.get_id
-        )
-        people = list(SupervisionReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 0)
-
-
-class TestSOHThankYou(RemindersTest):
-
-    def test_group_exclusion(self):
-        now = datetime.utcnow()
-        people = list(SOHThankYouReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 0)
-
-        script = """
-            5551234 > soh id 100
-        """
-        self.run_script(script)
-
-        people = list(SOHThankYouReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 1)
-        self.assertEqual(len(list(SOHThankYouReminder(TEST_DOMAIN, datetime.utcnow()).get_people())), 0)
-
-
 class TestStockOut(RemindersTest):
 
     @classmethod
@@ -262,6 +158,11 @@ class TestStockOut(RemindersTest):
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.id.get_id, cls.facility_sp_id, 100)
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.dp.get_id, cls.facility_sp_id, 100)
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.ip.get_id, cls.facility_sp_id, 100)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user2.delete()
+        super(TestStockOut, cls).tearDownClass()
 
     def test_reminder(self):
         now = datetime.utcnow()

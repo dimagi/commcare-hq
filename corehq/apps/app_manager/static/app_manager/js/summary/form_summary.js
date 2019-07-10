@@ -18,13 +18,13 @@ hqDefine('app_manager/js/summary/form_summary',[
         var formSummaryMenu = models.menuModel({
             items: _.map(initialPageData.get("modules"), function (module) {
                 return models.menuItemModel({
-                    id: module.id,
+                    unique_id: module.unique_id,
                     name: utils.translateName(module.name, lang, langs),
                     icon: utils.moduleIcon(module),
                     has_errors: false,
                     subitems: _.map(module.forms, function (form) {
                         return models.menuItemModel({
-                            id: form.id,
+                            unique_id: form.unique_id,
                             name: utils.translateName(form.name, lang, langs),
                             icon: utils.formIcon(form),
                         });

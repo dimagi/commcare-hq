@@ -55,6 +55,10 @@ class XpathVariable(XmlObject):
     locale_id = StringField('locale/@id')
     xpath = NodeField('xpath', CalculatedPropertyXpath)
 
+    @property
+    def value(self):
+        return self.locale_id or self.xpath
+
 
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
@@ -71,6 +75,29 @@ class LocaleArgument(XmlObject):
 class Id(XmlObject):
     ROOT_NAME = 'id'
     xpath = NodeField('xpath', Xpath)
+
+
+class XpathEnum(Xpath):
+    @classmethod
+    def build(cls, enum, template, get_template_context, get_value):
+        variables = []
+        for item in enum:
+            v_key = item.key_as_variable
+            v_val = get_value(v_key)
+            variables.append(XpathVariable(name=v_key, locale_id=v_val))
+
+        parts = []
+        for i, item in enumerate(enum):
+            template_context = get_template_context(item, i)
+            parts.append(template.format(**template_context))
+        parts.append("''")
+        parts.append(")" * len(enum))
+        function = ''.join(parts)
+
+        return cls(
+            function=function,
+            variables=variables,
+        )
 
 
 class Locale(XmlObject):
@@ -199,16 +226,22 @@ class DisplayNode(XmlObject):
     display = NodeField('display', Display)
 
     def __init__(self, node=None, context=None,
-                 locale_id=None, media_image=None, media_audio=None, **kwargs):
+                 locale_id=None, enum_text=None,
+                 media_image=None, media_audio=None, **kwargs):
         super(DisplayNode, self).__init__(node, context, **kwargs)
         self.set_display(
             locale_id=locale_id,
+            enum_text=enum_text,
             media_image=media_image,
             media_audio=media_audio,
         )
 
-    def set_display(self, locale_id=None, media_image=None, media_audio=None):
-        text = Text(locale_id=locale_id) if locale_id else None
+    def set_display(self, locale_id=None, enum_text=None, media_image=None, media_audio=None):
+        text = None
+        if locale_id:
+            text = Text(locale_id=locale_id)
+        elif enum_text:
+            text = enum_text
 
         if media_image or media_audio:
             self.display = Display(
@@ -244,10 +277,14 @@ class TextOrDisplay(XmlObject):
     display = NodeField('display', LocalizedMediaDisplay)
 
     def __init__(self, node=None, context=None, custom_icon_locale_id=None, custom_icon_form=None,
-                 custom_icon_xpath=None, menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
-                 media_image=None, media_audio=None, for_action_menu=False, **kwargs):
+                 custom_icon_xpath=None, menu_locale_id=None, menu_enum_text=None, image_locale_id=None,
+                 audio_locale_id=None, media_image=None, media_audio=None, for_action_menu=False, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
-        text = Text(locale_id=menu_locale_id) if menu_locale_id else None
+        text = None
+        if menu_locale_id:
+            text = Text(locale_id=menu_locale_id)
+        elif menu_enum_text:
+            text = menu_enum_text
 
         media_text = []
         if media_image:
@@ -306,6 +343,9 @@ class Instance(IdNode, OrderedXmlObject):
 
     def __eq__(self, other):
         return self.src == other.src and self.id == other.id
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __hash__(self):
         return hash((self.src, self.id))

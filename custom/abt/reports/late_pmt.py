@@ -85,6 +85,12 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     slug = 'late_pmt'
     name = "Late PMT"
 
+    languages = (
+        'en',
+        'fra',
+        'por'
+    )
+
     fields = [
         DatespanFilter,
         UsernameFilter,
@@ -134,17 +140,6 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         )
 
     @cached_property
-    def welcome_smses(self):
-        data = SMS.objects.filter(
-            domain=self.domain,
-            couch_recipient_doc_type='CommCareUser',
-            couch_recipient__in=self.get_user_ids,
-            direction=OUTGOING,
-            text__startswith="Welcome to"
-        ).values('date', 'couch_recipient')
-        return {user['couch_recipient']: user['date'].date() for user in data}
-
-    @cached_property
     def get_users_in_group_a(self):
         data = SMS.objects.filter(
             domain=self.domain,
@@ -155,6 +150,8 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 self.startdate,
                 self.enddate
             )
+        ).exclude(
+            text="123"
         ).values('date', 'couch_recipient').annotate(
             number_of_sms=Count('couch_recipient')
         )
@@ -218,10 +215,6 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             for date in dates:
                 for user in users:
                     key = (date.date(), user['user_id'])
-                    welcome_sms_date = self.welcome_smses.get(user['user_id'])
-                    if not welcome_sms_date or date.date() <= welcome_sms_date:
-                        continue
-
                     if not_in_group(key, group_a) and sub_status != 'group_b':
                         group = _('No PMT data Submitted')
                     elif not_in_group(key, group_b) and not not_in_group(key, group_a) and sub_status != 'group_a':

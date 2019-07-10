@@ -2,41 +2,41 @@
 {% load i18n %}
 
 {% block page_content %}
-    <p>{% trans "See a user's projects by entering their email address below." %}</p>
-    <form class="form-inline" method="GET" action="">
-        <input name="q" type="text" class="form-control" placeholder="you@example.com"/>
-        <input class="btn btn-primary" type="submit"/>
-    </form>
-    {% if web_user %}
-        <hr>
-        <div class="col-md-6">
-        <h1>{% blocktrans with user_name=web_user.human_friendly_name %}{{ user_name }}'s Information{% endblocktrans %}</h1>
-        {% if not web_user.is_active %}
+  <p>{% trans "See a user's projects by entering their email address below." %}</p>
+  <form class="form-inline" method="GET" action="">
+    <input name="q" type="text" class="form-control" placeholder="you@example.com"/>
+    <input class="btn btn-primary" type="submit"/>
+  </form>
+  {% if web_user %}
+    <hr>
+    <div class="col-md-6">
+      <h1>{% blocktrans with user_name=web_user.human_friendly_name %}{{ user_name }}'s Information{% endblocktrans %}</h1>
+      {% if not web_user.is_active %}
         <div class="alert alert-warning" role="alert">{% trans "This account is disabled." %}</div>
-        {% endif %}
-        <dl>
-            <dt>{% trans "ID" %}</dt>
-            <dd>{{ web_user.get_id }}
-                <small><a href="{% url 'raw_couch' %}?id={{ web_user.get_id }}">{% trans "couch doc" %}</a></small> |
-                <small><a href="{% url 'doc_in_es' %}?id={{ web_user.get_id }}">{% trans "elasticsearch lookup" %}</a></small>
-            </dd>
-        </dl>
-        <h3>{% trans "Domains" %}</h3>
-        <table class="table table-striped table-bordered">
-            <tr>
-                <th>{% trans "Domain" %}</th>
-                <th>{% trans "Role" %}</th>
-            </tr>
-            {% for membership in web_user.domain_memberships %}
-                <tr>
-                    <td><a href="{% url 'dashboard_default' membership.domain %}">{{ membership.domain  }}</a></td>
-                    <td>{{ membership.role.name|default:'Unknown' }}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}">View User Audit Report</a>
-        <a class="btn btn-primary" href="{% url 'disable_user' %}?username={{ web_user.username|urlencode }}">Disable/Enable User Account</a>
-        <a class="btn btn-primary {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}">Disable Two-Factor Authentication</a>
-        </div>
-    {% endif %}
+      {% endif %}
+      <dl>
+        <dt>{% trans "ID" %}</dt>
+        <dd>{{ web_user.get_id }}
+          <small><a href="{% url 'raw_doc' %}?id={{ web_user.get_id }}">{% trans "couch doc" %}</a></small> |
+          <small><a href="{% url 'doc_in_es' %}?id={{ web_user.get_id }}">{% trans "elasticsearch lookup" %}</a></small>
+        </dd>
+      </dl>
+      <h3>{% trans "Domains" %}</h3>
+      <table class="table table-striped table-bordered">
+        <tr>
+          <th>{% trans "Domain" %}</th>
+          <th>{% trans "Role" %}</th>
+        </tr>
+        {% for membership in web_user.domain_memberships %}
+          <tr>
+            <td><a href="{% url 'dashboard_default' membership.domain %}">{{ membership.domain  }}</a></td>
+            <td>{{ membership.role.name|default:'Unknown' }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+      <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}">View User Audit Report</a>
+      <a class="btn btn-primary" href="{% url 'disable_user' %}?username={{ web_user.username|urlencode }}">Disable/Enable User Account</a>
+      <a class="btn btn-primary {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}">Disable Two-Factor Authentication</a>
+    </div>
+  {% endif %}
 {% endblock %}

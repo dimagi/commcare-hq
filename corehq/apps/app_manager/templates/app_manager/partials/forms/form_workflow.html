@@ -1,76 +1,76 @@
 {% load i18n %}
 <div class="form-group">
-    <label class="control-label col-sm-2">
-        {% trans "End of Form Navigation" %}
-        <span class="hq-help-template"
-              data-title="{% trans "End of Form Navigation" %}"
-              data-content="{% blocktrans %}After the user completes a form, your application automatically returns to the home screen.
+  <label class="control-label col-sm-2">
+    {% trans "End of Form Navigation" %}
+    <span class="hq-help-template"
+          data-title="{% trans "End of Form Navigation" %}"
+          data-content="{% blocktrans %}After the user completes a form, your application automatically returns to the home screen.
               Here you can set the application to navigate automatically to a different location in the app.{% endblocktrans %}"
-        ></span>
-    </label>
-    <div id="form-workflow" class="col-sm-4 commcare-feature" data-since-version="2.10">
-        <div class="form-group" data-bind="css: {'has-error': hasError}">
-            <select name="post_form_workflow" class="form-control" data-bind="
+    ></span>
+  </label>
+  <div id="form-workflow" class="col-sm-4 commcare-feature" data-since-version="2.10">
+    <div class="form-group" data-bind="css: {'has-error': hasError}">
+      <select name="post_form_workflow" class="form-control" data-bind="
                 optstr: workflowOptions(),
                 value: workflow
                 "></select>
-            <div data-bind="visible: hasError" class="help-block">
-                {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
-            </div>
-            {% if is_case_list_form %}
-                <!-- ko if: workflow() !== 'default' -->
-                <p class="alert alert-warning">{% blocktrans %}
-                    This form is being used as a Case List Registration Form.
-                    Specifying End of Form Navigation here will override the Case List Registration workflow.
-                    To avoid overriding the Case List Registration workflow set the End of Form Navigation
-                    to the default option ('Home Screen').
-                {% endblocktrans %}</p>
-                <!-- /ko -->
-            {% endif %}
-        </div>
+      <div data-bind="visible: hasError" class="help-block">
+        {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
+      </div>
+      {% if is_case_list_form %}
+        <!-- ko if: workflow() !== 'default' -->
+        <p class="alert alert-warning">{% blocktrans %}
+          This form is being used as a Case List Registration Form.
+          Specifying End of Form Navigation here will override the Case List Registration workflow.
+          To avoid overriding the Case List Registration workflow set the End of Form Navigation
+          to the default option ('Home Screen').
+        {% endblocktrans %}</p>
+        <!-- /ko -->
+      {% endif %}
+    </div>
 
-        <div class="form-links-container" data-bind="
+    <div class="form-links-container" data-bind="
             visible: showFormLinkUI
             ">
 
-            <!-- Container for Form Link UI. Will be populated with existing form links and where new
-                form links will be added -->
-            <div class="form-links" data-bind="
+      <!-- Container for Form Link UI. Will be populated with existing form links and where new
+          form links will be added -->
+      <div class="form-links" data-bind="
                 template: {
                     name: 'form-link-template',
                     foreach: formLinks,
                     as: 'formLink'
                 }
                 ">
-            </div>
-            <div class="panel panel-default">
-                <div class="panel-heading clearfix">
-                    {% trans "Navigation Fallback" %}
-                </div>
-                <div class="panel-body">
-                    <select name="post_form_workflow_fallback" class="form-control" data-bind="
+      </div>
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          {% trans "Navigation Fallback" %}
+        </div>
+        <div class="panel-body">
+          <select name="post_form_workflow_fallback" class="form-control" data-bind="
                         optstr: workflowFallbackOptions(),
                         value: workflowfallback,
                         optionsCaption: 'Choose a fallback option...'
                     "></select>
-                </div>
-            </div>
-            <div class="row">
-                <button class="btn btn-primary" data-bind="click: onAddFormLink">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Add link" %}
-                </button>
-                <input type="hidden" class="workflow-change-trigger" />
-            </div>
         </div>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" data-bind="click: onAddFormLink">
+          <i class="fa fa-plus"></i>
+          {% trans "Add link" %}
+        </button>
+        <input type="hidden" class="workflow-change-trigger" />
+      </div>
     </div>
+  </div>
 </div>
 
 <script type="text/html" id="form-link-template">
-    <div class="well">
+  <div class="well">
     <div class="form-group">
-        <div class="row">
-            <div class="col-sm-11">
+      <div class="row">
+        <div class="col-sm-11">
                 <textarea name="form_links_xpath_expressions"
                           placeholder="{% trans "XPath Expression" %}"
                           rows="1"
@@ -78,83 +78,83 @@
                           data-bind="text: formLink.xpath, value: formLink.xpath"
                           spellcheck="false"
                 ></textarea>
-            </div>
-            <div class="col-sm-1">
-        <a class="pull-right"
-           role="button"
-           href="#"
-           data-bind="click: $parent.onDestroyFormLink.bind($parent)">
+        </div>
+        <div class="col-sm-1">
+          <a class="pull-right"
+             role="button"
+             href="#"
+             data-bind="click: $parent.onDestroyFormLink.bind($parent)">
             <i class="fa fa-remove"></i>
-        </a>
-            </div>
+          </a>
         </div>
-        <div class="row">
-            <div class="col-sm-11 text-center">
-                <i class="fa fa-arrow-down"></i>
-            </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-11 text-center">
+          <i class="fa fa-arrow-down"></i>
         </div>
-        <div class="row">
-            <div class="col-sm-11">
-                <select class="form-control" name="form_links_form_ids" data-bind="
+      </div>
+      <div class="row">
+        <div class="col-sm-11">
+          <select class="form-control" name="form_links_form_ids" data-bind="
                     options: $parent.forms,
                     optionsText: 'name',
                     optionsValue: 'uniqueId',
                     optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
                     value: formLink.formId
                     "></select>
-            </div>
-            <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
         </div>
-        <div class="row">
-            <div class="col-sm-11" data-bind="visible: !formLink.autoLink()">
-                <p>{% trans "This form requires manual linking." %}</p>
-            </div>
-            <div class="col-sm-11" data-bind="visible: formLink.autoLink()">
-                <p>{% trans "This form doesn't require manual linking." %}</p>
-            </div>
-            <div class="col-sm-11" data-bind="visible: formLink.autoLink() && !formLink.manualDatums()">
+        <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
+      </div>
+      <div class="row">
+        <div class="col-sm-11" data-bind="visible: !formLink.autoLink()">
+          <p>{% trans "This form requires manual linking." %}</p>
+        </div>
+        <div class="col-sm-11" data-bind="visible: formLink.autoLink()">
+          <p>{% trans "This form doesn't require manual linking." %}</p>
+        </div>
+        <div class="col-sm-11" data-bind="visible: formLink.autoLink() && !formLink.manualDatums()">
                 <span data-bind="click: enableManualDatums" class="btn btn-default btn-sm">
                     {% trans "Enable manual linking" %}
                 </span>
-            </div>
-            <div class="col-sm-11" data-bind="visible: formLink.manualDatums">
+        </div>
+        <div class="col-sm-11" data-bind="visible: formLink.manualDatums">
                 <span data-bind="click: disableManualDatums" class="btn btn-danger btn-sm">
                     {% trans "Disable manual linking" %}
                 </span>
-            </div>
         </div>
-        <div class="row">
-            <div class="col-sm-11"  data-bind="visible: formLink.showLinkDatums()">
-                <p>
-                    <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums">
-                        <!-- ko if: formLink.datumsFetched() -->
-                        {% trans "Refresh" %}
-                        <!-- /ko -->
-                        <!-- ko if: !formLink.datumsFetched() -->
-                        {% trans "Continue" %}
-                        <!-- /ko -->
-                    </button>
-                </p>
-            </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-11"  data-bind="visible: formLink.showLinkDatums()">
+          <p>
+            <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums">
+              <!-- ko if: formLink.datumsFetched() -->
+              {% trans "Refresh" %}
+              <!-- /ko -->
+              <!-- ko if: !formLink.datumsFetched() -->
+              {% trans "Continue" %}
+              <!-- /ko -->
+            </button>
+          </p>
         </div>
-        <div class="row">
-            <div class="col-sm-11" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
-                <p>
-                    {% trans "No additional linking required." %}
-                </p>
-            </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-11" data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0 && !formLink.autoLink()">
+          <p>
+            {% trans "No additional linking required." %}
+          </p>
         </div>
-            <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
-                <div class="form-group col-sm-11">
-                    <div class="panel panel-appmanager">
-                        <div class="panel-heading">
-                            <h4 class="panel-title panel-title-nolink">
-                              <span data-bind="text: name"></span>
-                              <span class="label label-primary" data-bind="text: caseType"></span>
-                            </h4>
-                        </div>
-                        <div class="panel-body">
-                            <div class="controls">
+      </div>
+      <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
+        <div class="form-group col-sm-11">
+          <div class="panel panel-appmanager">
+            <div class="panel-heading">
+              <h4 class="panel-title panel-title-nolink">
+                <span data-bind="text: name"></span>
+                <span class="label label-primary" data-bind="text: caseType"></span>
+              </h4>
+            </div>
+            <div class="panel-body">
+              <div class="controls">
                                 <textarea name="_xpath"
                                           placeholder="XPath Expression"
                                           rows="1"
@@ -162,22 +162,22 @@
                                           class="form-control"
                                           spellcheck="false">
                                 </textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <div class="alert alert-danger" data-bind="
+    <div class="alert alert-danger" data-bind="
             visible: formLink.errors().length
             ">
-            <ul data-bind="
+      <ul data-bind="
                     foreach: formLink.errors(),
             ">
-                <li data-bind="text: $data"></li>
-            </ul>
-        </div>
+        <li data-bind="text: $data"></li>
+      </ul>
     </div>
-    </div>
+  </div>
+  </div>
 </script>

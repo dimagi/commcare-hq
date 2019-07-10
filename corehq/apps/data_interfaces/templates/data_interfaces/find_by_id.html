@@ -5,28 +5,28 @@
 {% requirejs_main "data_interfaces/js/find_by_id" %}
 
 {% block page_content %}
-    {% registerurl 'global_quick_find' %}
-    {% registerurl 'list_case_exports' domain %}
-    {% registerurl 'list_form_exports' domain %}
+  {% registerurl 'global_quick_find' %}
+  {% registerurl 'list_case_exports' domain %}
+  {% registerurl 'list_form_exports' domain %}
 
-    {% blocktrans %}
-        <p class="lead">Find Data by ID</p>
-        <p>
-            This page allows you to directly access a specific form data or case data page.
-            Read more on our <a href='https://confluence.dimagi.com/display/commcarepublic/Find+Data+by+ID'>help site</a>.
-        </p>
-    {% endblocktrans %}
+  {% blocktrans %}
+    <p class="lead">Find Data by ID</p>
+    <p>
+      This page allows you to directly access a specific form data or case data page.
+      Read more on our <a href='https://confluence.dimagi.com/display/commcarepublic/Find+Data+by+ID'>help site</a>.
+    </p>
+  {% endblocktrans %}
 
-    {% if can_view_cases %}
-        <fieldset id="find-case" class="ko-template">
-            {% include 'data_interfaces/partials/find_by_id_form.html' %}
-        </fieldset>
-        <br><br><br>
-    {% endif %}
+  {% if can_view_cases %}
+    <fieldset id="find-case" class="ko-template">
+      {% include 'data_interfaces/partials/find_by_id_form.html' %}
+    </fieldset>
+    <br><br><br>
+  {% endif %}
 
-    {% if can_view_forms %}
-        <fieldset id="find-form" class="ko-template">
-            {% include 'data_interfaces/partials/find_by_id_form.html' %}
-        </fieldset>
-    {% endif %}
+  {% if can_view_forms %}
+    <fieldset id="find-form" class="ko-template">
+      {% include 'data_interfaces/partials/find_by_id_form.html' %}
+    </fieldset>
+  {% endif %}
 {% endblock page_content %}

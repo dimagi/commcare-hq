@@ -22,7 +22,7 @@ describe('Eligible Couple models', function () {
             var config = eligibleCoupleModels.config();
             var expectedColumns = [
                 {data: 'name()', name: 'name', title: 'Name'},
-                {data: 'age()', name: 'age', title: 'Age'},
+                {data: 'age()', name: 'dob', title: 'Age'},
                 {data: 'currentFamilyPlanningMethod()', name: 'currentFamilyPlanningMethod', title: 'Current Family Planning Method'},
                 {data: 'adoptionDateOfFamilyPlaning()', name: 'adoptionDateOfFamilyPlaning', title: 'Adoption Date Of Family Planing'},
             ];
@@ -45,7 +45,7 @@ describe('Eligible Couple models', function () {
                 {
                     id: '1',
                     name: 'test Name',
-                    age: 14,
+                    dob: '2017-04-11',
                     currentFamilyPlanningMethod: 'condom',
                     adoptionDateOfFamilyPlaning: '2019-03-01',
                 },
@@ -53,7 +53,7 @@ describe('Eligible Couple models', function () {
             );
             assert.equal('1', listView.id);
             assert.equal('<a href="unified_beneficiary_details/eligible_couple/1/?month=3&year=2019">test Name</a>', listView.name());
-            assert.equal(14, listView.age());
+            assert.equal('1 Yr 11 Mon', listView.age());
             assert.equal('condom', listView.currentFamilyPlanningMethod());
             assert.equal('2019-03-01', listView.adoptionDateOfFamilyPlaning());
         });

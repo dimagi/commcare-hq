@@ -172,7 +172,7 @@ class DataDictionaryView(BaseProjectDataView):
 
 class UploadDataDictionaryView(BaseProjectDataView):
     page_title = _("Upload Data Dictionary")
-    template_name = "data_dictionary/import_data_dict.html"
+    template_name = "hqwebapp/bulk_upload.html"
     urlname = 'upload_data_dict'
 
     @method_decorator(login_and_domain_required)

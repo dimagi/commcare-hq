@@ -2,15 +2,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from sqlagg import SumWhen
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import percent, phone_number_function
 
 
-class PregnantWomenExport(ExportableMixin, SqlData):
+class PregnantWomenExport(ExportableMixin, IcdsSqlData):
     title = 'Pregnant Women'
     table_name = 'agg_ccs_record_monthly'
 
@@ -46,8 +48,14 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 'Percentage Anemia',
                 lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                 [
-                    SumColumn('anemic_moderate'),
-                    SumColumn('anemic_severe'),
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_moderate'},
+                        alias='anemic_moderate'
+                    ),
+                    SumWhen(
+                        whens={"ccs_status = 'pregnant'": 'anemic_severe'},
+                        alias='anemic_severe'
+                    ),
                     AliasColumn('pregnant')
                 ],
                 slug='percent_anemia'

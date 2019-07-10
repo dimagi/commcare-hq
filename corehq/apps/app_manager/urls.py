@@ -30,10 +30,10 @@ from corehq.apps.app_manager.views import (
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
     update_linked_whitelist, overwrite_module_case_list, app_settings, toggle_build_profile,
 )
+from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.translations.views import (
     download_bulk_ui_translations, upload_bulk_ui_translations,
-    download_bulk_multimedia_translations,
     download_bulk_app_translations, upload_bulk_app_translations,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -45,8 +45,6 @@ app_urls = [
     url(r'^languages/translations/upload/$', upload_bulk_ui_translations, name='upload_bulk_ui_translations'),
     url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations, name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations, name='upload_bulk_app_translations'),
-    url(r'^languages/bulk_multimedia_translations/download/$', download_bulk_multimedia_translations,
-        name='download_bulk_multimedia_translations'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
@@ -172,6 +170,8 @@ urlpatterns = [
         name='edit_app_ui_translations'),
     url(r'^get_app_ui_translations/$', get_app_ui_translations, name='get_app_ui_translations'),
     url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', rearrange, name='rearrange'),
+    url(r'^move_child_modules_after_parents/(?P<app_id>[\w-]+)/$', move_child_modules_after_parents,
+        name='move_child_modules_after_parents'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', odk_qr_code, name='odk_qr_code'),
     url(r'^odk/(?P<app_id>[\w-]+)/media_qr_code/$', odk_media_qr_code, name='odk_media_qr_code'),

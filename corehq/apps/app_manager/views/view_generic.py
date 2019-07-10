@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context, \
 from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
 from corehq.apps.app_manager.views.releases import get_releases_context
-from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
+from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
@@ -155,7 +155,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         template = get_module_template(request.user, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
-        module_context = get_module_view_context(app, module, lang)
+        module_context = get_module_view_context(request, app, module, lang)
         context.update(module_context)
     elif app:
         context.update(get_app_view_context(request, app))
@@ -317,11 +317,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
-
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
 
     response = render(request, template, context)
 
-    response.set_cookie('lang', encode_if_unicode(lang))
+    set_lang_cookie(response, lang)
     return response

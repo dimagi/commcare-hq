@@ -34,6 +34,8 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."awc_days_pse_conducted" AS "awc_days_pse_conducted",
         "agg_awc"."awc_num_open" AS "awc_num_open",
         "agg_awc"."wer_weighed" AS "wer_weighed",
+        "agg_awc"."wer_weighed_0_2" AS "wer_weighed_0_2",
+        "agg_awc"."wer_eligible_0_2" AS "wer_eligible_0_2",
         "agg_awc"."wer_eligible" AS "wer_eligible",
         "agg_awc"."num_anc_visits" AS "num_anc_visits",
         "agg_awc"."num_children_immunized" AS "num_children_immunized",
@@ -82,7 +84,7 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."usage_num_add_pregnancy", 0) AS "usage_num_add_pregnancy",
         COALESCE("agg_awc"."cases_person_has_aadhaar_v2", 0) AS "cases_person_has_aadhaar_v2",
         COALESCE("agg_awc"."cases_person_beneficiary_v2", 0) AS "cases_person_beneficiary_v2"
-    FROM "public"."awc_location_months" "awc_location_months"
+    FROM "public"."awc_location_months_local" "awc_location_months"
     LEFT JOIN "public"."agg_awc" "agg_awc" ON (
         ("awc_location_months"."month" = "agg_awc"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_awc"."aggregation_level") AND
