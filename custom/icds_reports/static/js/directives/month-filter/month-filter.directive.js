@@ -7,7 +7,7 @@ function MonthModalController($location, $uibModalInstance) {
     vm.years = [];
     vm.monthsCopy = [];
     vm.showMessage = false;
-    var isSDD =  $location.path().indexOf('service_delivery_dashboard') != -1;
+    var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
     var startDate = $location.path().indexOf('service_delivery_dashboard') === -1 ? 2017 : 2019;
 
     window.angular.forEach(moment.months(), function(key, value) {
@@ -28,7 +28,7 @@ function MonthModalController($location, $uibModalInstance) {
     vm.selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
     vm.selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
 
-    if(isSDD && (vm.selectedYear<2019||vm.selectedYear==2019&&vm.selectedMonth==1)){
+    if(isSDD && (vm.selectedYear<2019 || (vm.selectedYear==2019 && vm.selectedMonth==1))){
         vm.showMessage = true;
         vm.selectedYear = new Date().getFullYear();
         vm.selectedMonth = new Date().getMonth()+1;
@@ -119,14 +119,14 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
     var init = function() {
             var month = $location.search()['month'];
             var year = $location.search()['year'];
-            var display_modal = true;
+            var displayModal = true;
 
-            if(year > 2019 || year==2019&&month>1){
-                display_modal = false;
+            if(year > 2019 || (year==2019  &&  month>1)){
+                displayModal = false;
             }
 
             if($location.path().indexOf('service_delivery_dashboard') !== -1
-                && display_modal){
+                && displayModal){
                 vm.open();
             }
     }
