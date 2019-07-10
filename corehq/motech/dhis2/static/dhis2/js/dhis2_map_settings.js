@@ -21,7 +21,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
 
         self.errors = [];
 
-        self.serialize = function () {
+        self.toJSON = function () {
             return {
                 "column": self.ucrColumn(),
                 "data_element_id": self.dataElementId(),
@@ -76,12 +76,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
             self.dataValueMaps.remove(dataValueMap);
         };
 
-        self.serialize = function () {
-            var dataValueMaps = [];
-            for (var i = 0; i < self.dataValueMaps().length; i++) {
-                var dataValueMap = self.dataValueMaps()[i];
-                dataValueMaps.push(dataValueMap.serialize());
-            }
+        self.toJSON = function () {
             return {
                 "description": self.description(),
                 "ucr_id": self.ucrId(),
@@ -94,7 +89,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
                 "period_column": self.periodColumn(),
                 "attribute_option_combo_id": self.attributeOptionComboId(),
                 "complete_date": self.completeDate(),
-                "datavalue_maps": dataValueMaps,
+                "datavalue_maps": self.dataValueMaps(),
             };
         };
 
@@ -110,7 +105,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
             // So that jsonDataSetMap object ducktypes dhis2MapSettings.dataSetMap object
         };
 
-        self.serialize = function () {
+        self.toJSON = function () {
             return JSON.parse(self.dataSetMap());
         };
 
@@ -156,12 +151,9 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         };
 
         self.submit = function (form) {
-            var serializedMaps = _.map(self.dataSetMaps(), function (map) {
-                return map.serialize();
-            });
             $.post(
                 form.action,
-                {'dataset_maps': JSON.stringify(serializedMaps)},
+                {'dataset_maps': JSON.stringify(self.dataSetMaps())},
                 function (data) { alertUser.alert_user(data['success'], 'success', true); }
             ).fail(function () { alertUser.alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
