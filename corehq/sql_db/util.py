@@ -227,7 +227,7 @@ def _get_all_nested_subclasses(cls):
 def get_standby_databases(relevant_dbs=None):
     standby_dbs = []
     for db_alias in settings.DATABASES:
-        if relevant_dbs is None or db_alias in relevant_dbs.keys():
+        if relevant_dbs is None or db_alias in relevant_dbs:
             with db.connections[db_alias].cursor() as cursor:
                 cursor.execute("SELECT pg_is_in_recovery()")
                 [(is_standby, )] = cursor.fetchall()
@@ -282,10 +282,11 @@ def filter_out_stale_standbys(dbs):
     # from given list of databases filters out those with more than
     #   acceptable standby delay, if that database is a standby
     delays_by_db = get_standby_delays_by_db()
+    relevant_dbs = tuple([pair[0] for pair in dbs])
     return [
         db
         for db in dbs
-        if get_replication_delay_for_standby(db, dbs) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
+        if get_replication_delay_for_standby(db, relevant_dbs) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
     ]
 
 
