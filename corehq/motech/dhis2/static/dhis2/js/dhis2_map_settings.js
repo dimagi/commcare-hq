@@ -101,13 +101,17 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         return self;
     };
 
-    var jsonDataSetMap = function (dataSetMap) {
+    var jsonDataSetMap = function (data) {
         var self = {};
 
-        self.dataSetMap = ko.observable(dataSetMap);
+        self.dataSetMap = ko.observable(JSON.stringify(data, null, 2));
+
+        self.init = function () {
+            // So that jsonDataSetMap object ducktypes dhis2MapSettings.dataSetMap object
+        };
 
         self.serialize = function () {
-            return self.dataSetMap();
+            return JSON.parse(self.dataSetMap());
         };
 
         return self;
@@ -127,13 +131,8 @@ hqDefine('dhis2/js/dhis2_map_settings', [
             if (dataSetMaps.length > 0) {
                 for (var i = 0; i < dataSetMaps.length; i++) {
                     var data = dataSetMaps[i],
-                        map;
-                    if (isJsonUi) {
-                        map = jsonDataSetMap(data);
-                    } else {
-                        map = dataSetMap(data);
-                        map.init();
-                    }
+                        map = isJsonUi ? jsonDataSetMap(data) : dataSetMap(data);
+                    map.init();
                     self.dataSetMaps.push(map);
                 }
             } else {

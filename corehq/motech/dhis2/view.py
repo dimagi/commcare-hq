@@ -66,15 +66,12 @@ class DataSetMapView(BaseProjectSettingsView):
     def post(self, request, *args, **kwargs):
 
         def update_dataset_map(instance, new_dataset_map):
-            if is_json_ui:
-                new_dataset_map = json.loads(new_dataset_map)
             new_dataset_map.pop('domain', None)  # Make sure a user cannot change the value of "domain"
             for key, value in new_dataset_map.items():
                 if key == 'datavalue_maps':
                     value = [DataValueMap(**v) for v in value]
                 instance[key] = value
 
-        is_json_ui = int(self.request.GET.get('json', 0))
         try:
             new_dataset_maps = json.loads(request.POST['dataset_maps'])
             current_dataset_maps = get_dataset_maps(request.domain)
@@ -102,27 +99,20 @@ class DataSetMapView(BaseProjectSettingsView):
     def page_context(self):
 
         def to_json(dataset_map):
-            dict_ = dataset_map.to_json()
-            if is_json_ui:
-                clean(dict_)
-                return json.dumps(dict_, indent=2)
-            else:
-                return dict_
-
-        def clean(dataset_map):
+            dataset_map = dataset_map.to_json()
             del(dataset_map['_id'])
             del(dataset_map['_rev'])
             del(dataset_map['doc_type'])
             del(dataset_map['domain'])
             for datavalue_map in dataset_map['datavalue_maps']:
                 del(datavalue_map['doc_type'])
+            return dataset_map
 
-        is_json_ui = int(self.request.GET.get('json', 0))
         dataset_maps = [to_json(d) for d in get_dataset_maps(self.request.domain)]
         return {
             'dataset_maps': dataset_maps,
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
-            'is_json_ui': is_json_ui,
+            'is_json_ui': int(self.request.GET.get('json', 0)),
         }
 
 
