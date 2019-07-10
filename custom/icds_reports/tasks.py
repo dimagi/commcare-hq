@@ -343,8 +343,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                      force_citus=force_citus),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
-                                   force_citus=force_citus),
-            _bust_awc_cache.si()
+                                   force_citus=force_citus)
         ).delay()
 
 
@@ -1247,15 +1246,6 @@ def create_mbt_for_month(state_id, month):
             )
             icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
             icds_file.save()
-
-
-@task(queue='background_queue')
-def _bust_awc_cache():
-    create_datadog_event('redis: delete dashboard keys', 'start')
-    reach_keys = cache.keys('*cas_reach_data*')
-    for key in reach_keys:
-        cache.delete(key)
-    create_datadog_event('redis: delete dashboard keys', 'finish')
 
 
 @task(queue='dashboard_comparison_queue')
