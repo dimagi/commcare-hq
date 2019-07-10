@@ -71,6 +71,7 @@ class CaseDiffQueue(object):
         # empty it is queued to be diffed and the corresponding
         # CaseRecord is removed.
         self.cases = {}
+        self.num_diffed_cases = 0
 
     def __enter__(self):
         self._load_resume_state()
@@ -156,11 +157,12 @@ class CaseDiffQueue(object):
             self._diff_cases()
 
     def _diff_cases(self):
-        self.diff_batcher.spawn(self._diff, self.cases_to_diff)
-        self.cases_to_diff = {}
+        def diff(couch_cases):
+            diff_cases(couch_cases, statedb=self.statedb)
+            self.num_diffed_cases += len(couch_cases)
 
-    def _diff(self, couch_cases):
-        diff_cases(couch_cases, statedb=self.statedb)
+        self.diff_batcher.spawn(diff, self.cases_to_diff)
+        self.cases_to_diff = {}
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
@@ -209,6 +211,8 @@ class CaseDiffQueue(object):
         if self.diff_batcher or self.cases_to_diff:
             state["to_diff"] = list(chain.from_iterable(self.diff_batcher))
             state["to_diff"].extend(self.cases_to_diff)
+        if self.num_diffed_cases:
+            state["num_diffed_cases"] = self.num_diffed_cases
         log.debug("resume state: %s", state)
         self.statedb.set_resume_state(type(self).__name__, state)
 
@@ -220,6 +224,8 @@ class CaseDiffQueue(object):
         if "pending" in state:
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
                 self._add_pending_cases(dict(chunk))
+        if "num_diffed_cases" in state:
+            self.num_diffed_cases = state["num_diffed_cases"]
 
     def _enqueue_cases(self, case_ids):
         for case in CaseAccessorCouch.get_cases(case_ids):

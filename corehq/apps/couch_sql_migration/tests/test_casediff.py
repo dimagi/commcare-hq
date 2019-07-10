@@ -94,6 +94,17 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update({"d"}, "f2")
         self.assertDiffed("a b c d")
 
+    def test_num_diffed_cases_on_resume(self):
+        self.add_cases("a b c", "f1")
+        self.add_cases("d", "f2")
+        # simulate a single call to couch failing
+        with self.queue() as queue:
+            queue.update({"a", "b", "c"}, "f1")
+        self.assertEqual(queue.num_diffed_cases, 3)
+        with self.queue() as queue:
+            queue.update({"d"}, "f2")
+        self.assertEqual(queue.num_diffed_cases, 4)
+
     def test_diff_cases_failure(self):
         self.add_cases("a b c", "f1")
         self.add_cases("d", "f2")
