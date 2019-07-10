@@ -832,13 +832,19 @@ def track_time(func):
     from custom.icds_reports.models import AggregateSQLProfile
 
     def get_async_indicator_time():
-        return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
-            .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
+        try:
+            return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
+                .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
+        except:
+            pass
 
     def get_sync_datasource_time():
-        return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
-            .exclude(doc_modification_time__isnull=True)\
-            .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
+        try:
+            return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
+                .exclude(doc_modification_time__isnull=True)\
+                .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
+        except:
+            pass
 
     @wraps(func)
     def wrapper(*args, **kwargs):
