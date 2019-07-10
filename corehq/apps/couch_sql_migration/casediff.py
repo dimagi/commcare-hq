@@ -8,6 +8,7 @@ from itertools import chain, count
 import gevent
 import six
 from gevent.pool import Pool
+from gevent.event import Event
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
@@ -28,6 +29,8 @@ from dimagi.utils.chunked import chunked
 from .diff import filter_case_diffs, filter_ledger_diffs
 
 log = logging.getLogger(__name__)
+
+STATUS_INTERVAL = 300  # 5 minutes
 
 
 class CaseDiffQueue(object):
@@ -56,8 +59,9 @@ class CaseDiffQueue(object):
 
     BATCH_SIZE = 100
 
-    def __init__(self, statedb):
+    def __init__(self, statedb, status_interval=STATUS_INTERVAL):
         self.statedb = statedb
+        self.status_interval = status_interval
         self.pending_cases = defaultdict(set)  # case id -> processed form ids
         self.cases_to_diff = {}  # case id -> case doc (JSON)
         self.pool = Pool(5)
@@ -75,6 +79,7 @@ class CaseDiffQueue(object):
 
     def __enter__(self):
         self._load_resume_state()
+        self._stop_status_logger = self.run_status_logger()
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -82,6 +87,7 @@ class CaseDiffQueue(object):
             if exc_type is None:
                 self.process_remaining_diffs()
         finally:
+            self._stop_status_logger()
             self._save_resume_state()
 
     def update(self, case_ids, form_id):
@@ -230,6 +236,51 @@ class CaseDiffQueue(object):
     def _enqueue_cases(self, case_ids):
         for case in CaseAccessorCouch.get_cases(case_ids):
             self.enqueue(case.to_json())
+
+    def run_status_logger(self):
+        """Start periodic status logger in a greenlet
+
+        Log status every `self.status_interval` seconds unless it
+        evaluates to false, in which case the loop is not started.
+
+        :returns: A function that stops the logger loop.
+        """
+        def status_logger():
+            while not exit.wait(timeout=self.status_interval):
+                self.log_status(self.get_status())
+
+        def stop():
+            exit.set()
+            loop.join()
+
+        if self.status_interval:
+            exit = Event()
+            loop = gevent.spawn(status_logger)
+            return stop
+        return lambda: None
+
+    @staticmethod
+    def log_status(status):
+        log.info(
+            "cases diffed=%s, pending cases=%s diffs=%s",
+            status["diffed_cases"],
+            status["pending_cases"],
+            status["pending_diffs"],
+        )
+
+    def get_status(self):
+        return {
+            "pending_cases": (
+                len(self.pending_cases)
+                + sum(len(batch) for batch in self.case_batcher)
+                + len(self.cases)
+            ),
+            "pending_diffs": (
+                len(self.cases_to_diff)
+                + sum(len(batch) for batch in self.diff_batcher)
+            ),
+            "diffed_cases": self.num_diffed_cases,
+        }
 
 
 def task_switch():

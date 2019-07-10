@@ -9,6 +9,7 @@ import attr
 import gevent
 import six
 from django.test import SimpleTestCase
+from gevent.event import Event
 from mock import patch
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
@@ -214,6 +215,16 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update({"a"}, "f1")
             flush(queue.pool)
             self.assertDiffed("a b c d")
+
+    def test_status_logger(self):
+        event = Event()
+        queue = mod.CaseDiffQueue(None, status_interval=0.00001)
+        with patch.object(queue, "log_status") as log_status:
+            log_status.side_effect = lambda x: event.set()
+            stop = queue.run_status_logger()
+            self.assertTrue(event.wait(timeout=5), "queue.log_status() not called")
+            stop()
+        self.assertGreater(log_status.call_count, 0)
 
     @contextmanager
     def queue(self):
