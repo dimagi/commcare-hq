@@ -77,7 +77,7 @@ class CommCareBuild(BlobMixin, Document):
             jad = self.fetch_file(path, "CommCare.jad")
         except ResourceNotFound:
             jad = None
-            
+
         return JadJar(
             jad=jad,
             jar=self.fetch_file(path, "CommCare.jar"),
