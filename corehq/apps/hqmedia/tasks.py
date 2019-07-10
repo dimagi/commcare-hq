@@ -188,7 +188,7 @@ def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_
 def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression, task):
     file_cache = {}
     with open(fpath, 'wb') as tmp:
-        with zipfile.ZipFile(tmp, "w") as z:
+        with zipfile.ZipFile(tmp, "w", allowZip64=True) as z:
             for path, data in files:
                 # don't compress multimedia files
                 extension = os.path.splitext(path)[1]
