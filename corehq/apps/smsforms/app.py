@@ -64,7 +64,7 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
         session_data.update(get_cloudcare_session_data(domain, form, contact))
 
     language = contact.get_language_code()
-    config = XFormsConfig(form_content=form.render_xform(),
+    config = XFormsConfig(form_content=form.render_xform().decode('utf-8'),
                           language=language,
                           session_data=session_data,
                           domain=domain,
