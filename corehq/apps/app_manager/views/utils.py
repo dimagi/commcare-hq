@@ -202,6 +202,10 @@ def _update_form_ids(app, master_app):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
+    # Corresponding forms in a master app and linked app need to have the same XMLNS but different unique ids,
+    # so the linked app needs to know if there are any new forms and, if so, assign those forms new unique ids.
+    # To do this lookup, get the XMLNSes from the last version of this (linked) app pulled from the same master,
+    # and compare those to the XMLNSes present in this app.
     form_ids_by_xmlns = _get_form_ids_by_xmlns(app.get_previous_version(master_app_id=master_app.copy_of))
     updated_source = update_form_unique_ids(app_source, form_ids_by_xmlns)
 
