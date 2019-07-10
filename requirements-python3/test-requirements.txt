@@ -74,8 +74,10 @@ fakecouch==0.0.15
 faker==0.8.15
 flaky==3.6.0
 freezegun==0.3.11
+funcsigs==1.0.2
 gevent==1.4.0
 ghdiff==0.4
+gipc==1.0.1
 greenlet==0.4.15
 gunicorn==19.9.0
 hiredis==0.2.0

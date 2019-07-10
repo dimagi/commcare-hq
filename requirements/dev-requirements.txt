@@ -85,11 +85,12 @@ faker==0.8.15
 fixture==1.5.11
 flaky==3.6.0
 freezegun==0.3.11
-funcsigs==1.0.2           # via mock
+funcsigs==1.0.2
 future==0.17.1            # via commonmark
 futures==3.2.0            # via s3transfer, tinys3
 gevent==1.4.0
 ghdiff==0.4
+gipc==1.0.1
 gnureadline==6.3.8
 graphviz==0.7
 greenlet==0.4.15
