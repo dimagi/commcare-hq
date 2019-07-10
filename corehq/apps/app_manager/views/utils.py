@@ -172,6 +172,20 @@ def overwrite_app(app, master_build, report_map=None):
     master_json = master_build.to_json()
     app_json = app.to_json()
 
+    # Corresponding forms in a master app and linked app need to have the same XMLNS but different unique ids,
+    # so the linked app needs to know if there are any new forms and, if so, assign those forms new unique ids.
+    # To do this lookup, get the XMLNSes from the last version of this (linked) app pulled from the same master,
+    # and compare those to the XMLNSes present in this app.
+    form_ids_by_xmlns = {}
+    previous_app = app.get_previous_version(master_app_id=master_build.master_id)
+    if previous_app:
+        form_ids_by_xmlns = _get_form_ids_by_xmlns(previous_app)
+    # Add in any forms from the current linked app, before the source is overwritten.
+    # This is particularly important if there's no previous version
+    for module in app['modules']:
+        for form in module['forms']:
+            form_ids_by_xmlns[form.xmlns] = form['unique_id']
+
     for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
             app_json[key] = value
@@ -189,12 +203,12 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
-    wrapped_app = _update_form_ids(wrapped_app, master_build)
+    wrapped_app = _update_form_ids(wrapped_app, master_build, form_ids_by_xmlns)
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
 
 
-def _update_form_ids(app, master_app):
+def _update_form_ids(app, master_app, form_ids_by_xmlns):
 
     _attachments = master_app.get_attachments()
 
@@ -202,12 +216,6 @@ def _update_form_ids(app, master_app):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
-    # Corresponding forms in a master app and linked app need to have the same XMLNS but different unique ids,
-    # so the linked app needs to know if there are any new forms and, if so, assign those forms new unique ids.
-    # To do this lookup, get the XMLNSes from the last version of this (linked) app pulled from the same master,
-    # and compare those to the XMLNSes present in this app.
-    previous_app = app.get_previous_version(master_app_id=master_app.copy_of)
-    form_ids_by_xmlns = _get_form_ids_by_xmlns(previous_app) if previous_app else {}
     updated_source = update_form_unique_ids(app_source, form_ids_by_xmlns)
 
     attachments = app_source.pop('_attachments')
