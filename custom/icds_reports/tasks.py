@@ -335,7 +335,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
-                create_mbt_for_month.delay(state_id, first_of_month_string)
+                create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
         if date.weekday() == 5:
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly', force_citus=force_citus)
         chain(
@@ -1231,7 +1231,9 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
 
 
 @task(queue='icds_dashboard_reports_queue')
-def create_mbt_for_month(state_id, month):
+def create_mbt_for_month(state_id, month, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
         helper = get_helper(helper_class.helper_key)(state_id, month)
