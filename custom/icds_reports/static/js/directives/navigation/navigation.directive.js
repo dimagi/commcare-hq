@@ -26,20 +26,6 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     };
 
     $scope.goToStep = function(path, params) {
-
-        var selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
-        var selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
-
-        var isServiceDeliveryDashboard = path.indexOf('service_delivery_dashboard') !== -1;
-        if (isServiceDeliveryDashboard && selectedYear <= 2019) {
-            if (selectedYear < 2019 || (selectedYear === 2019 && selectedMonth === 1)) {
-                $location.search('month', new Date().getMonth() + 1);
-                $location.search('year', new Date().getFullYear());
-                $rootScope.dateChanged = true;
-                params = $location.search();
-            }
-        }
-
         var page_path = "#/" + path;
         if (Object.keys(params).length > 0) {
             page_path += '?';
