@@ -157,14 +157,12 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         };
 
         self.submit = function (form) {
-            var dataSetMaps = [];
-            for (var i = 0; i < self.dataSetMaps().length; i++) {
-                var map = self.dataSetMaps()[i];
-                dataSetMaps.push(map.serialize());
-            }
+            var serializedMaps = _.map(self.dataSetMaps(), function (map) {
+                return map.serialize();
+            });
             $.post(
                 form.action,
-                {'dataset_maps': JSON.stringify(dataSetMaps)},
+                {'dataset_maps': JSON.stringify(serializedMaps)},
                 function (data) { alertUser.alert_user(data['success'], 'success', true); }
             ).fail(function () { alertUser.alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
