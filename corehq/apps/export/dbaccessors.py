@@ -83,6 +83,13 @@ def get_odata_case_configs_by_domain(domain):
     ]
 
 
+def get_odata_form_configs_by_domain(domain):
+    return [
+        config for config in get_form_exports_by_domain(domain)
+        if config.is_odata_config
+    ]
+
+
 def get_brief_exports(domain, form_or_case=None):
     from .models import ExportInstance
     if form_or_case == 'form':

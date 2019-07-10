@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
+            <EntityType Name="odata_config_1">
+                <Key>
+                    <PropertyRef Name="formid"/>
+                </Key>
+            </EntityType>
+            <EntityType Name="odata_config_2">
+                <Key>
+                    <PropertyRef Name="formid"/>
+                </Key>
+                <Property Name="selected_property_1" Type="Edm.String"/>
+                <Property Name="selected_property_2" Type="Edm.String"/>
+            </EntityType>
+            <EntityContainer Name="Container" >
+                <EntitySet EntityType="CommCare.odata_config_1" Name="odata_config_1"/>
+                <EntitySet EntityType="CommCare.odata_config_2" Name="odata_config_2"/>
+            </EntityContainer>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

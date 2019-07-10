@@ -605,9 +605,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     def __str__(self):
         return (
-            "XFormInstance("
+            "{f.doc_type}("
             "form_id='{f.form_id}', "
-            "domain='{f.domain}')"
+            "domain='{f.domain}', "
+            "xmlns='{f.xmlns}', "
+            ")"
         ).format(f=self)
 
     class Meta(object):
