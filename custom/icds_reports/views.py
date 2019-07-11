@@ -1795,7 +1795,7 @@ class DishaAPIViewV2(View):
             valid_state_names = [state[0] for state in self.valid_states]
             index = valid_state_names.index(state_name)
             state_id = self.valid_states[index][1]
-        except ValueError as e:
+        except ValueError:
             return JsonResponse(self.message('invalid_state'), status=400)
 
         data = get_disha_api_v2_data(state_id, month_formatter(query_month))
@@ -1804,7 +1804,8 @@ class DishaAPIViewV2(View):
     @property
     @icds_quickcache([])
     def valid_states(self):
-        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', 'state_id'))
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                               state_is_test=0).values_list('state_name', 'state_id'))
 
 
 @location_safe

@@ -12,7 +12,6 @@ from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 from custom.icds_reports.reports.demographics_data import get_demographics_data
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.models.views import DishaIndicatorViewV2
-from custom.icds_reports.models.aggregate import  AwcLocation
 import logging
 
 notify_logger = logging.getLogger('notify')
@@ -63,7 +62,7 @@ def get_disha_api_v2_data(state_id, month):
     #not using lxml because using lxml when no xml manipulation needed is just overengineering
     api_xml_response = """
     <?xml version="1.0" encoding="UTF-8"?>
-    <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope" 
+    <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
     SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
        <SOAP-ENV:Header />
        <SOAP-ENV:Body>
