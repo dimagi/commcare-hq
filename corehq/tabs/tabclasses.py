@@ -46,6 +46,10 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
 )
+from corehq.feature_previews import (
+    EXPLORE_CASE_DATA_PREVIEW,
+    is_eligible_for_ecd_preview,
+)
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
     BroadcastListView as NewBroadcastListView,
@@ -475,6 +479,11 @@ class ProjectDataTab(UITab):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
+    def can_view_ecd_preview(self):
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request) and
+                is_eligible_for_ecd_preview(self._request))
+
+    @property
     def _is_viewable(self):
         return self.domain and (
             self.can_edit_commcare_data
@@ -736,8 +745,8 @@ class ProjectDataTab(UITab):
 
             items.extend(edit_section)
 
-        if (toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
-                and self.can_edit_commcare_data):
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request) or
+             self.can_view_ecd_preview) and self.can_edit_commcare_data):
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
             explore_data_views = [
                 {
@@ -794,10 +803,11 @@ class ProjectDataTab(UITab):
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
             ))
-        if self.can_view_form_exports or self.can_view_case_exports:
+        if self.can_view_ecd_preview and self.can_edit_commcare_data:
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
             items.append(dropdown_dict(
-                _('Find Data by ID'),
-                url=reverse('data_find_by_id', args=[self.domain])
+                _('Explore Case Data (Preview)'),
+                url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
 
         if items:
