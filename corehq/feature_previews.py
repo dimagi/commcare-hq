@@ -27,18 +27,28 @@ class FeaturePreview(StaticToggle):
     """
 
     def __init__(self, slug, label, description, help_link=None, privilege=None,
-                 save_fn=None):
+                 save_fn=None, can_self_enable_fn=None):
         self.privilege = privilege
+
+        # a function determining whether this preview can be enabled
+        # according to the request object
+        self.can_self_enable_fn = can_self_enable_fn
+
         super(FeaturePreview, self).__init__(
             slug, label, TAG_PREVIEW, description=description,
             help_link=help_link, save_fn=save_fn, namespaces=[NAMESPACE_DOMAIN]
         )
 
     def has_privilege(self, request):
-        if not self.privilege:
-            return True
+        has_privilege = True
+        if self.privilege:
+            has_privilege = prbac_has_privilege(request, self.privilege)
 
-        return prbac_has_privilege(request, self.privilege)
+        can_self_enable = True
+        if self.can_self_enable_fn:
+            can_self_enable = self.can_self_enable_fn(request)
+
+        return has_privilege and can_self_enable
 
 
 @quickcache([])
