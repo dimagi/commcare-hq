@@ -8,10 +8,17 @@ from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.util.quickcache import quickcache
 from .privileges import LOOKUP_TABLES
-from .toggles import StaticToggle, NAMESPACE_DOMAIN, TAG_PREVIEW, \
-    all_toggles_by_name_in_scope
+from .toggles import (
+    StaticToggle,
+    NAMESPACE_DOMAIN,
+    TAG_PREVIEW,
+    all_toggles_by_name_in_scope,
+    ECD_MIGRATED_DOMAINS,
+    ECD_PREVIEW_ENTERPRISE_DOMAINS,
+)
 
 
 class FeaturePreview(StaticToggle):
@@ -150,4 +157,40 @@ VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
         "table questions."
     ),
     privilege=LOOKUP_TABLES,
+)
+
+
+def is_eligible_for_ecd_preview(request):
+    if not (hasattr(request, 'plan')
+            and hasattr(request, 'subscription')
+            and hasattr(request, 'domain')):
+        return False
+
+    if request.subscription.is_trial:
+        return False
+
+    is_migrated = ECD_MIGRATED_DOMAINS.enabled_for_request(request)
+    is_enterprise_eligible = ECD_PREVIEW_ENTERPRISE_DOMAINS.enabled_for_request(request)
+    is_pro_or_advanced = request.plan.plan.edition in [
+        SoftwarePlanEdition.ADVANCED,
+        SoftwarePlanEdition.PRO
+    ]
+
+    return is_migrated and (is_pro_or_advanced or is_enterprise_eligible)
+
+
+def save_ecd_preview(domain_name, _checked):
+    from corehq.tabs.tabclasses import ProjectDataTab
+    ProjectDataTab.clear_dropdown_cache_for_all_domain_users(domain_name)
+
+
+EXPLORE_CASE_DATA_PREVIEW = FeaturePreview(
+    slug='explore_case_data_preview',
+    label=_("Explore Case Data"),
+    description=_(
+        "This feature allows you to quickly explore your case data for "
+        "ad-hoc data queries or to identify unclean data."
+    ),
+    can_self_enable_fn=is_eligible_for_ecd_preview,
+    save_fn=save_ecd_preview,
 )
