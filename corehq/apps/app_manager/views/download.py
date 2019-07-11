@@ -255,14 +255,17 @@ def download_file(request, domain, app_id, path):
         return RegexURLResolver(
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
+    def create_build_files(build_profile_id=None):
+        request.app.create_build_files(build_profile_id=build_profile_id)
+        request.app.save()
+
     def create_build_files_if_necessary_handling_conflicts(is_retry=False):
         try:
             try:
                 # look for file guaranteed to exist if profile is created
                 request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
             except ResourceNotFound:
-                request.app.create_build_files(build_profile_id=build_profile)
-                request.app.save()
+                create_build_files(build_profile)
         except ResourceConflict:
             if is_retry:
                 raise
@@ -275,11 +278,13 @@ def download_file(request, domain, app_id, path):
         try:
             payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
-            if build_profile in request.app.build_profiles and build_profile_access:
+            if not build_profile:
+                create_build_files()
+            elif build_profile in request.app.build_profiles and build_profile_access:
                 create_build_files_if_necessary_handling_conflicts()
-                payload = request.app.fetch_attachment(full_path)
             else:
                 raise
+            payload = request.app.fetch_attachment(full_path)
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
