@@ -131,7 +131,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
             }
     }
 
-    this.init();
+    vm.init();
 }
 
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
