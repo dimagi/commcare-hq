@@ -18,18 +18,21 @@ from sqlalchemy import func, Column, Index, Integer, String, Text
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 
 
-def init_state_db(domain):
-    db_filepath = _get_state_db_filepath(domain)
+def init_state_db(domain, state_dir):
+    db_filepath = _get_state_db_filepath(domain, state_dir)
+    db_dir = os.path.dirname(db_filepath)
+    if os.path.isdir(state_dir) and not os.path.isdir(db_dir):
+        os.mkdir(db_dir)
     return StateDB.init(db_filepath)
 
 
-def open_state_db(domain):
-    db_filepath = _get_state_db_filepath(domain)
+def open_state_db(domain, state_dir):
+    db_filepath = _get_state_db_filepath(domain, state_dir)
     return StateDB.open(db_filepath)
 
 
-def delete_state_db(domain):
-    db_filepath = _get_state_db_filepath(domain)
+def delete_state_db(domain, state_dir):
+    db_filepath = _get_state_db_filepath(domain, state_dir)
     try:
         os.remove(db_filepath)
     except OSError as e:
@@ -37,9 +40,8 @@ def delete_state_db(domain):
             raise
 
 
-def _get_state_db_filepath(domain):
-    return os.path.join(settings.SHARED_DRIVE_CONF.tzmigration_planning_dir,
-                        '{}-tzmigration.db'.format(domain))
+def _get_state_db_filepath(domain, state_dir):
+    return os.path.join(state_dir, "db", '{}-couch-sql.db'.format(domain))
 
 
 class StateDB(DiffDB):

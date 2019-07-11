@@ -17,6 +17,7 @@ import mock
 import six
 from couchdbkit.exceptions import ResourceNotFound
 from six.moves import zip
+from testil import tempdir
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -91,10 +92,19 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             config = settings.S3_BLOB_DB_SETTINGS
             cls.s3db = TemporaryS3BlobDB(config)
             assert get_blob_db() is cls.s3db, (get_blob_db(), cls.s3db)
+        cls.tmp = tempdir()
+        cls.state_dir = cls.tmp.__enter__()
+        # patch to workaround django call_command() bug with required options
+        # which causes error when passing `state_dir=...`
+        cls.state_dir_patch = mock.patch.dict(
+            os.environ, CCHQ_MIGRATION_STATE_DIR=cls.state_dir)
+        cls.state_dir_patch.start()
 
     @classmethod
     def tearDownClass(cls):
         cls.s3db.close()
+        cls.tmp.__exit__(None, None, None)
+        cls.state_dir_patch.stop()
         super(BaseMigrationTestCase, cls).tearDownClass()
 
     def setUp(self):
@@ -123,7 +133,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         def diff_key(diff):
             return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
 
-        state = open_state_db(self.domain_name)
+        state = open_state_db(self.domain_name, self.state_dir)
         diffs = sorted(state.get_diffs(), key=diff_key)
         json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
         self.assertEqual(json_diffs, expected_diffs or [])
@@ -658,7 +668,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             self.domain_name,
             MIGRATE,
             no_input=True,
-            dry_run=True
+            dry_run=True,
         )
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.assertRaises(CommandError):

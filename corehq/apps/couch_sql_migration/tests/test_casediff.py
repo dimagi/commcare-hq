@@ -11,6 +11,7 @@ import six
 from django.test import SimpleTestCase
 from gevent.event import Event
 from mock import patch
+from testil import tempdir
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 
@@ -20,12 +21,27 @@ from ..statedb import delete_state_db, init_state_db
 log = logging.getLogger(__name__)
 
 
+class StateDirTest(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(StateDirTest, cls).setUpClass()
+        cls.tmp = tempdir()
+        cls.state_dir = cls.tmp.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.__exit__(None, None, None)
+        super(StateDirTest, cls).tearDownClass()
+
+
 @patch.object(mod.CaseDiffQueue, "BATCH_SIZE", 2)
 @patch.object(mod.BatchProcessor, "MAX_RETRIES", 0)
 @patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
-class TestCaseDiffQueue(SimpleTestCase):
+class TestCaseDiffQueue(StateDirTest):
 
     def setUp(self):
+        super(TestCaseDiffQueue, self).setUp()
         self.diff_cases_patcher = patch.object(mod, "diff_cases", self.diff_cases)
         self.get_cases_patcher = patch(
             "corehq.form_processor.backends.couch.dbaccessors.CaseAccessorCouch.get_cases",
@@ -45,7 +61,8 @@ class TestCaseDiffQueue(SimpleTestCase):
         self.diff_cases_patcher.stop()
         self.get_cases_patcher.stop()
         self.get_stock_forms_patcher.stop()
-        delete_state_db("test")
+        delete_state_db("test", self.state_dir)
+        super(TestCaseDiffQueue, self).tearDown()
 
     def test_case_diff(self):
         self.add_cases("c", "fx")
@@ -229,7 +246,8 @@ class TestCaseDiffQueue(SimpleTestCase):
     @contextmanager
     def queue(self):
         log.info("init CaseDiffQueue")
-        with init_state_db("test") as statedb, mod.CaseDiffQueue(statedb) as queue:
+        with init_state_db("test", self.state_dir) as statedb, \
+                mod.CaseDiffQueue(statedb) as queue:
             yield queue
 
     def add_cases(self, case_ids, xform_ids=(), actions=(), stock_forms=()):
@@ -313,6 +331,7 @@ class TestCaseDiffQueue(SimpleTestCase):
 class TestBatchProcessor(SimpleTestCase):
 
     def setUp(self):
+        super(TestBatchProcessor, self).setUp()
         self.proc = mod.BatchProcessor(mod.Pool())
 
     def test_retry_batch(self):

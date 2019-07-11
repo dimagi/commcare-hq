@@ -98,17 +98,17 @@ def setup_logging(log_dir, debug=False):
     log.info("command: %s", " ".join(sys.argv))
 
 
-def do_couch_to_sql_migration(domain, with_progress=True):
+def do_couch_to_sql_migration(domain, state_dir, with_progress=True):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(domain, with_progress).migrate()
+    CouchSqlDomainMigrator(domain, state_dir, with_progress).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True):
+    def __init__(self, domain, state_dir, with_progress=True):
         self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
         self.domain = domain
-        self.statedb = init_state_db(domain)
+        self.statedb = init_state_db(domain, state_dir)
         self.case_diff_queue = CaseDiffQueue(self.statedb)
         # exit immediately on uncaught greenlet error
         gevent.get_hub().SYSTEM_ERROR = BaseException

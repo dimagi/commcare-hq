@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import re
 
 from sqlalchemy.exc import OperationalError
-from testil import assert_raises, eq
+from testil import assert_raises, eq, tempdir
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as JsonDiff
 
@@ -17,37 +17,51 @@ from ..statedb import (
 )
 
 
+def setup_module():
+    global _tmp, state_dir
+    _tmp = tempdir()
+    state_dir = _tmp.__enter__()
+
+
+def teardown_module():
+    _tmp.__exit__(None, None, None)
+
+
 def teardown():
-    delete_state_db("test")
+    delete_state_db("test", state_dir)
+
+
+def init_db():
+    return init_state_db("test", state_dir)
 
 
 def test_db_unique_id():
-    with init_state_db("test") as db:
+    with init_db() as db:
         uid = db.unique_id
         assert re.search(r"\d{8}-\d{6}.\d{6}", uid), uid
 
-    with init_state_db("test") as db:
+    with init_db() as db:
         eq(db.unique_id, uid)
 
-    delete_state_db("test")
-    with init_state_db("test") as db:
+    delete_state_db("test", state_dir)
+    with init_db() as db:
         assert db.unique_id != uid, uid
 
 
 def test_problem_forms():
-    with init_state_db("test") as db:
+    with init_db() as db:
         db.add_problem_form("abc")
 
-    with init_state_db("test") as db:
+    with init_db() as db:
         db.add_problem_form("def")
         eq(set(db.iter_problem_forms()), {"abc", "def"})
 
 
 def test_no_action_case_forms():
-    with init_state_db("test") as db:
+    with init_db() as db:
         db.add_no_action_case_form("abc")
 
-    with init_state_db("test") as db:
+    with init_db() as db:
         eq(db.get_no_action_case_forms(), {"abc"})
 
         # verify that memoized result is cleared on add
@@ -56,21 +70,21 @@ def test_no_action_case_forms():
 
 
 def test_resume_state():
-    with init_state_db("test") as db:
+    with init_db() as db:
         eq(db.pop_resume_state("test", []), [])
         db.set_resume_state("test", ["abc", "def"])
 
-    with init_state_db("test") as db:
+    with init_db() as db:
         eq(db.pop_resume_state("test", []), ["abc", "def"])
 
     # simulate resume without save
-    with init_state_db("test") as db:
+    with init_db() as db:
         with assert_raises(ResumeError):
             db.pop_resume_state("test", [])
 
 
 def test_unexpected_diffs():
-    with init_state_db("test") as db:
+    with init_db() as db:
         db.add_diffs("kind", "abc", [JsonDiff("type", "path", "old", "new")])
         db.add_diffs("kind", "def", [JsonDiff("type", "path", "old", "new")])
         db.add_diffs("kind", "xyz", [JsonDiff("type", "path", "old", "new")])
@@ -81,7 +95,7 @@ def test_unexpected_diffs():
 
 
 def test_counters():
-    with init_state_db("test") as db:
+    with init_db() as db:
         db.increment_counter("abc", 1)
         db.add_missing_docs("abc", ["doc1"])
         db.increment_counter("def", 2)
@@ -95,5 +109,5 @@ def test_counters():
 
 def test_diff_doc_id_idx_exists():
     msg = re.compile("index diff_doc_id_idx already exists")
-    with init_state_db("test") as db, assert_raises(OperationalError, msg=msg):
+    with init_db() as db, assert_raises(OperationalError, msg=msg):
         diff_doc_id_idx.create(db.engine)
