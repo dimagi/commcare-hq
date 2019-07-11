@@ -17,6 +17,7 @@ def validate_xpath(xpath, allow_case_hashtags=False):
             cmd = ['node', path]
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
+        print(xpath.encode('utf-8'))
         stdout, stderr = p.communicate(xpath.encode('utf-8'))
         exit_code = p.wait()
         if exit_code == 0:
