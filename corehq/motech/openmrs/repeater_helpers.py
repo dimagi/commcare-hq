@@ -372,6 +372,7 @@ def get_patient_by_identifier(requests, identifier_type_uuid, value):
                 identifier['identifier'] == value
             ):
                 patients.append(patient)
+    # TODO: follow link['uri'] for link in response_json['links'] if link['rel'] == 'next'
     try:
         patient, = patients
     except ValueError:
