@@ -692,8 +692,9 @@ EXPLORE_CASE_DATA = StaticToggle(
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
-    'Domains that have undergone migration for Explore Case Data, but are not '
-    'yet ready to see the full report',
+    'Domains that have undergone migration for Explore Case Data and have a '
+    'CaseSearch elasticsearch index created.\n\n'
+    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
