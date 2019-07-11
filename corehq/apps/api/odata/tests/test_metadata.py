@@ -6,6 +6,7 @@ from collections import OrderedDict
 from django.test import TestCase
 from django.urls import reverse
 
+from flaky import flaky
 from mock import patch
 
 from corehq.apps.api.odata.tests.utils import (
@@ -147,6 +148,7 @@ class TestDeprecatedFormMetadataDocument(TestCase, DeprecatedFormOdataTestMixin,
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
+    @flaky
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
         with flag_enabled('ODATA'):
