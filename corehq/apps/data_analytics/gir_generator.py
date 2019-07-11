@@ -4,8 +4,10 @@ import datetime
 
 from collections import namedtuple, defaultdict
 
+from django.db import IntegrityError
 from django_countries.data import COUNTRIES
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.dates import add_months
 
 from corehq.apps.domain.models import Domain
@@ -21,6 +23,11 @@ import six
 
 
 UserCategories = namedtuple('UserCategories', 'active performing experienced total sms eligible')
+
+
+_gir_table_error_soft_assert = soft_assert(to=[
+    '{}@{}'.format('biyeun', 'dimagi.com')
+], send_to_ops=False, fail_if_debug=False)
 
 
 class GIRTableGenerator(object):
@@ -53,9 +60,21 @@ class GIRTableGenerator(object):
             for monthspan in self.monthspan_list:
                 gir_dict = GIRTableGenerator.get_gir_dict_for_domain_and_monthspan(domain, monthspan)
                 rows.append(gir_dict)
-        GIRRow.objects.bulk_create(
-            [GIRRow(**gir_row) for gir_row in rows]
-        )
+
+        final_rows = []
+        for row_data in rows:
+            try:
+                gir_row = GIRRow(**row_data)
+                final_rows.append(gir_row)
+            except IntegrityError:
+                _gir_table_error_soft_assert(
+                    False, ("An IntegrityError was encountered when creating the GIR report for "
+                            "{monthspan} with the row_data {row_data}").format(
+                        monthspan=monthspan,
+                        row_data=row_data,
+                    )
+                )
+        GIRRow.objects.bulk_create(final_rows)
 
     @staticmethod
     def classify_users(domain, monthspan):
