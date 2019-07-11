@@ -174,14 +174,16 @@ def overwrite_app(app, master_build, report_map=None):
 
     # Corresponding forms in a master app and linked app need to have the same XMLNS but different unique ids,
     # so the linked app needs to know if there are any new forms and, if so, assign those forms new unique ids.
-    # To do this lookup, get the XMLNSes from the last version of this (linked) app pulled from the same master,
+    # To do this lookup, get the XMLNSes from the the most recent versions of this app pulled from each master
     # and compare those to the XMLNSes present in this app.
     form_ids_by_xmlns = {}
-    previous_app = app.get_previous_version(master_app_id=master_build.master_id)
-    if previous_app:
-        form_ids_by_xmlns = _get_form_ids_by_xmlns(previous_app)
+    master_app_briefs = app.get_master_app_briefs()
+    for brief in master_app_briefs:
+        previous_app = app.get_previous_version(master_app_id=brief.master_id)
+        if previous_app:
+            form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
     # Add in any forms from the current linked app, before the source is overwritten.
-    # This is particularly important if there's no previous version
+    # This is particularly important if there's no previous version.
     for module in app['modules']:
         for form in module['forms']:
             form_ids_by_xmlns[form.xmlns] = form['unique_id']
