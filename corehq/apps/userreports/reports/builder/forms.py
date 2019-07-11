@@ -826,6 +826,11 @@ class ConfigureNewReportBase(forms.Form):
                 indicators = column.get_indicators(agg)
                 for i in indicators:
                     self._report_columns_by_column_id[i['column_id']] = column
+                    if isinstance(column, MultiselectQuestionColumnOption):
+                        for choice_ind in column.get_indicators(i):
+                            for choice in choice_ind.get('choices', []):
+                                slug = "{}_{}".format(i['column_id'], choice)
+                                self._report_columns_by_column_id[slug] = column
 
     def _bootstrap(self, existing_report):
         """
