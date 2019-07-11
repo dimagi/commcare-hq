@@ -116,6 +116,13 @@ def enable_callcenter(domain_name, checked):
     domain_obj.save()
 
 
+def can_enable_callcenter(request):
+    # This will only allow domains to remove themselves from the
+    # call center feature preview, but no new domains can currently activate
+    # the preview. A request from product
+    return CALLCENTER.enabled_for_request(request)
+
+
 CALLCENTER = FeaturePreview(
     slug='callcenter',
     label=_("Call Center"),
@@ -128,6 +135,7 @@ CALLCENTER = FeaturePreview(
         'and offer guidance towards solutions.'),
     help_link='https://help.commcarehq.org/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application',
     save_fn=enable_callcenter,
+    can_self_enable_fn=can_enable_callcenter,
 )
 
 
