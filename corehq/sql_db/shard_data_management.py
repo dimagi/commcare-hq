@@ -99,24 +99,52 @@ def get_count_of_unmatched_models_by_shard(database, model):
     return results
 
 
-def delete_unmatched_shard_data(database, model):
+def delete_unmatched_shard_data(database, model, query_size=5000):
     """
     Deletes any `model` data residing on shards that aren't expected to live in `database`.
 
-    Returns number of records deleted
+    The deletes are batched in query_size and sorted by the model's partition_attr.
+
+    Returns a generator where each value is a tuple of last value included in the query and number of records deleted
     """
+    column_name = model.partition_attr
     shard_id_function = _get_shard_id_function(model)
+
+    # Intentionally uses BETWEEN because it is inclusive of both values
     query = """
     DELETE FROM {table_name}
-    WHERE NOT ({shard_id_function}) = ANY(%s);
+    WHERE NOT ({shard_id_function}) = ANY(%s) AND {column_name} BETWEEN %s AND %s;
     """.format(
         shard_id_function=shard_id_function,
         table_name=model._meta.db_table,
+        column_name=column_name
     )
+
     valid_shards = partition_config.get_shards_on_db(database)
-    with connections[database].cursor() as cursor:
-        cursor.execute(query, [valid_shards])
-        return cursor.rowcount
+    qs = model.objects.using(database).order_by(column_name).values_list(column_name, flat=True)
+    prev_value = None
+    value = qs.first()
+    last_value = qs.order_by('-{}'.format(column_name)).first()
+    filter_expression = {}
+
+    first_run = True
+    while first_run or value < last_value:
+        first_run = False
+        qs = qs.filter(**filter_expression)
+        prev_value = value
+        try:
+            value = qs[query_size]
+        except IndexError:
+            # If the queryset has < query_size elements available we can use the last_value
+            value = last_value
+
+        with connections[database].cursor() as cursor:
+            cursor.execute(query, [valid_shards, prev_value, value])
+            num_deleted_count = cursor.rowcount
+
+        # update the filter expression, so the next query begins with the latest value that's been deleted
+        filter_expression = {'{}__gt'.format(column_name): value}
+        yield value, num_deleted_count
 
 
 def get_count_of_models_by_shard_for_testing(database, model):

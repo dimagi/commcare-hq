@@ -81,9 +81,8 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         super(PartitionedModel, instance).save(using=self.db2)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db2).count(), 1)
         # database 1 should not delete anything
-        num_deleted = delete_unmatched_shard_data(self.db1, AlertScheduleInstance)
-        self.assertEqual(0, num_deleted)
-        num_deleted = delete_unmatched_shard_data(self.db2, AlertScheduleInstance)
+        self.assertRaises(StopIteration, delete_unmatched_shard_data(self.db1, AlertScheduleInstance).next)
+        value, num_deleted = next(delete_unmatched_shard_data(self.db2, AlertScheduleInstance))
         self.assertEqual(1, num_deleted)
 
     def test_text_partitioning_correct(self):
@@ -110,11 +109,10 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         super(PartitionedModel, form).save(using=self.db1)
         self.assertEqual(XFormInstanceSQL.objects.using(self.db1).count(), 1)
 
-        num_deleted = delete_unmatched_shard_data(self.db1, XFormInstanceSQL)
+        value, num_deleted = next(delete_unmatched_shard_data(self.db1, XFormInstanceSQL))
         self.assertEqual(1, num_deleted)
         # database 2 should not delete anything
-        num_deleted = delete_unmatched_shard_data(self.db2, XFormInstanceSQL)
-        self.assertEqual(0, num_deleted)
+        self.assertRaises(StopIteration, delete_unmatched_shard_data(self.db2, XFormInstanceSQL).next)
 
     @classmethod
     def _make_form_instance(cls, form_id):
