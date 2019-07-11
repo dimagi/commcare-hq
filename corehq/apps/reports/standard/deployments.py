@@ -180,9 +180,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def get_data_for_app(self, options, app_id):
         try:
-            data = filter(lambda option: option['app_id'] == app_id,
-                          options)[0]
-            return data
+            return list(filter(lambda option: option['app_id'] == app_id, options))[0]
         except IndexError:
             return {}
 
