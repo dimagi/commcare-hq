@@ -116,7 +116,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
         });
     };
 
-    var init = function() {
+    vm.init = function() {
             var month = $location.search()['month'];
             var year = $location.search()['year'];
             var displayModal = true;
@@ -131,7 +131,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
             }
     }
 
-    init();
+    this.init();
 }
 
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
