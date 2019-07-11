@@ -3794,8 +3794,7 @@ class LazyBlobDoc(BlobMixin):
                 return None
             if content is not None:
                 if isinstance(content, six.text_type):
-                    _soft_assert(False, 'cached attachment has type unicode')
-                    content = content.encode('utf-8')
+                    return None
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
