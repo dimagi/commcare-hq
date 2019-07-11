@@ -86,7 +86,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.showWarning = function () {
         return (
             vm.now === vm.selectedMonth &&
-            new Date().getFullYear() === vm.selectedYeara
+            new Date().getFullYear() === vm.selectedYear
         );
     };
     vm.levels = [
@@ -344,8 +344,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.filterYears = function (minYear) {
         vm.yearsCopy = [];
+        var currentYear = new Date().getFullYear();
 
-        for (let year = minYear; year <= new Date().getFullYear(); year++ ) {
+        for (var year = minYear; year <= currentYear; year++ ) {
             vm.yearsCopy.push({
                 name: year,
                 id: year,
@@ -412,20 +413,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
+            var date = new Date();
+            vm.selectedYear = date.getFullYear();
             if (vm.isTakeHomeRationReportSelected()) {
                 vm.selectedLevel = 5;
-                if (vm.selectedYear !== 2019) {
-                    vm.selectedYear = new Date().getFullYear();
-                }
                 vm.filterYears(vm.selectedYear);
             } else {
                 vm.selectedLevel = 1;
-                vm.selectedYear = 2017;
                 vm.filterYears(vm.selectedYear);
             }
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
-        }   
+        }
     };
 
     vm.submitForm = function(csrfToken) {
