@@ -1660,6 +1660,15 @@ ICDS_DISHA_API = StaticToggle(
     relevant_environments={'icds', 'icds-new', 'india'},
 )
 
+
+ICDS_DISHA_API_V2 = StaticToggle(
+    'icds_disha_access',
+    'ICDS: Access New DISHA API V2',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'india'},
+)
+
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',

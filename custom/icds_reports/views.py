@@ -110,7 +110,8 @@ from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
 from couchexport.export import Format
-
+from custom.icds_reports.utils.data_accessor import get_disha_api_v2_data
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1760,6 +1761,50 @@ class DishaAPIView(View):
     @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+
+@location_safe
+class DishaAPIViewV2(View):
+
+    def message(self, message_name):
+        state_names = ", ".join([state[0] for state in self.valid_states])
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+        }
+        return {"message": error_messages[message_name]}
+
+    @method_decorator([api_auth, toggles.ICDS_DISHA_API_V2.required_decorator()])
+    def get(self, request, *args, **kwargs):
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 5 else today
+        if query_month > current_month:
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        state_name = self.request.GET.get('state_name')
+
+        try:
+            valid_state_names = [state[0] for state in self.valid_states]
+            index = valid_state_names.index(state_name)
+            state_id = self.valid_states[index][1]
+        except ValueError as e:
+            return JsonResponse(self.message('invalid_state'), status=400)
+
+        data = get_disha_api_v2_data(state_id, month_formatter(query_month))
+        return HttpResponse(data, content_type='text/xml')
+
+    @property
+    @icds_quickcache([])
+    def valid_states(self):
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', 'state_id'))
 
 
 @location_safe
