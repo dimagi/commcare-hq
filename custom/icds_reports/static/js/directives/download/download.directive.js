@@ -342,21 +342,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.filterYear = function (minYear) {
+    vm.filterYears = function (minYear) {
         vm.yearsCopy = [];
-        if (vm.selectedYear === new Date().getFullYear()) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id <= new Date().getMonth() + 1;
-            });
-        } else if (vm.selectedYear === 2017) {
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id >= 3;
-            });
-        } else {
-            vm.months = vm.monthsCopy;
-        }
 
-        for (var year=minYear; year <= new Date().getFullYear(); year++ ) {
+        for (let year = minYear; year <= new Date().getFullYear(); year++ ) {
             vm.yearsCopy.push({
                 name: year,
                 id: year,
@@ -372,6 +361,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             var offset = date.getDate() < 15 ? 2 : 1;
             latest.setMonth(date.getMonth() - offset);
         }
+
         if (year.id > latest.getFullYear()) {
             vm.years =  _.filter(vm.yearsCopy, function (y) {
                 return y.id <= latest.getFullYear();
@@ -383,6 +373,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 return y.id <= latest.getFullYear();
             });
         }
+
         if (year.id === 2019 && vm.isTakeHomeRationReportSelected()) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 var currentMonth = latest.getMonth() + 1;
@@ -423,10 +414,14 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         } else {
             if (vm.isTakeHomeRationReportSelected()) {
                 vm.selectedLevel = 5;
-                vm.filterYear(2019)
+                if (vm.selectedYear !== 2019) {
+                    vm.selectedYear = new Date().getFullYear();
+                }
+                vm.filterYears(vm.selectedYear);
             } else {
                 vm.selectedLevel = 1;
-                vm.filterYear(2017)
+                vm.selectedYear = 2017;
+                vm.filterYears(vm.selectedYear);
             }
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';

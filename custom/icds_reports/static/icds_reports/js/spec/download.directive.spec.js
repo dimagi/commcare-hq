@@ -177,6 +177,54 @@ describe('Download Directive', function () {
             assert.deepEqual(expected, result);
         });
 
+        it('tests filterYears when year is lower than current year ', function () {
+            const currentYear = new Date().getFullYear();
+            const minYear = currentYear - 1;
+            let expected = [];
+            for (let year = minYear; year <= currentYear; year++ ) {
+                expected.push({
+                    name: year,
+                    id: year,
+                });
+            }
+
+            controller.filterYears(minYear);
+            const years = controller.years;
+            for (let i = 0; i <= expected.length; i++) {
+                assert.equal(expected[i].name, years[i].name);
+                assert.equal(expected[i].id, years[i].id);
+            }
+        });
+
+        it('tests filterYears when year is equal to current year', function () {
+            const currentYear = new Date().getFullYear();
+            const minYear = currentYear;
+            let expected = [];
+            for (let year = minYear; year <= currentYear; year++ ) {
+                expected.push({
+                    name: year,
+                    id: year,
+                });
+            }
+
+            controller.filterYears(minYear);
+            const years = controller.years;
+            for (let i = 0; i <= expected.length; i++) {
+                assert.equal(expected[i].name, years[i].name);
+                assert.equal(expected[i].id, years[i].id);
+            }
+        });
+        it('tests filterYears when year is greater than current year', function () {
+            const currentYear = new Date().getFullYear();
+            const minYear = currentYear + 1;
+            const expected = [];
+
+            controller.filterYears(minYear);
+            const years = controller.years;
+
+            assert.equal(expected, years);
+        });
+
         it('tests on indicator select when child beneficiary list is selected', function () {
             controller.selectedIndicator = 6;
             var expected = "csv";
@@ -195,6 +243,154 @@ describe('Download Directive', function () {
             var result = controller.selectedFormat;
 
             assert.equal(expected, result);
+        });
+
+        it('tests onIndicatorSelect - child beneficiary list not selected, take home ratio report not selected',
+            function () {
+                controller.selectedIndicator = 8;
+                const yearToFilter = 2017;
+
+                const expectedFormat = 'xlsx';
+                const expectedLevel = 1;
+                const expectedYear = yearToFilter;
+                controller.filterYears(yearToFilter);
+                const expectedYears = controller.years;
+                controller.onSelectYear(yearToFilter);
+                const expectedMonths = [
+                    {"name": "March", "id": 3},
+                    {"name": "April", "id": 4},
+                    {"name": "May", "id": 5},
+                    {"name": "June", "id": 6},
+                    {"name": "July", "id": 7},
+                    {"name": "August", "id": 8},
+                    {"name": "September", "id": 9},
+                    {"name": "October", "id": 10},
+                    {"name": "November", "id": 11},
+                    {"name": "December", "id": 12},
+                ];
+                const expectedSelectedMonth = 3;
+
+                controller.onIndicatorSelect();
+                const format = controller.selectedFormat;
+                const level = controller.selectedLevel;
+                const year = controller.selectedYear;
+                const years = controller.years;
+                const months = controller.months;
+                const selectedMonth = controller.selectedMonth;
+
+                assert.equal(expectedFormat, format);
+                assert.equal(expectedLevel, level);
+                assert.equal(expectedYear, year);
+                for (let i = 0; i <= expectedYears.length; i++) {
+                    assert.equal(expectedYears[i].name, years[i].name);
+                    assert.equal(expectedYears[i].id, years[i].id);
+                }
+                assert.equal(expectedMonths, months);
+                assert.equal(expectedSelectedMonth, selectedMonth);
+        });
+
+        it('tests onIndicatorSelect - child beneficiary list not selected, take home ratio report selected,' +
+            'year is 2019', function () {
+            controller.haveAccessToFeatures = true;
+            controller.selectedIndicator = 10;
+            const yearToFilter = 2019;
+            const existingMonths = [
+                'January',
+                'February',
+                'March',
+                'April',
+                'May',
+                'June',
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December'
+            ];
+            const startingMonth = existingMonths[6];
+
+            const expectedFormat = 'xlsx';
+            const expectedLevel = 5;
+            controller.selectedYear = 2019;
+            const expectedYear = yearToFilter;
+            controller.filterYears(yearToFilter);
+            const expectedYears = controller.years;
+            controller.onSelectYear(yearToFilter);
+            let expectedMonths = [];
+            const expectedSelectedMonth = new Date().getMonth() + 1;
+            for (let month = startingMonth; month <= expectedSelectedMonth; month++) {
+                expectedMonths.push({
+                    name: existingMonths[month],
+                    id: month + 1,
+                });
+            }
+
+            controller.onIndicatorSelect();
+            const format = controller.selectedFormat;
+            const level = controller.selectedLevel;
+            const year = controller.selectedYear;
+            const years = controller.years;
+            const months = controller.months;
+            const selectedMonth = controller.selectedMonth;
+
+            assert.equal(expectedFormat, format);
+            assert.equal(expectedLevel, level);
+            assert.equal(expectedYear, year);
+            for (let i = 0; i <= expectedYears.length; i++) {
+                assert.equal(expectedYears[i].name, years[i].name);
+                assert.equal(expectedYears[i].id, years[i].id);
+            }
+            assert.equal(expectedMonths, months);
+            assert.equal(expectedSelectedMonth, selectedMonth);
+        });
+
+        it('tests onIndicatorSelect - child beneficiary list not selected, take home ratio report selected,' +
+            'year is not 2019', function () {
+            controller.haveAccessToFeatures = true;
+            controller.selectedIndicator = 10;
+            const date = new Date();
+            const currentYear = date.getFullYear();
+            const yearToFilter = currentYear ? currentYear > 2019 : 2020;
+
+            const expectedFormat = 'xlsx';
+            const expectedLevel = 5;
+            controller.selectedYear = 2019;
+            const expectedYear = yearToFilter;
+            controller.filterYears(yearToFilter);
+            const expectedYears = controller.years;
+            controller.onSelectYear(yearToFilter);
+            const expectedMonths = [
+                    {"name": "March", "id": 3},
+                    {"name": "April", "id": 4},
+                    {"name": "May", "id": 5},
+                    {"name": "June", "id": 6},
+                    {"name": "July", "id": 7},
+                    {"name": "August", "id": 8},
+                    {"name": "September", "id": 9},
+                    {"name": "October", "id": 10},
+                    {"name": "November", "id": 11},
+                    {"name": "December", "id": 12},
+                ];
+            const expectedSelectedMonth = new Date().getMonth() + 1;
+
+            controller.onIndicatorSelect();
+            const format = controller.selectedFormat;
+            const level = controller.selectedLevel;
+            const year = controller.selectedYear;
+            const years = controller.years;
+            const months = controller.months;
+            const selectedMonth = controller.selectedMonth;
+
+            assert.equal(expectedFormat, format);
+            assert.equal(expectedLevel, level);
+            assert.equal(expectedYear, year);
+            for (let i = 0; i <= expectedYears.length; i++) {
+                assert.equal(expectedYears[i].name, years[i].name);
+                assert.equal(expectedYears[i].id, years[i].id);
+            }
+            assert.equal(expectedMonths, months);
+            assert.equal(expectedSelectedMonth, selectedMonth);
         });
 
         it('tests isDistrictOrBelowSelected - state selected', function () {
@@ -238,6 +434,18 @@ describe('Download Directive', function () {
             controller.selectedPDFFormat = 'one';
             var result = controller.isCombinedPDFSelected();
             assert.isTrue(result);
+        });
+
+        it('tests isTakeHomeRatioReportSelected - THR selected', function () {
+            controller.selectedIndicator = 10;
+            const result = controller.isTakeHomeRationReportSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isTakeHomeRatioReportSelected - THR not selected', function () {
+            controller.selectedIndicator = 9;
+            const result = controller.isTakeHomeRationReportSelected();
+            assert.isFalse(result);
         });
 
     });
@@ -285,8 +493,12 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
+            var expected = 9;
+            if (controller.haveAccessToFeatures) {
+                expected++;
+            }
             var length = controller.indicators.length;
-            assert.equal(9, length);
+            assert.equal(expected, length);
         });
     });
 
