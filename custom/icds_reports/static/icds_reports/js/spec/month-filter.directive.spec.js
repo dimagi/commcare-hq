@@ -39,7 +39,8 @@ describe('Month Filter Controller', function () {
     it('tests call open modal', function () {
         var open = sinon.spy($uibModal, 'open');
         controller.open();
-        chai.expect(open).to.have.been.called;
+
+        assert(open.calledOnce);
     });
 
     it('tests auto date change on invalid date in SDD', function () {
@@ -71,7 +72,7 @@ describe('Month Filter Controller', function () {
     });
 
     function formatDateToPlaceholderFormat(date) {
-        var momentDate = moment(date)
+        var momentDate = moment(date);
         var year = momentDate.year();
         var month = momentDate.format('MMMM');
 
@@ -117,12 +118,12 @@ describe('Month Modal Controller', function () {
 
     it('tests call close modal', function () {
         controller.apply();
-        chai.expect(modalInstance.close).to.have.been.called;
+        assert(modalInstance.close.calledOnce);
     });
 
     it('tests call dismiss modal', function () {
         controller.close();
-        chai.expect(modalInstance.dismiss).to.have.been.called;
+        assert(modalInstance.dismiss.calledOnce);
     });
 
     it('tests initiate years', function () {
