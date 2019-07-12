@@ -116,7 +116,8 @@ def submit_unfinished_form(session):
     """
     # Get and clean the raw xml
     try:
-        xml = get_raw_instance(session.session_id, session.domain)['output']
+        response = get_raw_instance(session.session_id, session.domain)
+        xml = response['output']
     except InvalidSessionIdException:
         return
     root = XML(xml)
