@@ -506,7 +506,7 @@ def load_app_from_slug(domain, username, slug):
 def export_gzip(req, domain, app_id):
     app_json = get_app(domain, app_id)
     fd, fpath = tempfile.mkstemp()
-    with os.fdopen(fd, 'w') as tmp:
+    with os.fdopen(fd, 'wb') as tmp:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr('application.json', app_json.export_json())
 
