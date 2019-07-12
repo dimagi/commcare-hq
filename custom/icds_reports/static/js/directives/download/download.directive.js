@@ -57,6 +57,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
     });
 
+
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
@@ -75,6 +76,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             id: year,
         });
     }
+
     vm.years = vm.yearsCopy;
     vm.queuedTask = false;
     vm.selectedIndicator = 1;
@@ -342,9 +344,35 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;
+        vm.years = vm.yearsCopy;
+        vm.months = vm.monthsCopy;
+
         if (vm.isIncentiveReportSelected()) {
-            var offset = date.getDate() < 15 ? 2 : 1;
-            latest.setMonth(date.getMonth() - offset);
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                return y.id >= 2018;
+            });
+
+            if (vm.selectedYear === latest.getFullYear()) {
+                var includeCurrentMonth = date.getDate() >= 13 ? true : false;
+
+                vm.months = _.filter(vm.monthsCopy, function (month) {
+                    if (includeCurrentMonth) {
+                        return month.id <= latest.getMonth() +1;
+                    } else {
+                        return month.id <= latest.getMonth();
+                    }
+                });
+
+                if (vm.selectedMonth > vm.months.slice(-1)[0].id) {
+                    vm.selectedMonth = vm.months.slice(-1)[0].id;
+                }
+            } else {
+                if (vm.selectedYear === 2018) {
+                    vm.months = vm.months.slice(-3);
+                    vm.selectedMonth = 12;
+                }
+            }
+            return;
         }
         if (year.id > latest.getFullYear()) {
             vm.years =  _.filter(vm.yearsCopy, function (y) {
