@@ -54,7 +54,7 @@ def download_odk_profile(request, domain, app_id):
     """
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version, username)
+        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
@@ -68,7 +68,7 @@ def download_odk_profile(request, domain, app_id):
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version, username)
+        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
@@ -333,7 +333,7 @@ def download_profile(request, domain, app_id):
     """
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version, username)
+        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
@@ -346,7 +346,7 @@ def download_profile(request, domain, app_id):
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version, username)
+        make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
