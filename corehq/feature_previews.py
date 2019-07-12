@@ -179,7 +179,7 @@ def is_eligible_for_ecd_preview(request):
     return is_migrated and (is_pro_or_advanced or is_enterprise_eligible)
 
 
-def save_ecd_preview(domain_name, _checked):
+def clear_project_data_tab_cache(domain_name, _checked):
     from corehq.tabs.tabclasses import ProjectDataTab
     ProjectDataTab.clear_dropdown_cache_for_all_domain_users(domain_name)
 
@@ -192,5 +192,5 @@ EXPLORE_CASE_DATA_PREVIEW = FeaturePreview(
         "ad-hoc data queries or to identify unclean data."
     ),
     can_self_enable_fn=is_eligible_for_ecd_preview,
-    save_fn=save_ecd_preview,
+    save_fn=clear_project_data_tab_cache,
 )
