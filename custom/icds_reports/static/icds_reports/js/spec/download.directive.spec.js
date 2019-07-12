@@ -346,20 +346,7 @@ describe('Download Directive', function () {
                 var currentMonth = date.getMonth() + 1;
                 var yearToFilter = currentYear;
                 controller.selectedIndicator = 5;
-                var existingMonths = [
-                    'January',
-                    'February',
-                    'March',
-                    'April',
-                    'May',
-                    'June',
-                    'July',
-                    'August',
-                    'September',
-                    'October',
-                    'November',
-                    'December'
-                ];
+                var existingMonths = moment.months();
 
                 var expectedFormat = 'xlsx';
                 var expectedLevel = 1;
@@ -401,20 +388,7 @@ describe('Download Directive', function () {
                 var currentMonth = date.getMonth() + 1;
                 var yearToFilter = currentYear;
                 controller.selectedIndicator = 10;
-                var existingMonths = [
-                    'January',
-                    'February',
-                    'March',
-                    'April',
-                    'May',
-                    'June',
-                    'July',
-                    'August',
-                    'September',
-                    'October',
-                    'November',
-                    'December'
-                ];
+                var existingMonths = moment.months();
 
                 var expectedFormat = 'xlsx';
                 var expectedLevel = 5;
