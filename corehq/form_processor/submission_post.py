@@ -253,6 +253,22 @@ class SubmissionPost(object):
             with case_db_cache as case_db:
                 instance = xforms[0]
 
+                is_edit_of_error = len(xforms) == 2 and xforms[1].is_error
+                if is_edit_of_error:
+                    # edge case from ICDS where a form errors and then future re-submissions of the same
+                    # form do not have the same MD5 hash due to a bug on mobile:
+                    # see https://dimagi-dev.atlassian.net/browse/ICDS-376
+                    existing_form = xforms[1]
+                    if not existing_form.initial_processing_complete:
+                        # since we have a new form and the old one was not successfully processed
+                        # we can effectively ignore this form and process the new one as normal
+                        # since this form will have been marked as deprecated and have a new ID etc.
+                        existing_form.save()
+                        xforms = [instance]
+                    else:
+                        # not clear what to do in this case, try the normal edit workflow
+                        pass
+
                 if instance.is_duplicate:
                     with tracer.trace('submission.process_duplicate'):
                         submission_type = 'duplicate'
