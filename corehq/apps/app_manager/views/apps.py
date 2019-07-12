@@ -285,19 +285,19 @@ def get_app_view_context(request, app):
         'is_remote_app': is_remote_app(app),
     })
     if is_linked_app(app):
-        context['pulled_from_master_url'] = _get_upstream_url(app, request.couch_user)
+        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             master_versions_by_id = get_latest_released_app_versions_by_app_id(app.domain)
             master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
-            pulled_from_master_brief = {}
+            upstream_brief = {}
             for b in master_briefs:
-                if b.id == app.pulled_from_master_app_id:
-                    pulled_from_master_brief = b
+                if b.id == app.upstream_app_id:
+                    upstream_brief = b
             context.update({
                 'master_briefs': master_briefs,
                 'master_versions_by_id': master_versions_by_id,
-                'pulled_from_master_version': app.pulled_from_master_version,
-                'pulled_from_master_brief': pulled_from_master_brief,
+                'upstream_version': app.upstream_version,
+                'upstream_brief': upstream_brief,
                 'upstream_url': _get_upstream_url(app, request.couch_user, master_app_id='---'),
             })
         except RemoteRequestError:
@@ -316,7 +316,7 @@ def _get_upstream_url(app, request_user, master_app_id=None):
             )
     ):
         if master_app_id is None:
-            master_app_id = app.pulled_from_master_app_id
+            master_app_id = app.upstream_app_id
         url = reverse('view_app', args=[app.domain_link.master_domain, master_app_id])
         if app.domain_link.is_remote:
             url = '{}{}'.format(app.domain_link.remote_base_url, url)

@@ -192,10 +192,10 @@
             </legend>
             <div class="panel-body">
               <p>
-                {% blocktrans with master_name=pulled_from_master_brief.name master_version=app.pulled_from_master_version %}
+                {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
                   Your app was last pulled from
-                  <a href='{{ pulled_from_master_url }}'>{{ master_name }}</a>,
-                  version {{ master_version }}.
+                  <a href='{{ upstream_url }}'>{{ upstream_name }}</a>,
+                  version {{ upstream_version }}.
                 {% endblocktrans %}
               </p>
               <div class="form-horizontal">

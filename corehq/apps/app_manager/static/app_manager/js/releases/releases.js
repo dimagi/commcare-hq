@@ -43,20 +43,20 @@ hqDefine('app_manager/js/releases/releases', function () {
             return profiles;
         };
 
-        self.pulled_from_master_app_name = ko.computed(function () {
+        self.upstream_app_name = ko.computed(function () {
             if (self.doc_type() !== "LinkedApplication") {
                 return "";
             }
-            var brief = releasesMain.masterBriefsById[self.pulled_from_master_app_id()] || {};
+            var brief = releasesMain.masterBriefsById[self.upstream_app_id()] || {};
             return brief.name || gettext("Unknown App");
         });
 
-        self.pulled_from_master_app_url = ko.computed(function () {
+        self.upstream_url = ko.computed(function () {
             if (self.doc_type() !== "LinkedApplication") {
                 return "";
             }
-            if (self.pulled_from_master_app_id()) {
-                return releasesMain.upstreamUrl.replace('---', self.pulled_from_master_app_id());
+            if (self.upstream_app_id()) {
+                return releasesMain.upstreamUrl.replace('---', self.upstream_app_id());
             }
             return '';
         });

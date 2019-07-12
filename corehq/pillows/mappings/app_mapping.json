@@ -194,10 +194,10 @@
         "vellum_case_management": {
             "type": "boolean"
         },
-        "pulled_from_master_version": {
+        "upstream_version": {
             "type": "long"
         },
-        "pulled_from_master_app_id": {
+        "upstream_app_id": {
             "type": "string"
         },
         "version": {
