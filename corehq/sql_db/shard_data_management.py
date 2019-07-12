@@ -124,19 +124,21 @@ def delete_unmatched_shard_data(database, model, query_size=5000):
     qs = model.objects.using(database).order_by(column_name).values_list(column_name, flat=True)
     prev_value = None
     value = qs.first()
-    last_value = qs.order_by('-{}'.format(column_name)).first()
     filter_expression = {}
 
-    first_run = True
-    while first_run or value < last_value:
-        first_run = False
+    last_iteration = False
+    while not last_iteration:
         qs = qs.filter(**filter_expression)
         prev_value = value
         try:
             value = qs[query_size]
         except IndexError:
-            # If the queryset has < query_size elements available we can use the last_value
-            value = last_value
+            # If the queryset has < query_size elements available we can use the last value
+            values = list(qs)
+            if not values:
+                break
+            value = values[-1]
+            last_iteration = True
 
         with connections[database].cursor() as cursor:
             cursor.execute(query, [valid_shards, prev_value, value])
