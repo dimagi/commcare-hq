@@ -5582,8 +5582,8 @@ class LinkedApplication(Application):
     An app that can pull changes from an app in a different domain.
     """
     master = StringProperty()   # Legacy, should be removed once all linked apps support multiple masters
-    pulled_from_master_version = IntegerProperty()
-    pulled_from_master_app_id = StringProperty()
+    upstream_app_id = StringProperty()      # ID of the app that was most recently pulled
+    upstream_version = IntegerProperty()    # Version of the app that was most recently pulled
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5629,11 +5629,11 @@ class LinkedApplication(Application):
     @memoized
     def get_previous_version(self, master_app_id=None):
         if master_app_id is None:
-            master_app_id = self.pulled_from_master_app_id
+            master_app_id = self.upstream_app_id
         build_ids = get_build_ids(self.domain, self.master_id)
         for build_id in build_ids:
             build_doc = Application.get_db().get(build_id)
-            if build_doc.get('pulled_from_master_app_id', build_doc['master']) == master_app_id:
+            if build_doc.get('upstream_app_id', build_doc['master']) == master_app_id:
                 return self.wrap(build_doc)
         return None
 
@@ -5641,10 +5641,10 @@ class LinkedApplication(Application):
     def wrap(cls, data):
         # Legacy linked apps pulled the master's version along with its content.
         # So if the master's version wasn't recorded, that means it matches this app's version.
-        if 'pulled_from_master_version' not in data:
-            data['pulled_from_master_version'] = data['version']
-        if 'pulled_from_master_app_id' not in data:
-            data['pulled_from_master_app_id'] = data.get('master', None)
+        if 'upstream_version' not in data:
+            data['upstream_version'] = data['version']
+        if 'upstream_app_id' not in data:
+            data['upstream_app_id'] = data.get('master', None)
 
         return super(LinkedApplication, cls).wrap(data)
 
