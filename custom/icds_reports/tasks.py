@@ -1206,29 +1206,32 @@ def build_incentive_report(agg_date=None):
 
 @task(queue='icds_dashboard_reports_queue', serializer='pickle')
 def build_incentive_files(location, month, file_format, aggregation_level, state, district=None):
-    data_type = 'AWW_Performance'
-    excel_data = IncentiveReport(
-        location=location.location_id,
-        month=month,
-        aggregation_level=aggregation_level
-    ).get_excel_data()
-    state_name = state.name
-    district_name = district.name if aggregation_level >= 2 else None
-    block_name = location.name if aggregation_level == 3 else None
-    month_string = month.strftime("%B %Y")
-    if file_format == 'xlsx':
-        create_aww_performance_excel_file(
-            excel_data,
-            data_type,
-            month_string,
-            state_name,
-            district_name,
-            block_name
-        )
-    else:
-        blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month_string, file_format)
-        create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
-
+    try:
+        data_type = 'AWW_Performance'
+        excel_data = IncentiveReport(
+            location=location.location_id,
+            month=month,
+            aggregation_level=aggregation_level
+        ).get_excel_data()
+        state_name = state.name
+        district_name = district.name if aggregation_level >= 2 else None
+        block_name = location.name if aggregation_level == 3 else None
+        month_string = month.strftime("%B %Y")
+        if file_format == 'xlsx':
+            create_aww_performance_excel_file(
+                excel_data,
+                data_type,
+                month_string,
+                state_name,
+                district_name,
+                block_name
+            )
+        else:
+            blob_key = get_performance_report_blob_key(state_name, district_name, block_name, month_string, file_format)
+            create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
+    except Exception as e:
+        celery_task_logger.error(repr(e))
+        raise e
 
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month, force_citus=False):
