@@ -5562,8 +5562,8 @@ class LinkedApplication(Application):
     An app that can pull changes from an app in a different domain.
     """
     master = StringProperty()   # Legacy, should be removed once all linked apps support multiple masters
-    upstream_version = IntegerProperty()
-    upstream_app_id = StringProperty()
+    upstream_app_id = StringProperty()      # ID of the app that was most recently pulled
+    upstream_version = IntegerProperty()    # Version of the app that was most recently pulled
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
