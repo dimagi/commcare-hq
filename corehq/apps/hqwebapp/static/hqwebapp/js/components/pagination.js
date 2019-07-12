@@ -15,6 +15,8 @@
  *          in the success and error callbacks).
  *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
  *          in a cookie.
+ *      onLoad: Required with slug. A function called when all of the pagination library is finished loading.
+ *          Please call the initial goToPage(1) call inside the onLoad function in your app.
  *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
  *          which shows up next to the left of the limit dropdown.
  *
@@ -103,6 +105,11 @@ hqDefine('hqwebapp/js/components/pagination', [
                 }
                 return pages;
             });
+
+            if (params.onLoad) {
+                params.onLoad();
+            }
+
             return self;
         },
         template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',
