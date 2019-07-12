@@ -3787,11 +3787,14 @@ class LazyBlobDoc(BlobMixin):
             # it has been fetched already during this request
             content = self._LAZY_ATTACHMENTS_CACHE[name]
         except KeyError:
-            content = cache.get(self.__attachment_cache_key(name))
+            try:
+                content = cache.get(self.__attachment_cache_key(name))
+            except TypeError:
+                # TODO - remove try/except sometime after Python 3 migration is complete
+                return None
             if content is not None:
                 if isinstance(content, six.text_type):
-                    _soft_assert(False, 'cached attachment has type unicode')
-                    content = content.encode('utf-8')
+                    return None
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 

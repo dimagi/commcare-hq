@@ -26,6 +26,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
+    ODataFormSerializer,
     DeprecatedODataCaseSerializer,
     DeprecatedODataFormSerializer,
 )
@@ -39,8 +40,8 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
-from corehq.apps.export.esaccessors import get_case_export_base_query
-from corehq.apps.export.models import CaseExportInstance
+from corehq.apps.export.esaccessors import get_case_export_base_query, get_form_export_base_query
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.sms.util import strip_plus
@@ -1031,6 +1032,55 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         authentication = ODataAuthentication(Permissions.edit_data)
         resource_name = 'odata/cases'
         serializer = ODataCaseSerializer()
+        limit = 2000
+        max_limit = 10000
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)" % self._meta.resource_name,
+                self.wrap_view('dispatch_list'))
+        ]
+
+    def determine_format(self, request):
+        # Results should be sent as JSON
+        return 'application/json'
+
+
+class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
+
+    config_id = None
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not toggles.ODATA.enabled_for_request(request):
+            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        self.config_id = kwargs['config_id']
+        with TimingContext() as timer:
+            response = super(ODataFormResource, self).dispatch(request_type, request, **kwargs)
+        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
+        return response
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        data['domain'] = request.domain
+        data['config_id'] = self.config_id
+        data['api_path'] = request.path
+        response = super(ODataFormResource, self).create_response(
+            request, data, response_class, **response_kwargs)
+        return add_odata_headers(response)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        return get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=True)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        # Not sure why this is required but the feed 500s without it
+        return {
+            'pk': get_obj(bundle_or_obj)['_id']
+        }
+
+    class Meta(v0_4.XFormInstanceResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/forms'
+        serializer = ODataFormSerializer()
         limit = 2000
         max_limit = 10000
 

@@ -245,7 +245,7 @@ def _get_case_names(domain, case_ids):
 
 def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
     params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
-    fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+    fname = '{}-{}'.format(app_id, hashlib.md5(params.encode('utf-8')).hexdigest())
     fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
     return fpath
 

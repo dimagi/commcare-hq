@@ -54,7 +54,8 @@ _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dima
                                                '{}@{}'.format('biyeun', 'dimagi.com'),
                                                '{}@{}'.format('jschweers', 'dimagi.com'),
                                                '{}@{}'.format('aphilippot', 'dimagi.com'),
-                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
+                                               '{}@{}'.format('colaughlin', 'dimagi.com'),
+                                               '{}@{}'.format('miemma', 'dimagi.com')],
                                            send_to_ops=False)
 
 logger = logging.getLogger('analytics')
@@ -594,7 +595,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            _hubspot_failure_soft_assert(False, e.response.content)
+            _hubspot_failure_soft_assert(False, e.response.content.decode('utf-8'))
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
@@ -625,7 +626,7 @@ def _track_periodic_data_on_kiss(submit_json):
     ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
 
     filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
-    with open(filename, 'wb') as csvfile:
+    with open(filename, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(headers)
 

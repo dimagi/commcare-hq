@@ -40,7 +40,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, HQJSONResponseMixin, PaginatedItemException
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
 from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
