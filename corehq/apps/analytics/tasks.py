@@ -54,7 +54,8 @@ _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dima
                                                '{}@{}'.format('biyeun', 'dimagi.com'),
                                                '{}@{}'.format('jschweers', 'dimagi.com'),
                                                '{}@{}'.format('aphilippot', 'dimagi.com'),
-                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
+                                               '{}@{}'.format('colaughlin', 'dimagi.com'),
+                                               '{}@{}'.format('miemma', 'dimagi.com')],
                                            send_to_ops=False)
 
 logger = logging.getLogger('analytics')
