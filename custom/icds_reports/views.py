@@ -1770,24 +1770,40 @@ class DishaAPIViewV2(View):
         state_names = ", ".join([state[0] for state in self.valid_states])
         error_messages = {
             "missing_date": "Please specify valid month and year",
-            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_month": "Please specify a month that's older than or same as current month",
             "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "unknown_error": "Unknown Error occured"
         }
-        return {"message": error_messages[message_name]}
 
-    @method_decorator([api_auth, toggles.ICDS_DISHA_API_V2.required_decorator()])
+        error_message_template = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
+            SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
+               <SOAP-ENV:Header />
+               <SOAP-ENV:Body>
+                    <SOAP-ENV:Fault>
+                        <message>
+                            {}
+                        </message>
+                    </SOAP-ENV:Fault>
+               </SOAP-ENV:Body>
+            </SOAP-ENV:Envelope>
+            """
+        return error_message_template.format(error_messages[message_name]).strip()
+
+    @method_decorator([api_auth, toggles.ICDS_DISHA_API_NIC.required_decorator()])
     def get(self, request, *args, **kwargs):
         try:
             month = int(request.GET.get('month'))
             year = int(request.GET.get('year'))
         except (ValueError, TypeError):
-            return JsonResponse(self.message('missing_date'), status=400)
+            return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
 
         query_month = date(year, month, 1)
         today = date.today()
-        current_month = today - relativedelta(months=1) if today.day <= 5 else today
+        current_month = today - relativedelta(months=1)
         if query_month > current_month:
-            return JsonResponse(self.message('invalid_month'), status=400)
+            return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
 
         state_name = self.request.GET.get('state_name')
 
@@ -1795,11 +1811,12 @@ class DishaAPIViewV2(View):
             valid_state_names = [state[0] for state in self.valid_states]
             index = valid_state_names.index(state_name)
             state_id = self.valid_states[index][1]
+            data = get_disha_api_v2_data(state_id, month_formatter(query_month))
+            return HttpResponse(data, content_type='text/xml')
         except ValueError:
-            return JsonResponse(self.message('invalid_state'), status=400)
-
-        data = get_disha_api_v2_data(state_id, month_formatter(query_month))
-        return HttpResponse(data, content_type='text/xml')
+            return HttpResponse(self.message('invalid_state'), content_type='text/xml', status=400)
+        except AttributeError:
+            return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
 
     @property
     @icds_quickcache([])

@@ -1084,7 +1084,6 @@ class DishaIndicatorView(models.Model):
 class DishaIndicatorViewV2(models.Model):
     state_id = models.TextField(primary_key=True)
     state_name = models.TextField(blank=True, null=True)
-    aggregation_level = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
 
     cases_household = models.IntegerField(blank=True, null=True)
@@ -1093,7 +1092,7 @@ class DishaIndicatorViewV2(models.Model):
     cases_child_health = models.IntegerField(blank=True, null=True)
     num_launched_awcs = models.IntegerField(blank=True, null=True)
     ebf_in_month = models.IntegerField(blank=True, null=True)
-    cf_in_month = models.IntegerField(blank=True, null=True)
+    cf_initiation_in_month = models.IntegerField(blank=True, null=True)
     bf_at_birth = models.IntegerField(blank=True, null=True)
 
     objects = CitusComparisonManager()

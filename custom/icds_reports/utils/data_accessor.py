@@ -59,7 +59,7 @@ def get_disha_api_v2_data(state_id, month):
     data = DishaIndicatorViewV2.objects.filter(month=month,
                                                state_id=state_id).first()
 
-    #not using lxml because using lxml when no xml manipulation needed is just overengineering
+    # not using lxml because using lxml when no xml manipulation needed is just overengineering
     api_xml_response = """
     <?xml version="1.0" encoding="UTF-8"?>
     <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
@@ -78,18 +78,17 @@ def get_disha_api_v2_data(state_id, month):
           <cf_in_month>{cf_in_month}</cf_in_month>
        </SOAP-ENV:Body>
     </SOAP-ENV:Envelope>
-    """.format(**{
-        "state_name": data.state_name,
-        "month": data.month,
-        "num_launched_awcs": data.num_launched_awcs,
-        "cases_household": data.cases_household,
-        "cases_ccs_pregnant": data.cases_ccs_pregnant,
-        "cases_ccs_lactating": data.cases_ccs_lactating,
-        "cases_child_health": data.cases_child_health,
-        "bf_at_birth": data.bf_at_birth,
-        "ebf_in_month": data.ebf_in_month,
-        "cf_in_month": data.cf_in_month,
-
-    })
+    """.format(
+        state_name=data.state_name,
+        month=data.month,
+        num_launched_awcs=data.num_launched_awcs,
+        cases_household=data.cases_household,
+        cases_ccs_pregnant=data.cases_ccs_pregnant,
+        cases_ccs_lactating=data.cases_ccs_lactating,
+        cases_child_health=data.cases_child_health,
+        bf_at_birth=data.bf_at_birth,
+        ebf_in_month=data.ebf_in_month,
+        cf_in_month=data.cf_initiation_in_month
+    )
 
     return api_xml_response.strip()

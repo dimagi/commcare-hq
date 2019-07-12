@@ -1661,9 +1661,9 @@ ICDS_DISHA_API = StaticToggle(
 )
 
 
-ICDS_DISHA_API_V2 = StaticToggle(
-    'icds_disha_access',
-    'ICDS: Access New DISHA API V2',
+ICDS_DISHA_API_NIC = StaticToggle(
+    'icds_disha_access_nic',
+    'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'icds-new', 'india'},

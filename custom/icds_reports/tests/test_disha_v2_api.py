@@ -1,17 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-
-import mock
 from django.test import TestCase
 from custom.icds_reports.utils.data_accessor import get_disha_api_v2_data
 
 
 class DishaV2ApiTest(TestCase):
 
-    @mock.patch('custom.icds_reports.reports.disha.DishaDump._get_rows')
-    def test_file_content(self, disha_get_rows_mock):
-
+    def test_file_content(self):
         state_id = 'st1'
         month = '2017-05-01'
 
