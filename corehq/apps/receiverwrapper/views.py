@@ -161,7 +161,7 @@ def _submission_error(request, message, count_metric, metric_tags,
 
 
 def _record_metrics(tags, result, timer=None):
-    if result.xform and result.xform.metadata:
+    if hasattr(result, 'xform') and result.xform.metadata:
         lag = result.xform.received_on - result.xform.metadata.timeEnd
         datadog_gauge('commcare.xform_submissions.lag', int(lag.total_seconds()), tags=tags)
 
