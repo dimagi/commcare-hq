@@ -431,15 +431,6 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-def _log_failed_periodic_data(email, message):
-    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
-        False, "ANALYTICS - Failed to sync periodic data", {
-            'user_email': email,
-            'message': message,
-        }
-    )
-
-
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
