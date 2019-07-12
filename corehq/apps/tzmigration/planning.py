@@ -88,6 +88,12 @@ class BaseDB(object):
             'sqlite+pysqlite:///{}'.format(db_filepath), module=sqlite)
         self.Session = sessionmaker(bind=self.engine)
 
+    def __getstate__(self):
+        return self.db_filepath
+
+    def __setstate__(self, db_filepath):
+        self.__init__(db_filepath)
+
     @classmethod
     def init(cls, db_filepath):
         self = cls(db_filepath)

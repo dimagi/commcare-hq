@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import pickle
 import re
 
 from sqlalchemy.exc import OperationalError
@@ -111,3 +112,11 @@ def test_diff_doc_id_idx_exists():
     msg = re.compile("index diff_doc_id_idx already exists")
     with init_db() as db, assert_raises(OperationalError, msg=msg):
         diff_doc_id_idx.create(db.engine)
+
+
+def test_pickle():
+    with init_db() as db:
+        other = pickle.loads(pickle.dumps(db))
+        assert isinstance(other, type(db)), (other, db)
+        assert other is not db
+        eq(db.unique_id, other.unique_id)
