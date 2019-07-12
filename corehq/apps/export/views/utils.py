@@ -370,3 +370,9 @@ def can_view_case_exports(couch_user, domain):
 def remove_row_number_from_export_columns(export_instance):
     for table in export_instance.tables:
         table.columns = [column for column in table.columns if not isinstance(column, RowNumberColumn)]
+
+
+def clean_odata_columns(export_instance):
+    for table in export_instance.tables:
+        for column in table.columns:
+            column.label = column.label.replace('@', '').replace('.', ' ')
