@@ -594,7 +594,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            _hubspot_failure_soft_assert(False, e.response.content)
+            _hubspot_failure_soft_assert(False, e.response.content.decode('utf-8'))
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
