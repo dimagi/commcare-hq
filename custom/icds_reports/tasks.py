@@ -1197,11 +1197,11 @@ def build_incentive_report(agg_date=None):
     for file_format in ['xlsx', 'csv']:
         for location in locations:
             if location.location_type.name == 'state':
-                build_incentive_files.delay(location, agg_date, file_format, 1, location)
+                build_incentive_files(location, agg_date, file_format, 1, location)
             elif location.location_type.name == 'district':
-                build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
+                build_incentive_files(location, agg_date, file_format, 2, location.parent, location)
             else:
-                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+                build_incentive_files(location, agg_date, file_format, 3, location.parent.parent, location.parent)
 
 
 @task(queue='icds_dashboard_reports_queue', serializer='pickle')
