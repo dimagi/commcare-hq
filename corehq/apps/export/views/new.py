@@ -265,12 +265,20 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     page_title = ugettext_lazy("Create OData Case Feed")
     allow_deid = False
 
+    def create_new_export_instance(self, schema):
+        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
+        return export_instance
+
 
 @method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
     allow_deid = False
+
+    def create_new_export_instance(self, schema):
+        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
+        return export_instance
 
 
 class DeleteNewCustomExportView(BaseExportView):
