@@ -39,6 +39,7 @@ from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
     ODataFeedMixin,
+    clean_odata_columns,
     remove_row_number_from_export_columns,
 )
 
@@ -273,6 +274,7 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     def create_new_export_instance(self, schema):
         export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
         remove_row_number_from_export_columns(export_instance)
+        clean_odata_columns(export_instance)
         return export_instance
 
 
@@ -285,6 +287,7 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     def create_new_export_instance(self, schema):
         export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
         remove_row_number_from_export_columns(export_instance)
+        clean_odata_columns(export_instance)
         return export_instance
 
 
