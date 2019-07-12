@@ -87,7 +87,6 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
 
     if return_values:
         qs = qs.values_list(*return_values)
-    value = 0
 
     filter_expression = {}
     while True:
