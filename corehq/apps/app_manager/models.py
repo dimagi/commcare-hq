@@ -3980,7 +3980,7 @@ class VersionedDoc(LazyBlobDoc):
 
         # the '_attachments' value is a dict of `name: blob_content`
         # pairs, and is part of the exported (serialized) app interface
-        source['_attachments'] = _attachments
+        source['_attachments'] = {k: v.decode('utf-8') for (k, v) in _attachments.items()}
         source.pop("external_blobs", None)
         source = self.scrub_source(source)
 
