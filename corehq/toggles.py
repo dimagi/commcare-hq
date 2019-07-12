@@ -683,15 +683,27 @@ EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev). Please make sure the project '
     'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.',
+    'the Case List Explorer toggle or doing a manual migration.\n\n'
+    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
+    'This will be deprecated once the Feature Preview is in full swing.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
-    'Domains that have undergone migration for Explore Case Data, but are not '
-    'yet ready to see the full report',
+    'Domains that have undergone migration for Explore Case Data and have a '
+    'CaseSearch elasticsearch index created.\n\n'
+    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
+    'ecd_enterprise_domains',
+    'Enterprise Domains that are eligible to view the Explore Case Data '
+    'Feature Preview. By default, this feature will only be available for '
+    'domains that are Advanced or Pro and have undergone the ECD migration.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
