@@ -190,8 +190,8 @@ def overwrite_app(app, master_build, report_map=None):
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = app_json.get('version', 1)
-    app_json['pulled_from_master_version'] = master_json['version']
-    app_json['pulled_from_master_app_id'] = master_json['copy_of']
+    app_json['upstream_version'] = master_json['version']
+    app_json['upstream_app_id'] = master_json['copy_of']
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -354,7 +354,7 @@ def update_linked_app(app, master_app_id, user_id):
         ))
 
     previous = app.get_previous_version(master_app_id)
-    if previous is None or latest_released_master_build.version > previous.pulled_from_master_version:
+    if previous is None or latest_released_master_build.version > previous.upstream_version:
         report_map = get_static_report_mapping(latest_released_master_build.domain, app['domain'])
         try:
             app = overwrite_app(app, latest_released_master_build, report_map)
