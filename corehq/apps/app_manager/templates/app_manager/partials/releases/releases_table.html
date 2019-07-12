@@ -162,8 +162,8 @@
         <h4 class="panel-release-title">
           <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong>
           <span data-bind="if: doc_type() == 'LinkedApplication'">
-            (<a data-bind="text: pulled_from_master_app_name(), attr: {href: pulled_from_master_app_url()}"></a>
-              v<span data-bind="text: pulled_from_master_version"></span>)
+            (<a data-bind="text: upstream_app_name(), attr: {href: upstream_url()}"></a>
+              v<span data-bind="text: upstream_version"></span>)
           </span>
           |
           <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
