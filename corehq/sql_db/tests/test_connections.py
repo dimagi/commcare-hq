@@ -99,7 +99,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias('default') for i in range(3)]
             )
 
-    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'ucr': 4}.get(x, 0))
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 4}.get(x, 0))
     def test_standby_filtering(self, *args):
         reporting_dbs = {
             'ucr_engine': {
