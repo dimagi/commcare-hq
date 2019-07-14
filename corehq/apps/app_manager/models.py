@@ -5061,7 +5061,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
-        # ToDo: should add check for FF?
         if self.commcare_flavor:
             files['{}profile-{}.xml'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=False,
