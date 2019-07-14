@@ -34,23 +34,27 @@ def setup_ccz_file_for_hosting(hosted_ccz_id, user_email=None):
         except:
             exc = sys.exc_info()
             if user_email:
-                content = """
-                    Hi,\n
-                    CCZ could not be created for the following request:\n
-                    App: {app}\n
-                    Version: {version}\n
-                    Profile: {profile}\n
-                    Link: {link}
-                """.format(app=build.name, version=hosted_ccz.version, profile=hosted_ccz.profile.get('name'),
-                           link=hosted_ccz.link.identifier)
-                send_html_email_async.delay(
-                    "CCZ Hosting setup failed for project {app} {domain}".format(
-                        app=build.name,
-                        domain=hosted_ccz.domain,
-                    ),
-                    user_email,
-                    linebreaksbr(content)
-                )
+                _notify_failure_to_user(hosted_ccz, build, user_email)
             # delete the file from blob db if it was added but later failed
             hosted_ccz.delete_ccz()
             six.reraise(*exc)
+
+
+def _notify_failure_to_user(hosted_ccz, build, user_email):
+    content = """
+                        Hi,\n
+                        CCZ could not be created for the following request:\n
+                        App: {app}\n
+                        Version: {version}\n
+                        Profile: {profile}\n
+                        Link: {link}
+                    """.format(app=build.name, version=hosted_ccz.version, profile=hosted_ccz.profile.get('name'),
+                               link=hosted_ccz.link.identifier)
+    send_html_email_async.delay(
+        "CCZ Hosting setup failed for project {app} {domain}".format(
+            app=build.name,
+            domain=hosted_ccz.domain,
+        ),
+        user_email,
+        linebreaksbr(content)
+    )
