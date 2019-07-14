@@ -144,7 +144,7 @@ class HostedCCZ(models.Model):
         email = kwargs.pop('email') if 'email' in kwargs else None
         super(HostedCCZ, self).save(*args, **kwargs)
         if not self.utility.file_exists():
-            setup_ccz_file_for_hosting.delay(self.pk)
+            setup_ccz_file_for_hosting.delay(self.pk, user_email=email)
 
     def delete_ccz(self):
         # if no other link is using this app+version+profile, delete the file from blobdb
