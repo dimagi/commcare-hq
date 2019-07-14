@@ -45,6 +45,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.msgs = []
 
         if isinstance(self.module, ReportModule):
+            self._update_report_module_rows(rows)
             return self.msgs
 
         self._get_condensed_rows(rows)
@@ -95,6 +96,48 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             self._update_translation(self.case_list_menu_item_label, self.module.case_list.label)
 
         return self.msgs
+
+    def _update_report_module_rows(self, rows):
+        new_headers = [None for i in self.module.report_configs]
+        new_descriptions = [None for i in self.module.report_configs]
+        allow_update = True
+        for row in get_unicode_dicts(rows):
+            match = re.search(r'^Report (\d+) (Display Text|Description)$', row['case_property'])
+            if not match:
+                message = _("Found unexpected row \"{0}\" for menu {1}. No changes were made for menu "
+                            "{1}.").format(row['case_property'], self.module.id + 1)
+                self.msgs.append((messages.error, message))
+                allow_update = False
+                continue
+
+            index = int(match.group(1))
+            try:
+                config = self.module.report_configs[index]
+            except IndexError:
+                message = _("Expected {0} reports for menu {1} but found row for Report {2}. No changes were made "
+                            "for menu {1}.").format(len(self.module.report_configs), self.module.id + 1, index)
+                self.msgs.append((messages.error, message))
+                allow_update = False
+                continue
+
+            if match.group(2) == "Display Text":
+                new_headers[index] = row
+            else:
+                if config.use_xpath_description:
+                    message = _("Found row for {0}, but this report uses an xpath description, which is not "
+                                "localizable. Description not updated.").format(row['case_property'])
+                    self.msgs.append((messages.error, message))
+                    continue
+                new_descriptions[index] = row
+
+        if not allow_update:
+            return
+
+        for index, config in enumerate(self.module.report_configs):
+            if new_headers[index]:
+                self._update_translation(new_headers[index], config.header)
+            if new_descriptions[index]:
+                self._update_translation(new_descriptions[index], config.localized_description)
 
     def _get_condensed_rows(self, rows):
         '''

@@ -683,15 +683,27 @@ EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev). Please make sure the project '
     'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.',
+    'the Case List Explorer toggle or doing a manual migration.\n\n'
+    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
+    'This will be deprecated once the Feature Preview is in full swing.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
-    'Domains that have undergone migration for Explore Case Data, but are not '
-    'yet ready to see the full report',
+    'Domains that have undergone migration for Explore Case Data and have a '
+    'CaseSearch elasticsearch index created.\n\n'
+    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
+    'ecd_enterprise_domains',
+    'Enterprise Domains that are eligible to view the Explore Case Data '
+    'Feature Preview. By default, this feature will only be available for '
+    'domains that are Advanced or Pro and have undergone the ECD migration.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1117,14 +1129,6 @@ MESSAGE_LOG_METADATA = StaticToggle(
     'Include message id in Message Log export.',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-)
-
-BULK_CONDITIONAL_ALERTS = StaticToggle(
-    'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts', # noqa
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(
@@ -1731,7 +1735,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     'location_safe_case_imports',
     'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1748,7 +1752,7 @@ ODATA = StaticToggle(
     'odata',
     'Enable Odata feed.',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 
@@ -1785,7 +1789,7 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
-    'Allow project to configure ccz hosting',
+    'Allow project to manage ccz hosting',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
@@ -1822,7 +1826,7 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
     'Enables location columns to app status report',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(

@@ -331,7 +331,7 @@ hqDefine('export/js/models', [
 
     ExportInstance.prototype.getSaveText = function () {
         if (this.is_odata_config()) {
-            return gettext('Copy');
+            return gettext('Save');
         }
         return this.isNew() ? gettext('Create') : gettext('Save');
     };

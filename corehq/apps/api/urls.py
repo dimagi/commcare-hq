@@ -18,9 +18,13 @@ from corehq.apps.api.object_fetch_api import (
 )
 from corehq.apps.api.odata.views import (
     ODataCaseMetadataView,
+    DeprecatedODataCaseMetadataView,
     ODataCaseServiceView,
-    ODataFormMetadataView,
+    DeprecatedODataCaseServiceView,
+    DeprecatedODataFormMetadataView,
+    DeprecatedODataFormServiceView,
     ODataFormServiceView,
+    ODataFormMetadataView,
 )
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.v0_5 import (
@@ -53,7 +57,6 @@ API_LIST = (
         v0_4.XFormInstanceResource,
         v0_4.RepeaterResource,
         v0_4.SingleSignOnResource,
-        v0_4.HOPECaseResource,
         FixtureResource,
         DomainMetadataResource,
     )),
@@ -63,7 +66,6 @@ API_LIST = (
         v0_4.XFormInstanceResource,
         v0_4.RepeaterResource,
         v0_4.SingleSignOnResource,
-        v0_4.HOPECaseResource,
         v0_5.CommCareUserResource,
         v0_5.WebUserResource,
         v0_5.GroupResource,
@@ -83,8 +85,10 @@ API_LIST = (
         sms_v0_5.UserSelfRegistrationResource,
         sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
-        v0_5.ODataCommCareCaseResource,
-        v0_5.ODataXFormInstanceResource,
+        v0_5.DeprecatedODataCaseResource,
+        v0_5.DeprecatedODataFormResource,
+        v0_5.ODataCaseResource,
+        v0_5.ODataFormResource,
         LookupTableResource,
         LookupTableItemResource,
     )),
@@ -99,10 +103,14 @@ class CommCareHqApi(Api):
 
 def api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
-    yield url(r'v0.5/odata/Cases/$', ODataCaseServiceView.as_view(), name=ODataCaseServiceView.urlname)
-    yield url(r'v0.5/odata/Cases/\$metadata$', ODataCaseMetadataView.as_view(), name=ODataCaseMetadataView.urlname)
-    yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/$', ODataFormServiceView.as_view(), name=ODataFormServiceView.urlname)
-    yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/\$metadata$', ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
+    yield url(r'v0.5/odata/Cases/$', DeprecatedODataCaseServiceView.as_view(), name=DeprecatedODataCaseServiceView.urlname)
+    yield url(r'v0.5/odata/Cases/\$metadata$', DeprecatedODataCaseMetadataView.as_view(), name=DeprecatedODataCaseMetadataView.urlname)
+    yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/$', DeprecatedODataFormServiceView.as_view(), name=DeprecatedODataFormServiceView.urlname)
+    yield url(r'v0.5/odata/Forms/(?P<app_id>[\w\-:]+)/\$metadata$', DeprecatedODataFormMetadataView.as_view(), name=DeprecatedODataFormMetadataView.urlname)
+    yield url(r'v0.5/odata/cases/$', ODataCaseServiceView.as_view(), name=ODataCaseServiceView.urlname)
+    yield url(r'v0.5/odata/cases/\$metadata$', ODataCaseMetadataView.as_view(), name=ODataCaseMetadataView.urlname)
+    yield url(r'v0.5/odata/forms/$', ODataFormServiceView.as_view(), name=ODataFormServiceView.urlname)
+    yield url(r'v0.5/odata/forms/\$metadata$', ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:

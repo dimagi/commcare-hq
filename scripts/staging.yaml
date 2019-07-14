@@ -49,15 +49,10 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
   - nh/icds/skip_trans  # Norman June 21
   - fr/case-templates      # FR May 15
-  - jls/ko-create-mobile-worker # Jenny June 9
-  - jls/draconian-flag # Jenny June 17
-  - jls/ko-create-mobile-worker-debug # Jenny June 17
   - jls/linked-app-multiple-masters # Jenny June 18
-  - jls/disable-autofill # Jenny June 19
-  - odata-datadog  # Nick June 29
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
-  - mk/migrate-transifex-proj-realigned # MK June 28
+  - dropbox-fix # Nick P July 5
+  - mk/skip-files-build # MK July 6
 submodules: {}

@@ -214,6 +214,12 @@ class UITab(object):
             ])
             cache.delete(key)
 
+    @classmethod
+    def clear_dropdown_cache_for_all_domain_users(cls, domain):
+        from corehq.apps.users.models import CouchUser
+        for user_id in CouchUser.ids_by_domain(domain):
+            cls.clear_dropdown_cache(domain, user_id)
+
     @property
     def css_id(self):
         return self.__class__.__name__

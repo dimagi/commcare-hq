@@ -1,11 +1,6 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
-{% block core_libraries %}{{ block.super }}
-  {% include "hqwebapp/includes/angular.html" %}
-  <script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
-{% endblock %}
-
 {% block dependencies %}
   <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
   <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>

@@ -60,12 +60,15 @@ hqDefine("export/js/export_list", [
             'name',
             'owner_username',
             'sharing',
+            'odataUrl',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
             'isDailySaved',
             'isFeed',
             'isOData',
+            'editNameUrl',
+            'editDescriptionUrl',
             'showLink',
         ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
@@ -84,8 +87,15 @@ hqDefine("export/js/export_list", [
             self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
         }
 
+        if (options.editNameUrl) {
+            self.editNameUrl = options.editNameUrl;
+        }
+        if (options.editDescriptionUrl) {
+            self.editDescriptionUrl = options.editDescriptionUrl;
+        }
+
         if (options.isOData) {
-            self.odataFeedUrl = 'https://placekitten.com';
+            self.odataFeedUrl = options.odataUrl;
         }
 
         self.isLocationSafeForUser = function () {

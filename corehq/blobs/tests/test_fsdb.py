@@ -57,7 +57,7 @@ class _BlobDBTests(object):
         )
 
     def test_put_and_get_with_unicode(self):
-        identifier = new_meta(name=u'Łukasz')
+        identifier = new_meta(name='Łukasz')
         meta = self.db.put(BytesIO(b'\xc5\x81ukasz'), meta=identifier)
         self.assertEqual(identifier, meta)
         with self.db.get(key=meta.key) as fh:

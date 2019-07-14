@@ -76,7 +76,7 @@ class MessagingRuleProgressHelper(object):
 
     def is_canceled(self):
         """Check if task has been canceled"""
-        self.client.get(self.rule_cancellation_key) is not None
+        return self.client.get(self.rule_cancellation_key) is not None
 
     @staticmethod
     def _int_or_zero(value):

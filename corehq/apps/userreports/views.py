@@ -289,10 +289,7 @@ class ReportBuilderView(BaseDomainView):
         allowed_num_reports = allowed_report_builder_reports(self.request)
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit': (
-                number_of_report_builder_reports(self.domain) >= allowed_num_reports
-                and allowed_num_reports is not None
-            ),
+            'at_report_limit': number_of_report_builder_reports(self.domain) >= allowed_num_reports,
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
             'pricing_page_url': settings.PRICING_PAGE_URL,
@@ -359,8 +356,8 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
         num_builder_reports = number_of_report_builder_reports(self.domain)
         context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
-            'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
+            'at_report_limit': num_builder_reports >= max_allowed_reports,
+            'max_allowed_reports': max_allowed_reports,
             'support_email': settings.SUPPORT_EMAIL,
             'pricing_page_url': settings.PRICING_PAGE_URL,
         })

@@ -1210,13 +1210,12 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-    try:
-        # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
-        if case.external_id:
-            all_property_names.add('external_id')
-        all_property_names.remove('name')
-    except KeyError:
-        pass
+
+    # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
+    if case.external_id:
+        all_property_names.add('external_id')
+
+    all_property_names = all_property_names.difference({'name', 'case_name', 'type', 'case_type'})
     all_property_names = list(all_property_names)
     all_property_names.sort()
 

@@ -3787,11 +3787,14 @@ class LazyBlobDoc(BlobMixin):
             # it has been fetched already during this request
             content = self._LAZY_ATTACHMENTS_CACHE[name]
         except KeyError:
-            content = cache.get(self.__attachment_cache_key(name))
+            try:
+                content = cache.get(self.__attachment_cache_key(name))
+            except TypeError:
+                # TODO - remove try/except sometime after Python 3 migration is complete
+                return None
             if content is not None:
                 if isinstance(content, six.text_type):
-                    _soft_assert(False, 'cached attachment has type unicode')
-                    content = content.encode('utf-8')
+                    return None
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
@@ -3977,7 +3980,7 @@ class VersionedDoc(LazyBlobDoc):
 
         # the '_attachments' value is a dict of `name: blob_content`
         # pairs, and is part of the exported (serialized) app interface
-        source['_attachments'] = _attachments
+        source['_attachments'] = {k: v.decode('utf-8') for (k, v) in _attachments.items()}
         source.pop("external_blobs", None)
         source = self.scrub_source(source)
 
@@ -5584,7 +5587,7 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
-    SUPPORTED_SETTINGS = ['target_commcare_flavor']
+    SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
 
     # if `uses_master_app_form_ids` is True, the form id might match the master's form id
     # from a bug years ago. These should be fixed when mobile can handle the change

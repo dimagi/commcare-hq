@@ -64,7 +64,16 @@
   <tr>
     <td>
       <h4 data-bind="css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
-        <span data-bind="text: name"></span>
+        {% if not is_odata %}
+          <span data-bind="text: name"></span>
+        {% else %}
+          <inline-edit params="
+            value: name,
+            url: editNameUrl,
+            placeholder: '{% trans "Enter name here"|escapejs %}',
+            cols: 50,
+          " data-apply-bindings="false"></inline-edit>
+        {% endif %}
         <label class="label label-default label-default" data-bind="visible: isDeid()">
           {% trans 'De-Identified' %}
         </label>
@@ -73,7 +82,16 @@
         <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong>
         <span data-bind="text: formname"></span>
       </p>
-      <p data-bind="text: description"></p>
+      {% if not is_odata %}
+        <p data-bind="text: description"></p>
+      {% else %}
+        <inline-edit params="
+          value: description,
+          url: editDescriptionUrl,
+          placeholder: '{% trans "Enter description here"|escapejs %}',
+          cols: 50,
+        " data-apply-bindings="false"></inline-edit>
+      {% endif %}
 
       <div data-bind="ifnot: isLocationSafeForUser()" class="text-warning">
         {% blocktrans %}

@@ -285,11 +285,11 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                     'all': '',
                     'format': 'number',
                     'frequency': 'month',
-                    'color': 'green' if percent_increase(
+                    'color': get_color_with_green_positive(percent_increase(
                         'days_open',
                         kpi_data_tm,
                         kpi_data_lm,
-                    ) > 0 else 'red',
+                    )),
                 }
             ]
         ],

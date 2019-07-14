@@ -15,8 +15,6 @@ from django.conf import settings
 from django_prbac.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 
-from dimagi.utils.logging import notify_exception
-
 from corehq import privileges
 from corehq.util.timer import time_method
 from corehq.util import view_utils
@@ -93,14 +91,6 @@ class ApplicationBaseValidator(object):
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': six.text_type(e)})
-        except Exception as e:
-            if settings.DEBUG:
-                raise
-
-            # this is much less useful/actionable without a URL
-            # so make sure to include the request
-            notify_exception(view_utils.get_request(), "Unexpected error building app")
-            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
     @time_method()
@@ -173,7 +163,7 @@ class ApplicationBaseValidator(object):
 
     def _check_password_charset(self):
         errors = []
-        if hasattr(self.app, 'profile'):
+        if self.app.build_spec.supports_j2me() and hasattr(self.app, 'profile'):
             password_format = self.app.profile.get('properties', {}).get('password_format', 'n')
             message = _(
                 'Your app requires {0} passwords but the admin password is not '

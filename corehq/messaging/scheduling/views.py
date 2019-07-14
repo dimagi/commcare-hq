@@ -60,6 +60,7 @@ from corehq.messaging.scheduling.view_helpers import (
     upload_conditional_alert_workbook,
 )
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
@@ -71,6 +72,11 @@ import io
 import six
 from six.moves import range
 from six.moves.urllib.parse import quote_plus
+
+_soft_assert_type_error = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -274,7 +280,12 @@ class MessagingDashboardView(BaseMessagingSectionView):
         self.add_sms_count_info(result, 30)
         self.add_event_count_info(result, 30)
         self.add_error_count_info(result, 30)
-        return JsonResponse(result)
+        try:
+            return JsonResponse(result)
+        except TypeError:
+            # TODO - remove after https://sentry.io/organizations/dimagi/issues/1107606091/ is resolved
+            _soft_assert_type_error(False, repr(result))
+            raise
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('action') == 'raw':
@@ -1015,7 +1026,6 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
     urlname = 'download_conditional_alert'
     http_method_names = ['get']
 
-    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
 
@@ -1035,10 +1045,9 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'upload_conditional_alert'
-    page_title = ugettext_lazy("Upload Conditional Alerts")
+    page_title = ugettext_lazy("Upload SMS Alert Content")
     template_name = 'hqwebapp/bulk_upload.html'
 
-    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     def dispatch(self, *args, **kwargs):
         return super(UploadConditionalAlertView, self).dispatch(*args, **kwargs)
@@ -1048,9 +1057,9 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
         context = {
             'bulk_upload': {
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
-                "adjective": _("conditional alert"),
-                "plural_noun": _("conditional alerts"),
-                "help_link": "https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts", # noqa
+                "adjective": _("SMS alert content"),
+                "plural_noun": _("SMS alert content"),
+                "help_link": "https://confluence.dimagi.com/display/commcarepublic/Bulk+download+and+upload+of+SMS+content+in+conditional+alerts", # noqa
             },
         }
         context.update({
