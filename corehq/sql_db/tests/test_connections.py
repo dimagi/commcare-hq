@@ -148,7 +148,7 @@ class ConnectionManagerTests(SimpleTestCase):
         )
 
     def test_filter_out_stale_standbys(self, *args):
-        with mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'ucr': 2, 'default': 4}.get(x, 0)):
+        with mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 2, 'default': 4}.get(x, 0)):
             self.assertEqual(
                 filter_out_stale_standbys(['ucr', 'default']),
                 ['ucr']

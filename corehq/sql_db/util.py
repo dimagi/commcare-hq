@@ -282,7 +282,7 @@ def filter_out_stale_standbys(dbs):
     # from given list of databases filters out those with more than
     #   acceptable standby delay, if that database is a standby
     delays_by_db = get_standby_delays_by_db()
-    relevant_dbs = tuple([pair[0] for pair in dbs])
+    relevant_dbs = tuple(dbs)
     return [
         db
         for db in dbs
@@ -308,7 +308,7 @@ def select_db_for_read(weighted_dbs):
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 
     # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(weights_by_db)
+    fresh_dbs = filter_out_stale_standbys(list(weights_by_db.keys()))
     dbs = []
     weights = []
     for _db, weight in six.iteritems(weights_by_db):
