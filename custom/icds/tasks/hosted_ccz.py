@@ -5,15 +5,17 @@ import six
 import sys
 from io import open
 from celery.task import task
+from django.template.defaultfilters import linebreaksbr
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from custom.icds.models import HostedCCZ
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 @task
-def setup_ccz_file_for_hosting(hosted_ccz_id):
+def setup_ccz_file_for_hosting(hosted_ccz_id, user_email=None):
     try:
         hosted_ccz = HostedCCZ.objects.get(pk=hosted_ccz_id)
     except HostedCCZ.DoesNotExist:
@@ -31,6 +33,24 @@ def setup_ccz_file_for_hosting(hosted_ccz_id):
                 ccz_utility.store_file_in_blobdb(ccz, name=hosted_ccz.file_name)
         except:
             exc = sys.exc_info()
+            if user_email:
+                content = """
+                    Hi,\n
+                    CCZ could not be created for the following request:\n
+                    App: {app}\n
+                    Version: {version}\n
+                    Profile: {profile}\n
+                    Link: {link}
+                """.format(app=build.name, version=hosted_ccz.version, profile=hosted_ccz.profile.get('name'),
+                           link=hosted_ccz.link.identifier)
+                send_html_email_async.delay(
+                    "CCZ Hosting setup failed for project {app} {domain}".format(
+                        app=build.name,
+                        domain=hosted_ccz.domain,
+                    ),
+                    user_email,
+                    linebreaksbr(content)
+                )
             # delete the file from blob db if it was added but later failed
             hosted_ccz.delete_ccz()
             six.reraise(*exc)

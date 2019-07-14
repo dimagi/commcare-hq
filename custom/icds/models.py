@@ -141,6 +141,7 @@ class HostedCCZ(models.Model):
     def save(self, *args, **kwargs):
         from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
         self.full_clean()
+        email = kwargs.pop('email') if 'email' in kwargs else None
         super(HostedCCZ, self).save(*args, **kwargs)
         if not self.utility.file_exists():
             setup_ccz_file_for_hosting.delay(self.pk)
