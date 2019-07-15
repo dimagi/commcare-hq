@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import flaky
 import re
 from collections import OrderedDict
+from flaky import flaky
 from uuid import uuid4
 
 from django.urls import reverse
