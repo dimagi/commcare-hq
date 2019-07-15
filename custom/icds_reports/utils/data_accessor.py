@@ -56,8 +56,8 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
 @icds_quickcache(['state_id', 'month'], timeout=120 * 60)
 def get_disha_api_v2_data(state_id, month):
 
-    data = DishaIndicatorViewV2.objects.filter(month=month,
-                                               state_id=state_id).first()
+    data = DishaIndicatorViewV2.objects.get(month=month,
+                                            state_id=state_id)
 
     # not using lxml because using lxml when no xml manipulation needed is just overengineering
     api_xml_response = """

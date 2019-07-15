@@ -114,8 +114,10 @@ from couchexport.shortcuts import export_response
 from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_disha_api_v2_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-
+from custom.icds_reports.models.views import DishaIndicatorViewV2
 from django.views.decorators.csrf import csrf_exempt
+
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class TableauView(RedirectView):
@@ -1776,7 +1778,8 @@ class DishaAPIViewV2(View):
             "missing_date": "Please specify valid month and year",
             "invalid_month": "Please specify a month that's older than or same as current month",
             "invalid_state": "Please specify one of {} as state_name".format(state_names),
-            "unknown_error": "Unknown Error occured"
+            "unknown_error": "Unknown Error occured",
+            "no_data": "Data does not exists"
         }
 
         error_message_template = """
@@ -1829,9 +1832,10 @@ class DishaAPIViewV2(View):
             state_id = self.valid_states[state_name]
             data = get_disha_api_v2_data(state_id, month_formatter(query_month))
             return HttpResponse(data, content_type='text/xml')
+        except DishaIndicatorViewV2.DoesNotExist:
+            return HttpResponse(self.message('no_data'), content_type='text/xml', status=500)
         except AttributeError:
             return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
-
     @property
     @icds_quickcache([])
     def valid_states(self):
