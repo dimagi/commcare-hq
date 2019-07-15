@@ -584,6 +584,24 @@ class ConditionalAlertBaseView(BaseMessagingSectionView):
 
 
 class ConditionalAlertListView(ConditionalAlertBaseView):
+    """List conditional alerts for editing and monitoring processing status
+
+    The "active" status displayed in the list is NOT the rule's active
+    flag (`rule.active`); instead, it is the rule's schedule's active
+    flag. Rule processing is triggered automatically when the rule is
+    saved _if the *rule* is active_ (and there is no way to deactivate
+    a conditional alert rule with the UI, only its schedule can be
+    (de)activated). Therefore rule processing occurs unconditionally
+    every time a rule is saved.
+
+    The theory of operation is to create rules in the inactive state
+    one-by-one while monitoring system performance. A rule can be
+    activated once it has successfully processed all cases matching its
+    case type. Rule activation triggers a rule processing run.
+
+    TODO determine if rule processing run on (de)activate is necessary.
+    """
+
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
     page_title = ugettext_lazy('Conditional Alerts')
