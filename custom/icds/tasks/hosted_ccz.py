@@ -49,7 +49,8 @@ def _notify_failure_to_user(hosted_ccz, build, user_email):
               "Version: {version}\n" \
               "Profile: {profile}\n" \
               "Link: {link}" \
-              "".format(app=build.name, version=hosted_ccz.version, profile=profile_name, link=hosted_ccz.link.identifier)
+              "".format(app=build.name, version=hosted_ccz.version, profile=profile_name,
+                        link=hosted_ccz.link.identifier)
     send_html_email_async.delay(
         "CCZ Hosting setup failed for app {app} in project {domain}".format(
             app=build.name,
