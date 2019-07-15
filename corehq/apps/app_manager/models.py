@@ -5812,7 +5812,7 @@ class AppReleaseByLocation(models.Model):
     def clean(self):
         if self.active:
             if not self.build.is_released:
-                raise ValidationError({'version': _("Version not released. Please mark it as released to add "
+                raise ValidationError({'version': _("Version {} not released. Please mark it as released to add "
                                                     "restrictions.").format(self.build.version)})
             enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id,
                                                                  self.app_id)
@@ -5871,10 +5871,89 @@ class LatestEnabledBuildProfiles(models.Model):
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
     build_id = models.CharField(max_length=255)
+    active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
+        self.expire_cache(self.build.domain)
+
+    @property
+    def build(self):
+        if not hasattr(self, '_build'):
+            self._build = Application.get(self.build_id)
+        return self._build
+
+    def clean(self):
+        if self.active:
+            if not self.build.is_released:
+                raise ValidationError({
+                    'version': _("Version {} not released. Can not enable profiles for unreleased versions"
+                                 ).format(self.build.version)
+                })
+            latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
+                app_id=self.build.copy_of,
+                build_profile_id=self.build_profile_id
+            )
+            if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
+                raise ValidationError({
+                    'version': _("Latest version available for this profile is {}, which is "
+                                 "higher than this version. Disable any higher versions first."
+                                 ).format(latest_enabled_build_profile.version)})
+
+    @classmethod
+    def update_status(cls, build, build_profile_id, active):
+        """
+        create a new object or just set the status of an existing one for an app
+        build and build profile to the status passed
+        :param active: to be set as active, True/False
+        """
+        app_id = build.copy_of
+        build_id = build.get_id
+        version = build.version
+        try:
+            build_profile = LatestEnabledBuildProfiles.objects.get(
+                app_id=app_id,
+                version=version,
+                build_profile_id=build_profile_id,
+                build_id=build_id
+            )
+        except cls.DoesNotExist:
+            build_profile = LatestEnabledBuildProfiles(
+                app_id=app_id,
+                version=version,
+                build_profile_id=build_profile_id,
+                build_id=build_id
+            )
+        # assign it to avoid re-fetching during validations
+        build_profile._build = build
+        build_profile.activate() if active else build_profile.deactivate()
+
+    def activate(self):
+        self.active = True
+        self.full_clean()
+        self.save()
+
+    def deactivate(self):
+        self.active = False
+        self.full_clean()
+        self.save()
+
+    @classmethod
+    def for_app_and_profile(cls, app_id, build_profile_id):
+        return cls.objects.filter(
+            app_id=app_id,
+            build_profile_id=build_profile_id,
+            active=True
+        ).order_by('-version').first()
 
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
         get_latest_enabled_versions_per_profile.clear(self.app_id)
+
+    def to_json(self, app_names):
+        from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
+        return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
+
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
