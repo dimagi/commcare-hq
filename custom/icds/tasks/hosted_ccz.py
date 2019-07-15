@@ -41,17 +41,17 @@ def setup_ccz_file_for_hosting(hosted_ccz_id, user_email=None):
 
 
 def _notify_failure_to_user(hosted_ccz, build, user_email):
-    content = """
-                        Hi,\n
-                        CCZ could not be created for the following request:\n
-                        App: {app}\n
-                        Version: {version}\n
-                        Profile: {profile}\n
-                        Link: {link}
-                    """.format(app=build.name, version=hosted_ccz.version, profile=hosted_ccz.profile.get('name'),
-                               link=hosted_ccz.link.identifier)
+    build_profile = hosted_ccz.build_profile
+    profile_name = build_profile.get('name') if build_profile else None
+    content = "Hi,\n"\
+              "CCZ could not be created for the following request:\n" \
+              "App: {app}\n" \
+              "Version: {version}\n" \
+              "Profile: {profile}\n" \
+              "Link: {link}" \
+              "".format(app=build.name, version=hosted_ccz.version, profile=profile_name, link=hosted_ccz.link.identifier)
     send_html_email_async.delay(
-        "CCZ Hosting setup failed for project {app} {domain}".format(
+        "CCZ Hosting setup failed for app {app} in project {domain}".format(
             app=build.name,
             domain=hosted_ccz.domain,
         ),
