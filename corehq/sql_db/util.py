@@ -91,9 +91,6 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
     filter_expression = {}
     while True:
         results = qs.filter(**filter_expression)[:query_size]
-        if len(results) == 0:
-            break
-
         for row in results:
             if return_values:
                 value = row[0]
@@ -101,6 +98,10 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
             else:
                 value = row.pk
                 yield row
+
+        if len(results) < query_size:
+            break
+
         filter_expression = {'{}__gt'.format(sort_col): value}
 
 
