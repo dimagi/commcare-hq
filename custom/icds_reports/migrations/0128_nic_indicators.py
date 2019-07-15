@@ -16,5 +16,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('disha_indicators_v2.sql')
+        migrator.get_migration('nic_indicators.sql')
     ]

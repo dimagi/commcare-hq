@@ -2,16 +2,16 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.test import TestCase
-from custom.icds_reports.utils.data_accessor import get_disha_api_v2_data
+from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 
 
-class DishaV2ApiTest(TestCase):
+class NICIndicatorTest(TestCase):
 
     def test_file_content(self):
+        self.maxDiff = None
         state_id = 'st1'
         month = '2017-05-01'
-
-        data = get_disha_api_v2_data(state_id, month)
+        data = get_inc_indicator_api_data(state_id, month)
 
         self.assertMultiLineEqual("""<?xml version="1.0" encoding="UTF-8"?>
     <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
@@ -27,6 +27,6 @@ class DishaV2ApiTest(TestCase):
           <children_enrolled>618</children_enrolled>
           <bf_at_birth>1</bf_at_birth>
           <ebf_in_month>17</ebf_in_month>
-          <cf_in_month>54</cf_in_month>
+          <cf_in_month>14</cf_in_month>
        </SOAP-ENV:Body>
     </SOAP-ENV:Envelope>""", data)

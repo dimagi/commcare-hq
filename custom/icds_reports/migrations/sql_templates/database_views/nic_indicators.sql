@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS icds_disha_indicators_v2 CASCADE;
-CREATE VIEW icds_disha_indicators_v2 AS
+DROP VIEW IF EXISTS nic_indicators CASCADE;
+CREATE VIEW nic_indicators AS
 SELECT
     "awc_monthly"."state_id" AS "state_id",
     "awc_monthly"."state_name" AS "state_name",

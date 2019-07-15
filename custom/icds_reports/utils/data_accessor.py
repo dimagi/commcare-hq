@@ -11,7 +11,7 @@ from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructur
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 from custom.icds_reports.reports.demographics_data import get_demographics_data
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
-from custom.icds_reports.models.views import DishaIndicatorViewV2
+from custom.icds_reports.models.views import NICIndicatorsView
 import logging
 
 notify_logger = logging.getLogger('notify')
@@ -54,9 +54,9 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
 # keeping cache timeout as 2 hours as this is going to be used
 # in some script/tool which might flood us with requests
 @icds_quickcache(['state_id', 'month'], timeout=120 * 60)
-def get_disha_api_v2_data(state_id, month):
+def get_inc_indicator_api_data(state_id, month):
 
-    data = DishaIndicatorViewV2.objects.get(month=month,
+    data = NICIndicatorsView.objects.get(month=month,
                                             state_id=state_id)
 
     # not using lxml because using lxml when no xml manipulation needed is just overengineering

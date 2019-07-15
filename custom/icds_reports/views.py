@@ -6,7 +6,7 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
-from lxml.etree import fromstring
+from lxml import etree
 
 
 from datetime import datetime, date
@@ -112,9 +112,9 @@ from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
 from couchexport.export import Format
-from custom.icds_reports.utils.data_accessor import get_disha_api_v2_data
+from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import DishaIndicatorViewV2
+from custom.icds_reports.models.views import NICIndicatorsView
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -1769,8 +1769,8 @@ class DishaAPIView(View):
 
 
 @location_safe
-@method_decorator([api_auth, csrf_exempt, toggles.ICDS_DISHA_API_NIC.required_decorator()], name='dispatch')
-class DishaAPIViewV2(View):
+@method_decorator([api_auth, csrf_exempt, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
+class NICIndicatorAPIView(View):
 
     def message(self, message_name):
         state_names = ", ".join(self.valid_states.keys())
@@ -1799,7 +1799,7 @@ class DishaAPIViewV2(View):
         return error_message_template.format(error_messages[message_name]).strip()
 
     def get_data(self, post_body):
-        xml_data = fromstring(post_body.strip())
+        xml_data = etree.fromstring(post_body.strip())
         nic_indicators_request = {
             'month': xml_data.xpath('//month')[0].text if xml_data.xpath('//month') else None,
             'year': xml_data.xpath('//year')[0].text if xml_data.xpath('//year') else None,
@@ -1830,12 +1830,13 @@ class DishaAPIViewV2(View):
 
         try:
             state_id = self.valid_states[state_name]
-            data = get_disha_api_v2_data(state_id, month_formatter(query_month))
+            data = get_inc_indicator_api_data(state_id, month_formatter(query_month))
             return HttpResponse(data, content_type='text/xml')
-        except DishaIndicatorViewV2.DoesNotExist:
+        except NICIndicatorsView.DoesNotExist:
             return HttpResponse(self.message('no_data'), content_type='text/xml', status=500)
         except AttributeError:
             return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
+
     @property
     @icds_quickcache([])
     def valid_states(self):

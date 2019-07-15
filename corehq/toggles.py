@@ -1661,8 +1661,8 @@ ICDS_DISHA_API = StaticToggle(
 )
 
 
-ICDS_DISHA_API_NIC = StaticToggle(
-    'icds_disha_access_nic',
+ICDS_NIC_INDICATOR_API = StaticToggle(
+    'icds_nic_indicator_acess',
     'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],

@@ -1081,7 +1081,7 @@ class DishaIndicatorView(models.Model):
         db_table = 'icds_disha_indicators'
 
 
-class DishaIndicatorViewV2(models.Model):
+class NICIndicatorsView(models.Model):
     state_id = models.TextField(primary_key=True)
     state_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
@@ -1100,4 +1100,4 @@ class DishaIndicatorViewV2(models.Model):
     class Meta(object):
         app_label = 'icds_reports'
         managed = False
-        db_table = 'icds_disha_indicators_v2'
+        db_table = 'nic_indicators'
