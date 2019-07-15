@@ -354,9 +354,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
             if (vm.selectedYear === latest.getFullYear()) {
                 var offset = date.getDate() < 15 ? 1 : 0;
-                
+
                 vm.months = _.filter(vm.monthsCopy, function (month) {
-                        return month.id <= latest.getMonth() - offset;
+                    return month.id <= latest.getMonth() - offset;
                 });
 
                 if (vm.selectedMonth > vm.months.slice(-1)[0].id) {
@@ -366,7 +366,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 if (vm.selectedYear === 2018) {
                     vm.months = vm.months.slice(-3);
 
-                    if(vm.selectedMonth < 10) {
+                    if (vm.selectedMonth < 10) {
                         vm.selectedMonth = 12;
                     }
                 }
