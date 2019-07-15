@@ -7,7 +7,6 @@ import uuid
 from mock import patch
 from memoized import memoized
 import os
-import codecs
 
 from django.test import TestCase, SimpleTestCase
 
@@ -22,13 +21,15 @@ from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.tests.utils import get_sample_report_config
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 from six.moves import zip
 from six.moves import range
 from io import open
 
 
-class AppManagerTest(TestCase):
+class AppManagerTest(TestCase, TestXmlMixin):
+    file_path = ('data',)
     min_paths = (
         'files/profile.ccpr',
         'files/profile.xml',
@@ -53,8 +54,7 @@ class AppManagerTest(TestCase):
         cls.domain = 'test-domain'
         create_domain(cls.domain)
 
-        with codecs.open(os.path.join(os.path.dirname(__file__), "data", "very_simple_form.xml"), encoding='utf-8') as f:
-            cls.xform_str = f.read()
+        cls.xform_str = cls.get_xml('very_simple_form').decode('utf-8')
 
     def setUp(self):
         super(AppManagerTest, self).setUp()
