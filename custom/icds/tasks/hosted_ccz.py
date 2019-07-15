@@ -25,7 +25,7 @@ def setup_ccz_file_for_hosting(hosted_ccz_id):
         # profile_id should be None and not any other false value
         profile_id = hosted_ccz.profile_id or None
         build = wrap_app(get_build_doc_by_version(hosted_ccz.domain, hosted_ccz.app_id, version))
-        ccz_file = create_files_for_ccz(build, profile_id, download_targeted_version=build.has_commcare_flavor)
+        ccz_file = create_files_for_ccz(build, profile_id, download_targeted_version=bool(build.commcare_flavor))
         try:
             with open(ccz_file, 'rb') as ccz:
                 ccz_utility.store_file_in_blobdb(ccz, name=hosted_ccz.file_name)
