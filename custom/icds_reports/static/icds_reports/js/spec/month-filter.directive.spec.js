@@ -44,7 +44,6 @@ describe('Month Filter Controller', function () {
     });
 
     it('tests auto date change on invalid date in SDD', function () {
-        var expectedDate  = formatDateToPlaceholderFormat(new Date());
         var invalidDate = moment('2015-10-19').toDate();
 
         var clock = sinon.useFakeTimers(invalidDate.getTime());
@@ -165,7 +164,7 @@ describe('Month Modal Controller', function () {
         clock.restore();
     });
 
-    it('test display info message on invalid sdd navigation', function() {
+    it('test display info message on invalid sdd navigation', function () {
         var fakeDate = new Date(2016, 9, 1);
         var clock = sinon.useFakeTimers(fakeDate.getTime());
         injectSDDController();
@@ -175,13 +174,13 @@ describe('Month Modal Controller', function () {
         clock.restore();
     });
 
-    it('test change default date in invalid sdd navigation', function() {
+    it('test change default date in invalid sdd navigation', function () {
         var fakeDate = new Date(2016, 9, 1);
         var clock = sinon.useFakeTimers(fakeDate.getTime());
         injectSDDController();
 
         assert.equal(controller.selectedYear, new Date().getFullYear());
-        assert.equal(controller.selectedMonth, new Date().getMonth()+1);
+        assert.equal(controller.selectedMonth, new Date().getMonth() + 1);
 
         clock.restore();
     });
@@ -195,7 +194,7 @@ describe('Month Modal Controller', function () {
         return false;
     }
 
-    function injectSDDController(){
+    function injectSDDController() {
         $location.path('service_delivery_dashboard');
 
         inject(function ($controller, _$location_) {

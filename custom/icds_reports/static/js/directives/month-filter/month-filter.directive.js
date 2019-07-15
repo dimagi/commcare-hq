@@ -134,8 +134,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
                 displayModal = false;
             }
 
-            if($location.path().indexOf('service_delivery_dashboard') !== -1
-                && displayModal){
+            if($location.path().indexOf('service_delivery_dashboard') !== -1 && displayModal) {
                 vm.open();
             }
     }
