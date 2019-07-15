@@ -4,12 +4,17 @@ from __future__ import unicode_literals
 import logging
 from collections import defaultdict
 from contextlib import contextmanager
+try:
+    from inspect import signature
+except ImportError:
+    from funcsigs import signature  # TODO remove after Python 3 upgrade
 
 import attr
 import gevent
 import six
 from django.test import SimpleTestCase
 from gevent.event import Event
+from gevent.queue import Queue
 from mock import patch
 from testil import tempdir
 
@@ -325,6 +330,90 @@ class TestCaseDiffQueue(StateDirTest):
     def expected_error(self):
         with silence_expected_errors(), self.assertRaises(Error):
             yield
+
+
+@patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
+class TestCaseDiffProcess(StateDirTest):
+
+    def tearDown(self):
+        delete_state_db("test", self.state_dir)
+        super(TestCaseDiffProcess, self).tearDown()
+
+    def test_process(self):
+        with self.process() as proc:
+            self.assertEqual(self.get_status(proc), [0, 0, 0])
+            proc.update({"case1", "case2"}, "form")
+            proc.enqueue({"case": "data"})
+            self.assertEqual(self.get_status(proc), [2, 1, 0])
+
+    def test_process_statedb(self):
+        with self.process() as proc1:
+            self.assertEqual(self.get_status(proc1), [0, 0, 0])
+            proc1.enqueue({"case": "data"})
+            self.assertEqual(self.get_status(proc1), [0, 1, 0])
+        with self.process() as proc2:
+            self.assertEqual(self.get_status(proc2), [0, 1, 0])
+            proc2.enqueue({"case": "data"})
+            self.assertEqual(self.get_status(proc2), [0, 2, 0])
+
+    def test_fake_case_diff_queue_interface(self):
+        tested = set()
+        for name in dir(FakeCaseDiffQueue):
+            if name.startswith("_"):
+                continue
+            tested.add(name)
+            fake = getattr(FakeCaseDiffQueue, name)
+            real = getattr(mod.CaseDiffQueue, name)
+            self.assertEqual(signature(fake), signature(real))
+        self.assertEqual(tested, {"update", "enqueue", "get_status"})
+
+    @contextmanager
+    def process(self):
+        with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
+            statedb,
+            status_interval=1,
+            queue_class=FakeCaseDiffQueue,
+        ) as proc:
+            yield proc
+
+    @staticmethod
+    def get_status(proc):
+        def log_status(status):
+            log.info("status: %s", status)
+            keys = ["pending_cases", "pending_diffs", "diffed_cases"]
+            assert keys == list(status), status
+            queue.put([status[k] for k in keys])
+
+        queue = Queue()
+        with patch.object(mod.CaseDiffQueue, "log_status") as mock:
+            mock.side_effect = log_status
+            proc.request_status()
+            return queue.get(timeout=5)
+
+
+class FakeCaseDiffQueue(object):
+
+    def __init__(self, statedb, status_interval=None):
+        self.statedb = statedb
+        self.stats = {"pending_cases": 0, "pending_diffs": 0, "diffed_cases": 0}
+
+    def __enter__(self):
+        state = self.statedb.pop_resume_state(type(self).__name__, {})
+        if "stats" in state:
+            self.stats = state["stats"]
+        return self
+
+    def __exit__(self, *exc_info):
+        self.statedb.set_resume_state(type(self).__name__, {"stats": self.stats})
+
+    def update(self, case_ids, form_id):
+        self.stats["pending_cases"] += len(case_ids)
+
+    def enqueue(self, case_doc):
+        self.stats["pending_diffs"] += 1
+
+    def get_status(self):
+        return self.stats
 
 
 @patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)

@@ -6,6 +6,7 @@ from collections import defaultdict
 from itertools import chain, count
 
 import gevent
+import gipc
 import six
 from gevent.pool import Pool
 from gevent.event import Event
@@ -398,6 +399,109 @@ class BatchProcessor(object):
 
     def __iter__(self):
         return iter(self.batches.values())
+
+
+class CaseDiffProcess(object):
+    """Run CaseDiffQueue in a separate process"""
+
+    def __init__(self, statedb, status_interval=STATUS_INTERVAL, queue_class=CaseDiffQueue):
+        self.statedb = statedb
+        self.status_interval = status_interval
+        self.queue_class = queue_class
+
+    def __enter__(self):
+        log.debug("starting case diff process")
+        self.calls_pipe = gipc.pipe()
+        self.stats_pipe = gipc.pipe()
+        calls, self.calls = self.calls_pipe.__enter__()
+        self.stats, stats = self.stats_pipe.__enter__()
+        args = (self.queue_class, calls, stats, self.statedb)
+        self.process = gipc.start_process(target=run_case_diff_queue, args=args)
+        self.status_logger = gevent.spawn(self.run_status_logger)
+        return self
+
+    def __exit__(self, *exc_info):
+        is_error = exc_info[0] is not None
+        if is_error:
+            log.error("stopping process with error", exc_info=exc_info)
+        else:
+            log.debug("stopping process")
+        self.calls.put((TERMINATE, is_error))
+        self.status_logger.join(timeout=30)
+        self.process.join(timeout=30)
+        self.stats_pipe.__exit__(*exc_info)
+        self.calls_pipe.__exit__(*exc_info)
+
+    def update(self, case_ids, form_id):
+        self.calls.put(("update", case_ids, form_id))
+
+    def enqueue(self, case_doc):
+        self.calls.put(("enqueue", case_doc))
+
+    def request_status(self):
+        log.debug("reqeust status...")
+        self.calls.put((STATUS,))
+
+    def run_status_logger(self):
+        """Request and log status from the case diff process
+
+        Status details are logged as they are produced by the remote
+        process. A status update is requested when the remote process
+        has not sent an update in `status_interval` seconds.
+        """
+        requested = object()
+        status = None
+        while True:
+            with gevent.Timeout(self.status_interval, False) as timeout:
+                status = self.stats.get(timeout=timeout)
+            if status == TERMINATE:
+                break
+            if status is None:
+                self.request_status()
+                status = requested
+            elif status is not requested:
+                CaseDiffQueue.log_status(status)
+                status = None
+
+
+STATUS = "status"
+TERMINATE = "terminate"
+
+
+def run_case_diff_queue(queue_class, calls, stats, statedb):
+    def status():
+        stats.put(queue.get_status())
+
+    def terminate(is_error):
+        stats.put(TERMINATE)
+        raise (ParentError if is_error else GracefulExit)
+
+    def dispatch(action, *args):
+        log.debug("case diff dispatch: %s", action)
+        if action in process_actions:
+            process_actions[action](*args)
+        else:
+            getattr(queue, action)(*args)
+
+    process_actions = {STATUS: status, TERMINATE: terminate}
+    try:
+        with queue_class(statedb, status_interval=0) as queue, calls, stats:
+            try:
+                while True:
+                    call = calls.get()
+                    dispatch(*call)
+            except GracefulExit:
+                pass
+    except ParentError:
+        log.error("stopped due to error in parent process")
+
+
+class GracefulExit(Exception):
+    pass
+
+
+class ParentError(Exception):
+    pass
 
 
 def diff_cases(couch_cases, statedb):
