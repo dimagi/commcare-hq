@@ -100,23 +100,23 @@ class UploadedTranslationsValidator(object):
             if _column_name == header:
                 return index
 
-    def _filter_rows(self, for_type, expected_rows, module_or_form_id):
+    def _filter_rows(self, for_type, rows, module_or_form_id):
         if for_type == 'form':
             return self.app_translation_generator._filter_invalid_rows_for_form(
-                expected_rows,
+                rows,
                 module_or_form_id,
                 self._get_current_header_index(module_or_form_id, 'label')
             )
         elif for_type == 'module':
             return self.app_translation_generator._filter_invalid_rows_for_module(
-                expected_rows,
+                rows,
                 module_or_form_id,
                 self._get_current_header_index(module_or_form_id, 'case_property'),
                 self._get_current_header_index(module_or_form_id, 'list_or_detail'),
                 self._get_current_header_index(module_or_form_id, self.default_language_column)
             )
         elif for_type == 'module_and_form':
-            return expected_rows
+            return rows
         assert False, "Unexpected type"
 
     def _compare_sheet(self, module_or_form_id, uploaded_rows, for_type):
