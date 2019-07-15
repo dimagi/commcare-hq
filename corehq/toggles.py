@@ -1835,3 +1835,10 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
+    'disable_case_update_rule_task',
+    'Disable the `run_case_update_rules` periodic task',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
