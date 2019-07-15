@@ -191,8 +191,8 @@ describe('Month Modal Controller', function () {
 
         inject(function ($controller, _$location_) {
             controller = $controller(MonthModalController, {
-                    $location: $location,
-                    $uibModalInstance: modalInstance,
+                $location: $location,
+                $uibModalInstance: modalInstance,
             });
         });
     }

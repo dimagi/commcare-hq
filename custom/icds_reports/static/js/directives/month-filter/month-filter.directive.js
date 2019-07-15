@@ -28,10 +28,10 @@ function MonthModalController($location, $uibModalInstance) {
     vm.selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
     vm.selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
 
-    if(isSDD && (vm.selectedYear<2019 || (vm.selectedYear==2019 && vm.selectedMonth==1))){
+    if (isSDD && (vm.selectedYear < 2019 || (vm.selectedYear === 2019 && vm.selectedMonth === 1))) {
         vm.showMessage = true;
         vm.selectedYear = new Date().getFullYear();
-        vm.selectedMonth = new Date().getMonth()+1;
+        vm.selectedMonth = new Date().getMonth() + 1;
     }
 
     if (vm.selectedYear === new Date().getFullYear()) {
@@ -125,7 +125,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
         });
     };
 
-    vm.init = function() {
+    vm.init = function () {
         var month = parseInt($location.search()['month']);
         var year = parseInt($location.search()['year']);
         var displayModal = true;
@@ -137,7 +137,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
         if ($location.path().indexOf('service_delivery_dashboard') !== -1 && displayModal) {
             vm.open();
         }
-    }
+    };
 
     vm.init();
 }
