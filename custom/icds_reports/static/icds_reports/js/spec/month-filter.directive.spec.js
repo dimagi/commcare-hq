@@ -69,14 +69,6 @@ describe('Month Filter Controller', function () {
 
         clock.restore();
     });
-
-    function formatDateToPlaceholderFormat(date) {
-        var momentDate = moment(date);
-        var year = momentDate.year();
-        var month = momentDate.format('MMMM');
-
-        return month + ' ' + year;
-    }
 });
 
 describe('Month Modal Controller', function () {

@@ -126,17 +126,17 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
     };
 
     vm.init = function() {
-            var month = $location.search()['month'];
-            var year = $location.search()['year'];
-            var displayModal = true;
+        var month = $location.search()['month'];
+        var year = $location.search()['year'];
+        var displayModal = true;
 
-            if(year > 2019 || (year==2019  &&  month>1)){
-                displayModal = false;
-            }
+        if(year > 2019 || (year==2019  &&  month>1)){
+            displayModal = false;
+        }
 
-            if($location.path().indexOf('service_delivery_dashboard') !== -1 && displayModal) {
-                vm.open();
-            }
+        if($location.path().indexOf('service_delivery_dashboard') !== -1 && displayModal) {
+            vm.open();
+        }
     }
 
     vm.init();
