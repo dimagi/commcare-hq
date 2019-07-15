@@ -1,4 +1,4 @@
-/* global module, inject, chai */
+/* global module, inject, chai, moment */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -356,7 +356,7 @@ describe('Download Directive', function () {
                 controller.onSelectYear(yearToFilter);
                 var expectedMonths = [];
                 var expectedSelectedMonth = currentMonth;
-                for (var month = 0; month < currentMonth; month++) {
+                for (var month=0; month<currentMonth; month++) {
                     expectedMonths.push({
                         name: existingMonths[month],
                         id: month + 1,
@@ -398,7 +398,7 @@ describe('Download Directive', function () {
                 controller.onSelectYear(yearToFilter);
                 var expectedMonths = [];
                 var expectedSelectedMonth = currentMonth;
-                for (var month = 0; month < currentMonth; month++) {
+                for (var month=0; month<currentMonth; month++) {
                     expectedMonths.push({
                         name: existingMonths[month],
                         id: month + 1,

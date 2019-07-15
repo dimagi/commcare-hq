@@ -346,7 +346,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.yearsCopy = [];
         var currentYear = new Date().getFullYear();
 
-        for (var year = minYear; year <= currentYear; year++ ) {
+        for (var year=minYear; year<=currentYear; year++ ) {
             vm.yearsCopy.push({
                 name: year,
                 id: year,
