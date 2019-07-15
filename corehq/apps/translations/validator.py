@@ -36,6 +36,7 @@ class UploadedTranslationsValidator(object):
     def __init__(self, app, uploaded_workbook, lang_to_compare, lang_prefix='default_'):
         self.app = app
         self.uploaded_workbook = uploaded_workbook
+        self.uploaded_headers = dict()  # sheet_name: list of headers
         self.expected_headers = dict()  # module_or_form_id: list of headers
         self.expected_rows = dict()  # module_or_form_id: translations
         self.lang_prefix = lang_prefix
@@ -50,6 +51,7 @@ class UploadedTranslationsValidator(object):
             self.app.domain, self.app.get_id, None, self.app.default_language, target_lang,
             self.lang_prefix)
         self.current_sheet_name_to_module_or_form_type_and_id = dict()
+        self.uploaded_sheet_name_to_module_or_form_type_and_id = dict()
 
     def _generate_expected_headers_and_rows(self):
         self.expected_headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
@@ -163,3 +165,23 @@ class UploadedTranslationsValidator(object):
             if error_msgs:
                 msgs[sheet_name] = error_msgs
         return msgs
+
+    def _parse_uploaded_worksheet(self):
+        sheets_rows = dict()
+        for sheet in self.uploaded_workbook.worksheets:
+            sheets_rows[sheet.worksheet.title] = get_unicode_dicts(sheet)
+        self._generate_uploaded_headers()
+        self._set_uploaded_sheet_name_to_module_or_form_mapping(sheets_rows[MODULES_AND_FORMS_SHEET_NAME])
+        return sheets_rows
+
+    def _generate_uploaded_headers(self):
+        for sheet in self.uploaded_workbook.worksheets:
+            self.uploaded_headers[sheet.title] = sheet.headers
+
+    def _set_uploaded_sheet_name_to_module_or_form_mapping(self, all_module_and_form_details):
+        for row in all_module_and_form_details:
+            self.uploaded_sheet_name_to_module_or_form_type_and_id[row['menu_or_form']] = Unique_ID(
+                row['Type'],
+                row['unique_id']
+            )
+
