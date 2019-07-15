@@ -145,16 +145,15 @@ class TestLinkedApps(BaseLinkedAppsTest):
     def test_multi_master_fields(self):
         original_master1_version = self.plain_master_app.version or 0
         original_master2_version = self.other_master_app.version or 0
-        original_linked_version = self.linked_app.version or 0
 
         # Make a few versions of master apps
         self._make_new_master_build()
         self._make_new_master_build()
         self._make_new_master_build()
-        current_master1 = self._make_new_master_build()
+        self._make_new_master_build()
         self._make_new_master_build(app=self.other_master_app)
         self._make_new_master_build(app=self.other_master_app)
-        current_master2 = self._make_new_master_build(app=self.other_master_app)
+        self._make_new_master_build(app=self.other_master_app)
 
         # Pull linked app from first master and refresh from database
         update_linked_app(self.linked_app, self.plain_master_app.get_id, 'test_incremental_versioning')
