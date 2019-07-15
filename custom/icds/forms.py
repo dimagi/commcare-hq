@@ -55,8 +55,9 @@ class HostedCCZForm(forms.Form):
     file_name = forms.CharField(label=ugettext_lazy("CCZ File Name"), required=False)
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3, 'cols': 15}))
 
-    def __init__(self, request, domain, *args, **kwargs):
+    def __init__(self, request, domain, email, *args, **kwargs):
         self.domain = domain
+        self.email = email
         super(HostedCCZForm, self).__init__(*args, **kwargs)
         self.fields['link_id'].choices = self.link_choices()
         self.fields['app_id'].choices = self.app_id_choices()
@@ -106,12 +107,12 @@ class HostedCCZForm(forms.Form):
 
     def save(self):
         try:
-            HostedCCZ.objects.create(
+            HostedCCZ(
                 link_id=self.cleaned_data['link_id'], app_id=self.cleaned_data['app_id'],
                 version=self.cleaned_data['version'], profile_id=self.cleaned_data['profile_id'],
                 file_name=self.cleaned_data['file_name'],
                 note=self.cleaned_data['note'],
-            )
+            ).save(email=self.email)
         except ValidationError as e:
             return False, ','.join(e.messages)
         return True, None
