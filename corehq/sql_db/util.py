@@ -207,18 +207,19 @@ def _get_all_nested_subclasses(cls):
 
 
 @memoized
-def get_standby_databases():
+def get_standby_databases(relevant_dbs=None):
     standby_dbs = []
     for db_alias in settings.DATABASES:
-        with db.connections[db_alias].cursor() as cursor:
-            cursor.execute("SELECT pg_is_in_recovery()")
-            [(is_standby, )] = cursor.fetchall()
-            if is_standby:
-                standby_dbs.append(db_alias)
+        if relevant_dbs is None or db_alias in relevant_dbs:
+            with db.connections[db_alias].cursor() as cursor:
+                cursor.execute("SELECT pg_is_in_recovery()")
+                [(is_standby, )] = cursor.fetchall()
+                if is_standby:
+                    standby_dbs.append(db_alias)
     return standby_dbs
 
 
-def get_replication_delay_for_standby(db_alias):
+def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
@@ -226,7 +227,8 @@ def get_replication_delay_for_standby(db_alias):
     If the given database is not a standby database, zero delay is returned
     If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
     """
-    if db_alias not in get_standby_databases():
+
+    if db_alias not in get_standby_databases(relevant_dbs):
         return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
@@ -263,10 +265,11 @@ def filter_out_stale_standbys(dbs):
     # from given list of databases filters out those with more than
     #   acceptable standby delay, if that database is a standby
     delays_by_db = get_standby_delays_by_db()
+    relevant_dbs = tuple(dbs)
     return [
         db
         for db in dbs
-        if get_replication_delay_for_standby(db) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
+        if get_replication_delay_for_standby(db, relevant_dbs) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
     ]
 
 
@@ -288,7 +291,7 @@ def select_db_for_read(weighted_dbs):
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 
     # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(weights_by_db)
+    fresh_dbs = filter_out_stale_standbys(list(weights_by_db.keys()))
     dbs = []
     weights = []
     for _db, weight in six.iteritems(weights_by_db):
