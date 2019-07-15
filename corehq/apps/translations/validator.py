@@ -68,6 +68,18 @@ class UploadedTranslationsValidator(object):
         self._map_ids_to_headers()
         self._map_ids_to_translations()
 
+    def _set_current_sheet_name_to_module_or_form_mapping(self):
+        # iterate the first sheet to get unique ids for forms/modules
+        all_module_and_form_details = self.expected_rows[MODULES_AND_FORMS_SHEET_NAME]
+        sheet_name_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
+        unique_id_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
+        type_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
+        for row in all_module_and_form_details:
+            self.current_sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = Unique_ID(
+                row[type_column_index],
+                row[unique_id_column_index]
+            )
+
     def _map_ids_to_headers(self):
         sheet_names = list(self.expected_headers.keys())
         for sheet_name in sheet_names:
@@ -81,18 +93,6 @@ class UploadedTranslationsValidator(object):
             if sheet_name != MODULES_AND_FORMS_SHEET_NAME:
                 mapping = self.current_sheet_name_to_module_or_form_type_and_id.get(sheet_name)
                 self.expected_rows[mapping.id] = self.expected_rows.pop(sheet_name)
-
-    def _set_current_sheet_name_to_module_or_form_mapping(self):
-        # iterate the first sheet to get unique ids for forms/modules
-        all_module_and_form_details = self.expected_rows[MODULES_AND_FORMS_SHEET_NAME]
-        sheet_name_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
-        unique_id_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
-        type_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
-        for row in all_module_and_form_details:
-            self.current_sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = Unique_ID(
-                row[type_column_index],
-                row[unique_id_column_index]
-            )
 
     @memoized
     def _get_current_header_index(self, module_or_form_id, header):
