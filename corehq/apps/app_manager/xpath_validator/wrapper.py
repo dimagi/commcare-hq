@@ -19,11 +19,11 @@ def validate_xpath(xpath, allow_case_hashtags=False):
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate(xpath.replace('\r', ' ').encode('utf-8'))
         exit_code = p.wait()
-        if exit_code == 0:
-            return XpathValidationResponse(is_valid=True, message=None)
-        elif exit_code == 1:
-            return XpathValidationResponse(is_valid=False, message=stdout)
-        else:
-            raise XpathValidationError(
-                "{path} failed with exit code {exit_code}:\n{stderr}"
-                .format(path=path, exit_code=exit_code, stderr=stderr))
+    if exit_code == 0:
+        return XpathValidationResponse(is_valid=True, message=None)
+    elif exit_code == 1:
+        return XpathValidationResponse(is_valid=False, message=stdout)
+    else:
+        raise XpathValidationError(
+            "{path} failed with exit code {exit_code}:\n{stderr}"
+            .format(path=path, exit_code=exit_code, stderr=stderr))
