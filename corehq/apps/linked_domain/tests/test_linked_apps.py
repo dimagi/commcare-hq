@@ -141,11 +141,11 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(master1_copy2.get_id, latest_master_release.get_id)
         self.assertEqual(master1_copy2._rev, latest_master_release._rev)
 
-        master2_copy1 = self._make_new_master_build(app=self.other_master_app)
-        latest_plain_master_release = self.linked_app.get_latest_master_release(master_id)
-        latest_other_master_release = self.linked_app.get_latest_master_release(self.other_master_app.get_id)
-        self.assertEqual(master1_copy2.get_id, latest_plain_master_release.get_id)
-        self.assertEqual(master2_copy1.get_id, latest_other_master_release.get_id)
+        master2_copy1 = self._make_master2_build()
+        latest_master1_release = self.linked_app.get_latest_master_release(master_id)
+        latest_master2_release = self.linked_app.get_latest_master_release(self.master2.get_id)
+        self.assertEqual(master1_copy2.get_id, latest_master1_release.get_id)
+        self.assertEqual(master2_copy1.get_id, latest_master2_release.get_id)
 
     def test_incremental_versioning(self):
         original_master_version = self.master1.version or 0
@@ -167,7 +167,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
     def test_multi_master_fields(self):
         original_master1_version = self.master1.version or 0
         original_master2_version = self.master2.version or 0
-        original_linked_version = self.linked_app.version or 0
 
         # Make a few versions of master apps
         self._make_master1_build(True)
@@ -184,42 +183,38 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(self.linked_app.upstream_app_id, self.master1.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master1_version + 4)
 
-        # Pull linked app from other master and refresh from database
+        # Pull linked app from master2 and refresh from database
         update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
         self.assertEqual(self.linked_app.upstream_app_id, self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master2_version + 3)
 
     def test_get_previous_version(self):
-        # Make build of plain master, pull linked app, and make linked app build
-        self._make_new_master_build()
-        plain_build = self._make_new_master_build()
-        plain_build.save()
-        update_linked_app(self.linked_app, self.plain_master_app.get_id, 'test_incremental_versioning')
+        # Make build of master1, pull linked app, and make linked app build
+        self._make_master1_build()
+        update_linked_app(self.linked_app, self.master1.get_id, 'test_incremental_versioning')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
-        linked_build1 = self._make_new_linked_build()
+        linked_build1 = self._make_linked_build()
 
-        # Make several builds of other master, each also pulled to linked app and built there
-        self._make_new_master_build(app=self.other_master_app)
-        other_build = self._make_new_master_build(app=self.other_master_app)
-        other_build.save()
-        update_linked_app(self.linked_app, self.other_master_app.get_id, 'test_incremental_versioning')
+        # Make several builds of master2, each also pulled to linked app and built there
+        self._make_master2_build()
+        self._make_master2_build()
+        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
-        linked_build2 = self._make_new_linked_build()
-        self._make_new_master_build(app=self.other_master_app)
-        other_build = self._make_new_master_build(app=self.other_master_app)
-        other_build.save()
-        update_linked_app(self.linked_app, self.other_master_app.get_id, 'test_incremental_versioning')
+        linked_build2 = self._make_linked_build()
+        self._make_master2_build()
+        self._make_master2_build()
+        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
-        linked_build3 = self._make_new_linked_build()
+        linked_build3 = self._make_linked_build()
 
-        previous_other_version = linked_build3.get_previous_version()
-        self.assertEqual(previous_other_version.upstream_app_id, self.other_master_app.get_id)
-        self.assertEqual(previous_other_version.get_id, linked_build2.get_id)
+        previous_master2_version = linked_build3.get_previous_version()
+        self.assertEqual(previous_master2_version.upstream_app_id, self.master2.get_id)
+        self.assertEqual(previous_master2_version.get_id, linked_build2.get_id)
 
-        previous_plain_version = linked_build3.get_previous_version(master_app_id=self.plain_master_app.get_id)
-        self.assertEqual(previous_plain_version.upstream_app_id, self.plain_master_app.get_id)
-        self.assertEqual(previous_plain_version.get_id, linked_build1.get_id)
+        previous_master1_version = linked_build3.get_previous_version(master_app_id=self.master1.get_id)
+        self.assertEqual(previous_master1_version.upstream_app_id, self.master1.get_id)
+        self.assertEqual(previous_master1_version.get_id, linked_build1.get_id)
 
     def test_get_latest_master_release_not_permitted(self):
         release = self._make_master1_build(True)
@@ -308,7 +303,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         })
         self.assertEqual(self.master1.practice_mobile_worker_id, '123456')
         self.assertEqual(self.linked_app.practice_mobile_worker_id, 'abc123456def')
-        # cleanup the linked app properties
+        # clean up the linked app properties
         self.linked_app.linked_app_logo_refs = {}
         self.linked_app.linked_app_attrs = {}
         self.linked_app.save()
