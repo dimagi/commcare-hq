@@ -31,8 +31,8 @@ class UploadedTranslationsValidator(object):
     def __init__(self, app, uploaded_workbook, lang_to_compare, lang_prefix='default_'):
         self.app = app
         self.uploaded_workbook = uploaded_workbook
-        self.headers = None
-        self.expected_rows = None
+        self.expected_headers = dict()  # module_or_form_id: list of headers
+        self.expected_rows = dict()  # module_or_form_id: translations
         self.lang_prefix = lang_prefix
         self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
         self.default_language_column = self.lang_prefix + self.app.default_language
@@ -46,7 +46,7 @@ class UploadedTranslationsValidator(object):
             self.lang_prefix)
 
     def _generate_expected_headers_and_rows(self):
-        self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
+        self.expected_headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
             self.app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
@@ -59,7 +59,7 @@ class UploadedTranslationsValidator(object):
 
     @memoized
     def _get_header_index(self, sheet_name, header):
-        for index, _column_name in enumerate(self.headers[sheet_name]):
+        for index, _column_name in enumerate(self.expected_headers[sheet_name]):
             if _column_name == header:
                 return index
 
