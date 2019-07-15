@@ -236,7 +236,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(self.plain_master_app.logo_refs, {})
         self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
         self.assertEqual(self.linked_app.logo_refs, logo_refs)
-        self.assertEqual(self.linked_app.target_commcare_flavor, 'commcare_lts')
+        self.assertEqual(self.linked_app.commcare_flavor, 'commcare_lts')
         self.assertEqual(self.linked_app.linked_app_attrs, {
             'target_commcare_flavor': 'commcare_lts',
         })
