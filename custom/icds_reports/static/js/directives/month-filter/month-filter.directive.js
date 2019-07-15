@@ -39,7 +39,7 @@ function MonthModalController($location, $uibModalInstance) {
             return month.id <= new Date().getMonth() + 1;
         });
 
-        if (vm.selectedYear === 2019) {
+        if (startDate === 2019) {
             vm.months.shift();
         }
     } else if (startDate === 2019 && vm.selectedYear === 2019) {
@@ -68,7 +68,7 @@ function MonthModalController($location, $uibModalInstance) {
                 return month.id <= new Date().getMonth() + 1;
             });
 
-            if (vm.selectedYear === 2019) {
+            if (startDate === 2019) {
                 vm.months.shift();
             }
             
