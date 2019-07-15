@@ -354,7 +354,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
             if (vm.selectedYear === latest.getFullYear()) {
                 var offset = date.getDate() < 15 ? 1 : 0;
-                console.log(offset);
+                
                 vm.months = _.filter(vm.monthsCopy, function (month) {
                         return month.id <= latest.getMonth() - offset;
                 });
