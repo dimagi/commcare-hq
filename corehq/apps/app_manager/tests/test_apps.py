@@ -16,13 +16,11 @@ from corehq.apps.app_manager.models import Application, DetailColumn, import_app
     ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tasks import autogenerate_build, prune_auto_generated_builds
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
-from corehq.apps.app_manager.util import add_odk_profile_after_build, purge_report_from_mobile_ucr
 from corehq.apps.app_manager.views.apps import load_app_from_slug
+from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.tests.utils import get_sample_report_config
-from corehq.util.test_utils import flag_enabled
 
 from six.moves import zip
 from six.moves import range
@@ -331,27 +329,3 @@ class AppManagerTest(TestCase):
         self.assertIn('Build-Number', self.app.jad_settings)
         self.app.build_spec = BuildSpec(version='2.8.0', build_number=1)
         self.assertNotIn('Build-Number', self.app.jad_settings)
-
-
-class TestReportModule(SimpleTestCase):
-
-    @flag_enabled('MOBILE_UCR')
-    @patch('dimagi.ext.couchdbkit.Document.get_db')
-    def test_purge_report_from_mobile_ucr(self, get_db):
-        report_config = ReportConfiguration(domain='domain', config_id='foo1')
-        report_config._id = "my_report_config"
-
-        app = Application.new_app('domain', "App")
-        report_module = app.add_module(ReportModule.new_module('Reports', None))
-        report_module.report_configs = [
-            ReportAppConfig(report_id=report_config._id, header={'en': 'CommBugz'}),
-            ReportAppConfig(report_id='other_config_id', header={'en': 'CommBugz'})
-        ]
-        self.assertEqual(len(app.modules[0].report_configs), 2)
-
-        with patch('corehq.apps.app_manager.util.get_apps_in_domain') as get_apps:
-            get_apps.return_value = [app]
-            # this will get called when report_config is deleted
-            purge_report_from_mobile_ucr(report_config)
-
-        self.assertEqual(len(app.modules[0].report_configs), 1)
