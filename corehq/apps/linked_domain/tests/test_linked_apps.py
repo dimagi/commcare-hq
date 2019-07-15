@@ -134,10 +134,18 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._make_master1_build(False)
         self.assertIsNone(self.linked_app.get_latest_master_release(master_id))
 
-        copy1 = self._make_master1_build(True)
+        self._make_master1_build(True)
+        master1_copy2 = self._make_master1_build(True)
+
         latest_master_release = self.linked_app.get_latest_master_release(master_id)
-        self.assertEqual(copy1.get_id, latest_master_release.get_id)
-        self.assertEqual(copy1._rev, latest_master_release._rev)
+        self.assertEqual(master1_copy2.get_id, latest_master_release.get_id)
+        self.assertEqual(master1_copy2._rev, latest_master_release._rev)
+
+        master2_copy1 = self._make_new_master_build(app=self.other_master_app)
+        latest_plain_master_release = self.linked_app.get_latest_master_release(master_id)
+        latest_other_master_release = self.linked_app.get_latest_master_release(self.other_master_app.get_id)
+        self.assertEqual(master1_copy2.get_id, latest_plain_master_release.get_id)
+        self.assertEqual(master2_copy1.get_id, latest_other_master_release.get_id)
 
     def test_incremental_versioning(self):
         original_master_version = self.master1.version or 0
