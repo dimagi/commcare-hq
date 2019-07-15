@@ -204,7 +204,7 @@ class LocationType(models.Model):
             self.domain,
             self.name,
             self.administrative,
-        ).encode('utf-8')
+        )
 
     @property
     @memoized
@@ -620,7 +620,7 @@ class SQLLocation(AdjListModel):
             self.domain,
             self.name,
             self.location_type.name if hasattr(self, 'location_type') else None,
-        ).encode('utf-8')
+        )
 
     @property
     def display_name(self):
