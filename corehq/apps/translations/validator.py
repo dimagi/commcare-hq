@@ -12,7 +12,12 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
 )
-from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.generators import (
+    SKIP_TRANSFEX_STRING,
+    AppTranslationsGenerator,
+    Unique_ID,
+)
 
 COLUMNS_TO_COMPARE = {
     'module_and_form': ['Type', 'menu_or_form'],
@@ -44,6 +49,7 @@ class UploadedTranslationsValidator(object):
         self.app_translation_generator = AppTranslationsGenerator(
             self.app.domain, self.app.get_id, None, self.app.default_language, target_lang,
             self.lang_prefix)
+        self.current_sheet_name_to_module_or_form_type_and_id = dict()
 
     def _generate_expected_headers_and_rows(self):
         self.expected_headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
@@ -56,9 +62,38 @@ class UploadedTranslationsValidator(object):
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
         )
+        self._set_current_sheet_name_to_module_or_form_mapping()
+        self._map_ids_to_headers()
+        self._map_ids_to_translations()
+
+    def _map_ids_to_headers(self):
+        sheet_names = self.expected_headers.keys()
+        for sheet_name in sheet_names:
+            if sheet_name != MODULES_AND_FORMS_SHEET_NAME:
+                mapping = self.current_sheet_name_to_module_or_form_type_and_id.get(sheet_name)
+                self.expected_headers[mapping.id] = self.expected_headers.pop(sheet_name)
+
+    def _map_ids_to_translations(self):
+        sheet_names = self.expected_rows.keys()
+        for sheet_name in sheet_names:
+            if sheet_name != MODULES_AND_FORMS_SHEET_NAME:
+                mapping = self.current_sheet_name_to_module_or_form_type_and_id.get(sheet_name)
+                self.expected_rows[mapping.id] = self.expected_rows.pop(sheet_name)
+
+    def _set_current_sheet_name_to_module_or_form_mapping(self):
+        # iterate the first sheet to get unique ids for forms/modules
+        all_module_and_form_details = self.expected_rows[MODULES_AND_FORMS_SHEET_NAME]
+        sheet_name_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
+        unique_id_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
+        type_column_index = self._get_current_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
+        for row in all_module_and_form_details:
+            self.current_sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = Unique_ID(
+                row[type_column_index],
+                row[unique_id_column_index]
+            )
 
     @memoized
-    def _get_header_index(self, sheet_name, header):
+    def _get_current_header_index(self, module_or_form_id, header):
         for index, _column_name in enumerate(self.expected_headers[sheet_name]):
             if _column_name == header:
                 return index
