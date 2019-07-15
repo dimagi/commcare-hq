@@ -23,7 +23,7 @@ def convert_app_for_remote_linking(latest_master_build):
     _attachments = latest_master_build.get_attachments()
     source = latest_master_build.to_json()
     source['_LAZY_ATTACHMENTS'] = {
-        name: {'content': content}
+        name: {'content': content.decode('utf-8')}
         for name, content in _attachments.items()
     }
     source.pop("external_blobs", None)
