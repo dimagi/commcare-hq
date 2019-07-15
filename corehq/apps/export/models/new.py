@@ -712,6 +712,15 @@ class ExportInstance(BlobMixin, Document):
     class Meta(object):
         app_label = 'export'
 
+    @classmethod
+    def wrap(cls, data):
+        from corehq.apps.export.views.utils import clean_odata_columns, remove_row_number_from_export_columns
+        export_instance = super(ExportInstance, cls).wrap(data)
+        if export_instance.is_odata_config:
+            clean_odata_columns(export_instance)
+            remove_row_number_from_export_columns(export_instance)
+        return export_instance
+
     @property
     def is_safe(self):
         """For compatibility with old exports"""
