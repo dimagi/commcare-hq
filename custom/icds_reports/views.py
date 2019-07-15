@@ -6,6 +6,8 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
+from lxml.etree import fromstring
+
 
 from datetime import datetime, date
 from celery.result import AsyncResult
@@ -113,6 +115,7 @@ from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_disha_api_v2_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
 
+from django.views.decorators.csrf import csrf_exempt
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class TableauView(RedirectView):
@@ -1764,10 +1767,11 @@ class DishaAPIView(View):
 
 
 @location_safe
+@method_decorator([api_auth, csrf_exempt, toggles.ICDS_DISHA_API_NIC.required_decorator()], name='dispatch')
 class DishaAPIViewV2(View):
 
     def message(self, message_name):
-        state_names = ", ".join([state[0] for state in self.valid_states])
+        state_names = ", ".join(self.valid_states.keys())
         error_messages = {
             "missing_date": "Please specify valid month and year",
             "invalid_month": "Please specify a month that's older than or same as current month",
@@ -1791,11 +1795,22 @@ class DishaAPIViewV2(View):
             """
         return error_message_template.format(error_messages[message_name]).strip()
 
-    @method_decorator([api_auth, toggles.ICDS_DISHA_API_NIC.required_decorator()])
-    def get(self, request, *args, **kwargs):
+    def get_data(self, post_body):
+        xml_data = fromstring(post_body.strip())
+        nic_indicators_request = {
+            'month': xml_data.xpath('//month')[0].text if xml_data.xpath('//month') else None,
+            'year': xml_data.xpath('//year')[0].text if xml_data.xpath('//year') else None,
+            'state_name': xml_data.xpath('//state_name')[0].text if xml_data.xpath('//state_name') else None,
+
+        }
+        return nic_indicators_request
+
+    def post(self, request, *args, **kwargs):
+
+        nic_indicators_request = self.get_data(request.body)
         try:
-            month = int(request.GET.get('month'))
-            year = int(request.GET.get('year'))
+            month = int(nic_indicators_request.get('month'))
+            year = int(nic_indicators_request.get('year'))
         except (ValueError, TypeError):
             return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
 
@@ -1805,24 +1820,24 @@ class DishaAPIViewV2(View):
         if query_month > current_month:
             return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
 
-        state_name = self.request.GET.get('state_name')
+        state_name = nic_indicators_request.get('state_name')
+
+        if state_name not in self.valid_states:
+            return HttpResponse(self.message('invalid_state'), content_type='text/xml', status=400)
 
         try:
-            valid_state_names = [state[0] for state in self.valid_states]
-            index = valid_state_names.index(state_name)
-            state_id = self.valid_states[index][1]
+            state_id = self.valid_states[state_name]
             data = get_disha_api_v2_data(state_id, month_formatter(query_month))
             return HttpResponse(data, content_type='text/xml')
-        except ValueError:
-            return HttpResponse(self.message('invalid_state'), content_type='text/xml', status=400)
         except AttributeError:
             return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
 
     @property
     @icds_quickcache([])
     def valid_states(self):
-        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
-                                               state_is_test=0).values_list('state_name', 'state_id'))
+        states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                            state_is_test=0).values_list('state_name', 'state_id')
+        return {state[0]: state[1] for state in states}
 
 
 @location_safe

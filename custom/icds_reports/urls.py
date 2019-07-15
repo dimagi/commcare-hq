@@ -151,6 +151,6 @@ urlpatterns = [
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww'),
     url(r'^inactive_dashboard_users', InactiveDashboardUsers.as_view(), name='inactive_aww'),
     url(r'^health_indicators', DishaAPIView.as_view(), name='disha_api'),
-    url(r'^nic_health_indicators', DishaAPIViewV2.as_view(), name='nic_disha_api'),
+    url(r'^nic_indicators', DishaAPIViewV2.as_view(), name='nic_disha_api'),
     url(r'^cas_export', CasDataExport.as_view(), name='cas_export'),
 ]
