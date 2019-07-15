@@ -131,7 +131,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             'Response is: \n{0}\n'
         )
 
-    _record_metrics(metric_tags, result, timer)
+    _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response
 
@@ -160,17 +160,17 @@ def _submission_error(request, message, count_metric, metric_tags,
     return response
 
 
-def _record_metrics(tags, result, timer=None):
-    if hasattr(result, 'xform') and result.xform.metadata:
-        lag = result.xform.received_on - result.xform.metadata.timeEnd
+def _record_metrics(tags, submission_type, response, timer=None, xform=None):
+    if xform and xform.metadata:
+        lag = xform.received_on - xform.metadata.timeEnd
         datadog_gauge('commcare.xform_submissions.lag', int(lag.total_seconds()), tags=tags)
 
     tags += [
-        'submission_type:{}'.format(result.submission_type),
-        'status_code:{}'.format(result.response.status_code)
+        'submission_type:{}'.format(submission_type),
+        'status_code:{}'.format(response.status_code)
     ]
 
-    if result.response.status_code == 201 and timer:
+    if response.status_code == 201 and timer:
         tags += [
             'duration:%s' % bucket_value(timer.duration, (1, 5, 20, 60, 120, 300, 600), 's'),
         ]
