@@ -96,7 +96,7 @@ class UploadedTranslationsValidator(object):
 
     @memoized
     def _get_current_header_index(self, module_or_form_id, header):
-        for index, _column_name in enumerate(self.expected_headers[sheet_name]):
+        for index, _column_name in enumerate(self.expected_headers[module_or_form_id]):
             if _column_name == header:
                 return index
 
