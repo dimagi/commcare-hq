@@ -44,6 +44,7 @@ from custom.icds_reports.queries import get_test_state_locations_id, get_test_di
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField, Max, Min
+from django.db.utils import OperationalError
 import six
 import uuid
 from six.moves import range
@@ -835,16 +836,14 @@ def track_time(func):
         try:
             return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
                 .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
-        except:
-            pass
+        except OperationalError:
+            return None
 
     def get_sync_datasource_time():
-        try:
-            return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
-                .exclude(doc_modification_time__isnull=True)\
-                .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
-        except:
-            pass
+        return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
+            .exclude(doc_modification_time__isnull=True)\
+            .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
+
 
     @wraps(func)
     def wrapper(*args, **kwargs):
