@@ -254,7 +254,7 @@ class SubmissionPost(object):
                 instance = xforms[0]
 
                 is_edit_of_error = len(xforms) == 2 and xforms[1].is_error
-                if is_edit_of_error:
+                if not instance.is_duplicate and is_edit_of_error:
                     # edge case from ICDS where a form errors and then future re-submissions of the same
                     # form do not have the same MD5 hash due to a bug on mobile:
                     # see https://dimagi-dev.atlassian.net/browse/ICDS-376
