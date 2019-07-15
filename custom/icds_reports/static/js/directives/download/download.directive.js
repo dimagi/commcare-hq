@@ -353,14 +353,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
 
             if (vm.selectedYear === latest.getFullYear()) {
-                var includeCurrentMonth = date.getDate() >= 13 ? true : false;
-
+                var offset = date.getDate() < 15 ? 1 : 0;
+                console.log(offset);
                 vm.months = _.filter(vm.monthsCopy, function (month) {
-                    if (includeCurrentMonth) {
-                        return month.id <= latest.getMonth() +1;
-                    } else {
-                        return month.id <= latest.getMonth();
-                    }
+                        return month.id <= latest.getMonth() - offset;
                 });
 
                 if (vm.selectedMonth > vm.months.slice(-1)[0].id) {
@@ -369,7 +365,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             } else {
                 if (vm.selectedYear === 2018) {
                     vm.months = vm.months.slice(-3);
-                    vm.selectedMonth = 12;
+
+                    if(vm.selectedMonth < 10) {
+                        vm.selectedMonth = 12;
+                    }
                 }
             }
             return;
@@ -416,6 +415,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
+        } else if (vm.isIncentiveReportSelected()) {
+            if (vm.selectedYear < 2018) {
+                vm.selectedYear = new Date().getFullYear();
+            }
+            vm.onSelectYear({'id': vm.selectedYear});
         } else {
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
