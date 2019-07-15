@@ -81,7 +81,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         super(PartitionedModel, instance).save(using=self.db2)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db2).count(), 1)
         # database 1 should not delete anything
-        self.assertRaises(StopIteration, delete_unmatched_shard_data(self.db1, AlertScheduleInstance).next)
+        self.assertRaises(StopIteration, lambda: next(delete_unmatched_shard_data(self.db1, AlertScheduleInstance)))
         value, num_deleted = next(delete_unmatched_shard_data(self.db2, AlertScheduleInstance))
         self.assertEqual(1, num_deleted)
 
@@ -112,7 +112,7 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         value, num_deleted = next(delete_unmatched_shard_data(self.db1, XFormInstanceSQL))
         self.assertEqual(1, num_deleted)
         # database 2 should not delete anything
-        self.assertRaises(StopIteration, delete_unmatched_shard_data(self.db2, XFormInstanceSQL).next)
+        self.assertRaises(StopIteration, lambda: next(delete_unmatched_shard_data(self.db2, XFormInstanceSQL)))
 
     @classmethod
     def _make_form_instance(cls, form_id):
