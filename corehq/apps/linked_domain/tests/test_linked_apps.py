@@ -46,16 +46,20 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     def setUpClass(cls):
         super(BaseLinkedAppsTest, cls).setUpClass()
         cls.domain = 'domain'
+        cls.linked_domain = 'domain-2'
         cls.master_app_with_report_modules = Application.new_app(cls.domain, "Master Application")
         module = cls.master_app_with_report_modules.add_module(ReportModule.new_module('Reports', None))
         module.report_configs = [
             ReportAppConfig(report_id='master_report_id', header={'en': 'CommBugz'}),
         ]
 
-        cls.master1 = Application.new_app(cls.domain, "Master Application")
-        cls.linked_domain = 'domain-2'
+        cls.master1 = Application.new_app(cls.domain, "First Master Application")
         cls.master1.linked_whitelist = [cls.linked_domain]
         cls.master1.save()
+
+        cls.master2 = Application.new_app(cls.domain, "Second Master Application")
+        cls.master2.linked_whitelist = [cls.linked_domain]
+        cls.master2.save()
 
         cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
         cls.linked_app.save()
@@ -66,6 +70,7 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         cls.linked_app.delete()
         cls.master1.delete()
+        cls.master2.delete()
         cls.domain_link.delete()
         super(BaseLinkedAppsTest, cls).tearDownClass()
 
@@ -77,6 +82,9 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
 class TestLinkedApps(BaseLinkedAppsTest):
     def _make_master1_build(self, release):
         return self._make_build(self.master1, release)
+
+    def _make_master1_build(self, release):
+        return self._make_build(self.master2, release)
 
     def _make_build(self, app, release):
         app.save()  # increment version number
@@ -144,6 +152,32 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.assertEqual(current_master.version, original_master_version + 4)
         self.assertEqual(self.linked_app.version, original_linked_version + 1)
+
+    def test_multi_master_fields(self):
+        original_master1_version = self.master1.version or 0
+        original_master2_version = self.master2.version or 0
+        original_linked_version = self.linked_app.version or 0
+
+        # Make a few versions of master apps
+        self._make_new_master_build()
+        self._make_new_master_build()
+        self._make_new_master_build()
+        current_master1 = self._make_new_master_build()
+        self._make_new_master_build(app=self.master2)
+        self._make_new_master_build(app=self.master2)
+        current_master2 = self._make_new_master_build(app=self.master2)
+
+        # Pull linked app from first master and refresh from database
+        update_linked_app(self.linked_app, self.plain_master_app.get_id, 'test_incremental_versioning')
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(self.linked_app.upstream_app_id, self.plain_master_app.get_id)
+        self.assertEqual(self.linked_app.upstream_version, original_master1_version + 4)
+
+        # Pull linked app from other master and refresh from database
+        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(self.linked_app.upstream_app_id, self.master2.get_id)
+        self.assertEqual(self.linked_app.upstream_version, original_master2_version + 3)
 
     def test_get_latest_master_release_not_permitted(self):
         release = self._make_master1_build(True)
