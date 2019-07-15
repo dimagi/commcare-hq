@@ -5877,7 +5877,7 @@ class LatestEnabledBuildProfiles(models.Model):
         if self.active:
             if not self.build.is_released:
                 raise ValidationError({
-                    'version': _("Release the build first. Can not enable profiles for unreleased versions"
+                    'version': _("Version {} not released. Can not enable profiles for unreleased versions"
                                  ).format(self.build.version)
                 })
             latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
