@@ -38,6 +38,10 @@ function MonthModalController($location, $uibModalInstance) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
         });
+
+        if (vm.selectedYear === 2019) {
+            vm.months.shift();
+        }
     } else if (startDate === 2019 && vm.selectedYear === 2019) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id >= 2;
@@ -63,6 +67,11 @@ function MonthModalController($location, $uibModalInstance) {
             vm.months = _.filter(vm.monthsCopy, function(month) {
                 return month.id <= new Date().getMonth() + 1;
             });
+
+            if (vm.selectedYear === 2019) {
+                vm.months.shift();
+            }
+            
             vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
         } else if (startDate === 2019 && vm.selectedYear === 2019) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
