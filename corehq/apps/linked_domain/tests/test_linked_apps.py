@@ -120,7 +120,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.assertIsNone(self.linked_app.get_latest_master_release(master_id))
 
-        master1_copy1 = self.master1.make_build()
+        self.master1.make_build()
 
         self.assertIsNone(self.linked_app.get_latest_master_release(master_id))
 
@@ -230,7 +230,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
     def test_override_translations(self):
         translations = {'en': {'updates.check.begin': 'update?'}}
 
-        copy = self.master1.make_build()
+        self.master1.make_build()
         copy1 = self.master1.make_build()
         copy1.is_released = True
         copy1.save()
