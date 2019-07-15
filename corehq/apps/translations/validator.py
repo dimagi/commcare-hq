@@ -69,14 +69,14 @@ class UploadedTranslationsValidator(object):
         self._map_ids_to_translations()
 
     def _map_ids_to_headers(self):
-        sheet_names = self.expected_headers.keys()
+        sheet_names = list(self.expected_headers.keys())
         for sheet_name in sheet_names:
             if sheet_name != MODULES_AND_FORMS_SHEET_NAME:
                 mapping = self.current_sheet_name_to_module_or_form_type_and_id.get(sheet_name)
                 self.expected_headers[mapping.id] = self.expected_headers.pop(sheet_name)
 
     def _map_ids_to_translations(self):
-        sheet_names = self.expected_rows.keys()
+        sheet_names = list(self.expected_rows.keys())
         for sheet_name in sheet_names:
             if sheet_name != MODULES_AND_FORMS_SHEET_NAME:
                 mapping = self.current_sheet_name_to_module_or_form_type_and_id.get(sheet_name)
@@ -185,4 +185,3 @@ class UploadedTranslationsValidator(object):
                 row['Type'],
                 row['unique_id']
             )
-
