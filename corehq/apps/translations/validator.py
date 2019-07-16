@@ -54,11 +54,14 @@ class UploadedTranslationsValidator(object):
         self.uploaded_sheet_name_to_module_or_form_type_and_id = dict()
 
     def _generate_current_headers_and_rows(self):
-        self.current_headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
-            self.app,
-            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
-        )}
+        self.current_headers = {
+            mod_or_form_id: headers
+            for mod_or_form_id, headers in
+            get_bulk_app_sheet_headers(
+                self.app,
+                exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
+                exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment)
+        }
         self.current_rows = get_bulk_app_sheets_by_name(
             self.app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
