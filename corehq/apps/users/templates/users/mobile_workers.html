@@ -390,10 +390,11 @@
       <pagination data-apply-bindings="false"
                   data-bind="visible: showTable"
                   params="goToPage: goToPage,
-                                    slug: 'mobile-workers',
-                                    perPage: itemsPerPage,
-                                    totalItems: totalItems,
-                                    showSpinner: showPaginationSpinner"></pagination>
+                          slug: 'mobile-workers',
+                          perPage: itemsPerPage,
+                          totalItems: totalItems,
+                          onLoad: onPaginationLoad,
+                          showSpinner: showPaginationSpinner"></pagination>
     </div>
     </div-->
   </div>
