@@ -6,8 +6,6 @@ from __future__ import unicode_literals
 import logging
 import os
 import sys
-from collections import defaultdict
-from copy import deepcopy
 from datetime import datetime
 
 import gevent
