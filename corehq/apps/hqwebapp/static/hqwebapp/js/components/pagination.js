@@ -15,10 +15,9 @@
  *          in the success and error callbacks).
  *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
  *          in a cookie.
- *      onLoad: Optional, useful with slug. A function called when all of the pagination library is finished loading.
- *          This is extremely useful when using slug to store the pagination state in a cookie. Sometimes
- *          the pagination widget loads after the library utilizing it, resulting in an undefined perPage.
- *          To avoid this, please call the first goToPage(1) call inside the specified onLoad function.
+ *      onLoad: Typically needed with slug, in order to avoid a race condition between the cookie and the default
+ *          value of perPage. Typically will call goToPage(1). Not needed when your pages wait on some other
+ *          logic before loading, e.g., they aren't loaded until an ajax request brings back their content.
  *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
  *          which shows up next to the left of the limit dropdown.
  *
