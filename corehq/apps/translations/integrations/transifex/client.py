@@ -8,7 +8,10 @@ from io import open
 
 import polib
 import requests
-from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
+from corehq.apps.translations.integrations.transifex.exceptions import (
+    ResourceMissing,
+    InvalidLockResourceRequest,
+)
 from memoized import memoized
 
 from corehq.apps.translations.integrations.transifex.const import (
@@ -180,7 +183,7 @@ class TransifexApiClient(object):
                     return False
             return True
 
-    def get_translation(self, resource_slug, hq_lang_code, lock_resource=False):
+    def get_translation(self, resource_slug, hq_lang_code, lock_resource=False, lock_reviewed=False):
         """
         get translations for a resource in the target lang.
         lock/freeze the resource if successfully pulled translations
@@ -188,8 +191,11 @@ class TransifexApiClient(object):
         :param resource_slug: resource slug
         :param hq_lang_code: target lang code on HQ
         :param lock_resource: lock resource after pulling translation
+        :param lock_reviewed: lock reviewed translations
         :return: list of POEntry objects
         """
+        if lock_resource and lock_reviewed:
+            raise InvalidLockResourceRequest("Unexpected request to lock both the resource and its translations")
         lang = self.transifex_lang_code(hq_lang_code)
         url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
             self.project, resource_slug, lang
@@ -202,7 +208,12 @@ class TransifexApiClient(object):
             f.write(response.content.decode(encoding='utf-8'))
         if lock_resource:
             self.lock_resource(resource_slug)
+        if lock_reviewed:
+            self._lock_reviewed_strings_on_resource(resource_slug, hq_lang_code)
         return polib.pofile(temp_file.name)
+
+    def _lock_reviewed_strings_on_resource(self, resource_slug, lang_code):
+        pass
 
     @staticmethod
     def transifex_lang_code(hq_lang_code):

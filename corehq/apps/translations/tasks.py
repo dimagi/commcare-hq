@@ -100,6 +100,7 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
                           data.get('transifex_project_slug'),
                           version,
                           lock_translations=data.get('lock_translations'),
+                          lock_only_reviewed=data.get('lock_only_reviewed'),
                           use_version_postfix='yes' in data['use_version_postfix'])
     translation_file = None
     try:

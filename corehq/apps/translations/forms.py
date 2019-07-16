@@ -256,12 +256,20 @@ class PullAppTranslationsForm(AppTranslationsForm):
                                                                    " for all languages"),
                                            required=False,
                                            initial=False)
+    lock_only_reviewed = forms.BooleanField(
+        label=ugettext_lazy("Lock translations for resources that have been reviewed"),
+        help_text=ugettext_lazy("Please note that this will lock the translation for only languages it has been "
+                                "marked as reviewed"),
+        required=False,
+        initial=False,
+    )
 
     def form_fields(self):
         form_fields = super(PullAppTranslationsForm, self).form_fields()
         form_fields.extend([
             hqcrispy.Field('target_lang', css_class="hqwebapp-select2"),
             hqcrispy.Field('lock_translations'),
+            hqcrispy.Field('lock_only_reviewed'),
             hqcrispy.Field('perform_translated_check'),
         ])
         return form_fields

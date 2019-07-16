@@ -15,7 +15,7 @@ from corehq.apps.translations.models import TransifexProject
 class Transifex(object):
     def __init__(self, domain, app_id, source_lang, project_slug, version=None, lang_prefix='default_',
                  resource_slugs=None, is_source_file=True, exclude_if_default=False, lock_translations=False,
-                 use_version_postfix=True, update_resource=False):
+                 lock_only_reviewed=False, use_version_postfix=True, update_resource=False):
         """
         :param domain: domain name
         :param app_id: id of the app to be used
@@ -42,6 +42,7 @@ class Transifex(object):
         self.exclude_if_default = exclude_if_default
         self.source_lang = source_lang
         self.lock_translations = lock_translations
+        self.lock_only_reviewed = lock_only_reviewed
         self.use_version_postfix = use_version_postfix
         self.update_resource = update_resource
 
@@ -144,7 +145,8 @@ class Transifex(object):
         po_entries = {}
         for resource_slug in self.resource_slugs:
             po_entries[resource_slug] = self.client.get_translation(resource_slug, self.source_lang,
-                                                                    self.lock_translations)
+                                                                    self.lock_translations,
+                                                                    self.lock_only_reviewed,)
         return po_entries
 
     def resources_pending_translations(self, all_langs=False):

@@ -7,3 +7,7 @@ class ResourceMissing(Exception):
 
 class InvalidProjectMigration(Exception):
     pass
+
+
+class InvalidLockResourceRequest(Exception):
+    pass
