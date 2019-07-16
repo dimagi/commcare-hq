@@ -5,6 +5,10 @@ class ResourceMissing(Exception):
     pass
 
 
+class StringMissing(Exception):
+    pass
+
+
 class InvalidProjectMigration(Exception):
     pass
 

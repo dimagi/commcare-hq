@@ -10,6 +10,7 @@ import polib
 import requests
 from corehq.apps.translations.integrations.transifex.exceptions import (
     ResourceMissing,
+    StringMissing,
     InvalidLockResourceRequest,
 )
 from memoized import memoized
@@ -213,7 +214,36 @@ class TransifexApiClient(object):
         return polib.pofile(temp_file.name)
 
     def _lock_reviewed_strings_on_resource(self, resource_slug, lang_code):
-        pass
+        """
+        lock all strings on a resource, optionally only once that have been reviewed
+        """
+        lang_code = self.transifex_lang_code(lang_code)
+        url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/strings".format(
+            self.project, resource_slug, lang_code)
+        response = requests.get(url, auth=self._auth)
+        for resource_detail in response.json():
+            if resource_detail.get('reviewed'):
+                self._lock_source_string_for_translation(resource_slug, lang_code, resource_detail['string_hash'])
+
+    def _lock_source_string_for_translation(self, resource_slug, lang_code, string_hash):
+        url = "https://www.transifex.com/api/2/project/{}/resource/{}/source/{}".format(
+            self.project, resource_slug, string_hash)
+        tags = self._get_string_details(url, resource_slug, string_hash)['tags']
+        new_tag = "locked_%s" % self.transifex_lang_code(lang_code)
+        tags = tags.append(new_tag) if tags else [new_tag]
+        headers = {'content-type': 'application/json'}
+        return requests.put(
+            url, data=json.dumps({'tags': tags}), auth=self._auth, headers=headers,
+        )
+
+    def _get_string_details(self, url, resource_slug, string_hash):
+        response = requests.get(url, auth=self._auth)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise StringMissing("String with hash {} missing on resource {}".format(
+                string_hash, resource_slug
+            ))
 
     @staticmethod
     def transifex_lang_code(hq_lang_code):
