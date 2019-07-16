@@ -34,7 +34,7 @@ from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import (
     MULTIMEDIA_SUBMISSION_ERROR_COUNT,
     XFORM_LOCKED_COUNT,
@@ -131,7 +131,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             'Response is: \n{0}\n'
         )
 
-    _record_metrics(metric_tags, result.submission_type, response, timer)
+    _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response
 
@@ -160,7 +160,11 @@ def _submission_error(request, message, count_metric, metric_tags,
     return response
 
 
-def _record_metrics(tags, submission_type, response, timer=None):
+def _record_metrics(tags, submission_type, response, timer=None, xform=None):
+    if xform and xform.metadata:
+        lag = xform.received_on - xform.metadata.timeEnd
+        datadog_gauge('commcare.xform_submissions.lag', int(lag.total_seconds()), tags=tags)
+
     tags += [
         'submission_type:{}'.format(submission_type),
         'status_code:{}'.format(response.status_code)
