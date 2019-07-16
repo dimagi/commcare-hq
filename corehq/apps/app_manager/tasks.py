@@ -25,14 +25,6 @@ def create_user_cases(domain_name):
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
 def make_async_build_v2(app_id, domain, version, username, allow_prune=True, comment=None):
     app = get_app(domain, app_id)
-    return make_async_build(app, username, allow_prune=allow_prune, comment=comment)
-
-
-@serial_task('{app._id}-{app.version}', max_retries=0, timeout=60 * 60)
-def make_async_build(app, username, allow_prune=True, comment=None):
-    previous_version = app.get_previous_version()
-    if previous_version and previous_version.version == app.version:
-        return
     errors = app.validate_app()
     if not errors:
         if allow_prune and comment is None:
@@ -43,6 +35,14 @@ def make_async_build(app, username, allow_prune=True, comment=None):
         copy.is_auto_generated = allow_prune
         copy.save(increment_version=False)
         return copy
+
+
+def make_async_build(app, username, allow_prune=True, comment=None):
+    previous_version = app.get_previous_version()
+    if previous_version and previous_version.version == app.version:
+        return
+    make_async_build_v2.delay(app.get_id, app.domain, app.version, username,
+                              allow_prune=allow_prune, comment=comment)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
