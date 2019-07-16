@@ -534,11 +534,13 @@ def handle_unexpected_error(interface, instance, exception):
         instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
         FormAccessors(interface.domain).save_new_form(instance)
 
-    notify_submission_error(instance, exec_info, instance.problem)
+    notify_submission_error(instance, instance.problem, exec_info)
 
 
-def notify_submission_error(instance, exec_info, message):
+def notify_submission_error(instance, message, exec_info=None):
     from corehq.util.global_request.api import get_request
+
+    exec_info = exec_info or sys.exc_info()
     domain = getattr(instance, 'domain', '---')
     details = {
         'domain': domain,
