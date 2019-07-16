@@ -97,8 +97,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(copy.delete)
         return copy
 
-    def _pull_linked_app(self):
-        update_linked_app(self.linked_app, 'TestLinkedApps user')
+    def _pull_linked_app(self, upstream_app_id):
+        update_linked_app(self.linked_app, upstream_app_id, 'TestLinkedApps user')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
 
     def test_missing_ucrs(self):
@@ -157,10 +157,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._make_master1_build(True)
         current_master = self._make_master1_build(True)
 
-        # Pull linked app and refresh from database
-        update_linked_app(self.linked_app, self.master1.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
-
+        self._pull_linked_app(self.master1.get_id)
         self.assertEqual(current_master.version, original_master_version + 4)
         self.assertEqual(self.linked_app.version, original_linked_version + 1)
 
@@ -177,35 +174,28 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._make_master2_build(True)
         current_master2 = self._make_master2_build(True)
 
-        # Pull linked app from first master and refresh from database
-        update_linked_app(self.linked_app, self.master1.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self._pull_linked_app(self.master1.get_id)
         self.assertEqual(self.linked_app.upstream_app_id, self.master1.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master1_version + 4)
 
-        # Pull linked app from master2 and refresh from database
-        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self._pull_linked_app(self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_app_id, self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master2_version + 3)
 
     def test_get_previous_version(self):
         # Make build of master1, pull linked app, and make linked app build
         self._make_master1_build()
-        update_linked_app(self.linked_app, self.master1.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self._pull_linked_app(self.master1.get_id)
         linked_build1 = self._make_linked_build()
 
         # Make several builds of master2, each also pulled to linked app and built there
         self._make_master2_build()
         self._make_master2_build()
-        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self._pull_linked_app(self.master2.get_id)
         linked_build2 = self._make_linked_build()
         self._make_master2_build()
         self._make_master2_build()
-        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self._pull_linked_app(self.master2.get_id)
         linked_build3 = self._make_linked_build()
 
         previous_master2_version = linked_build3.get_previous_version()
@@ -245,9 +235,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.save()
         self.assertEqual(self.linked_app.translations, {})
 
-        self._pull_linked_app()
+        self._pull_linked_app(self.master1.get_id)
         self.linked_app = LinkedApplication.get(self.linked_app._id)
-
         self.assertEqual(self.master1.translations, {})
         self.assertEqual(self.linked_app.linked_app_translations, translations)
         self.assertEqual(self.linked_app.translations, translations)
@@ -293,7 +282,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.practice_mobile_worker_id = 'abc123456def'
         self.assertEqual(self.linked_app.logo_refs, {})
 
-        self._pull_linked_app()
+        self._pull_linked_app(self.master1.get_id)
         self.assertEqual(self.master1.logo_refs, {})
         self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
         self.assertEqual(self.linked_app.logo_refs, logo_refs)
