@@ -5377,7 +5377,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             # all have the same xform.
             return forms[0].wrapped_xform()
 
-
     def get_questions(self, xmlns, langs=None, include_triggers=False, include_groups=False,
                       include_translations=False):
         forms = self.get_forms_by_xmlns(xmlns)
