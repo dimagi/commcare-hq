@@ -21,15 +21,6 @@
                   </ui-select-choices>
             </ui-select>
         </div>
-        <div class="form-group" style="margin: 20px 50px;" ng-show="$ctrl.filters.indexOf('ageServiceDeliveryDashboard') === -1">
-            <label>Age:</label>
-            <ui-select ng-model="$ctrl.selectedAgeSDD" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
-                <ui-select-match placeholder="Age"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                  <ui-select-choices repeat="age.id as age in $ctrl.agesServiceDeliveryDashboard | propsFilter: {name: $select.search}">
-                    <div ng-bind-html="age.name"></div>
-                  </ui-select-choices>
-            </ui-select>
-        </div>
     </div>
     <div class="modal-footer">
        <button ng-click="$ctrl.reset()" class="btn btn-primary">Reset</button>
