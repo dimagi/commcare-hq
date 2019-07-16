@@ -15,6 +15,10 @@
  *          in the success and error callbacks).
  *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
  *          in a cookie.
+ *      onLoad: Optional, useful with slug. A function called when all of the pagination library is finished loading.
+ *          This is extremely useful when using slug to store the pagination state in a cookie. Sometimes
+ *          the pagination widget loads after the library utilizing it, resulting in an undefined perPage.
+ *          To avoid this, please call the first goToPage(1) call inside the specified onLoad function.
  *      itemsTextTemplate: Optional. A string that contains <%= firstItem %>, <%= lastItem %>, <%= maxItems %>
  *          which shows up next to the left of the limit dropdown.
  *
@@ -32,17 +36,7 @@ hqDefine('hqwebapp/js/components/pagination', [
         viewModel: function (params) {
             var self = {};
 
-            // load initial values based on GET parameters
-            self.initialValues = {};
-            self._url = new URL(window.location.href);
-            if (params.pageSlug) {
-                self.initialValues.page = parseInt(self._url.searchParams.get(params.pageSlug));
-            }
-            if (params.limitSlug) {
-                self.initialValues.limit = parseInt(self._url.searchParams.get(params.limitSlug));
-            }
-
-            self.currentPage = ko.observable(self.initialValues.page || self.currentPage || 1);
+            self.currentPage = ko.observable(self.currentPage || 1);
 
             self.totalItems = params.totalItems;
             self.totalItems.subscribe(function (newValue) {
@@ -54,7 +48,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
             if (!self.inlinePageListOnly) {
                 self.perPageCookieName = 'ko-pagination-' + self.slug;
-                self.perPage(self.initialValues.limit || $.cookie(self.perPageCookieName) || self.perPage());
+                self.perPage($.cookie(self.perPageCookieName) || self.perPage());
                 self.perPage.subscribe(function (newValue) {
                     self.goToPage(1);
                     if (self.slug) {
@@ -81,9 +75,7 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.goToPage(Math.max(self.currentPage() - 1, 1), e);
             };
             self.goToPage = function (page, e) {
-                // make sure that the first goToPage that's called does not override the initialValues from GET
-                self.currentPage(self.initialValues.page || page);
-                self.initialValues.page = undefined;
+                self.currentPage(page);
                 params.goToPage(self.currentPage());
                 if (e) {
                     e.stopPropagation();
@@ -115,6 +107,11 @@ hqDefine('hqwebapp/js/components/pagination', [
                 }
                 return pages;
             });
+
+            if (params.onLoad) {
+                params.onLoad();
+            }
+
             return self;
         },
         template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',

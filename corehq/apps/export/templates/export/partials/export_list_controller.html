@@ -48,10 +48,11 @@
         <pagination data-apply-bindings="false"
                     data-bind="visible: hasData"
                     params="goToPage: goToPage,
-                                    slug: 'export-list',
-                                    perPage: itemsPerPage,
-                                    totalItems: totalItems,
-                                    showSpinner: isLoadingPage"></pagination>
+                            slug: 'export-list',
+                            perPage: itemsPerPage,
+                            totalItems: totalItems,
+                            showSpinner: isLoadingPage,
+                            onLoad: onPaginationLoad"></pagination>
       </div>
     </div>
   </div>
