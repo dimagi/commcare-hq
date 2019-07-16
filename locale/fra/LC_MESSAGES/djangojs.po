@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-09 20:44+0000\n"
+"POT-Creation-Date: 2019-07-16 20:44+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -122,7 +122,8 @@ msgid "There was an error saving."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr "Ajouter"
@@ -565,7 +566,16 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr "Valeur non reconnue"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+msgid "Active"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+msgid "Inactive"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
 msgstr "Supprimer"
@@ -2791,12 +2801,12 @@ msgstr "Il y avait une erreur avec votre téléchargement"
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:384
-#: corehq/apps/export/static/export/js/export_list.js:391
+#: corehq/apps/export/static/export/js/export_list.js:386
+#: corehq/apps/export/static/export/js/export_list.js:393
 msgid "Invalid date format"
 msgstr "Format de date non valide"
 
-#: corehq/apps/export/static/export/js/export_list.js:515
+#: corehq/apps/export/static/export/js/export_list.js:517
 msgid "Problem saving dashboard feed filters"
 msgstr ""
 
@@ -2924,11 +2934,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:67
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:61
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:98
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:90
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3517,10 +3527,9 @@ msgid "Checking availability..."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js:302
-#, fuzzy
-#| msgid "Issue communicating with server. Try again."
 msgid "Issue connecting to server. Check Internet connection."
-msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
+msgstr ""
+"Problème de connexion au serveur. Veuillez vérifier votre connexion internet."
 
 #: corehq/apps/users/static/users/js/mobile_workers.js:326
 msgid "Select location"
@@ -3773,28 +3782,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid ""
-#~ "This password is automatically generated. Please copy it or create your "
-#~ "own. It will not be shown again."
-#~ msgstr ""
-#~ "Ce mot de passe est généré automatiquement. Veuillez le copier ou créer "
-#~ "le vôtre. Il ne sera pas affiché à nouveau."
-
-#~ msgid "Username"
-#~ msgstr "Nom d'utilisateur"
-
-#~ msgid "First Name"
-#~ msgstr "Prénom"
-
-#~ msgid "Last Name"
-#~ msgstr "Nom"
-
-#~ msgid "Status"
-#~ msgstr "État"
-
-#~ msgid "show"
-#~ msgstr "afficher"
-
-#~ msgid "hide"
-#~ msgstr "masquer"
