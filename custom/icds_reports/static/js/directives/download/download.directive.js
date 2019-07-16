@@ -503,7 +503,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isVisible = function(level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all') &&
-            !(vm.isIncentiveReportSelected() && level > 2) && !(vm.isLadySupervisorSelected() && level > 2);
+            !(vm.isIncentiveReportSelected() && level > 2) && !(vm.isLadySupervisorSelected() && level > 2) &&
+            !(vm.isTakeHomeRationReportSelected() && level > 3);
     };
 
     vm.selectedFilterOptions = function() {
