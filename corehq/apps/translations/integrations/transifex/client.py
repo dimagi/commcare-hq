@@ -230,11 +230,13 @@ class TransifexApiClient(object):
             self.project, resource_slug, string_hash)
         tags = self._get_string_details(url, resource_slug, string_hash)['tags']
         new_tag = "locked_%s" % self.transifex_lang_code(lang_code)
-        tags = tags.append(new_tag) if tags else [new_tag]
-        headers = {'content-type': 'application/json'}
-        return requests.put(
-            url, data=json.dumps({'tags': tags}), auth=self._auth, headers=headers,
-        )
+        tags = tags or []
+        if new_tag not in tags:
+            tags = tags.append(new_tag)
+            headers = {'content-type': 'application/json'}
+            return requests.put(
+                url, data=json.dumps({'tags': tags}), auth=self._auth, headers=headers,
+            )
 
     def _get_string_details(self, url, resource_slug, string_hash):
         response = requests.get(url, auth=self._auth)
