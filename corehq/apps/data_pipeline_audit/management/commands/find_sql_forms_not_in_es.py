@@ -84,4 +84,5 @@ def iter_form_ids_by_last_modified(start_datetime, end_datetime):
             F('state'))),
         annotate=annotate,
         values=['form_id'],
+        load_source='find_sql_forms_not_in_es'
     )

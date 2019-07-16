@@ -111,7 +111,8 @@ def get_active_schedule_instance_ids(cls, due_before, due_after=None):
     for domain, schedule_instance_id, next_event_due in paginate_query_across_partitioned_databases(
         cls,
         active_filter,
-        values=['domain', 'schedule_instance_id', 'next_event_due']
+        values=['domain', 'schedule_instance_id', 'next_event_due'],
+        load_source='get_schedule_instance_ids'
     ):
         yield domain, schedule_instance_id, next_event_due
 
@@ -138,7 +139,8 @@ def get_active_case_schedule_instance_ids(cls, due_before, due_after=None):
     for domain, case_id, schedule_instance_id, next_event_due in paginate_query_across_partitioned_databases(
         cls,
         active_filter,
-        values=['domain', 'case_id', 'schedule_instance_id', 'next_event_due']
+        values=['domain', 'case_id', 'schedule_instance_id', 'next_event_due'],
+        load_source='get_schedule_instance_ids'
     ):
         yield (domain, case_id, schedule_instance_id, next_event_due)
 
@@ -150,7 +152,8 @@ def get_alert_schedule_instances_for_schedule(schedule):
     _validate_class(schedule, AlertSchedule)
     return paginate_query_across_partitioned_databases(
         AlertScheduleInstance,
-        Q(alert_schedule_id=schedule.schedule_id)
+        Q(alert_schedule_id=schedule.schedule_id),
+        load_source='schedule_instances_for_schedule'
     )
 
 
@@ -161,7 +164,8 @@ def get_timed_schedule_instances_for_schedule(schedule):
     _validate_class(schedule, TimedSchedule)
     return paginate_query_across_partitioned_databases(
         TimedScheduleInstance,
-        Q(timed_schedule_id=schedule.schedule_id)
+        Q(timed_schedule_id=schedule.schedule_id),
+        load_source='schedule_instances_for_schedule'
     )
 
 

@@ -7,6 +7,8 @@ from collections import defaultdict
 
 from django.db import OperationalError
 
+from corehq.util.datadog.utils import load_counter_for_model
+
 try:
     from random import choices
 except ImportError:
@@ -29,7 +31,7 @@ STALE_CHECK_FREQUENCY = 30
 
 
 def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
-                                                values=None):
+                                                values=None, load_source=None):
     """
     Runs a query across all partitioned databases in small chunks and produces a generator
     with the results.
@@ -49,11 +51,12 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     """
     db_names = get_db_aliases_for_partitioned_query()
     for db_name in db_names:
-        for row in paginate_query(db_name, model_class, q_expression, annotate, query_size, values):
+        for row in paginate_query(db_name, model_class, q_expression, annotate, query_size, values, load_source):
             yield row
 
 
-def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None):
+def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None,
+                   load_source=None):
     """
     Runs a query on the given database in small chunks and produces a generator
     with the results.
@@ -73,6 +76,8 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
 
     :return: A generator with the results
     """
+
+    track_load = load_counter_for_model(model_class)(load_source, None, extra_tags=['db:{}'.format(db_name)])
     sort_col = 'pk'
 
     return_values = None
@@ -94,6 +99,7 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
         filter_expression = {}
         while value is None or value < last_value:
             for row in qs.filter(**filter_expression)[:query_size]:
+                track_load()
                 if return_values:
                     value = row[0]
                     yield row[1:]
