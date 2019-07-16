@@ -71,7 +71,7 @@ class ProjectMigrator(object):
         translations = OrderedDict()
         for lang in langs:
             try:
-                translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
+                translations[lang] = self.client.get_translation("Menus_and_forms", lang)
             except ResourceMissing:
                 # Probably a lang in app not present on Transifex, so skip
                 pass

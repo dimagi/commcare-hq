@@ -249,7 +249,7 @@ class PullResource(BaseTranslationsView):
         wb = openpyxl.Workbook(write_only=True)
         ws = wb.create_sheet(title='translations')
         ws.append(['context', 'source', 'translation', 'occurrence'])
-        for po_entry in transifex.client.get_translation(resource_slug, target_lang, False):
+        for po_entry in transifex.client.get_translation(resource_slug, target_lang):
             ws.append([po_entry.msgctxt, po_entry.msgid, po_entry.msgstr,
                        po_entry.occurrences[0][0] if po_entry.occurrences else ''])
         return wb

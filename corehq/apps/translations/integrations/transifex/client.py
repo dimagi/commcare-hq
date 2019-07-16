@@ -180,7 +180,7 @@ class TransifexApiClient(object):
                     return False
             return True
 
-    def get_translation(self, resource_slug, hq_lang_code, lock_resource):
+    def get_translation(self, resource_slug, hq_lang_code, lock_resource=False):
         """
         get translations for a resource in the target lang.
         lock/freeze the resource if successfully pulled translations
