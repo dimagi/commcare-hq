@@ -22,6 +22,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--database', action='store')
+        parser.add_argument('--model', action='store')
         parser.add_argument('--delete', action='store_true')
 
     def handle(self, **options):
@@ -29,6 +30,9 @@ class Command(BaseCommand):
         databases = [options.get('database')] or get_db_aliases_for_partitioned_query()
         for database in databases:
             for model in sharded_models:
+                if options['model'] and options['model'] != model.__name__:
+                    continue
+
                 if options['delete']:
                     self.delete(database, model)
                 else:
