@@ -373,9 +373,15 @@
           <div data-bind="if: can_edit()">
             <div data-bind="if: isLocationSafeForUser">
               <a data-bind="attr: {href: editUrl}" class="btn btn-default">
-                <i class="fa fa-pencil"></i>
-                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
-                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                <div data-bind="ifnot: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                  <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                </div>
+                <div data-bind="if: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span>{% trans 'Copy' %}</span>
+                </div>
               </a>
             </div>
           </div>
