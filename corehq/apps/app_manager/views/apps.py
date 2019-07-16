@@ -51,7 +51,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import (
-    make_async_build,
+    make_build,
     update_linked_app_and_notify_task
 )
 from corehq.apps.app_manager.util import (
@@ -496,7 +496,7 @@ def load_app_from_slug(domain, username, slug):
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build(app, username, allow_prune=False, comment=comment, bypass_async=True)
+    build = make_build(app, username, allow_prune=False, comment=comment, async=False)
     build.is_released = True
     build.save(increment_version=False)
     return build

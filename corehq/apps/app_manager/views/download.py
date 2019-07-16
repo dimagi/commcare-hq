@@ -23,7 +23,7 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
-from corehq.apps.app_manager.tasks import make_async_build
+from corehq.apps.app_manager.tasks import make_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
@@ -54,7 +54,7 @@ def download_odk_profile(request, domain, app_id):
     """
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build(request.app, username)
+        make_build(request.app, username)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
@@ -68,7 +68,7 @@ def download_odk_profile(request, domain, app_id):
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build(request.app, username)
+        make_build(request.app, username)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
@@ -333,7 +333,7 @@ def download_profile(request, domain, app_id):
     """
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build(request.app, username)
+        make_build(request.app, username)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
@@ -346,7 +346,7 @@ def download_profile(request, domain, app_id):
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
-        make_async_build(request.app, username)
+        make_build(request.app, username)
     else:
         request._always_allow_browser_caching = True
     profile = _get_profile(request)
@@ -358,7 +358,7 @@ def download_media_profile(request, domain, app_id):
 @safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
-        make_async_build(request.app)
+        make_build(request.app)
     return HttpResponse(
         request.app.create_practice_user_restore()
     )

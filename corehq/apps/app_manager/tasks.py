@@ -37,11 +37,11 @@ def make_async_build_v2(app_id, domain, version, username, allow_prune=True, com
         return copy
 
 
-def make_async_build(app, username, allow_prune=True, comment=None, bypass_async=False):
+def make_build(app, username, allow_prune=True, comment=None, async=True):
     latest_build = app.get_latest_build()
     if latest_build and latest_build.version == app.version:
         return
-    if not bypass_async:
+    if async:
         make_async_build_v2.delay(app.get_id, app.domain, app.version, username,
                                   allow_prune=allow_prune, comment=comment)
     else:
