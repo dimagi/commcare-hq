@@ -146,4 +146,3 @@ class TestODataWrap(TestCase):
         self.addCleanup(export_with_modified_formid_column.delete)
         cleaned_export = FormExportInstance.get(export_with_modified_formid_column.get_id)
         self.assertEqual(cleaned_export.tables[0].columns[0].label, 'formid')
-
