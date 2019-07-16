@@ -5867,15 +5867,23 @@ class AppReleaseByLocation(models.Model):
 class LatestEnabledBuildProfiles(models.Model):
     # ToDo: this would be deprecated after AppReleaseByLocation is released and
     # this model's entries are migrated to the new location specific model
+    domain = models.CharField(max_length=255, null=False, default='')
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
     build_id = models.CharField(max_length=255)
     active = models.BooleanField(default=True)
 
+    def get_domain(self):
+        # method to set domain on records added before domain column was added
+        # so that its added now on save
+        if not self.domain:
+            self.domain = Application.get(self.build_id).domain
+        return self.domain
+
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        self.expire_cache(self.build.domain)
+        self.expire_cache(self.get_domain())
 
     @property
     def build(self):
