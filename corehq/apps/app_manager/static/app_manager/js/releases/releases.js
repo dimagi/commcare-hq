@@ -372,6 +372,10 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
         self.toggleLimitToReleased = function () {
             self.onlyShowReleased(!self.onlyShowReleased());
             self.goToPage(1);
