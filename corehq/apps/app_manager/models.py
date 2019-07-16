@@ -89,6 +89,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    get_build_by_version,
 )
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
@@ -5888,18 +5889,18 @@ class LatestEnabledBuildProfiles(models.Model):
     @property
     def build(self):
         if not hasattr(self, '_build'):
-            self._build = Application.get(self.build_id)
+            self._build = get_build_by_version(self.get_domain(), self.app_id, self.version)['value']
         return self._build
 
     def clean(self):
         if self.active:
-            if not self.build.is_released:
+            if not self.build['is_released']:
                 raise ValidationError({
                     'version': _("Version {} not released. Can not enable profiles for unreleased versions"
-                                 ).format(self.build.version)
+                                 ).format(self.build['version'])
                 })
             latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
-                app_id=self.build.copy_of,
+                app_id=self.build['copy_of'],
                 build_profile_id=self.build_profile_id
             )
             if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
@@ -5930,7 +5931,8 @@ class LatestEnabledBuildProfiles(models.Model):
                 app_id=app_id,
                 version=version,
                 build_profile_id=build_profile_id,
-                build_id=build_id
+                build_id=build_id,
+                domain=build.domain
             )
         # assign it to avoid re-fetching during validations
         build_profile._build = build
