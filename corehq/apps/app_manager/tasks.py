@@ -38,8 +38,8 @@ def make_async_build_v2(app_id, domain, version, username, allow_prune=True, com
 
 
 def make_async_build(app, username, allow_prune=True, comment=None, bypass_async=False):
-    previous_version = app.get_previous_version()
-    if previous_version and previous_version.version == app.version:
+    latest_build = app.get_latest_build()
+    if latest_build and latest_build.version == app.version:
         return
     if not bypass_async:
         make_async_build_v2.delay(app.get_id, app.domain, app.version, username,

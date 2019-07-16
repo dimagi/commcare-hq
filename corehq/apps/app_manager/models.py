@@ -4230,7 +4230,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return False
 
     @memoized
-    def get_previous_version(self):
+    def get_latest_build(self):
         return self.view('app_manager/applications',
             startkey=[self.domain, self.master_id, {}],
             endkey=[self.domain, self.master_id],
@@ -4776,18 +4776,18 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        previous_version = self.get_previous_version()
-        if previous_version:
-            force_new_version = self.build_profiles != previous_version.build_profiles
+        latest_build = self.get_latest_build()
+        if latest_build:
+            force_new_version = self.build_profiles != latest_build.build_profiles
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
                 if not force_new_version:
                     try:
-                        previous_form = previous_version.get_form(form.unique_id)
+                        previous_form = latest_build.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename)
+                        previous_source = latest_build.fetch_attachment(filename)
                     except (ResourceNotFound, FormNotFoundException):
                         form.version = None
                     else:
@@ -4811,8 +4811,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        previous_version = self.get_previous_version()
-        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+        latest_build = self.get_latest_build()
+        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
