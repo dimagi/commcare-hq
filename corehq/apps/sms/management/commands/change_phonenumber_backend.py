@@ -47,16 +47,16 @@ class Command(BaseCommand):
 
 
 def print_counts_by_default_backend(query):
-    map = defaultdict(int)
+    counts = defaultdict(int)
     for phone in with_progress_bar(query, len(query), oneline=True):
         default_backend = SQLMobileBackend.load_default_by_phone_and_domain(
             SQLMobileBackend.SMS,
             clean_phone_number(phone.phone_number),
             domain=phone.domain
         )
-        map[default_backend.name] += 1
+        counts[default_backend.name] += 1
     print("Counts by default backend")
-    for default, count in sorted(map.items()):
+    for default, count in sorted(counts.items()):
         print("{:<25}{:>4}".format(default, count))
 
 
