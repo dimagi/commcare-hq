@@ -124,8 +124,10 @@
     <pagination data-apply-bindings="false"
                 data-bind="visible: !emptyTable()"
                 params="goToPage: goToPage,
-                            perPage: itemsPerPage,
-                            totalItems: totalItems,
-                            showSpinner: showPaginationSpinner"></pagination>
+                        perPage: itemsPerPage,
+                        totalItems: totalItems,
+                        onLoad: onPaginationLoad,
+                        slug: 'conditional-alerts',
+                        showSpinner: showPaginationSpinner"></pagination>
   </div>
 {% endblock %}

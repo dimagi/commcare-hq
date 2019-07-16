@@ -4,9 +4,10 @@
   </ul>
   <pagination data-apply-bindings="false"
               params="goToPage: goToPage,
-                        slug: 'style-guide',
-                        perPage: perPage,
-                        totalItems: totalItems"></pagination>
+                      slug: 'style-guide',
+                      perPage: perPage,
+                      onLoad: onPaginationLoad,
+                      totalItems: totalItems"></pagination>
 </div>
 
 <script>
@@ -26,7 +27,9 @@
       };
 
       // Initialize with first page of data
-      self.goToPage(1);
+      self.onPaginationLoad = function () {
+        self.goToPage(1);
+      };
 
       return self;
     };
