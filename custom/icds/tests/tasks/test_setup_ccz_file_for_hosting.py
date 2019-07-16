@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import mock
+from django.template.defaultfilters import linebreaksbr
 from django.test import SimpleTestCase
 
 from custom.icds.tasks import setup_ccz_file_for_hosting
@@ -56,7 +57,10 @@ class TestSetUpCCZFileForHosting(SimpleTestCase):
         self.assertTrue(mock_create_ccz.called)
         self.assertTrue(mock_ccz_utility.return_value.store_file_in_blobdb.called)
 
-    def test_ccz_creation_fails(self, mock_ccz_utility, mock_get, mock_create_ccz, mock_get_build, *_):
+    @mock.patch('custom.icds.tasks.hosted_ccz.send_html_email_async.delay')
+    def test_ccz_creation_fails(self, mock_email, mock_ccz_utility, mock_get, mock_create_ccz, mock_get_build,
+                                mock_wrapped_app, *_):
+        mock_wrapped_app.return_value.name = "My App"
         mock_get.return_value = self.hosted_ccz
 
         mock_result = mock.MagicMock()
@@ -71,10 +75,23 @@ class TestSetUpCCZFileForHosting(SimpleTestCase):
         mock_ccz_utility.return_value.store_file_in_blobdb = mock_store
         mock_store.side_effect = Exception("Fail hard!")
         with self.assertRaisesMessage(Exception, "Fail hard!"):
-            setup_ccz_file_for_hosting(3)
+            setup_ccz_file_for_hosting(3, user_email="batman@gotham.com")
 
         mock_get_build.assert_called_with(self.hosted_ccz.domain, self.hosted_ccz.app_id,
                                           self.hosted_ccz.version)
         self.assertTrue(mock_create_ccz.called)
         self.assertTrue(mock_ccz_utility.return_value.store_file_in_blobdb.called)
         self.assertTrue(mock_delete_ccz.called)
+        content = "Hi,\n" \
+                  "CCZ could not be created for the following request:\n" \
+                  "App: {app}\n" \
+                  "Version: {version}\n" \
+                  "Profile: {profile}\n" \
+                  "Link: {link}" \
+                  "".format(app="My App", version=self.hosted_ccz.version, profile=None,
+                            link=self.hosted_ccz.link.identifier)
+        mock_email.assert_called_with(
+            "CCZ Hosting setup failed for app My App in project test",
+            "batman@gotham.com",
+            linebreaksbr(content)
+        )

@@ -129,6 +129,7 @@ class ManageHostedCCZ(BaseDomainView):
         return HostedCCZForm(
             self.request,
             self.domain,
+            self.request.user.email,
             data=self.request.POST if self.request.method == "POST" else None
         )
 

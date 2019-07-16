@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from functools import cmp_to_key
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import (
     MessageMetadata,
@@ -594,7 +597,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         subevent.save()
 
     # Process structured sms actions first
-    actions = sorted(survey_keyword.keywordaction_set.all(), cmp=cmp_fcn)
+    actions = sorted(survey_keyword.keywordaction_set.all(), key=cmp_to_key(cmp_fcn))
     for survey_keyword_action in actions:
         if survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER:
             contact = sender

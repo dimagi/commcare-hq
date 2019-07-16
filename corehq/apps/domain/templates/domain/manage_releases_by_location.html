@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'app_manager/js/manage_releases' %}
+{% requirejs_main 'app_manager/js/manage_releases_by_location' %}
 
 {% block page_content %}
   {% initial_page_data 'app_releases_by_location' app_releases_by_location %}
@@ -21,7 +21,7 @@
         <div class="panel-body">
           <form class="form-horizontal disable-on-submit" id="manage-app-releases" action=""
                 method='post'>
-            {% crispy manage_releases_form %}
+            {% crispy manage_releases_by_location_form %}
           </form>
           {% if app_releases_by_location %}
             <table id="managed-releases" class="table">
@@ -59,9 +59,9 @@
                   </button>
                   <br/>
                   <span class="error-message label label-danger" data-bind="visible: error">
-                                        {% trans 'Could not update!' %}
-                                        <span data-bind="text: errorMessage"></span>
-                                    </span>
+                    {% trans 'Could not update!' %}
+                    <span data-bind="text: errorMessage"></span>
+                  </span>
                 </td>
               </tr>
               </tbody>

@@ -19,7 +19,10 @@ from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_tria
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
-from corehq.apps.domain.views.releases import ManageReleases
+from corehq.apps.domain.views.releases import (
+    ManageReleasesByLocation,
+    ManageReleasesByAppProfile,
+)
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
@@ -45,6 +48,10 @@ from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
+)
+from corehq.feature_previews import (
+    EXPLORE_CASE_DATA_PREVIEW,
+    is_eligible_for_ecd_preview,
 )
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
@@ -475,6 +482,11 @@ class ProjectDataTab(UITab):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
+    def can_view_ecd_preview(self):
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request) and
+                is_eligible_for_ecd_preview(self._request))
+
+    @property
     def _is_viewable(self):
         return self.domain and (
             self.can_edit_commcare_data
@@ -736,8 +748,8 @@ class ProjectDataTab(UITab):
 
             items.extend(edit_section)
 
-        if (toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
-                and self.can_edit_commcare_data):
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request) or
+             self.can_view_ecd_preview) and self.can_edit_commcare_data):
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
             explore_data_views = [
                 {
@@ -794,10 +806,11 @@ class ProjectDataTab(UITab):
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
             ))
-        if self.can_view_form_exports or self.can_view_case_exports:
+        if self.can_view_ecd_preview and self.can_edit_commcare_data:
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
             items.append(dropdown_dict(
-                _('Find Data by ID'),
-                url=reverse('data_find_by_id', args=[self.domain])
+                _('Explore Case Data (Preview)'),
+                url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
 
         if items:
@@ -866,11 +879,6 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 ManageHostedCCZ.page_title,
                 url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
-            ))
-        if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _('Manage Releases'),
-                url=(reverse(ManageReleases.urlname, args=[self.domain])),
             ))
         return submenu_context
 
@@ -1676,6 +1684,18 @@ def _get_administration_section(domain):
         administration.append({
             'title': _(TransferDomainView.page_title),
             'url': reverse(TransferDomainView.urlname, args=[domain])
+        })
+
+    if toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByLocation.page_title),
+            'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
+        })
+
+    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByAppProfile.page_title),
+            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
         })
 
     return administration

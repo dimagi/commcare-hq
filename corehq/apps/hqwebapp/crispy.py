@@ -183,6 +183,7 @@ class B3MultiField(LayoutObject):
         self.css_id = kwargs.pop('css_id', '')
         self.field_class = kwargs.pop('field_class', None)
         self.label_class = kwargs.pop('label_class', None)
+        self.required = kwargs.pop('required', False)
         self.help_bubble_text = kwargs.pop('help_bubble_text', '')
         self.flat_attrs = flatatt(kwargs)
 

@@ -7,7 +7,7 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tasks import make_async_build, prune_auto_generated_builds
+from corehq.apps.app_manager.tasks import make_async_build_v2, prune_auto_generated_builds
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
@@ -102,7 +102,7 @@ class AppPillowTest(TestCase):
 
         # Build #2, auto-generated
         app.save()
-        build2 = make_async_build(app, 'someone')
+        build2 = make_async_build_v2(app.get_id, app.domain, app.version)
 
         # Build #3, manually generated
         app.save()

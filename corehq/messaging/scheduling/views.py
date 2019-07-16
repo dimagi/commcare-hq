@@ -60,6 +60,7 @@ from corehq.messaging.scheduling.view_helpers import (
     upload_conditional_alert_workbook,
 )
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
@@ -71,6 +72,11 @@ import io
 import six
 from six.moves import range
 from six.moves.urllib.parse import quote_plus
+
+_soft_assert_type_error = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -274,7 +280,12 @@ class MessagingDashboardView(BaseMessagingSectionView):
         self.add_sms_count_info(result, 30)
         self.add_event_count_info(result, 30)
         self.add_error_count_info(result, 30)
-        return JsonResponse(result)
+        try:
+            return JsonResponse(result)
+        except TypeError:
+            # TODO - remove after https://sentry.io/organizations/dimagi/issues/1107606091/ is resolved
+            _soft_assert_type_error(False, repr(result))
+            raise
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('action') == 'raw':
@@ -573,6 +584,24 @@ class ConditionalAlertBaseView(BaseMessagingSectionView):
 
 
 class ConditionalAlertListView(ConditionalAlertBaseView):
+    """List conditional alerts for editing and monitoring processing status
+
+    The "active" status displayed in the list is NOT the rule's active
+    flag (`rule.active`); instead, it is the rule's schedule's active
+    flag. Rule processing is triggered automatically when the rule is
+    saved _if the *rule* is active_ (and there is no way to deactivate
+    a conditional alert rule with the UI, only its schedule can be
+    (de)activated). Therefore rule processing occurs unconditionally
+    every time a rule is saved.
+
+    The theory of operation is to create rules in the inactive state
+    one-by-one while monitoring system performance. A rule can be
+    activated once it has successfully processed all cases matching its
+    case type. Rule activation triggers a rule processing run.
+
+    TODO determine if rule processing run on (de)activate is necessary.
+    """
+
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
     page_title = ugettext_lazy('Conditional Alerts')

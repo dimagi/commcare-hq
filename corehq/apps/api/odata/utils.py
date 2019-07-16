@@ -69,6 +69,11 @@ def get_case_odata_fields_from_config(case_export_config):
     return [column.label for column in export_columns if column.selected]
 
 
+def get_form_odata_fields_from_config(form_export_config):
+    table = form_export_config.tables[0]
+    return [column.label for column in table.selected_columns]
+
+
 def record_feed_access_in_datadog(request, config_id, duration, response):
     config = ExportInstance.get(config_id)
     username = request.couch_user.username

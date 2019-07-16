@@ -137,9 +137,7 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
 
     for case_type, rules in six.iteritems(rules_by_case_type):
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date, db=db))
-
-        for case in CaseAccessors(domain).iter_cases(case_ids):
+        for case in AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db):
             migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
                 last_migration_check_time)
 
