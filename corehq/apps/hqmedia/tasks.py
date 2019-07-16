@@ -124,14 +124,6 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 
 @task(serializer='pickle')
-def build_application_zip_v2(include_multimedia_files, include_index_files, domain, app_id,
-                             download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
-                             download_targeted_version=False):
-    return build_application_zip(include_multimedia_files, include_index_files, domain, app_id, download_id,
-                                 build_profile_id, compress_zip, filename, download_targeted_version)
-
-
-@task(serializer='pickle')
 def build_application_zip(include_multimedia_files, include_index_files, domain, app_id,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
