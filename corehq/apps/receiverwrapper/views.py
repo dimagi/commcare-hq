@@ -173,7 +173,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
         'status_code:{}'.format(response.status_code)
     ]
 
-    if response.status_code == 201 and timer:
+    if timer:
         tags += [
             'duration:%s' % bucket_value(timer.duration, (1, 5, 20, 60, 120, 300, 600), 's'),
         ]
