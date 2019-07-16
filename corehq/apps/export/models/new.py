@@ -1037,6 +1037,17 @@ class CaseExportInstance(ExportInstance):
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(CaseExportInstanceFilters)
 
+    @classmethod
+    def wrap(cls, data):
+        export_instance = super(CaseExportInstance, cls).wrap(data)
+        if export_instance.is_odata_config:
+            for table in export_instance.tables:
+                for column in table.columns:
+                    if [path_node.name for path_node in column.item.path] == ['_id']:
+                        column.label = 'caseid'
+                        column.selected = True
+        return export_instance
+
     @property
     def identifier(self):
         return self.case_type
@@ -1088,6 +1099,17 @@ class FormExportInstance(ExportInstance):
     # static filters to limit the data in this export
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(FormExportInstanceFilters)
+
+    @classmethod
+    def wrap(cls, data):
+        export_instance = super(FormExportInstance, cls).wrap(data)
+        if export_instance.is_odata_config:
+            for table in export_instance.tables:
+                for column in table.columns:
+                    if [path_node.name for path_node in column.item.path] == ['form', 'meta', 'instanceID']:
+                        column.label = 'formid'
+                        column.selected = True
+        return export_instance
 
     @property
     def identifier(self):
