@@ -68,3 +68,5 @@ class Command(BaseCommand):
                 length=length, oneline=False):
             total_deleted += num_deleted
             print("All invalid values below {} are deleted, {} docs deleted so far".format(value, total_deleted))
+
+        print("{} Deleted {} invalid {} from database {}".format(datetime.utcnow(), total_deleted, model.__name__, database))
