@@ -163,7 +163,10 @@ def _submission_error(request, message, count_metric, metric_tags,
 def _record_metrics(tags, submission_type, response, timer=None, xform=None):
     if submission_type == 'normal' and xform and xform.metadata:
         lag = xform.received_on - xform.metadata.timeEnd
-        datadog_gauge('commcare.xform_submissions.lag', int(lag.total_seconds()), tags=tags)
+        lag_days = lag.total_seconds() / 86400
+        tags += [
+            'lag:%s' % bucket_value(lag_days, (1, 2, 4, 7, 14, 31, 90), 'd')
+        ]
 
     tags += [
         'submission_type:{}'.format(submission_type),
