@@ -83,24 +83,26 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
     if annotate:
         qs = qs.annotate(**annotate)
 
-    qs = qs.filter(q_expression)
-    last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
-    if last_value is not None:
-        qs = qs.order_by(sort_col)
-        if return_values:
-            qs = qs.values_list(*return_values)
+    qs = qs.filter(q_expression).order_by(sort_col)
 
-        value = None
-        filter_expression = {}
-        while value is None or value < last_value:
-            for row in qs.filter(**filter_expression)[:query_size]:
-                if return_values:
-                    value = row[0]
-                    yield row[1:]
-                else:
-                    value = row.pk
-                    yield row
-            filter_expression = {'{}__gt'.format(sort_col): value}
+    if return_values:
+        qs = qs.values_list(*return_values)
+
+    filter_expression = {}
+    while True:
+        results = qs.filter(**filter_expression)[:query_size]
+        for row in results:
+            if return_values:
+                value = row[0]
+                yield row[1:]
+            else:
+                value = row.pk
+                yield row
+
+        if len(results) < query_size:
+            break
+
+        filter_expression = {'{}__gt'.format(sort_col): value}
 
 
 def split_list_by_db_partition(partition_values):
