@@ -17,9 +17,8 @@ def validate_xpath(xpath, allow_case_hashtags=False):
         else:
             cmd = ['node', path]
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        # Collapse whitespace. '\r' mysteriously causes the process to hang in python 3.
-        stdout, stderr = p.communicate(re.sub(r'\s+', ' ', xpath).encode('utf-8'))
+                             stderr=subprocess.PIPE, universal_newlines=True)
+        stdout, stderr = p.communicate(xpath)
         exit_code = p.wait()
     if exit_code == 0:
         return XpathValidationResponse(is_valid=True, message=None)
