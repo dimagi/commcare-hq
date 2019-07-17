@@ -1135,7 +1135,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding="unicode"))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -4249,7 +4249,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
-        salt = os.urandom(5).encode('hex')
+        salt = os.urandom(5)
         self.admin_password = make_password(raw_password, salt=salt)
 
         if raw_password.isnumeric():

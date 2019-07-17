@@ -58,8 +58,8 @@
     <div class="col-md-3 col-md-offset-9">
       <search-box data-apply-bindings="false"
                   params="value: buildComment,
-                                action: function() { goToPage(1); },
-                                placeholder: '{% trans_html_attr "Version or comment" %}'"></search-box>
+                          action: function() { goToPage(1); },
+                          placeholder: '{% trans_html_attr "Version or comment" %}'"></search-box>
     </div>
   </div>
 
@@ -222,10 +222,12 @@
 
   <pagination data-apply-bindings="false"
               params="goToPage: goToPage,
-                        perPage: fetchLimit,
-                        slug: 'releases-table',
-                        totalItems: totalItems,
-                        showSpinner: showPaginationSpinner"></pagination>
+                      perPage: fetchLimit,
+                      slug: 'releases-table',
+                      totalItems: totalItems,
+                      onLoad: onPaginationLoad,
+                      showSpinner: showPaginationSpinner"></pagination>
+
   <script type="text/html" id="delete-build-modal-template">
     <div class="modal-dialog">
       <div class="modal-content">
