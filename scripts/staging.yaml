@@ -55,5 +55,5 @@ branches:
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
   - dropbox-fix # Nick P July 5
   - mk/skip-files-build # MK July 6
-  - jls/force-bust-js-cdn # Jenny July 17
+  - jls/force-bust-js-cdn  # Jenny July 17
 submodules: {}
