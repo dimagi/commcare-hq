@@ -342,19 +342,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.filterYears = function (minYear) {
-        vm.yearsCopy = [];
-        var currentYear = new Date().getFullYear();
-
-        for (var year = minYear; year <= currentYear; year++) {
-            vm.yearsCopy.push({
-                name: year,
-                id: year,
-            });
-        }
-        vm.years = vm.yearsCopy;
-    };
-
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;
@@ -413,14 +400,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
-            var date = new Date();
-            vm.selectedYear = date.getFullYear();
             if (vm.isTakeHomeRationReportSelected()) {
-                vm.selectedLevel = 5;
-                vm.filterYears(vm.selectedYear);
+                vm.selectedYear = new Date().getFullYear();
+                vm.years = _.filter(vm.yearsCopy, function (y) {
+                    return y.id >= 2019;
+                });
+
+                resetLevelsBelow(3);
             } else {
-                vm.selectedLevel = 1;
-                vm.filterYears(vm.selectedYear);
+                vm.years = vm.yearsCopy;
             }
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
