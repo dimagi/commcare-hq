@@ -17,9 +17,15 @@ from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_ids_by_xmlns, update_linked_app
+from corehq.apps.app_manager.views.utils import (
+    get_blank_form_xml,
+    overwrite_app,
+    _get_form_ids_by_xmlns,
+    update_linked_app,
+)
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
+from lxml import etree
 from io import open
 
 from corehq.util.test_utils import flag_enabled, softer_assert
@@ -99,7 +105,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
 
-    def test_overwrite_app_maintain_ids(self):
+    def test_overwrite_app_maintain_form_unique_ids(self):
         module = self.master1.add_module(Module.new_module('M1', None))
         module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
@@ -113,6 +119,56 @@ class TestLinkedApps(BaseLinkedAppsTest):
             id_map_before,
             _get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
+
+    def test_multi_master_form_attributes(self):
+        # Add single module and form to both master1 and master2
+        master1_module = self.master1.add_module(Module.new_module('Module for master1', None))
+        master1_module.new_form('Form for master1', 'en', get_blank_form_xml('Form for master1'))
+        master1_map = _get_form_ids_by_xmlns(self.master1)
+        self._make_master1_build()
+        master2_module = self.master2.add_module(Module.new_module('Module for master2', None))
+        master2_module.new_form('Form for master2', 'en', get_blank_form_xml('Form for master2'))
+        master2_map = _get_form_ids_by_xmlns(self.master2)
+        self._make_master2_build()
+
+        # Pull master1, so linked app now has a form. Verify that form xmlnses match but unique ids do not.
+        self._pull_linked_app(self.master1.get_id)
+        linked_master1_build1 = self._make_linked_build()
+        linked_master1_build1_form = linked_master1_build1.get_module(0).get_form(0)
+        linked_master1_map = _get_form_ids_by_xmlns(self.linked_app)
+        self.assertEqual(set(master1_map.keys()), set(linked_master1_map.keys()))
+        self.assertNotEqual(set(master1_map.values()), set(linked_master1_map.values()))
+
+        # Pull master2, so linked app now has other form. Verify that form xmlnses match but unique ids do not.
+        self._pull_linked_app(self.master2.get_id)
+        linked_master2_build1 = self._make_linked_build()
+        linked_master2_map = _get_form_ids_by_xmlns(self.linked_app)
+        linked_master2_build1_form = linked_master2_build1.get_module(0).get_form(0)
+        self.assertEqual(set(master2_map.keys()), set(linked_master2_map.keys()))
+        self.assertNotEqual(set(master2_map.values()), set(linked_master2_map.values()))
+        self.assertNotEqual(linked_master1_build1_form.unique_id, linked_master2_build1_form.unique_id)
+
+        # Re-pull master1, so linked app is back to the first form, with same xmlns, unique id, and version
+        linked_master1_build1 = self._make_master1_build()
+        self._pull_linked_app(self.master1.get_id)
+        linked_master1_build2 = self._make_linked_build()
+        linked_master1_build2_form = linked_master1_build2.get_module(0).get_form(0)
+        self.assertEqual(linked_master1_map, _get_form_ids_by_xmlns(self.linked_app))
+        self.assertEqual(linked_master1_build1_form.xmlns, linked_master1_build2_form.xmlns)
+        self.assertEqual(linked_master1_build1_form.unique_id, linked_master1_build2_form.unique_id)
+        self.assertEqual(linked_master1_build1_form.get_version(), linked_master1_build2_form.get_version())
+
+        # Update form in master1 and make new linked build, which should update form version
+        wrapped = self.master1.get_module(0).get_form(0).wrapped_xform()
+        wrapped.set_name("Updated form for master1")
+        self.master1.get_module(0).get_form(0).source = etree.tostring(wrapped.xml, encoding="unicode")
+        self._make_master1_build()
+        self._pull_linked_app(self.master1.get_id)
+        linked_master1_build3 = self._make_linked_build()
+        linked_master1_build3_form = linked_master1_build3.get_module(0).get_form(0)
+        self.assertEqual(linked_master1_build2_form.xmlns, linked_master1_build3_form.xmlns)
+        self.assertEqual(linked_master1_build2_form.unique_id, linked_master1_build3_form.unique_id)
+        self.assertLess(linked_master1_build2_form.get_version(), linked_master1_build3_form.get_version())
 
     def test_get_latest_master_release(self):
         master_id = self.master1.get_id
