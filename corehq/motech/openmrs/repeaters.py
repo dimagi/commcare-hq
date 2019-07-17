@@ -6,7 +6,7 @@ from collections import defaultdict
 import six
 from itertools import chain
 
-from corehq.motech.openmrs.handler import (
+from corehq.motech.openmrs.workflow_tasks import (
     CreateVisitsEncountersObsTask,
     SyncPatientIdentifiersTask,
     SyncPersonAttributesTask,
