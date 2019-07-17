@@ -1,4 +1,4 @@
-/* global module, inject, chai, moment */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -299,7 +299,7 @@ describe('Download Directive', function () {
             var fakeDate = new Date(2020, 8, 1);
             var clock = sinon.useFakeTimers(fakeDate);
             var expectedMonth = 7;
-            var expectedFirstYear = 2019
+            var expectedFirstYear = 2019;
 
             controller.selectedYear = 2019;
             controller.selectedIndicator = 10;
@@ -325,8 +325,8 @@ describe('Download Directive', function () {
 
             var m = controller.months;
             var y = controller.yearsCopy;
-            var actualMonth = m[m.length-1].id - 1;
-            var actualYear = y[y.length-1];
+            var actualMonth = m[m.length - 1].id - 1;
+            var actualYear = y[y.length - 1];
 
             assert.equal(expectedMonth, actualMonth);
             assert.equal(expectedYear, actualYear);
