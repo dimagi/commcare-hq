@@ -7,9 +7,13 @@ import six
 from itertools import chain
 
 from corehq.motech.openmrs.workflow_tasks import (
+    CreatePersonAddressTask,
     CreateVisitsEncountersObsTask,
     SyncPatientIdentifiersTask,
     SyncPersonAttributesTask,
+    UpdatePersonAddressTask,
+    UpdatePersonNameTask,
+    UpdatePersonPropertiesTask,
 )
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.workflow import execute_workflow
@@ -41,10 +45,6 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
     get_case_location_ancestor_repeaters,
     get_patient,
-    UpdatePersonNameTask,
-    UpdatePersonPropertiesTask,
-    UpdatePersonAddressTask,
-    CreatePersonAddressTask,
     OpenmrsResponse,
 )
 from corehq.motech.requests import Requests
