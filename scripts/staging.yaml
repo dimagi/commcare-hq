@@ -50,10 +50,9 @@ trunk: master
 name: autostaging
 branches:
   - nh/icds/skip_trans  # Norman June 21
-  #- fr/case-templates      # FR May 15
-  #- jls/linked-app-multiple-masters # Jenny June 18
+  - fr/case-templates      # FR May 15
+  - jls/linked-app-multiple-masters # Jenny June 18
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
   - dropbox-fix # Nick P July 5
-  #- mk/skip-files-build # MK July 6
-  - jls/force-bust-js-cdn  # Jenny July 17
+  - mk/skip-files-build # MK July 6
 submodules: {}
