@@ -170,6 +170,21 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(linked_master1_build2_form.unique_id, linked_master1_build3_form.unique_id)
         self.assertLess(linked_master1_build2_form.get_version(), linked_master1_build3_form.get_version())
 
+        # Add another form to both master1 and master2. When master1 is pulled, that form should be assigned a
+        # new unique id, and when master2 is pulled, it should retain that id since it has the same xmlns.
+        self.master1.get_module(0).new_form('Twin form', None, self.get_xml('very_simple_form').decode('utf-8'))
+        self._make_master1_build()
+        self._pull_linked_app(self.master1.get_id)
+        xmlns = self.master1.get_module(0).get_form(1).xmlns
+        self.master2.get_module(0).new_form('Twin form', None, self.get_xml('very_simple_form').decode('utf-8'))
+        linked_master1_build4 = self._make_linked_build()
+        self._make_master2_build()
+        self._pull_linked_app(self.master2.get_id)
+        linked_master2_build2 = self._make_linked_build()
+        self.assertEqual(xmlns, self.master2.get_module(0).get_form(1).xmlns)
+        self.assertEqual(_get_form_ids_by_xmlns(linked_master1_build4)[xmlns],
+                         _get_form_ids_by_xmlns(linked_master2_build2)[xmlns])
+
     def test_get_latest_master_release(self):
         master_id = self.master1.get_id
 
