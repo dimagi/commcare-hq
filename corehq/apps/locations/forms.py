@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 
+import six
 from crispy_forms.layout import Submit
 from django import forms
 from django.db.models import Q
@@ -50,7 +51,7 @@ class LocationSelectWidget(forms.Widget):
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
-        location_ids = value or []
+        location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{
@@ -725,3 +726,19 @@ class RelatedLocationForm(forms.Form):
                 if name.startswith('relation_distance_')
             }
         )
+
+
+def to_list(value):
+    """
+    Returns ``value`` as a list if it is iterable and not a string,
+    otherwise returns ``value`` in a list.
+
+    >>> to_list(('foo', 'bar', 'baz')) == ['foo', 'bar', 'baz']
+    True
+    >>> to_list('foo bar baz') == ['foo bar baz']
+    True
+
+    """
+    if hasattr(value, '__iter__') and not isinstance(value, six.string_types):
+        return list(value)
+    return [value]
