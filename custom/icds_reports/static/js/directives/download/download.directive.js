@@ -307,6 +307,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
+        console.log("ITEM:!!!!! :");
+        console.log($item);
         if (level < 4) {
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
@@ -363,9 +365,14 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
 
         if (year.id === 2019 && vm.isTakeHomeRationReportSelected()) {
+            var currentMonth = latest.getMonth() + 1;
+            var currentYear = latest.getFullYear();
             vm.months = _.filter(vm.monthsCopy, function (month) {
-                var currentMonth = latest.getMonth() + 1;
-                return month.id >= 7 && month.id <= currentMonth;
+                if (currentYear === 2019) {
+                    return month.id >= 7 && month.id <= currentMonth;
+                } else {
+                    return month.id >= 7;
+                }
             });
             vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
         } else if (year.id === latest.getFullYear()) {
@@ -401,11 +408,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.selectedFormat = vm.formats[0].id;
         } else {
             if (vm.isTakeHomeRationReportSelected()) {
-                vm.selectedYear = new Date().getFullYear();
+                var currentYear  = new Date().getFullYear();
+                vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
                 vm.years = _.filter(vm.yearsCopy, function (y) {
                     return y.id >= 2019;
                 });
-
                 resetLevelsBelow(3);
             } else {
                 vm.years = vm.yearsCopy;
@@ -416,6 +423,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.submitForm = function(csrfToken) {
+        console.log(vm.selectedLevel);
         $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
         var taskConfig = {
