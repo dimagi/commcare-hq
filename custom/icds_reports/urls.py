@@ -128,7 +128,7 @@ urlpatterns = [
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
     url(r'^lady_supervisor/', LadySupervisorView.as_view(), name='lady_supervisor'),
     url(
-        r'^service_delivery_dashboard/',
+        r'^service_delivery_dashboard/(?P<step>[\w-]+)/',
         ServiceDeliveryDashboardView.as_view(),
         name='service_delivery_dashboard'
     ),
