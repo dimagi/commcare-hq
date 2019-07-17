@@ -11,14 +11,32 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain, get_current_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    wrap_app,
+    get_apps_in_domain,
+    get_current_app,
+)
 from corehq.apps.app_manager.decorators import require_deploy_apps
-from corehq.apps.app_manager.exceptions import AppEditingError, \
-    ModuleNotFoundException, FormNotFoundException, AppLinkError, MultimediaMissingError
-from corehq.apps.app_manager.models import Application, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
+    ModuleNotFoundException,
+    FormNotFoundException,
+    AppLinkError,
+    MultimediaMissingError,
+)
+from corehq.apps.app_manager.models import (
+    Application,
+    enable_usercase_if_necessary,
+    CustomIcon,
+)
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
+from corehq.apps.linked_domain.exceptions import (
+    RemoteRequestError,
+    RemoteAuthError,
+    ActionNotPermitted,
+)
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
