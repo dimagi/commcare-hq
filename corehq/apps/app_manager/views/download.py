@@ -358,7 +358,7 @@ def download_media_profile(request, domain, app_id):
 @safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
-        make_build(request.app)
+        make_build(request.app, request.user.username)
     return HttpResponse(
         request.app.create_practice_user_restore()
     )
