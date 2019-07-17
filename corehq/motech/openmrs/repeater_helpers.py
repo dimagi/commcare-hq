@@ -117,6 +117,31 @@ class CreatePersonAttributeTask(WorkflowTask):
             )
 
 
+class DeletePersonAttributeTask(WorkflowTask):
+
+    def __init__(self, requests, person_uuid, attribute_uuid, attribute_type_uuid, existing_value):
+        self.requests = requests
+        self.person_uuid = person_uuid
+        self.attribute_uuid = attribute_uuid
+        self.attribute_type_uuid = attribute_type_uuid
+        self.existing_value = existing_value
+
+    def run(self):
+        self.requests.delete(
+            '/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
+                person_uuid=self.person_uuid, attribute_uuid=self.attribute_uuid
+            ),
+            raise_for_status=True,
+        )
+
+    def rollback(self):
+        self.requests.post(
+            '/ws/rest/v1/person/{person_uuid}/attribute'.format(person_uuid=self.person_uuid),
+            json={'attributeType': self.attribute_type_uuid, 'value': self.existing_value},
+            raise_for_status=True,
+        )
+
+
 class UpdatePersonAttributeTask(WorkflowTask):
 
     def __init__(self, requests, person_uuid, attribute_uuid, attribute_type_uuid, value, existing_value):

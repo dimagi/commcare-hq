@@ -12,6 +12,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     CreatePersonAddressTask,
     CreatePersonAttributeTask,
     CreateVisitTask,
+    DeletePersonAttributeTask,
     OpenmrsResponse,
     UpdatePatientIdentifierTask,
     UpdatePersonAddressTask,
@@ -121,12 +122,20 @@ class SyncPersonAttributesTask(WorkflowTask):
             if person_attribute_type in existing_person_attributes:
                 attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
                 if value != existing_value:
-                    subtasks.append(
-                        UpdatePersonAttributeTask(
-                            self.requests, self.person_uuid, attribute_uuid, person_attribute_type, value,
-                            existing_value
+                    if value in ("", None):
+                        subtasks.append(
+                            DeletePersonAttributeTask(
+                                self.requests, self.person_uuid, attribute_uuid, person_attribute_type,
+                                existing_value
+                            )
                         )
-                    )
+                    else:
+                        subtasks.append(
+                            UpdatePersonAttributeTask(
+                                self.requests, self.person_uuid, attribute_uuid, person_attribute_type, value,
+                                existing_value
+                            )
+                        )
             else:
                 subtasks.append(
                     CreatePersonAttributeTask(self.requests, self.person_uuid, person_attribute_type, value)
