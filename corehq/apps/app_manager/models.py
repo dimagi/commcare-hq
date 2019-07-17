@@ -4777,31 +4777,32 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             return hashlib.md5(val).hexdigest()
 
         latest_build = self.get_latest_build()
-        if latest_build:
-            force_new_version = self.build_profiles != latest_build.build_profiles
-            for form_stuff in self.get_forms(bare=False):
-                filename = 'files/%s' % self.get_form_filename(**form_stuff)
-                form = form_stuff["form"]
-                if not force_new_version:
-                    try:
-                        previous_form = latest_build.get_form(form.unique_id)
-                        # take the previous version's compiled form as-is
-                        # (generation code may have changed since last build)
-                        previous_source = latest_build.fetch_attachment(filename)
-                    except (ResourceNotFound, FormNotFoundException):
-                        form.version = None
-                    else:
-                        previous_hash = _hash(previous_source)
-
-                        # hack - temporarily set my version to the previous version
-                        # so that that's not treated as the diff
-                        previous_form_version = previous_form.get_version()
-                        form.version = previous_form_version
-                        my_hash = _hash(self.fetch_xform(form=form))
-                        if previous_hash != my_hash:
-                            form.version = None
-                else:
+        if not latest_build:
+            return
+        force_new_version = self.build_profiles != latest_build.build_profiles
+        for form_stuff in self.get_forms(bare=False):
+            filename = 'files/%s' % self.get_form_filename(**form_stuff)
+            form = form_stuff["form"]
+            if not force_new_version:
+                try:
+                    previous_form = latest_build.get_form(form.unique_id)
+                    # take the previous version's compiled form as-is
+                    # (generation code may have changed since last build)
+                    previous_source = latest_build.fetch_attachment(filename)
+                except (ResourceNotFound, FormNotFoundException):
                     form.version = None
+                else:
+                    previous_hash = _hash(previous_source)
+
+                    # hack - temporarily set my version to the previous version
+                    # so that that's not treated as the diff
+                    previous_form_version = previous_form.get_version()
+                    form.version = previous_form_version
+                    my_hash = _hash(self.fetch_xform(form=form))
+                    if previous_hash != my_hash:
+                        form.version = None
+            else:
+                form.version = None
 
     def set_media_versions(self):
         """
