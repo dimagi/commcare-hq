@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-09 20:44+0000\n"
+"POT-Creation-Date: 2019-07-16 20:44+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -114,7 +114,8 @@ msgid "There was an error saving."
 msgstr "Ocurrió un error al guardar."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr "Agregar"
@@ -559,7 +560,16 @@ msgstr "Este formulario ya no existe o tiene un tipo de caso diferente"
 msgid "Unrecognized value"
 msgstr "Valor no reconocido"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+msgid "Active"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+msgid "Inactive"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
 msgstr "Eliminar"
@@ -2902,12 +2912,12 @@ msgstr "Ocurrió un error al descargar su exportación."
 msgid "Download Requested"
 msgstr "Descarga Solicitada"
 
-#: corehq/apps/export/static/export/js/export_list.js:384
-#: corehq/apps/export/static/export/js/export_list.js:391
+#: corehq/apps/export/static/export/js/export_list.js:386
+#: corehq/apps/export/static/export/js/export_list.js:393
 msgid "Invalid date format"
 msgstr "Formato de fecha inválido"
 
-#: corehq/apps/export/static/export/js/export_list.js:515
+#: corehq/apps/export/static/export/js/export_list.js:517
 msgid "Problem saving dashboard feed filters"
 msgstr "Ocurrió un problema al guardar filtros de alimentación del tablero"
 
@@ -3035,11 +3045,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:67
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:61
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:98
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:90
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3664,16 +3674,14 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js:281
-#, fuzzy
-#| msgid "Checking email..."
 msgid "Checking availability..."
-msgstr "Revisando correo electrónico..."
+msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js:302
-#, fuzzy
-#| msgid "Please check your Internet connection!"
 msgid "Issue connecting to server. Check Internet connection."
-msgstr "¡Por favor revise su conexión de Internet!"
+msgstr ""
+"Ocurrió un problema al conectarse con el servidor. Revise la conexión a "
+"Internet."
 
 #: corehq/apps/users/static/users/js/mobile_workers.js:326
 msgid "Select location"
@@ -3926,34 +3934,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid ""
-#~ "This password is automatically generated. Please copy it or create your "
-#~ "own. It will not be shown again."
-#~ msgstr ""
-#~ "Esta contraseña se genera automáticamente. Por favor cópiela o cree la "
-#~ "suya. No se mostrará de nuevo. "
-
-#~ msgid "Username is available."
-#~ msgstr "El nombre de usuario está disponible."
-
-#~ msgid "Username"
-#~ msgstr "Nombre de Usuario"
-
-#~ msgid "First Name"
-#~ msgstr "Nombre"
-
-#~ msgid "Last Name"
-#~ msgstr "Apellido"
-
-#~ msgid "Status"
-#~ msgstr "Estatus"
-
-#~ msgid "show"
-#~ msgstr "mostrar"
-
-#~ msgid "hide"
-#~ msgstr "ocultar"
-
-#~ msgid "toggle"
-#~ msgstr "alternar"

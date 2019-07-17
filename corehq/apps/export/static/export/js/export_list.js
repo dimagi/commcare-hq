@@ -295,7 +295,9 @@ hqDefine("export/js/export_list", [
             });
         };
 
-        self.fetchPage(1);
+        self.onPaginationLoad = function () {
+            self.fetchPage(1);
+        };
 
         return self;
     };

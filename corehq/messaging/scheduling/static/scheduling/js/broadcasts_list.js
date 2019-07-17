@@ -87,7 +87,9 @@ hqDefine("scheduling/js/broadcasts_list", [
             });
         };
 
-        self.goToPage(self.currentPage());
+        self.onPaginationLoad = function () {
+            self.goToPage(self.currentPage());
+        };
 
         return self;
     };

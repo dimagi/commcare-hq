@@ -62,6 +62,10 @@ hqDefine("users/js/web_users",[
             });
         };
 
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
         return self;
     };
 

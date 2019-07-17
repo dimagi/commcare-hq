@@ -238,10 +238,10 @@ Install LESS and UglifyJS:
 
 For all STATICFILES changes (primarily LESS and JavaScript), run:
 
-    $ manage.py collectstatic
-    $ manage.py compilejsi18n
-    $ manage.py fix_less_imports_collectstatic
-    $ manage.py compress
+    $ ./manage.py collectstatic
+    $ ./manage.py compilejsi18n
+    $ ./manage.py fix_less_imports_collectstatic
+    $ ./manage.py compress
 
 
 #### Formplayer

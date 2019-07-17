@@ -119,3 +119,6 @@ ELASTICSEARCH_DEBUG_HOSTS = {
 }
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
+
+# use console email by default
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -161,7 +161,7 @@ def _submission_error(request, message, count_metric, metric_tags,
 
 
 def _record_metrics(tags, submission_type, response, timer=None, xform=None):
-    if submission_type == 'normal' and xform and xform.metadata:
+    if xform and xform.metadata and xform.metadata.timeEnd and xform.received_on:
         lag = xform.received_on - xform.metadata.timeEnd
         lag_days = lag.total_seconds() / 86400
         tags += [
