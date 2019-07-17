@@ -124,14 +124,20 @@ class StateDB(DiffDB):
 
     def _upsert(self, model, key_field, key, value, incr=False):
         with self.session() as session:
-            session.execute("""
-                INSERT INTO {table} ({key}, value) VALUES (:key, :value)
-                ON CONFLICT ({key}) DO UPDATE SET value = {incr}:value
-            """.format(
-                table=model.__tablename__,
-                key=key_field.name,
-                incr=("value + " if incr else "")
-            ), {"key": key, "value": value})
+            updated = (
+                session.query(model)
+                .filter(key_field == key)
+                .update(
+                    {model.value: (model.value + value) if incr else value},
+                    synchronize_session=False,
+                )
+            )
+            if not updated:
+                obj = model(value=value)
+                key_field.__set__(obj, key)
+                session.add(obj)
+            else:
+                assert updated == 1, (key, updated)
 
     def add_missing_docs(self, kind, doc_ids):
         with self.session() as session:
