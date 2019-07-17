@@ -334,7 +334,7 @@ describe('Download Directive', function () {
         });
 
         it('tests THR Report AWC hierarchy reduction', function () {
-            for (var i = 0; i<5;i++) {
+            for (var i = 0; i < 5; i++) {
                 controller.hierarchy[i].selected = i;
                 controller.selectedLocations[i] = i;
             }

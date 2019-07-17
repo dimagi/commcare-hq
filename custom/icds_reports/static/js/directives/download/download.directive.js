@@ -307,8 +307,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
-        console.log("ITEM:!!!!! :");
-        console.log($item);
         if (level < 4) {
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
@@ -423,7 +421,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.submitForm = function(csrfToken) {
-        console.log(vm.selectedLevel);
         $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
         var taskConfig = {
