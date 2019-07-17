@@ -6,95 +6,19 @@ from datetime import timedelta
 from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
-from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CreatePatientIdentifierTask,
-    CreatePersonAddressTask,
     CreatePersonAttributeTask,
     CreateVisitTask,
     DeletePersonAttributeTask,
-    OpenmrsResponse,
     UpdatePatientIdentifierTask,
-    UpdatePersonAddressTask,
     UpdatePersonAttributeTask,
-    UpdatePersonNameTask,
-    UpdatePersonPropertiesTask,
     get_ancestor_location_openmrs_uuid,
-    get_patient,
     get_unknown_location_uuid,
 )
 from corehq.motech.openmrs.serializers import to_omrs_datetime
-from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
-from corehq.motech.utils import pformat_json
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.openmrs.workflow import WorkflowTask
 from dimagi.utils.parsing import string_to_utc_datetime
-
-
-def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos, form_question_values):
-    """
-    Updates an OpenMRS patient and (optionally) creates visits.
-
-    This involves several requests to the `OpenMRS REST Web Services`_. If any of those requests fail, we want to
-    roll back previous changes to avoid inconsistencies in OpenMRS. To do this we define a workflow of tasks we
-    want to do. Each workflow task has a rollback task. If a task fails, all previous tasks are rolled back in
-    reverse order.
-
-    :return: A response-like object that can be used by Repeater.handle_response
-
-
-    .. _OpenMRS REST Web Services: https://wiki.openmrs.org/display/docs/REST+Web+Services+API+For+Clients
-    """
-    errors = []
-    for info in case_trigger_infos:
-        assert isinstance(info, CaseTriggerInfo)
-        patient = get_patient(requests, domain, info, openmrs_config)
-        if patient is None:
-            errors.append('Warning: CommCare case "{}" was not found in OpenMRS'.format(info.case_id))
-            continue
-
-        # case_trigger_infos are info about all of the cases
-        # created/updated by the form. Execute a separate workflow to
-        # update each patient.
-        workflow = [
-            # Update name first. If the current name in OpenMRS fails
-            # validation, other API requests will be rejected.
-            UpdatePersonNameTask(requests, info, openmrs_config, patient['person']),
-            # Update identifiers second. If a current identifier fails
-            # validation, other API requests will be rejected.
-            SyncPatientIdentifiersTask(requests, info, openmrs_config, patient),
-            # Now we should be able to update the rest.
-            UpdatePersonPropertiesTask(requests, info, openmrs_config, patient['person']),
-            SyncPersonAttributesTask(
-                requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
-            ),
-        ]
-        if patient['person']['preferredAddress']:
-            workflow.append(
-                UpdatePersonAddressTask(requests, info, openmrs_config, patient['person'])
-            )
-        else:
-            workflow.append(
-                CreatePersonAddressTask(requests, info, openmrs_config, patient['person'])
-            )
-        workflow.append(
-            CreateVisitsEncountersObsTask(
-                requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
-            ),
-        )
-
-        errors.extend(
-            execute_workflow(workflow)
-        )
-
-    if errors:
-        logger.error('Errors encountered sending OpenMRS data: %s', errors)
-        # If the form included multiple patients, some workflows may
-        # have succeeded, but don't say everything was OK if any
-        # workflows failed. (Of course most forms will only involve one
-        # case, so one workflow.)
-        return OpenmrsResponse(400, 'Bad Request', pformat_json([str(e) for e in errors]))
-    else:
-        return OpenmrsResponse(200, 'OK', '')
 
 
 class SyncPersonAttributesTask(WorkflowTask):
