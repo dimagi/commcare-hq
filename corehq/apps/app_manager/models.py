@@ -13,7 +13,6 @@ import re
 import types
 import uuid
 from collections import defaultdict, namedtuple, Counter, OrderedDict
-from functools import wraps
 
 from copy import deepcopy
 from distutils.version import LooseVersion
