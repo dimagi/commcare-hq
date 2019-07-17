@@ -39,19 +39,22 @@ def make_async_build_v2(app_id, domain, version, username, allow_prune=True, com
 
 
 def make_async_build(app, username, allow_prune=True, comment=None):
-    latest_build = app.get_latest_build()
-    if latest_build and latest_build.version == app.version:
-        return
-    make_async_build_v2.delay(app.get_id, app.domain, app.version, username,
-                              allow_prune=allow_prune, comment=comment)
+    if _should_make_build(app):
+        make_async_build_v2.delay(app.get_id, app.domain, app.version, username,
+                                  allow_prune=allow_prune, comment=comment)
 
 
 def make_build(app, username, allow_prune=True, comment=None):
+    if _should_make_build(app):
+        return make_async_build_v2(app.get_id, app.domain, app.version, username,
+                                   allow_prune=allow_prune, comment=comment)
+
+
+def _should_make_build(app):
     latest_build = app.get_latest_build()
     if latest_build and latest_build.version == app.version:
-        return
-    return make_async_build_v2(app.get_id, app.domain, app.version, username,
-                               allow_prune=allow_prune, comment=comment)
+        return False
+    return True
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
