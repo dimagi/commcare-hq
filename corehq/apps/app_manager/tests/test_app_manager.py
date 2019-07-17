@@ -12,7 +12,7 @@ import codecs
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_built_app_ids_for_app_id
-from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module, \
+from corehq.apps.app_manager.models import Application, DetailColumn, import_app, ApplicationBase, Module, \
     ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tasks import make_build, prune_auto_generated_builds
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds

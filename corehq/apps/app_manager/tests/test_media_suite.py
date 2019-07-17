@@ -18,7 +18,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.tests.util import parse_normalize
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
-from corehq.util.test_utils import flag_enabled, softer_assert
+from corehq.util.test_utils import softer_assert
 
 import commcare_translations
 
