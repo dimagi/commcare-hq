@@ -5611,8 +5611,7 @@ class LinkedApplication(Application):
     def get_latest_master_release(self, master_app_id):
         if self.domain_link:
             return get_latest_master_app_release(self.domain_link, master_app_id)
-        else:
-            raise ActionNotPermitted
+        raise ActionNotPermitted
 
     def get_latest_master_releases_versions(self):
         if self.domain_link:
