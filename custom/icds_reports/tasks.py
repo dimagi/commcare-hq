@@ -696,7 +696,8 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     icds_data_validation.delay(aggregation_date)
 
 
-@periodic_task(
+@periodic_task_on_envs(
+    settings.ICDS_TESTING_ENVS,
     queue='background_queue',
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
