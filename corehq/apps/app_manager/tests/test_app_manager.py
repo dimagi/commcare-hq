@@ -267,7 +267,7 @@ class AppManagerTest(TestCase):
 
         # Build #2, auto-generated
         app.save()
-        make_build(app, 'someone', perform_async=False)
+        make_build(app, 'someone')
         build_ids = get_built_app_ids_for_app_id(app.domain, app.id)
         self.assertEqual(len(build_ids), 2)
         self.assertEqual(build_ids[0], build1.id)
