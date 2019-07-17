@@ -336,7 +336,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
                 'domain': domain_name,
                 'api_name': 'v0.5',
                 'resource_name': ODataCaseResource._meta.resource_name,
-                'pk': config_id,
+                'pk': config_id + '/feed',
             }
         )
 
@@ -488,7 +488,7 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
                 'domain': domain_name,
                 'api_name': 'v0.5',
                 'resource_name': ODataFormResource._meta.resource_name,
-                'pk': config_id,
+                'pk': config_id + '/feed',
             }
         )
 
