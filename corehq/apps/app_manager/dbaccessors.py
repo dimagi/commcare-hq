@@ -335,7 +335,7 @@ def get_build_ids_after_version(domain, app_id, version):
 
 def get_build_ids(domain, app_id):
     """
-    Returns all the built apps for an application id, in descending order.
+    Returns all the built apps for an application id, in descending order of time built.
     """
     from .models import Application
     results = Application.get_db().view(
