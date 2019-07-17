@@ -1,14 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from datetime import datetime
+
+from django.conf import settings
 from django.db.models import Min
 
 from celery import current_task, current_app
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.signals import after_task_publish
-from django.conf import settings
+
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
+from casexml.apps.phone.const import SYNCLOG_RETENTION_DAYS
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 from dimagi.utils.logging import notify_exception
@@ -16,7 +20,6 @@ from dimagi.utils.logging import notify_exception
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
 ASYNC_RESTORE_SENT = "SENT"
-SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
 
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="1"),

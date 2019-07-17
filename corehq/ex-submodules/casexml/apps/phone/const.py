@@ -20,3 +20,5 @@ RESTORE_CACHE_KEY_PREFIX = "ota-restore"
 # case sync algorithms
 CLEAN_OWNERS = 'clean_owners'
 LIVEQUERY = 'livequery'
+
+SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
