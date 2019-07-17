@@ -6,6 +6,8 @@ import re
 from sqlalchemy.exc import OperationalError
 from testil import assert_raises, eq
 
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as JsonDiff
+
 from ..statedb import (
     Counts,
     ResumeError,
@@ -65,6 +67,17 @@ def test_resume_state():
     with init_state_db("test") as db:
         with assert_raises(ResumeError):
             db.pop_resume_state("test", [])
+
+
+def test_unexpected_diffs():
+    with init_state_db("test") as db:
+        db.add_diffs("kind", "abc", [JsonDiff("type", "path", "old", "new")])
+        db.add_diffs("kind", "def", [JsonDiff("type", "path", "old", "new")])
+        db.add_diffs("kind", "xyz", [JsonDiff("type", "path", "old", "new")])
+        db.add_unexpected_diff("abc")
+        db.add_unexpected_diff("def")
+        db.add_unexpected_diff("abc")
+        eq(list(db.iter_unexpected_diffs()), ["abc", "def"])
 
 
 def test_counters():

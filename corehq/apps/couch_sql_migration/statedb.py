@@ -150,7 +150,7 @@ class StateDB(DiffDB):
         """Add case that has been updated by a form it does not reference"""
         with self.session() as session:
             sql = (
-                "INSERT INTO {table} (id) VALUES (:id) ON CONFLICT DO NOTHING"
+                "INSERT OR IGNORE INTO {table} (id) VALUES (:id)"
             ).format(table=UnexpectedCaseUpdate.__tablename__)
             session.execute(sql, {"id": case_id})
 
