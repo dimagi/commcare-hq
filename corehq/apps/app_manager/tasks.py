@@ -46,8 +46,8 @@ def make_build(app, username, allow_prune=True, comment=None, perform_async=True
         make_async_build_v2.delay(app.get_id, app.domain, app.version, username,
                                   allow_prune=allow_prune, comment=comment)
     else:
-        make_async_build_v2(app.get_id, app.domain, app.version, username,
-                            allow_prune=allow_prune, comment=comment)
+        return make_async_build_v2(app.get_id, app.domain, app.version, username,
+                                   allow_prune=allow_prune, comment=comment)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
