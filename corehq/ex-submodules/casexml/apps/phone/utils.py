@@ -44,8 +44,9 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
     if data is None:
         items = data_fn()
         io_data = write_fixture_items_to_io(items)
-        cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
         data = io_data.read()
+        io_data.seek(0)
+        cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
 
     global_id = GLOBAL_USER_ID.encode('utf-8')
     b_user_id = restore_state.restore_user.user_id.encode('utf-8')
@@ -80,7 +81,6 @@ def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
             "key": key_prefix + '/' + domain,
         }
     db.put(io_data, **kw)
-    io_data.seek(0)
 
 
 def get_cached_fixture_items(domain, bucket_prefix):
