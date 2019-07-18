@@ -83,7 +83,6 @@ class Command(ResourceStaticCommand):
                 proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename],
                                         stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
-                out = out.decode('utf-8')
                 if out:
                     match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
                     if match:
