@@ -257,7 +257,7 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
         response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
+            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'config_id': 'my_config_id'}),
             HTTP_AUTHORIZATION='Basic ' + correct_credentials,
         )
         self.assertEqual(response.status_code, 403)
@@ -285,49 +285,12 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
             '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/$metadata',
-            'value': [],
+            'value': [{
+                'name': 'feed',
+                'kind': 'EntitySet',
+                'url': 'feed',
+            }],
         })
-
-    def test_populated_service_document(self):
-        odata_config_1 = CaseExportInstance(domain=self.domain.name, is_odata_config=True)
-        odata_config_1.save()
-        self.addCleanup(odata_config_1.delete)
-
-        odata_config_2 = CaseExportInstance(domain=self.domain.name, is_odata_config=True)
-        odata_config_2.save()
-        self.addCleanup(odata_config_2.delete)
-
-        non_odata_config = CaseExportInstance(domain=self.domain.name)
-        non_odata_config.save()
-        self.addCleanup(non_odata_config.delete)
-
-        config_in_other_domain = CaseExportInstance(domain='other_domain', is_odata_config=True)
-        config_in_other_domain.save()
-        self.addCleanup(config_in_other_domain.delete)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['OData-Version'], '4.0')
-        response_content = json.loads(response.content.decode('utf-8'))
-        self.assertCountEqual(response_content, ['@odata.context', 'value'])
-        self.assertEqual(
-            response_content['@odata.context'],
-            'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/$metadata'
-        )
-        self.assertCountEqual(response_content['value'], [
-            {
-                'url': odata_config_1.get_id,
-                'kind': 'EntitySet',
-                'name': odata_config_1.get_id,
-            },
-            {
-                'url': odata_config_2.get_id,
-                'kind': 'EntitySet',
-                'name': odata_config_2.get_id,
-            },
-        ])
 
 
 class TestCaseServiceDocumentUsingApiKey(TestCaseServiceDocument):
@@ -376,7 +339,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
         response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
+            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'config_id': 'my_config_id'}),
             HTTP_AUTHORIZATION='Basic ' + correct_credentials,
         )
         self.assertEqual(response.status_code, 403)
@@ -404,49 +367,12 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
             '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/$metadata',
-            'value': [],
+            'value': [{
+                'name': 'feed',
+                'kind': 'EntitySet',
+                'url': 'feed',
+            }],
         })
-
-    def test_populated_service_document(self):
-        odata_config_1 = FormExportInstance(domain=self.domain.name, is_odata_config=True)
-        odata_config_1.save()
-        self.addCleanup(odata_config_1.delete)
-
-        odata_config_2 = FormExportInstance(domain=self.domain.name, is_odata_config=True)
-        odata_config_2.save()
-        self.addCleanup(odata_config_2.delete)
-
-        non_odata_config = FormExportInstance(domain=self.domain.name)
-        non_odata_config.save()
-        self.addCleanup(non_odata_config.delete)
-
-        config_in_other_domain = FormExportInstance(domain='other_domain', is_odata_config=True)
-        config_in_other_domain.save()
-        self.addCleanup(config_in_other_domain.delete)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['OData-Version'], '4.0')
-        response_content = json.loads(response.content.decode('utf-8'))
-        self.assertCountEqual(response_content, ['@odata.context', 'value'])
-        self.assertEqual(
-            response_content['@odata.context'],
-            'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/$metadata'
-        )
-        self.assertCountEqual(response_content['value'], [
-            {
-                'url': odata_config_1.get_id,
-                'kind': 'EntitySet',
-                'name': odata_config_1.get_id,
-            },
-            {
-                'url': odata_config_2.get_id,
-                'kind': 'EntitySet',
-                'name': odata_config_2.get_id,
-            },
-        ])
 
 
 class TestFormServiceDocumentUsingApiKey(TestFormServiceDocument):
