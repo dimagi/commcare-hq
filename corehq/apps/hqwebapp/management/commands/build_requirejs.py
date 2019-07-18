@@ -80,7 +80,7 @@ class Command(ResourceStaticCommand):
             '''
             dirs = defaultdict(set)
             for filename in html_files:
-                proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename],
                                         stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
                 out = out.decode('utf-8')
