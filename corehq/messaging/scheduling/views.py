@@ -60,7 +60,6 @@ from corehq.messaging.scheduling.view_helpers import (
     upload_conditional_alert_workbook,
 )
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
@@ -72,11 +71,6 @@ import io
 import six
 from six.moves import range
 from six.moves.urllib.parse import quote_plus
-
-_soft_assert_type_error = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
-    exponential_backoff=False,
-)
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -280,12 +274,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         self.add_sms_count_info(result, 30)
         self.add_event_count_info(result, 30)
         self.add_error_count_info(result, 30)
-        try:
-            return JsonResponse(result)
-        except TypeError:
-            # TODO - remove after https://sentry.io/organizations/dimagi/issues/1107606091/ is resolved
-            _soft_assert_type_error(False, repr(result))
-            raise
+        return JsonResponse(result)
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('action') == 'raw':
