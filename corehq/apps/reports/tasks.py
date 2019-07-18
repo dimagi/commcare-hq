@@ -183,12 +183,11 @@ def build_form_multimedia_zip(
         export_id,
         zip_name,
         download_id,
-        user_types=None,
-        group=None):
-
+        user_types,
+):
     form_ids = get_form_ids_having_multimedia(
         domain, app_id, xmlns, parse(startdate), parse(enddate),
-        group=group, user_types=user_types,
+        user_types=user_types,
     )
     forms_info = _get_form_attachment_info(domain, form_ids, export_id)
 

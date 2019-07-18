@@ -257,48 +257,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(len(form_ids), 2)
 
     @run_with_all_backends
-    def test_get_form_ids_having_multimedia_with_group(self):
-        start = datetime(2013, 7, 1)
-        end = datetime(2013, 7, 30)
-        xmlns = 'http://a.b.org'
-        app_id = '1234'
-        user_id = 'escobar'
-
-        self._send_group_to_es(
-            _id='medellin',
-            users=['escobar'],
-        )
-
-        self._send_form_to_es(
-            app_id=app_id,
-            xmlns=xmlns,
-            received_on=datetime(2013, 7, 2),
-            user_id=user_id,
-            attachment_dict={
-                'my_image': {'content_type': 'image/jpg'}
-            }
-        )
-        self._send_form_to_es(
-            app_id=app_id,
-            xmlns=xmlns,
-            received_on=datetime(2013, 7, 2),
-            user_id='murphy',
-            attachment_dict={
-                'my_image': {'content_type': 'image/jpg'}
-            }
-        )
-
-        form_ids = get_form_ids_having_multimedia(
-            self.domain,
-            app_id,
-            xmlns,
-            start,
-            end,
-            group='medellin',
-        )
-        self.assertEqual(len(form_ids), 1)
-
-    @run_with_all_backends
     def test_get_forms_multiple_apps_xmlnss(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
