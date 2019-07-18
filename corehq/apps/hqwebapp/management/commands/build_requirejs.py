@@ -27,8 +27,6 @@ class Command(ResourceStaticCommand):
     '''
 
     root_dir = settings.FILEPATH
-    build_js_filename = "staticfiles/build.js"
-    build_txt_filename = "staticfiles/build.txt"
 
     def add_arguments(self, parser):
         parser.add_argument('--local', action='store_true',
@@ -46,11 +44,35 @@ class Command(ResourceStaticCommand):
             rel = rel[1:]
         return rel
 
-    def r_js(self, local=False, no_optimize=False):
-        '''
-        Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
-        and the bundle config output by the build.
-        '''
+    def handle(self, **options):
+        logger.setLevel('DEBUG')
+
+        local = options['local']
+        no_optimize = options['no_optimize']
+
+        if local:
+            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
+                                    stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+            if out:
+                confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
+                                    "This script overwrites some static files. "
+                                    "Are you sure you want to continue (y/n)? ".format(out))
+                if confirm[0].lower() != 'y':
+                    exit()
+            confirm = six.moves.input("You are running locally. Have you already run "
+                                "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
+            if confirm[0].lower() != 'y':
+                exit()
+            # We'll be copying optimized bundles back into corehq and could use a reference of js filenames
+            local_js_dirs = set()
+
+        try:
+            from resource_versions import resource_versions
+        except (ImportError, SyntaxError):
+            resource_versions = {}
+
+        # Write build.js file to feed to r.js
         with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
             config = yaml.load(f)
 
@@ -105,40 +127,8 @@ class Command(ResourceStaticCommand):
             with open(os.path.join(self.root_dir, 'staticfiles', 'build.js'), 'w') as fout:
                 fout.write("({});".format(json.dumps(config, indent=4)))
 
-        call(["node", "bower_components/r.js/dist/r.js", "-o", self.build_js_filename])
-
-        return config
-
-    def handle(self, **options):
-        logger.setLevel('DEBUG')
-
-        local = options['local']
-        no_optimize = options['no_optimize']
-
-        if local:
-            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
-                                    stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            if out:
-                confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
-                                    "This script overwrites some static files. "
-                                    "Are you sure you want to continue (y/n)? ".format(out))
-                if confirm[0].lower() != 'y':
-                    exit()
-            confirm = six.moves.input("You are running locally. Have you already run "
-                                "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
-            if confirm[0].lower() != 'y':
-                exit()
-            # We'll be copying optimized bundles back into corehq and could use a reference of js filenames
-            local_js_dirs = set()
-
-        try:
-            from resource_versions import resource_versions
-        except (ImportError, SyntaxError):
-            resource_versions = {}
-
-        config = self.r_js(local=local, no_optimize=no_optimize)
-
+        # Run r.js
+        call(["node", "bower_components/r.js/dist/r.js", "-o", "staticfiles/build.js"])
         if local:
             # Copy optimized modules in staticfiles back into corehq
             for module in config['modules']:
@@ -161,8 +151,8 @@ class Command(ResourceStaticCommand):
                         copyfile(src, os.path.join(self.root_dir, dest_stem, module['name'] + '.js'))
                     else:
                         logger.warning("Could not copy {} into {}".format(self._relative(src), self._relative(dest)))
-            logger.info("Final build config written to {}".format(self.build_js_filename))
-            logger.info("Bundle config output written to {}".format(self.build_txt_filename))
+            logger.info("Final build config written to staticfiles/build.js")
+            logger.info("Bundle config output written to staticfiles/build.txt")
 
         filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
         resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
