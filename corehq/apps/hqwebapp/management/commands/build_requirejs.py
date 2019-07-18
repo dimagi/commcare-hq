@@ -17,9 +17,6 @@ from corehq.apps.hqwebapp.management.commands.resource_static import Command as 
 from io import open
 
 
-logger = logging.getLogger('__name__')
-
-
 class Command(ResourceStaticCommand):
     help = '''
         Runs RequireJS optimizer to concatenate, minify, and bundle JavaScript files
@@ -37,6 +34,7 @@ class Command(ResourceStaticCommand):
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
 
     def handle(self, **options):
+        logger = logging.getLogger('__name__')
         logger.setLevel('DEBUG')
 
         local = options['local']
@@ -119,7 +117,7 @@ class Command(ResourceStaticCommand):
                 config['modules'].append({
                     'name': os.path.join(directory, "bundle"),
                     'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
-                    'include': sorted(mains),
+                    'include': sorted(list(mains)),
                     'create': True,
                 })
 
