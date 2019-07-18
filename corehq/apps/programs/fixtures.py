@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from functools import partial
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import get_or_cache_global_fixture
+from casexml.apps.phone.utils import get_or_cache_global_fixture, GLOBAL_USER_ID
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 
@@ -45,7 +45,8 @@ class ProgramFixturesProvider(FixtureProvider):
 
         return simple_fixture_generator(
             restore_user, self.id, "program",
-            PROGRAM_FIELDS, get_programs, restore_state.last_sync_log
+            PROGRAM_FIELDS, get_programs, restore_state.last_sync_log, GLOBAL_USER_ID
         )
+
 
 program_fixture_generator = ProgramFixturesProvider()
