@@ -180,56 +180,6 @@ class FixtureTest(TestCase, TestXmlMixin):
         )
         self.assertXMLNotEqual(expected_xml_new, expected_xml)
 
-    def test_selective_product_sync(self):
-        user = self.user
-
-        expected_xml = self.generate_product_fixture_xml(user)
-
-        product_list = Product.by_domain(user.domain)
-        self._initialize_product_names(len(product_list))
-
-        fixture_original = call_fixture_generator(product_fixture_generator, user)[1]
-        deprecated_generate_restore_payload(self.domain_obj, user)
-        self.assertXmlEqual(
-            expected_xml,
-            fixture_original
-        )
-
-        first_sync = self._get_latest_synclog()
-
-        # make sure the time stamp on this first sync is
-        # not on the same second that the products were created
-        first_sync.date += datetime.timedelta(seconds=1)
-
-        # second sync is before any changes are made, so there should
-        # be no products synced
-        fixture_pre_change = call_fixture_generator(product_fixture_generator, user, last_sync=first_sync)
-        deprecated_generate_restore_payload(self.domain_obj, user)
-        self.assertEqual(
-            [],
-            fixture_pre_change,
-            "Fixture was not empty on second sync"
-        )
-
-        second_sync = self._get_latest_synclog()
-
-        self.assertTrue(first_sync._id != second_sync._id)
-
-        # save should make the product more recently updated than the
-        # last sync
-        for product in product_list:
-            product.save()
-
-        # now that we've updated a product, we should get
-        # product data in sync again
-        fixture_post_change = call_fixture_generator(product_fixture_generator, user, last_sync=second_sync)[1]
-
-        # regenerate the fixture xml to make sure it is still legit
-        self.assertXmlEqual(
-            expected_xml,
-            fixture_post_change
-        )
-
     def generate_program_xml(self, program_list, user):
         program_xml = ''
         for program in program_list:
