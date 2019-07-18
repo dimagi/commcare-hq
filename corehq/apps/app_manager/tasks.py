@@ -26,10 +26,14 @@ def make_async_build_v2(app_id, domain, version, username=None, allow_prune=True
     app = get_app(domain, app_id)
     errors = app.validate_app()
     if not errors:
-        copy = app.make_build(comment=comment)
-        copy.is_auto_generated = allow_prune
-        copy.save(increment_version=False)
-        return copy
+        _make_build(app, allow_prune, comment)
+
+
+def _make_build(app, allow_prune=True, comment=None):
+    copy = app.make_build(comment=comment)
+    copy.is_auto_generated = allow_prune
+    copy.save(increment_version=False)
+    return copy
 
 
 def make_async_build(app, username):
@@ -41,9 +45,9 @@ def make_async_build(app, username):
 
 
 def make_build(app, allow_prune=True, comment=None):
-    if _should_make_build(app):
-        return make_async_build_v2(app.get_id, app.domain, app.version,
-                                   allow_prune=allow_prune, comment=comment)
+    errors = app.validate_app()
+    if not errors:
+        return _make_build(app, allow_prune=allow_prune, comment=comment)
 
 
 def _should_make_build(app):
