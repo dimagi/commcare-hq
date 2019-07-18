@@ -54,6 +54,6 @@ branches:
   #- jls/linked-app-multiple-masters # Jenny June 18
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
   - dropbox-fix # Nick P July 5
-  #- mk/skip-files-build # MK July 6
+  - mk/skip-files-build # MK July 6
   - jls/trivial-mobile-workers-change # Jenny July 18
 submodules: {}
