@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 import six
-from datetime import date
+from datetime import date, timedelta
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -17,6 +17,7 @@ from memoized import memoized
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
+from unidecode import unidecode
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, track_workflow
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -27,6 +28,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.tasks import build_form_multimedia_zip
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
@@ -420,9 +422,21 @@ def prepare_form_multimedia(request, domain):
 
     download = DownloadBase()
     export_object = view_helper.get_export(export_specs[0]['export_id'])
-    task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id, filter_form_data)
-    from corehq.apps.reports.tasks import build_form_multimedia_zip
-    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
+
+    datespan = filter_form.cleaned_data['date_range']
+    mobile_user_and_group_slugs = filter_form.get_mobile_user_and_group_slugs(filter_form_data)
+
+    download.set_task(build_form_multimedia_zip.delay(
+        domain=domain,
+        startdate=datespan.startdate.isoformat(),
+        enddate=(datespan.enddate + timedelta(days=1)).isoformat(),
+        app_id=export_object.app_id,
+        xmlns=export_object.xmlns if hasattr(export_object, 'xmlns') else '',
+        export_id=export_object.get_id,
+        zip_name='multimedia-{}'.format(unidecode(export_object.name)),
+        user_types=filter_form.get_es_user_types(mobile_user_and_group_slugs),
+        download_id=download.download_id
+    ))
 
     return json_response({
         'success': True,
