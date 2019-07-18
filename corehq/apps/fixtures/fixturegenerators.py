@@ -6,20 +6,12 @@ from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import write_fixture_items_to_io, cache_fixture_items_data, \
-    get_cached_fixture_items
+    get_cached_fixture_items, GLOBAL_USER_ID
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 from .utils import get_index_schema_node
-
-# GLOBAL_USER_ID is expected to be a globally unique string that will never
-# change and can always be search-n-replaced in global fixture XML. The UUID
-# in this string was generated with `uuidgen` on Mac OS X 10.11.6
-# HACK if this string is present anywhere in an item list it will be replaced
-# with the restore user's user_id. DO NOT DEPEND ON THIS IMPLEMENTATION DETAIL.
-# This is an optimization to avoid an extra XML parse/serialize cycle.
-GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
 def item_lists_by_domain(domain):

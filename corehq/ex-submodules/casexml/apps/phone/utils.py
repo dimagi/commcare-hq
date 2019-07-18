@@ -25,6 +25,32 @@ from corehq.blobs.models import BlobMeta
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
 
+# GLOBAL_USER_ID is expected to be a globally unique string that will never
+# change and can always be search-n-replaced in global fixture XML. The UUID
+# in this string was generated with `uuidgen` on Mac OS X 10.11.6
+# HACK if this string is present anywhere in an item list it will be replaced
+# with the restore user's user_id. DO NOT DEPEND ON THIS IMPLEMENTATION DETAIL.
+# This is an optimization to avoid an extra XML parse/serialize cycle.
+GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
+
+
+def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name, data_fn):
+    domain = restore_state.restore_user.domain
+
+    data = None
+    if not restore_state.overwrite_cache:
+        data = get_cached_fixture_items(domain, cache_bucket_prefix)
+
+    if data is None:
+        items = data_fn()
+        io_data = write_fixture_items_to_io(items)
+        cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
+        data = io_data.read()
+
+    global_id = GLOBAL_USER_ID.encode('utf-8')
+    b_user_id = restore_state.restore_user.user_id.encode('utf-8')
+    return [data.replace(global_id, b_user_id)] if data else []
+
 
 def write_fixture_items_to_io(items):
     io = BytesIO()
