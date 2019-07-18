@@ -185,36 +185,25 @@ def build_form_multimedia_zip(
         export_id,
         zip_name,
         download_id,
-        export_is_legacy=False,  # always False
         user_types=None,
         group=None):
 
     form_ids = get_form_ids_having_multimedia(
-        domain,
-        app_id,
-        xmlns,
-        parse(startdate),
-        parse(enddate),
-        group=group,
-        user_types=user_types,
+        domain, app_id, xmlns, parse(startdate), parse(enddate),
+        group=group, user_types=user_types,
     )
-    properties = _get_export_properties(export_id)
+    forms_info = _get_form_attachment_info(domain, form_ids, export_id)
 
     if not app_id:
         zip_name = 'Unrelated Form'
-    forms_info = list()
-    for form in FormAccessors(domain).iter_forms(form_ids):
-        if not zip_name:
-            zip_name = unidecode(form.name or 'unknown form')
-        forms_info.append(_extract_form_attachment_info(form, properties))
+    else:
+        zip_name = unidecode(forms_info[0]['form'].name or 'unknown form')
 
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
 
-    case_id_to_name = _get_case_names(
-        domain,
-        set.union(*[form_info['case_ids'] for form_info in forms_info]) if forms_info else set(),
-    )
+    all_case_ids = set.union(*(info['case_ids'] for info in forms_info))
+    case_id_to_name = _get_case_names(domain, all_case_ids)
 
     with TransientTempfile() as temp_path:
         with open(temp_path, 'wb') as f:
@@ -223,6 +212,14 @@ def build_form_multimedia_zip(
             _save_and_expose_zip(f, zip_name, domain, download_id)
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
+
+
+def _get_form_attachment_info(domain, form_ids, export_id):
+    properties = _get_export_properties(export_id)
+    forms_info = []
+    for form in FormAccessors(domain).iter_forms(form_ids):
+        forms_info.append(_extract_form_attachment_info(form, properties))
+    return forms_info
 
 
 def _get_case_names(domain, case_ids):
