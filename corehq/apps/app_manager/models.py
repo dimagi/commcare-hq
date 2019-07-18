@@ -5877,7 +5877,6 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def get_domain(self):
         # method to set domain on records added before domain column was added
-        # so that its added now on save
         if not self.domain:
             self.domain = Application.get(self.build_id).domain
         return self.domain
