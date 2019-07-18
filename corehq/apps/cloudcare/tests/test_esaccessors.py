@@ -49,7 +49,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
             is_active=True,
         )
 
-        with patch('corehq.pillows.user.Group.by_user', return_value=[]):
+        with patch('corehq.pillows.user.Group.by_user_id', return_value=[]):
             send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
         self.es.indices.refresh(USER_INDEX)
         return user
