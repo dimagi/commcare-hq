@@ -1043,7 +1043,7 @@ class CaseExportInstance(ExportInstance):
         if export_instance.is_odata_config:
             for table in export_instance.tables:
                 for column in table.columns:
-                    if [path_node.name for path_node in column.item.path] == ['_id']:
+                    if not column.item.transform and [path_node.name for path_node in column.item.path] == ['_id']:
                         column.label = 'caseid'
                         column.selected = True
         return export_instance
@@ -1106,7 +1106,9 @@ class FormExportInstance(ExportInstance):
         if export_instance.is_odata_config:
             for table in export_instance.tables:
                 for column in table.columns:
-                    if [path_node.name for path_node in column.item.path] == ['form', 'meta', 'instanceID']:
+                    if not column.item.transform and (
+                        [path_node.name for path_node in column.item.path] == ['form', 'meta', 'instanceID']
+                    ):
                         column.label = 'formid'
                         column.selected = True
         return export_instance
