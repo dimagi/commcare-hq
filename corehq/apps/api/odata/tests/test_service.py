@@ -284,7 +284,7 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
-            '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/$metadata',
+            '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/cases/my_config_id/$metadata',
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',
@@ -366,7 +366,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
         self.assertEqual(json.loads(response.content.decode('utf-8')), {
-            '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/$metadata',
+            '@odata.context': 'http://localhost:8000/a/test_domain/api/v0.5/odata/forms/my_config_id/$metadata',
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',

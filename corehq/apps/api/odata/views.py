@@ -17,9 +17,11 @@ from corehq.apps.api.odata.utils import (
 )
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain, get_odata_form_configs_by_domain
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -109,9 +111,9 @@ class ODataCaseServiceView(View):
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain, **kwargs):
+    def get(self, request, domain, config_id):
         service_document_content = {
-            '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
+            '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain, config_id]),
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',
@@ -128,13 +130,10 @@ class ODataCaseMetadataView(View):
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain):
-        configs = get_odata_case_configs_by_domain(domain)
-        config_ids_to_properties = OrderedDict()
-        for config in configs:
-            config_ids_to_properties[config.get_id] = get_case_odata_fields_from_config(config)
+    def get(self, request, domain, config_id):
+        config = get_document_or_404(CaseExportInstance, domain, config_id)
         metadata = render_to_string('api/case_odata_metadata.xml', {
-            'config_ids_to_properties': config_ids_to_properties,
+            'fields': get_case_odata_fields_from_config(config),
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
@@ -146,9 +145,9 @@ class ODataFormServiceView(View):
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain, **kwargs):
+    def get(self, request, domain, config_id):
         service_document_content = {
-            '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain]),
+            '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain, config_id]),
             'value': [{
                 'name': 'feed',
                 'kind': 'EntitySet',
@@ -165,13 +164,10 @@ class ODataFormMetadataView(View):
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain):
-        configs = get_odata_form_configs_by_domain(domain)
-        config_ids_to_properties = OrderedDict()
-        for config in configs:
-            config_ids_to_properties[config.get_id] = get_form_odata_fields_from_config(config)
+    def get(self, request, domain, config_id):
+        config = get_document_or_404(FormExportInstance, domain, config_id)
         metadata = render_to_string('api/form_odata_metadata.xml', {
-            'config_ids_to_properties': config_ids_to_properties,
+            'fields': get_case_odata_fields_from_config(config),
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 

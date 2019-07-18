@@ -257,7 +257,7 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
         response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
+            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'config_id': 'my_config_id'}),
             HTTP_AUTHORIZATION='Basic ' + correct_credentials,
         )
         self.assertEqual(response.status_code, 403)
@@ -277,30 +277,15 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
-    def test_successful_request(self):
+    def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
             response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/xml')
-        self.assertEqual(response['OData-Version'], '4.0')
-        self.assertXmlEqual(
-            self.get_xml('empty_metadata_document', override_path=PATH_TO_TEST_DATA),
-            response.content
-        )
+        self.assertEqual(response.status_code, 404)
 
     def test_populated_metadata_document(self):
-        odata_config_1 = CaseExportInstance(
-            _id='odata_config_1',
-            domain=self.domain.name,
-            is_odata_config=True,
-            tables=[TableConfiguration(columns=[])]
-        )
-        odata_config_1.save()
-        self.addCleanup(odata_config_1.delete)
-
-        odata_config_2 = CaseExportInstance(
-            _id='odata_config_2',
+        odata_config = CaseExportInstance(
+            _id='my_config_id',
             domain=self.domain.name,
             is_odata_config=True,
             tables=[
@@ -313,8 +298,8 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
                 ),
             ]
         )
-        odata_config_2.save()
-        self.addCleanup(odata_config_2.delete)
+        odata_config.save()
+        self.addCleanup(odata_config.delete)
 
         non_odata_config = CaseExportInstance(domain=self.domain.name)
         non_odata_config.save()
@@ -326,14 +311,7 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
-            with patch(
-                'corehq.apps.api.odata.views.get_odata_case_configs_by_domain',
-                return_value=sorted(
-                    get_odata_case_configs_by_domain(self.domain.name),
-                    key=lambda _config: _config.get_id
-                )
-            ):
-                response = self._execute_query(correct_credentials)
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
         self.assertEqual(response['OData-Version'], '4.0')
@@ -392,7 +370,7 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
         response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
+            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'config_id': 'my_config_id'}),
             HTTP_AUTHORIZATION='Basic ' + correct_credentials,
         )
         self.assertEqual(response.status_code, 403)
@@ -412,30 +390,15 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
         response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
-    def test_successful_request(self):
+    def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
             response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['Content-Type'], 'application/xml')
-        self.assertEqual(response['OData-Version'], '4.0')
-        self.assertXmlEqual(
-            self.get_xml('empty_metadata_document', override_path=PATH_TO_TEST_DATA),
-            response.content
-        )
+        self.assertEqual(response.status_code, 404)
 
     def test_populated_metadata_document(self):
-        odata_config_1 = FormExportInstance(
-            _id='odata_config_1',
-            domain=self.domain.name,
-            is_odata_config=True,
-            tables=[TableConfiguration(columns=[])]
-        )
-        odata_config_1.save()
-        self.addCleanup(odata_config_1.delete)
-
-        odata_config_2 = FormExportInstance(
-            _id='odata_config_2',
+        odata_config = FormExportInstance(
+            _id='my_config_id',
             domain=self.domain.name,
             is_odata_config=True,
             tables=[
@@ -448,27 +411,12 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
                 ),
             ]
         )
-        odata_config_2.save()
-        self.addCleanup(odata_config_2.delete)
-
-        non_odata_config = FormExportInstance(domain=self.domain.name)
-        non_odata_config.save()
-        self.addCleanup(non_odata_config.delete)
-
-        config_in_other_domain = FormExportInstance(domain='other_domain', is_odata_config=True)
-        config_in_other_domain.save()
-        self.addCleanup(config_in_other_domain.delete)
+        odata_config.save()
+        self.addCleanup(odata_config.delete)
 
         correct_credentials = self._get_correct_credentials()
         with flag_enabled('ODATA'):
-            with patch(
-                'corehq.apps.api.odata.views.get_odata_form_configs_by_domain',
-                return_value=sorted(
-                    get_odata_form_configs_by_domain(self.domain.name),
-                    key=lambda _config: _config.get_id
-                )
-            ):
-                response = self._execute_query(correct_credentials)
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
         self.assertEqual(response['OData-Version'], '4.0')
