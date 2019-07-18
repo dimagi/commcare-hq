@@ -36,19 +36,19 @@ class Command(ResourceStaticCommand):
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
 
-    def _relative(self, path, root=None):
-        if not root:
-            root = self.root_dir
-        rel = path.replace(root, '')
-        if rel.startswith("/"):
-            rel = rel[1:]
-        return rel
-
     def handle(self, **options):
         logger.setLevel('DEBUG')
 
         local = options['local']
         no_optimize = options['no_optimize']
+
+        def _relative(path, root=None):
+            if not root:
+                root = self.root_dir
+            rel = path.replace(root, '')
+            if rel.startswith("/"):
+                rel = rel[1:]
+            return rel
 
         if local:
             proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
@@ -89,7 +89,7 @@ class Command(ResourceStaticCommand):
                         if not re.search(r'/partials/', filename):
                             html_files.append(filename)
                     elif local and name.endswith(".js"):
-                        local_js_dirs.add(self._relative(root))
+                        local_js_dirs.add(_relative(root))
 
             '''
             Build a dict of all main js modules, grouped by directory:
@@ -144,13 +144,13 @@ class Command(ResourceStaticCommand):
                     # If that didn't work, look for a js directory that matches the module name
                     # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                     # for something ending in foo/baz
-                    common_dir = self._relative(os.path.dirname(src), os.path.join(self.root_dir, 'staticfiles'))
-                    options = [d for d in local_js_dirs if self._relative(d).endswith(common_dir)]
+                    common_dir = _relative(os.path.dirname(src), os.path.join(self.root_dir, 'staticfiles'))
+                    options = [d for d in local_js_dirs if _relative(d).endswith(common_dir)]
                     if len(options) == 1:
                         dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
                         copyfile(src, os.path.join(self.root_dir, dest_stem, module['name'] + '.js'))
                     else:
-                        logger.warning("Could not copy {} into {}".format(self._relative(src), self._relative(dest)))
+                        logger.warning("Could not copy {} into {}".format(_relative(src), _relative(dest)))
             logger.info("Final build config written to staticfiles/build.js")
             logger.info("Bundle config output written to staticfiles/build.txt")
 
@@ -160,7 +160,7 @@ class Command(ResourceStaticCommand):
             dest = os.path.join(self.root_dir, 'corehq', 'apps', 'hqwebapp', 'static',
                                 'hqwebapp', 'js', 'requirejs_config.js')
             copyfile(filename, dest)
-            logger.info("Copied updated requirejs_config.js back into {}".format(self._relative(dest)))
+            logger.info("Copied updated requirejs_config.js back into {}".format(_relative(dest)))
 
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
