@@ -1864,16 +1864,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.locations.models import get_case_sharing_groups_for_locations
         # get faked location group objects
         groups = list(get_case_sharing_groups_for_locations(
-            self.get_sql_locations(self.domain),
+            self.get_sql_locations(),
             self._id
         ))
 
-        groups += [group for group in Group.by_user(self) if group.case_sharing]
+        groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
         return groups
 
     def get_reporting_groups(self):
         from corehq.apps.groups.models import Group
-        return [group for group in Group.by_user(self) if group.reporting]
+        return [group for group in Group.by_user_id(self._id) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
@@ -1894,7 +1894,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
-        return Group.by_user(self, wrap=False)
+        return Group.by_user_id(self._id, wrap=False)
 
     def set_groups(self, group_ids):
         from corehq.apps.groups.models import Group

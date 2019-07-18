@@ -69,7 +69,7 @@ def date_format(date_str):
 
 
 def group_name(owner_id):
-    group = Group.by_user(owner_id, wrap=False, include_names=True)
+    group = Group.by_user_id(owner_id, wrap=False, include_names=True)
     if not group:
         try:
             group = Group.get(owner_id)

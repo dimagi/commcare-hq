@@ -2111,6 +2111,6 @@ def project_health_user_details(request, domain, user_id):
     return render(request, 'reports/project_health/user_details.html', {
         'domain': domain,
         'user': user,
-        'groups': ', '.join(g.name for g in Group.by_user(user)),
+        'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
         'submission_by_form_link': submission_by_form_link,
     })

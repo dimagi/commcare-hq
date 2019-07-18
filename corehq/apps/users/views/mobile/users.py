@@ -175,7 +175,7 @@ class EditCommCareUserView(BaseEditUserView):
     def groups(self):
         if not self.editable_user:
             return []
-        return Group.by_user(self.editable_user)
+        return Group.by_user_id(self.editable_user_id)
 
     @property
     @memoized

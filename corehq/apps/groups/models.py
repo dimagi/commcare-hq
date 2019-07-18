@@ -227,11 +227,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             return result
 
     @classmethod
-    def by_user(cls, user_or_user_id, wrap=True, include_names=False):
-        try:
-            user_id = user_or_user_id.user_id
-        except AttributeError:
-            user_id = user_or_user_id
+    def by_user_id(cls, user_id, wrap=True, include_names=False):
         results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
         if wrap:
             return results
