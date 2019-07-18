@@ -49,11 +49,11 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
   - nh/icds/skip_trans  # Norman June 21
-  - fr/case-templates      # FR May 15
-  - jls/ko-create-mobile-worker # Jenny June 9
-  - jls/linked-app-multiple-masters # Jenny June 18
+  #- fr/case-templates      # FR May 15
+  #- jls/linked-app-multiple-masters # Jenny June 18
   - rn_only_select_app_type_when_no_advanced # Rohit June 27 
-  - jls/build-app-ccz-app-id-step-2-of-3 # Jenny July 3
+  - dropbox-fix # Nick P July 5
+  #- mk/skip-files-build # MK July 6
+  - jls/trivial-mobile-workers-change # Jenny July 18
 submodules: {}

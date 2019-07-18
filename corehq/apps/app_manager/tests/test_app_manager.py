@@ -14,7 +14,7 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.app_manager.dbaccessors import get_app, get_built_app_ids_for_app_id
 from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module, \
     ReportModule, ReportAppConfig
-from corehq.apps.app_manager.tasks import make_async_build, prune_auto_generated_builds
+from corehq.apps.app_manager.tasks import make_async_build_v2, prune_auto_generated_builds
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.app_manager.util import add_odk_profile_after_build, purge_report_from_mobile_ucr
 from corehq.apps.builds.models import BuildSpec
@@ -267,7 +267,7 @@ class AppManagerTest(TestCase):
 
         # Build #2, auto-generated
         app.save()
-        make_async_build(app, 'someone')
+        make_async_build_v2(app.get_id, app.domain, app.version)
         build_ids = get_built_app_ids_for_app_id(app.domain, app.id)
         self.assertEqual(len(build_ids), 2)
         self.assertEqual(build_ids[0], build1.id)

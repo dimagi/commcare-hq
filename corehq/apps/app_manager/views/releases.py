@@ -11,6 +11,7 @@ from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+from django.core.exceptions import ValidationError
 
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
@@ -44,6 +45,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_app_cached,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
@@ -59,7 +61,10 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
-    no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+)
 from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.download import source_files
@@ -233,7 +238,7 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists() or
+        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists() or
                 AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
@@ -592,50 +597,21 @@ class LanguageProfilesView(View):
 
 @require_can_edit_apps
 def toggle_build_profile(request, domain, build_id, build_profile_id):
-    build = Application.get(build_id)
-    action = request.GET.get('action')
-    if action and action == 'enable' and not build.is_released:
-        messages.error(request, _("Release the build first. Can not enable profiles for unreleased versions"))
-        return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
-    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
-        app_id=build.copy_of,
-        build_profile_id=build_profile_id
-    ).order_by('-version').first()
-    if action == 'enable' and latest_enabled_build_profile:
-        if latest_enabled_build_profile.version > build.version:
-            messages.error(request, _(
-                "Latest version available for this profile is {}, which is "
-                "higher than this version. Disable any higher versions first.".format(
-                    latest_enabled_build_profile.version
-                )))
-            return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
-    if action == 'enable':
-        build_profile = LatestEnabledBuildProfiles.objects.create(
-            app_id=build.copy_of,
-            version=build.version,
-            build_profile_id=build_profile_id,
-            build_id=build_id
-        )
-        build_profile.expire_cache(domain)
-    elif action == 'disable':
-        build_profile = LatestEnabledBuildProfiles.objects.filter(
-            app_id=build.copy_of,
-            version=build.version,
-            build_profile_id=build_profile_id,
-            build_id=build_id
-        ).first()
-        build_profile.delete()
-        build_profile.expire_cache(domain)
-    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
-        app_id=build.copy_of,
-        build_profile_id=build_profile_id
-    ).order_by('-version').first()
-    if latest_enabled_build_profile:
-        messages.success(request, _("Latest version for profile {} is now {}").format(
-            build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
-        ))
+    build = get_app_cached(request.domain, build_id)
+    status = request.GET.get('action') == 'enable'
+    try:
+        LatestEnabledBuildProfiles.update_status(build, build_profile_id, status)
+    except ValidationError as e:
+        messages.error(request, e)
     else:
-        messages.success(request, _("Latest release now available for profile {}").format(
-            build.build_profiles[build_profile_id].name
-        ))
+        latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
+            build.copy_of, build_profile_id)
+        if latest_enabled_build_profile:
+            messages.success(request, _("Latest version for profile {} is now {}").format(
+                build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
+            ))
+        else:
+            messages.success(request, _("Latest release now available for profile {}").format(
+                build.build_profiles[build_profile_id].name
+            ))
     return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))

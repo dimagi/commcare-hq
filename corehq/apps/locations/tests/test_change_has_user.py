@@ -53,7 +53,7 @@ class TestChangeHasUser(TestCase):
             'name': name,
             'location_type': 'county',
             'location_user-username': name.lower(),
-            'location_user-password': '123',
+            'location_user-new_password': '123',
             'location_user-first_name': '',
             'location_user-last_name': '',
         }
@@ -63,7 +63,7 @@ class TestChangeHasUser(TestCase):
             request_user=MagicMock(),
             is_new=True,
         )
-        self.assertTrue(form.is_valid())
+        self.assertTrue(form.is_valid(), form.errors)
         form.save()
 
     def test(self, existing_users_mock):

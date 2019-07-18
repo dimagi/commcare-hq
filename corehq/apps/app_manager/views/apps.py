@@ -51,7 +51,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import (
-    make_async_build,
+    make_async_build_v2,
     update_linked_app_and_notify_task
 )
 from corehq.apps.app_manager.util import (
@@ -496,7 +496,7 @@ def load_app_from_slug(domain, username, slug):
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build(app, username, allow_prune=False, comment=comment)
+    build = make_async_build_v2(app.get_id, app.domain, app.version, allow_prune=False, comment=comment)
     build.is_released = True
     build.save(increment_version=False)
     return build
@@ -506,7 +506,7 @@ def load_app_from_slug(domain, username, slug):
 def export_gzip(req, domain, app_id):
     app_json = get_app(domain, app_id)
     fd, fpath = tempfile.mkstemp()
-    with os.fdopen(fd, 'w') as tmp:
+    with os.fdopen(fd, 'wb') as tmp:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr('application.json', app_json.export_json())
 

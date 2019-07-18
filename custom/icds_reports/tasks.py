@@ -12,7 +12,6 @@ from datetime import date, datetime, timedelta
 from io import BytesIO, open
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
@@ -25,22 +24,18 @@ from dateutil.relativedelta import relativedelta
 from dateutil import parser as date_parser
 from six.moves import range
 
+from corehq.util.celery_utils import periodic_task_on_envs
 from couchexport.export import export_from_tables
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
-
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
     get_primary_db_case_counts,
     get_primary_db_form_counts,
 )
-
-from corehq.apps.es.cases import CaseES, server_modified_range
-from corehq.apps.es.forms import FormES, submitted
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -187,19 +182,15 @@ SQL_FUNCTION_PATHS = [
 ]
 
 
-# Tasks that are only to be run on ICDS_ENVS should be marked
-# with @only_icds_periodic_task rather than @periodic_task
-if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    only_icds_periodic_task = periodic_task
-else:
-    def only_icds_periodic_task(**kwargs):
-        return lambda fn: fn
-
-
-@periodic_task(run_every=crontab(minute=0, hour=18),
+@periodic_task(run_every=crontab(minute=15, hour=18),
                acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task():
     move_ucr_data_into_aggregation_tables.delay()
+
+
+@periodic_task(run_every=crontab(minute=45, hour=17),
+               acks_late=True, queue='icds_aggregation_queue')
+def run_citus_move_ucr_data_into_aggregation_tables_task():
     if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
         move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
@@ -341,15 +332,14 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
-                create_mbt_for_month.delay(state_id, first_of_month_string)
+                create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
         if date.weekday() == 5:
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly', force_citus=force_citus)
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                      force_citus=force_citus),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
-                                   force_citus=force_citus),
-            _bust_awc_cache.si()
+                                   force_citus=force_citus)
         ).delay()
 
 
@@ -706,7 +696,8 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     icds_data_validation.delay(aggregation_date)
 
 
-@periodic_task(
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
     queue='background_queue',
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
@@ -1044,7 +1035,12 @@ def _get_value(data, field):
 
 # This task caused memory spikes once a day on the india env
 # before it was switched to icds-only (June 2019)
-@only_icds_periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    run_every=crontab(minute=30, hour=18),
+    acks_late=True,
+    queue='icds_aggregation_queue'
+)
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -1188,51 +1184,6 @@ def build_disha_dump():
     celery_task_logger.info("Finished dumping DISHA data")
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
-def push_missing_docs_to_es():
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-        return
-
-    current_date = date.today() - timedelta(weeks=12)
-    interval = timedelta(days=1)
-    case_doc_type = 'CommCareCase'
-    xform_doc_type = 'XFormInstance'
-    doc_differences = dict()
-    while current_date <= date.today() + interval:
-        end_date = current_date + interval
-        primary_xforms = get_primary_db_form_counts(
-            'icds-cas', current_date, end_date
-        ).get(xform_doc_type, -1)
-        es_xforms = get_es_counts_by_doc_type(
-            'icds-cas', (FormES,), (submitted(gte=current_date, lt=end_date),)
-        ).get(xform_doc_type.lower(), -2)
-        if primary_xforms != es_xforms:
-            doc_differences[(current_date, xform_doc_type)] = primary_xforms - es_xforms
-
-        primary_cases = get_primary_db_case_counts(
-            'icds-cas', current_date, end_date
-        ).get(case_doc_type, -1)
-        es_cases = get_es_counts_by_doc_type(
-            'icds-cas', (CaseES,), (server_modified_range(gte=current_date, lt=end_date),)
-        ).get(case_doc_type, -2)
-        if primary_cases != es_cases:
-            doc_differences[(current_date, case_doc_type)] = primary_xforms - es_xforms
-
-        current_date += interval
-
-    if doc_differences:
-        message = "\n".join([
-            "{}, {}: {}".format(k[0], k[1], v)
-            for k, v in doc_differences.items()
-        ])
-        send_mail_async.delay(
-            subject="Results from push_missing_docs_to_es",
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
-        )
-
-
 @periodic_task(run_every=crontab(hour=17, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
@@ -1283,7 +1234,9 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
 
 
 @task(queue='icds_dashboard_reports_queue')
-def create_mbt_for_month(state_id, month):
+def create_mbt_for_month(state_id, month, force_citus=False):
+    if force_citus:
+        force_citus_engine()
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
         helper = get_helper(helper_class.helper_key)(state_id, month)
@@ -1297,15 +1250,6 @@ def create_mbt_for_month(state_id, month):
             )
             icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
             icds_file.save()
-
-
-@task(queue='background_queue')
-def _bust_awc_cache():
-    create_datadog_event('redis: delete dashboard keys', 'start')
-    reach_keys = cache.keys('*cas_reach_data*')
-    for key in reach_keys:
-        cache.delete(key)
-    create_datadog_event('redis: delete dashboard keys', 'finish')
 
 
 @task(queue='dashboard_comparison_queue')

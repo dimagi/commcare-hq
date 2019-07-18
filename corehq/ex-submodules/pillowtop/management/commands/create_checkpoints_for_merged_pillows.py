@@ -11,6 +11,7 @@ from six.moves import input
 from pillowtop.models import KafkaCheckpoint
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_pillow_by_name
+from io import open
 
 
 PILLOW_REORG_MAPPING = {
@@ -100,7 +101,7 @@ class Command(BaseCommand):
 
         path = options['reorg_file_path']
         if path:
-            with open(path, 'rb') as f:
+            with open(path, 'r') as f:
                 reorg_mapping = json.loads(f.read())
         else:
             reorg_mapping = PILLOW_REORG_MAPPING

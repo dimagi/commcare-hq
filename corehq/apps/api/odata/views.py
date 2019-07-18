@@ -11,11 +11,12 @@ from corehq import toggles
 from corehq.apps.api.odata.utils import (
     get_case_odata_fields_from_config,
     get_case_type_to_properties,
+    get_form_odata_fields_from_config,
     get_xmlns_by_app,
     get_xmlns_to_properties,
 )
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
-from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain
+from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain, get_odata_form_configs_by_domain
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -133,9 +134,49 @@ class ODataCaseMetadataView(View):
     def get(self, request, domain):
         configs = get_odata_case_configs_by_domain(domain)
         config_ids_to_properties = OrderedDict()
-        for config in sorted(configs, key=lambda _config: _config.get_id):  # For deterministic tests
+        for config in configs:
             config_ids_to_properties[config.get_id] = get_case_odata_fields_from_config(config)
         metadata = render_to_string('api/case_odata_metadata.xml', {
+            'config_ids_to_properties': config_ids_to_properties,
+        })
+        return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
+
+
+class ODataFormServiceView(View):
+
+    urlname = 'odata_form_service_from_export_instance'
+
+    @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
+    @method_decorator(toggles.ODATA.required_decorator())
+    def get(self, request, domain):
+        service_document_content = {
+            '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain]),
+            'value': [
+                {
+                    'name': config.get_id,
+                    'kind': 'EntitySet',
+                    'url': config.get_id,
+                }
+                for config in get_odata_form_configs_by_domain(domain)
+            ]
+        }
+        return add_odata_headers(JsonResponse(service_document_content))
+
+
+class ODataFormMetadataView(View):
+
+    urlname = 'odata_form_metadata_from_export_instance'
+
+    @method_decorator(basic_auth_or_try_api_key_auth)
+    @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
+    @method_decorator(toggles.ODATA.required_decorator())
+    def get(self, request, domain):
+        configs = get_odata_form_configs_by_domain(domain)
+        config_ids_to_properties = OrderedDict()
+        for config in configs:
+            config_ids_to_properties[config.get_id] = get_form_odata_fields_from_config(config)
+        metadata = render_to_string('api/form_odata_metadata.xml', {
             'config_ids_to_properties': config_ids_to_properties,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))

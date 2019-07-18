@@ -17,6 +17,8 @@ from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
     ODataFeedMixin,
+    clean_odata_columns,
+    remove_row_number_from_export_columns,
 )
 
 
@@ -30,6 +32,14 @@ class BaseEditNewCustomExportView(BaseExportView):
     @memoized
     def new_export_instance(self):
         return self.export_instance_cls.get(self.export_id)
+
+    def get_export_instance(self, schema, original_export_instance):
+        return self.export_instance_cls.generate_instance_from_schema(
+            schema,
+            saved_export=original_export_instance,
+            # The export exists - we don't want to automatically select new columns
+            auto_select=False,
+        )
 
     @property
     def page_url(self):
@@ -46,12 +56,7 @@ class BaseEditNewCustomExportView(BaseExportView):
             self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
             export_instance.identifier
         )
-        self.export_instance = self.export_instance_cls.generate_instance_from_schema(
-            schema,
-            saved_export=export_instance,
-            # The export exists - we don't want to automatically select new columns
-            auto_select=False,
-        )
+        self.export_instance = self.get_export_instance(schema, export_instance)
         for message in self.export_instance.error_messages():
             messages.error(request, message)
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
@@ -116,10 +121,22 @@ class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
     page_title = ugettext_lazy("Copy OData Feed")
 
+    def get_export_instance(self, schema, original_export_instance):
+        export_instance = super(EditODataCaseFeedView, self).get_export_instance(schema, original_export_instance)
+        remove_row_number_from_export_columns(export_instance)
+        clean_odata_columns(export_instance)
+        return export_instance
+
 
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
     page_title = ugettext_lazy("Copy OData Feed")
+
+    def get_export_instance(self, schema, original_export_instance):
+        export_instance = super(EditODataFormFeedView, self).get_export_instance(schema, original_export_instance)
+        remove_row_number_from_export_columns(export_instance)
+        clean_odata_columns(export_instance)
+        return export_instance
 
 
 class EditExportAttrView(BaseEditNewCustomExportView):

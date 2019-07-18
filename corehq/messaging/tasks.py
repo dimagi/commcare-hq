@@ -93,8 +93,7 @@ def paginated_case_ids(domain, case_type):
         values=['case_id']
     )
     for row in row_generator:
-        # return value from case generator is ('<pk>', '<case_id>')
-        yield row[1]
+        yield row[0]
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):

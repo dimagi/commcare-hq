@@ -1,10 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
 import traceback
 
 import json_delta
 import laboratory
 
+from corehq.util.json import CommCareJSONEncoder
 from custom.icds_reports.models.util import (
     CitusDashboardDiff,
     CitusDashboardException,
@@ -39,6 +41,10 @@ class DashboardQueryExperiment(laboratory.Experiment):
         )
 
     def log_diff(self, control_value, candidate_value):
+        # handle serialization of Decimals and dates
+        control_value = json.loads(json.dumps(control_value, cls=CommCareJSONEncoder))
+        candidate_value = json.loads(json.dumps(candidate_value, cls=CommCareJSONEncoder))
+
         diff = json_delta.diff(control_value, candidate_value, verbose=False)
         CitusDashboardDiff.objects.create(
             data_source=self.context['data_source'],

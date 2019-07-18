@@ -631,7 +631,7 @@ def get_form_source_download_url(xform):
 def get_latest_enabled_build_for_profile(domain, profile_id):
     from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
     latest_enabled_build = (LatestEnabledBuildProfiles.objects.
-                            filter(build_profile_id=profile_id)
+                            filter(build_profile_id=profile_id, active=True)
                             .order_by('-version')
                             .first())
     if latest_enabled_build:
@@ -685,6 +685,6 @@ def get_latest_enabled_versions_per_profile(app_id):
     return {
         build_profile['build_profile_id']: build_profile['version__max']
         for build_profile in
-        LatestEnabledBuildProfiles.objects.filter(app_id=app_id).values('build_profile_id').annotate(
+        LatestEnabledBuildProfiles.objects.filter(app_id=app_id, active=True).values('build_profile_id').annotate(
             Max('version'))
     }

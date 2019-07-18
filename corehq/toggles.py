@@ -683,15 +683,27 @@ EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev). Please make sure the project '
     'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.',
+    'the Case List Explorer toggle or doing a manual migration.\n\n'
+    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
+    'This will be deprecated once the Feature Preview is in full swing.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
-    'Domains that have undergone migration for Explore Case Data, but are not '
-    'yet ready to see the full report',
+    'Domains that have undergone migration for Explore Case Data and have a '
+    'CaseSearch elasticsearch index created.\n\n'
+    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
+    'ecd_enterprise_domains',
+    'Enterprise Domains that are eligible to view the Explore Case Data '
+    'Feature Preview. By default, this feature will only be available for '
+    'domains that are Advanced or Pro and have undergone the ECD migration.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1660,6 +1672,15 @@ ICDS_DISHA_API = StaticToggle(
     relevant_environments={'icds', 'icds-new', 'india'},
 )
 
+
+ICDS_NIC_INDICATOR_API = StaticToggle(
+    'icds_nic_indicator_acess',
+    'ICDS: Dashboard Indicator API for NIC',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'india'},
+)
+
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
@@ -1723,7 +1744,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     'location_safe_case_imports',
     'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1824,11 +1845,18 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     [NAMESPACE_USER]
 )
 
-
 SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
     'skip_creating_default_build_files_on_build',
     'Skips creating the build files for default profile each time a build is made'
     'which helps speed up the build and revert process',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
+    'disable_case_update_rule_task',
+    'Disable the `run_case_update_rules` periodic task '
+    'while investigating database performance issues.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-25 19:30+0000\n"
+"POT-Creation-Date: 2019-07-16 20:44+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
@@ -113,16 +113,17 @@ msgid "There was an error saving."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:392
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:395
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:413
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:416
 msgid "You have unsaved changes"
 msgstr ""
 
@@ -343,7 +344,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js:6
-#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:350
+#: corehq/apps/fixtures/static/fixtures/js/lookup-manage.js:353
 msgid ""
 "Sorry, something went wrong with the download. If you see this repeatedly "
 "please report an issue."
@@ -549,7 +550,16 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+msgid "Active"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+msgid "Inactive"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
 msgstr ""
@@ -1346,7 +1356,8 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:578
-#: corehq/apps/export/static/export/js/models.js:333
+#: corehq/apps/export/static/export/js/models.js:334
+#: corehq/apps/export/static/export/js/models.js:336
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:260
 msgid "Save"
 msgstr ""
@@ -2209,7 +2220,7 @@ msgid "Inlined attachments must have an attachment name"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/export/static/export/js/models.js:333
+#: corehq/apps/export/static/export/js/models.js:336
 msgid "Create"
 msgstr ""
 
@@ -2460,7 +2471,13 @@ msgid ""
 "later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:360
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:644
+msgid ""
+"We have detected an issue with your network. Please check your Internet "
+"connection and retry when connectivity improves."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:366
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
@@ -2468,12 +2485,22 @@ msgstr ""
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:425
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:307
+msgid ""
+"You are now offline. Web Apps is not optimized for offline use. Please "
+"reconnect to the Internet before continuing."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:316
+msgid "You are are back online."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:441
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:453
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:469
 msgid "Please wait..."
 msgstr ""
 
@@ -2629,7 +2656,7 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:29
+#: corehq/apps/users/static/users/js/mobile_workers.js:78
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
@@ -2693,24 +2720,24 @@ msgstr ""
 msgid "Show previous versions"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:92
+#: corehq/apps/export/static/export/js/create_export.js:94
 msgid "<%= count %> form submission available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:94
+#: corehq/apps/export/static/export/js/create_export.js:96
 msgid "<%= count %> form submissions available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:105
+#: corehq/apps/export/static/export/js/create_export.js:107
 msgid "User Registration"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:273
+#: corehq/apps/export/static/export/js/create_export.js:276
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:308
+#: corehq/apps/export/static/export/js/create_export.js:311
 msgid "There is an issue communicating with the server at this time."
 msgstr ""
 
@@ -2738,16 +2765,16 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:80
+#: corehq/apps/export/static/export/js/export_list.js:108
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:335
-#: corehq/apps/export/static/export/js/export_list.js:342
+#: corehq/apps/export/static/export/js/export_list.js:386
+#: corehq/apps/export/static/export/js/export_list.js:393
 msgid "Invalid date format"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:462
+#: corehq/apps/export/static/export/js/export_list.js:517
 msgid "Problem saving dashboard feed filters"
 msgstr ""
 
@@ -2799,19 +2826,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:629
+#: corehq/apps/export/static/export/js/models.js:632
 msgid "The table path should end with []"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:740
+#: corehq/apps/export/static/export/js/models.js:743
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:742
+#: corehq/apps/export/static/export/js/models.js:745
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:744
+#: corehq/apps/export/static/export/js/models.js:747
 msgid "None"
 msgstr ""
 
@@ -2873,11 +2900,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:67
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:61
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:98
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:90
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3067,17 +3094,14 @@ msgid "Please specify."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:25
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:73
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:27
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:64
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:29
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:55
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
@@ -3091,8 +3115,6 @@ msgid "Unknown"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/case_details.js:109
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:297
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:345
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
@@ -3268,12 +3290,16 @@ msgstr ""
 msgid "Failed to re-process"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid.js:131
+#: corehq/apps/reports/static/reports/v2/js/datagrid.js:180
 msgid "Save Filters"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/v2/js/datagrid.js:135
+#: corehq/apps/reports/static/reports/v2/js/datagrid.js:187
 msgid "Export Data"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/v2/js/datagrid/columns.js:32
+msgid "Column Title"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid/report_filters.js:35
@@ -3427,7 +3453,6 @@ msgid "Password was not changed "
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:31
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:402
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
@@ -3456,34 +3481,16 @@ msgid_plural "Download %s Users"
 msgstr[0] ""
 msgstr[1] ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:82
-msgid ""
-"This password is automatically generated. Please copy it or create your own. "
-"It will not be shown again."
+#: corehq/apps/users/static/users/js/mobile_workers.js:281
+msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:227
+#: corehq/apps/users/static/users/js/mobile_workers.js:302
+msgid "Issue connecting to server. Check Internet connection."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js:326
 msgid "Select location"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:266
-msgid "Username is available."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:446
-msgid "Username"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:447
-msgid "First Name"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:448
-msgid "Last Name"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:449
-msgid "Status"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:137
@@ -3657,27 +3664,27 @@ msgstr ""
 msgid "Unable to save DataSet maps"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:38
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:56
 msgid "Weekly"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:39
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:57
 msgid "Monthly"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:42
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:60
 msgid "Disable logging"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:108
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:126
 msgid "Unable to save OpenMRS Importers"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:113
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:131
 msgid "Importing from OpenMRS will begin shortly."
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:115
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:133
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
@@ -3732,20 +3739,4 @@ msgstr ""
 
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
-msgstr ""
-
-#: submodules/formdesigner/_build/src/global-deps.js:3
-msgid "show"
-msgstr ""
-
-#: submodules/formdesigner/_build/src/global-deps.js:3
-msgid "hide"
-msgstr ""
-
-#: submodules/formdesigner/_build/src/global-deps.js:3
-msgid "toggle"
-msgstr ""
-
-#: submodules/formdesigner/_build/src/main-components.js:30
-msgid "6.0.65"
 msgstr ""

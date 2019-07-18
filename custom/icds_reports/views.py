@@ -6,6 +6,8 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
+from lxml import etree
+
 
 from datetime import datetime, date
 from celery.result import AsyncResult
@@ -110,6 +112,10 @@ from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
 from couchexport.export import Format
+from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.models.views import NICIndicatorsView
+from django.views.decorators.csrf import csrf_exempt
 
 
 @location_safe
@@ -329,7 +335,6 @@ class ServiceDeliveryDashboardView(BaseReportView):
 
         location_filters = get_location_filter(location, domain)
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
-        age_sdd = request.GET.get('ageSDD', '0_3')
 
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
@@ -344,7 +349,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
             location_filters,
             year,
             month,
-            age_sdd,
+            step,
             include_test
         )
         return JsonResponse(data=data)
@@ -1760,6 +1765,83 @@ class DishaAPIView(View):
     @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+
+@location_safe
+@method_decorator([api_auth, csrf_exempt, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
+class NICIndicatorAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_states.keys())
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than or same as current month",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "unknown_error": "Unknown Error occured",
+            "no_data": "Data does not exists"
+        }
+
+        error_message_template = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
+            SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
+               <SOAP-ENV:Header />
+               <SOAP-ENV:Body>
+                    <SOAP-ENV:Fault>
+                        <message>
+                            {}
+                        </message>
+                    </SOAP-ENV:Fault>
+               </SOAP-ENV:Body>
+            </SOAP-ENV:Envelope>
+            """
+        return error_message_template.format(error_messages[message_name]).strip()
+
+    def get_data(self, post_body):
+        xml_data = etree.fromstring(post_body.strip())
+        nic_indicators_request = {
+            'month': xml_data.xpath('//month')[0].text if xml_data.xpath('//month') else None,
+            'year': xml_data.xpath('//year')[0].text if xml_data.xpath('//year') else None,
+            'state_name': xml_data.xpath('//state_name')[0].text if xml_data.xpath('//state_name') else None,
+
+        }
+        return nic_indicators_request
+
+    def post(self, request, *args, **kwargs):
+
+        nic_indicators_request = self.get_data(request.body)
+        try:
+            month = int(nic_indicators_request.get('month'))
+            year = int(nic_indicators_request.get('year'))
+        except (ValueError, TypeError):
+            return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
+
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1)
+        if query_month > current_month:
+            return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
+
+        state_name = nic_indicators_request.get('state_name')
+
+        if state_name not in self.valid_states:
+            return HttpResponse(self.message('invalid_state'), content_type='text/xml', status=400)
+
+        try:
+            state_id = self.valid_states[state_name]
+            data = get_inc_indicator_api_data(state_id, month_formatter(query_month))
+            return HttpResponse(data, content_type='text/xml')
+        except NICIndicatorsView.DoesNotExist:
+            return HttpResponse(self.message('no_data'), content_type='text/xml', status=500)
+        except AttributeError:
+            return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
+
+    @property
+    @icds_quickcache([])
+    def valid_states(self):
+        states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                            state_is_test=0).values_list('state_name', 'state_id')
+        return {state[0]: state[1] for state in states}
 
 
 @location_safe

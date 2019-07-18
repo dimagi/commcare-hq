@@ -93,6 +93,13 @@ class CaseOdataTestMixin(OdataTestMixin):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name})
 
 
+class FormOdataTestMixin(OdataTestMixin):
+
+    @property
+    def view_url(self):
+        return reverse(self.view_urlname, kwargs={'domain': self.domain.name})
+
+
 
 def generate_api_key_from_web_user(web_user):
     api_key = ApiKey.objects.get_or_create(user=web_user.get_django_user())[0]

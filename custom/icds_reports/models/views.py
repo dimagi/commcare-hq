@@ -1079,3 +1079,25 @@ class DishaIndicatorView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'icds_disha_indicators'
+
+
+class NICIndicatorsView(models.Model):
+    state_id = models.TextField(primary_key=True)
+    state_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+
+    cases_household = models.IntegerField(blank=True, null=True)
+    cases_ccs_pregnant = models.IntegerField(blank=True, null=True)
+    cases_ccs_lactating = models.IntegerField(blank=True, null=True)
+    cases_child_health = models.IntegerField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    ebf_in_month = models.IntegerField(blank=True, null=True)
+    cf_initiation_in_month = models.IntegerField(blank=True, null=True)
+    bf_at_birth = models.IntegerField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'nic_indicators'

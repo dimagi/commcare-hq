@@ -9,8 +9,14 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.showTable = true;
-    vm.dataAgeSDD = '0_3';
     vm.dataAggregationLevel = 1;
+
+    vm.steps = {
+        'pw_lw_children': {route: '/service_delivery_dashboard/pw_lw_children', label: 'PW, LW & Children 0-3 years (0-1095 days)'},
+        'children': {route: '/service_delivery_dashboard/children', label: 'Children 3-6 years (1096-2190 days)'},
+    };
+
+    vm.step = $routeParams.step;
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -57,7 +63,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
             locationLevelName
         ).renderWith(renderCellValue('raw', locationLevelNameField)
         ).withClass('medium-col')];
-        if (vm.dataAgeSDD === '0_3') {
+        if (vm.step === 'pw_lw_children') {
             if (vm.dataAggregationLevel <= 4) {
                 vm.dtColumns = vm.dtColumns.concat([
                     DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(renderCellValue('raw','num_launched_awcs')).withClass('medium-col'),
@@ -231,7 +237,6 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         }).then(
             function (response) {
                 vm.data = response.data.data;
-                vm.dataAgeSDD = response.data.ageSDD;
                 vm.dataAggregationLevel = response.data.aggregationLevel;
                 vm.setDtColumns();
             },
