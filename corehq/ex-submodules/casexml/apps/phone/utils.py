@@ -3,9 +3,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 import weakref
+from io import BytesIO
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
+
+import six
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
@@ -16,9 +19,49 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.mock import Balance
 from memoized import memoized
 
+from corehq.blobs import get_blob_db, CODES, NotFound
+from corehq.blobs.models import BlobMeta
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
+
+
+def write_fixture_items_to_io(items):
+    io = BytesIO()
+    io.write(ITEMS_COMMENT_PREFIX)
+    io.write(six.text_type(len(items)).encode('utf-8'))
+    io.write(b'-->')
+    for element in items:
+        io.write(ElementTree.tostring(element, encoding='utf-8'))
+    io.seek(0)
+    return io
+
+
+def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
+    db = get_blob_db()
+    try:
+        kw = {"meta": db.metadb.get(
+            parent_id=domain,
+            type_code=CODES.fixture,
+            name=fixure_name,
+        )}
+    except BlobMeta.DoesNotExist:
+        kw = {
+            "domain": domain,
+            "parent_id": domain,
+            "type_code": CODES.fixture,
+            "name": fixure_name,
+            "key": key_prefix + '/' + domain,
+        }
+    db.put(io_data, **kw)
+    io_data.seek(0)
+
+
+def get_cached_fixture_items(domain, bucket_prefix):
+    try:
+        return get_blob_db().get(key=bucket_prefix + '/' + domain).read()
+    except NotFound:
+        return None
 
 
 def get_cached_items_with_count(cached_bytes):
