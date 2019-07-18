@@ -135,7 +135,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         fixture_xml = self.generate_product_fixture_xml(user)
         index_schema, fixture = call_fixture_generator(product_fixture_generator, user)
 
-        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture))
+        self.assertXmlEqual(fixture_xml, fixture)
 
         schema_xml = """
             <schema id="commtrack:products">
@@ -149,6 +149,37 @@ class FixtureTest(TestCase, TestXmlMixin):
         """
         self.assertXmlEqual(schema_xml, ElementTree.tostring(index_schema))
 
+    def test_fixture_cache(self):
+        user = self.user
+
+        expected_xml = self.generate_product_fixture_xml(user)
+
+        fixture_original = call_fixture_generator(product_fixture_generator, user)[1]
+        self.assertXmlEqual(
+            expected_xml,
+            fixture_original
+        )
+
+        product = Product.by_domain(user.domain)[0]
+        product.name = 'new_name'
+        super(Product, product).save()  # save but skip clearing the cache
+
+        fixture_cached = call_fixture_generator(product_fixture_generator, user)[1]
+        self.assertXmlEqual(
+            expected_xml,
+            fixture_cached
+        )
+
+        # This will update all the products and re-save them.
+        expected_xml_new = self.generate_product_fixture_xml(user)
+
+        fixture_cached = call_fixture_generator(product_fixture_generator, user)[1]
+        self.assertXmlEqual(
+            expected_xml_new,
+            fixture_cached
+        )
+        self.assertXMLNotEqual(expected_xml_new, expected_xml)
+
     def test_selective_product_sync(self):
         user = self.user
 
@@ -161,7 +192,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_original)
+            fixture_original
         )
 
         first_sync = self._get_latest_synclog()
@@ -196,7 +227,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_post_change)
+            fixture_post_change
         )
 
     def generate_program_xml(self, program_list, user):
