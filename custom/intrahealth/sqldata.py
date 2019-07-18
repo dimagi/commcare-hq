@@ -2471,6 +2471,51 @@ class ProgramData(ProgramsDataSource):
         return sorted(rows, key=lambda x: x[0])
 
 
+class ProductsDataSource(YeksiSqlData):
+
+    @property
+    def filters(self):
+        return []
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('ID'))
+        headers.add_column(DataTablesColumn('Name'))
+        return headers
+
+
+class ProductData(ProductsDataSource):
+    slug = 'product'
+    comment = 'Product names'
+    title = 'Product'
+    show_total = False
+
+    @property
+    def group_by(self):
+        group_by = ['product_id', 'product_name']
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        rows = []
+        for record in records:
+            rows.append([record['product_id'], record['product_name']])
+        return sorted(rows, key=lambda x: x[0])
+
+
 class ProductsInProgramData(ProgramsDataSource):
     """
     Returns list of all product ids used in program as string joined by spaces
@@ -2498,14 +2543,70 @@ class ProductsInProgramData(ProgramsDataSource):
         records = self.get_data()
         programs = defaultdict(set)
         for record in records:
-            products = record['product_ids'].split(' ')
-            for product in products:
-                programs[record['program_id']].add(product)
-
+            product_ids = record['product_ids']
+            program_id = record['program_id']
+            if product_ids is not None:
+                products = product_ids.split(' ')
+                for product in products:
+                    programs[program_id].add(product)
+            else:
+                programs[program_id].add(None)
         rows = []
         for program_id, products in programs.items():
-            rows.append([program_id, " ".join(products)])
-        return sorted(rows, key=lambda x: x[0])
+            try:
+                rows.append([program_id, " ".join(products)])
+            except TypeError:
+                rows.append([program_id, None])
+        rows = sorted(rows, key=lambda x: x[0])
+        return rows
+
+
+class ProductsInProgramWithNameData(ProgramsDataSource):
+    """
+    Returns list of all product ids used in program as string joined by spaces
+    """
+    slug = 'products_in_program'
+    comment = 'Products selected per program'
+    title = 'Products selected per program'
+    show_total = False
+
+    @property
+    def group_by(self):
+        group_by = ['program_id', 'program_name', 'product_ids']
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Program ID", SimpleColumn('program_id')),
+            DatabaseColumn("Program Name", SimpleColumn('program_name')),
+            DatabaseColumn("Product IDs", SimpleColumn('product_ids')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        programs = defaultdict()
+        for record in records:
+            product_ids = record['product_ids']
+            program_id = record['program_id']
+            program_name = record['program_name']
+            programs[program_id] = {
+                'name': program_name,
+                'product_ids': [],
+            }
+            if product_ids is not None:
+                products = product_ids.split(' ')
+                for product in products:
+                    programs[program_id]['product_ids'].append(product)
+            else:
+                programs[program_id]['product_ids'].append(None)
+        rows = []
+        for program_id, program_data in programs.items():
+            rows.append([program_id, program_data['name'], program_data['product_ids']])
+        rows = sorted(rows, key=lambda x: x[0])
+        return rows
 
 
 class AvailabilityData(VisiteDeLOperateurDataSource):

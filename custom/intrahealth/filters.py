@@ -7,16 +7,16 @@ import json
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
-from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.util.translation import localize
 from django.utils.translation import ugettext as _
 from six.moves import range
 from six.moves import filter
 
-from custom.intrahealth.sqldata import ProgramData
-
+from custom.intrahealth.sqldata import ProgramData, ProductData, ProductsInProgramWithNameData
 
 class LocationFilter(AsyncLocationFilter):
     label = ugettext_noop("Region")
@@ -143,6 +143,10 @@ class MonthsDateFilter(BaseReportFilter):
         }
 
 
+class DateRangeFilter(DatespanFilter):
+    label = 'Plage de dates'
+
+
 class ProgramFilter(BaseReportFilter):
     template = "yeksi_naa/program_filter.html"
     slug = 'program'
@@ -167,3 +171,41 @@ class ProgramFilter(BaseReportFilter):
             'programs': self.program(),
             'chosen_program': self.request.GET.get('program', ''),
         }
+
+
+class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):
+    slug = 'product'
+    label = 'Programmes et produits'
+
+    def get_labels(self):
+        return [
+                ('Programme', 'All', 'program'),
+                ('Produit', 'All', 'product'),
+            ]
+
+    @property
+    def drilldown_map(self):
+        rows = []
+        data = ProductsInProgramWithNameData(config={'domain': self.domain}).rows
+        all_products_data = ProductData(config={'domain': self.domain}).rows
+        products = {}
+        for product in all_products_data:
+            product_id, product_name = product[0], product[1]
+            products[product_id] = product_name
+
+        for data_row in data:
+            program_id = data_row[0]
+            program_name = data_row[1]
+            product_ids = data_row[2]
+            for product_id in product_ids:
+                if product_id not in products:
+                    index = product_ids.index(product_id)
+                    product_ids.pop(index)
+            rows.append({
+                'val': program_id,
+                'text': program_name,
+                'next': [
+                    {'val': p, 'text': products[p]} for p in product_ids if program_name if p is not None
+                ]
+            })
+        return rows
