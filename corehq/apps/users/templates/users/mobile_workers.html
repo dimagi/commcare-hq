@@ -7,8 +7,10 @@
   {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
   {% endif %}
-  <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-  <script src="{% static 'users/js/mobile_workers.js' %}?version2=20190717"></script>
+  {% compress js %}
+    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
+    <script src="{% static 'users/js/mobile_workers.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block page_content %}
