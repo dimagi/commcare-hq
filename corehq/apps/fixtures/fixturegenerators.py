@@ -1,12 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
 from collections import defaultdict
+from functools import partial
 from operator import attrgetter
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import write_fixture_items_to_io, cache_fixture_items_data, \
-    get_cached_fixture_items, GLOBAL_USER_ID
+from casexml.apps.phone.utils import GLOBAL_USER_ID, get_or_cache_global_fixture
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
@@ -66,20 +66,8 @@ class ItemListsProvider(FixtureProvider):
 
     def get_global_items(self, global_types, restore_state):
         domain = restore_state.restore_user.domain
-
-        data = None
-        if not restore_state.overwrite_cache:
-            data = get_cached_fixture_items(domain, FIXTURE_BUCKET)
-
-        if data is None:
-            global_items = self._get_global_items(global_types, domain)
-            io_data = write_fixture_items_to_io(global_items)
-            cache_fixture_items_data(io_data, domain, '', FIXTURE_BUCKET)
-            data = io_data.read()
-
-        global_id = GLOBAL_USER_ID.encode('utf-8')
-        b_user_id = restore_state.restore_user.user_id.encode('utf-8')
-        return [data.replace(global_id, b_user_id)] if data else []
+        data_fn = partial(self._get_global_items, global_types, domain)
+        return get_or_cache_global_fixture(restore_state, FIXTURE_BUCKET, '', data_fn)
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
