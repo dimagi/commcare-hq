@@ -1,8 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-import hashlib
 import os
-import tempfile
 import uuid
 import zipfile
 from datetime import datetime, timedelta
@@ -41,7 +39,7 @@ from corehq.elastic import (
 )
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.util.files import safe_filename_header, TransientTempfile
+from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
@@ -194,11 +192,6 @@ def build_form_multimedia_zip(
     )
     forms_info = _get_form_attachment_info(domain, form_ids, export_id)
 
-    if not app_id:
-        zip_name = 'Unrelated Form'
-    else:
-        zip_name = unidecode(forms_info[0]['form'].name or 'unknown form')
-
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
 
@@ -216,10 +209,10 @@ def build_form_multimedia_zip(
 
 def _get_form_attachment_info(domain, form_ids, export_id):
     properties = _get_export_properties(export_id)
-    forms_info = []
-    for form in FormAccessors(domain).iter_forms(form_ids):
-        forms_info.append(_extract_form_attachment_info(form, properties))
-    return forms_info
+    return [
+        _extract_form_attachment_info(form, properties)
+        for form in FormAccessors(domain).iter_forms(form_ids)
+    ]
 
 
 def _get_case_names(domain, case_ids):
@@ -308,16 +301,15 @@ def _get_export_properties(export_id):
     Return a list of strings corresponding to form questions that are
     included in the export.
     """
+    from corehq.apps.export.models import FormExportInstance
     properties = set()
-    if export_id:
-        from corehq.apps.export.models import FormExportInstance
-        export = FormExportInstance.get(export_id)
-        for table in export.tables:
-            for column in table.columns:
-                if column.selected and column.item:
-                    path_parts = [n.name for n in column.item.path]
-                    path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
-                    properties.add("-".join(path_parts))
+    export = FormExportInstance.get(export_id)
+    for table in export.tables:
+        for column in table.columns:
+            if column.selected and column.item:
+                path_parts = [n.name for n in column.item.path]
+                path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
+                properties.add("-".join(path_parts))
     return properties
 
 
