@@ -945,12 +945,13 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
-    def get_es_user_types(self, mobile_user_and_group_slugs=None):
+    def get_es_user_types(self, filter_form_data):
         """
         Return a list of elastic search user types (each item in the return list
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
         export user types.
         """
+        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
         es_user_types = []
         export_user_types = self._get_mapped_user_types(
             self._get_selected_es_user_types(mobile_user_and_group_slugs)

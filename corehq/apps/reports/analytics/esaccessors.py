@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from corehq.apps.es import (
     FormES,
@@ -613,12 +613,13 @@ def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
     ).get_data()
 
 
-def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, user_types=None):
+def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types=None):
+    enddate = datespan.enddate + timedelta(days=1)
     query = (FormES()
              .domain(domain)
              .app(app_id)
              .xmlns(xmlns)
-             .submitted(gte=startdate, lte=enddate)
+             .submitted(gte=datespan.startdate, lte=enddate)
              .remove_default_filter("has_user")
              .source(['_id', 'external_blobs']))
 

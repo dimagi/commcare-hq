@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 import six
-from datetime import date, timedelta
+from datetime import date
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -17,7 +17,6 @@ from memoized import memoized
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, process_email_request
-from unidecode import unidecode
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, track_workflow
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -420,21 +419,16 @@ def prepare_form_multimedia(request, domain):
             'error': _("Please check that you've submitted all required filters."),
         })
 
-    download = DownloadBase()
-    export_object = view_helper.get_export(export_specs[0]['export_id'])
-
+    export = view_helper.get_export(export_specs[0]['export_id'])
     datespan = filter_form.cleaned_data['date_range']
-    mobile_user_and_group_slugs = filter_form.get_mobile_user_and_group_slugs(filter_form_data)
+    user_types = filter_form.get_es_user_types(filter_form_data)
 
+    download = DownloadBase()
     download.set_task(build_form_multimedia_zip.delay(
         domain=domain,
-        startdate=datespan.startdate.isoformat(),
-        enddate=(datespan.enddate + timedelta(days=1)).isoformat(),
-        app_id=export_object.app_id,
-        xmlns=export_object.xmlns if hasattr(export_object, 'xmlns') else '',
-        export_id=export_object.get_id,
-        zip_name='multimedia-{}'.format(unidecode(export_object.name)),
-        user_types=filter_form.get_es_user_types(mobile_user_and_group_slugs),
+        export_id=export.get_id,
+        datespan=datespan,
+        user_types=user_types,
         download_id=download.download_id
     ))
 

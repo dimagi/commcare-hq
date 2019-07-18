@@ -176,20 +176,17 @@ def _store_excel_in_blobdb(report_class, file, domain):
 @task(serializer='pickle')
 def build_form_multimedia_zip(
         domain,
-        xmlns,
-        startdate,
-        enddate,
-        app_id,
         export_id,
-        zip_name,
-        download_id,
+        datespan,
         user_types,
+        download_id,
 ):
+    from corehq.apps.export.models import FormExportInstance
+    export = FormExportInstance.get(export_id)
     form_ids = get_form_ids_having_multimedia(
-        domain, app_id, xmlns, parse(startdate), parse(enddate),
-        user_types=user_types,
+        domain, export.app_id, export.xmlns, datespan, user_types
     )
-    forms_info = _get_form_attachment_info(domain, form_ids, export_id)
+    forms_info = _get_form_attachment_info(domain, form_ids, export)
 
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
@@ -201,13 +198,14 @@ def build_form_multimedia_zip(
         with open(temp_path, 'wb') as f:
             _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name)
         with open(temp_path, 'rb') as f:
+            zip_name = 'multimedia-{}'.format(unidecode(export.name))
             _save_and_expose_zip(f, zip_name, domain, download_id)
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
 
-def _get_form_attachment_info(domain, form_ids, export_id):
-    properties = _get_export_properties(export_id)
+def _get_form_attachment_info(domain, form_ids, export):
+    properties = _get_export_properties(export)
     return [
         _extract_form_attachment_info(form, properties)
         for form in FormAccessors(domain).iter_forms(form_ids)
@@ -295,14 +293,12 @@ def _convert_legacy_indices_to_export_properties(indices):
     ))
 
 
-def _get_export_properties(export_id):
+def _get_export_properties(export):
     """
     Return a list of strings corresponding to form questions that are
     included in the export.
     """
-    from corehq.apps.export.models import FormExportInstance
     properties = set()
-    export = FormExportInstance.get(export_id)
     for table in export.tables:
         for column in table.columns:
             if column.selected and column.item:
