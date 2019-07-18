@@ -1,6 +1,7 @@
 hqDefine('app_manager/js/import_app', function () {
     function CompressionViewModel(source, post_url) {
         var self = this;
+        self.know = 'why';
         self.name = ko.observable("");
         self.source = ko.observable(source);
         self.save = function (formElement) {
