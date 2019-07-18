@@ -6,31 +6,12 @@ from __future__ import division
 import functools
 from datetime import timedelta
 import testil
-from django.core.cache.backends.locmem import LocMemCache
 
 from corehq.project_limits.rate_counter.rate_counter import CounterCache, \
     FixedWindowRateCounter, SlidingWindowRateCounter
 
 
-class CacheForTesting(LocMemCache):
-    def incr(self, key, delta=1):
-        try:
-            return super(CacheForTesting, self).incr(key, delta)
-        except ValueError as e:
-            if str(e) == "Key '{}' not found".format(key):
-                self.set(key, 1)
-                return 1
-            raise
-
-    def expire(self, key, timeout):
-        pass
-
-
-_CounterCache = functools.partial(
-    CounterCache,
-    local_cache=CacheForTesting('local-test', {}),
-    shared_cache=CacheForTesting('shared-test', {}),
-)
+_CounterCache = CounterCache
 _FixedWindowRateCounter = functools.partial(
     FixedWindowRateCounter,
     _CounterCache=_CounterCache

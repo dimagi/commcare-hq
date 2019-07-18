@@ -128,13 +128,14 @@ class FixedWindowRateCounter(AbstractRateCounter):
 class CounterCache(object):
     def __init__(self, memoized_timeout, timeout, local_cache=LOCMEM, shared_cache=REDIS):
         self.memoized_timeout = memoized_timeout
-        self.timeout = timeout
+        self.timeout = int(timeout)
         self.local_cache = local_cache
         self.shared_cache = shared_cache
 
     def incr(self, key, delta=1):
-        value = self.shared_cache.incr(key, delta)
+        value = self.shared_cache.incr(key, delta, ignore_key_check=True)
         if value == 1:
+            print(key, self.timeout)
             self.shared_cache.expire(key, timeout=self.timeout)
         self.local_cache.set(key, value, timeout=self.memoized_timeout)
         return value

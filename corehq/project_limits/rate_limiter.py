@@ -3,8 +3,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import functools
+import six
 
-from corehq.project_limits.rate_counter import week_rate_counter, \
+from corehq.project_limits.rate_counter.presets import week_rate_counter, \
     day_rate_counter, hour_rate_counter, minute_rate_counter, second_rate_counter
 
 
@@ -12,7 +13,7 @@ class RateLimiter(object):
     """
     Example usage:
 
-    >>> MyFeatureRateLimiter = RateLimiter.spawn('my_feature')
+    >>> MyFeatureRateLimiter = RateLimiter.create('my_feature')
     >>> my_feature_rate_limiter = MyFeatureRateLimiter(per_week=50000, per_day=13000,
     ...                                                per_second=5)
     >>> if my_feature_rate_limiter.allow_usage('my_domain'):
@@ -32,14 +33,23 @@ class RateLimiter(object):
         ) if limit]
 
     @classmethod
-    def spawn(cls, feature_key):
-        return functools.partial(feature_key)
+    def create(cls, feature_key):
+        return functools.partial(cls, feature_key)
 
-    def report_usage(self, delta=1, *args):
-        scope = (self.feature_key,) + args
-        for limit, rate_counter in self.rate_limits:
-            rate_counter.increment(scope, delta)
+    def get_normalized_scope(self, scope):
+        if isinstance(scope, six.string_types):
+            scope = (scope,)
+        elif not isinstance(scope, tuple):
+            raise ValueError("scope must be a string or tuple: {!r}".format(scope))
 
-    def allow_usage(self, *args):
-        scope = (self.feature_key,) + args
-        return all(rate_counter.get(scope) < limit for limit, rate_counter in self.rate_limits)
+        return (self.feature_key,) + scope
+
+    def report_usage(self, scope, delta=1):
+        scope = self.get_normalized_scope(scope)
+        for rate_counter, limit in self.rate_limits:
+            print(scope, delta)
+            rate_counter.increment(scope, delta=delta)
+
+    def allow_usage(self, scope):
+        scope = self.get_normalized_scope(scope)
+        return all(rate_counter.get(scope) < limit for rate_counter, limit in self.rate_limits)
