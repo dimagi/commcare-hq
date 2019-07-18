@@ -1025,7 +1025,7 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     def detail_uri_kwargs(self, bundle_or_obj):
         # Not sure why this is required but the feed 500s without it
         return {
-            'pk': get_obj(bundle_or_obj)['case_id']
+            'pk': get_obj(bundle_or_obj)['_id']
         }
 
     class Meta(v0_4.CommCareCaseResource.Meta):
