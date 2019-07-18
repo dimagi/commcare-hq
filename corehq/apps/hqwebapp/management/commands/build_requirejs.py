@@ -34,7 +34,7 @@ class Command(ResourceStaticCommand):
                  'production optimization (dependency tracing, concatenation and minification) locally. '
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
-            help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
+            help='Don\'t minify files. Useful when running on a local environment.')
 
     def handle(self, **options):
         local = options['local']
