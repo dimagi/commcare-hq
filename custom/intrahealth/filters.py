@@ -179,9 +179,9 @@ class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):
 
     def get_labels(self):
         return [
-                ('Programme', 'All', 'program'),
-                ('Produit', 'All', 'product'),
-            ]
+            ('Programme', 'All', 'program'),
+            ('Produit', 'All', 'product'),
+        ]
 
     @property
     def drilldown_map(self):
@@ -189,10 +189,12 @@ class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):
         data = ProductsInProgramWithNameData(config={'domain': self.domain}).rows
         all_products_data = ProductData(config={'domain': self.domain}).rows
         products = {}
+
         for product in all_products_data:
             product_id, product_name = product[0], product[1]
             products[product_id] = product_name
 
+        data.sort(key=lambda x: x[1])
         for data_row in data:
             program_id = data_row[0]
             program_name = data_row[1]
@@ -201,11 +203,16 @@ class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):
                 if product_id not in products:
                     index = product_ids.index(product_id)
                     product_ids.pop(index)
+
+            products_list = [
+                [x, products[x]] for x in product_ids
+            ]
+            products_list.sort(key=lambda x: x[1])
             rows.append({
                 'val': program_id,
                 'text': program_name,
                 'next': [
-                    {'val': p, 'text': products[p]} for p in product_ids if program_name if p is not None
+                    {'val': p[0], 'text': p[1]} for p in products_list if program_name if p[1] is not None
                 ]
             })
         return rows
