@@ -27,7 +27,6 @@ hqDefine("users/js/mobile_workers", function () {
         SUCCESS: 'success',
         WARNING: 'warning',
         ERROR: 'danger',
-        DRENCHED: 'wine',
     };
 
     var rmi = function () {};
