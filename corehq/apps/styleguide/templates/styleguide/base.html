@@ -39,9 +39,8 @@
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
     {% compress js %}
       <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v3.ko.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
       <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
       <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
       <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
@@ -94,6 +93,7 @@
     {% include 'hqwebapp/partials/ko_inline_edit.html' %}
     {% include 'hqwebapp/partials/ko_search_box.html' %}
     {% include 'hqwebapp/partials/ko_select_toggle.html' %}
+    {% include 'hqwebapp/partials/ko_feedback.html' %}
 
     <footer class="docs-footer">
       <div class="container">

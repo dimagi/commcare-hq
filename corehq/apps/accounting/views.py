@@ -42,7 +42,6 @@ from corehq.apps.domain.views.accounting import (
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
-    use_select2_v4,
     use_jquery_ui,
     use_multiselect,
 )
@@ -163,10 +162,6 @@ class NewBillingAccountView(BillingAccountsSectionView):
     def page_url(self):
         return reverse(self.urlname)
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewBillingAccountView, self).dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         if self.account_form.is_valid():
             account = self.account_form.create_account()
@@ -251,10 +246,6 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     def page_url(self):
         return reverse(self.urlname, args=(self.args[0],))
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManageBillingAccountView, self).dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
@@ -294,7 +285,6 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_select2_v4
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super(NewSubscriptionView, self).dispatch(request, *args, **kwargs)
@@ -368,7 +358,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_select2_v4
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super(EditSubscriptionView, self).dispatch(request, *args, **kwargs)
@@ -584,7 +573,6 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         SoftwareProductRateAsyncHandler,
     ]
 
-    @use_select2_v4
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(EditSoftwarePlanView, self).dispatch(request, *args, **kwargs)
@@ -708,10 +696,6 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
             'trigger_form': self.trigger_form,
         }
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(TriggerInvoiceView, self).dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
@@ -752,10 +736,6 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
             'trigger_customer_form': self.trigger_customer_invoice_form,
         }
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(TriggerCustomerInvoiceView, self).dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
@@ -793,10 +773,6 @@ class TriggerBookkeeperEmailView(AccountingSectionView):
         return {
             'trigger_email_form': self.trigger_email_form,
         }
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(TriggerBookkeeperEmailView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.trigger_email_form.is_valid():
@@ -1462,7 +1438,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    }
+                    },
+                    show_stack_trace=True
                 )
 
     def refresh_item(self, item_id):

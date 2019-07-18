@@ -1,4 +1,5 @@
 from __future__ import absolute_import, unicode_literals
+from __future__ import division
 
 from collections import OrderedDict
 from datetime import date
@@ -261,7 +262,7 @@ class PregnantWomanQueryHelper(object):
                 woman.domain = %(domain)s AND
                 {location_where}
                 (daterange(%(start_date)s, %(end_date)s) && ANY(pregnant_ranges)) AND
-                ccs_record.add < %(start_date)s
+                (ccs_record.add < %(start_date)s or ccs_record.add is NULL)
             ) ORDER BY {sort_col}
         """.format(
             location_where=location_query,
@@ -556,9 +557,7 @@ class EligibleCoupleQueryHelper(object):
             WHERE (
                 woman.domain = %(domain)s AND
                 woman.marital_status = 'married' AND
-                NOT (
-                    woman.migration_status = 'yes' AND woman.migration_status IS NOT NULL
-                ) AND
+                woman.migration_status IS DISTINCT FROM 'migrated' AND
                 {location_where}
                 dob BETWEEN %(dob_start_date)s AND %(dob_end_date)s AND
                 (

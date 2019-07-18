@@ -242,7 +242,13 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
     } else if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
-    } else if (resp.hasOwnProperty('responseJSON')) {
+    } else if (!window.navigator.onLine) {
+        errorMessage = Formplayer.Errors.NO_INTERNET_ERROR;
+        if (action === Formplayer.Const.SUBMIT) {
+            $('.submit').removeAttr('disabled');
+            $('.form-control').removeAttr('disabled');
+        }
+    } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
     if (failureCallback) {
@@ -432,7 +438,7 @@ WebFormSession.prototype.newRepeat = function (repeat) {
 
 WebFormSession.prototype.deleteRepeat = function (repetition) {
     var juncture = getIx(repetition.parent);
-    var rep_ix = +(repetition.rel_ix().replace('_', ':').split(":").slice(-1)[0]);
+    var rep_ix = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
     this.serverRequest(
         {
             'action': Formplayer.Const.DELETE_REPEAT,

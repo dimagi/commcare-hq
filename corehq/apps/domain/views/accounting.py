@@ -24,10 +24,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
-    use_select2_v4,
-)
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -357,7 +354,6 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
         return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
                                           is_ops_user=is_ops_user)
 
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -551,7 +547,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    }
+                    },
+                    show_stack_trace=True
                 )
 
     def refresh_item(self, item_id):
@@ -1257,10 +1254,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(ConfirmBillingAccountInfoView, self).dispatch(request, *args, **kwargs)
-
     @property
     def steps(self):
         last_steps = super(ConfirmBillingAccountInfoView, self).steps
@@ -1459,7 +1452,6 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         Select2BillingInfoHandler,
     ]
 
-    @use_select2_v4
     @method_decorator(require_POST)
     def dispatch(self, request, *args, **kwargs):
         return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)

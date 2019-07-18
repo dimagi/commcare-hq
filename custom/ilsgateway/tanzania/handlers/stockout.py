@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
+
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.exceptions import InvalidProductCodeException
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
@@ -36,4 +39,4 @@ class StockoutHandler(GenericStockReportHandler):
     def on_error(self, data):
         for error in data['errors']:
             if isinstance(error, InvalidProductCodeException):
-                self.respond(INVALID_PRODUCT_CODE, product_code=error.message)
+                self.respond(INVALID_PRODUCT_CODE, product_code=six.text_type(error))

@@ -21,6 +21,16 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-tasks_cases",
     "display_name": "Cases - Tasks (Static)",
@@ -100,8 +110,8 @@
           "location_property": "_id",
           "type": "ancestor_location"
         },
-        "is_primary_key": false,
-        "is_nullable": true,
+        "is_primary_key": true,
+        "is_nullable": false,
         "column_id": "supervisor_id",
         "type": "expression"
       },
@@ -421,6 +431,13 @@
       }
     },
     "engine_id": "icds-ucr-non-dashboard",
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [

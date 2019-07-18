@@ -58,7 +58,6 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
-    use_select2,
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
@@ -279,7 +278,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_select2
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -291,10 +289,7 @@ class ReportBuilderView(BaseDomainView):
         allowed_num_reports = allowed_report_builder_reports(self.request)
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit': (
-                number_of_report_builder_reports(self.domain) >= allowed_num_reports
-                and allowed_num_reports is not None
-            ),
+            'at_report_limit': number_of_report_builder_reports(self.domain) >= allowed_num_reports,
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
             'pricing_page_url': settings.PRICING_PAGE_URL,
@@ -361,8 +356,8 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
         num_builder_reports = number_of_report_builder_reports(self.domain)
         context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
-            'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
+            'at_report_limit': num_builder_reports >= max_allowed_reports,
+            'max_allowed_reports': max_allowed_reports,
             'support_email': settings.SUPPORT_EMAIL,
             'pricing_page_url': settings.PRICING_PAGE_URL,
         })
@@ -625,7 +620,7 @@ class ConfigureReport(ReportBuilderView):
         if not has_report_builder_access(request):
             raise Http404
 
-        report_data = json.loads(request.body)
+        report_data = json.loads(request.body.decode('utf-8'))
         if report_data['existing_report'] and not self.existing_report:
             # This is the case if the user has clicked "Save" for a second time from the new report page
             # i.e. the user created a report with the first click, but didn't navigate to the report view page

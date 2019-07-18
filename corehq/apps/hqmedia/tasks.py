@@ -9,10 +9,10 @@ import zipfile
 from io import open
 from wsgiref.util import FileWrapper
 
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-from celery import states
 from celery.task import task
 from celery.utils.log import get_task_logger
 
@@ -124,20 +124,22 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 
 @task(serializer='pickle')
-def build_application_zip(include_multimedia_files, include_index_files, app,
+def build_application_zip(include_multimedia_files, include_index_files, domain, app_id,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
-    from corehq.apps.hqmedia.views import iter_app_files
-
     DownloadBase.set_progress(build_application_zip, 0, 100)
-    initial_progress = 10   # early on indicate something is happening
-    file_progress = 50.0    # arbitrarily say building files takes half the total time
+    app = get_app(domain, app_id)
+    fpath = create_files_for_ccz(app, build_profile_id, include_multimedia_files, include_index_files,
+                                 download_id, compress_zip, filename, download_targeted_version,
+                                 task=build_application_zip, expose_link=True)
+    _expose_download_link(fpath, filename, compress_zip, download_id)
+    DownloadBase.set_progress(build_application_zip, 100, 100)
 
-    errors = []
-    compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
 
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    if use_transfer:
+def _get_file_path(app, include_multimedia_files, include_index_files, build_profile_id,
+                   download_targeted_version):
+    if settings.SHARED_DRIVE_CONF.transfer_enabled:
+
         fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}{}{}{}".format(
             app._id,
             'mm' if include_multimedia_files else '',
@@ -149,74 +151,115 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             fpath += '-targeted'
     else:
         dummy, fpath = tempfile.mkstemp()
+    return fpath
 
-    DownloadBase.set_progress(build_application_zip, initial_progress, 100)
 
-    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        files, errors, file_count = iter_app_files(
-            app, include_multimedia_files, include_index_files, build_profile_id,
-            download_targeted_version=download_targeted_version,
-        )
+def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_index_files,
+                     download_id, compress_zip, filename, download_targeted_version):
+    from corehq.apps.hqmedia.views import iter_app_files
+    files, errors, file_count = iter_app_files(
+        build, include_multimedia_files, include_index_files, build_profile_id,
+        download_targeted_version=download_targeted_version,
+    )
 
-        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
-            manifest = json.dumps({
-                'include_multimedia_files': include_multimedia_files,
-                'include_index_files': include_index_files,
-                'download_id': download_id,
-                'build_profile_id': build_profile_id,
-                'compress_zip': compress_zip,
-                'filename': filename,
-                'download_targeted_version': download_targeted_version,
-                'app': app.to_json(),
-            }, indent=4)
-            files = itertools.chain(files, [('manifest.json', manifest)])
+    if toggles.CAUTIOUS_MULTIMEDIA.enabled(build.domain):
+        manifest = json.dumps({
+            'include_multimedia_files': include_multimedia_files,
+            'include_index_files': include_index_files,
+            'download_id': download_id,
+            'build_profile_id': build_profile_id,
+            'compress_zip': compress_zip,
+            'filename': filename,
+            'download_targeted_version': download_targeted_version,
+            'app': build.to_json(),
+        }, indent=4)
+        files = itertools.chain(files, [('manifest.json', manifest)])
+    return files, errors, file_count
 
-        file_cache = {}
-        with open(fpath, 'wb') as tmp:
-            with zipfile.ZipFile(tmp, "w") as z:
-                progress = initial_progress
-                for path, data in files:
-                    # don't compress multimedia files
-                    extension = os.path.splitext(path)[1]
-                    file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
-                    z.writestr(path, data, file_compression)
-                    progress += file_progress / file_count
-                    DownloadBase.set_progress(build_application_zip, progress, 100)
-                    if extension not in MULTIMEDIA_EXTENSIONS:
-                        file_cache[path] = data
 
-        if toggles.LOCALE_ID_INTEGRITY.enabled(app.domain):
-            errors.extend(find_missing_locale_ids_in_ccz(file_cache))
+def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression, task):
+    file_cache = {}
+    with open(fpath, 'wb') as tmp:
+        with zipfile.ZipFile(tmp, "w", allowZip64=True) as z:
+            for path, data in files:
+                # don't compress multimedia files
+                extension = os.path.splitext(path)[1]
+                file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
+                z.writestr(path, data, file_compression)
+                current_progress += file_progress / file_count
+                DownloadBase.set_progress(task, current_progress, 100)
+                if extension not in MULTIMEDIA_EXTENSIONS:
+                    file_cache[path] = data
+    return file_cache
 
+
+def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True, include_index_files=True,
+                         download_id=None, compress_zip=False, filename="commcare.zip",
+                         download_targeted_version=False, task=None, expose_link=False):
+    """
+    :param task: celery task whose progress needs to be set when being run asynchronously by celery
+    :param expose_link: expose downloadable link for the file created
+    :return: path to the ccz file
+    """
+    compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
+    current_progress = 10  # early on indicate something is happening
+    file_progress = 50.0  # arbitrarily say building files takes half the total time
+
+    DownloadBase.set_progress(task, current_progress, 100)
+
+    fpath = _get_file_path(build, include_multimedia_files, include_index_files, build_profile_id,
+                           download_targeted_version)
+
+    # Don't rebuild the file if it is already there
+    if not (os.path.isfile(fpath) and settings.SHARED_DRIVE_CONF.transfer_enabled):
+        files, errors, file_count = _build_ccz_files(build, build_profile_id, include_multimedia_files,
+                                                     include_index_files, download_id, compress_zip,
+                                                     filename, download_targeted_version)
+        file_cache = _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression,
+                                        task)
+        if toggles.LOCALE_ID_INTEGRITY.enabled(build.domain):
+            locale_errors = find_missing_locale_ids_in_ccz(file_cache)
+            if locale_errors:
+                errors.extend(locale_errors)
+                notify_exception(
+                    None,
+                    message="CCZ missing locale ids from default/app_strings.txt",
+                    details={'domain': build.domain, 'app_id': build.id, 'errors': locale_errors}
+                )
         if include_index_files and include_multimedia_files:
-            errors.extend(check_ccz_multimedia_integrity(app.domain, fpath))
+            multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
+            errors.extend(multimedia_errors)
+            if multimedia_errors:
+                notify_exception(
+                    None,
+                    message="CCZ missing multimedia files",
+                    details={'domain': build.domain, 'app_id': build.id, 'errors': multimedia_errors}
+                )
 
         if errors:
             os.remove(fpath)
             raise Exception('\t' + '\t'.join(errors))
     else:
-        DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
+        DownloadBase.set_progress(task, current_progress + file_progress, 100)
+    if expose_link:
+        _expose_download_link(fpath, filename, compress_zip, download_id)
+    DownloadBase.set_progress(task, 100, 100)
+    return fpath
 
+
+def _expose_download_link(fpath, filename, compress_zip, download_id):
     common_kwargs = {
         'mimetype': 'application/zip' if compress_zip else 'application/x-zip-compressed',
         'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
         'download_id': download_id,
         'expiry': (1 * 60 * 60),
     }
-    if use_transfer:
-        expose_file_download(
-            fpath,
-            use_transfer=use_transfer,
-            **common_kwargs
-        )
+    if settings.SHARED_DRIVE_CONF.transfer_enabled:
+        expose_file_download(fpath, use_transfer=True, **common_kwargs)
     else:
-        expose_cached_download(
-            FileWrapper(open(fpath, 'rb')),
-            file_extension=file_extention_from_filename(filename),
-            **common_kwargs
-        )
-
-    DownloadBase.set_progress(build_application_zip, 100, 100)
+        expose_cached_download(FileWrapper(open(fpath, 'rb')),
+                               file_extension=file_extention_from_filename(filename),
+                               **common_kwargs)
 
 
 def find_missing_locale_ids_in_ccz(file_cache):

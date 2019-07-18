@@ -37,6 +37,7 @@ from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.const import ONE_DAY
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
@@ -57,7 +58,7 @@ from io import open
 
 
 logging = get_task_logger(__name__)
-EXPIRE_TIME = 60 * 60 * 24
+EXPIRE_TIME = ONE_DAY
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
@@ -244,7 +245,7 @@ def _get_case_names(domain, case_ids):
 
 def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
     params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
-    fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+    fname = '{}-{}'.format(app_id, hashlib.md5(params.encode('utf-8')).hexdigest())
     fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
     return fpath
 

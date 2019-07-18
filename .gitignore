@@ -6,7 +6,6 @@
 /local.ini*
 /localsettings*
 /loadtest/test_scripts/localsettings.py
-/scripts/_vendor
 !localsettings.example.py
 .settings/
 .project
@@ -39,6 +38,7 @@ dump.rdb
 /staticmedia*
 .transifexrc
 python_env
+python_env-3.6
 services
 KEEP_UNTIL__*
 formplayer.properties

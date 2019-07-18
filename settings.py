@@ -348,7 +348,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.hope',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -450,6 +449,7 @@ MASTER_LIST_EMAIL = 'master-list@example.com'
 REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
 CONTACT_EMAIL = 'info@example.com'
+FEEDBACK_EMAIL = 'hq-feedback@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
@@ -915,7 +915,7 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if error.message != 'No module named localsettings':
+    if six.text_type(error) != 'No module named localsettings':
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
@@ -1261,6 +1261,19 @@ if six.PY3:
     APPS_DB = NEW_APPS_DB
 
     META_DB = 'meta'
+
+    _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
+    for _name in ["default", "redis"]:
+        if _name not in CACHES:  # noqa: F405
+            continue
+        _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
+        assert _options.get('SERIALIZER', _serializer) == _serializer, (
+            "Refusing to change SERIALIZER. Remove that option from "
+            "localsettings or whereever redis caching is configured. {}"
+            .format(_options)
+        )
+        _options['SERIALIZER'] = _serializer
+    del _name, _options, _serializer
 else:
     NEW_USERS_GROUPS_DB = b'users'
     USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
@@ -1301,7 +1314,6 @@ COUCHDB_APPS = [
     'fluff_filter',
     'hqcase',
     'hqmedia',
-    'hope',
     'case_importer',
     'indicators',
     'locations',
@@ -1807,6 +1819,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
 ]
 
 
@@ -2080,7 +2093,7 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
-if UNIT_TESTING or DEBUG:
+if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
     try:
         from ddtrace import tracer
         tracer.enabled = False

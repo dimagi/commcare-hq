@@ -22,7 +22,7 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAc
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -265,7 +265,7 @@ class CommTrackSubmissionTest(XMLTest):
             self.assertEqual(expected_qty, latest_trans.quantity)
 
     def _get_all_ledger_transactions(self, q_):
-        return list(run_query_across_partitioned_databases(LedgerTransaction, q_))
+        return list(paginate_query_across_partitioned_databases(LedgerTransaction, q_))
 
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):

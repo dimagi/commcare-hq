@@ -1,33 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from contextlib import contextmanager
+from __future__ import absolute_import, unicode_literals
+
 import json
-from collections import defaultdict, namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
+from contextlib import contextmanager
+
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
-from couchdbkit import NoResultFound
 
-from corehq.apps.case_importer.const import LookupErrors, ImportErrors
-from corehq.apps.groups.models import Group
-from corehq.apps.case_importer.exceptions import (
-    ImporterExcelFileEncrypted,
-    ImporterExcelError,
-    ImporterFileNotFound,
-    ImporterRefError,
-    InvalidCustomFieldNameException,
-)
-from corehq.apps.users.cases import get_wrapped_owner
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
-from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.workbook_reading import open_any_workbook, Workbook, \
-    SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
-from couchexport.export import SCALAR_NEVER_WAS
 import six
 
+from corehq.apps.case_importer.const import LookupErrors
+from corehq.apps.case_importer.exceptions import (
+    ImporterExcelError,
+    ImporterExcelFileEncrypted,
+    ImporterFileNotFound,
+    ImporterRefError,
+)
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.workbook_reading import (
+    SpreadsheetFileEncrypted,
+    SpreadsheetFileInvalidError,
+    SpreadsheetFileNotFound,
+    Workbook,
+    open_any_workbook,
+)
 
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change
 # owner_id, external_id, etc. (See also custom_data_fields.models.RESERVED_WORDS)
@@ -142,124 +139,6 @@ class WorksheetWrapper(object):
             }
 
 
-def convert_custom_fields_to_struct(config):
-    excel_fields = config.excel_fields
-    case_fields = config.case_fields
-    custom_fields = config.custom_fields
-
-    field_map = {}
-    for i, field in enumerate(excel_fields):
-        if field:
-            field_map[field] = {}
-
-            if case_fields[i]:
-                field_map[field]['field_name'] = case_fields[i]
-            elif custom_fields[i]:
-                # if we have configured this field for external_id populate external_id instead
-                # of the default property name from the column
-                if config.search_field == EXTERNAL_ID and field == config.search_column:
-                    field_map[field]['field_name'] = EXTERNAL_ID
-                else:
-                    field_map[field]['field_name'] = custom_fields[i]
-    # hack: make sure the external_id column ends up in the field_map if the user
-    # didn't explicitly put it there
-    if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
-        field_map[config.search_column] = {
-            'field_name': EXTERNAL_ID
-        }
-    return field_map
-
-
-class ImportErrorDetail(object):
-
-    ERROR_MSG = {
-        ImportErrors.InvalidOwnerId: _(
-            "Owner ID was used in the mapping but there were errors when "
-            "uploading because of these values. Make sure the values in this "
-            "column are ID's for users or case sharing groups or locations."
-        ),
-        ImportErrors.InvalidOwnerName: _(
-            "Owner name was used in the mapping but there were errors when "
-            "uploading because of these values."
-        ),
-        ImportErrors.InvalidDate: _(
-            "Date fields were specified that caused an error during "
-            "conversion. This is likely caused by a value from Excel having "
-            "the wrong type or not being formatted properly."
-        ),
-        ImportErrors.BlankExternalId: _(
-            "Blank external ids were found in these rows causing as error "
-            "when importing cases."
-        ),
-        ImportErrors.CaseGeneration: _(
-            "These rows failed to generate cases for unknown reasons"
-        ),
-        ImportErrors.InvalidParentId: _(
-            "An invalid or unknown parent case was specified for the "
-            "uploaded case."
-        ),
-        ImportErrors.DuplicateLocationName: _(
-            "Owner ID was used in the mapping, but there were errors when "
-            "uploading because of these values. There are multiple locations "
-            "with this same name, try using site-code instead."
-        ),
-        ImportErrors.InvalidInteger: _(
-            "Integer values were specified, but the values in Excel were not "
-            "all integers"
-        ),
-        ImportErrors.ImportErrorMessage: _(
-            "Problems in importing cases. Please check the Excel file."
-        )
-    }
-
-    def __init__(self, *args, **kwargs):
-        self.errors = defaultdict(dict)
-
-    def add(self, error, row_number, column_name=None):
-        self.errors[error].setdefault(column_name, {})
-        self.errors[error][column_name]['error'] = _(error)
-
-        try:
-            self.errors[error][column_name]['description'] = self.ERROR_MSG[error]
-        except KeyError:
-            self.errors[error][column_name]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
-
-        if 'rows' not in self.errors[error][column_name]:
-            self.errors[error][column_name]['rows'] = []
-
-        self.errors[error][column_name]['rows'].append(row_number)
-
-    def as_dict(self):
-        return dict(self.errors)
-
-
-def convert_field_value(value):
-    # coerce to string unless it's a unicode string then we want that
-    if isinstance(value, six.text_type):
-        return value
-    else:
-        return str(value)
-
-
-def parse_search_id(config, row):
-    """ Find and convert the search id in an Excel row """
-
-    # Find index of user specified search column
-    search_column = config.search_column
-    search_id = row[search_column] or ''
-
-    try:
-        # if the spreadsheet gives a number, strip any decimals off
-        # float(x) is more lenient in conversion from string so both
-        # are used
-        search_id = int(float(search_id))
-    except (ValueError, TypeError, OverflowError):
-        # if it's not a number that's okay too
-        pass
-
-    return convert_field_value(search_id)
-
-
 def lookup_case(search_field, search_id, domain, case_type):
     """
     Attempt to find the case in CouchDB by the provided search_field and search_id.
@@ -292,43 +171,6 @@ def lookup_case(search_field, search_id, domain, case_type):
         return (None, LookupErrors.NotFound)
 
 
-def populate_updated_fields(config, row):
-    """
-    Returns a dict map of fields that were marked to be updated
-    due to the import. This can be then used to pass to the CaseBlock
-    to trigger updates.
-    """
-    field_map = convert_custom_fields_to_struct(config)
-    fields_to_update = {}
-    for key in field_map:
-        try:
-            update_value = row[key]
-        except Exception:
-            continue
-
-        if 'field_name' in field_map[key]:
-            update_field_name = field_map[key]['field_name'].strip()
-        else:
-            # nothing was selected so don't add this value
-            continue
-
-        if update_field_name in RESERVED_FIELDS:
-            raise InvalidCustomFieldNameException(_('Field name "{}" is reserved').format(update_field_name))
-
-        if isinstance(update_value, six.string_types) and update_value.strip() == SCALAR_NEVER_WAS:
-            soft_assert_type_text(update_value)
-            # If we find any instances of blanks ('---'), convert them to an
-            # actual blank value without performing any data type validation.
-            # This is to be consistent with how the case export works.
-            update_value = ''
-        elif update_value is not None:
-            update_value = convert_field_value(update_value)
-
-        fields_to_update[update_field_name] = update_value
-
-    return fields_to_update
-
-
 def open_spreadsheet_download_ref(filename):
     """
     open a spreadsheet download ref just to test there are no errors opening it
@@ -348,66 +190,6 @@ def get_spreadsheet(filename):
         raise ImporterFileNotFound(six.text_type(e))
     except SpreadsheetFileInvalidError as e:
         raise ImporterExcelError(six.text_type(e))
-
-
-def is_valid_location_owner(owner, domain):
-    if isinstance(owner, SQLLocation):
-        return owner.domain == domain and owner.location_type.shares_cases
-    else:
-        return False
-
-
-def is_valid_id(uploaded_id, domain, cache):
-    if uploaded_id in cache:
-        return cache[uploaded_id]
-
-    owner = get_wrapped_owner(uploaded_id)
-    return is_valid_owner(owner, domain)
-
-
-def is_valid_owner(owner, domain):
-    return (
-        (isinstance(owner, CouchUser) and owner.is_member_of(domain)) or
-        (isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)) or
-        is_valid_location_owner(owner, domain)
-    )
-
-
-def get_id_from_name(name, domain, cache):
-    '''
-    :param name: A username, group name, or location name/site_code
-    :param domain:
-    :param cache:
-    :return: Looks for the given name and returns the corresponding id if the
-    user or group exists and None otherwise. Searches for user first, then
-    group, then location
-    '''
-    if name in cache:
-        return cache[name]
-
-    def get_from_user(name):
-        try:
-            name_as_address = name
-            if '@' not in name_as_address:
-                name_as_address = format_username(name, domain)
-            user = CouchUser.get_by_username(name_as_address)
-            return getattr(user, 'couch_id', None)
-        except NoResultFound:
-            return None
-
-    def get_from_group(name):
-        group = Group.by_name(domain, name, one=True)
-        return getattr(group, 'get_id', None)
-
-    def get_from_location(name):
-        try:
-            return SQLLocation.objects.get_from_user_input(domain, name).location_id
-        except SQLLocation.DoesNotExist:
-            return None
-
-    id = get_from_user(name) or get_from_group(name) or get_from_location(name)
-    cache[name] = id
-    return id
 
 
 def get_importer_error_message(e):

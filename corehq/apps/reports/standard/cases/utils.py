@@ -9,7 +9,11 @@ from corehq.apps.locations.dbaccessors import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
-from corehq.apps.es import filters, users as user_es, cases as case_es
+from corehq.apps.es import (
+    filters,
+    users as user_es,
+    cases as case_es,
+)
 from corehq.apps.es.es_query import HQESQuery
 
 

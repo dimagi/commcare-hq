@@ -14,7 +14,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.filters = ['gender', 'age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for infants',
     };

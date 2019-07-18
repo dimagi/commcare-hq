@@ -16,6 +16,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'ccs-record-monthly'
     base_tablename = 'ccs_record_monthly'
 
     def __init__(self, month):
@@ -23,13 +24,27 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     def aggregate(self, cursor):
+        create_query, create_params = self.create_table_query()
         agg_query, agg_params = self.aggregation_query()
         index_queries = self.indexes()
 
         cursor.execute(self.drop_table_query())
+        cursor.execute(create_query, create_params)
         cursor.execute(agg_query, agg_params)
         for query in index_queries:
             cursor.execute(query)
+
+    def create_table_query(self):
+        return """
+        CREATE TABLE IF NOT EXISTS "{tablename}" (
+            CHECK (month = DATE %(date)s)
+        ) INHERITS ("{parent_tablename}")
+        """.format(
+            parent_tablename=self.base_tablename,
+            tablename=self.tablename,
+        ), {
+            "date": self.month.strftime("%Y-%m-%d"),
+        }
 
     @property
     def ccs_record_case_ucr_tablename(self):
@@ -54,7 +69,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
 
     @property
     def person_case_ucr_tablename(self):

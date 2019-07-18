@@ -2,7 +2,7 @@
   "operationalization": {
     "data_source": [
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -14,8 +14,9 @@
         ],
         "columns": [
           {
-            "column_name": "owner_id",
-            "agg_fun": "count"
+            "column_name": "awc_count",
+            "column_in_report": "owner_id",
+            "agg_fun": "sum"
           }
         ]
       }
@@ -24,7 +25,7 @@
   "population": {
     "data_source": [
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "columns": [
           {
             "column_name": "open_count",
@@ -87,7 +88,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -132,7 +133,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -186,7 +187,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -240,7 +241,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -294,7 +295,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -348,7 +349,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -402,7 +403,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "columns": [
           {
             "column_name": "M_st_count",
@@ -452,7 +453,7 @@
   "disabled_children": {
     "data_source": [
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -493,7 +494,7 @@
         ]
       },
       {
-        "id": "static-{domain}-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -547,6 +548,7 @@
     "data_source": [
       {
         "id": "static-{domain}-static-asr_4_6_infrastructure",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "where_housed",
@@ -787,6 +789,7 @@
     "data_source": [
       {
         "id": "static-{domain}-static-asr_4_6_infrastructure",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "medicine_kits_available",

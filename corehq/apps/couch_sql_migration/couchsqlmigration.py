@@ -23,18 +23,21 @@ from casexml.apps.case.xform import (
 from casexml.apps.case.xml.parser import CaseNoopAction
 from django.conf import settings
 from django.db.utils import IntegrityError
-from django_redis import get_redis_connection
 from gevent.pool import Pool
 
+from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
+    PROBLEM_TEMPLATE_START,
+)
 from corehq.apps.couch_sql_migration.diff import (
     filter_case_diffs,
     filter_form_diffs,
     filter_ledger_diffs,
 )
+from corehq.apps.couch_sql_migration.statedb import init_state_db
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.blobs import CODES, get_blob_db
+from corehq.blobs import CODES, get_blob_db, NotFound as BlobNotFound
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -43,6 +46,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     doc_type_to_state,
 )
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachmentSQL,
@@ -53,8 +57,13 @@ from corehq.form_processor.models import (
     XFormInstanceSQL,
     XFormOperationSQL,
 )
+from corehq.form_processor.parsers.ledgers.form import MissingFormXml
 from corehq.form_processor.submission_post import CaseStockProcessingResult
-from corehq.form_processor.utils import adjust_datetimes, should_use_sql_backend
+from corehq.form_processor.utils import (
+    adjust_datetimes,
+    extract_meta_user_id,
+    should_use_sql_backend,
+)
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
@@ -70,7 +79,7 @@ from corehq.util.log import with_progress_bar
 from corehq.util.pagination import PaginationEventHandler
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
-from couchforms.models import doc_types as form_doc_types
+from couchforms.models import XFormOperation, doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -83,7 +92,13 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def setup_logging(log_dir):
+def setup_logging(log_dir, debug=False):
+    if debug:
+        assert log.level <= logging.DEBUG, log.level
+        logging.root.setLevel(logging.DEBUG)
+        for handler in logging.root.handlers:
+            if handler.name in ["file", "console"]:
+                handler.setLevel(logging.DEBUG)
     if not log_dir:
         return
     time = datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -95,39 +110,20 @@ def setup_logging(log_dir):
     log.info("command: %s", " ".join(sys.argv))
 
 
-def do_couch_to_sql_migration(domain, with_progress=True, debug=False, run_timestamp=None):
+def do_couch_to_sql_migration(domain, with_progress=True):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(
-        domain,
-        with_progress=with_progress,
-        debug=debug,
-        run_timestamp=run_timestamp
-    ).migrate()
+    CouchSqlDomainMigrator(domain, with_progress).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True, debug=False, run_timestamp=None):
-        from corehq.apps.tzmigration.planning import DiffDB
+    def __init__(self, domain, with_progress=True):
         self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
-        self.debug = debug
         self.domain = domain
-        self.run_timestamp = run_timestamp or int(time())
-        db_filepath = get_diff_db_filepath(domain)
-        self.diff_db = DiffDB.init(db_filepath)
-        if debug:
-            assert log.level <= logging.DEBUG, log.level
-            logging.root.setLevel(logging.DEBUG)
-            for handler in logging.root.handlers:
-                if handler.name in ["file", "console"]:
-                    handler.setLevel(logging.DEBUG)
-
-        self.errors_with_normal_doc_type = []
-        self.forms_that_touch_cases_without_actions = set()
+        self.statedb = init_state_db(domain)
 
     def migrate(self):
         log.info('migrating domain {}'.format(self.domain))
-        log.info('run timestamp is {}'.format(self.run_timestamp))
 
         self.processed_docs = 0
         with TimingContext("couch_sql_migration") as timing_context:
@@ -145,98 +141,62 @@ class CouchSqlDomainMigrator(object):
         log.info('migrated domain {}'.format(self.domain))
 
     def _process_main_forms(self):
-        last_received_on = datetime.min
-        # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=10000, run_timestamp=self.run_timestamp)
-        pool = Pool(15)
-        self._rebuild_queues(pool)
-
-        # process main forms (including cases and ledgers)
-        changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
-
-        # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=10000)
-
-        for change in self._with_progress(['XFormInstance'], changes):
-            log.debug('Processing doc: {}({})'.format('XFormInstance', change.id))
-            form = change.get_document()
-            if form.get('problem', None):
-                self.errors_with_normal_doc_type.append(change.id)
-                continue
-            try:
-                wrapped_form = XFormInstance.wrap(form)
-                form_received = wrapped_form.received_on
-                assert last_received_on <= form_received
-                last_received_on = form_received
-                self._try_to_process_form(wrapped_form, pool)
-                self._try_to_process_queues(pool)
-            except Exception:
-                log.exception("Error migrating form %s", change.id)
-
-        # finish up the queues once all changes have been iterated through
-        update_interval = timedelta(seconds=10)
-        next_check = datetime.now()
-        while self.queues.has_next():
-            wrapped_form = self.queues.get_next()
-            if wrapped_form:
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-            else:
-                gevent.sleep(0.01)  # swap greenlets
-
-            remaining_items = self.queues.remaining_items + len(pool)
-            now = datetime.now()
-            if now > next_check:
-                log.info('Waiting on {} docs'.format(remaining_items))
-                next_check += update_interval
-
-        while not pool.join(timeout=10):
-            log.info('Waiting on {} docs'.format(len(pool)))
+        """process main forms (including cases and ledgers)"""
+        with AsyncFormProcessor(self.statedb, self._migrate_form) as pool:
+            changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
+            for change in self._with_progress(['XFormInstance'], changes):
+                pool.process_xform(change.get_document())
 
         self._log_main_forms_processed_count()
 
-    def _try_to_process_form(self, wrapped_form, pool):
-        case_ids = get_case_ids_from_form(wrapped_form)
-        if self.queues.try_obj(case_ids, wrapped_form):
-            pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-        elif self.queues.full:
-            gevent.sleep(0.01)  # swap greenlets
-
-    def _try_to_process_queues(self, pool):
-        # regularly check if we can empty the queues
-        while True:
-            new_wrapped_form = self.queues.get_next()
-            if not new_wrapped_form:
-                break
-            pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
-
-    def _rebuild_queues(self, pool):
-        prev_ids = self.queues.get_ids_from_run_timestamp()
-
-        for chunked_ids in chunked(prev_ids, 100):
-            chunk = list([_id for _id in chunked_ids if _id])
-            for form in FormAccessorCouch.get_forms(chunk):
-                self._try_to_process_form(form, pool)
-
-        self._try_to_process_queues(pool)
-
-    def _migrate_form_and_associated_models_async(self, wrapped_form):
+    def _migrate_form(self, wrapped_form):
         set_local_domain_sql_backend_override(self.domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
             log.exception("Unable to migrate form: %s", wrapped_form.form_id)
         finally:
-            self.queues.release_lock_for_queue_obj(wrapped_form)
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
-    def _migrate_form_and_associated_models(self, couch_form):
-        sql_form = _migrate_form(self.domain, couch_form)
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
+        """
+        Copies `couch_form` into a new sql form
+        """
+        if form_is_processed:
+            form_data = couch_form.form
+            with force_phone_timezones_should_be_processed():
+                adjust_datetimes(form_data)
+            xmlns = form_data.get("@xmlns", "")
+            user_id = extract_meta_user_id(form_data)
+        else:
+            xmlns = couch_form.xmlns
+            user_id = couch_form.user_id
+        sql_form = XFormInstanceSQL(
+            form_id=couch_form.form_id,
+            domain=self.domain,
+            xmlns=xmlns,
+            user_id=user_id,
+        )
+        _copy_form_properties(sql_form, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
+        if couch_form.doc_type != 'SubmissionErrorLog':
+            self._save_diffs(couch_form, sql_form)
+        case_stock_result = self._get_case_stock_result(sql_form, couch_form) if form_is_processed else None
+        _save_migrated_models(sql_form, case_stock_result)
 
-        self._save_diffs(couch_form, sql_form)
+    def _save_diffs(self, couch_form, sql_form):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+        couch_form_json = couch_form.to_json()
+        sql_form_json = sql_form_to_json(sql_form)
+        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
+        self.statedb.add_diffs(
+            couch_form.doc_type, couch_form.form_id,
+            filter_form_diffs(couch_form_json, sql_form_json, diffs)
+        )
 
+    def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
         if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
@@ -246,24 +206,15 @@ class CouchSqlDomainMigrator(object):
                     if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
                 ]
                 if len(touch_updates):
-                    # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
-                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
-
-        _save_migrated_models(sql_form, case_stock_result)
-
-    def _save_diffs(self, couch_form, sql_form):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
-        couch_form_json = couch_form.to_json()
-        sql_form_json = sql_form.to_json()
-        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
-        self.diff_db.add_diffs(
-            couch_form.doc_type, couch_form.form_id,
-            filter_form_diffs(couch_form_json, sql_form_json, diffs)
-        )
+                    # record these for later use when filtering case diffs.
+                    # See ``_filter_forms_touch_case``
+                    self.statedb.add_no_action_case_form(couch_form.form_id)
+        return case_stock_result
 
     def _copy_unprocessed_forms(self):
         pool = Pool(10)
-        for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
+        problems = self.statedb.iter_problem_forms()
+        for couch_form_json in iter_docs(XFormInstance.get_db(), problems, chunksize=1000):
             assert couch_form_json['problem']
             couch_form_json['doc_type'] = 'XFormError'
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
@@ -282,20 +233,7 @@ class CouchSqlDomainMigrator(object):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         try:
             couch_form = _wrap_form(couch_form_json)
-            sql_form = XFormInstanceSQL(
-                form_id=couch_form.form_id,
-                xmlns=couch_form.xmlns,
-                user_id=couch_form.user_id,
-            )
-            _copy_form_properties(self.domain, sql_form, couch_form)
-            _migrate_form_attachments(sql_form, couch_form)
-            _migrate_form_operations(sql_form, couch_form)
-
-            if couch_form.doc_type != 'SubmissionErrorLog':
-                self._save_diffs(couch_form, sql_form)
-
-            _save_migrated_models(sql_form)
-
+            self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
             self.processed_docs += 1
             self._log_unprocessed_forms_processed_count(throttled=True)
         except Exception:
@@ -380,15 +318,17 @@ class CouchSqlDomainMigrator(object):
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         log.debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
+        statedb = self.statedb
+        counts = defaultdict(int)
         case_ids = list(couch_cases)
         sql_cases = CaseAccessorSQL.get_cases(case_ids)
+        sql_case_ids = set()
         for sql_case in sql_cases:
+            sql_case_ids.add(sql_case.case_id)
             couch_case = couch_cases[sql_case.case_id]
             sql_case_json = sql_case.to_json()
             diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-            diffs = filter_case_diffs(
-                couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
-            )
+            diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
             if diffs and not sql_case.is_deleted:
                 try:
                     couch_case, diffs = self._rebuild_couch_case_and_re_diff(
@@ -397,10 +337,22 @@ class CouchSqlDomainMigrator(object):
                     log.warning('Case {} rebuild -> {}: {}'.format(
                         sql_case.case_id, type(err).__name__, err))
             if diffs:
-                self.diff_db.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+                statedb.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+            counts[couch_case['doc_type']] += 1
 
         self._diff_ledgers(case_ids)
 
+        if len(case_ids) != len(sql_case_ids):
+            couch_ids = set(case_ids)
+            assert not (sql_case_ids - couch_ids), sql_case_ids - couch_ids
+            missing_cases = [couch_cases[x] for x in couch_ids - sql_case_ids]
+            log.debug("Found %s missing SQL cases", len(missing_cases))
+            for doc_type, doc_ids in self._filter_missing_cases(missing_cases):
+                statedb.add_missing_docs(doc_type, doc_ids)
+                counts[doc_type] += len(doc_ids)
+
+        for doc_type, count in six.iteritems(counts):
+            statedb.increment_counter(doc_type, count)
         self.processed_docs += len(case_ids)
         self._log_case_diff_count(throttled=True)
 
@@ -413,9 +365,7 @@ class CouchSqlDomainMigrator(object):
         )
         rebuilt_case_json = rebuilt_case.to_json()
         diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
-        diffs = filter_case_diffs(
-            rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
-        )
+        diffs = filter_case_diffs(rebuilt_case_json, sql_case_json, diffs, self.statedb)
         return rebuilt_case_json, diffs
 
     def _diff_ledgers(self, case_ids):
@@ -431,10 +381,30 @@ class CouchSqlDomainMigrator(object):
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
             diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
-            self.diff_db.add_diffs(
+            self.statedb.add_diffs(
                 'stock state', ledger_value.ledger_reference.as_id(),
                 filter_ledger_diffs(diffs)
             )
+
+    def _filter_missing_cases(self, missing_cases):
+        result = defaultdict(list)
+        for couch_case in missing_cases:
+            if self._is_orphaned_case(couch_case):
+                log.info("Ignoring orphaned case: %s", couch_case["_id"])
+            else:
+                result[couch_case["doc_type"]].append(couch_case["_id"])
+        return six.iteritems(result)
+
+    def _is_orphaned_case(self, couch_case):
+        def references_case(form_id):
+            form = FormAccessorCouch.get_form(form_id)
+            try:
+                return case_id in get_case_ids_from_form(form)
+            except MissingFormXml:
+                return True  # assume case is referenced if form XML is missing
+
+        case_id = couch_case["_id"]
+        return not any(references_case(x) for x in couch_case["xform_ids"])
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
@@ -487,7 +457,7 @@ class CouchSqlDomainMigrator(object):
         self._log_processed_docs_count(['type:case_diffs'], throttled)
 
     def _get_resumable_iterator(self, doc_types, slug):
-        key = "%s.%s.%s" % (self.domain, slug, self.run_timestamp)
+        key = "%s.%s.%s" % (self.domain, slug, self.statedb.unique_id)
         return _iter_changes(self.domain, doc_types, resumable_key=key)
 
     def _send_timings(self, timing_context):
@@ -516,28 +486,8 @@ def _wrap_form(doc):
         return XFormInstance.wrap(doc)
 
 
-def _migrate_form(domain, couch_form):
-    """
-    This copies the couch form into a new sql form but does not save it.
-
-    See form_processor.parsers.form._create_new_xform
-    and SubmissionPost._set_submission_properties for what this should do.
-    """
-    interface = FormProcessorInterface(domain)
-
-    form_data = couch_form.form
-    with force_phone_timezones_should_be_processed():
-        adjust_datetimes(form_data)
-    sql_form = interface.new_xform(form_data)
-    sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
-    if sql_form.xmlns is None:
-        sql_form.xmlns = ''
-    return _copy_form_properties(domain, sql_form, couch_form)
-
-
-def _copy_form_properties(domain, sql_form, couch_form):
+def _copy_form_properties(sql_form, couch_form):
     assert isinstance(sql_form, XFormInstanceSQL)
-    sql_form.domain = domain
 
     # submission properties
     sql_form.auth_context = couch_form.auth_context
@@ -704,6 +654,53 @@ def _migrate_couch_attachments_to_blob_db(couch_form):
         assert not set(couch_form._attachments) - set(couch_form.blobs), couch_form
 
 
+def _fix_replacement_form_problem_in_couch(doc):
+    """Fix replacement form created by swap_duplicate_xforms
+
+    The replacement form was incorrectly created with "problem" text,
+    which causes it to be counted as an error form, and that messes up
+    the diff counts at the end of this migration.
+
+    NOTE the replacement form's _id does not match instanceID in its
+    form.xml. That issue is not resolved here.
+
+    See:
+    - corehq/apps/cleanup/management/commands/swap_duplicate_xforms.py
+    - couchforms/_design/views/all_submissions_by_domain/map.js
+    """
+    problem = doc["problem"]
+    assert problem.startswith(PROBLEM_TEMPLATE_START), doc
+    assert doc["doc_type"] == "XFormInstance", doc
+    deprecated_id = problem[len(PROBLEM_TEMPLATE_START):].split(" on ", 1)[0]
+    form = XFormInstance.wrap(doc)
+    form.deprecated_form_id = deprecated_id
+    form.history.append(XFormOperation(
+        user="system",
+        date=datetime.utcnow(),
+        operation="Resolved bad duplicate form during couch-to-sql "
+        "migration. Original problem: %s" % problem,
+    ))
+    form.problem = None
+    old_form = XFormInstance.get(deprecated_id)
+    if old_form.initial_processing_complete and not form.initial_processing_complete:
+        form.initial_processing_complete = True
+    form.save()
+    return form.to_json()
+
+
+def sql_form_to_json(form):
+    """Serialize SQL form to JSON
+
+    Handles missing form XML gracefully.
+    """
+    try:
+        form.get_xml()
+    except (AttachmentNotFound, BlobNotFound):
+        form.get_xml.get_cache(form)[()] = ""
+        assert form.get_xml() == "", form.get_xml()
+    return form.to_json()
+
+
 def _migrate_case_attachments(couch_case, sql_case):
     """Copy over attachment meta """
     for name, attachment in six.iteritems(couch_case.case_attachments):
@@ -764,16 +761,32 @@ def _get_case_and_ledger_updates(domain, sql_form):
         for case in case_result.cases:
             case_db.post_process_case(case, sql_form)
             case_db.mark_changed(case)
+        cases = case_result.cases
 
-        stock_result = process_stock(xforms, case_db)
-        cases = case_db.get_cases_for_saving(sql_form.received_on)
-        stock_result.populate_models()
+        try:
+            stock_result = process_stock(xforms, case_db)
+            cases = case_db.get_cases_for_saving(sql_form.received_on)
+            stock_result.populate_models()
+        except MissingFormXml:
+            stock_result = None
 
     return CaseStockProcessingResult(
         case_result=case_result,
         case_models=cases,
         stock_result=stock_result,
     )
+
+
+def get_case_ids(form):
+    """Get case ids referenced in form
+
+    Gracefully handles missing XML, but will omit case ids referenced in
+    ledger updates if XML is missing.
+    """
+    try:
+        return get_case_ids_from_form(form)
+    except MissingFormXml:
+        return [update.id for update in get_case_updates(form)]
 
 
 def _save_migrated_models(sql_form, case_stock_result=None):
@@ -826,29 +839,6 @@ def _iter_changes(domain, doc_types, **kw):
     ).iter_all_changes(**kw)
 
 
-def get_diff_db_filepath(domain):
-    return os.path.join(settings.SHARED_DRIVE_CONF.tzmigration_planning_dir,
-                        '{}-tzmigration.db'.format(domain))
-
-
-def get_diff_db(domain):
-    from corehq.apps.tzmigration.planning import DiffDB
-
-    db_filepath = get_diff_db_filepath(domain)
-    return DiffDB.open(db_filepath)
-
-
-def delete_diff_db(domain):
-    db_filepath = get_diff_db_filepath(domain)
-    try:
-        os.remove(db_filepath)
-    except OSError as e:
-        # continue if the file didn't exist to begin with
-        # reraise on any other error
-        if e.errno != 2:
-            raise
-
-
 def commit_migration(domain_name):
     domain_obj = Domain.get_by_name(domain_name, strict=True)
     domain_obj.use_sql_backend = True
@@ -860,6 +850,93 @@ def commit_migration(domain_name):
             "could not set use_sql_backend for domain %s (try again)" % domain_name
     datadog_counter("commcare.couch_sql_migration.total_committed")
     log.info("committed migration for {}".format(domain_name))
+
+
+class AsyncFormProcessor(object):
+
+    def __init__(self, statedb, migrate_form):
+        self.statedb = statedb
+        self.migrate_form = migrate_form
+        self.processed_docs = 0
+
+    def __enter__(self):
+        self.pool = Pool(15)
+        self.queues = PartiallyLockingQueue()
+        self._rebuild_queues(self.statedb.pop_saved_resume_state())
+        return self
+
+    def __exit__(self, exc_type, exc, exc_tb):
+        if exc_type is None:
+            self._finish_processing_queues()
+        self.statedb.save_resume_state(self.queues.queue_ids)
+        self.queues = self.pool = None
+
+    def _rebuild_queues(self, form_ids):
+        for chunk in chunked(form_ids, 100, list):
+            for form in FormAccessorCouch.get_forms(chunk):
+                self._try_to_process_form(form)
+        self._try_to_empty_queues()
+
+    def process_xform(self, doc):
+        """Process XFormInstance document asynchronously"""
+        form_id = doc["_id"]
+        log.debug('Processing doc: XFormInstance(%s)', form_id)
+        if doc.get('problem'):
+            if six.text_type(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+                doc = _fix_replacement_form_problem_in_couch(doc)
+            else:
+                self.statedb.add_problem_form(form_id)
+                return
+        try:
+            wrapped_form = XFormInstance.wrap(doc)
+        except Exception:
+            log.exception("Error migrating form %s", form_id)
+        self._try_to_process_form(wrapped_form)
+        self._try_to_empty_queues()
+
+    def _try_to_process_form(self, wrapped_form):
+        case_ids = get_case_ids(wrapped_form)
+        if self.queues.try_obj(case_ids, wrapped_form):
+            self.pool.spawn(self._async_migrate_form, wrapped_form)
+        elif self.queues.full:
+            gevent.sleep()  # swap greenlets
+
+    def _async_migrate_form(self, wrapped_form):
+        try:
+            self.migrate_form(wrapped_form)
+        finally:
+            self.queues.release_lock_for_queue_obj(wrapped_form)
+
+    def _try_to_empty_queues(self):
+        while True:
+            new_wrapped_form = self.queues.get_next()
+            if not new_wrapped_form:
+                break
+            self.pool.spawn(self._async_migrate_form, new_wrapped_form)
+
+    def _finish_processing_queues(self):
+        update_interval = timedelta(seconds=10)
+        next_check = datetime.now()
+        pool = self.pool
+        while self.queues.has_next():
+            wrapped_form = self.queues.get_next()
+            if wrapped_form:
+                pool.spawn(self._async_migrate_form, wrapped_form)
+            else:
+                gevent.sleep()  # swap greenlets
+
+            now = datetime.now()
+            if now > next_check:
+                remaining_items = self.queues.remaining_items + len(pool)
+                log.info('Waiting on {} docs'.format(remaining_items))
+                next_check += update_interval
+
+        while not pool.join(timeout=10):
+            log.info('Waiting on {} docs'.format(len(pool)))
+
+        unprocessed = self.queues.queue_ids
+        if unprocessed:
+            log.error("Unprocessed forms (unexpected): %s", unprocessed)
 
 
 class PartiallyLockingQueue(object):
@@ -876,7 +953,7 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, queue_id_param="id", max_size=-1, run_timestamp=None):
+    def __init__(self, queue_id_param="form_id", max_size=10000):
         """
         :queue_id_param string: param of the queued objects to pull an id from
         :max_size int: the maximum size the queue should reach. -1 means no limit
@@ -891,24 +968,14 @@ class PartiallyLockingQueue(object):
             return getattr(queue_obj, queue_id_param)
         self.get_queue_obj_id = get_queue_obj_id
 
-        def get_cached_list_key():
-            return "partial_queues.queued_or_processing.%s" % run_timestamp
-        self.get_cached_list_key = get_cached_list_key
-        client = get_redis_connection()
-        client.rpush(get_cached_list_key(), '')  # hack to make key exist
-        client.expire(get_cached_list_key(), 60 * 60 * 24 * 30)  # 30 days
+    @property
+    def queue_ids(self):
+        """Return a list of queue object ids
 
-    def add_processing_doc_id(self, doc_id):
-        client = get_redis_connection()
-        client.rpush(self.get_cached_list_key(), doc_id)
-
-    def remove_processing_doc_id(self, doc_id):
-        client = get_redis_connection()
-        gevent.spawn(client.lrem, self.get_cached_list_key(), 1, doc_id)
-
-    def get_ids_from_run_timestamp(self):
-        client = get_redis_connection()
-        return client.lrange(self.get_cached_list_key(), 0, -1) or []
+        Queue state can be ruilt using this list by looking up each
+        queue object and lock ids and passing them to `try_obj()`.
+        """
+        return list(self.lock_ids_by_queue_id)
 
     def try_obj(self, lock_ids, queue_obj):
         """ Checks if the object can acquire some locks. If not, adds item to queue
@@ -982,11 +1049,9 @@ class PartiallyLockingQueue(object):
         releasing a lock that isn't held
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
-        lock_ids = self.lock_ids_by_queue_id.get(queue_obj_id)
-        self.remove_processing_doc_id(queue_obj_id)
+        lock_ids = self.lock_ids_by_queue_id.pop(queue_obj_id, None)
         if lock_ids:
             self._release_lock(lock_ids)
-            del self.lock_ids_by_queue_id[queue_obj_id]
             return True
         return False
 
@@ -1010,7 +1075,6 @@ class PartiallyLockingQueue(object):
                 self.queue_by_lock_id[lock_id].append(queue_obj_id)
             self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
         self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
-        self.add_processing_doc_id(queue_obj_id)
 
     def _remove_item(self, queued_obj_id):
         """ Removes a queued obj from data model

@@ -4,20 +4,22 @@
 
 {% if not no_header %}
   <h2>
-    {% blocktrans with verb=bulk_upload.verb|default:"Upload"|title %}
+    {% blocktrans with verb=bulk_upload.verb|default:"Upload" %}
       {{ verb }}
     {% endblocktrans %}
-    {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
-      {{ plural_noun }} Using Excel
+    {% blocktrans with plural_noun=bulk_upload.plural_noun %}
+      {{ plural_noun }} using Excel
     {% endblocktrans %}
   </h2>
 {% endif %}
 
 <p>
-  {% if bulk_upload.help_text %}
-    <div class="alert alert-info">
-      {{ bulk_upload.help_text }}
-    </div>
+  {% if bulk_upload.help_link %}
+    <p class="help-block">
+      {% blocktrans with link=bulk_upload.help_link %}
+        Read more on the <a target='_blank' href='{{ link }}'>Help Site</a>.
+      {% endblocktrans %}
+    </p>
   {% endif %}
   <ol>
     {% block prerequisites %}{% endblock %}
@@ -32,7 +34,7 @@
           <a id="download_link" href="{{ bulk_upload.download_url }}" data-bind="attr: {href: url}">
             <button class="btn btn-primary">
               <i class="fa fa-cloud-download"></i>
-              {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+              {% blocktrans with plural_noun=bulk_upload.plural_noun %}
                 Download {{ plural_noun }}
               {% endblocktrans %}
             </button>

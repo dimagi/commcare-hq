@@ -18,6 +18,16 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-child_tasks_cases",
     "display_name": "Cases - Child Tasks (Static)",
@@ -35,15 +45,6 @@
             "property_name": "type"
           },
           "property_value": "tasks"
-        },
-        {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "expression": {
-            "type": "property_name",
-            "property_name": "tasks_type"
-          },
-          "property_value": "child"
         }
       ]
     },
@@ -62,6 +63,19 @@
             "type": "location_type_name"
           },
           "property_value": "awc"
+        }
+      },
+      {
+        "name": "temp_not_child_task",
+        "error_message": "Task is not of type child",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "tasks_type"
+          },
+          "property_value": "child"
         }
       }
     ],
@@ -83,6 +97,8 @@
       {
         "column_id": "supervisor_id",
         "datatype": "string",
+        "is_primary_key": true,
+        "is_nullable": false,
         "type": "expression",
         "expression": {
           "type": "ancestor_location",
@@ -219,13 +235,11 @@
     "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+     "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "disable_destructive_rebuild": true
   }

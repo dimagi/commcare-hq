@@ -547,7 +547,8 @@ class AppBuildTimingsView(TemplateView):
                 build_application_zip(
                     include_multimedia_files=True,
                     include_index_files=True,
-                    app=app,
+                    domain=app.domain,
+                    app_id=app.id,
                     download_id=None,
                     compress_zip=True,
                     filename='app-profile-test.ccz',

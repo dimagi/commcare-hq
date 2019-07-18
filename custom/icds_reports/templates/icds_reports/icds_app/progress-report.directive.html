@@ -1,7 +1,7 @@
 {% load static %}
 
 <div class="progress-report-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters">
+    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-5">
             <div class="row">
                 <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
@@ -21,6 +21,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
+    <info-message></info-message>
     <div class="report-content report-content-without-message">
         <div ng-if="$ctrl.data === void(0)">
             <h2>No Data</h2>
@@ -79,7 +80,7 @@
                 <button class="btn btn-info btn-sm right" ng-click="$ctrl.goBack()">Back</button>
             </div>
             <div class="row no-margin headers-overflow-unset" ng-repeat="section in $ctrl.data"  style="margin-bottom: 50px !important;">
-                <table datatable="ng" dt-column-defs="$ctrl.dtColumnDefs" dt-options="$ctrl.dtOptions" class="table black">
+                <table datatable="ng" dt-column-defs="$ctrl.dtColumnDefs" dt-options="$ctrl.dtOptions" class="table black factSheetTable">
                     <thead>
                     <tr>
                         <th class="col-md-6"><span ng-bind-html="section.section_title"></span></th>

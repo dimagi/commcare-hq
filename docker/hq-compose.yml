@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: "${DOCKERFILE}"
     environment:
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 kafka:9092 elasticsearch:9200 riakcs:9980"
+      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 kafka:9092 elasticsearch:9200 minio:9980"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
       JS_SETUP: "${JS_SETUP}"
       PYTHON_VERSION: "${PYTHON_VERSION}"
@@ -24,7 +24,7 @@ services:
       - redis
       - elasticsearch
       - kafka
-      - riakcs
+      - minio
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
@@ -90,12 +90,17 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/tmp/kafka-logs
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/var/lib/zookeeper
 
-  riakcs:
-    image: dimagi/riak-cs
+  minio:
+    image: minio/minio
+    command: server --address :9980 /data
     expose:
       - "9980"
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-riakcs:}/var/lib/riak-data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-conf:}/root/.minio
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-minio-data:}/data
+    environment:
+      MINIO_ACCESS_KEY: admin-key
+      MINIO_SECRET_KEY: admin-secret
 
   citus_master:
     image: 'citusdata/citus:8.1.1'

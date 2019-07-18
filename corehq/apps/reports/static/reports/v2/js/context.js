@@ -51,6 +51,9 @@ hqDefine('reports/v2/js/context', [
         getColumns: function () {
             return initialPageData.get('report.columns');
         },
+        getUnsortableColumnNames: function () {
+            return initialPageData.get('report.unsortableColumnNames');
+        },
         getColumnFilters: function () {
             return initialPageData.get('report.columnFilters');
         },

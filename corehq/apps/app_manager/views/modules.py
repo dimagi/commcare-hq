@@ -25,6 +25,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import ParentCaseProper
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
+from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.domain.decorators import track_domain_request, LoginAndDomainMixin
 from corehq.apps.domain.models import Domain
@@ -97,7 +98,7 @@ def get_module_template(user, module):
         return "app_manager/module_view.html"
 
 
-def get_module_view_context(app, module, lang=None):
+def get_module_view_context(request, app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
@@ -118,12 +119,12 @@ def get_module_view_context(app, module, lang=None):
             'auto_select_case': module.auto_select_case,
             'has_schedule': module.has_schedule,
         })
-        context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
+        context.update(_get_shared_module_view_context(request, app, module, case_property_builder, lang))
         context.update(_get_advanced_module_view_context(app, module))
     elif isinstance(module, ReportModule):
         context.update(_get_report_module_context(app, module))
     else:
-        context.update(_get_shared_module_view_context(app, module, case_property_builder, lang))
+        context.update(_get_shared_module_view_context(request, app, module, case_property_builder, lang))
         context.update(_get_basic_module_view_context(app, module, case_property_builder))
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
@@ -131,13 +132,13 @@ def get_module_view_context(app, module, lang=None):
     return context
 
 
-def _get_shared_module_view_context(app, module, case_property_builder, lang=None):
+def _get_shared_module_view_context(request, app, module, case_property_builder, lang=None):
     '''
     Get context items that are used by both basic and advanced modules.
     '''
     case_type = module.case_type
     context = {
-        'details': _get_module_details_context(app, module, case_property_builder, case_type),
+        'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'js_options': {
@@ -346,7 +347,7 @@ def _case_list_form_options(app, module, case_type_, lang=None):
     }
 
 
-def _get_module_details_context(app, module, case_property_builder, case_type_):
+def _get_module_details_context(request, app, module, case_property_builder, case_type_, messages=messages):
     subcase_types = list(app.get_subcase_types(module.case_type))
     item = {
         'label': gettext_lazy('Case List'),
@@ -358,10 +359,14 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
         'short': module.case_details.short,
         'long': module.case_details.long,
     }
-    case_properties = case_property_builder.get_properties(case_type_)
-    if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
-        usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
-        case_properties |= usercase_properties
+    try:
+        case_properties = case_property_builder.get_properties(case_type_)
+        if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
+            usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
+            case_properties |= usercase_properties
+    except CaseError as e:
+        case_properties = []
+        messages.error(request, "Error in Case Management: %s" % e)
 
     item['properties'] = sorted(case_properties)
     item['fixture_select'] = module.fixture_select
@@ -571,8 +576,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     handle_media_edits(request, module, should_edit, resp, lang)
     handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
-    handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
-
+    if hasattr(module, 'case_list'):
+        handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -588,7 +593,6 @@ def _new_advanced_module(request, domain, app, name, lang):
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
     response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(request, _('Caution: Advanced modules are a labs feature'))
     return response
 
 
@@ -626,20 +630,25 @@ def delete_module(request, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
     try:
-        record = app.delete_module(module_unique_id)
+        module = app.get_module_by_unique_id(module_unique_id)
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
-    if record is not None:
-        messages.success(
-            request,
-            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
-                record.module.default_name(app=app),
-                reverse('undo_delete_module', args=[domain, record.get_id])
-            ),
-            extra_tags='html'
-        )
-        app.save()
-        clear_xmlns_app_id_cache(domain)
+    if module.get_child_modules():
+        messages.error(request, _('"{}" has sub-menus. You must remove these before '
+                                  'you can delete it.').format(module.default_name()))
+        return back_to_main(request, domain, app_id)
+
+    record = app.delete_module(module_unique_id)
+    messages.success(
+        request,
+        _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
+            name=record.module.default_name(app=app),
+            url=reverse('undo_delete_module', args=[domain, record.get_id])
+        ),
+        extra_tags='html'
+    )
+    app.save()
+    clear_xmlns_app_id_cache(domain)
     return back_to_main(request, domain, app_id=app_id)
 
 
@@ -801,7 +810,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.short.custom_variables = custom_variables['short']
 
@@ -810,7 +819,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
         except etree.XMLSyntaxError as error:
             return HttpResponseBadRequest(
-                "There was an issue with your custom variables: {}".format(error.message)
+                "There was an issue with your custom variables: {}".format(error)
             )
         detail.long.custom_variables = custom_variables['long']
 

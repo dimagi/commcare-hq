@@ -299,7 +299,8 @@ else
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \
             ${VOLUME_PREFIX}redis \
-            ${VOLUME_PREFIX}riakcs \
+            ${VOLUME_PREFIX}minio-conf \
+            ${VOLUME_PREFIX}minio-data \
             ${VOLUME_PREFIX}zookeeper
     fi
 fi

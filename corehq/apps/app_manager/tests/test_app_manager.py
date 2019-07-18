@@ -14,7 +14,7 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.app_manager.dbaccessors import get_app, get_built_app_ids_for_app_id
 from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module, \
     ReportModule, ReportAppConfig
-from corehq.apps.app_manager.tasks import make_async_build, prune_auto_generated_builds
+from corehq.apps.app_manager.tasks import make_async_build_v2, prune_auto_generated_builds
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.app_manager.util import add_odk_profile_after_build, purge_report_from_mobile_ucr
 from corehq.apps.builds.models import BuildSpec
@@ -128,12 +128,27 @@ class AppManagerTest(TestCase):
         self.app.delete_module(self.app.modules[0].unique_id)
         self.assertEqual(len(self.app.modules), 2)
 
+    def assertModuleOrder(self, actual_modules, expected_modules):
+        self.assertEqual([m.name['en'] for m in actual_modules],
+                         [m.name['en'] for m in expected_modules])
+
     def testSwapModules(self):
-        m0 = self.app.modules[0].name['en']
-        m1 = self.app.modules[1].name['en']
+        m0, m1, m2 = self.app.modules
+        self.app.rearrange_modules(1, 0)
+        self.assertModuleOrder(self.app.modules, [m1, m0, m2])
+
+    def testRearrangeModuleWithChildrenHigher(self):
+        m0, m1, m2 = self.app.modules
+        m2.root_module_id = m1.unique_id
+        self.app.rearrange_modules(1, 0)
+        # m2 is a child of m1, so when m1 moves to the top, m2 should follow
+        self.assertModuleOrder(self.app.modules, [m1, m2, m0])
+
+    def testRearrangeModuleWithChildrenLower(self):
+        m0, m1, m2 = self.app.modules
+        m1.root_module_id = m0.unique_id
         self.app.rearrange_modules(0, 1)
-        self.assertEqual(self.app.modules[0].name['en'], m1)
-        self.assertEqual(self.app.modules[1].name['en'], m0)
+        self.assertModuleOrder(self.app.modules, [m2, m0, m1])
 
     @patch_default_builds
     def _test_import_app(self, app_id_or_source):
@@ -252,7 +267,7 @@ class AppManagerTest(TestCase):
 
         # Build #2, auto-generated
         app.save()
-        make_async_build(app, 'someone')
+        make_async_build_v2(app.get_id, app.domain, app.version)
         build_ids = get_built_app_ids_for_app_id(app.domain, app.id)
         self.assertEqual(len(build_ids), 2)
         self.assertEqual(build_ids[0], build1.id)

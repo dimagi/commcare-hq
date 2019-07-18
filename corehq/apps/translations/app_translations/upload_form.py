@@ -192,9 +192,20 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                         break
 
             if trans_type == 'default':
-                # plaintext/Markdown
-                markdown_allowed = not self.markdown_vetoes[label_id] or self.markdowns[label_id]
-                if self._looks_like_markdown(new_translation) and markdown_allowed:
+                # Always update plain text
+                self._update_translation_node(
+                    new_translation,
+                    text_node,
+                    self._get_value_node(text_node),
+                    delete_node=(not keep_value_node)
+                )
+
+                # Also update markdown if either of the following is true:
+                # - The new translation uses markdown...unless the user has explicitly specified it is NOT markdown
+                # - The question has used markdown in the past. If the markdown node exists, it needs to stay up to
+                #   date, since mobile will display the markdown value if it's present.
+                is_markdown = self._looks_like_markdown(new_translation) and not self.markdown_vetoes[label_id]
+                if is_markdown or self.markdowns[label_id]:
                     # If it looks like Markdown, add it ... unless it
                     # looked like Markdown before but it wasn't. If we
                     # have a Markdown node, always keep it. FB 183536
@@ -208,12 +219,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                         # the plaintext node
                         delete_node=(not keep_value_node)
                     )
-                self._update_translation_node(
-                    new_translation,
-                    text_node,
-                    self._get_value_node(text_node),
-                    delete_node=(not keep_value_node)
-                )
             else:
                 # audio/video/image
                 self._update_translation_node(new_translation,

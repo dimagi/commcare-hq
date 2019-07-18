@@ -367,7 +367,7 @@ def get_raw_instance(session_id, domain=None, auth=None):
         "action":"get-instance",
         "session-id": session_id,
         "domain": domain
-        }
+    }
 
     response = post_data(json.dumps(data), auth)
     if "error" in response:

@@ -20,6 +20,16 @@
     "icds-new",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-infrastructure_form",
     "display_name": "Forms - Infrastructure (Static)",

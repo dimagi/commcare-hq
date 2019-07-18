@@ -12,7 +12,7 @@ from mock import patch
 from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
-from casexml.apps.case.xform import cases_referenced_by_xform
+from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
 
@@ -405,11 +405,10 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         form = self.post_xml(self.xform_xml, self.domain_name).xform
         repeat_records = self.repeat_records(self.domain_name).all()
         payload = repeat_records[0].get_payload()
-        cases = cases_referenced_by_xform(form)
         self.assertEqual(json.loads(payload), {
             'received_on': json_format_datetime(form.received_on),
             'form_id': form.form_id,
-            'case_ids': [case.case_id for case in cases]
+            'case_ids': list(get_case_ids_from_form(form))
         })
 
 

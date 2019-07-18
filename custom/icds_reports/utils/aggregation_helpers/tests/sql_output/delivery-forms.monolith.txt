@@ -1,0 +1,36 @@
+DROP TABLE IF EXISTS "icds_db_delivery_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_delivery_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_ccs_record_delivery_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_ccs_record_delivery_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_delivery_form_7a197ee47818209780c23ed9" (
+          case_id, state_id, supervisor_id, month, latest_time_end_processed,
+          breastfed_at_birth, valid_visits, where_born
+        ) (
+          SELECT
+            DISTINCT case_load_ccs_record0 AS case_id,
+            %(state_id)s AS state_id,
+            LAST_VALUE(supervisor_id) over w as supervisor_id,
+            %(month)s::DATE AS month,
+            LAST_VALUE(timeend) over w AS latest_time_end_processed,
+            LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth,
+            SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
+                          (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END
+                ) OVER w as valid_visits,
+            LAST_VALUE(where_born) OVER w AS where_born
+          FROM "ucr_icds-cas_static-dashboard_delivery_fo_f079e6e1"
+          WHERE state_id = %(state_id)s AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+                case_load_ccs_record0 IS NOT NULL
+          WINDOW w AS (
+            PARTITION BY case_load_ccs_record0
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+          )
+        )
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

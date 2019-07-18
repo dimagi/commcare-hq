@@ -6,6 +6,10 @@ from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
 
+class StockProcessingError(Exception):
+    pass
+
+
 class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 

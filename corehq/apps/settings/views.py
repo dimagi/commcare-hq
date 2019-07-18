@@ -39,7 +39,6 @@ from corehq.apps.domain.decorators import (
     two_factor_exempt,
 )
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.settings.forms import (
@@ -126,7 +125,6 @@ class MyAccountSettingsView(BaseMyAccountView):
     api_key = None
     template_name = 'settings/edit_my_account.html'
 
-    @use_select2_v4
     @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -497,8 +495,8 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
             'version': 2,
             'flag': MULTIPLE_APPS_UNLIMITED.slug,
             'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug],
-            'signature': b64encode(sign(message_v1)),
-            'multiple_flags_signature': b64encode(sign(message_v2))
+            'signature': b64encode(sign(message_v1)).decode('utf-8'),
+            'multiple_flags_signature': b64encode(sign(message_v2)).decode('utf-8')
         })
 
         qrcode = get_qrcode(qrcode_data)

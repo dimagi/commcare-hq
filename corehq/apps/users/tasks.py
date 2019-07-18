@@ -48,7 +48,7 @@ def bulk_upload_async(domain, user_specs, group_specs):
     }
 
 
-@task(serializer='pickle', )
+@task(serializer='pickle')
 def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
     errors = []
@@ -290,3 +290,15 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
+
+
+@task()
+def update_domain_date(user_id, domain):
+    from corehq.apps.users.models import WebUser
+    user = WebUser.get_by_user_id(user_id, domain)
+    domain_membership = user.get_domain_membership(domain)
+    if domain_membership:
+        domain_membership.last_accessed = datetime.today().date()
+        user.save()
+    else:
+        logger.error("DomainMembership does not exist for user %s in domain %s" % (user.name, domain))

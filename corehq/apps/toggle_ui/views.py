@@ -20,7 +20,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.toggles import (
     ALL_NAMESPACES,
-    ALL_TAGS,
+    ALL_TAG_GROUPS,
     NAMESPACE_USER,
     NAMESPACE_DOMAIN,
     TAG_CUSTOM,
@@ -89,7 +89,7 @@ class ToggleListView(BasePageView):
             'page_url': self.page_url,
             'show_usage': self.show_usage,
             'toggles': toggles,
-            'tags': ALL_TAGS,
+            'tags': ALL_TAG_GROUPS,
             'user_counts': user_counts,
             'last_used': last_used,
             'last_modified': last_modified,

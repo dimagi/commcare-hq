@@ -1,41 +1,55 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import io
+import os
 import tempfile
 from io import BytesIO
-import os
 
-from couchexport.export import export_raw
-from couchexport.models import Format
 from django.test import SimpleTestCase
+
 from mock import patch
 from six.moves import zip
 
-from corehq.apps.app_manager.models import Application, Module
+from collections import OrderedDict
+from couchexport.export import export_raw
+from couchexport.models import Format
+
+from corehq.apps.app_manager.models import Application, Module, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.translations.app_translations.download import (
+    get_bulk_app_sheets_by_name,
+    get_bulk_app_single_sheet_by_name,
+    get_form_question_label_name_media,
+    get_module_case_list_form_rows,
+    get_module_case_list_menu_item_rows,
+    get_module_detail_rows,
+)
+from corehq.apps.translations.app_translations.upload_app import (
+    get_sheet_name_to_unique_id_map,
+    process_bulk_app_translation_upload,
+)
+from corehq.apps.translations.app_translations.upload_form import (
+    BulkAppTranslationFormUpdater,
+)
+from corehq.apps.translations.app_translations.upload_module import (
+    BulkAppTranslationModuleUpdater,
+)
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
     get_form_sheet_name,
     get_menu_row,
     get_module_sheet_name,
 )
-from corehq.apps.translations.app_translations.download import (
-    get_bulk_app_sheets_by_name,
-    get_bulk_app_single_sheet_by_name,
-    get_form_question_label_name_media,
-    get_module_case_list_form_rows,
-    get_module_rows,
+from corehq.apps.translations.const import (
+    MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_NAME,
 )
-from corehq.apps.translations.app_translations.upload_app import process_bulk_app_translation_upload
-from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
-from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONReader
-
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONReader,
+    get_workbook,
+)
 
 EXCEL_HEADERS = (
     (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en',
@@ -75,7 +89,10 @@ EXCEL_DATA = (
       ('Form', 'menu6_form1', 'Advanced Form', '', '', '2b9c856ba2ea4ec1ab8743af299c1627'),
       ('Form', 'menu6_form2', 'Shadow Form', '', '', 'c42e1a50123c43f2bd1e364f5fa61379'),
       )),
-    ('menu1', (('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
+    ('menu1',
+     (('case_list_menu_item_label', 'list', 'Steth List'),
+      ('name', 'list', 'Name'),
+      ('name', 'detail', 'Name'))),
     ('menu1_form1',
      (('What_does_this_look_like-label', 'What does this look like?',
        'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
@@ -151,8 +168,9 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             f.seek(0)
             workbook = get_workbook(f)
             assert workbook
-            expected_headers = get_bulk_app_sheet_headers(app, lang=lang)
-            messages = process_bulk_app_translation_upload(app, workbook, expected_headers, lang=lang)
+
+            sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(f, lang)
+            messages = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
 
         self.assertSetEqual(
             {m[1] for m in messages}, set(expected_messages)
@@ -345,6 +363,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         )),
         ("menu1", (
             ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
+            ("case_list_menu_item_label", "list", "List Stethoscopes", "French List of Stethoscopes"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
             ("Tab 1", "detail", "Other", "Autre"),
@@ -383,6 +402,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('add_markdown-label', 'add_markdown: ~~new \\u0939\\u093f markdown~~',
              'add_markdown: ~~new \\u0939\\u093f markdown~~', '', '', '', '', '', ''),
             ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
+            ('remove_markdown-label', 'no longer markdown', 'just plain text', '', '', '', '', '', ''),
             ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*',
              '', '', '', '', '', ''),
         ))
@@ -392,6 +412,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         (SINGLE_SHEET_NAME, (
           ("menu1", "", "", "", "My & awesome module", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
           ("menu1", "case_list_form_label", "list", "", "Register Mother", "", "", "", ""),
+          ("menu1", "case_list_menu_item_label", "list", "",
+           "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
           ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
@@ -429,6 +451,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
               'add_markdown: ~~new \\u0939\\u093f markdown~~', "", "", "", ""),
           ("menu1_form1", "", "", 'update_markdown-label',
               '## smaller_markdown', "", "", "", ""),
+          ("menu1_form1", "", "", 'remove_markdown-label',
+              'no longer markdown', "", "", "", ""),
           ("menu1_form1", "", "", 'vetoed_markdown-label',
               '*i just happen to like stars a lot*', "", "", "", ""),
         )),
@@ -472,6 +496,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
           ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
           ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
+          ('remove_markdown-label', '# remove_markdown', '# remove_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '',
            '', '', ''),
         ))
@@ -510,6 +535,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ('menu1_form1', '', '', 'question7-label', 'question7', '', '', '', ''),
             ('menu1_form1', '', '', 'add_markdown-label', 'add_markdown', '', '', '', ''),
             ('menu1_form1', '', '', 'update_markdown-label', '# update_markdown', '', '', '', ''),
+            ('menu1_form1', '', '', 'remove_markdown-label', '# remove_markdown', '', '', '', ''),
             ('menu1_form1', '', '', 'vetoed_markdown-label', '*i just happen to like stars*', '', '', '', ''),
         )),
     )
@@ -551,6 +577,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
           ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
           ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
+          ('remove_markdown-label', '# remove_markdown', '# remove_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '',
            '', '', '', '', ''),
           ))
@@ -605,10 +632,18 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'Name'
             )
             self.assertEqual(
+                module.case_list.label['en'],
+                'List Stethoscopes'
+            )
+            self.assertEqual(
                 module.case_details.long.columns[3].enum[0].value['en'],
                 'jr://file/commcare/image/module1_list_icon_energy_high_english.jpg'
             )
         if fra:
+            self.assertEqual(
+                module.case_list.label['fra'],
+                'French List of Stethoscopes'
+            )
             self.assertEqual(
                 module.case_details.long.tabs[1].header['fra'],
                 'Autre'
@@ -642,6 +677,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                                        "en", "/data/add_markdown")
             self.assert_question_label("## smaller_markdown", 0, 0,
                                        "en", "/data/update_markdown")
+            self.assert_question_label("no longer markdown", 0, 0,
+                                       "en", "/data/remove_markdown")
             self.assert_question_label("*i just happen to like stars a lot*", 0, 0,
                                        "en", "/data/vetoed_markdown")
 
@@ -681,7 +718,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "{}" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra'.format(
+                'be processed but will ignore the following columns: default-fra'.format(
                     MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "menu1" has fewer columns than expected. Sheet '
@@ -689,7 +726,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
                 "You must provide at least one translation of the case property 'name'",
 
                 'Sheet "menu1_form1" has fewer columns than expected. Sheet '
@@ -697,7 +734,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1_form1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
 
                 'App Translations Updated!'
             ]
@@ -725,7 +762,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "{}" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra'.format(
+                'be processed but will ignore the following columns: default-fra'.format(
                     MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "menu1" has fewer columns than expected. Sheet '
@@ -733,7 +770,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
                 "You must provide at least one translation of the case property 'name'",
 
                 'Sheet "menu1_form1" has fewer columns than expected. Sheet '
@@ -741,7 +778,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 'unchanged: default_fra',
 
                 'Sheet "menu1_form1" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'be processed but will ignore the following columns: default-fra',
 
                 "Error in menu1_form1: You must provide at least one translation for the label 'question1-label'.",
 
@@ -1000,6 +1037,106 @@ class MovedModuleTest(BulkAppTranslationTestBaseWithApp):
         self.assert_question_label("What does this look like?", 1, 0, "en", "/data/What_does_this_look_like")
 
 
+class MovedFormTest(BulkAppTranslationTestBaseWithApp):
+    """
+    Test the bulk app translation upload when a form is moved to a
+    different module, resulting in different expected headers.
+    """
+    file_path = "data", "bulk_app_translation", "moved_module"
+
+    def test_moved_form(self):
+        headers = (
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id')),  # noqa: E501
+            ('menu1', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu1_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            # was menu6_form1:
+            ('menu1_form2', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu2', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu2_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu3', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu3_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu4', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu4_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en')),
+            ('menu5', ('case_property', 'list_or_detail', 'default_en')),
+            ('menu6', ('case_property', 'list_or_detail', 'default_en')),
+        )
+        data = (
+            (MODULES_AND_FORMS_SHEET_NAME, (
+                ('Menu', 'menu1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),  # noqa: E501
+                ('Form', 'menu1_form1', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', '', 'c480ace490edc870ae952765e8dfacec33c69fec'),  # noqa: E501
+                # was menu6_form1:
+                ('Form', 'menu1_form2', 'Advanced Form', '', '', '2b9c856ba2ea4ec1ab8743af299c1627'),
+                # was menu6_form2:
+                ('Form', 'menu1_form3', 'Shadow Form', '', '', 'c42e1a50123c43f2bd1e364f5fa61379'),
+                ('Menu', 'menu2', 'Register Series', '', '', 'b9c25abe21054632a3623199debd7cfa'),
+                ('Form', 'menu2_form1', 'Registration Form', '', '', '280b1b06d1b442b9bba863453ba30bc3'),
+                ('Menu', 'menu3', 'Followup Series', '', '', '217e1c8de3dd46f98c7d2806bc19b580'),
+                ('Form', 'menu3_form1', 'Add Point to Series', '', '', 'a01b55fd2c1a483492c1166029946249'),
+                ('Menu', 'menu4', 'Remove Point', '', '', '17195132472446ed94bd91ba19a2b379'),
+                ('Form', 'menu4_form1', 'Remove Point', '', '', '98458acd899b4d5f87df042a7585e8bb'),
+                ('Menu', 'menu5', 'Empty Reports Module', '', '', '703eb807ae584d1ba8bf9457d7ac7590'),
+                ('Menu', 'menu6', 'Advanced Module', '', '', '7f75ed4c15be44509591f41b3d80746e'),
+            )),
+            ('menu1', (
+                ('case_list_menu_item_label', 'list', 'Steth List'),
+                ('name', 'list', 'Name'),
+                ('name', 'detail', 'Name')
+            )),
+            ('menu1_form1', (
+                ('What_does_this_look_like-label', 'What does this look like?', 'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),  # noqa: E501
+                ('no_media-label', 'No media', '', '', ''),
+                ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')  # noqa: E501
+            )),
+            # was menu6_form1:
+            ('menu1_form2', (
+                ('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
+            )),
+            ('menu2', (
+                ('name', 'list', 'Name'), ('name', 'detail', 'Name')
+            )),
+            ('menu2_form1', (
+                ('name_of_series-label', 'Name of series', '', '', '')
+            )),
+            ('menu3', (
+                ('name', 'list', 'Name'),
+                ('Tab 0', 'detail', 'Name'),
+                ('Tab 1', 'detail', 'Graph'),
+                ('name', 'detail', 'Name'),
+                ('line_graph (graph)', 'detail', 'Line Graph'),
+                ('secondary-y-title (graph config)', 'detail', ''),
+                ('x-title (graph config)', 'detail', 'xxx'),
+                ('y-title (graph config)', 'detail', 'yyy'),
+                ('x-name 0 (graph series config)', 'detail', 'xxx'),
+                ('name 0 (graph series config)', 'detail', 'yyy'),
+                ('graph annotation 1', 'detail', 'This is (2, 2)')
+            )),
+            ('menu3_form1', (
+                ('x-label', 'x', '', '' ''),
+                ('y-label', 'y', '', '', '')
+            )),
+            ('menu4', (
+                ('x', 'list', 'X'),
+                ('y', 'list', 'Y'),
+                ('x (ID Mapping Text)', 'detail', 'X Name'),
+                ('1 (ID Mapping Value)', 'detail', 'one'),
+                ('2 (ID Mapping Value)', 'detail', 'two'),
+                ('3 (ID Mapping Value)', 'detail', 'three')
+            )),
+            ('menu4_form1', (
+                ('confirm_remove-label', 'Swipe to remove the point at (<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/session/data/case_id]/y"/>).')  # noqa: E501
+            )),
+            ('menu5', ()),
+            ('menu6', (
+                ('name', 'list', 'Name'),
+                ('name', 'detail', 'Name'),
+            )),
+        )
+        expected_messages = [
+            'App Translations Updated!',
+        ]
+        self.upload_raw_excel_translations(headers, data, expected_messages=expected_messages)
+
+
 class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):
 
     file_path = "data", "bulk_app_translation", "form_modifications"
@@ -1083,8 +1220,12 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(get_module_case_list_form_rows(app.langs, app.modules[0]),
                          [('case_list_form_label', 'list', 'New Case')])
 
-    def test_module_rows(self):
-        self.assertListEqual(get_module_rows(self.app.langs, self.app.modules[0]), [
+    def test_module_case_list_menu_item_rows(self):
+        self.assertEqual(get_module_case_list_menu_item_rows(self.app.langs, self.app.modules[0]),
+                         [('case_list_menu_item_label', 'list', 'Steth List')])
+
+    def test_module_detail_rows(self):
+        self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
             ('name', 'list', 'Name'),
             ('name', 'detail', 'Name'),
         ])
@@ -1128,6 +1269,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertListEqual(sheet, [
             ['menu1', '', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None, '',
              '58ce5c9cf6eda401526973773ef216e7980bc6cc'],
+            ['menu1', 'case_list_menu_item_label', 'list', '', 'Steth List', '', '', '', ''],
             ['menu1', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu1', 'name', 'detail', '', 'Name', '', '', '', ''],
 
@@ -1291,3 +1433,93 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
             self.assertEqual(save_xform_patch.call_args[0][2].decode('utf-8'), expected_xform)
+
+
+class ReportModuleTest(BulkAppTranslationTestBase):
+    headers = [
+        ['Menus_and_forms', ['Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id']],
+        ['menu1', ['case_property', 'list_or_detail', 'default_en']],
+    ]
+
+    def setUp(self):
+        factory = AppFactory(build_version='2.43.0')
+        module = factory.new_report_module('reports')
+        module.report_configs = [
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Report"},
+                localized_description={"en": "This report has data"},
+                use_xpath_description=False,
+                uuid='789ghi',
+            ),
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Other Report"},
+                localized_description={"en": "do not use this"},
+                xpath_description="1 + 2",
+                use_xpath_description=True,
+                uuid='345cde',
+            ),
+        ]
+        self.app = factory.app
+
+    def test_download(self):
+        actual_headers = get_bulk_app_sheet_headers(self.app)
+        actual_sheets = get_bulk_app_sheets_by_name(self.app)
+
+        self.assertEqual(actual_headers, self.headers)
+        self.assertEqual(actual_sheets, OrderedDict({
+            'Menus_and_forms': [['Menu', 'menu1', 'reports module', '', '', 'reports_module']],
+            'menu1': [
+                ('Report 0 Display Text', 'list', 'My Report'),
+                ('Report 0 Description', 'list', 'This report has data'),
+                ('Report 1 Display Text', 'list', 'My Other Report'),
+            ]
+        }))
+
+    def test_upload(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 0 Description', 'list', 'This report still has data'),
+                       ('Report 1 Display Text', 'list', 'My Other Report has also changed'),
+                       ('Report 1 Description', 'list', 'You cannot update this'))),
+        )
+        messages = [
+            "Found row for Report 1 Description, but this report uses an xpath description, "
+            "which is not localizable. Description not updated.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report has changed"})
+        self.assertEqual(module.report_configs[0].localized_description, {"en": "This report still has data"})
+        self.assertEqual(module.report_configs[1].header, {"en": "My Other Report has also changed"})
+
+    def test_upload_unexpected_reports(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 3 Display Text', 'list', 'This is not a real report'))),
+        )
+        messages = [
+            "Expected 2 reports for menu 1 but found row for Report 3. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})
+
+    def test_upload_unexpected_rows(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('some other thing', 'list', 'this is not report-related'))),
+        )
+        messages = [
+            "Found unexpected row \"some other thing\" for menu 1. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})

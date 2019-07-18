@@ -6,6 +6,7 @@ import logging
 from collections import namedtuple
 
 from ddtrace import tracer
+from django.db import IntegrityError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -251,6 +252,22 @@ class SubmissionPost(object):
 
             with case_db_cache as case_db:
                 instance = xforms[0]
+
+                is_edit_of_error = len(xforms) == 2 and xforms[1].is_error
+                if not instance.is_duplicate and is_edit_of_error:
+                    # edge case from ICDS where a form errors and then future re-submissions of the same
+                    # form do not have the same MD5 hash due to a bug on mobile:
+                    # see https://dimagi-dev.atlassian.net/browse/ICDS-376
+                    existing_form = xforms[1]
+                    if not existing_form.initial_processing_complete:
+                        # since we have a new form and the old one was not successfully processed
+                        # we can effectively ignore this form and process the new one as normal
+                        # since this form will have been marked as deprecated and have a new ID etc.
+                        existing_form.save()
+                        xforms = [instance]
+                    else:
+                        # not clear what to do in this case, try the normal edit workflow
+                        pass
 
                 if instance.is_duplicate:
                     with tracer.trace('submission.process_duplicate'):
@@ -507,20 +524,31 @@ def _transform_instance_to_error(interface, exception, instance):
 
 def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
-    notify_submission_error(instance, exception, instance.problem)
-    FormAccessors(interface.domain).save_new_form(instance)
+
+    # get this here in case we hit the integrity error below and lose the exception context
+    exec_info = sys.exc_info()
+
+    try:
+        FormAccessors(interface.domain).save_new_form(instance)
+    except IntegrityError:
+        instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
+        FormAccessors(interface.domain).save_new_form(instance)
+
+    notify_submission_error(instance, instance.problem, exec_info)
 
 
-def notify_submission_error(instance, exception, message):
+def notify_submission_error(instance, message, exec_info=None):
     from corehq.util.global_request.api import get_request
+
+    exec_info = exec_info or sys.exc_info()
     domain = getattr(instance, 'domain', '---')
     details = {
         'domain': domain,
         'error form ID': instance.form_id,
     }
-    should_email = not isinstance(exception, CouchSaveAborted)  # intentionally don't double-email these
+    should_email = not isinstance(exec_info[1], CouchSaveAborted)  # intentionally don't double-email these
     if should_email:
         request = get_request()
-        notify_exception(request, message, details=details)
+        notify_exception(request, message, details=details, exec_info=exec_info)
     else:
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})

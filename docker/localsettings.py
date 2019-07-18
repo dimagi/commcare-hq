@@ -86,23 +86,25 @@ if USE_PARTITIONED_DATABASE:
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
 
-# See CITUSDB_SETUP.md for explanation
-DATABASES.update({
-    'icds-ucr': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcare_ucr_citus',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'citus_master',
-        'PORT': '5432',
-        'TEST': {
-            # use the same DB for tests to skip expensive setup time in Travis
-            'NAME': 'commcare_ucr_citus',
-            'SERIALIZE': False,
-        },
-    },
-})
+# Remove this until we're ready to switch tests to using it
+# # See CITUSDB_SETUP.md for explanation
+# DATABASES.update({
+#     'icds-ucr': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'DISABLE_SERVER_SIDE_CURSORS': True,
+#         'NAME': 'commcare_ucr_citus',
+#         'USER': 'commcarehq',
+#         'PASSWORD': 'commcarehq',
+#         'HOST': 'citus_master',
+#         'PORT': '5432',
+#         'TEST': {
+#             # use the same DB for tests to skip expensive setup time in Travs
+#             'NAME': 'commcare_ucr_citus',
+#             'SERIALIZE': False,
+#         },
+#     },
+# })
+
 
 ####### Couch Config ######
 COUCH_DATABASES = {
@@ -139,7 +141,7 @@ ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
 
 S3_BLOB_DB_SETTINGS = {
-    "url": "http://riakcs:9980/",
+    "url": "http://minio:9980/",
     "access_key": "admin-key",
     "secret_key": "admin-secret",
     "config": {

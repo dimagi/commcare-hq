@@ -52,7 +52,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
@@ -211,10 +210,6 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 
 class BaseEditUserView(BaseUserSettingsView):
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -686,7 +681,7 @@ def undo_remove_web_user(request, domain, record_id):
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
-    role_data = json.loads(request.body)
+    role_data = json.loads(request.body.decode('utf-8'))
     role_data = dict(
         (p, role_data[p])
         for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
@@ -734,7 +729,7 @@ def post_user_role(request, domain):
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
-    role_data = json.loads(request.body)
+    role_data = json.loads(request.body.decode('utf-8'))
     try:
         role = UserRole.get(role_data["_id"])
     except ResourceNotFound:
@@ -954,10 +949,6 @@ class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
     page_title = ugettext_lazy("Invite Web User to Project")
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(InviteWebUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

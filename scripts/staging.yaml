@@ -49,12 +49,11 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
-  #- jls/reports-select2-v4  # Jenny April 9
-  - nh/cdc/one_domain  # Norman March 26
-  - sr-ucr-mirror # Sravan May 1
-  - mk/ccz-hosting-revamp # MK May 6
-  - jls/standardize-broadcasts-ui # Jenny May 11
-  - je/fast-fixture-upload # J$ May 13
-#  - web-user-reports-project-access  # Gabriella May 13
+  - nh/icds/skip_trans  # Norman June 21
+  #- fr/case-templates      # FR May 15
+  #- jls/linked-app-multiple-masters # Jenny June 18
+  - rn_only_select_app_type_when_no_advanced # Rohit June 27 
+  - dropbox-fix # Nick P July 5
+  #- mk/skip-files-build # MK July 6
+  - jls/trivial-mobile-workers-change # Jenny July 18
 submodules: {}

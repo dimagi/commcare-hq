@@ -36,11 +36,12 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
         Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
-        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('missing', 'location_', new=MISSING),
         Ignore('type', 'xmlns', old=None, new=''),
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
         Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
+        Ignore('missing', '_attachments', new=MISSING),
 
         Ignore('diff', check=has_date_values),
         Ignore(check=is_text_xmlns),
@@ -83,6 +84,11 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'user_id', old=None),
         Ignore('type', 'opened_on', old=None),
         Ignore('type', 'opened_by', old=MISSING),
+        # The form that created the case was archived, but the opened_by
+        # field was not updated as part of the subsequent rebuild.
+        # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
+        # opened_by or opened_on (the latter is ignored by has_date_values).
+        Ignore(path='opened_by', check=is_case_without_create_action),
         # form has case block with no actions
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
@@ -93,7 +99,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'closed_by', old='', new=None),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
-        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('missing', 'location_', new=MISSING),
         Ignore('type', 'type', old=None, new=''),
         # this happens for cases where the creation form has been archived but the case still has other forms
         Ignore('type', 'owner_id', old=None, new=''),
@@ -124,8 +130,10 @@ load_ignore_rules = memoized(lambda: {
     ],
     'CommCareCase-Deleted': [
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
         Ignore('missing', '-deletion_date', old=MISSING, new=None),
+        Ignore('missing', 'deleted_on', old=MISSING),
         ignore_renamed('-deletion_id', 'deletion_id'),
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],
@@ -152,16 +160,16 @@ def filter_form_diffs(couch_form, sql_form, diffs):
     return _filter_ignored(couch_form, sql_form, diffs, [doc_type, 'XFormInstance*'])
 
 
-def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
+def filter_case_diffs(couch_case, sql_case, diffs, statedb=None):
     doc_type = couch_case['doc_type']
     doc_types = [doc_type, 'CommCareCase*']
     diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    if forms_that_touch_cases_without_actions:
-        diffs = _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions)
+    if statedb is not None:
+        diffs = _filter_forms_touch_case(diffs, statedb)
     return diffs
 
 
-def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
+def _filter_forms_touch_case(diffs, statedb):
     """Legacy bug in case processing would not add the form ID to the list of
     xform_ids for the case if the case block had no actions"""
     other_diffs = []
@@ -174,12 +182,10 @@ def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
 
     if form_id_diffs:
         diffs = other_diffs
+        exclusions = statedb.get_no_action_case_forms()
         for diff in form_id_diffs:
             form_ids = diff.new_value.split(',')
-            diff_ids = [
-                form_id for form_id in form_ids
-                if form_id not in forms_that_touch_cases_without_actions
-            ]
+            diff_ids = [f for f in form_ids if f not in exclusions]
             if diff_ids:
                 diff = diff._replace(new_value=','.join(diff_ids))
                 diffs.append(diff)
@@ -378,3 +384,8 @@ def case_index_order(old_obj, new_obj, rule, diff):
 def is_supply_point(old_obj, new_obj, rule, diff):
     from corehq.apps.commtrack.const import COMMTRACK_SUPPLY_POINT_XMLNS
     return old_obj["xmlns"] == COMMTRACK_SUPPLY_POINT_XMLNS
+
+
+def is_case_without_create_action(old_obj, new_obj, rule, diff):
+    from casexml.apps.case.const import CASE_ACTION_CREATE as CREATE
+    return all(a.get("action_type") != CREATE for a in old_obj.get("actions", []))

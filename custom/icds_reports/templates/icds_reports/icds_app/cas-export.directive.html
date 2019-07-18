@@ -1,9 +1,10 @@
 <div class="cas-export-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row fixes-filters">
+    <div class="row fixes-filters" ng-init="updateCssClasses()">
         <div class="col-md-11">
             <span class="breadcrump-element">Export CAS Data: </span>
         </div>
     </div>
+    <info-message></info-message>
     <div class="report-content report-content-without-message">
         <div class="alert alert-info" ng-show="!$ctrl.allFiltersSelected()">
             <strong>Info!</strong> Please select all filters!

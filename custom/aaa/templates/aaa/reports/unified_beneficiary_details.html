@@ -77,9 +77,9 @@
               <!-- ko if: selectedType !== 'child' -->
               <div class="col-md-6 table-item">
                 <div class="row">
-                  <label class="col-md-5 col-form-label">{% trans 'Status' %}:</label>
+                  <label class="col-md-5 col-form-label">{% trans 'Marital Status' %}:</label>
                   <div class="col-md-7">
-                    <span data-bind="text: detailsModel.personDetails.person().status"></span>
+                    <span data-bind="text: detailsModel.personDetails.person().maritalStatus"></span>
                   </div>
                 </div>
               </div>
@@ -278,8 +278,8 @@
       <!-- ko foreach: {data: detailsModel.childDetails, as: 'child'} -->
       <div class="table-item col-md-3">
         <!-- ko if: child.name !== void(0) -->
-        <label class="col-md-5 col-form-label" data-bind="text: 'Child ' + ($index() + 1) + ':'"></label>
-        <div class="col-md-7">
+        <label class="col-form-label" data-bind="text: 'Child ' + ($index() + 1) + ':'"></label>
+        <div>
           <span data-bind="html: child.linkName"></span>
         </div>
         <!-- /ko -->
@@ -371,7 +371,7 @@
         <div class="row">
           <label class="col-md-6 col-form-label">{% trans 'Date of LMP' %}:</label>
           <div class="col-md-6">
-            <span data-bind="text: detailsModel.pregnantDetails().dateOfLmp"></span>
+            <span data-bind="text: detailsModel.pregnantDetails().lmp"></span>
           </div>
         </div>
       </div>
@@ -944,7 +944,7 @@
     <!-- ko if: showSection('infant_details') -->
     <div class="row shadow details-box break">
       <div class="col-md-12 secondary-title">
-        <h4>{% trans 'Infant Details' %}</h4>
+        <h4>{% trans 'Infant Development Details' %}</h4>
       </div>
       <div class="col-md-6 table-item">
         <div class="row">

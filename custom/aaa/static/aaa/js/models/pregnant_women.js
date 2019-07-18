@@ -76,7 +76,6 @@ hqDefine("aaa/js/models/pregnant_women", [
     var pregnantWomenDetails = function () {
         var self = {};
         // pregnancy_details
-        self.dateOfLmp = ko.observable();
         self.weightOfPw = ko.observable();
         self.dateOfRegistration = ko.observable();
         self.edd = ko.observable();
@@ -189,7 +188,7 @@ hqDefine("aaa/js/models/pregnant_women", [
 
         self.abortionWeeks = ko.computed(function () {
             if (self.abortionDays() !== undefined) {
-                return Number.isInteger(self.abortionDays()) ? self.abortionDays / 7 : self.abortionDays();
+                return self.abortionDays() === parseInt(self.abortionDays()) ? parseInt(self.abortionDays() / 7) : self.abortionDays();
             } else {
                 return 'N/A';
             }

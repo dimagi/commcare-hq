@@ -146,7 +146,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             return dateBuilt.getTime() > supportedDate.getTime();
         };
 
-        self.has_commcare_flavor_target = self.target_commcare_flavor() !== 'none';
+        self.has_commcare_flavor_target = !!self.commcare_flavor();
         self.download_targeted_version = ko.observable(self.has_commcare_flavor_target);
 
         self.get_odk_install_url = ko.computed(function () {
@@ -372,6 +372,10 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
         self.toggleLimitToReleased = function () {
             self.onlyShowReleased(!self.onlyShowReleased());
             self.goToPage(1);
@@ -395,7 +399,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
         self.revertSavedApp = function (savedApp) {
-            $.postGo(self.reverse('revert_to_copy'), {saved_app: savedApp.id()});
+            $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {

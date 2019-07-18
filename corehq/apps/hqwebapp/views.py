@@ -1094,7 +1094,7 @@ def quick_find(request):
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
         elif redirect and request.couch_user.is_superuser:
-            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
+            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), doc.get('_id')))
         else:
             return json_response(doc_info)
 
@@ -1199,19 +1199,6 @@ def deactivate_alert(request):
     ma.active = False
     ma.save()
     return HttpResponseRedirect(reverse('alerts'))
-
-
-# Use instead of djangular's base JSONResponseMixin
-# Adds djng_current_rmi to view context
-class HQJSONResponseMixin(JSONResponseMixin):
-    # Add the output of djng_current_rmi to view context, which requires having
-    # the rest of the context, specifically context['view'], available.
-    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
-    def get_context_data(self, **kwargs):
-        context = super(HQJSONResponseMixin, self).get_context_data(**kwargs)
-        from djangular.templatetags.djangular_tags import djng_current_rmi
-        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
-        return context
 
 
 def redirect_to_dimagi(endpoint):

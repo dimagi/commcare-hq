@@ -1,0 +1,67 @@
+
+        CREATE TABLE IF NOT EXISTS "icds_db_ccs_pnc_form_06010e08381e3ede425406c5" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_ccs_record_postnatal_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_ccs_record_postnatal_forms")
+        
+{"month_string": "2018-12-01", "state_id": "st1"}
+DROP TABLE IF EXISTS "icds_db_ccs_pnc_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_ccs_pnc_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_ccs_record_postnatal_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_ccs_record_postnatal_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_ccs_pnc_form_7a197ee47818209780c23ed9" (
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf,
+          valid_visits
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) as supervisor_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+            GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
+            ucr.is_ebf as is_ebf,
+            COALESCE(ucr.valid_visits, 0) as valid_visits
+          FROM (
+        SELECT
+        distinct case_id,
+        LAST_VALUE(latest_time_end) OVER w AS latest_time_end,
+        MAX(counsel_methods) OVER w AS counsel_methods,
+        LAST_VALUE(is_ebf) OVER w as is_ebf,
+        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
+        (latest_time_end::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits,
+        LAST_VALUE(supervisor_id) OVER w as supervisor_id
+        from
+        (
+            SELECT
+                DISTINCT ccs_record_case_id AS case_id,
+                LAST_VALUE(timeend) OVER w AS latest_time_end,
+                MAX(counsel_methods) OVER w AS counsel_methods,
+                LAST_VALUE(is_ebf) OVER w as is_ebf,
+                LAST_VALUE(unscheduled_visit) OVER w as unscheduled_visit,
+                LAST_VALUE(days_visit_late) OVER w as days_visit_late,
+                LAST_VALUE(next_visit) OVER w as next_visit,
+                LAST_VALUE(supervisor_id) OVER w as supervisor_id
+                FROM "ucr_icds-cas_static-postnatal_care_forms_0c30d94e"
+                WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+                WINDOW w AS (
+                    PARTITION BY doc_id, ccs_record_case_id
+                    ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        ) ut
+        WINDOW w AS (
+            PARTITION BY case_id
+            ORDER BY latest_time_end RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        ) ucr
+          FULL OUTER JOIN "icds_db_ccs_pnc_form_06010e08381e3ede425406c5" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

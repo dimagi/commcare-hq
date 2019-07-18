@@ -22,8 +22,14 @@ def create_user_cases(domain_name):
         sync_usercase(user)
 
 
-@serial_task('{app._id}-{app.version}', max_retries=0, timeout=60*60)
-def make_async_build(app, username, allow_prune=True, comment=None):
+@serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
+def make_async_build_v2(app_id, domain, version, allow_prune=True, comment=None):
+    app = get_app(domain, app_id)
+    return make_async_build(app, allow_prune=allow_prune, comment=comment)
+
+
+@serial_task('{app._id}-{app.version}', max_retries=0, timeout=60 * 60)
+def make_async_build(app, allow_prune=True, comment=None):
     previous_version = app.get_previous_version()
     if previous_version and previous_version.version == app.version:
         return
@@ -72,7 +78,7 @@ def update_linked_app_and_notify_task(domain, app_id, user_id, email):
     update_linked_app_and_notify(domain, app_id, user_id, email)
 
 
-@task(queue=settings.CELERY_MAIN_QUEUE)
+@task
 def load_appcues_template_app(domain, username, app_slug):
     from corehq.apps.app_manager.views.apps import load_app_from_slug
     load_app_from_slug(domain, username, app_slug)
