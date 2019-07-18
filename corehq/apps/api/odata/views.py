@@ -109,17 +109,14 @@ class ODataCaseServiceView(View):
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain):
+    def get(self, request, domain, **kwargs):
         service_document_content = {
             '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
-            'value': [
-                {
-                    'name': config.get_id,
-                    'kind': 'EntitySet',
-                    'url': config.get_id,
-                }
-                for config in get_odata_case_configs_by_domain(domain)
-            ]
+            'value': [{
+                'name': 'feed',
+                'kind': 'EntitySet',
+                'url': 'feed',
+            }]
         }
         return add_odata_headers(JsonResponse(service_document_content))
 
@@ -149,17 +146,14 @@ class ODataFormServiceView(View):
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
     @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain):
+    def get(self, request, domain, **kwargs):
         service_document_content = {
             '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain]),
-            'value': [
-                {
-                    'name': config.get_id,
-                    'kind': 'EntitySet',
-                    'url': config.get_id,
-                }
-                for config in get_odata_form_configs_by_domain(domain)
-            ]
+            'value': [{
+                'name': 'feed',
+                'kind': 'EntitySet',
+                'url': 'feed',
+            }]
         }
         return add_odata_headers(JsonResponse(service_document_content))
 
