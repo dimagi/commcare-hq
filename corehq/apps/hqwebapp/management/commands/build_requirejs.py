@@ -29,7 +29,6 @@ class Command(ResourceStaticCommand):
     root_dir = settings.FILEPATH
     build_js_filename = "staticfiles/build.js"
     build_txt_filename = "staticfiles/build.txt"
-    local_js_dirs = set()   # a reference of js filenames, for use when copying optimized bundles back into corehq
 
     def add_arguments(self, parser):
         parser.add_argument('--local', action='store_true',
@@ -68,7 +67,7 @@ class Command(ResourceStaticCommand):
                         if not re.search(r'/partials/', filename):
                             html_files.append(filename)
                     elif local and name.endswith(".js"):
-                        self.local_js_dirs.add(self._relative(root))
+                        local_js_dirs.add(self._relative(root))
 
             '''
             Build a dict of all main js modules, grouped by directory:
@@ -130,6 +129,8 @@ class Command(ResourceStaticCommand):
                                 "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
             if confirm[0].lower() != 'y':
                 exit()
+            # We'll be copying optimized bundles back into corehq and could use a reference of js filenames
+            local_js_dirs = set()
 
         try:
             from resource_versions import resource_versions
@@ -154,12 +155,12 @@ class Command(ResourceStaticCommand):
                     # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                     # for something ending in foo/baz
                     common_dir = self._relative(os.path.dirname(src), os.path.join(self.root_dir, 'staticfiles'))
-                    options = [d for d in self.local_js_dirs if self._relative(d).endswith(common_dir)]
+                    options = [d for d in local_js_dirs if self._relative(d).endswith(common_dir)]
                     if len(options) == 1:
                         dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
                         copyfile(src, os.path.join(self.root_dir, dest_stem, module['name'] + '.js'))
                     else:
-                        logger.warning("Could not copy {} to {}".format(self._relative(src), self._relative(dest)))
+                        logger.warning("Could not copy {} into {}".format(self._relative(src), self._relative(dest)))
             logger.info("Final build config written to {}".format(self.build_js_filename))
             logger.info("Bundle config output written to {}".format(self.build_txt_filename))
 
