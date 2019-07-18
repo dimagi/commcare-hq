@@ -40,10 +40,12 @@ class ProgramFixturesProvider(FixtureProvider):
     def _get_fixture_items(self, restore_state):
         restore_user = restore_state.restore_user
 
-        data_fn = lambda: Program.by_domain(restore_user.domain)
+        def get_programs():
+            return Program.by_domain(restore_user.domain)
+
         return simple_fixture_generator(
             restore_user, self.id, "program",
-            PROGRAM_FIELDS, data_fn, restore_state.last_sync_log
+            PROGRAM_FIELDS, get_programs, restore_state.last_sync_log
         )
 
 program_fixture_generator = ProgramFixturesProvider()
