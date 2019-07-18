@@ -29,6 +29,8 @@ def test_fixed_window_rate_counter():
     # this timestamp is chosen to be 6 days into a week window
     timestamp = (1000 * 7 * DAYS + 6 * DAYS)
     counter = _FixedWindowRateCounter('test-week', 7 * DAYS)
+    counter.counter.shared_cache.clear()
+
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 1)
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 2)
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 3)
@@ -52,6 +54,8 @@ def test_sliding_window_with_grains_rate_counter():
 
     timestamp = (1000 * 7 * DAYS + 6 * DAYS)
     counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS)
+    counter.grain_counter.counter.shared_cache.clear()
+
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 1)
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 2)
     testil.eq(counter.increment_and_get('alice', timestamp=timestamp), 3)
