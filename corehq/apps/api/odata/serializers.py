@@ -140,8 +140,8 @@ class ODataCaseSerializer(Serializer):
         assert all([domain, config_id, api_path]), [domain, config_id, api_path]
 
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
-            config_id
+            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain, config_id]),
+            'feed'
         )
 
         next_link = self.get_next_url(data.pop('meta'), api_path)
@@ -192,8 +192,8 @@ class ODataFormSerializer(Serializer):
         assert all([domain, config_id, api_path]), [domain, config_id, api_path]
 
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataFormMetadataView.urlname, args=[domain]),
-            config_id
+            absolute_reverse(ODataFormMetadataView.urlname, args=[domain, config_id]),
+            'feed'
         )
 
         next_link = self.get_next_url(data.pop('meta'), api_path)

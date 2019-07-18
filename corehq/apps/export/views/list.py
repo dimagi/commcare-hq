@@ -233,7 +233,7 @@ class ExportListHelper(object):
                 'domain': export.domain,
                 'api_name': 'v0.5',
                 'resource_name': resource_class._meta.resource_name,
-                'pk': export.get_id,
+                'pk': export.get_id + '/feed',
             }
         )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 
