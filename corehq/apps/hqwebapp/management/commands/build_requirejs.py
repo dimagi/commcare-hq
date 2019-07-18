@@ -48,17 +48,7 @@ class Command(ResourceStaticCommand):
                             bundles[directory].append(path[:-3])
                             all_modules.append(path[:-3])
 
-            # Go through customized bundles and expand any that include directories
-            for module in config['modules']:
-                if 'include_directories' in module:
-                    if 'include' not in module:
-                        module['include'] = []
-                    for directory in module.pop('include_directories'):
-                        if directory not in bundles:
-                            raise Exception("Could not find directory to include: {}".format(directory))
-                        module['include'] += bundles[directory]
-
-            # Add a bundle for each directory that doesn't already have a custom module defined
+            # Add a bundle for each directory that doesn't already have a custom bundle defined
             customized_directories = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
             for directory, inclusions in six.iteritems(bundles):
                 if directory not in customized_directories and not directory.startswith("app_manager/js/vellum"):
