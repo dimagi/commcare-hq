@@ -56,4 +56,6 @@ branches:
   - dropbox-fix # Nick P July 5
   - mk/skip-files-build # MK July 6
   - jls/compress-mobile-workers-js # Jenny July 18
+  - case-form-link # Nick P July 18
+  - one-feed # Nick P July 18
 submodules: {}
