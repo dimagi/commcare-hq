@@ -34,8 +34,6 @@ class Command(ResourceStaticCommand):
             bundles = {}
             all_modules = []
             prefix = os.path.join(os.getcwd(), 'corehq')
-
-            # Gather all directories of static files
             for finder in finders.get_finders():
                 if isinstance(finder, finders.AppDirectoriesFinder):
                     for path, storage in finder.list(['.*', '*~', '* *', '*.*ss', '*.png']):
@@ -48,10 +46,9 @@ class Command(ResourceStaticCommand):
                             bundles[directory].append(path[:-3])
                             all_modules.append(path[:-3])
 
-            # Add a bundle for each directory that doesn't already have a custom bundle defined
-            customized_directories = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
+            customized = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
             for directory, inclusions in six.iteritems(bundles):
-                if directory not in customized_directories and not directory.startswith("app_manager/js/vellum"):
+                if directory not in customized and not directory.startswith("app_manager/js/vellum"):
                     # Add this module's config to build config
                     config['modules'].append({
                         'name': os.path.join(directory, 'bundle'),
@@ -60,18 +57,15 @@ class Command(ResourceStaticCommand):
                         'exclude': ['hqwebapp/js/common'],
                     })
 
-            # Write a no-op .js file to staticfiles for each bundle, because r.js needs an actual file to overwrite
+            # Write .js files to staticfiles
             for module in config['modules']:
                 with open(os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js"), 'w') as fout:
                     fout.write("define([], function() {});")
 
-            # Write final r.js config out as a .js file
             with open(os.path.join(self.root_dir, 'staticfiles', 'build.js'), 'w') as fout:
                 fout.write("({});".format(json.dumps(config, indent=4)))
 
-        # Run r.js
         call(["node", "bower_components/r.js/dist/r.js", "-o", "staticfiles/build.js"])
-
         filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
         resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
 
