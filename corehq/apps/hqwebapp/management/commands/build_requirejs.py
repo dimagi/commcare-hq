@@ -121,7 +121,6 @@ class Command(ResourceStaticCommand):
             proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
                                     stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
-            out = out.decode('utf-8')
             if out:
                 confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
                                     "This script overwrites some static files. "
