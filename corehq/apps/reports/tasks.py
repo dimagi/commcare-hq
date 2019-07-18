@@ -51,6 +51,7 @@ from .analytics.esaccessors import (
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
+MAX_MM_ZIP_GBS = 5
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
@@ -249,11 +250,16 @@ def _format_filename(form_info, question_id, extension, case_id_to_name):
 
 
 def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
+    total_size = 0
     with open(fpath, 'wb') as zfile:
         with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
             for form_number, form_info in enumerate(forms_info, 1):
                 form = form_info['form']
                 for attachment in form_info['attachments']:
+                    total_size += attachment['size']
+                    if total_size >= MAX_MM_ZIP_GBS * 1024**3:
+                        raise Exception("Refusing to make multimedia export bigger than {} GB"
+                                        .format(MAX_MM_ZIP_GBS))
                     filename = _format_filename(
                         form_info,
                         attachment['question_id'],
