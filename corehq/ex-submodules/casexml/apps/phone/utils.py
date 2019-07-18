@@ -90,6 +90,10 @@ def get_cached_fixture_items(domain, bucket_prefix):
         return None
 
 
+def clear_fixture_cache(domain, bucket_prefix):
+    get_blob_db().delete(key=bucket_prefix + '/' + domain)
+
+
 def get_cached_items_with_count(cached_bytes):
     """Get the number of items encoded in cached XML elements byte string
 
