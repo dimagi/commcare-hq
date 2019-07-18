@@ -53,7 +53,7 @@ class Command(ResourceStaticCommand):
         and the bundle config output by the build.
         '''
         with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
-            config = yaml.safe_load(f)
+            config = yaml.load(f)
 
             if no_optimize:
                 config['optimize'] = 'none'
