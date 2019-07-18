@@ -26,7 +26,7 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
         helper.save()
 
     try:
-        dropbox_path = '/{}'.format(os.path.basename(helper.src))
+        dropbox_path = '/{}'.format(helper.dest)
         path_display = upload_to_dropbox(access_token, dropbox_path, helper.src, progress_callback)
     except Exception as e:
         helper.failure_reason = str(e)
