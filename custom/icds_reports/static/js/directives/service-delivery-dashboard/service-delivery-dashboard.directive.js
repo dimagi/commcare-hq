@@ -20,7 +20,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
-            url: url('service_delivery_dashboard'),
+            url: url('service_delivery_dashboard', vm.step),
             data: $location.search(),
             type: 'GET',
         })
@@ -229,7 +229,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     };
 
     vm.getData = function () {
-        var getUrl = url('service_delivery_dashboard');
+        var getUrl = url('service_delivery_dashboard', vm.step);
         vm.myPromise = $http({
             method: "GET",
             url: getUrl,
