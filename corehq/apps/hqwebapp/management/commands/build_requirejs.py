@@ -4,7 +4,6 @@ import json
 import os
 import re
 import six
-import subprocess
 import yaml
 from django.contrib.staticfiles import finders
 from django.conf import settings
@@ -32,49 +31,63 @@ class Command(ResourceStaticCommand):
         with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
             config = yaml.load(f)
 
-            # Find all HTML files in corehq, excluding partials
+            '''
+            The default strategy is to make one "bundle" for every corehq directory of js files.
+            Begin by gathering all corehq staticfiles directories into a dict like:
+                {
+                    'app_manager/js' => [
+                        'app_manager/js/app_view',
+                        'app_manager/js/add_ons',
+                        ...
+                    ],
+                    'app_manager/js/forms' => [
+                        'app_manager/js/forms/form_designer',
+                        ...
+                    ],
+                    ...
+                }
+            '''
             prefix = os.path.join(os.getcwd(), 'corehq')
-            html_files = []
-            for root, dirs, files in os.walk(prefix):
-                for name in files:
-                    if name.endswith(".html"):
-                        filename = os.path.join(root, name)
-                        if not re.search(r'/partials/', filename):
-                            html_files.append(filename)
+            corehq_dirs = {}
+            all_js_files = []
+            for finder in finders.get_finders():
+                if isinstance(finder, finders.AppDirectoriesFinder):
+                    for path, storage in finder.list(['.*', '*~', '* *', '*.*ss', '*.png']):
+                        if not storage.location.startswith(prefix):
+                            continue
+                        if path.endswith(".js"):
+                            directory = re.sub(r'/[^/]*$', '', path)
+                            if directory not in corehq_dirs:
+                                corehq_dirs[directory] = []
+                            corehq_dirs[directory].append(path[:-3])
+                            all_js_files.append(path[:-3])
 
-            '''
-            Build a dict of all main js modules, grouped by directory:
-            {
-                'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
-                'linked_domain/js': set(['linked_domain/js/domain_links']),
-                ...
-            }
-            '''
-            dirs = {}
-            for filename in html_files:
-                proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename], stdout=subprocess.PIPE)
-                (out, err) = proc.communicate()
-                if out:
-                    match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
-                    if match:
-                        main = match.group(1)
-                        directory = match.group(2)
-                        if os.path.exists(os.path.join(os.getcwd(), 'staticfiles', main + '.js')):
-                            if directory not in dirs:
-                                dirs.update({directory: set()})
-                            dirs[directory].add(main)
+            # Go through customized bundles and expand any that include directories
+            for module in config['modules']:
+                if 'include_directories' in module:
+                    if 'include' not in module:
+                        module['include'] = []
+                    for directory in module.pop('include_directories'):
+                        if directory not in corehq_dirs:
+                            raise Exception("Could not find directory to include: {}".format(directory))
+                        module['include'] += corehq_dirs[directory]
 
+            # Add a bundle for each directory that doesn't already have a custom module defined
+            customized_directories = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
+            for directory, inclusions in six.iteritems(corehq_dirs):
+                if directory not in customized_directories and not directory.startswith("app_manager/js/vellum"):
+                    # Add this module's config to build config
+                    config['modules'].append({
+                        'name': os.path.join(directory, 'bundle'),
+                        'include': inclusions,
+                        'excludeShallow': [name for name in all_js_files if name not in inclusions],
+                        'exclude': ['hqwebapp/js/common'],
+                    })
 
-            # For each directory, add an optimized "module" entry including all of the main modules in that dir.
-            # For each of these entries, r.js will create an optimized bundle of these main modules and all their
-            # dependencies
-            for directory, mains in dirs.items():
-                config['modules'].append({
-                    'name': os.path.join(directory, "bundle"),
-                    'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
-                    'include': list(mains),
-                    'create': True,
-                })
+            # Write a no-op .js file to staticfiles for each bundle, because r.js needs an actual file to overwrite
+            for module in config['modules']:
+                with open(os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js"), 'w') as fout:
+                    fout.write("define([], function() {});")
 
             # Write final r.js config out as a .js file
             with open(os.path.join(self.root_dir, 'staticfiles', 'build.js'), 'w') as fout:
