@@ -35,6 +35,15 @@ GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
 def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name, data_fn):
+    """
+    Get the fixture data for a global fixture (one that does not vary by user).
+
+    :param restore_state: Restore state object used to access features of the restore
+    :param cache_bucket_prefix: Fixture bucket prefix
+    :param fixture_name: Name of the fixture
+    :param data_fn: Function to generate the XML fixture elements
+    :return: byte string representation of the fixture
+    """
     domain = restore_state.restore_user.domain
 
     data = None
