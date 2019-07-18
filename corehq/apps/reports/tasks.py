@@ -1,61 +1,53 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from datetime import datetime, timedelta
-from dateutil.parser import parse
 import hashlib
 import os
 import tempfile
-from unidecode import unidecode
 import uuid
 import zipfile
+from datetime import datetime, timedelta
+from io import open
 
 from django.conf import settings
 
+import six
 from celery.schedules import crontab
-from celery.task import periodic_task
-from celery.task import task
+from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
+from dateutil.parser import parse
+from six.moves import filter, map
+from unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.reports.util import send_report_download_email
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.dates import iso_string_to_datetime
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
-
 from soil import DownloadBase
-from soil.util import expose_download
+from soil.util import expose_blob_download
 
-from corehq.apps.domain.calculations import (
-    all_domain_stats,
-    calced_props,
-)
+from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.reports.util import send_report_download_email
+from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.elastic import (
-    stream_es_query,
+    ES_META,
+    get_es_new,
     send_to_elasticsearch,
-    get_es_new, ES_META)
+    stream_es_query,
+)
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.app_mapping import APP_INDEX
+from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.view_utils import absolute_reverse
-from corehq.blobs import CODES, get_blob_db
 
 from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-
-import six
-from six.moves import map
-from six.moves import filter
-from io import open
-
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
@@ -223,15 +215,12 @@ def build_form_multimedia_zip(
         set.union(*[form_info['case_ids'] for form_info in forms_info]) if forms_info else set(),
     )
 
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    if use_transfer:
-        fpath = _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms)
-    else:
-        _, fpath = tempfile.mkstemp()
+    with TransientTempfile() as temp_path:
+        with open(temp_path, 'wb') as f:
+            _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name)
+        with open(temp_path, 'rb') as f:
+            _save_and_expose_zip(f, zip_name, domain, download_id)
 
-    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
-    filename = "{}.zip".format(zip_name)
-    expose_download(use_transfer, fpath, filename, download_id, 'zip')
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
 
@@ -241,13 +230,6 @@ def _get_case_names(domain, case_ids):
         if case.get('name'):
             case_id_to_name[case.get('_id')] = case.get('name')
     return case_id_to_name
-
-
-def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
-    params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
-    fname = 'form_multimedia-{}-{}.zip'.format(app_id, hashlib.md5(params.encode('utf-8')).hexdigest())
-    fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
-    return fpath
 
 
 def _format_filename(form_info, question_id, extension, case_id_to_name):
@@ -266,26 +248,44 @@ def _format_filename(form_info, question_id, extension, case_id_to_name):
     return filename
 
 
-def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name):
+def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
+    with open(fpath, 'wb') as zfile:
+        with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
+            for form_number, form_info in enumerate(forms_info, 1):
+                form = form_info['form']
+                for attachment in form_info['attachments']:
+                    filename = _format_filename(
+                        form_info,
+                        attachment['question_id'],
+                        attachment['extension'],
+                        case_id_to_name
+                    )
+                    zip_info = zipfile.ZipInfo(filename, attachment['timestamp'])
+                    multimedia_zipfile.writestr(zip_info, form.get_attachment(
+                        attachment['name']),
+                        zipfile.ZIP_STORED
+                    )
+                DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
 
-    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        with open(fpath, 'wb') as zfile:
-            with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
-                for form_number, form_info in enumerate(forms_info):
-                    form = form_info['form']
-                    for attachment in form_info['attachments']:
-                        filename = _format_filename(
-                            form_info,
-                            attachment['question_id'],
-                            attachment['extension'],
-                            case_id_to_name
-                        )
-                        zip_info = zipfile.ZipInfo(filename, attachment['timestamp'])
-                        multimedia_zipfile.writestr(zip_info, form.get_attachment(
-                            attachment['name']),
-                            zipfile.ZIP_STORED
-                        )
-                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
+
+def _save_and_expose_zip(f, zip_name, domain, download_id):
+    expiry_minutes = 60
+    get_blob_db().put(
+        f,
+        key=download_id,
+        domain=domain,
+        parent_id=domain,
+        type_code=CODES.form_multimedia,
+        timeout=expiry_minutes,
+    )
+    expose_blob_download(
+        download_id,
+        expiry=expiry_minutes * 60,  # seconds
+        mimetype='application/zip',
+        content_disposition=safe_filename_header(zip_name, 'zip'),
+        download_id=download_id,
+    )
+
 
 
 def _convert_legacy_indices_to_export_properties(indices):
