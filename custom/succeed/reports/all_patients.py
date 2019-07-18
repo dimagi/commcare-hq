@@ -69,15 +69,14 @@ def date_format(date_str):
 
 
 def group_name(owner_id):
-    group = Group.by_user_id(owner_id, wrap=False, include_names=True)
-    if not group:
+    view_results = Group.by_user_id(owner_id, wrap=False)
+    if view_results:
+        return view_results[0]['value']
+    else:
         try:
-            group = Group.get(owner_id)
+            return Group.get(owner_id).name
         except ResourceNotFound:
-            group = dict(name="No Group")
-    if isinstance(group, list):
-        group = group[0]
-    return group['name']
+            return "No Group"
 
 
 def edit_link(case_id, app_dict, latest_build):

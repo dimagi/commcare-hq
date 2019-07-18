@@ -52,9 +52,9 @@ def transform_user_for_elasticsearch(doc_dict):
         doc['base_username'] = doc['username'].split("@")[0]
     else:
         doc['base_username'] = doc['username']
-    groups = Group.by_user_id(doc['_id'], wrap=False, include_names=True)
-    doc['__group_ids'] = [group['group_id'] for group in groups]
-    doc['__group_names'] = [group['name'] for group in groups]
+    view_results = Group.by_user_id(doc['_id'], wrap=False)
+    doc['__group_ids'] = [row['id'] for row in view_results]
+    doc['__group_names'] = [row['value'] for row in view_results]
     doc['user_data_es'] = []
     if 'user_data' in doc:
         for key, value in six.iteritems(doc['user_data']):

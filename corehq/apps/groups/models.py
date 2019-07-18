@@ -227,12 +227,10 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             return result
 
     @classmethod
-    def by_user_id(cls, user_id, wrap=True, include_names=False):
+    def by_user_id(cls, user_id, wrap=True):
         results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
         if wrap:
             return results
-        if include_names:
-            return [dict(group_id=r['id'], name=r['value'][1]) for r in results]
         else:
             return [r['id'] for r in results]
 
