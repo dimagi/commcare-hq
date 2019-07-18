@@ -74,7 +74,7 @@ from corehq.feature_previews import (
     is_eligible_for_ecd_preview,
 )
 from corehq.messaging.scheduling.views import (
-    BroadcastListView as NewBroadcastListView
+    BroadcastListView as NewBroadcastListView,
     ConditionalAlertListView,
     CreateConditionalAlertView,
     CreateScheduleView,
