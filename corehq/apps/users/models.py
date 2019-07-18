@@ -1940,9 +1940,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return None
 
     def get_location_ids(self, domain):
+        # domain arg included here for compatibility with WebUser
         return self.assigned_location_ids
 
     def get_sql_locations(self, domain):
+        # domain arg included here for compatibility with WebUser
         from corehq.apps.locations.models import SQLLocation
         if self.assigned_location_ids:
             return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
