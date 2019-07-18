@@ -102,7 +102,7 @@ class AppPillowTest(TestCase):
 
         # Build #2, auto-generated
         app.save()
-        build2 = make_build(app, 'someone')
+        build2 = make_build(app)
 
         # Build #3, manually generated
         app.save()

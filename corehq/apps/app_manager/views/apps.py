@@ -494,7 +494,7 @@ def load_app_from_slug(domain, username, slug):
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_build(app, username, allow_prune=False, comment=comment)
+    build = make_build(app, allow_prune=False, comment=comment)
     build.is_released = True
     build.save(increment_version=False)
     return build

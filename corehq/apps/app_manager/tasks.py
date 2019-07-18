@@ -40,9 +40,9 @@ def make_async_build(app, username):
                                   comment=comment)
 
 
-def make_build(app, username, allow_prune=True, comment=None):
+def make_build(app, allow_prune=True, comment=None):
     if _should_make_build(app):
-        return make_async_build_v2(app.get_id, app.domain, app.version, username,
+        return make_async_build_v2(app.get_id, app.domain, app.version,
                                    allow_prune=allow_prune, comment=comment)
 
 
