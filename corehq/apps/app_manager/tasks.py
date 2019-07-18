@@ -22,7 +22,7 @@ def create_user_cases(domain_name):
 
 
 @serial_task('{app_id}-{version}', max_retries=0, timeout=60 * 60)
-def make_async_build_v2(app_id, domain, version, username=None, allow_prune=True, comment=None):
+def make_async_build_v2(app_id, domain, version, allow_prune=True, comment=None):
     app = get_app(domain, app_id)
     errors = app.validate_app()
     if not errors:
