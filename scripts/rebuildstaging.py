@@ -23,21 +23,19 @@ Where staging.yaml looks as follows:
 
 When not specified, a submodule's trunk and name inherit from the parent
 """
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
-from __future__ import unicode_literals
-from gevent import monkey
-import six
-monkey.patch_all()
-
-import contextlib
 import os
 import re
-import sh
 import sys
+from contextlib import ExitStack
 
 import gevent
+import jsonobject
+import sh
+import six
+from gevent import monkey
+
 from gitutils import (
     OriginalBranch,
     get_git,
@@ -45,8 +43,9 @@ from gitutils import (
     has_merge_conflict,
     print_merge_details,
 )
-import jsonobject
 from sh_verbose import ShVerbose
+
+monkey.patch_all()
 
 
 class BranchConfig(jsonobject.JsonObject):
@@ -186,10 +185,9 @@ def rebuild_staging(config, print_details=True, push=True):
     merge_conflicts = []
     not_found = []
     all_configs = list(config.span_configs())
-    context_manager = contextlib.nested(*[OriginalBranch(get_git(path))
-                                          for path, _ in all_configs])
-    with context_manager:
+    with ExitStack() as stack:
         for path, config in all_configs:
+            stack.enter_context(OriginalBranch(get_git(path)))
             git = get_git(path)
             try:
                 git.checkout('-B', config.name, origin(config.trunk), '--no-track')
