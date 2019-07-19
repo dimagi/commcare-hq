@@ -71,7 +71,7 @@ PROPERTY_TAG_STOCK = 'stock'
 
 # Yeah... let's not hard code this list everywhere
 # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
-KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
+KNOWN_CASE_PROPERTIES = ["type", "name", "case_name", "external_id", "user_id", "owner_id", "opened_on"]
 
 # Attributes found on a case block. <case case_id="..." date_modified="..." ...>
 CASE_ATTRIBUTES = {
