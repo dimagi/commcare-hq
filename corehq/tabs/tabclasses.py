@@ -632,6 +632,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     "show_in_dropdown": True,
                     "subpages": [_f for _f in [
                         {
@@ -656,6 +657,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DailySavedExportListView.page_title),
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -683,6 +685,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -690,6 +693,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -715,6 +719,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-plug',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
