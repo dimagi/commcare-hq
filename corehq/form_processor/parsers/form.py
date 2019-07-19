@@ -207,6 +207,8 @@ def _handle_duplicate(new_doc):
 
                 # since we have a new form and the old one was not successfully processed
                 # we can effectively ignore this form and process the new one as normal
+                if not interface.use_sql_domain:
+                    new_doc._rev, existing_doc._rev = existing_doc._rev, new_doc._rev
                 interface.assign_new_id(existing_doc)
                 existing_doc.save()
                 return new_doc, None
