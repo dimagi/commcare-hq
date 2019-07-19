@@ -274,7 +274,8 @@ def download_file(request, domain, app_id, path):
 
     try:
         assert request.app.copy_of
-        # lazily create language profiles to avoid slowing initial build
+        # create build files for default profile if they were not created during initial build
+        # or for language profiles for which build files have not been created yet
         try:
             payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
