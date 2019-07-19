@@ -27,21 +27,17 @@
             days.
           {% endblocktrans %}
         </p>
-        <div class="row">
-          <div class="col-sm-6 text-center">
-            <a id="overdue-invoice-link"
-               href={% url 'domain_billing_statements' domain %}>
-              <button class="btn btn-primary">
-                {% trans "Pay invoice now" %}
-              </button>
-            </a>
-          </div>
-          <div class="col-sm-6 text-center">
-            <button id="overdue-invoice-snooze" class="btn btn-default">
-              {% trans "Remind me later" %}
-            </button>
-          </div>
-        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="overdue-invoice-snooze" class="btn btn-default">
+          {% trans "Remind me later" %}
+        </button>
+        <a id="overdue-invoice-link"
+           class="btn btn-primary"
+           href={% url 'domain_billing_statements' domain %}>
+          {% trans "Pay invoice now" %}
+        </a>
       </div>
 
     </div>
