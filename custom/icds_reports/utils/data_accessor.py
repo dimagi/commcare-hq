@@ -20,7 +20,7 @@ notify_logger = logging.getLogger('notify')
 def _all_zeros(data):
     values = [(kpi['value'] == 0 and kpi['all'] == 0) for row in data['records'] for kpi in row]
     if all(values):
-        create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0')
+        create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0', aggregation_key='icds_0')
     return all(values)
 
 
