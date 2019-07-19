@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
-from casexml.apps.case.tests.util import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case
 from corehq.apps.domain.models import CallCenterProperties
 from corehq.apps.domain.shortcuts import create_domain
@@ -37,7 +37,7 @@ class CallCenterLocationOwnerTest(TestCase):
         cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***')
 
         # Create locations
-        LocationType.objects.get_or_create(
+        cls.location_type, _ = LocationType.objects.get_or_create(
             domain=cls.domain.name,
             name=LOCATION_TYPE,
         )
@@ -55,9 +55,14 @@ class CallCenterLocationOwnerTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
+        cls.grandchild_location.delete()
+        cls.child_location.delete()
+        cls.root_location.delete()
+        cls.location_type.delete()
 
     def tearDown(self):
         delete_all_cases()
+        delete_all_xforms()
 
     def test_no_location_sync(self):
         self.user.unset_location()

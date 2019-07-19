@@ -79,6 +79,12 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
         super(FormsByApplicationFilterDbTest, cls).setUpClass()
         cls.class_setup()
 
+    @classmethod
+    def tearDownClass(cls):
+        super(FormsByApplicationFilterDbTest, cls).tearDownClass()
+        cls.app.delete()
+        cls.deleted_app.delete()
+
     def test_get_filtered_data_by_app_id_missing(self):
         params = FormsByApplicationFilterParams([
             _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),

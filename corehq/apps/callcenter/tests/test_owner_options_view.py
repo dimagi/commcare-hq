@@ -7,6 +7,7 @@ import math
 from django.test import TestCase
 from elasticsearch import ConnectionError
 
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
@@ -89,8 +90,12 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         CALL_CENTER_LOCATION_OWNERS.set(cls.domain.name, False, NAMESPACE_DOMAIN)
         cls.domain.delete()
         cls.web_user.delete()
+        for loc in cls.locations:
+            loc.delete()
         ensure_index_deleted(USER_INDEX_INFO.index)
         ensure_index_deleted(GROUP_INDEX_INFO.index)
+        delete_all_cases()
+        delete_all_xforms()
 
     def test_pages(self):
         """
