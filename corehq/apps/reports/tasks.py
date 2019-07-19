@@ -191,7 +191,7 @@ def build_form_multimedia_zip(
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
 
-    all_case_ids = set.union(*(info['case_ids'] for info in forms_info))
+    all_case_ids = set.union(*(info['case_ids'] for info in forms_info)) if forms_info else set()
     case_id_to_name = _get_case_names(domain, all_case_ids)
 
     with TransientTempfile() as temp_path:
