@@ -192,6 +192,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_id,
             xmlns,
             DateSpan(start, end),
+            [],
         )
         self.assertEqual(len(form_ids), 1)
 
@@ -230,7 +231,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_id,
             xmlns,
             DateSpan(start, end),
-            user_types=[MOBILE_USER_TYPE]
+            [MOBILE_USER_TYPE]
         )
         self.assertEqual(len(form_ids), 1)
 
@@ -239,7 +240,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_id,
             xmlns,
             DateSpan(start, end),
-            user_types=[MOBILE_USER_TYPE, WEB_USER_TYPE]
+            [MOBILE_USER_TYPE, WEB_USER_TYPE]
         )
         self.assertEqual(len(form_ids), 2)
 
@@ -248,7 +249,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             app_id,
             xmlns,
             DateSpan(start, end),
-            user_types=[]
+            []
         )
         self.assertEqual(len(form_ids), 2)
 

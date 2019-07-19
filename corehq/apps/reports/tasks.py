@@ -27,6 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
+from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
@@ -49,7 +50,6 @@ from .analytics.esaccessors import (
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
-MAX_MM_ZIP_GBS = 5
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
@@ -244,9 +244,9 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                 form = form_info['form']
                 for attachment in form_info['attachments']:
                     total_size += attachment['size']
-                    if total_size >= MAX_MM_ZIP_GBS * 1024**3:
+                    if total_size >= MAX_MULTIMEDIA_EXPORT_SIZE:
                         raise Exception("Refusing to make multimedia export bigger than {} GB"
-                                        .format(MAX_MM_ZIP_GBS))
+                                        .format(MAX_MULTIMEDIA_EXPORT_SIZE / 1024**3))
                     filename = _format_filename(
                         form_info,
                         attachment['question_id'],
