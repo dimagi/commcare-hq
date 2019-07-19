@@ -136,12 +136,12 @@ class EditFormTest(TestCase, TestFileMixin):
             owner_id='some-owner',
         )
 
-        form, _ = submit_case_blocks(case_block.as_string().decode('utf-8'), domain=self.domain, form_id=form_id)
+        form, _ = submit_case_blocks(case_block.as_text(), domain=self.domain, form_id=form_id)
         self.assertTrue(form.is_error)
         self.assertTrue('IllegalCaseId' in form.problem)
 
         case_block.case_id = uuid.uuid4().hex
-        form, _ = submit_case_blocks(case_block.as_string().decode('utf-8'), domain=self.domain, form_id=form_id)
+        form, _ = submit_case_blocks(case_block.as_text(), domain=self.domain, form_id=form_id)
         self.assertFalse(form.is_error)
         self.assertEqual(None, getattr(form, 'problem', None))
 
