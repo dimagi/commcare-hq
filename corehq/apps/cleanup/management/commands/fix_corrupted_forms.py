@@ -1,5 +1,6 @@
 # encoding: utf-8
 from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import unicode_literals
 
 from django.core.management import BaseCommand
@@ -14,7 +15,7 @@ SUSPICIOUS_STRINGS = [
         'á', 'é', 'í', 'ó', 'ú',
         'Á', 'É', 'Í', 'Ó', 'Ú',
         '’',
-    ] # TODO - add more common non-ascii characters
+    ]  # TODO - add more common non-ascii characters
 ]
 
 
