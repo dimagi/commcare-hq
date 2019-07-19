@@ -17,8 +17,7 @@ def bootstrap_mach_gateway(apps):
     sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
     sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
-    workbook = xlrd.open_workbook('corehq/apps/smsbillables/management/'
-                                  'commands/pricing_data/Syniverse_coverage_list_PREMIUM.xls')
+    workbook = xlrd.open_workbook('corehq/apps/smsbillables/management/pricing_data/Syniverse_coverage_list_PREMIUM.xls')
     table = workbook.sheet_by_index(0)
 
     data = {}
