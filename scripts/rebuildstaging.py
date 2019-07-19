@@ -24,6 +24,8 @@ Where staging.yaml looks as follows:
 When not specified, a submodule's trunk and name inherit from the parent
 """
 from __future__ import absolute_import, print_function, unicode_literals
+from gevent import monkey
+monkey.patch_all()
 
 import os
 import re
@@ -34,7 +36,6 @@ import gevent
 import jsonobject
 import sh
 import six
-from gevent import monkey
 
 from gitutils import (
     OriginalBranch,
@@ -44,8 +45,6 @@ from gitutils import (
     print_merge_details,
 )
 from sh_verbose import ShVerbose
-
-monkey.patch_all()
 
 
 class BranchConfig(jsonobject.JsonObject):
