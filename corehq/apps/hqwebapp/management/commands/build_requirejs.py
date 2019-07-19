@@ -134,7 +134,8 @@ class Command(ResourceStaticCommand):
                 exit()
 
         try:
-            from resource_versions import resource_versions
+            from get_resource_versions import get_resource_versions
+            resource_versions = get_resource_versions()
         except (ImportError, SyntaxError):
             resource_versions = {}
 
