@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from distutils.version import LooseVersion
+from functools import partial
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from casexml.apps.phone.utils import GLOBAL_USER_ID, get_or_cache_global_fixture
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
@@ -23,6 +25,14 @@ PRODUCT_FIELDS = [
 ]
 
 CUSTOM_DATA_SLUG = 'product_data'
+
+PRODUCT_FIXTURE_BUCKET = 'product_fixture'
+PRODUCT_FIXTURE_BUCKET_INDEXED = 'product_fixture-indexed'
+
+ALL_CACHE_PREFIXES = [
+    PRODUCT_FIXTURE_BUCKET,
+    PRODUCT_FIXTURE_BUCKET_INDEXED
+]
 
 
 def product_fixture_generator_json(domain):
@@ -51,6 +61,23 @@ class ProductFixturesProvider(FixtureProvider):
     id = 'commtrack:products'
 
     def __call__(self, restore_state):
+        indexed = (
+            not restore_state.params.openrosa_version
+            or restore_state.params.openrosa_version >= LooseVersion(OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE'])
+        )
+
+        data_fn = partial(self._get_fixture_items, restore_state, indexed)
+        cache_prefix = PRODUCT_FIXTURE_BUCKET_INDEXED if indexed else PRODUCT_FIXTURE_BUCKET
+        fixture_nodes = get_or_cache_global_fixture(restore_state, cache_prefix, self.id, data_fn)
+
+        if not indexed:
+            # Don't include index schema when openrosa version is specified and below 2.1
+            return fixture_nodes
+        else:
+            schema_node = get_index_schema_node(self.id, ['@id', 'code', 'program_id', 'category'])
+            return [schema_node] + fixture_nodes
+
+    def _get_fixture_items(self, restore_state, indexed):
         restore_user = restore_state.restore_user
 
         def get_products():
@@ -60,19 +87,15 @@ class ProductFixturesProvider(FixtureProvider):
             )
 
         fixture_nodes = simple_fixture_generator(
-            restore_user, self.id, "product", PRODUCT_FIELDS, get_products, restore_state.last_sync_log
+            restore_user, self.id, "product", PRODUCT_FIELDS,
+            get_products, restore_state.last_sync_log, GLOBAL_USER_ID
         )
         if not fixture_nodes:
             return []
 
-        if (restore_state.params.openrosa_version
-                and restore_state.params.openrosa_version < LooseVersion(OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE'])):
-            # Don't include index schema when openrosa version is specified and below 2.1
-            return fixture_nodes
-        else:
-            schema_node = get_index_schema_node(self.id, ['@id', 'code', 'program_id', 'category'])
+        if indexed:
             fixture_nodes[0].attrib['indexed'] = 'true'
-            return [schema_node] + fixture_nodes
+        return fixture_nodes
 
 
 product_fixture_generator = ProductFixturesProvider()

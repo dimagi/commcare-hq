@@ -411,6 +411,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             XFormInstanceSQL,
             Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
             annotate=annotate,
+            load_source='forms_by_last_modified'
         )
 
     @staticmethod
@@ -422,7 +423,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             q_expr &= Q(xmlns=xmlns)
 
         for form_id in paginate_query_across_partitioned_databases(
-                XFormInstanceSQL, q_expr, values=['form_id']):
+                XFormInstanceSQL, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
             yield form_id[0]
 
     @staticmethod
