@@ -44,6 +44,8 @@ def bootstrap_mach_gateway(apps):
         for price, subscribers in data[country_code]:
             total_subscribers += subscribers
             weighted_price += price * subscribers
+        if total_subscribers == 0:
+            continue
         weighted_price = weighted_price / total_subscribers
         SmsGatewayFee.create_new(
             SQLMachBackend.get_api_id(),
