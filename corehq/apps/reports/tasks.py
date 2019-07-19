@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals, division
 
 import os
 import uuid
@@ -12,7 +12,6 @@ import six
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
-from dateutil.parser import parse
 from six.moves import filter, map
 from unidecode import unidecode
 
