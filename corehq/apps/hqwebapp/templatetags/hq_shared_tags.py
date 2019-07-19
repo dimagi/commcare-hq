@@ -99,7 +99,8 @@ def concat(str1, str2):
     return "%s%s" % (str1, str2)
 
 try:
-    from resource_versions import resource_versions
+    from resource_versions import get_resource_versions
+    resource_versions = get_resource_versions()
 except (ImportError, SyntaxError):
     resource_versions = {}
 
