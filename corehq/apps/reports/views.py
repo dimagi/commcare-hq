@@ -80,14 +80,12 @@ from corehq.form_processor.models import UserRequestedRebuild
 from couchexport.export import Format, export_from_tables
 from couchexport.shortcuts import export_response
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime, string_to_datetime, json_format_date
+from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
-from soil import DownloadBase
 
 from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
@@ -136,9 +134,6 @@ from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 
 from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
-from .tasks import (
-    build_form_multimedia_zip,
-)
 from corehq.apps.saved_reports.tasks import send_delayed_report, send_email_report
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
@@ -2076,29 +2071,6 @@ def export_report(request, domain, export_hash, format):
             return response
         else:
             return HttpResponseNotFound(_("We don't support this format"))
-
-
-@login_or_digest
-@require_form_view_permission
-@require_GET
-def form_multimedia_export(request, domain):
-    task_kwargs = {'domain': domain}
-    try:
-        task_kwargs['xmlns'] = request.GET["xmlns"]
-        task_kwargs['startdate'] = request.GET["startdate"]
-        task_kwargs['enddate'] = request.GET["enddate"]
-        task_kwargs['enddate'] = json_format_date(string_to_datetime(task_kwargs['enddate']) + timedelta(days=1))
-        task_kwargs['app_id'] = request.GET.get("app_id", None)
-        task_kwargs['export_id'] = request.GET.get("export_id", None)
-        task_kwargs['zip_name'] = request.GET.get("name", None)
-    except (KeyError, ValueError):
-        return HttpResponseBadRequest()
-
-    download = DownloadBase()
-    task_kwargs['download_id'] = download.download_id
-    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-
-    return download.get_start_response()
 
 
 @require_permission(Permissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
