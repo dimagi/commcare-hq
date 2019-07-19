@@ -4,7 +4,7 @@ from xml.etree import cElementTree as ElementTree
 import six
 
 
-def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=None):
+def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=None, user_id=None):
     """
     Fixture generator used to build commtrack related fixtures such
     as products and programs.
@@ -23,7 +23,7 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
     root = ElementTree.Element('fixture',
                                {
                                    'id': id,
-                                   'user_id': restore_user.user_id
+                                   'user_id': user_id or restore_user.user_id
                                })
     list_elem = ElementTree.Element(name_plural)
     root.append(list_elem)
