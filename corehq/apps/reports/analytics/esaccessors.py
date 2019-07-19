@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from corehq.apps.es import (
     FormES,
@@ -21,7 +21,7 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     MISSING_KEY,
     AggregationTerm, NestedTermAggregationsHelper, SumAggregation)
-from corehq.apps.export.const import CASE_SCROLL_SIZE
+from corehq.apps.export.const import CASE_SCROLL_SIZE, MAX_MULTIMEDIA_EXPORT_SIZE
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
@@ -613,37 +613,44 @@ def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
     ).get_data()
 
 
-def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, user_types=None, group=None):
+def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    enddate = datespan.enddate + timedelta(days=1)
     query = (FormES()
              .domain(domain)
              .app(app_id)
              .xmlns(xmlns)
-             .submitted(gte=startdate, lte=enddate)
+             .submitted(gte=datespan.startdate, lte=enddate)
              .remove_default_filter("has_user")
              .source(['_id', 'external_blobs']))
 
     if user_types:
         query = query.user_type(user_types)
 
-    if group:
-        results = (GroupES()
-            .domain(domain)
-            .group_ids([group])
-            .source(['users'])).run().hits
-        assert len(results) <= 1
-        user_ids = results[0]['users']
-        query = query.user_id(user_ids)
-
     form_ids = set()
     for form in query.scroll():
         try:
-            for attachment in _get_attachment_dicts_from_form(form):
+            for attachment in form.get('external_blobs', {}).values():
                 if attachment['content_type'] != "text/xml":
-                    form_ids.add(form['_id'])
+                    yield form
                     continue
         except AttributeError:
             pass
     return form_ids
+
+def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
+    return {
+        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
+    }
+
+
+def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+    size = 0
+    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+        for attachment in form.get('external_blobs', {}).values():
+            size += attachment.get('content_length', 0)
+            if size > MAX_MULTIMEDIA_EXPORT_SIZE:
+                return True
+    return False
 
 
 def scroll_case_names(domain, case_ids):
@@ -653,12 +660,6 @@ def scroll_case_names(domain, case_ids):
             .source(['name', '_id'])
             .size(CASE_SCROLL_SIZE))
     return query.scroll()
-
-
-def _get_attachment_dicts_from_form(form):
-    if 'external_blobs' in form:
-        return list(form['external_blobs'].values())
-    return []
 
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
