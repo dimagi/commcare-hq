@@ -104,6 +104,10 @@ class AbstractXFormInstance(object):
     def to_json(self):
         raise NotImplementedError()
 
+    def set_meta_properties(self):
+        # noop - applicable for only SQL model
+        pass
+
     @classmethod
     def get(self, xform_id):
         raise NotImplementedError()

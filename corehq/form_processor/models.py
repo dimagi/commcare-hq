@@ -513,6 +513,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if const.TAG_META in self.form_data:
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
+    def set_meta_properties(self):
+        # doesn't save the form
+        from corehq.apps.receiverwrapper.util import get_app_version_info
+        self.time_end = getattr(self.metadata, 'timeEnd', None)
+        self.time_start = getattr(self.metadata, 'timeStart', None)
+        app_version_info = get_app_version_info(self.domain, self.build_id, None, self.metadata)
+
+        self.commcare_version = app_version_info.commcare_version
+        self.app_version = app_version_info.build_version
+
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])

@@ -228,20 +228,20 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
 
     @property
     def time_start(self):
-        # Will be addressed in https://github.com/dimagi/commcare-hq/pull/19391/
-        return None
+        return self.metadata.timeStart
 
     @property
     def time_end(self):
-        return None
+        return self.metadata.timeEnd
 
     @property
     def commcare_version(self):
-        return str(self.metadata.commcare_version)
+        return self.metadata.commcare_version
 
     @property
     def app_version(self):
-        return None
+        from corehq.apps.receiverwrapper.util import get_version_from_build_id
+        return get_version_from_build_id(self.domain, self.build_id)
 
     def __str__(self):
         return "%s (%s)" % (self.type, self.xmlns)

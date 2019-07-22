@@ -143,6 +143,7 @@ class SubmissionPost(object):
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
         found_old = scrub_meta(xform)
+        xform.set_meta_properties()
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def _get_success_message(self, instance, cases=None):

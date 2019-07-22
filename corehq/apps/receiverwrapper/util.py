@@ -40,6 +40,8 @@ def submit_form_locally(instance, domain, **kwargs):
 
 
 def get_meta_appversion_text(form_metadata):
+    if not form_metadata:
+        return None
     try:
         text = form_metadata['appVersion']
     except KeyError:

@@ -416,6 +416,28 @@ class FundamentalCaseTests(FundamentalBaseTests):
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
             _submit_form_with_cc_version("2.43")
 
+    def test_metadata_fields(self):
+        xml = """<?xml version='1.0' ?>
+        <form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
+            <meta>
+                <device_id>5020280</device_id>
+                <timeStart>2010-07-22T13:54:27.971</timeStart>
+                <timeEnd>2010-07-23T13:55:11.648</timeEnd>
+                <username>admin</username>
+                <instanceID>f7f0c79e-8b79-11df-b7de-005056c00008"</instanceID>
+                <appVersion>'CommCare ODK, version "2.18.0"(345454). App v70. CommCare Version 2.18. Build 345454, built on: December-12-2014</appVersion>
+            </meta>
+            <foo>bar</foo>
+        </form>
+        """
+
+        xform = submit_form_locally(
+            xml, domain=DOMAIN
+        ).xform
+        self.assertEqual(xform.commcare_version, '2.18.0')
+        self.assertEqual(xform.time_start, datetime(2010, 7, 22, 13, 54, 27, 971000))
+        self.assertEqual(xform.time_end, datetime(2010, 7, 23, 13, 55, 11, 648000))
+
     def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
