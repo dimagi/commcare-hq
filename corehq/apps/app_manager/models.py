@@ -4676,6 +4676,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
+    # If this app was created by copying another, this points to that app
+    progenitor_app_id = StringProperty()
+
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
 
@@ -5637,6 +5640,8 @@ class LinkedApplication(Application):
             data['upstream_version'] = data['version']
         if 'upstream_app_id' not in data:
             data['upstream_app_id'] = data.get('master', None)
+        if 'progenitor_app_id' not in data:
+            data['progenitor_app_id'] = data.get('master', None)
 
         return super(LinkedApplication, cls).wrap(data)
 
