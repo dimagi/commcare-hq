@@ -33,7 +33,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_current_app,
     get_latest_released_app_version,
-    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -287,21 +286,23 @@ def get_app_view_context(request, app):
     if is_linked_app(app):
         context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
-            master_versions_by_id = get_latest_released_app_versions_by_app_id(app.domain)
+            master_versions_by_id = app.get_latest_master_releases_versions()
             master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
-            upstream_brief = {}
-            for b in master_briefs:
-                if b.id == app.upstream_app_id:
-                    upstream_brief = b
-            context.update({
-                'master_briefs': master_briefs,
-                'master_versions_by_id': master_versions_by_id,
-                'upstream_version': app.upstream_version,
-                'upstream_brief': upstream_brief,
-                'upstream_url': _get_upstream_url(app, request.couch_user, master_app_id='---'),
-            })
         except RemoteRequestError:
-            pass
+            messages.error(request, "Unable to reach remote master server. Please try again later.")
+            master_versions_by_id = {}
+            master_briefs = []
+        upstream_brief = {}
+        for b in master_briefs:
+            if b.id == app.upstream_app_id:
+                upstream_brief = b
+        context.update({
+            'master_briefs': master_briefs,
+            'master_versions_by_id': master_versions_by_id,
+            'upstream_version': app.upstream_version,
+            'upstream_brief': upstream_brief,
+            'upstream_url': _get_upstream_url(app, request.couch_user, master_app_id='---'),
+        })
     return context
 
 
