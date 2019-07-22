@@ -96,7 +96,9 @@ hqDefine("app_manager/js/forms/form_view", function () {
             var labels = {};
             labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
             labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
-            labels[FormWorkflow.Values.MODULE] = gettext("Menu: ") + initialPageData('module_name');
+            if (initialPageData('module_name')) {
+                labels[FormWorkflow.Values.MODULE] = gettext("Menu: ") + initialPageData('module_name');
+            }
             if (initialPageData('root_module_name')) {
                 labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Menu: ") + initialPageData('root_module_name');
             }
