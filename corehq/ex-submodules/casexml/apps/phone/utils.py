@@ -43,7 +43,7 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
     :param cache_bucket_prefix: Fixture bucket prefix
     :param fixture_name: Name of the fixture
     :param data_fn: Function to generate the XML fixture elements
-    :return: byte string representation of the fixture
+    :return: list containing byte string representation of the fixture
     """
     domain = restore_state.restore_user.domain
 
