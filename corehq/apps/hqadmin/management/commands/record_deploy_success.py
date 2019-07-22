@@ -107,14 +107,16 @@ class Command(BaseCommand):
                 alert_type="success"
             )
 
-            print("\n=============================================================\n" \
-                  "Congratulations! Deploy Complete.\n\n" \
-                  "Don't forget to keep an eye on the deploy dashboard to " \
-                  "make sure everything is running smoothly.\n\n" \
-                  "https://app.datadoghq.com/dashboard/xch-zwt-vzv/hq-deploy-dashboard?tpl_var_environment={}" \
-                  "\n=============================================================\n".format(
-                settings.SERVER_ENVIRONMENT
-            ))
+            print(
+                "\n=============================================================\n"
+                "Congratulations! Deploy Complete.\n\n"
+                "Don't forget to keep an eye on the deploy dashboard to "
+                "make sure everything is running smoothly.\n\n"
+                "https://app.datadoghq.com/dashboard/xch-zwt-vzv/hq-deploy-dashboard?tpl_var_environment={}"
+                "\n=============================================================\n".format(
+                    settings.SERVER_ENVIRONMENT
+                )
+            )
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
