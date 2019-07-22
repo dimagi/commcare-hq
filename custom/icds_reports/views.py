@@ -1818,7 +1818,7 @@ class NICIndicatorAPIView(View):
 
         query_month = date(year, month, 1)
         today = date.today()
-        current_month = today - relativedelta(months=1)
+        current_month = today
         if query_month > current_month:
             return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
 
