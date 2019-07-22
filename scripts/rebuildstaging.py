@@ -184,9 +184,8 @@ def rebuild_staging(config, print_details=True, push=True):
     merge_conflicts = []
     not_found = []
     all_configs = list(config.span_configs())
-    with ExitStack() as stack:
-        for path, config in all_configs:
-            stack.enter_context(OriginalBranch(get_git(path)))
+    for path, config in all_configs:
+        with OriginalBranch(get_git(path)):
             git = get_git(path)
             try:
                 git.checkout('-B', config.name, origin(config.trunk), '--no-track')
