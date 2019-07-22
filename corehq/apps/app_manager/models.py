@@ -5596,7 +5596,7 @@ class LinkedApplication(Application):
     @memoized
     def get_master_app_briefs(self):
         if self.domain_link:
-            return get_master_app_briefs(self.domain_link)
+            return get_master_app_briefs(self.domain_link, self.progenitor_app_id)
         return []
 
     @property
@@ -5611,7 +5611,10 @@ class LinkedApplication(Application):
 
     def get_latest_master_releases_versions(self):
         if self.domain_link:
-            return get_latest_master_releases_versions(self.domain_link)
+            versions = get_latest_master_releases_versions(self.domain_link)
+            # Use self.get_master_app_briefs to limit return value by progenitor_app_id
+            master_ids = [b.id for b in self.get_master_app_briefs()]
+            return {key: value for key, value in versions.items() if key in master_ids}
         return {}
 
     @memoized
