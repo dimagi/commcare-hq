@@ -52,9 +52,11 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
         data = get_cached_fixture_items(domain, cache_bucket_prefix)
 
     if data is None:
-        with CriticalSection(['{}/{}'.format(cache_bucket_prefix, domain)], block=False) as lock:
-            if not lock.success():
-                return []  # if we can't get the lock don't include this fixture in the restore
+        with CriticalSection(['{}/{}'.format(cache_bucket_prefix, domain)]):
+            # re-check cache to avoid re-computing it
+            data = get_cached_fixture_items(domain, cache_bucket_prefix)
+            if data is not None:
+                return data
             else:
                 items = data_fn()
                 io_data = write_fixture_items_to_io(items)
