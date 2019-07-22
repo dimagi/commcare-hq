@@ -18,8 +18,8 @@ notify_logger = logging.getLogger('notify')
 
 
 def _all_zeros(data, agg_level):
-    values = [(kpi['value'] == 0 and kpi['all'] == 0) for row in data['records'] for kpi in row]
-    retry = false
+    values = [(not kpi['value'] and not kpi['all']) for row in data['records'] for kpi in row]
+    retry = False
     if agg_level <= 1:
         retry = any(values)
     else:
