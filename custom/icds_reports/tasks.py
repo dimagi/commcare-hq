@@ -47,7 +47,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
     get_icds_ucr_db_alias_or_citus
-from corehq.sql_db.routers import db_for_read_write, force_citus_engine, forced_citus
+from corehq.sql_db.routers import db_for_read_write, force_citus_engine, forced_citus, unforce_citus
 from corehq.util.datadog.utils import case_load_counter, create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -420,6 +420,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
         self.retry(exc=exc)
 
     celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
+    unforce_citus()
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
@@ -471,6 +472,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
         self.retry(exc=exc)
 
     celery_task_logger.info("Ended icds reports {} {} {}".format(state_id, date, func.__name__))
+    unforce_citus()
 
 
 @track_time
@@ -524,6 +526,7 @@ def _aggregate_inactive_aww(day, force_citus=False):
     if force_citus:
         force_citus_engine()
     AggregateInactiveAWW.aggregate(day)
+    unforce_citus()
 
 
 @track_time
@@ -598,6 +601,7 @@ def _child_health_helper(query, params, force_citus=False):
     celery_task_logger.info("Running child_health_helper with %s", params)
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(query, params)
+    unforce_citus()
 
 
 @track_time
@@ -1250,6 +1254,7 @@ def create_mbt_for_month(state_id, month, force_citus=False):
             )
             icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
             icds_file.save()
+    unforce_citus()
 
 
 @task(queue='dashboard_comparison_queue')
