@@ -286,7 +286,6 @@ def get_app_view_context(request, app):
     })
 
     if app.get_doc_type() == 'LinkedApplication':
-        context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             master_versions_by_id = app.get_latest_master_releases_versions()
             master_briefs = [brief for brief in app.get_master_app_briefs() if brief.id in master_versions_by_id]
@@ -303,7 +302,8 @@ def get_app_view_context(request, app):
             'master_versions_by_id': master_versions_by_id,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
-            'upstream_url': _get_upstream_url(app, request.couch_user, master_app_id='---'),
+            'upstream_url': _get_upstream_url(app, request.couch_user),
+            'upstream_url_template': _get_upstream_url(app, request.couch_user, master_app_id='---'),
         })
     return context
 
