@@ -167,7 +167,7 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url'
+        'custom_base_url', 'progenitor_app_id'
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()

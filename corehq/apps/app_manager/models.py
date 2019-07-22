@@ -5652,14 +5652,15 @@ class LinkedApplication(Application):
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, six.string_types):
         soft_assert_type_text(app_id_or_source)
-        app_id = app_id_or_source
-        source = get_app(None, app_id)
+        progenitor_app_id = app_id_or_source
+        source = get_app(None, progenitor_app_id)
         source_domain = source['domain']
         source = source.export_json(dump_json=False)
         report_map = get_static_report_mapping(source_domain, domain)
     else:
         cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
+        progenitor_app_id = app_id_or_source.get('_id', None)
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
         report_map = {}
@@ -5679,6 +5680,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app = cls.from_source(source, domain)
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+    app.progenitor_app_id = progenitor_app_id
 
     if report_map:
         for module in app.get_report_modules():
