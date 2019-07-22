@@ -14,10 +14,10 @@ class Command(BaseCommand):
 
     def handle(self, file_path):
         with open(file_path, 'r') as f:
-            for line in f:
-                username, app_id = line.split(',')
+            for username in f:
                 couch_user = CommCareUser.get_by_username(username)
                 device_id = couch_user.last_device.device_id
+                app_id = couch_user.last_device.app_meta.build_id
                 try:
                     get_restore_response(
                         'icds-cas',
