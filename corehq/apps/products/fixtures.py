@@ -66,9 +66,16 @@ class ProductFixturesProvider(FixtureProvider):
             or restore_state.params.openrosa_version >= LooseVersion(OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE'])
         )
 
-        data_fn = partial(self._get_fixture_items, restore_state, indexed)
-        cache_prefix = PRODUCT_FIXTURE_BUCKET_INDEXED if indexed else PRODUCT_FIXTURE_BUCKET
-        fixture_nodes = get_or_cache_global_fixture(restore_state, cache_prefix, self.id, data_fn)
+        # disable caching temporarily
+        # https://dimagi-dev.atlassian.net/browse/IIO-332
+
+        # data_fn = partial(self._get_fixture_items, restore_state, indexed)
+        # cache_prefix = PRODUCT_FIXTURE_BUCKET_INDEXED if indexed else PRODUCT_FIXTURE_BUCKET
+        # fixture_nodes = get_or_cache_global_fixture(restore_state, cache_prefix, self.id, data_fn)
+
+        fixture_nodes = self._get_fixture_items(restore_state, indexed)
+        if not fixture_nodes:
+            return []
 
         if not indexed:
             # Don't include index schema when openrosa version is specified and below 2.1
@@ -88,7 +95,7 @@ class ProductFixturesProvider(FixtureProvider):
 
         fixture_nodes = simple_fixture_generator(
             restore_user, self.id, "product", PRODUCT_FIELDS,
-            get_products, restore_state.last_sync_log, GLOBAL_USER_ID
+            get_products, restore_state.last_sync_log
         )
         if not fixture_nodes:
             return []

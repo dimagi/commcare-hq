@@ -16,6 +16,9 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
     # expand this here to prevent two separate couch calls
     data = data_fn()
 
+    if not _should_sync(data, last_sync):
+        return []
+
     name_plural = "{}s".format(name)
     root = ElementTree.Element('fixture',
                                {
@@ -49,3 +52,22 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
                 item_elem.append(field_elem)
 
     return [root]
+
+
+def _should_sync(data, last_sync):
+    """
+    Determine if a data collection needs to be synced.
+    """
+
+    # definitely sync if we haven't synced before
+    if not last_sync or not last_sync.date:
+        return True
+
+    # check if any items have been modified since last sync
+    for data_item in data:
+        # >= used because if they are the same second, who knows
+        # which actually happened first
+        if not data_item.last_modified or data_item.last_modified >= last_sync.date:
+            return True
+
+    return False

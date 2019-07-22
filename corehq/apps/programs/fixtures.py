@@ -34,8 +34,11 @@ class ProgramFixturesProvider(FixtureProvider):
     id = 'commtrack:programs'
 
     def __call__(self, restore_state):
-        data_fn = partial(self._get_fixture_items, restore_state)
-        return get_or_cache_global_fixture(restore_state, PROGRAM_FIXTURE_BUCKET, self.id, data_fn)
+        # disable caching temporarily
+        # https://dimagi-dev.atlassian.net/browse/IIO-332
+        # data_fn = partial(self._get_fixture_items, restore_state)
+        # return get_or_cache_global_fixture(restore_state, PROGRAM_FIXTURE_BUCKET, self.id, data_fn)
+        return self._get_fixture_items(restore_state)
 
     def _get_fixture_items(self, restore_state):
         restore_user = restore_state.restore_user
@@ -45,7 +48,7 @@ class ProgramFixturesProvider(FixtureProvider):
 
         return simple_fixture_generator(
             restore_user, self.id, "program",
-            PROGRAM_FIELDS, get_programs, restore_state.last_sync_log, GLOBAL_USER_ID
+            PROGRAM_FIELDS, get_programs, restore_state.last_sync_log
         )
 
 
