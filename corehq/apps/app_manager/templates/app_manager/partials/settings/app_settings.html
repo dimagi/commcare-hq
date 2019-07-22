@@ -198,24 +198,28 @@
                 {% endblocktrans %}
               </p>
               <div class="form-horizontal">
-                <div class="form-group">
-                  <div class="{% css_field_class %}">
-                    <select name="master_app_id" class="form-control hqwebapp-select2"
-                            data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
-                      <option value="">{% trans "Select a master app to pull" %}</option>
-                      {% for brief in master_briefs %}
-                        <option value="{{ brief.id }}">
-                          {{ brief.name }}
-                          {% for id, version in master_versions_by_id.items %}
-                            {% if id == brief.id %}
-                              ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %})
-                            {% endif %}
-                          {% endfor %}
-                        </option>
-                      {% endfor %}
-                    </select>
+                {% if multiple_masters %}
+                  <div class="form-group">
+                    <div class="{% css_field_class %}">
+                      <select name="master_app_id" class="form-control hqwebapp-select2"
+                              data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
+                        <option value="">{% trans "Select a master app to pull" %}</option>
+                        {% for brief in master_briefs %}
+                          <option value="{{ brief.id }}">
+                            {{ brief.name }}
+                            {% for id, version in master_versions_by_id.items %}
+                              {% if id == brief.id %}
+                                ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %})
+                              {% endif %}
+                            {% endfor %}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
                   </div>
-                </div>
+                {% else %}
+                  <input name="master_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
+                {% endif %}
                 <div class="form-group">
                   <div class="{% css_field_class %}">
                     <div class="checkbox">

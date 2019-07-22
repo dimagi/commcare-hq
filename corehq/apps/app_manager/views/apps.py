@@ -299,6 +299,7 @@ def get_app_view_context(request, app):
                 upstream_brief = b
         context.update({
             'master_briefs': master_briefs,
+            'multiple_masters': len(master_briefs) > 1,
             'master_versions_by_id': master_versions_by_id,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
