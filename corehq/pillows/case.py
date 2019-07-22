@@ -41,6 +41,12 @@ def transform_case_for_elasticsearch(doc_dict):
     if 'backend_id' not in doc_ret:
         doc_ret['backend_id'] = 'couch'
 
+    if settings.CASE_ES_DROP_FORM_FIELDS:
+        # these fields are lazily loaded to replacing or removing them
+        # prevents them from being loaded from the DB
+        doc_ret['actions'] = []
+        doc_ret['xform_ids'] = []
+
     return doc_ret
 
 
