@@ -202,6 +202,12 @@ def overwrite_app(app, master_build, report_map=None):
                 raise AppEditingError(config.report_id)
 
     wrapped_app = _update_form_ids(wrapped_app, master_build, form_ids_by_xmlns)
+
+    # Multimedia versions should be set based on the linked app's versions, not those of the master app.
+    for path in wrapped_app.multimedia_map.keys():
+        wrapped_app.multimedia_map[path].version = None
+    wrapped_app.set_media_versions()
+
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
 
