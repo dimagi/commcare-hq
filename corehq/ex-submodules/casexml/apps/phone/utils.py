@@ -56,7 +56,7 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
             # re-check cache to avoid re-computing it
             data = get_cached_fixture_items(domain, cache_bucket_prefix)
             if data is not None:
-                return data
+                return [data]
             else:
                 items = data_fn()
                 io_data = write_fixture_items_to_io(items)
