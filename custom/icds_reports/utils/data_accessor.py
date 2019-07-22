@@ -17,11 +17,17 @@ import logging
 notify_logger = logging.getLogger('notify')
 
 
-def _all_zeros(data):
-    values = [(kpi['value'] == 0 and kpi['all'] == 0) for row in data['records'] for kpi in row]
-    if all(values):
+def _all_zeros(data, agg_level):
+    values = [(not kpi['value'] and not kpi['all']) for row in data['records'] for kpi in row]
+    retry = False
+    if agg_level <= 1:
+        retry = any(values)
+    else:
+        retry = all(values)
+    if retry:
         create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0', aggregation_key='icds_0')
-    return all(values)
+    return retry
+
 
 
 def get_program_summary_data(step, domain, config, now, include_test, pre_release_features):
@@ -42,8 +48,9 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
     retry = 0
     while True:
         config_copy = deepcopy(config)
+        aggregation_level = config_copy.get('aggregation_level')
         data = get_program_summary_data(step, domain, config_copy, now, include_test, pre_release_features)
-        if not _all_zeros(data) or retry == 2:
+        if not _all_zeros(data, aggregation_level) or retry == 2:
             break
         else:
             sleep(5)
