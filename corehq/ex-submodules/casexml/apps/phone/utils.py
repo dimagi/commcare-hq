@@ -21,6 +21,7 @@ from memoized import memoized
 
 from corehq.blobs import get_blob_db, CODES, NotFound
 from corehq.blobs.models import BlobMeta
+from dimagi.utils.couch import CriticalSection
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
@@ -51,11 +52,15 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
         data = get_cached_fixture_items(domain, cache_bucket_prefix)
 
     if data is None:
-        items = data_fn()
-        io_data = write_fixture_items_to_io(items)
-        data = io_data.read()
-        io_data.seek(0)
-        cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
+        with CriticalSection('{}/{}'.format(cache_bucket_prefix, domain), block=False) as lock:
+            if not lock.success():
+                return []  # if we can't get the lock don't include this fixture in the restore
+            else:
+                items = data_fn()
+                io_data = write_fixture_items_to_io(items)
+                data = io_data.read()
+                io_data.seek(0)
+                cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
 
     global_id = GLOBAL_USER_ID.encode('utf-8')
     b_user_id = restore_state.restore_user.user_id.encode('utf-8')
