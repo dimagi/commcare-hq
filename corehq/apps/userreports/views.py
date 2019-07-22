@@ -1082,7 +1082,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             except DataSourceConfigurationNotFoundError:
                 _soft_assert = soft_assert(to=[
                     '{}@{}'.format(name, 'dimagi.com')
-                    for name in ['jemord', 'cellowitz', 'npellegrino', 'frener']
+                    for name in ['jemord', 'cellowitz', 'frener']
                 ])
                 _soft_assert(False, "Report {} on domain {} attempted to reference deleted table".format(
                     report._id, self.domain

@@ -25,8 +25,9 @@ def _all_zeros(data, agg_level):
     else:
         retry = all(values)
     if retry:
-        create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0')
+        create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0', aggregation_key='icds_0')
     return retry
+
 
 
 def get_program_summary_data(step, domain, config, now, include_test, pre_release_features):

@@ -24,6 +24,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil import parser as date_parser
 from six.moves import range
 
+from corehq.util.celery_utils import periodic_task_on_envs
 from couchexport.export import export_from_tables
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
@@ -179,15 +180,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
 ]
-
-
-# Tasks that are only to be run on ICDS_ENVS should be marked
-# with @only_icds_periodic_task rather than @periodic_task
-if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    only_icds_periodic_task = periodic_task
-else:
-    def only_icds_periodic_task(**kwargs):
-        return lambda fn: fn
 
 
 @periodic_task(run_every=crontab(minute=15, hour=18),
@@ -704,7 +696,8 @@ def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=Fa
     icds_data_validation.delay(aggregation_date)
 
 
-@periodic_task(
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
     queue='background_queue',
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
@@ -1042,7 +1035,12 @@ def _get_value(data, field):
 
 # This task caused memory spikes once a day on the india env
 # before it was switched to icds-only (June 2019)
-@only_icds_periodic_task(run_every=crontab(minute=30, hour=18), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task_on_envs(
+    settings.ICDS_ENVS,
+    run_every=crontab(minute=30, hour=18),
+    acks_late=True,
+    queue='icds_aggregation_queue'
+)
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')

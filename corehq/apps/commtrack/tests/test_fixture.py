@@ -135,7 +135,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         fixture_xml = self.generate_product_fixture_xml(user)
         index_schema, fixture = call_fixture_generator(product_fixture_generator, user)
 
-        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture))
+        self.assertXmlEqual(fixture_xml, fixture)
 
         schema_xml = """
             <schema id="commtrack:products">
@@ -149,55 +149,44 @@ class FixtureTest(TestCase, TestXmlMixin):
         """
         self.assertXmlEqual(schema_xml, ElementTree.tostring(index_schema))
 
-    def test_selective_product_sync(self):
+        # test restore with different user
+        user2 = create_restore_user(self.domain, username='user2')
+        self.addCleanup(user2._couch_user.delete)
+        fixture_xml = self.generate_product_fixture_xml(user2)
+        index_schema, fixture = call_fixture_generator(product_fixture_generator, user2)
+
+        self.assertXmlEqual(fixture_xml, fixture)
+
+    def test_product_fixture_cache(self):
         user = self.user
 
         expected_xml = self.generate_product_fixture_xml(user)
 
-        product_list = Product.by_domain(user.domain)
-        self._initialize_product_names(len(product_list))
-
         fixture_original = call_fixture_generator(product_fixture_generator, user)[1]
-        deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_original)
+            fixture_original
         )
 
-        first_sync = self._get_latest_synclog()
+        product = Product.by_domain(user.domain)[0]
+        product.name = 'new_name'
+        super(Product, product).save()  # save but skip clearing the cache
 
-        # make sure the time stamp on this first sync is
-        # not on the same second that the products were created
-        first_sync.date += datetime.timedelta(seconds=1)
-
-        # second sync is before any changes are made, so there should
-        # be no products synced
-        fixture_pre_change = call_fixture_generator(product_fixture_generator, user, last_sync=first_sync)
-        deprecated_generate_restore_payload(self.domain_obj, user)
-        self.assertEqual(
-            [],
-            fixture_pre_change,
-            "Fixture was not empty on second sync"
-        )
-
-        second_sync = self._get_latest_synclog()
-
-        self.assertTrue(first_sync._id != second_sync._id)
-
-        # save should make the product more recently updated than the
-        # last sync
-        for product in product_list:
-            product.save()
-
-        # now that we've updated a product, we should get
-        # product data in sync again
-        fixture_post_change = call_fixture_generator(product_fixture_generator, user, last_sync=second_sync)[1]
-
-        # regenerate the fixture xml to make sure it is still legit
+        fixture_cached = call_fixture_generator(product_fixture_generator, user)[1]
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_post_change)
+            fixture_cached
         )
+
+        # This will update all the products and re-save them.
+        expected_xml_new = self.generate_product_fixture_xml(user)
+
+        fixture_cached = call_fixture_generator(product_fixture_generator, user)[1]
+        self.assertXmlEqual(
+            expected_xml_new,
+            fixture_cached
+        )
+        self.assertXMLNotEqual(expected_xml_new, expected_xml)
 
     def generate_program_xml(self, program_list, user):
         program_xml = ''
@@ -242,10 +231,21 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         self.assertXmlEqual(
             program_xml,
-            ElementTree.tostring(fixture[0])
+            fixture[0]
         )
 
-    def test_selective_program_sync(self):
+        # test restore with different user
+        user2 = create_restore_user(self.domain, username='user2')
+        self.addCleanup(user2._couch_user.delete)
+        program_xml = self.generate_program_xml(program_list, user2)
+        fixture = call_fixture_generator(program_fixture_generator, user2)
+
+        self.assertXmlEqual(
+            program_xml,
+            fixture[0]
+        )
+
+    def test_program_fixture_cache(self):
         user = self.user
         Program(
             domain=user.domain,
@@ -253,47 +253,32 @@ class FixtureTest(TestCase, TestXmlMixin):
             code="t1"
         ).save()
 
-        program_list = Program.by_domain(user.domain)
+        program_list = list(Program.by_domain(user.domain))
         program_xml = self.generate_program_xml(program_list, user)
 
-        fixture_original = call_fixture_generator(program_fixture_generator, user)
+        fixture = call_fixture_generator(program_fixture_generator, user)
 
-        deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             program_xml,
-            ElementTree.tostring(fixture_original[0])
+            fixture[0]
         )
 
-        first_sync = self._get_latest_synclog()
-        # make sure the time stamp on this first sync is
-        # not on the same second that the programs were created
-        first_sync.date += datetime.timedelta(seconds=1)
+        program = program_list[0]
+        program.name = 'new_name'
+        super(Program, program).save()  # save but skip clearing the cache
 
-        # second sync is before any changes are made, so there should
-        # be no programs synced
-        fixture_pre_change = call_fixture_generator(program_fixture_generator, user, last_sync=first_sync)
-        deprecated_generate_restore_payload(self.domain_obj, user)
-        self.assertEqual(
-            [],
-            fixture_pre_change,
-            "Fixture was not empty on second sync"
-        )
-
-        second_sync = self._get_latest_synclog()
-
-        self.assertTrue(first_sync._id != second_sync._id)
-
-        # save should make the program more recently updated than the
-        # last sync
-        for program in program_list:
-            program.save()
-
-        # now that we've updated a program, we should get
-        # program data in sync again
-        fixture_post_change = call_fixture_generator(program_fixture_generator, user, last_sync=second_sync)
-
-        # regenerate the fixture xml to make sure it is still legit
+        fixture_cached = call_fixture_generator(program_fixture_generator, user)
         self.assertXmlEqual(
             program_xml,
-            ElementTree.tostring(fixture_post_change[0])
+            fixture_cached[0]
         )
+
+        program.save()
+        program_xml_new = self.generate_program_xml(program_list, user)
+
+        fixture_regen = call_fixture_generator(program_fixture_generator, user)
+        self.assertXmlEqual(
+            program_xml_new,
+            fixture_regen[0]
+        )
+        self.assertXMLNotEqual(program_xml_new, program_xml)

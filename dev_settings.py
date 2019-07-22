@@ -36,17 +36,17 @@ TEST_NON_SERIALIZED_APPS = ['corehq.form_processor', 'corehq.blobs']
 SHELL_PLUS_POST_IMPORTS = (
     # Models
     ('datetime'),
-    ('corehq.apps.app_manager.models', b'Application'),
-    ('corehq.apps.domain.models', b'Domain'),
-    ('corehq.apps.groups.models', b'Group'),
-    ('corehq.apps.users.models', (b'CouchUser', b'WebUser', b'CommCareUser')),
-    ('casexml.apps.case.models', b'CommCareCase'),
-    ('corehq.form_processor.interfaces.dbaccessors', (b'CaseAccessors', b'FormAccessors')),
-    ('couchforms.models', b'XFormInstance'),
+    ('corehq.apps.app_manager.models', 'Application'),
+    ('corehq.apps.domain.models', 'Domain'),
+    ('corehq.apps.groups.models', 'Group'),
+    ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
+    ('casexml.apps.case.models', 'CommCareCase'),
+    ('corehq.form_processor.interfaces.dbaccessors', ('CaseAccessors', 'FormAccessors')),
+    ('couchforms.models', 'XFormInstance'),
 
     # Data querying utils
-    ('dimagi.utils.couch.database', b'get_db'),
-    ('corehq.apps', b'es'),
+    ('dimagi.utils.couch.database', 'get_db'),
+    ('corehq.apps', 'es'),
 )
 
 INTERNAL_IPS = ['127.0.0.1']
