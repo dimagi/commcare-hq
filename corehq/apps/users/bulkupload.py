@@ -547,7 +547,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                         user.get_django_user(use_primary_db=True).check_password(password)
 
-                    for group_id in Group.by_user(user, wrap=False):
+                    for group_id in Group.by_user_id(user.user_id, wrap=False):
                         group = group_memoizer.get(group_id)
                         if group.name not in group_names:
                             group.remove_user(user)
@@ -604,7 +604,9 @@ def build_data_headers(keys, header_prefix='data'):
 def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters, task, total_count):
 
     def _get_group_names(user):
-        return sorted([group_memoizer.get(id).name for id in Group.by_user(user, wrap=False)], key=alphanumeric_sort_key)
+        return sorted([
+            group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+        ], key=alphanumeric_sort_key)
 
     def _get_devices(user):
         """
