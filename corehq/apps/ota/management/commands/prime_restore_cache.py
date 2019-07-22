@@ -18,12 +18,17 @@ class Command(BaseCommand):
                 username, app_id = line.split(',')
                 couch_user = CommCareUser.get_by_username(username)
                 device_id = couch_user.last_device.device_id
-                get_restore_response(
-                    'icds-cas',
-                    couch_user,
-                    app_id,
-                    device_id=device_id,
-                    version='2.0',
-                    force_cache=True,
-                    cache_timeout=ONE_DAY
-                )
+                try:
+                    get_restore_response(
+                        'icds-cas',
+                        couch_user,
+                        app_id,
+                        device_id=device_id,
+                        version='2.0',
+                        force_cache=True,
+                        cache_timeout=ONE_DAY
+                    )
+                except:
+                    pass
+                else:
+                    print(username)
