@@ -144,6 +144,7 @@ def get_cursor(model):
     return connections[db].cursor()
 
 
+@contextmanager
 def force_citus_engine(force=False):
     if force:
         _thread_local.force_citus = True
