@@ -1864,7 +1864,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.locations.models import get_case_sharing_groups_for_locations
         # get faked location group objects
         groups = list(get_case_sharing_groups_for_locations(
-            self.get_sql_locations(),
+            self.get_sql_locations(self.domain),
             self._id
         ))
 
