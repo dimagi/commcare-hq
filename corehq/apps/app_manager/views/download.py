@@ -38,7 +38,7 @@ BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuild
                       "If error persists, please contact us at commcarehq-support@dimagi.com")
 
 
-def _get_profile(request):
+def _get_build_profile_id(request):
     profile = request.GET.get('profile')
     if profile in request.app.build_profiles:
         return profile
@@ -57,7 +57,7 @@ def download_odk_profile(request, domain, app_id):
         make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     return HttpResponse(
         request.app.create_profile(is_odk=True, build_profile_id=profile),
         content_type="commcare/profile"
@@ -71,7 +71,7 @@ def download_odk_media_profile(request, domain, app_id):
         make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True, build_profile_id=profile),
         content_type="commcare/profile"
@@ -86,7 +86,7 @@ def download_suite(request, domain, app_id):
     """
     if not request.app.copy_of:
         request.app.set_form_versions()
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     return HttpResponse(
         request.app.create_suite(build_profile_id=profile)
     )
@@ -100,7 +100,7 @@ def download_media_suite(request, domain, app_id):
     """
     if not request.app.copy_of:
         request.app.set_media_versions()
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     return HttpResponse(
         request.app.create_media_suite(build_profile_id=profile)
     )
@@ -112,7 +112,7 @@ def download_app_strings(request, domain, app_id, lang):
     See Application.create_app_strings
 
     """
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     return HttpResponse(
         request.app.create_app_strings(lang, build_profile_id=profile)
     )
@@ -124,7 +124,7 @@ def download_xform(request, domain, app_id, module_id, form_id):
     See Application.fetch_xform
 
     """
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     try:
         return HttpResponse(
             request.app.fetch_xform(module_id, form_id, build_profile_id=profile)
@@ -241,13 +241,13 @@ def download_file(request, domain, app_id, path):
     if request.GET.get('download') == 'true':
         response['Content-Disposition'] = "attachment; filename={}".format(path)
 
-    build_profile = request.GET.get('profile')
+    build_profile_id = _get_build_profile_id(request)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
         full_path = path
-    elif build_profile and build_profile in request.app.build_profiles and build_profile_access:
-        full_path = 'files/%s/%s' % (build_profile, path)
+    elif build_profile_id and build_profile_id in request.app.build_profiles and build_profile_access:
+        full_path = 'files/%s/%s' % (build_profile_id, path)
     else:
         full_path = 'files/%s' % path
 
@@ -255,14 +255,17 @@ def download_file(request, domain, app_id, path):
         return RegexURLResolver(
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
+    def create_build_files(build_profile_id=None):
+        request.app.create_build_files(build_profile_id=build_profile_id)
+        request.app.save()
+
     def create_build_files_if_necessary_handling_conflicts(is_retry=False):
         try:
             try:
                 # look for file guaranteed to exist if profile is created
-                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
+                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile_id))
             except ResourceNotFound:
-                request.app.create_build_files(build_profile_id=build_profile)
-                request.app.save()
+                create_build_files(build_profile_id)
         except ResourceConflict:
             if is_retry:
                 raise
@@ -271,15 +274,18 @@ def download_file(request, domain, app_id, path):
 
     try:
         assert request.app.copy_of
-        # lazily create language profiles to avoid slowing initial build
+        # create build files for default profile if they were not created during initial build
+        # or for language profiles for which build files have not been created yet
         try:
             payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
-            if build_profile in request.app.build_profiles and build_profile_access:
+            if not build_profile_id:
+                create_build_files()
+            elif build_profile_id in request.app.build_profiles and build_profile_access:
                 create_build_files_if_necessary_handling_conflicts()
-                payload = request.app.fetch_attachment(full_path)
             else:
                 raise
+            payload = request.app.fetch_attachment(full_path)
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
@@ -336,7 +342,7 @@ def download_profile(request, domain, app_id):
         make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     return HttpResponse(
         request.app.create_profile(build_profile_id=profile)
     )
@@ -349,7 +355,7 @@ def download_media_profile(request, domain, app_id):
         make_async_build_v2.delay(request.app.get_id, request.app.domain, request.app.version)
     else:
         request._always_allow_browser_caching = True
-    profile = _get_profile(request)
+    profile = _get_build_profile_id(request)
     return HttpResponse(
         request.app.create_profile(with_media=True, build_profile_id=profile)
     )
