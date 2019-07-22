@@ -30,7 +30,6 @@ monkey.patch_all()
 import os
 import re
 import sys
-from contextlib import ExitStack
 
 import gevent
 import jsonobject
