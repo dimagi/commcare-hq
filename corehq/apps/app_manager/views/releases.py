@@ -299,10 +299,7 @@ def save_copy(request, domain, app_id):
             timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
                                          timing_buckets=(1, 10, 30, 60, 120, 240))
             with timer:
-                result = make_app_build(app, comment, user_id)
-                if isinstance(result, HttpResponse):
-                    return result
-                copy = result
+                copy = make_app_build(app, comment, user_id)
             CouchUser.get(user_id).set_has_built_app()
         except BuildConflictException:
             return HttpResponseBadRequest(_("There is already a version build in progress. Please wait."))
