@@ -72,13 +72,15 @@ class ProductFixturesProvider(FixtureProvider):
         # https://dimagi-dev.atlassian.net/browse/IIO-332
         # data_fn = partial(self._get_fixture_items, restore_state, indexed)
 
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-            # run caching with dummy data alongside normal fixture generation to try and diagnose issue
-            cache_prefix = PRODUCT_FIXTURE_BUCKET_INDEXED if indexed else PRODUCT_FIXTURE_BUCKET
-            def dummy_data_fn():
-                return [get_index_schema_node(self.id, ['@id', 'code', 'program_id', 'category'])]
-
-            get_or_cache_global_fixture(restore_state, cache_prefix, self.id, dummy_data_fn)
+        # disable this for now to avoid producing the same issue - the metrics for cache clearing will stil
+        # be active
+        # if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        #     # run caching with dummy data alongside normal fixture generation to try and diagnose issue
+        #     cache_prefix = PRODUCT_FIXTURE_BUCKET_INDEXED if indexed else PRODUCT_FIXTURE_BUCKET
+        #     def dummy_data_fn():
+        #         return [get_index_schema_node(self.id, ['@id', 'code', 'program_id', 'category'])]
+        #
+        #     get_or_cache_global_fixture(restore_state, cache_prefix, self.id, dummy_data_fn)
 
         fixture_nodes = self._get_fixture_items(restore_state, indexed)
         if not fixture_nodes:
