@@ -9,7 +9,6 @@ from corehq.apps.domain.dbaccessors import (
     get_docs_in_domain_by_class,
     get_doc_ids_in_domain_by_class,
 )
-from corehq.apps.groups.models import Group
 
 
 def group_by_domain(domain):
@@ -64,6 +63,7 @@ GroupIdName = namedtuple('GroupIdName', 'id name')
 
 
 def get_group_id_name_map_by_user(user_id, limit=None):
+    from corehq.apps.groups.models import Group
     view_results = Group.view(
         'groups/by_user',
         key=user_id,
