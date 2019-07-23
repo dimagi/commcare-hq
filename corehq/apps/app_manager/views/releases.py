@@ -54,8 +54,10 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import (
     BuildProfile,
-    LatestEnabledBuildProfiles,
+)
+from corehq.apps.app_manager.sql_models import (
     AppReleaseByLocation,
+    LatestEnabledBuildProfiles,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
