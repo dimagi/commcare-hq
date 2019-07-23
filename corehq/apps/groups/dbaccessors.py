@@ -1,11 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from collections import namedtuple
+
 from django.conf import settings
 
 from corehq.apps.domain.dbaccessors import (
     get_docs_in_domain_by_class,
     get_doc_ids_in_domain_by_class,
 )
+from corehq.apps.groups.models import Group
 
 
 def group_by_domain(domain):
@@ -54,3 +58,16 @@ def refresh_group_views():
 def get_group_ids_by_domain(domain):
     from corehq.apps.groups.models import Group
     return get_doc_ids_in_domain_by_class(domain, Group)
+
+
+GroupIdName = namedtuple('GroupIdName', 'id name')
+
+
+def get_group_id_name_map_by_user(user_id, limit=None):
+    view_results = Group.view(
+        'groups/by_user',
+        key=user_id,
+        include_docs=False,
+        limit=limit
+    )
+    return [GroupIdName(r['id'], r['value'][1]) for r in view_results]
