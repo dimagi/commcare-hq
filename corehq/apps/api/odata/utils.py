@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.export.dbaccessors import get_latest_case_export_schema, get_latest_form_export_schema
@@ -10,6 +10,9 @@ from corehq.apps.export.models import CaseExportDataSchema, ExportInstance, Expo
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
+
+
+FieldMetadata = namedtuple('FieldMetadata', ['name', 'odata_type'])
 
 
 def get_case_type_to_properties(domain):
@@ -65,8 +68,18 @@ def format_odata_property_for_power_bi(odata_property):
 
 
 def get_case_odata_fields_from_config(case_export_config):
+    # todo: this should eventually be handled by the data dictionary but we don't do a good
+    # job of mapping that in exports today so we don't have datatype information handy.
+    SPECIAL_TYPES = {
+        'closed': 'Edm.Boolean',
+        'modified_on': 'Edm.DateTimeOffset',
+        'date_modified': 'Edm.DateTimeOffset',
+        'server_modified_on': 'Edm.DateTimeOffset',
+        'opened_on': 'Edm.DateTimeOffset',
+    }
     export_columns = case_export_config.tables[0].columns
-    return [column.label for column in export_columns if column.selected]
+    return [FieldMetadata(column.label, SPECIAL_TYPES.get(column.item.path[0].name, 'Edm.String'))
+            for column in export_columns if column.selected]
 
 
 def get_form_odata_fields_from_config(form_export_config):
