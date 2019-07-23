@@ -4521,22 +4521,31 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         # I'm putting this assert here if copy._id is ever None
         # which makes tests error
         assert copy._id
-
-        built_on = datetime.datetime.utcnow()
-        copy.date_created = built_on
-        copy.built_on = built_on
-        copy.built_with = BuildRecord(
-            version=copy.build_spec.version,
-            build_number=copy.version,
-            datetime=built_on,
-        )
-        copy.build_comment = comment
-        copy.comment_from = user_id
-        copy.is_released = False
-
+        copy._set_build_fields(user_id, comment)
         prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
+
+    def _set_build_fields(self, user_id, comment=None):
+        built_on = datetime.datetime.utcnow()
+        self.date_created = built_on
+        self.built_on = built_on
+        self.built_with = BuildRecord(
+            version=self.build_spec.version,
+            build_number=self.version,
+            datetime=built_on,
+        )
+        self.build_comment = comment
+        self.comment_from = user_id
+        self.is_released = False
+
+    def _unset_build_fields(self):
+        self.date_created = None
+        self.built_on = None
+        self.built_with = BuildRecord()
+        self.build_comment = None
+        self.comment_from = None
+        self.is_released = False
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)
