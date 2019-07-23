@@ -43,7 +43,6 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     Form,
-    LinkedApplication,
     Module,
     ModuleNotFoundException,
     app_template_dir,
@@ -51,7 +50,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import (
-    make_async_build_v2,
+    make_build,
     update_linked_app_and_notify_task
 )
 from corehq.apps.app_manager.util import (
@@ -82,7 +81,6 @@ from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
@@ -496,7 +494,7 @@ def load_app_from_slug(domain, username, slug):
                         app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
 
     comment = _("A sample application you can try out in Web Apps")
-    build = make_async_build_v2(app.get_id, app.domain, app.version, allow_prune=False, comment=comment)
+    build = make_build(app, allow_prune=False, comment=comment)
     build.is_released = True
     build.save(increment_version=False)
     return build
