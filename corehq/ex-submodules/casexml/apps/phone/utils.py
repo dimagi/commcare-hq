@@ -21,6 +21,7 @@ from memoized import memoized
 
 from corehq.blobs import get_blob_db, CODES, NotFound
 from corehq.blobs.models import BlobMeta
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.couch import CriticalSection
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
@@ -48,16 +49,20 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
     domain = restore_state.restore_user.domain
 
     data = None
+    key = '{}/{}'.format(cache_bucket_prefix, domain)
+
     if not restore_state.overwrite_cache:
         data = get_cached_fixture_items(domain, cache_bucket_prefix)
+        _record_datadog_metric('cache_miss' if data is None else 'cache_hit', key)
 
     if data is None:
-        with CriticalSection(['{}/{}'.format(cache_bucket_prefix, domain)]):
+        with CriticalSection([key]):
             # re-check cache to avoid re-computing it
             data = get_cached_fixture_items(domain, cache_bucket_prefix)
             if data is not None:
                 return [data]
             else:
+                _record_datadog_metric('generate', key)
                 items = data_fn()
                 io_data = write_fixture_items_to_io(items)
                 data = io_data.read()
@@ -107,7 +112,15 @@ def get_cached_fixture_items(domain, bucket_prefix):
 
 
 def clear_fixture_cache(domain, bucket_prefix):
-    get_blob_db().delete(key=bucket_prefix + '/' + domain)
+    key = bucket_prefix + '/' + domain
+    _record_datadog_metric('cache_clear', key)
+    get_blob_db().delete(key=key)
+
+
+def _record_datadog_metric(name, cache_key):
+    datadog_counter('commcare.fixture.{}'.format(name), tags=[
+        'cache_key:{}'.format(cache_key),
+    ])
 
 
 def get_cached_items_with_count(cached_bytes):
