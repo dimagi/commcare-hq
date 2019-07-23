@@ -64,7 +64,8 @@
             </tr>
           </thead>
           <tbody data-bind="foreach: hostings">
-            <tr data-bind="style: {background: rowColor()}">
+            <tr data-bind="css: {'success': status === 'completed', 'info': status === 'pending',
+                                 'danger': status === 'failed', 'warning': status === 'building'}">
               <td>
                 <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
                 </a>
