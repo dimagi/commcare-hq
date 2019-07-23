@@ -22,6 +22,7 @@ hqDefine('icds/js/manage_hosted_ccz', [
             self.note = note;
             self.status = status;
             self.removeUrl = initialPageData.reverse("remove_hosted_ccz", id);
+            self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", id);
             self.viewUrl = initialPageData.reverse("hosted_ccz", link);
             return self;
         };

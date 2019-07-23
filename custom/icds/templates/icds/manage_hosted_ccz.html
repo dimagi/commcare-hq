@@ -12,6 +12,7 @@
 {% initial_page_data 'appVersionOnlyShowReleased' True %}
 {% registerurl "paginate_releases" domain '---' %}
 {% registerurl "remove_hosted_ccz" domain '---' %}
+{% registerurl "recreate_hosted_ccz" domain '---' %}
 {% registerurl "hosted_ccz" domain '---' %}
 <div class="container" id="manage-ccz-hostings">
   <div class="row">
@@ -83,6 +84,9 @@
               <td>
                 <a data-bind="attr: { href: removeUrl}" class="btn btn-danger">
                   {% trans 'Remove' %}
+                </a>
+                <a data-bind="attr: { href: recreateUrl}" class="btn btn-warning">
+                  {% trans 'Recreate' %}
                 </a>
               </td>
             </tr>
