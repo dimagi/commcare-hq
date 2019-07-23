@@ -202,17 +202,31 @@ USER_MAPPING = {
                         }
                     }
                 },
-                'base_username': {'fields': {'base_username': {'type': 'text'},
-                                             'exact': {'type': 'keyword'}},
-                                 'type': 'text'},
-                'username': {'fields': {'exact': {'type': 'keyword'},
-                                        'username': {'analyzer': 'standard',
-                                                     'type': 'text'}},
-                             'type': 'text'},
+                'base_username': {
+                    'fields': {
+                        'base_username': {'type': 'text'},
+                        'exact': {'type': 'keyword'}
+                    },
+                    'type': 'text'
+                },
+                'username': {
+                    'fields': {
+                        'exact': {'type': 'keyword'},
+                        'username': {
+                            'analyzer': 'standard',
+                            'type': 'text'
+                        }
+                    },
+                    'type': 'text'
+                },
                 '__group_ids': {'type': 'text'},
-                '__group_names': {'fields': {'__group_names': {'type': 'text'},
-                                             'exact': { 'type': 'keyword'}},
-                                  'type': 'text'}}}
+                '__group_names': {
+                    'fields': {
+                        '__group_names': {'type': 'text'},
+                        'exact': {'type': 'keyword'}},
+                    'type': 'text'}
+                }
+}
 
 USER_INDEX_INFO = ElasticsearchIndexInfo(
     index=USER_INDEX,

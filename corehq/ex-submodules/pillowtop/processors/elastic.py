@@ -135,4 +135,3 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
             break  # ignore the error if a doc already exists when trying to create it in the index
         except NotFoundError:
             break
-

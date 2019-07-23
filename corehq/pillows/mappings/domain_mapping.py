@@ -106,9 +106,10 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                                'properties': {'city': {'fields': {'city': {'type': 'text'},
                                                                   'exact': {'type': 'keyword'}},
                                                        'type': 'text'},
-                                              'countries': {'fields':
-                                                               {'countries': {'type': 'keyword'},
-                                                                'exact': {'type': 'keyword'}},
+                                              'countries': {'fields': {
+                                                  'countries': {'type': 'keyword'},
+                                                  'exact': {'type': 'keyword'}
+                                              },
                                                             'type': 'text'},
                                               'description': {'fields': {'description': {'type': 'text'},
                                                                          'exact': {'type': 'keyword'}},
@@ -157,8 +158,10 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                                                                 'workshop_region': {'type': 'text'}},
                                                            'type': 'text'},
                                             'notes': {'type': 'text'},
-                                            'organization_name': {'fields': {'exact': {'type': 'keyword'},
-                                                                             'organization_name': {'type': 'text'}},
+                                            'organization_name': {'fields': {
+                                                'exact': {'type': 'keyword'},
+                                                'organization_name': {'type': 'text'}
+                                            },
                                                                   'type': 'text'},
                                             'phone_model': {'fields': {'exact': {'type': 'keyword'},
                                                                        'phone_model': {'type': 'text'}},
