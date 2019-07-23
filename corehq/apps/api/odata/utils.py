@@ -78,7 +78,13 @@ def get_case_odata_fields_from_config(case_export_config):
         'opened_on': 'Edm.DateTimeOffset',
     }
     export_columns = case_export_config.tables[0].columns
-    return [FieldMetadata(column.label, SPECIAL_TYPES.get(column.item.path[0].name, 'Edm.String'))
+
+    def _get_primary_path(export_column):
+        if export_column and export_column.item and export_column.item.path:
+            return export_column.item.path[0].name
+        return None
+
+    return [FieldMetadata(column.label, SPECIAL_TYPES.get(_get_primary_path(column), 'Edm.String'))
             for column in export_columns if column.selected]
 
 
