@@ -222,6 +222,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
+        self.genericErrorMessage = ko.observable('');
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.fetchLimit = ko.observable();
@@ -449,6 +450,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 error: function (xhr) {
                     self.buildErrorCode(xhr.status);
                     self.buildState('error');
+                    self.genericErrorMessage(xhr.responseText);
                 },
             });
         };

@@ -69,7 +69,11 @@
       {% trans "Sorry, you don't have permission to do this action!" %}
     </span>
     <span data-bind="visible: buildErrorCode() !== 403">
-      {% trans "An error occurred. Reload the page and click Make New Version to try again." %}
+      <span data-bind="visible: genericErrorMessage, text: genericErrorMessage">
+      </span>
+      <span data-bind="visible: !genericErrorMessage()">
+        {% trans "An error occurred. Reload the page and click Make New Version to try again." %}
+      </span>
     </span>
   </div>
 
