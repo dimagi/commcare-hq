@@ -64,6 +64,7 @@ from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
     require_deploy_apps,
+    avoid_parallel_build_request,
 )
 from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
@@ -268,6 +269,7 @@ def release_build(request, domain, app_id, saved_app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@avoid_parallel_build_request
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.

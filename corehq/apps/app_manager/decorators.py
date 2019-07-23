@@ -4,6 +4,7 @@ import logging
 import json
 from functools import wraps
 from django.contrib import messages
+from django.core.cache import cache
 from django.http import HttpResponseRedirect, HttpResponse
 from couchdbkit.exceptions import ResourceConflict
 from django.views.decorators.http import require_POST
@@ -144,6 +145,38 @@ def no_conflict(fn):
             return HttpResponse(status=409)
 
     return _no_conflict
+
+
+def avoid_parallel_build_request(fn):
+    @wraps(fn)
+    def new_fn(request, domain, app_id, *args, **kwargs):
+        if _build_request_in_progress(domain, app_id):
+            return HttpResponse(_("There is already a version build in progress. Please wait."), status=400)
+        else:
+            _set_build_in_progress_lock(domain, app_id)
+            fn_return = fn(request, domain, app_id, *args, **kwargs)
+            _release_build_in_progress_lock(domain, app_id)
+            return fn_return
+    return new_fn
+
+
+def _set_build_in_progress_lock(domain, app_id):
+    key = _build_request_cache_key(domain, app_id)
+    cache.set(key, True)
+
+
+def _build_request_cache_key(domain, app_id):
+    return 'app-build-{domain}-{app_id}'.format(domain=domain, app_id=app_id)
+
+
+def _release_build_in_progress_lock(domain, app_id):
+    key = _build_request_cache_key(domain, app_id)
+    cache.delete(key)
+
+
+def _build_request_in_progress(domain, app_id):
+    key = _build_request_cache_key(domain, app_id)
+    return cache.get(key, False)
 
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
