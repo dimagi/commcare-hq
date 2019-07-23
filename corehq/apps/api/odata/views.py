@@ -11,7 +11,7 @@ from corehq.apps.api.odata.utils import (
     get_case_type_to_properties,
     get_xmlns_by_app,
     get_xmlns_to_properties,
-)
+    get_form_odata_fields_from_config)
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
@@ -163,7 +163,7 @@ class ODataFormMetadataView(View):
     def get(self, request, domain, config_id):
         config = get_document_or_404(FormExportInstance, domain, config_id)
         metadata = render_to_string('api/form_odata_metadata.xml', {
-            'fields': get_case_odata_fields_from_config(config),
+            'fields': get_form_odata_fields_from_config(config),
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
