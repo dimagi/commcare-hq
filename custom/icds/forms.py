@@ -60,8 +60,7 @@ class HostedCCZForm(forms.Form):
                                    ('pending', 'Pending'),
                                    ('building', 'Building'),
                                    ('failed', 'Failed'),
-                                   ('completed', 'Completed'),
-                               ),
+                                   ('completed', 'Completed')),
                                required=False,
                                help_text=ugettext_lazy("Applicable for search only"))
 
