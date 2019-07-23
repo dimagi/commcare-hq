@@ -31,6 +31,10 @@ class CopyApplicationForm(forms.Form):
         help_text=_("This will create an application that can be updated from changes to this application."
                     " This requires your app to have at least one released version.")
     )
+    build_id = forms.CharField(
+        required=False,
+        label=_('Copy from built version'),
+        widget=forms.Select(choices=[], attrs={"class": "app-manager-version-dropdown"}))
 
     # Toggles to enable when copying the app
     toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
@@ -38,7 +42,7 @@ class CopyApplicationForm(forms.Form):
     def __init__(self, from_domain, app, *args, **kwargs):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
-        fields = ['domain', 'name', 'toggles']
+        fields = ['domain', 'name', 'toggles', 'build_id']
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
