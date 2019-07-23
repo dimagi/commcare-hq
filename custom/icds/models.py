@@ -92,6 +92,12 @@ class HostedCCZ(models.Model):
     profile_id = models.CharField(max_length=255, blank=True)
     file_name = models.CharField(max_length=255, blank=True)
     note = models.TextField(blank=True)
+    status = models.CharField(max_length=255, null=False, blank=False, default='pending',
+                              choices=(('pending', 'Pending'),
+                                       ('building', 'Building'),
+                                       ('failed', 'Failed'),
+                                       ('completed', 'Completed'),
+                                       ))
 
     class Meta:
         unique_together = ('link', 'app_id', 'version', 'profile_id')
@@ -155,6 +161,10 @@ class HostedCCZ(models.Model):
     def delete(self, *args, **kwargs):
         self.delete_ccz()
         super(HostedCCZ, self).delete(*args, **kwargs)
+
+    def update_status(self, new_status):
+        assert new_status in ['pending', 'building', 'failed', 'completed']
+        HostedCCZ.objects.filter(id=self.pk).update(status=new_status)
 
 
 def delete_ccz_for_link(sender, instance, **kwargs):

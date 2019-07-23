@@ -39,6 +39,9 @@
               <th class="col-sm-2">
                 {% trans 'Link' %}
               </th>
+              <th>
+                {% trans 'Status' %}
+              </th>
               <th class="col-sm-2">
                 {% trans 'Application' %}
               </th>
@@ -64,6 +67,8 @@
               <td>
                 <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
                 </a>
+              </td>
+              <td data-bind="text: status">
               </td>
               <td data-bind="text: appName">
               </td>

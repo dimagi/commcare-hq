@@ -12,7 +12,7 @@ hqDefine('icds/js/manage_hosted_ccz', [
 ) {
     'use strict';
     $(function () {
-        var hostedCCZ = function (id, link, appName, version, profileName, fileName, note) {
+        var hostedCCZ = function (id, link, appName, version, profileName, fileName, note, status) {
             var self = {};
             self.link = link;
             self.appName = appName;
@@ -21,6 +21,7 @@ hqDefine('icds/js/manage_hosted_ccz', [
             self.fileName = fileName;
             self.note = note;
             self.url = initialPageData.reverse("remove_hosted_ccz", id);
+            self.status = status;
             self.viewUrl = initialPageData.reverse("hosted_ccz", link);
             return self;
         };
@@ -28,15 +29,16 @@ hqDefine('icds/js/manage_hosted_ccz', [
             var self = {};
             self.hostings = _.map(hostings, function (hosting) {
                 return hostedCCZ(hosting.id, hosting.link_name, hosting.app_name, hosting.version,
-                    hosting.profile_name, hosting.file_name, hosting.note);
+                    hosting.profile_name, hosting.file_name, hosting.note, hosting.status);
             });
             self.search = function () {
                 var linkId = $("#link-id-select").val();
                 var appId = $("#app-id-search-select").val();
                 var version = $("#version-input").val() || '';
                 var profileId = $("#app-profile-id-input").val() || '';
+                var status = $("#id_status").val();
                 window.location.search = ("link_id=" + linkId + "&app_id=" + appId + "&version=" +
-                    version + "&profile_id=" + profileId);
+                    version + "&profile_id=" + profileId + "&status=" + status);
             };
             self.clear = function () {
                 window.location.search = "";

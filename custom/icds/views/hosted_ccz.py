@@ -159,6 +159,8 @@ class ManageHostedCCZ(BaseDomainView):
             hosted_cczs = hosted_cczs.filter(version=self.request.GET.get('version'))
         if self.request.GET.get('profile_id'):
             hosted_cczs = hosted_cczs.filter(profile_id=self.request.GET.get('profile_id'))
+        if self.request.GET.get('status'):
+            hosted_cczs = hosted_cczs.filter(status=self.request.GET.get('status'))
         hosted_cczs = [h.to_json(app_names) for h in hosted_cczs]
         return {
             'form': self.form,
