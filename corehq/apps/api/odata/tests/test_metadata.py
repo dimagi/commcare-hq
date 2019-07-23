@@ -290,6 +290,8 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
             tables=[
                 TableConfiguration(
                     columns=[
+                        ExportColumn(label='closed', selected=True),
+                        ExportColumn(label='date_modified', selected=True),
                         ExportColumn(label='selected_property_1', selected=True),
                         ExportColumn(label='selected_property_2', selected=True),
                         ExportColumn(label='unselected_property'),
