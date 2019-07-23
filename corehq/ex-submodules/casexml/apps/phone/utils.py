@@ -57,17 +57,18 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
 
     if data is None:
         with CriticalSection([key]):
-            # re-check cache to avoid re-computing it
-            data = get_cached_fixture_items(domain, cache_bucket_prefix)
-            if data is not None:
-                return [data]
-            else:
-                _record_datadog_metric('generate', key)
-                items = data_fn()
-                io_data = write_fixture_items_to_io(items)
-                data = io_data.read()
-                io_data.seek(0)
-                cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
+            if not restore_state.overwrite_cache:
+                # re-check cache to avoid re-computing it
+                data = get_cached_fixture_items(domain, cache_bucket_prefix)
+                if data is not None:
+                    return [data]
+
+            _record_datadog_metric('generate', key)
+            items = data_fn()
+            io_data = write_fixture_items_to_io(items)
+            data = io_data.read()
+            io_data.seek(0)
+            cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
 
     global_id = GLOBAL_USER_ID.encode('utf-8')
     b_user_id = restore_state.restore_user.user_id.encode('utf-8')
