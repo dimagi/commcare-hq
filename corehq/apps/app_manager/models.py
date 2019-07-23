@@ -5868,20 +5868,14 @@ class LatestEnabledBuildProfiles(models.Model):
     build_id = models.CharField(max_length=255)
     active = models.BooleanField(default=True)
 
-    def get_domain(self):
-        # method to set domain on records added before domain column was added
-        if not self.domain:
-            self.domain = Application.get(self.build_id).domain
-        return self.domain
-
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        self.expire_cache(self.get_domain())
+        self.expire_cache(self.domain)
 
     @property
     def build(self):
         if not hasattr(self, '_build'):
-            self._build = get_build_by_version(self.get_domain(), self.app_id, self.version)['value']
+            self._build = get_build_by_version(self.domain, self.app_id, self.version)['value']
         return self._build
 
     def clean(self):
