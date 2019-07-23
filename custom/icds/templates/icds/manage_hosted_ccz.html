@@ -64,7 +64,7 @@
             </tr>
           </thead>
           <tbody data-bind="foreach: hostings">
-            <tr>
+            <tr data-bind="style: {background: rowColor()}">
               <td>
                 <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
                 </a>
