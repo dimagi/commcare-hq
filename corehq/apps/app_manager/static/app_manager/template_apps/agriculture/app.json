@@ -401,7 +401,7 @@
             "doc_type": "CaseReferences",
             "save": {}
           },
-          "post_form_workflow": "module",
+          "post_form_workflow": "default",
           "form_type": "module_form",
           "form_filter": "",
           "doc_type": "Form",
@@ -2079,7 +2079,7 @@
             "doc_type": "CaseReferences",
             "save": {}
           },
-          "post_form_workflow": "module",
+          "post_form_workflow": "default",
           "form_type": "module_form",
           "form_filter": "",
           "doc_type": "Form",
