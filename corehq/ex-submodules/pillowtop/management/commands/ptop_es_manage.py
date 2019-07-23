@@ -67,4 +67,4 @@ class Command(BaseCommand):
         if flip_all:
             for index_info in es_indices:
                 assume_alias(es, index_info.index, index_info.alias)
-            print(simplejson.dumps(es.indices.get_aliases(), indent=4))
+            print(simplejson.dumps(es.indices.get_alias(), indent=4))

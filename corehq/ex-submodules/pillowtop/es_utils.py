@@ -13,18 +13,14 @@ from pillowtop.logger import pillow_logging
 INDEX_REINDEX_SETTINGS = {
     "index": {
         "refresh_interval": "1800s",
-        "merge.policy.merge_factor": 20,
-        "store.throttle.max_bytes_per_sec": "1mb",
-        "store.throttle.type": "merge",
+        "merge.policy.max_merge_at_once": 20,
     }
 }
 
 INDEX_STANDARD_SETTINGS = {
     "index": {
         "refresh_interval": "5s",
-        "merge.policy.merge_factor": 10,
-        "store.throttle.max_bytes_per_sec": "5mb",
-        "store.throttle.type": "node",
+        "merge.policy.max_merge_at_once": 10,
     }
 }
 
@@ -191,7 +187,12 @@ def initialize_mapping_if_necessary(es, index_info):
         pillow_logging.info("Initializing elasticsearch mapping for [%s]" % index_info.type)
         mapping = copy(index_info.mapping)
         mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-        mapping_res = es.indices.put_mapping(index_info.type, {index_info.type: mapping}, index=index_info.index)
+        mapping_res = es.indices.put_mapping(
+            index_info.type,
+            {index_info.type: mapping},
+            index=index_info.index,
+            include_type_name=True
+        )
         if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
             # API confirms OK, trust it.
             pillow_logging.info("Mapping set: [%s] %s" % (index_info.type, mapping_res))

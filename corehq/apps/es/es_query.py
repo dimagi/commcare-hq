@@ -167,9 +167,9 @@ class ESQuery(object):
         self._aggregations = []
         self.es_instance_alias = es_instance_alias
         self.es_query = {"query": {
-            "filtered": {
-                "filter": {"and": []},
-                "query": queries.match_all()
+            "bool": {
+                "filter": queries.match_all(),
+                "must": []
             }
         }}
 
@@ -249,7 +249,7 @@ class ESQuery(object):
 
     @property
     def _filters(self):
-        return self.es_query['query']['filtered']['filter']['and']
+        return self.es_query['query']['bool']['must']
 
     def exclude_source(self):
         """

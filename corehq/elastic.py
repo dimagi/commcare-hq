@@ -349,7 +349,6 @@ def scan(client, query=None, scroll='5m', **kwargs):
         )
 
     """
-    kwargs['search_type'] = 'scan'
     # initial search
     initial_resp = client.search(body=query, scroll=scroll, **kwargs)
 
