@@ -6,7 +6,7 @@ from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case
 from corehq.apps.domain.models import CallCenterProperties
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
-from corehq.apps.locations.tests.util import make_loc
+from corehq.apps.locations.tests.util import make_loc, delete_all_locations
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -28,6 +28,7 @@ class CallCenterLocationOwnerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(CallCenterLocationOwnerTest, cls).setUpClass()
         # Create domain
         cls.domain = create_domain(TEST_DOMAIN)
         cls.domain.call_center_config = cls.get_call_center_config()
@@ -55,10 +56,8 @@ class CallCenterLocationOwnerTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
-        cls.grandchild_location.delete()
-        cls.child_location.delete()
-        cls.root_location.delete()
-        cls.location_type.delete()
+        delete_all_locations()
+        super(CallCenterLocationOwnerTest, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_cases()

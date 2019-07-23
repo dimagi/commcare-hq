@@ -60,9 +60,9 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(ReportAppAnalyticsTest, cls).tearDownClass()
         cls.app.delete()
         cls.deleted_app.delete()
+        super(ReportAppAnalyticsTest, cls).tearDownClass()
 
     def test_get_all_form_definitions_grouped_by_app_and_xmlns_no_data(self):
         self.assertEqual([], get_all_form_definitions_grouped_by_app_and_xmlns('missing'))
