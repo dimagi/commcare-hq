@@ -4237,6 +4237,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         ).first()
 
     @memoized
+    def _get_version_comparison_build(self):
+        '''
+        Returns an earlier build to be used for comparing forms and multimedia
+        when making a new build and setting the versions of those items.
+        For normal applications, this is just the previous build.
+        '''
+        return self.get_previous_version()
+
+    @memoized
     def get_latest_saved(self):
         """
         This looks really similar to get_latest_app, not sure why tim added
@@ -4775,7 +4784,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        previous_version = self.get_previous_version()
+        previous_version = self._get_version_comparison_build()
         if previous_version:
             force_new_version = self.build_profiles != previous_version.build_profiles
             for form_stuff in self.get_forms(bare=False):
@@ -4810,7 +4819,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        previous_version = self.get_previous_version()
+        previous_version = self._get_version_comparison_build()
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
@@ -5634,6 +5643,16 @@ class LinkedApplication(Application):
             if build_doc.get('upstream_app_id', build_doc['master']) == master_app_id:
                 return self.wrap(build_doc)
         return None
+
+    @memoized
+    def _get_version_comparison_build(self):
+        previous_version = super(LinkedApplication, self)._get_version_comparison_build()
+        if not previous_version:
+            # If there's no previous version, check for a previous version in the same family.
+            # This allows projects using multiple masters to copy a master app and start pulling
+            # from that copy without resetting thei form and multimedia versions.
+            previous_version = self.get_previous_version(master_app_id=self.progenitor_app_id)
+        return previous_version
 
     @classmethod
     def wrap(cls, data):
