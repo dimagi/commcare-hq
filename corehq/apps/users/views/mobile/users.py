@@ -747,12 +747,14 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
 @require_can_edit_commcare_users
 @require_POST
+@location_safe
 def activate_commcare_user(request, domain, user_id):
     return _modify_user_status(request, domain, user_id, True)
 
 
 @require_can_edit_commcare_users
 @require_POST
+@location_safe
 def deactivate_commcare_user(request, domain, user_id):
     return _modify_user_status(request, domain, user_id, False)
 
