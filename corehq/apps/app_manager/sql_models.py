@@ -9,7 +9,6 @@ from django.utils.translation import ugettext as _
 from memoized import memoized
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_by_version
-from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import (
     expire_get_latest_app_release_by_location_cache,
     get_latest_app_release_by_location,
