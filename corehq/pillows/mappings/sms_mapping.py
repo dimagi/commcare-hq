@@ -14,31 +14,31 @@ SMS_MAPPING = {
     'date_formats': DATE_FORMATS_ARR,
     'dynamic': False,
     'properties': {
-        'backend_api': {'type': 'string'},
-        'backend_id': {'type': 'string'},
-        'base_doc': {'type': 'string'},
+        'backend_api': {'type': 'text'},
+        'backend_id': {'type': 'text'},
+        'base_doc': {'type': 'text'},
         'billed': {'type': 'boolean'},
-        'couch_recipient': {'type': 'string'},
-        'couch_recipient_doc_type': {'type': 'string'},
+        'couch_recipient': {'type': 'text'},
+        'couch_recipient_doc_type': {'type': 'text'},
         'date': {
             'format': DATE_FORMATS_STRING,
             'type': 'date'
         },
-        'direction': {'type': 'string'},
-        'doc_type': {'index': 'not_analyzed', 'type': 'string'},
+        'direction': {'type': 'text'},
+        'doc_type': {'type': 'keyword'},
         'domain': {
             'fields': {
-                'domain': {'index': 'analyzed', 'type': 'string'},
-                'exact': {'index': 'not_analyzed', 'type': 'string'}
+                'domain': {'type': 'text'},
+                'exact': {'type': 'keyword'}
             },
-            'type': 'multi_field'
+            'type': 'text'
         },
-        'phone_number': {'type': 'string'},
+        'phone_number': {'type': 'text'},
         'processed': {'type': 'boolean'},
-        'reminder_id': {'type': 'string'},
-        'text': {'type': 'string'},
-        'workflow': {'type': 'string'},
-        'xforms_session_couch_id': {'type': 'string'}
+        'reminder_id': {'type': 'text'},
+        'text': {'type': 'text'},
+        'workflow': {'type': 'text'},
+        'xforms_session_couch_id': {'type': 'text'}
     }
 }
 

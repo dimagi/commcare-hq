@@ -10,24 +10,22 @@
         "domain": {
             "fields": {
                 "domain": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "case_id": {
-            "type": "string"
+            "type": "text"
         },
         "section_id": {
-            "type": "string"
+            "type": "text"
         },
         "entry_id": {
-            "type": "string"
+            "type": "text"
         },
         "balance": {
             "type": "integer"
@@ -36,13 +34,13 @@
             "type": "date"
         },
         "last_modified_form_id": {
-            "type": "string"
+            "type": "text"
         },
         "daily_consumption": {
             "type": "float"
         },
         "location_id": {
-            "type": "string"
+            "type": "text"
         }
     }
 }

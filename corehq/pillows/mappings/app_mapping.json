@@ -4,9 +4,6 @@
     "_meta": {
         "created": null
     },
-    "_all": {
-        "enabled": false
-    },
     "date_detection": false,
     "properties": {
         "@indexed_on": {
@@ -14,39 +11,38 @@
             "type": "date"
         },
         "short_url": {
-            "type": "string"
+            "type": "text"
         },
         "build_broken": {
             "type": "boolean"
         },
         "copy_of": {
-            "type": "string"
+            "type": "text"
         },
         "phone_model": {
-            "type": "string"
+            "type": "text"
         },
         "copy_history": {
-            "type": "string"
+            "type": "text"
         },
         "is_released": {
             "type": "boolean"
         },
         "platform": {
-            "type": "string"
+            "type": "text"
         },
         "admin_password": {
-            "type": "string"
+            "type": "text"
         },
         "build_spec": {
             "type": "object",
             "dynamic": false,
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "version": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "build_number": {
                     "type": "long"
@@ -65,8 +61,7 @@
             "dynamic": false,
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "output_size": {
                     "type": "object",
@@ -76,24 +71,24 @@
                     "type": "long"
                 },
                 "multimedia_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "media_type": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "unique_id": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
         "comment_from": {
-            "type": "string"
+            "type": "text"
         },
         "cloudcare_enabled": {
             "type": "boolean"
         },
         "recipients": {
-            "type": "string"
+            "type": "text"
         },
         "translations": {
             "type": "object",
@@ -108,8 +103,7 @@
             "dynamic": false,
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "build_number": {
                     "type": "long"
@@ -122,7 +116,7 @@
                     "format": "__DATE_FORMATS_STRING__"
                 },
                 "version": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "latest": {
                     "type": "boolean"
@@ -130,60 +124,57 @@
             }
         },
         "application_version": {
-            "type": "string"
+            "type": "text"
         },
         "build_comment": {
-            "type": "string"
+            "type": "text"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "force_http": {
             "type": "boolean"
         },
         "created_from_template": {
-            "type": "string"
+            "type": "text"
         },
         "translation_strategy": {
-            "type": "string"
+            "type": "text"
         },
         "case_sharing": {
             "type": "boolean"
         },
         "short_odk_url": {
-            "type": "string"
+            "type": "text"
         },
         "domain": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "build_langs": {
-            "type": "string"
+            "type": "text"
         },
         "deployment_date": {
             "type": "date",
             "format": "__DATE_FORMATS_STRING__"
         },
         "user_type": {
-            "type": "string"
+            "type": "text"
         },
         "text_input": {
-            "type": "string"
+            "type": "text"
         },
         "secure_submissions": {
             "type": "boolean"
@@ -202,13 +193,13 @@
             "dynamic": true
         },
         "description": {
-            "type": "string"
+            "type": "text"
         },
         "short_odk_media_url": {
-            "type": "string"
+            "type": "text"
         },
         "langs": {
-            "type": "string"
+            "type": "text"
         },
         "use_custom_suite": {
             "type": "boolean"
@@ -226,8 +217,7 @@
                     "dynamic": false,
                     "properties": {
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "show": {
                             "type": "boolean"
@@ -242,12 +232,10 @@
                     "type": "boolean"
                 },
                 "root_module_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "name": {
                     "type": "object",
@@ -258,8 +246,7 @@
                     "dynamic": false,
                     "properties": {
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "show": {
                             "type": "boolean"
@@ -278,14 +265,13 @@
                             "type": "boolean"
                         },
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "relationship": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "module_id": {
-                            "type": "string"
+                            "type": "text"
                         }
                     }
                 },
@@ -294,11 +280,10 @@
                     "dynamic": false,
                     "properties": {
                         "unique_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "version": {
                             "type": "long"
@@ -311,13 +296,13 @@
                             "type": "boolean"
                         },
                         "form_type": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "requires": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "form_filter": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "actions": {
                             "type": "object",
@@ -328,41 +313,39 @@
                                     "dynamic": false,
                                     "properties": {
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "repeat_context": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "case_properties": {
                                             "type": "object",
                                             "dynamic": false
                                         },
                                         "case_type": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "reference_id": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "case_name": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -373,8 +356,7 @@
                                     "dynamic": false,
                                     "properties": {
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "update": {
                                             "type": "object",
@@ -385,17 +367,16 @@
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -406,25 +387,23 @@
                                     "dynamic": false,
                                     "properties": {
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -435,31 +414,29 @@
                                     "dynamic": false,
                                     "properties": {
                                         "name_path": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "followup_date": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -474,33 +451,30 @@
                                             "dynamic": false
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
                                     }
                                 },
                                 "doc_type": {
-                                    "index": "not_analyzed",
-                                    "type": "string"
+                                    "type": "keyword"
                                 },
                                 "load_from_form": {
                                     "type": "object",
@@ -511,25 +485,23 @@
                                             "dynamic": false
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -540,31 +512,29 @@
                                     "dynamic": false,
                                     "properties": {
                                         "name_path": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "external_id": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -575,28 +545,26 @@
                                     "dynamic": false,
                                     "properties": {
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "followup_date": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -611,25 +579,23 @@
                                             "dynamic": false
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -640,25 +606,23 @@
                                     "dynamic": false,
                                     "properties": {
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "condition": {
                                             "type": "object",
                                             "dynamic": false,
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         }
@@ -667,49 +631,46 @@
                             }
                         },
                         "xmlns": {
-                            "type": "string"
+                            "type": "text"
                         }
                     }
                 },
                 "case_type": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "details": {
                     "type": "object",
                     "dynamic": false,
                     "properties": {
                         "filter": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "type": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "sort_elements": {
                             "type": "object",
                             "dynamic": false,
                             "properties": {
                                 "doc_type": {
-                                    "index": "not_analyzed",
-                                    "type": "string"
+                                    "type": "keyword"
                                 },
                                 "direction": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "type": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "field": {
-                                    "type": "string"
+                                    "type": "text"
                                 }
                             }
                         },
@@ -718,38 +679,36 @@
                             "dynamic": false,
                             "properties": {
                                 "doc_type": {
-                                    "index": "not_analyzed",
-                                    "type": "string"
+                                    "type": "keyword"
                                 },
                                 "time_ago_interval": {
                                     "type": "float"
                                 },
                                 "filter_xpath": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "field": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "late_flag": {
                                     "type": "long"
                                 },
                                 "format": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "enum": {
                                     "type": "object",
                                     "dynamic": false,
                                     "properties": {
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "value": {
                                             "type": "object",
                                             "dynamic": false
                                         },
                                         "key": {
-                                            "type": "string"
+                                            "type": "text"
                                         }
                                     }
                                 },
@@ -758,10 +717,10 @@
                                     "dynamic": false
                                 },
                                 "model": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "advanced": {
-                                    "type": "string"
+                                    "type": "text"
                                 }
                             }
                         }
@@ -772,8 +731,7 @@
                     "dynamic": false,
                     "properties": {
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "show": {
                             "type": "boolean"
@@ -785,15 +743,15 @@
                     }
                 },
                 "unique_id": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
         "attribution_notes": {
-            "type": "string"
+            "type": "text"
         },
         "admin_password_charset": {
-            "type": "string"
+            "type": "text"
         },
         "date_created": {
             "type": "date",

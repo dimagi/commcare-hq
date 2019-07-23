@@ -27,41 +27,36 @@ GROUP_MAPPING = {
     "date_detection": False,
     "properties": {
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
+            "type": "text",
             "fields": {
                 "domain": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 },
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "multi_field"
         },
         "name": {
+            "type": "text",
             "fields": {
                 "exact": {
-                    "index": "analyzed",
-                    "type": "string",
+                    "type": "text",
                     "analyzer": "sortable_exact"
                 },
                 "name": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             },
-            "type": "multi_field"
         },
         "reporting": {"type": "boolean"},
-        "path": {"type": "string"},
+        "path": {"type": "text"},
         "case_sharing": {"type": "boolean"},
-        "users": {"type": "string"},
-        "removed_users": {"type": "string"},
+        "users": {"type": "text"},
+        "removed_users": {"type": "text"},
     }
 }
 

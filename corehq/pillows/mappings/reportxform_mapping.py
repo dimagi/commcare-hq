@@ -23,22 +23,22 @@ CASE_MAPPING_FRAGMENT = {
             'dynamic': True
         },
 
-        "@case_id": {"type": "string", "index": "not_analyzed"},
-        "@user_id": {"type": "string", "index": "not_analyzed"},
-        "@xmlns": {"type": "string", "index": "not_analyzed"},
+        "@case_id": {"type": "keyword"},
+        "@user_id": {"type": "keyword"},
+        "@xmlns": {"type": "keyword"},
 
 
-        "case_id": {"type": "string", "index": "not_analyzed"},
-        "user_id": {"type": "string", "index": "not_analyzed"},
-        "xmlns": {"type": "string", "index": "not_analyzed"},
+        "case_id": {"type": "keyword"},
+        "user_id": {"type": "keyword"},
+        "xmlns": {"type": "keyword"},
 
         "create": {
             'type': 'object',
             'dynamic': True,
             'properties:': {
-                'case_type': {"type": "string", "index": "not_analyzed"},
-                'owner_id': {"type": "string", "index": "not_analyzed"},
-                'case_name': {"type": "string", "index": "not_analyzed"},
+                'case_type': {"type": "keyword"},
+                'owner_id': {"type": "keyword"},
+                'case_name': {"type": "keyword"},
             }
         },
 
@@ -46,9 +46,9 @@ CASE_MAPPING_FRAGMENT = {
             'type': 'object',
             'dynamic': True,
             'properties:': {
-                'case_type': {"type": "string", "index": "not_analyzed"},
-                'owner_id': {"type": "string", "index": "not_analyzed"},
-                'case_name': {"type": "string", "index": "not_analyzed"},
+                'case_type': {"type": "keyword"},
+                'owner_id': {"type": "keyword"},
+                'case_name': {"type": "keyword"},
                 'date_opened': {
                     "type": "date",
                     "format": DATE_FORMATS_STRING
@@ -75,36 +75,36 @@ REPORT_XFORM_MAPPING = {
         "created": '2014-10-07', #record keeping on the index.
     },
     "properties": {
-        'doc_type': {'type': 'string'},
+        'doc_type': {'type': 'text'},
         "domain": {
-            "type": "multi_field",
+            "type": "text",
             "fields": {
-                "domain": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
+                "domain": {"type": "text"},
+                "exact": {"type": "keyword"}
                 #exact is full text string match - hyphens get parsed in standard
                 # analyzer
                 # in queries you can access by domain.exact
             }
         },
         "xmlns": {
-            "type": "multi_field",
+            "type": "text",
             "fields": {
-                "xmlns": {"type": "string", "index": "analyzed"},
-                "exact": {"type": "string", "index": "not_analyzed"}
+                "xmlns": {"type": "text"},
+                "exact": {"type": "keyword"}
             }
         },
-        '@uiVersion': {"type": "string"},
-        '@version': {"type": "string"},
-        "path": {"type": "string", "index": "not_analyzed"},
+        '@uiVersion': {"type": "text"},
+        '@version': {"type": "text"},
+        "path": {"type": "keyword"},
         "submit_ip": {"type": "ip"},
-        "app_id": {"type": "string", "index": "not_analyzed"},
+        "app_id": {"type": "keyword"},
         "received_on": {
             "type": "date",
             "format": DATE_FORMATS_STRING
         },
         'initial_processing_complete': {"type": "boolean"},
         'partial_submission': {"type": "boolean"},
-        "#export_tag": {"type": "string", "index": "not_analyzed"},
+        "#export_tag": {"type": "keyword"},
         'external_blobs': {
             'dynamic': False,
             'type': 'object'
@@ -116,8 +116,8 @@ REPORT_XFORM_MAPPING = {
         'form': {
             'dynamic': True,
             'properties': {
-                '@name': {"type": "string", "index": "not_analyzed"},
-                "#type": {"type": "string", "index": "not_analyzed"},
+                '@name': {"type": "keyword"},
+                "#type": {"type": "keyword"},
                 'meta': {
                     'dynamic': False,
                     'properties': {
@@ -129,12 +129,12 @@ REPORT_XFORM_MAPPING = {
                             "type": "date",
                             "format": DATE_FORMATS_STRING
                         },
-                        "userID": {"type": "string", "index": "not_analyzed"},
-                        "deviceID": {"type": "string", "index": "not_analyzed"},
-                        "instanceID": {"type": "string", "index": "not_analyzed"},
-                        "username": {"type": "string", "index": "not_analyzed"},
-                        "appVersion": {"type": "string", "index": "not_analyzed"},
-                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
+                        "userID": {"type": "keyword"},
+                        "deviceID": {"type": "keyword"},
+                        "instanceID": {"type": "keyword"},
+                        "username": {"type": "keyword"},
+                        "appVersion": {"type": "keyword"},
+                        "CommCareVersion": {"type": "keyword"},
                     }
                 },
             },
@@ -151,7 +151,7 @@ REPORT_XFORM_MAPPING = {
             "everything_else": {
                 "match": "*",
                 "match_mapping_type": "string",
-                "mapping": {"type": "string", "index": "not_analyzed"}
+                "mapping": {"type": "keyword"}
             }
         }
     ]

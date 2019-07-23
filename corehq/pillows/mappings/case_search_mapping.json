@@ -6,9 +6,6 @@
         "comment": "",
         "created": "2016-03-29 @frener"
     },
-    "_all": {
-        "enabled": false
-    },
     "properties": {
         "@indexed_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -19,21 +16,18 @@
             "dynamic": false,
             "properties": {
                 "key": {
-                    "type": "string",
+                    "type": "text",
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     }
                 },
                 "value": {
-                    "type": "string",
-                    "null_value": "",
+                    "type": "text",
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string",
+                            "type": "keyword",
                             "null_value": ""
                         },
                         "numeric": {
@@ -53,84 +47,71 @@
             "type": "boolean"
         },
         "closed_by": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "keyword"
         },
         "closed_on": {
             "format": "__DATE_FORMATS_STRING__",
             "type": "date"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "external_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "keyword"
         },
         "indices": {
             "type": "nested",
             "dynamic": false,
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "identifier": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "referenced_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "referenced_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "relationship": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             }
         },
         "location_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "keyword"
         },
         "modified_on": {
             "format": "__DATE_FORMATS_STRING__",
             "type": "date"
         },
         "name": {
-            "type": "string",
+            "type": "text",
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             }
         },
         "opened_by": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "keyword"
         },
         "opened_on": {
             "format": "__DATE_FORMATS_STRING__",
             "type": "date"
         },
         "owner_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "keyword"
         },
         "server_modified_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -139,19 +120,16 @@
         "type": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "type": {
-                    "index": "analyzed",
-                    "type": "string"
+                    "type": "text"
                 }
             },
-            "type": "multi_field"
+            "type": "text"
         },
         "user_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "keyword"
         }
     }
 }
