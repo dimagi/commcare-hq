@@ -274,7 +274,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
                 var awcReportPath = 'awc_reports';
-                if ($location.path().indexOf('maternal_child') !== -1) {
+                if ($location.path().indexOf('maternal_child') !== -1 || $location.path().indexOf('maternal_and_child') !== -1) {
                     awcReportPath += '/maternal_child';
                 } else if ($location.path().indexOf('demographics') !== -1) {
                     awcReportPath += '/demographics';
