@@ -226,7 +226,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
         # Add single module and form, with image, to master, and pull linked app.
         master1_module = self.master1.add_module(Module.new_module('Module for master', None))
         master1_module.new_form('Form for master', 'en', get_blank_form_xml('Form for master'))
-        master1_map = _get_form_ids_by_xmlns(self.master1)
         image_path = 'jr://file/commcare/photo.jpg'
         self.master1.create_mapping(CommCareImage(_id='123'), image_path)
         self.master1.get_module(0).set_icon('en', image_path)
