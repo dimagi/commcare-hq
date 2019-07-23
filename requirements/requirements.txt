@@ -62,7 +62,7 @@ djangorestframework==3.5.4
 dnspython==1.15.0
 docutils==0.14            # via botocore
 dropbox==9.3.0
-elasticsearch==1.9.0
+elasticsearch==6.4.0
 email_validator==1.0.3
 enum34==1.1.6             # via cryptography
 et-xmlfile==1.0.1         # via openpyxl
