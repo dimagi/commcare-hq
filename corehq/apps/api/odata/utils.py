@@ -80,6 +80,15 @@ def get_case_odata_fields_from_config(case_export_config):
     return _get_odata_fields_from_columns(case_export_config, SPECIAL_TYPES)
 
 
+def get_form_odata_fields_from_config(form_export_config):
+    SPECIAL_TYPES = {
+        'received_on': 'Edm.DateTimeOffset',
+        'form.meta.timeStart': 'Edm.DateTimeOffset',
+        'form.meta.timeEnd': 'Edm.DateTimeOffset',
+    }
+    return _get_odata_fields_from_columns(form_export_config, SPECIAL_TYPES)
+
+
 def _get_odata_fields_from_columns(export_config, special_types):
     def _get_dot_path(export_column):
         if export_column and export_column.item and export_column.item.path:
@@ -88,11 +97,6 @@ def _get_odata_fields_from_columns(export_config, special_types):
 
     return [FieldMetadata(column.label, special_types.get(_get_dot_path(column), 'Edm.String'))
             for column in export_config.tables[0].selected_columns]
-
-
-def get_form_odata_fields_from_config(form_export_config):
-    table = form_export_config.tables[0]
-    return [column.label for column in table.selected_columns]
 
 
 def record_feed_access_in_datadog(request, config_id, duration, response):
