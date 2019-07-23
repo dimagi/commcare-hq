@@ -6,7 +6,11 @@ import uuid
 from math import ceil
 
 from django.db.models import Count
-from django.http import HttpResponse, Http404
+from django.http import (
+    HttpResponse,
+    Http404,
+    HttpResponseBadRequest,
+)
 from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
 from django.views.generic import View
@@ -66,7 +70,11 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
     avoid_parallel_build_request,
 )
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
+from corehq.apps.app_manager.exceptions import (
+    ModuleIdMissingException,
+    PracticeUserException,
+    BuildConflictException,
+)
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
@@ -296,6 +304,8 @@ def save_copy(request, domain, app_id):
                     return result
                 copy = result
             CouchUser.get(user_id).set_has_built_app()
+        except BuildConflictException:
+            return HttpResponseBadRequest(_("There is already a version build in progress. Please wait."))
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():

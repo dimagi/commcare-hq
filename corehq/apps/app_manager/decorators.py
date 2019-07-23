@@ -11,7 +11,10 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from corehq import toggles
-from corehq.apps.app_manager.exceptions import CaseError
+from corehq.apps.app_manager.exceptions import (
+    CaseError,
+    BuildConflictException,
+)
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import AppEditingError
 from corehq.apps.app_manager.util import get_latest_app_release_by_location, get_latest_enabled_build_for_profile
@@ -153,12 +156,11 @@ def avoid_parallel_build_request(fn):
         domain = app.domain
         app_id = app.get_id
         if _build_request_in_progress(domain, app_id):
-            return HttpResponse(_("There is already a version build in progress. Please wait."), status=400)
-        else:
-            _set_build_in_progress_lock(domain, app_id)
-            fn_return = fn(app, comment, user_id, *args, **kwargs)
-            _release_build_in_progress_lock(domain, app_id)
-            return fn_return
+            raise BuildConflictException()
+        _set_build_in_progress_lock(domain, app_id)
+        fn_return = fn(app, comment, user_id, *args, **kwargs)
+        _release_build_in_progress_lock(domain, app_id)
+        return fn_return
     return new_fn
 
 
