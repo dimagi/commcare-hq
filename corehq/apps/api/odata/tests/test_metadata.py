@@ -409,6 +409,15 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
             tables=[
                 TableConfiguration(
                     columns=[
+                        ExportColumn(label='received_on', selected=True,
+                                     item=ExportItem(path=[PathNode(name='received_on')])),
+                        ExportColumn(label='started_time', selected=True,
+                                     item=ExportItem(path=[
+                                         PathNode(name='form'),
+                                         PathNode(name='meta'),
+                                         PathNode(name='timeStart'),
+                                     ])),
+
                         ExportColumn(label='selected_property_1', selected=True),
                         ExportColumn(label='selected_property_2', selected=True),
                         ExportColumn(label='unselected_property'),

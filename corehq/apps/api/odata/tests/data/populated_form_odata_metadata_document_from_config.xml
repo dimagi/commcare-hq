@@ -6,6 +6,8 @@
                 <Key>
                     <PropertyRef Name="formid"/>
                 </Key>
+                <Property Name="received_on" Type="Edm.DateTimeOffset"/>
+                <Property Name="started_time" Type="Edm.DateTimeOffset"/>
                 <Property Name="selected_property_1" Type="Edm.String"/>
                 <Property Name="selected_property_2" Type="Edm.String"/>
             </EntityType>
