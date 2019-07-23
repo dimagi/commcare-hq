@@ -55,8 +55,9 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
 )
 from corehq.apps.app_manager.models import (
-    Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
+    Application, RemoteApp, OpenSubCaseAction, CaseIndex
 )
+from corehq.apps.app_manager.schemas.document.form_action import AdvancedFormActions
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name

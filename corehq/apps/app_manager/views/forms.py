@@ -59,10 +59,11 @@ from corehq.apps.app_manager.schemas.document.form_action import (
     FormActionCondition,
     OpenCaseAction,
     UpdateCaseAction,
+    FormActions,
+    AdvancedFormActions,
 )
 from corehq.apps.app_manager.models import (
     AdvancedForm,
-    AdvancedFormActions,
     AppEditingError,
     CaseReferences,
     CustomAssertion,
@@ -70,7 +71,6 @@ from corehq.apps.app_manager.models import (
     CustomInstance,
     DeleteFormRecord,
     Form,
-    FormActions,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,

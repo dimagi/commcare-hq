@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import itertools
+from collections import Counter
+
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -17,6 +20,16 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from memoized import memoized
+
+from corehq.apps.app_manager.const import (
+    AUTO_SELECT_USER,
+    AUTO_SELECT_CASE,
+    AUTO_SELECT_FIXTURE,
+    AUTO_SELECT_USERCASE,
+    AUTO_SELECT_RAW,
+)
+from corehq.apps.app_manager.models import IndexedSchema, LoadUpdateAction, AdvancedOpenCaseAction
 
 
 class FormActionCondition(DocumentSchema):
@@ -127,3 +140,114 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     def form_element_name(self):
         return 'subcase_{}'.format(self.id)
 
+
+class FormActions(DocumentSchema):
+
+    open_case = SchemaProperty(OpenCaseAction)
+    update_case = SchemaProperty(UpdateCaseAction)
+    close_case = SchemaProperty(FormAction)
+    open_referral = SchemaProperty(OpenReferralAction)
+    update_referral = SchemaProperty(UpdateReferralAction)
+    close_referral = SchemaProperty(FormAction)
+
+    case_preload = SchemaProperty(PreloadAction)
+    referral_preload = SchemaProperty(PreloadAction)
+    load_from_form = SchemaProperty(PreloadAction)  # DEPRECATED
+
+    usercase_update = SchemaProperty(UpdateCaseAction)
+    usercase_preload = SchemaProperty(PreloadAction)
+
+    subcases = SchemaListProperty(OpenSubCaseAction)
+
+    get_subcases = IndexedSchema.Getter('subcases')
+
+    def all_property_names(self):
+        names = set()
+        names.update(list(self.update_case.update.keys()))
+        names.update(list(self.case_preload.preload.values()))
+        for subcase in self.subcases:
+            names.update(list(subcase.case_properties.keys()))
+        return names
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.subcases])
+
+
+class AdvancedFormActions(DocumentSchema):
+    load_update_cases = SchemaListProperty(LoadUpdateAction)
+
+    open_cases = SchemaListProperty(AdvancedOpenCaseAction)
+
+    get_load_update_actions = IndexedSchema.Getter('load_update_cases')
+    get_open_actions = IndexedSchema.Getter('open_cases')
+
+    def get_all_actions(self):
+        return itertools.chain(self.get_load_update_actions(), self.get_open_actions())
+
+    def get_subcase_actions(self):
+        return (a for a in self.get_all_actions() if a.case_indices)
+
+    def get_open_subcase_actions(self, parent_case_type=None):
+        for action in self.open_cases:
+            if action.case_indices:
+                if not parent_case_type:
+                    yield action
+                else:
+                    if any(self.actions_meta_by_tag[case_index.tag]['action'].case_type == parent_case_type
+                           for case_index in action.case_indices):
+                        yield action
+
+    def get_case_tags(self):
+        for action in self.get_all_actions():
+            yield action.case_tag
+
+    def get_action_from_tag(self, tag):
+        return self.actions_meta_by_tag.get(tag, {}).get('action', None)
+
+    @property
+    def actions_meta_by_tag(self):
+        return self._action_meta()['by_tag']
+
+    @property
+    def actions_meta_by_parent_tag(self):
+        return self._action_meta()['by_parent_tag']
+
+    @property
+    def auto_select_actions(self):
+        return self._action_meta()['by_auto_select_mode']
+
+    @memoized
+    def _action_meta(self):
+        meta = {
+            'by_tag': {},
+            'by_parent_tag': {},
+            'by_auto_select_mode': {
+                AUTO_SELECT_USER: [],
+                AUTO_SELECT_CASE: [],
+                AUTO_SELECT_FIXTURE: [],
+                AUTO_SELECT_USERCASE: [],
+                AUTO_SELECT_RAW: [],
+            }
+        }
+
+        def add_actions(type, action_list):
+            for action in action_list:
+                meta['by_tag'][action.case_tag] = {
+                    'type': type,
+                    'action': action
+                }
+                for parent in action.case_indices:
+                    meta['by_parent_tag'][parent.tag] = {
+                        'type': type,
+                        'action': action
+                    }
+                if type == 'load' and action.auto_select and action.auto_select.mode:
+                    meta['by_auto_select_mode'][action.auto_select.mode].append(action)
+
+        add_actions('load', self.get_load_update_actions())
+        add_actions('open', self.get_open_actions())
+
+        return meta
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.get_open_subcase_actions()])
