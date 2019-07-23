@@ -5,19 +5,10 @@ import itertools
 from collections import Counter
 
 from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DateTimeProperty,
-    DecimalProperty,
     DictProperty,
-    Document,
     DocumentSchema,
-    FloatProperty,
-    IntegerProperty,
-    ListProperty,
-    SchemaDictProperty,
     SchemaListProperty,
     SchemaProperty,
-    StringListProperty,
     StringProperty,
 )
 from memoized import memoized
