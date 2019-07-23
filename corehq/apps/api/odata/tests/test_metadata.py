@@ -24,7 +24,6 @@ from corehq.apps.api.odata.views import (
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain, get_odata_form_configs_by_domain
 from corehq.apps.export.models import CaseExportInstance, ExportColumn, FormExportInstance, TableConfiguration
 from corehq.util.test_utils import flag_enabled
 
