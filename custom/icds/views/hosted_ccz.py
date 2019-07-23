@@ -15,7 +15,6 @@ from django.views.generic import TemplateView
 from django.contrib import messages
 from django.http.response import (
     HttpResponse,
-    JsonResponse,
 )
 from django.conf import settings
 
