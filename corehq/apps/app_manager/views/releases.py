@@ -269,7 +269,6 @@ def release_build(request, domain, app_id, saved_app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@avoid_parallel_build_request
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
@@ -292,11 +291,10 @@ def save_copy(request, domain, app_id):
             timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
                                          timing_buckets=(1, 10, 30, 60, 120, 240))
             with timer:
-                copy = app.make_build(
-                    comment=comment,
-                    user_id=user_id,
-                )
-                copy.save(increment_version=False)
+                result = make_app_build(app, comment, user_id)
+                if isinstance(result, HttpResponse):
+                    return result
+                copy = result
             CouchUser.get(user_id).set_has_built_app()
         finally:
             # To make a RemoteApp always available for building
@@ -323,6 +321,16 @@ def save_copy(request, domain, app_id):
             'lang': lang
         }),
     })
+
+
+@avoid_parallel_build_request
+def make_app_build(app, comment, user_id):
+    copy = app.make_build(
+        comment=comment,
+        user_id=user_id,
+    )
+    copy.save(increment_version=False)
+    return copy
 
 
 def _track_build_for_app_preview(domain, couch_user, app_id, message):

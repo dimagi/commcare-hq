@@ -149,12 +149,14 @@ def no_conflict(fn):
 
 def avoid_parallel_build_request(fn):
     @wraps(fn)
-    def new_fn(request, domain, app_id, *args, **kwargs):
+    def new_fn(app, comment, user_id, *args, **kwargs):
+        domain = app.domain
+        app_id = app.get_id
         if _build_request_in_progress(domain, app_id):
             return HttpResponse(_("There is already a version build in progress. Please wait."), status=400)
         else:
             _set_build_in_progress_lock(domain, app_id)
-            fn_return = fn(request, domain, app_id, *args, **kwargs)
+            fn_return = fn(app, comment, user_id, *args, **kwargs)
             _release_build_in_progress_lock(domain, app_id)
             return fn_return
     return new_fn
