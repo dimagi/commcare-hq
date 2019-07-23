@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import uuid
+import sys
+from copy import deepcopy
 from functools import partial
 from six.moves.urllib.parse import urlencode
 from django.contrib import messages
@@ -313,6 +315,10 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
 
 
 def update_linked_app(app, user_id):
+    def restore_app(app, retain_copy):
+        report_map = get_static_report_mapping(app['domain'], app['domain'])
+        return overwrite_app(app, retain_copy, report_map)
+
     if not app.domain_link:
         raise AppLinkError(_(
             'This project is not authorized to update from the master application. '
@@ -326,6 +332,7 @@ def update_linked_app(app, user_id):
         ))
 
     if app.version is None or master_version > app.version:
+        retain_copy = deepcopy(app.to_json())
         try:
             latest_master_build = app.get_latest_master_release()
         except ActionNotPermitted:
@@ -354,6 +361,10 @@ def update_linked_app(app, user_id):
                     'which are not available in the linked domain: {ucr_id}'
                 ).format(ucr_id=str(e))
             )
+        except Exception as e:
+            etype, exc, tb = sys.exc_info()
+            restore_app(app, latest_master_build)
+            six.reraise(etype, exc, tb)
 
     if app.master_is_remote:
         try:
