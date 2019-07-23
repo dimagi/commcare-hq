@@ -77,7 +77,6 @@ def get_case_odata_fields_from_config(case_export_config):
         'server_modified_on': 'Edm.DateTimeOffset',
         'opened_on': 'Edm.DateTimeOffset',
     }
-    export_columns = case_export_config.tables[0].columns
 
     def _get_primary_path(export_column):
         if export_column and export_column.item and export_column.item.path:
@@ -85,7 +84,7 @@ def get_case_odata_fields_from_config(case_export_config):
         return None
 
     return [FieldMetadata(column.label, SPECIAL_TYPES.get(_get_primary_path(column), 'Edm.String'))
-            for column in export_columns if column.selected]
+            for column in case_export_config.tables[0].selected_columns]
 
 
 def get_form_odata_fields_from_config(form_export_config):
