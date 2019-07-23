@@ -22,9 +22,9 @@ hqDefine('icds/js/manage_hosted_ccz', [
             self.note = note;
             self.status = status;
             self.rowColor = function () {
-                if (self.status === 'failed') { return '#d9534f' };
-                if (self.status === 'pending') { return '#5bc0de' };
-            }
+                if (self.status === 'failed') { return '#d9534f'; }
+                if (self.status === 'pending') { return '#5bc0de'; }
+            };
             self.removeUrl = initialPageData.reverse("remove_hosted_ccz", id);
             self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", id);
             self.viewUrl = initialPageData.reverse("hosted_ccz", link);
