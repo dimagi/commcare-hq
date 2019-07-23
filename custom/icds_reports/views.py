@@ -1817,9 +1817,8 @@ class NICIndicatorAPIView(View):
             return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
 
         query_month = date(year, month, 1)
-        today = date.today()
-        current_month = today - relativedelta(months=1)
-        if query_month > current_month:
+
+        if query_month > date.today():
             return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
 
         state_name = nic_indicators_request.get('state_name')

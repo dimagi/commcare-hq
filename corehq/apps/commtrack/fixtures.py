@@ -16,7 +16,7 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
     # expand this here to prevent two separate couch calls
     data = data_fn()
 
-    if not should_sync(data, last_sync):
+    if not _should_sync(data, last_sync):
         return []
 
     name_plural = "{}s".format(name)
@@ -54,7 +54,7 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
     return [root]
 
 
-def should_sync(data, last_sync):
+def _should_sync(data, last_sync):
     """
     Determine if a data collection needs to be synced.
     """

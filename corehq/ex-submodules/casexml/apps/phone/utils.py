@@ -21,6 +21,7 @@ from memoized import memoized
 
 from corehq.blobs import get_blob_db, CODES, NotFound
 from corehq.blobs.models import BlobMeta
+from dimagi.utils.couch import CriticalSection
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
@@ -42,7 +43,7 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
     :param cache_bucket_prefix: Fixture bucket prefix
     :param fixture_name: Name of the fixture
     :param data_fn: Function to generate the XML fixture elements
-    :return: byte string representation of the fixture
+    :return: list containing byte string representation of the fixture
     """
     domain = restore_state.restore_user.domain
 
@@ -51,11 +52,17 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
         data = get_cached_fixture_items(domain, cache_bucket_prefix)
 
     if data is None:
-        items = data_fn()
-        io_data = write_fixture_items_to_io(items)
-        data = io_data.read()
-        io_data.seek(0)
-        cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
+        with CriticalSection(['{}/{}'.format(cache_bucket_prefix, domain)]):
+            # re-check cache to avoid re-computing it
+            data = get_cached_fixture_items(domain, cache_bucket_prefix)
+            if data is not None:
+                return [data]
+            else:
+                items = data_fn()
+                io_data = write_fixture_items_to_io(items)
+                data = io_data.read()
+                io_data.seek(0)
+                cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
 
     global_id = GLOBAL_USER_ID.encode('utf-8')
     b_user_id = restore_state.restore_user.user_id.encode('utf-8')
