@@ -235,6 +235,7 @@ class DashboardView(TemplateView):
             )]
         )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
+        kwargs['have_access_to_dashboard_manual'] = toggles.ENABLE_ICDS_DASHBOARD_MANUAL_UPDATE.enabled(self.couch_user.username)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
@@ -1961,3 +1962,31 @@ class CasDataExportAPIView(View):
             "awc": 3
         }
         return type_map[data_type]
+
+
+@location_safe
+@method_decorator([login_and_domain_required, toggles.ENABLE_ICDS_DASHBOARD_MANUAL_UPDATE.required_decorator()], name='dispatch')
+class ManualUpdateView(TemplateView):
+    page_title = 'Update Dashboard Manual'
+    urlname = 'update_dashboard_manual'
+    template_name = 'icds_reports/update_manual.html'
+
+    def post(self, request, *args, **kwargs):
+        data = request.FILES['dashboard_manual']
+        icds_file, _ = IcdsFile.objects.get_or_create(blob_id="dashboard_manual.pdf",
+                    data_type='dashboard_manual')
+
+        icds_file.store_file_in_blobdb(data)
+        icds_file.save()
+        messages.success(request, 'ICDS Dashboard Manual uploaded Successfully')
+        return redirect(self.urlname, domain=request.domain)
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class DowloadManual(View):
+    def get(self, request, *argv, **kwarg):
+        blob = IcdsFile.objects.filter(blob_id="dashboard_manual.pdf").order_by('file_added').last()
+        response = HttpResponse(blob.get_file_from_blobdb().read(), content_type='application/pdf')
+        response['Content-Disposition'] = safe_filename_header("ICDS_dashboard_manual.pdf")
+        return response

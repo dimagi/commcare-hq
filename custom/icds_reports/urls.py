@@ -12,7 +12,8 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView, \
-    CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers
+    CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, ManualUpdateView, \
+    DowloadManual
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -142,6 +143,8 @@ urlpatterns = [
     url(r'^export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
     url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
+    url(r'^update_dashboard_manual/', ManualUpdateView.as_view(), name=ManualUpdateView.urlname,),
+    url(r'^download_manual/', DowloadManual.as_view(), name='download_manual'),
     url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
     url(r'^download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),

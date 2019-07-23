@@ -1,0 +1,18 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static "reports/js/filters/main.js" %}"></script>
+    <script src="{% static "icds_reports/js/update_manual.js" %}"></script>
+{% endblock %}
+
+{% block page_content %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="filter_date_selector">New Manual</label>
+            <input name="dashboard_manual" type='file' class="form-control" id="dashboard_manual"  placeholder="Dashboard Manual">
+        </div>
+        <button class="btn btn-default">Upload manual</button>
+    </form>
+{% endblock %}

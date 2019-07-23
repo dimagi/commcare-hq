@@ -146,7 +146,7 @@
                                       <ul class="nav navbar-nav" role="menu">
                                           <li class="dropdown">
                                               <span class="pointer">
-                                                  <a href="{% static 'media/Dashboard_Training_Manual.pdf' %}" download>
+                                                  <a href="{% if have_access_to_dashboard_manual %}{% url 'download_manual'  domain %}{%else%}{%static 'media/Dashboard_Training_Manual.pdf' %}{% endif %}" download>
                                                       <i class="fa fa-question-circle nav-main-icon fa-2x light-grey"
                                                           uib-popover-html="'Download user manual'"
                                                           popover-placement="left"
