@@ -2,19 +2,21 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.app_manager.exceptions import XFormException, XFormValidationError
+from corehq.apps.app_manager.schemas.document.form_action import (
+    FormAction,
+    FormActionCondition,
+    OpenCaseAction,
+    PreloadAction,
+    UpdateCaseAction,
+    OpenSubCaseAction,
+)
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
-    FormAction,
-    FormActionCondition,
     LoadUpdateAction,
     Module,
-    OpenCaseAction,
-    PreloadAction,
-    UpdateCaseAction,
-    OpenSubCaseAction,
     CaseIndex)
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin

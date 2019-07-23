@@ -23,8 +23,7 @@ from django.contrib import messages
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
-    handle_media_edits
+from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.domain.decorators import track_domain_request, LoginAndDomainMixin
@@ -57,6 +56,11 @@ from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.schemas.document.form_action import (
+    FormActionCondition,
+    OpenCaseAction,
+    UpdateCaseAction,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     CaseSearch,
@@ -64,17 +68,14 @@ from corehq.apps.app_manager.models import (
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
-    FormActionCondition,
     MappingItem,
     Module,
     ModuleNotFoundException,
-    OpenCaseAction,
     ParentSelect,
     ReportModule,
     ShadowModule,
     SortElement,
     ReportAppConfig,
-    UpdateCaseAction,
     FixtureSelect,
     DefaultCaseSearchProperty,
     get_all_mobile_filter_configs,

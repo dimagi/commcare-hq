@@ -1,17 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.app_manager.exceptions import CaseError
+from corehq.apps.app_manager.schemas.document.form_action import (
+    UpdateCaseAction,
+    FormActionCondition,
+    PreloadAction,
+    OpenSubCaseAction,
+)
 from corehq.apps.app_manager.models import (
     Application,
     Module,
-    UpdateCaseAction,
-    OpenSubCaseAction,
     AdvancedOpenCaseAction,
-    FormActionCondition,
     CaseIndex,
     AdvancedModule,
     LoadUpdateAction,
-    PreloadAction,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem, autoset_owner_id_for_advanced_action

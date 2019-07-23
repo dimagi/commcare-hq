@@ -7,8 +7,10 @@ from django.http import HttpResponse
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.schemas.document.form_action import (
     FormActionCondition,
+)
+from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
 )
 from corehq.apps.app_manager.util import save_xform

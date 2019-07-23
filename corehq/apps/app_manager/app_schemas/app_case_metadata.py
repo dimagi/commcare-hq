@@ -21,12 +21,14 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_parent_type_map,
 )
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.schemas.document.form_action import (
+    FormAction,
+    FormActionCondition,
+)
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
     Form,
-    FormAction,
-    FormActionCondition,
     Module,
 )
 from corehq.apps.app_manager.xform import VELLUM_TYPES

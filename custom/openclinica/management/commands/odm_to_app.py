@@ -5,14 +5,16 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from lxml import etree
 from django.core.management.base import BaseCommand
-from corehq.apps.app_manager.models import (
-    Application,
-    Module,
+from corehq.apps.app_manager.schemas.document.form_action import (
     OpenCaseAction,
     UpdateCaseAction,
     PreloadAction,
     OpenSubCaseAction,
     FormActionCondition,
+)
+from corehq.apps.app_manager.models import (
+    Application,
+    Module,
     CaseListForm,
 )
 from corehq.apps.app_manager.xform_builder import XFormBuilder

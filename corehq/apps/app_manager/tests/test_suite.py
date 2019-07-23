@@ -9,24 +9,26 @@ from lxml.etree import tostring
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
+from corehq.apps.app_manager.schemas.document.form_action import (
+    FormActionCondition,
+    OpenCaseAction,
+    PreloadAction,
+    UpdateCaseAction,
+    OpenSubCaseAction,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
     CaseSearchProperty,
     DetailColumn,
-    FormActionCondition,
     GraphConfiguration,
     GraphSeries,
     MappingItem,
     Module,
-    OpenCaseAction,
-    OpenSubCaseAction,
-    PreloadAction,
     ReportAppConfig,
     ReportModule,
     SortElement,
-    UpdateCaseAction,
     CustomInstance,
     CustomAssertion,
 )

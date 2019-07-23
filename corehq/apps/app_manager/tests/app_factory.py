@@ -6,20 +6,22 @@ import uuid
 import six
 
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.schemas.document.form_action import (
+    UpdateCaseAction,
+    FormActionCondition,
+    OpenCaseAction,
+    OpenSubCaseAction,
+    PreloadAction,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Module,
-    UpdateCaseAction,
     LoadUpdateAction,
-    FormActionCondition,
-    OpenSubCaseAction,
-    OpenCaseAction,
     AdvancedOpenCaseAction,
     Application,
     AdvancedForm,
     AutoSelectCase,
     CaseIndex,
-    PreloadAction,
     ReportModule,
     ShadowModule,
     DetailColumn,

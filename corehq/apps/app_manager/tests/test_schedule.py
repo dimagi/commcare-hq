@@ -4,6 +4,9 @@ from __future__ import unicode_literals
 from mock import patch
 import copy
 from django.test import SimpleTestCase
+from corehq.apps.app_manager.schemas.document.form_action import (
+    FormActionCondition,
+)
 from corehq.apps.app_manager.models import (
     DetailColumn,
     Application,
@@ -11,7 +14,6 @@ from corehq.apps.app_manager.models import (
     ScheduleVisit,
     SchedulePhase,
     SchedulePhaseForm,
-    FormActionCondition,
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.tests.util import TestXmlMixin

@@ -55,6 +55,11 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationFailed,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
+from corehq.apps.app_manager.schemas.document.form_action import (
+    FormActionCondition,
+    OpenCaseAction,
+    UpdateCaseAction,
+)
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
@@ -65,15 +70,12 @@ from corehq.apps.app_manager.models import (
     CustomInstance,
     DeleteFormRecord,
     Form,
-    FormActionCondition,
     FormActions,
     FormDatum,
     FormLink,
     IncompatibleFormTypeException,
     MappingItem,
     ModuleNotFoundException,
-    OpenCaseAction,
-    UpdateCaseAction,
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
