@@ -24,7 +24,8 @@ from corehq.apps.api.odata.views import (
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.models import CaseExportInstance, ExportColumn, FormExportInstance, TableConfiguration
+from corehq.apps.export.models import CaseExportInstance, ExportColumn, FormExportInstance, TableConfiguration, \
+    ExportItem, PathNode
 from corehq.util.test_utils import flag_enabled
 
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
@@ -290,8 +291,11 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
             tables=[
                 TableConfiguration(
                     columns=[
-                        ExportColumn(label='closed', selected=True),
-                        ExportColumn(label='date_modified', selected=True),
+                        ExportColumn(label='closed', selected=True,
+                                     # this is what exports generate for a base level property
+                                     item=ExportItem(path=[PathNode(name='closed')])),
+                        ExportColumn(label='date_modified', selected=True,
+                                     item=ExportItem(path=[PathNode(name='date_modified')])),
                         ExportColumn(label='selected_property_1', selected=True),
                         ExportColumn(label='selected_property_2', selected=True),
                         ExportColumn(label='unselected_property'),
