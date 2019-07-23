@@ -500,6 +500,8 @@ def _build_sample_app(app):
         copy.is_released = True
         copy.save(increment_version=False)
         return copy
+    else:
+        notify_exception(None, 'Validation errors building sample app', details=errors)
 
 
 @require_can_edit_apps
