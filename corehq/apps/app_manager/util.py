@@ -629,7 +629,7 @@ def get_form_source_download_url(xform):
 
 @quickcache(['domain', 'profile_id'], timeout=24 * 60 * 60)
 def get_latest_enabled_build_for_profile(domain, profile_id):
-    from corehq.apps.app_manager.sql_models import LatestEnabledBuildProfiles
+    from corehq.apps.app_manager.limited_release_models import LatestEnabledBuildProfiles
     latest_enabled_build = (LatestEnabledBuildProfiles.objects.
                             filter(build_profile_id=profile_id, active=True)
                             .order_by('-version')
@@ -644,7 +644,7 @@ def get_latest_app_release_by_location(domain, location_id, app_id):
     for a location search for enabled app releases for all parent locations.
     Child location's setting takes precedence over parent
     """
-    from corehq.apps.app_manager.sql_models import AppReleaseByLocation
+    from corehq.apps.app_manager.limited_release_models import AppReleaseByLocation
     location = SQLLocation.active_objects.get(location_id=location_id)
     location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
         'location_id', flat=True).reverse()
@@ -680,7 +680,7 @@ def expire_get_latest_app_release_by_location_cache(app_release_by_location):
 
 @quickcache(['app_id'], timeout=24 * 60 * 60)
 def get_latest_enabled_versions_per_profile(app_id):
-    from corehq.apps.app_manager.sql_models import LatestEnabledBuildProfiles
+    from corehq.apps.app_manager.limited_release_models import LatestEnabledBuildProfiles
     # a dict with each profile id mapped to its latest enabled version number, if present
     return {
         build_profile['build_profile_id']: build_profile['version__max']

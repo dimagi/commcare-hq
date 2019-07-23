@@ -79,7 +79,7 @@ from corehq.apps.app_manager.models import (
     FormBase,
     RemoteApp,
 )
-from corehq.apps.app_manager.sql_models import (
+from corehq.apps.app_manager.limited_release_models import (
     AppReleaseByLocation,
     LatestEnabledBuildProfiles,
 )

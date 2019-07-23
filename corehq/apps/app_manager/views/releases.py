@@ -55,7 +55,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.models import (
     BuildProfile,
 )
-from corehq.apps.app_manager.sql_models import (
+from corehq.apps.app_manager.limited_release_models import (
     AppReleaseByLocation,
     LatestEnabledBuildProfiles,
 )

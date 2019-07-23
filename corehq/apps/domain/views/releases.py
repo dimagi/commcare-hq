@@ -21,7 +21,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_doc_by_version,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.sql_models import (
+from corehq.apps.app_manager.limited_release_models import (
     AppReleaseByLocation,
     LatestEnabledBuildProfiles,
 )
