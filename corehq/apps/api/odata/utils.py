@@ -81,12 +81,12 @@ def get_case_odata_fields_from_config(case_export_config):
 
 
 def _get_odata_fields_from_columns(export_config, special_types):
-    def _get_primary_path(export_column):
+    def _get_dot_path(export_column):
         if export_column and export_column.item and export_column.item.path:
-            return export_column.item.path[0].name
+            return '.'.join(subpath.name for subpath in export_column.item.path)
         return None
 
-    return [FieldMetadata(column.label, special_types.get(_get_primary_path(column), 'Edm.String'))
+    return [FieldMetadata(column.label, special_types.get(_get_dot_path(column), 'Edm.String'))
             for column in export_config.tables[0].selected_columns]
 
 
