@@ -148,18 +148,7 @@ def _r_js(local=False, no_optimize=False):
     if no_optimize:
         config['optimize'] = 'none'
 
-    # Find all HTML files in corehq, excluding partials
-    prefix = os.path.join(ROOT_DIR, 'corehq')
-    html_files = []
-    local_js_dirs = set()  # a reference of js filenames, for use when copying optimized bundles back into corehq
-    for root, dirs, files in os.walk(prefix):
-        for name in files:
-            if name.endswith(".html"):
-                filename = os.path.join(root, name)
-                if not re.search(r'/partials/', filename):
-                    html_files.append(filename)
-            elif local and name.endswith(".js"):
-                local_js_dirs.add(_relative(root))
+    html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
     '''
     Build a dict of all main js modules, grouped by directory:
@@ -201,6 +190,22 @@ def _r_js(local=False, no_optimize=False):
     call(["node", "bower_components/r.js/dist/r.js", "-o", BUILD_JS_FILENAME])
 
     return config, local_js_dirs
+
+
+def _get_html_files_and_local_js_dirs(local):
+    # Find all HTML files in corehq, excluding partials
+    prefix = os.path.join(ROOT_DIR, 'corehq')
+    html_files = []
+    local_js_dirs = set()  # a reference of js filenames, for use when copying optimized bundles back into corehq
+    for root, dirs, files in os.walk(prefix):
+        for name in files:
+            if name.endswith(".html"):
+                filename = os.path.join(root, name)
+                if not re.search(r'/partials/', filename):
+                    html_files.append(filename)
+            elif local and name.endswith(".js"):
+                local_js_dirs.add(_relative(root))
+    return html_files, local_js_dirs
 
 
 def _relative(path, root=None):
