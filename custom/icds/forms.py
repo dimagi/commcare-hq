@@ -56,11 +56,11 @@ class HostedCCZForm(forms.Form):
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3, 'cols': 15}))
     status = forms.ChoiceField(label=ugettext_lazy("Status"),
                                choices=(
-                                   ('', 'Select Status'),
-                                   (HostedCCZ.PENDING, 'Pending'),
-                                   (HostedCCZ.BUILDING, 'Building'),
-                                   (HostedCCZ.FAILED, 'Failed'),
-                                   (HostedCCZ.COMPLETED, 'Completed')),
+                                   ('', ugettext_lazy('Select Status')),
+                                   (HostedCCZ.PENDING, ugettext_lazy('Pending')),
+                                   (HostedCCZ.BUILDING, ugettext_lazy('Building')),
+                                   (HostedCCZ.FAILED, ugettext_lazy('Failed')),
+                                   (HostedCCZ.COMPLETED, ugettext_lazy('Completed'))),
                                required=False,
                                help_text=ugettext_lazy("Applicable for search only"))
 
