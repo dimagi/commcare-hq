@@ -6,10 +6,10 @@ import uuid
 from math import ceil
 
 from django.db.models import Count
-from django.http import (
+from django.http.response import (
     HttpResponse,
     Http404,
-    HttpResponseBadRequest,
+    JsonResponse
 )
 from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
@@ -302,7 +302,9 @@ def save_copy(request, domain, app_id):
                 copy = make_app_build(app, comment, user_id)
             CouchUser.get(user_id).set_has_built_app()
         except BuildConflictException:
-            return HttpResponseBadRequest(_("There is already a version build in progress. Please wait."))
+            return JsonResponse({
+                'error': _("There is already a version build in progress. Please wait.")
+            }, status=400)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():

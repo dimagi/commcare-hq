@@ -215,7 +215,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
         var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
         var self = this;
-        var genericErrorMessage = gettext(
+        self.genericErrorMessage = gettext(
             'An error occurred. Reload the page and click Make New Version to try again.');
         self.options = o;
         self.recipients = self.options.recipient_contacts;
@@ -437,6 +437,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
+            self.errorMessage(self.genericErrorMessage);
             $.post({
                 url: self.reverse('save_copy'),
                 success: function (data) {
@@ -452,8 +453,8 @@ hqDefine('app_manager/js/releases/releases', function () {
                 error: function (xhr) {
                     self.buildErrorCode(xhr.status);
                     self.buildState('error');
-                    if (xhr.responseText) {
-                        self.errorMessage(xhr.responseText);
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        self.errorMessage(xhr.responseJSON.error);
                     }
                 },
             });
