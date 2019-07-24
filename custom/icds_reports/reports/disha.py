@@ -64,14 +64,27 @@ class DishaDump(object):
         columns.remove("month")
         return columns
 
-    def _get_rows(self):
-        return DishaIndicatorView.objects.filter(
+    def _get_rows(self, query_master=False):
+        if query_master:
+            objects = DishaIndicatorView.objects.using('icds-ucr')
+        else:
+            objects = DishaIndicatorView.objects
+        return objects.filter(
             month=self.month,
             state_name__iexact=self.state_name
             # batch_qs requires ordered queryset
         ).order_by('pk').values_list(*self._get_columns())
 
-    def _write_data_in_chunks(self, file_obj):
+    def _write_data(self, file_obj, query_master=False):
+        data = {
+            'month': str(self.month),
+            'state_name': self.state_name,
+            'column_names': self._get_columns(),
+            'rows': list(self._get_rows(query_master))
+        }
+        file_obj.write(json.dumps(data, ensure_ascii=False).encode('utf8'))
+
+    def _write_data_in_chunks(self, file_obj, query_master=False):
         # Writes indicators in json format to the file at temp_path
         #   in chunks so as to avoid memory errors while doing json.dumps.
         #   The structure of the json is as below
@@ -82,7 +95,7 @@ class DishaDump(object):
         #       'rows': List of lists of rows, in the same order as columns
         #   }
         columns = self._get_columns()
-        indicators = self._get_rows()
+        indicators = self._get_rows(query_master)
         metadata_line = '{{'\
             '"month":"{month}", '\
             '"state_name": "{state_name}", '\
@@ -105,10 +118,10 @@ class DishaDump(object):
                 count=count, total=total, batches=num_batches))
         file_obj.write("]}".encode('utf-8'))
 
-    def build_export_json(self):
+    def build_export_json(self, query_master=False):
         with TransientTempfile() as temp_path:
             with open(temp_path, 'w+b') as f:
-                self._write_data_in_chunks(f)
+                self._write_data(f, query_master)
                 f.seek(0)
                 blob_ref, _ = IcdsFile.objects.get_or_create(blob_id=self._blob_id(), data_type='disha_dumps')
                 blob_ref.store_file_in_blobdb(f, expired=DISHA_DUMP_EXPIRY)
@@ -127,18 +140,18 @@ def build_dumps_for_month(month, rebuild=False):
             retry_count = 0
             while True:
                 try:
-                    dump.build_export_json()
+                    # force query to master after max retries
+                    query_master = retry_count == MAX_RETRY_COUNT
+                    dump.build_export_json(query_master=query_master)
                 except Exception as e:
                     # The DISHA sql query that runs on aggregate tables can be cancelled by Postgres
                     #   if the query is routed to standby and that standby needs to alter the matching rows
                     if not is_pg_cancelled_query_exception(e):
                         raise e
-                    elif retry_count == MAX_RETRY_COUNT:
-                        logging.info("Skipping as max retries exceeded for state {}".format(state_name)))
-                        break
                     else:
                         retry_count += 1
-                        logger.info("Postgres cancelled the DISHA query. Retry count: {}".format(str(retry_count)))
+                        logger.info("Postgres cancelled the DISHA query. Retry count: {}/{}".format(
+                            str(retry_count), str(MAX_RETRY_COUNT)))
                 else:
                     break
             logger.info("Finished for state {}".format(state_name))
