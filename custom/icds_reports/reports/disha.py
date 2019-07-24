@@ -7,7 +7,6 @@ from io import open
 import json
 import logging
 import re
-from corehq.apps.reports.util import batch_qs
 from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
 from corehq.util.sentry import is_pg_cancelled_query_exception
@@ -72,21 +71,10 @@ class DishaDump(object):
         return objects.filter(
             month=self.month,
             state_name__iexact=self.state_name
-            # batch_qs requires ordered queryset
-        ).order_by('pk').values_list(*self._get_columns())
+        ).values_list(*self._get_columns())
 
     def _write_data(self, file_obj, query_master=False):
-        data = {
-            'month': str(self.month),
-            'state_name': self.state_name,
-            'column_names': self._get_columns(),
-            'rows': list(self._get_rows(query_master))
-        }
-        file_obj.write(json.dumps(data, ensure_ascii=False).encode('utf8'))
-
-    def _write_data_in_chunks(self, file_obj, query_master=False):
         # Writes indicators in json format to the file at temp_path
-        #   in chunks so as to avoid memory errors while doing json.dumps.
         #   The structure of the json is as below
         #   {
         #       'month': '2018-09-01',
@@ -94,29 +82,13 @@ class DishaDump(object):
         #       'columns': [<List of disha columns>],
         #       'rows': List of lists of rows, in the same order as columns
         #   }
-        columns = self._get_columns()
-        indicators = self._get_rows(query_master)
-        metadata_line = '{{'\
-            '"month":"{month}", '\
-            '"state_name": "{state_name}", '\
-            '"column_names": {columns}, '\
-            '"rows": ['.format(
-                month=self.month,
-                state_name=self.state_name,
-                columns=json.dumps(columns, ensure_ascii=False)).encode('utf8')
-        file_obj.write(metadata_line)
-        written_count = 0
-        num_batches = 10
-        for count, (_, end, total, chunk) in enumerate(batch_qs(indicators, num_batches=num_batches)):
-            chunk_string = json.dumps(list(chunk), ensure_ascii=False).encode('utf8')
-            # chunk is list of lists, so skip enclosing brackets
-            file_obj.write(chunk_string[1:-1])
-            written_count += len(chunk)
-            if written_count != total:
-                file_obj.write(",")
-            logger.info("Processed {count}/{batches} batches. Total records:{total}".format(
-                count=count, total=total, batches=num_batches))
-        file_obj.write("]}".encode('utf-8'))
+        data = {
+            'month': str(self.month),
+            'state_name': self.state_name,
+            'column_names': self._get_columns(),
+            'rows': list(self._get_rows(query_master))
+        }
+        file_obj.write(json.dumps(data, ensure_ascii=False).encode('utf8'))
 
     def build_export_json(self, query_master=False):
         with TransientTempfile() as temp_path:
