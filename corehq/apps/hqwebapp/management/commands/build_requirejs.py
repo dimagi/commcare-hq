@@ -8,7 +8,6 @@ import six
 import subprocess
 import yaml
 from collections import defaultdict
-from django.contrib.staticfiles import finders
 from django.conf import settings
 from shutil import copyfile
 from subprocess import call
