@@ -62,6 +62,7 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^case_migrations/', include('corehq.apps.case_migrations.urls')),
+    url(r'^case_templates/', include('corehq.apps.case_templates.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
