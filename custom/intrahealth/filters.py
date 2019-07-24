@@ -10,13 +10,14 @@ from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.reports.filters.base import BaseReportFilter, BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
-from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports_core.filters import DatespanFilter
 from corehq.util.translation import localize
 from django.utils.translation import ugettext as _
 from six.moves import range
 from six.moves import filter
 
 from custom.intrahealth.sqldata import ProgramData, ProductData, ProductsInProgramWithNameData
+
 
 class LocationFilter(AsyncLocationFilter):
     label = ugettext_noop("Region")

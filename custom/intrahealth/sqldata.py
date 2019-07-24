@@ -3888,3 +3888,163 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         for month in self.month_headers():
             headers.add_column(month)
         return headers
+
+
+class VisiteDeLOperateurPerProductV2DataSource(SqlData):
+    slug = 'disponibilite'
+    comment = 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles'
+    title = 'Disponibilité'
+
+    def __init__(self, config):
+        super(VisiteDeLOperateurPerProductV2DataSource, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], "visite_de_l_operateur_per_product_v2")
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'starddate', 'enddate')]
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        elif self.config['product_program']:
+            filters.append(EQ('program_id', 'product_program'))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = [self.loc_name, self.loc_id]
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn("Total Stock", SimpleColumn('total_stock')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+
+        # TODO: we need only the latest value of total_stock from selected daterange
+        return [
+            {'region_name': 'Region 1', 'region_id': 1, 'total_stock': 15},
+            {'region_name': 'Region 2', 'region_id': 2, 'total_stock': 11},
+            {'region_name': 'Region 3', 'region_id': 3, 'total_stock': 53},
+            {'region_name': 'Region 4', 'region_id': 4, 'total_stock': 23},
+            {'region_name': 'Region 5', 'region_id': 5, 'total_stock': 64},
+            {'region_name': 'Region 6', 'region_id': 6, 'total_stock': 4},
+        ]
+        # return self.get_data()
+
+
+class EffectiveDeLivraisonDataSource(SqlData):
+    slug = 'effective_de_livraison'
+    title = 'effective_de_livraison'
+
+    def __init__(self, config):
+        super(EffectiveDeLivraisonDataSource, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], "date_effective_de_livraison")
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = []
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = [self.loc_name, self.loc_id]
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn("nb_pps_visites", SimpleColumn('nb_pps_visites')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        # TODO: we need only the latest value of nb_pps_visites from selected daterange
+        return [
+            {'region_name': 'Region 1', 'region_id': 1, 'nb_pps_visites': 45},
+            {'region_name': 'Region 2', 'region_id': 2, 'nb_pps_visites': 34},
+            {'region_name': 'Region 3', 'region_id': 3, 'nb_pps_visites': 86},
+            {'region_name': 'Region 4', 'region_id': 4, 'nb_pps_visites': 40},
+            {'region_name': 'Region 5', 'region_id': 5, 'nb_pps_visites': 100},
+            {'region_name': 'Region 6', 'region_id': 6, 'nb_pps_visites': 10},
+        ]
+        # return self.get_data()
