@@ -215,6 +215,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
         var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
         var self = this;
+        var genericErrorMessage = gettext(
+            'An error occurred. Reload the page and click Make New Version to try again.');
         self.options = o;
         self.recipients = self.options.recipient_contacts;
         self.totalItems = ko.observable();
@@ -222,7 +224,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
-        self.genericErrorMessage = ko.observable('');
+        self.errorMessage = ko.observable(genericErrorMessage);
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.fetchLimit = ko.observable();
@@ -450,7 +452,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 error: function (xhr) {
                     self.buildErrorCode(xhr.status);
                     self.buildState('error');
-                    self.genericErrorMessage(xhr.responseText);
+                    self.errorMessage(xhr.responseText);
                 },
             });
         };
