@@ -37,7 +37,7 @@ class Command(BaseCommand):
 def latin_to_utf(latin_string):
     try:
         return latin_string.encode('latin1').decode('utf-8')
-    except:
+    except UnicodeError:
         return latin_string
 
 
