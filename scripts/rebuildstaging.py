@@ -28,10 +28,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 from gevent import monkey
 monkey.patch_all()
 
-import contextlib
 import os
 import re
 import sys
+from contextlib import ExitStack
 
 import gevent
 import jsonobject
@@ -185,9 +185,9 @@ def rebuild_staging(config, print_details=True, push=True):
     merge_conflicts = []
     not_found = []
     all_configs = list(config.span_configs())
-    context_manager = contextlib.nested(*[OriginalBranch(get_git(path))
-                                          for path, _ in all_configs])
-    with context_manager:
+    with ExitStack() as stack:
+        for path, _ in all_configs:
+            stack.enter_context(OriginalBranch(get_git(path)))
         for path, config in all_configs:
             git = get_git(path)
             try:
