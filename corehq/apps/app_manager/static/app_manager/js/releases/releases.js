@@ -452,7 +452,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                 error: function (xhr) {
                     self.buildErrorCode(xhr.status);
                     self.buildState('error');
-                    self.errorMessage(xhr.responseText);
+                    if (xhr.responseText) {
+                        self.errorMessage(xhr.responseText);
+                    }
                 },
             });
         };
