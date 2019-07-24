@@ -166,7 +166,7 @@ def avoid_parallel_build_request(fn):
 
 def _set_build_in_progress_lock(domain, app_id):
     key = _build_request_cache_key(domain, app_id)
-    cache.set(key, True, 60*60)  # Lock for an hour
+    cache.set(key, True, 60 * 60)  # Lock for an hour
 
 
 def _build_request_cache_key(domain, app_id):
