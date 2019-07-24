@@ -425,6 +425,10 @@ def copy_app(request, domain):
         with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
             source = z.read(z.filelist[0].filename)
         app_id_or_source = source
+    elif request.POST.get('build_id'):
+        build = Application.get(request.POST.get('build_id'))
+        build._unset_build_fields()
+        app_id_or_source = build.export_json(dump_json=False)
     else:
         app_id_or_source = app_id
 
@@ -435,19 +439,21 @@ def copy_app(request, domain):
                 set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
         linked = data.get('linked')
         if linked:
-            return _create_linked_app(request, app, link_domain, data['name'])
+            return _create_linked_app(request, app, link_domain, data['name'], master_build_id=data['build_id'])
         else:
-            return _copy_app_helper(
-                request, master_domain, app_id_or_source, link_domain, data['name'], app_id)
+            return _copy_app_helper(request, master_domain, app_id_or_source, link_domain, data['name'])
 
     # having login_and_domain_required validates that the user
     # has access to the domain we're copying the app to
     return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
 
 
-def _create_linked_app(request, master_app, link_domain, link_app_name):
+def _create_linked_app(request, master_app, link_domain, link_app_name, master_build_id=None):
     master_domain = master_app.domain
-    master_version = get_latest_released_app_version(master_domain, master_app._id)
+    if master_build_id:
+        master_version = Application.get(master_build_id)
+    else:
+        master_version = get_latest_released_app_version(master_domain, master_app._id)
     if not master_version:
         messages.error(request, _("Creating linked app failed."
                                   " Unable to get latest released version of your app."
@@ -466,7 +472,7 @@ def _create_linked_app(request, master_app, link_domain, link_app_name):
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
 
 
-def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name, app_id):
+def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name):
     extra_properties = {'name': copy_to_app_name}
     app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties, request)
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
