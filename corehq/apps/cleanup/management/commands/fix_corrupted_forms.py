@@ -42,6 +42,21 @@ def latin_to_utf(latin_string):
 
 
 def fix_form(source):
+    """Re-code non-printable substrings of Latin-1-decoded source as UTF-8
+
+    Original problem: `source = utf8_bytes.decode('latin1')`
+
+    The theory of the fix is that any non-ASCII UTF-8 character decoded
+    as Latin-1 would end up as multiple Latin-1 characters, all being
+    "unprintable" characters having a 1 as their most significant
+    bit. This works because Latin-1 is a single-byte encoding (each
+    character is encoded as a single 8-bit byte), while UTF-8 is a
+    variable-width encoding where each character is encoded with 1 to 4
+    bytes, and all bytes of multi-byte code points have a 1 as their
+    most significant bit. Since the source string is XML, all non-ASCII
+    character sequences will be followed by an XML delimiter, which
+    always ends with a printable ASCII character (`>`).
+    """
     new_source = ""
     unicode_block = ""
     for char in source:
