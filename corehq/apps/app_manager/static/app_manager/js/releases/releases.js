@@ -224,7 +224,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
-        self.errorMessage = ko.observable(genericErrorMessage);
+        self.errorMessage = ko.observable(self.genericErrorMessage);
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.fetchLimit = ko.observable();
