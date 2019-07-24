@@ -6,6 +6,8 @@ from django.utils.translation import ugettext_noop
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, IN
+
+from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
@@ -69,9 +71,9 @@ def date_format(date_str):
 
 
 def group_name(owner_id):
-    view_results = Group.by_user_id(owner_id, wrap=False)
-    if view_results:
-        return view_results[0]['value']
+    results = get_group_id_name_map_by_user(owner_id, limit=1)
+    if results:
+        return results[0].name
     else:
         try:
             return Group.get(owner_id).name
