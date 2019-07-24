@@ -46,57 +46,57 @@ class Command(ResourceStaticCommand):
         with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
             config = yaml.safe_load(f)
 
-            if no_optimize:
-                config['optimize'] = 'none'
+        if no_optimize:
+            config['optimize'] = 'none'
 
-            # Find all HTML files in corehq, excluding partials
-            prefix = os.path.join(ROOT_DIR, 'corehq')
-            html_files = []
-            for root, dirs, files in os.walk(prefix):
-                for name in files:
-                    if name.endswith(".html"):
-                        filename = os.path.join(root, name)
-                        if not re.search(r'/partials/', filename):
-                            html_files.append(filename)
-                    elif local and name.endswith(".js"):
-                        self.local_js_dirs.add(_relative(root))
+        # Find all HTML files in corehq, excluding partials
+        prefix = os.path.join(ROOT_DIR, 'corehq')
+        html_files = []
+        for root, dirs, files in os.walk(prefix):
+            for name in files:
+                if name.endswith(".html"):
+                    filename = os.path.join(root, name)
+                    if not re.search(r'/partials/', filename):
+                        html_files.append(filename)
+                elif local and name.endswith(".js"):
+                    self.local_js_dirs.add(_relative(root))
 
-            '''
-            Build a dict of all main js modules, grouped by directory:
-            {
-                'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
-                'linked_domain/js': set(['linked_domain/js/domain_links']),
-                ...
-            }
-            '''
-            dirs = defaultdict(set)
-            for filename in html_files:
-                proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
-                                        stdout=subprocess.PIPE)
-                (out, err) = proc.communicate()
-                out = out.decode('utf-8')
-                if out:
-                    match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
-                    if match:
-                        main = match.group(1)
-                        directory = match.group(2)
-                        if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                            dirs[directory].add(main)
+        '''
+        Build a dict of all main js modules, grouped by directory:
+        {
+            'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
+            'linked_domain/js': set(['linked_domain/js/domain_links']),
+            ...
+        }
+        '''
+        dirs = defaultdict(set)
+        for filename in html_files:
+            proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                                    stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+            out = out.decode('utf-8')
+            if out:
+                match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
+                if match:
+                    main = match.group(1)
+                    directory = match.group(2)
+                    if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
+                        dirs[directory].add(main)
 
-            # For each directory, add an optimized "module" entry including all of the main modules in that dir.
-            # For each of these entries, r.js will create an optimized bundle of these main modules and all their
-            # dependencies
-            for directory, mains in dirs.items():
-                config['modules'].append({
-                    'name': os.path.join(directory, "bundle"),
-                    'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
-                    'include': sorted(mains),
-                    'create': True,
-                })
+        # For each directory, add an optimized "module" entry including all of the main modules in that dir.
+        # For each of these entries, r.js will create an optimized bundle of these main modules and all their
+        # dependencies
+        for directory, mains in dirs.items():
+            config['modules'].append({
+                'name': os.path.join(directory, "bundle"),
+                'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
+                'include': sorted(mains),
+                'create': True,
+            })
 
-            # Write final r.js config out as a .js file
-            with open(os.path.join(ROOT_DIR, 'staticfiles', 'build.js'), 'w') as fout:
-                fout.write("({});".format(json.dumps(config, indent=4)))
+        # Write final r.js config out as a .js file
+        with open(os.path.join(ROOT_DIR, 'staticfiles', 'build.js'), 'w') as fout:
+            fout.write("({});".format(json.dumps(config, indent=4)))
 
         call(["node", "bower_components/r.js/dist/r.js", "-o", self.build_js_filename])
 
