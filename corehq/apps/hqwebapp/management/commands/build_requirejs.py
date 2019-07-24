@@ -19,6 +19,7 @@ from io import open
 logger = logging.getLogger('__name__')
 ROOT_DIR = settings.FILEPATH
 BUILD_JS_FILENAME = "staticfiles/build.js"
+BUILD_TXT_FILENAME = "staticfiles/build.txt"
 
 
 class Command(ResourceStaticCommand):
@@ -27,7 +28,7 @@ class Command(ResourceStaticCommand):
         and set them up with the CDN.
     '''
 
-    build_txt_filename = "staticfiles/build.txt"
+
 
     def add_arguments(self, parser):
         parser.add_argument('--local', action='store_true',
@@ -54,29 +55,7 @@ class Command(ResourceStaticCommand):
         config, local_js_dirs = _r_js(local=local, no_optimize=no_optimize)
 
         if local:
-            # Copy optimized modules in staticfiles back into corehq
-            for module in config['modules']:
-                src = os.path.join(ROOT_DIR, 'staticfiles', module['name'] + '.js')
-
-                # Most of the time, the module is .../staticfiles/appName/js/moduleName and
-                # should be copied to .../corehq/apps/appName/static/appName/js/moduleName.js
-                app = re.sub(r'/.*', '', module['name'])
-                dest = os.path.join(ROOT_DIR, 'corehq', 'apps', app, 'static', module['name'] + '.js')
-                if os.path.exists(os.path.dirname(dest)):
-                    copyfile(src, dest)
-                else:
-                    # If that didn't work, look for a js directory that matches the module name
-                    # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
-                    # for something ending in foo/baz
-                    common_dir = _relative(os.path.dirname(src), os.path.join(ROOT_DIR, 'staticfiles'))
-                    options = [d for d in local_js_dirs if _relative(d).endswith(common_dir)]
-                    if len(options) == 1:
-                        dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
-                        copyfile(src, os.path.join(ROOT_DIR, dest_stem, module['name'] + '.js'))
-                    else:
-                        logger.warning("Could not copy {} to {}".format(_relative(src), _relative(dest)))
-            logger.info("Final build config written to {}".format(BUILD_JS_FILENAME))
-            logger.info("Bundle config output written to {}".format(self.build_txt_filename))
+            _copy_modules_back_into_corehq(config, local_js_dirs)
 
         filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
         resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
@@ -228,3 +207,31 @@ def _relative(path, root=None):
     if rel.startswith("/"):
         rel = rel[1:]
     return rel
+
+
+def _copy_modules_back_into_corehq(config, local_js_dirs):
+    """
+    Copy optimized modules in staticfiles back into corehq
+    """
+    for module in config['modules']:
+        src = os.path.join(ROOT_DIR, 'staticfiles', module['name'] + '.js')
+
+        # Most of the time, the module is .../staticfiles/appName/js/moduleName and
+        # should be copied to .../corehq/apps/appName/static/appName/js/moduleName.js
+        app = re.sub(r'/.*', '', module['name'])
+        dest = os.path.join(ROOT_DIR, 'corehq', 'apps', app, 'static', module['name'] + '.js')
+        if os.path.exists(os.path.dirname(dest)):
+            copyfile(src, dest)
+        else:
+            # If that didn't work, look for a js directory that matches the module name
+            # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
+            # for something ending in foo/baz
+            common_dir = _relative(os.path.dirname(src), os.path.join(ROOT_DIR, 'staticfiles'))
+            options = [d for d in local_js_dirs if _relative(d).endswith(common_dir)]
+            if len(options) == 1:
+                dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
+                copyfile(src, os.path.join(ROOT_DIR, dest_stem, module['name'] + '.js'))
+            else:
+                logger.warning("Could not copy {} to {}".format(_relative(src), _relative(dest)))
+    logger.info("Final build config written to {}".format(BUILD_JS_FILENAME))
+    logger.info("Bundle config output written to {}".format(BUILD_TXT_FILENAME))
