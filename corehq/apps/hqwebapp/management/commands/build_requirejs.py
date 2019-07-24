@@ -150,32 +150,11 @@ def _r_js(local=False, no_optimize=False):
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
-    '''
-    Build a dict of all main js modules, grouped by directory:
-    {
-        'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
-        'linked_domain/js': set(['linked_domain/js/domain_links']),
-        ...
-    }
-    '''
-    dirs = defaultdict(set)
-    for filename in html_files:
-        proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
-                                stdout=subprocess.PIPE)
-        (out, err) = proc.communicate()
-        out = out.decode('utf-8')
-        if out:
-            match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
-            if match:
-                main = match.group(1)
-                directory = match.group(2)
-                if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                    dirs[directory].add(main)
-
     # For each directory, add an optimized "module" entry including all of the main modules in that dir.
     # For each of these entries, r.js will create an optimized bundle of these main modules and all their
     # dependencies
-    for directory, mains in dirs.items():
+    dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
+    for directory, mains in dirs_to_js_modules.items():
         config['modules'].append({
             'name': os.path.join(directory, "bundle"),
             'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
@@ -193,7 +172,9 @@ def _r_js(local=False, no_optimize=False):
 
 
 def _get_html_files_and_local_js_dirs(local):
-    # Find all HTML files in corehq, excluding partials
+    """
+    Returns all HTML files in corehq, excluding partials
+    """
     prefix = os.path.join(ROOT_DIR, 'corehq')
     html_files = []
     local_js_dirs = set()  # a reference of js filenames, for use when copying optimized bundles back into corehq
@@ -206,6 +187,31 @@ def _get_html_files_and_local_js_dirs(local):
             elif local and name.endswith(".js"):
                 local_js_dirs.add(_relative(root))
     return html_files, local_js_dirs
+
+
+def _get_main_js_modules_by_dir(html_files):
+    """
+    Returns a dict of all main js modules, grouped by directory:
+    {
+        'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
+        'linked_domain/js': set(['linked_domain/js/domain_links']),
+        ...
+    }
+    """
+    dirs = defaultdict(set)
+    for filename in html_files:
+        proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                                stdout=subprocess.PIPE)
+        (out, err) = proc.communicate()
+        out = out.decode('utf-8')
+        if out:
+            match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
+            if match:
+                main = match.group(1)
+                directory = match.group(2)
+                if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
+                    dirs[directory].add(main)
+    return dirs
 
 
 def _relative(path, root=None):
