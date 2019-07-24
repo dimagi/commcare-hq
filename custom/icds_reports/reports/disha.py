@@ -131,8 +131,11 @@ def build_dumps_for_month(month, rebuild=False):
                 except Exception as e:
                     # The DISHA sql query that runs on aggregate tables can be cancelled by Postgres
                     #   if the query is routed to standby and that standby needs to alter the matching rows
-                    if not is_pg_cancelled_query_exception(e) or retry_count == MAX_RETRY_COUNT:
+                    if not is_pg_cancelled_query_exception(e):
                         raise e
+                    elif retry_count == MAX_RETRY_COUNT:
+                        logging.info("Skipping as max retries exceeded for state {}".format(state_name)))
+                        break
                     else:
                         retry_count += 1
                         logger.info("Postgres cancelled the DISHA query. Retry count: {}".format(str(retry_count)))
