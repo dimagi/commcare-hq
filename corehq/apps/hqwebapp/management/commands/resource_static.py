@@ -42,7 +42,8 @@ class Command(BaseCommand):
             from get_resource_versions import get_resource_versions
             resource_versions = get_resource_versions()
             resource_versions.update(resources)
-            fout.write(yaml.dump([{'name': name, 'version': version} for name, version in resource_versions.items()]))
+            fout.write(yaml.dump([{'name': name, 'version': version}
+                                  for name, version in resource_versions.items()]))
 
     def update_resources(self, resources, sha=None, overwrite=True):
         if not sha:
