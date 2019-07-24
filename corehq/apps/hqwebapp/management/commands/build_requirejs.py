@@ -162,9 +162,7 @@ def _r_js(local=False, no_optimize=False):
             'create': True,
         })
 
-    # Write final r.js config out as a .js file
-    with open(os.path.join(ROOT_DIR, 'staticfiles', 'build.js'), 'w') as fout:
-        fout.write("({});".format(json.dumps(config, indent=4)))
+    _save_r_js_config(config)
 
     call(["node", "bower_components/r.js/dist/r.js", "-o", BUILD_JS_FILENAME])
 
@@ -212,6 +210,15 @@ def _get_main_js_modules_by_dir(html_files):
                 if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
                     dirs[directory].add(main)
     return dirs
+
+
+def _save_r_js_config(config):
+    """
+    Writes final r.js config out as a .js file
+    """
+    r_js_config = "({});".format(json.dumps(config, indent=4))
+    with open(os.path.join(ROOT_DIR, 'staticfiles', 'build.js'), 'w') as fout:
+        fout.write(r_js_config)
 
 
 def _relative(path, root=None):
