@@ -57,10 +57,10 @@ class HostedCCZForm(forms.Form):
     status = forms.ChoiceField(label=ugettext_lazy("Status"),
                                choices=(
                                    ('', 'Select Status'),
-                                   ('pending', 'Pending'),
-                                   ('building', 'Building'),
-                                   ('failed', 'Failed'),
-                                   ('completed', 'Completed')),
+                                   (HostedCCZ.PENDING, 'Pending'),
+                                   (HostedCCZ.BUILDING, 'Building'),
+                                   (HostedCCZ.FAILED, 'Failed'),
+                                   (HostedCCZ.COMPLETED, 'Completed')),
                                required=False,
                                help_text=ugettext_lazy("Applicable for search only"))
 

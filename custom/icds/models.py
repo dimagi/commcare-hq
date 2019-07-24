@@ -86,6 +86,11 @@ class HostedCCZSupportingFile(models.Model):
 
 
 class HostedCCZ(models.Model):
+    PENDING = 'pending'
+    BUILDING = 'building'
+    FAILED = 'failed'
+    COMPLETED = 'completed'
+    STATUSES = [PENDING, BUILDING, FAILED, COMPLETED]
     link = models.ForeignKey(HostedCCZLink, on_delete=models.CASCADE)
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
@@ -93,10 +98,10 @@ class HostedCCZ(models.Model):
     file_name = models.CharField(max_length=255, blank=True)
     note = models.TextField(blank=True)
     status = models.CharField(max_length=255, null=False, blank=False, default='pending',
-                              choices=(('pending', 'Pending'),
-                                       ('building', 'Building'),
-                                       ('failed', 'Failed'),
-                                       ('completed', 'Completed'),
+                              choices=((PENDING, _('Pending')),
+                                       (BUILDING, _('Building')),
+                                       (FAILED, _('Failed')),
+                                       (COMPLETED, _('Completed')),
                                        ))
 
     class Meta:
@@ -163,7 +168,7 @@ class HostedCCZ(models.Model):
         super(HostedCCZ, self).delete(*args, **kwargs)
 
     def update_status(self, new_status):
-        assert new_status in ['pending', 'building', 'failed', 'completed']
+        assert new_status in self.STATUSES
         HostedCCZ.objects.filter(id=self.pk).update(status=new_status)
 
 
