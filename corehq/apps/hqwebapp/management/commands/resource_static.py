@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import six
+import yaml
 from django.core.management.base import BaseCommand
 from django.contrib.staticfiles import finders
 from django.conf import settings
@@ -36,8 +37,12 @@ class Command(BaseCommand):
         return sha
 
     def output_resources(self, resources):
-        with open(os.path.join(self.root_dir, 'resource_versions.py'), 'w') as fout:
-            fout.write("resource_versions = %s" % json.dumps(resources, indent=2))
+        with open(os.path.join(self.root_dir, 'resource_versions.yaml'), 'w') as fout:
+            #fout.write("resource_versions = %s" % json.dumps(resources, indent=2))
+            from get_resource_versions import get_resource_versions
+            resource_versions = get_resource_versions()
+            resource_versions.update(resources)
+            fout.write(yaml.dump([{'name': name, 'version': version} for name, version in resource_versions.items()]))
 
     def overwrite_resources(self, resources, sha=None):
         if not sha:
