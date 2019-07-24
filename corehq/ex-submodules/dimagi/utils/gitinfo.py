@@ -2,7 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
 import re
-from subprocess import Popen, PIPE
+try:
+    # Backports Popen as context manager for Py2
+    from subprocess32 import Popen, PIPE
+except ImportError:
+    from subprocess import Popen, PIPE
 
 
 def git_file_deltas(git_dir, commit, compare=None):
