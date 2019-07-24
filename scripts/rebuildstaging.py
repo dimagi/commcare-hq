@@ -23,21 +23,21 @@ Where staging.yaml looks as follows:
 
 When not specified, a submodule's trunk and name inherit from the parent
 """
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
-from __future__ import unicode_literals
 from gevent import monkey
-import six
 monkey.patch_all()
 
 import contextlib
 import os
 import re
-import sh
 import sys
 
 import gevent
+import jsonobject
+import sh
+import six
+
 from gitutils import (
     OriginalBranch,
     get_git,
@@ -45,7 +45,6 @@ from gitutils import (
     has_merge_conflict,
     print_merge_details,
 )
-import jsonobject
 from sh_verbose import ShVerbose
 
 
