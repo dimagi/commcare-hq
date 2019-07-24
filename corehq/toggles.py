@@ -1852,6 +1852,14 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     [NAMESPACE_USER]
 )
 
+SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
+    'skip_creating_default_build_files_on_build',
+    'Skips creating the build files for default profile each time a build is made'
+    'which helps speed up the build and revert process',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'disable_case_update_rule_task',
     'Disable the `run_case_update_rules` periodic task '
