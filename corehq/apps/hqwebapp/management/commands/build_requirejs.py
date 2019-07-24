@@ -18,6 +18,7 @@ from io import open
 
 logger = logging.getLogger('__name__')
 ROOT_DIR = settings.FILEPATH
+BUILD_JS_FILENAME = "staticfiles/build.js"
 
 
 class Command(ResourceStaticCommand):
@@ -26,9 +27,7 @@ class Command(ResourceStaticCommand):
         and set them up with the CDN.
     '''
 
-    build_js_filename = "staticfiles/build.js"
     build_txt_filename = "staticfiles/build.txt"
-    local_js_dirs = set()   # a reference of js filenames, for use when copying optimized bundles back into corehq
 
     def add_arguments(self, parser):
         parser.add_argument('--local', action='store_true',
@@ -37,70 +36,6 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
-
-    def r_js(self, local=False, no_optimize=False):
-        '''
-        Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
-        and the bundle config output by the build.
-        '''
-        with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
-            config = yaml.safe_load(f)
-
-        if no_optimize:
-            config['optimize'] = 'none'
-
-        # Find all HTML files in corehq, excluding partials
-        prefix = os.path.join(ROOT_DIR, 'corehq')
-        html_files = []
-        for root, dirs, files in os.walk(prefix):
-            for name in files:
-                if name.endswith(".html"):
-                    filename = os.path.join(root, name)
-                    if not re.search(r'/partials/', filename):
-                        html_files.append(filename)
-                elif local and name.endswith(".js"):
-                    self.local_js_dirs.add(_relative(root))
-
-        '''
-        Build a dict of all main js modules, grouped by directory:
-        {
-            'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
-            'linked_domain/js': set(['linked_domain/js/domain_links']),
-            ...
-        }
-        '''
-        dirs = defaultdict(set)
-        for filename in html_files:
-            proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
-                                    stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            out = out.decode('utf-8')
-            if out:
-                match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
-                if match:
-                    main = match.group(1)
-                    directory = match.group(2)
-                    if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                        dirs[directory].add(main)
-
-        # For each directory, add an optimized "module" entry including all of the main modules in that dir.
-        # For each of these entries, r.js will create an optimized bundle of these main modules and all their
-        # dependencies
-        for directory, mains in dirs.items():
-            config['modules'].append({
-                'name': os.path.join(directory, "bundle"),
-                'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
-                'include': sorted(mains),
-                'create': True,
-            })
-
-        # Write final r.js config out as a .js file
-        with open(os.path.join(ROOT_DIR, 'staticfiles', 'build.js'), 'w') as fout:
-            fout.write("({});".format(json.dumps(config, indent=4)))
-
-        call(["node", "bower_components/r.js/dist/r.js", "-o", self.build_js_filename])
-
-        return config
 
     def handle(self, **options):
         logger.setLevel('DEBUG')
@@ -116,7 +51,7 @@ class Command(ResourceStaticCommand):
         except (ImportError, SyntaxError):
             resource_versions = {}
 
-        config = self.r_js(local=local, no_optimize=no_optimize)
+        config, local_js_dirs = _r_js(local=local, no_optimize=no_optimize)
 
         if local:
             # Copy optimized modules in staticfiles back into corehq
@@ -134,13 +69,13 @@ class Command(ResourceStaticCommand):
                     # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                     # for something ending in foo/baz
                     common_dir = _relative(os.path.dirname(src), os.path.join(ROOT_DIR, 'staticfiles'))
-                    options = [d for d in self.local_js_dirs if _relative(d).endswith(common_dir)]
+                    options = [d for d in local_js_dirs if _relative(d).endswith(common_dir)]
                     if len(options) == 1:
                         dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
                         copyfile(src, os.path.join(ROOT_DIR, dest_stem, module['name'] + '.js'))
                     else:
                         logger.warning("Could not copy {} to {}".format(_relative(src), _relative(dest)))
-            logger.info("Final build config written to {}".format(self.build_js_filename))
+            logger.info("Final build config written to {}".format(BUILD_JS_FILENAME))
             logger.info("Bundle config output written to {}".format(self.build_txt_filename))
 
         filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
@@ -200,6 +135,72 @@ def _confirm_or_exit():
                               "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
     if confirm[0].lower() != 'y':
         exit()
+
+
+def _r_js(local=False, no_optimize=False):
+    '''
+    Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
+    and the bundle config output by the build.
+    '''
+    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
+        config = yaml.safe_load(f)
+
+    if no_optimize:
+        config['optimize'] = 'none'
+
+    # Find all HTML files in corehq, excluding partials
+    prefix = os.path.join(ROOT_DIR, 'corehq')
+    html_files = []
+    local_js_dirs = set()  # a reference of js filenames, for use when copying optimized bundles back into corehq
+    for root, dirs, files in os.walk(prefix):
+        for name in files:
+            if name.endswith(".html"):
+                filename = os.path.join(root, name)
+                if not re.search(r'/partials/', filename):
+                    html_files.append(filename)
+            elif local and name.endswith(".js"):
+                local_js_dirs.add(_relative(root))
+
+    '''
+    Build a dict of all main js modules, grouped by directory:
+    {
+        'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
+        'linked_domain/js': set(['linked_domain/js/domain_links']),
+        ...
+    }
+    '''
+    dirs = defaultdict(set)
+    for filename in html_files:
+        proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                                stdout=subprocess.PIPE)
+        (out, err) = proc.communicate()
+        out = out.decode('utf-8')
+        if out:
+            match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
+            if match:
+                main = match.group(1)
+                directory = match.group(2)
+                if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
+                    dirs[directory].add(main)
+
+    # For each directory, add an optimized "module" entry including all of the main modules in that dir.
+    # For each of these entries, r.js will create an optimized bundle of these main modules and all their
+    # dependencies
+    for directory, mains in dirs.items():
+        config['modules'].append({
+            'name': os.path.join(directory, "bundle"),
+            'exclude': ['hqwebapp/js/common', 'hqwebapp/js/base_main'],
+            'include': sorted(mains),
+            'create': True,
+        })
+
+    # Write final r.js config out as a .js file
+    with open(os.path.join(ROOT_DIR, 'staticfiles', 'build.js'), 'w') as fout:
+        fout.write("({});".format(json.dumps(config, indent=4)))
+
+    call(["node", "bower_components/r.js/dist/r.js", "-o", BUILD_JS_FILENAME])
+
+    return config, local_js_dirs
 
 
 def _relative(path, root=None):
