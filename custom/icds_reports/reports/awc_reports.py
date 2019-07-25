@@ -984,7 +984,7 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
     filters['open_in_month'] = 1
     filters['valid_in_month'] = 1
     if filters.get('age_in_months__range') is None:
-        filters['age_in_months__lte'] = 60
+        filters['age_in_months__lte'] = 72
     data = ChildHealthMonthlyView.objects.filter(
         **filters
     ).order_by(order)
