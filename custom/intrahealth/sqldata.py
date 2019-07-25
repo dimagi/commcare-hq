@@ -3935,7 +3935,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN('real_date_repeat', 'starddate', 'enddate')]
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
         if self.config['selected_location']:
             filters.append(EQ(self.loc_id, 'selected_location'))
         if self.config['product_product']:
@@ -3960,7 +3960,6 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def rows(self):
-        self.get_data()
         # TODO: we need only the latest value of total_stock from selected daterange
         return [
             {'region_name': 'Region 1', 'region_id': 1, 'total_stock': 15},
@@ -4062,6 +4061,10 @@ class TauxDeRuptureRateData(SqlData):
         self.config = config
 
     @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], "")
+
+    @property
     def group_by(self):
         return ['doc_id', 'real_date', self.loc_name, self.loc_id, 'nb_products_stockout', 'count_products_select']
 
@@ -4115,4 +4118,77 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def rows(self):
+        # TODO: we don't know in which format data will be displaied
         return []
+
+class ConsommationPerProductData(SqlData):
+    slug = 'consommation_per_product'
+    comment = 'Exemple s'
+    title = 'Consommation per product'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(ConsommationPerProductData, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], "operatour_combined")
+
+    @property
+    def group_by(self):
+        return [self.loc_name, self.loc_id, 'product_id', 'product_name']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product name", SimpleColumn('product_name')),
+        ]
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = []
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        return filters
+
+    @property
+    def rows(self):
+        # TODO: we don't know in which format data will be displaied
+        return []
+

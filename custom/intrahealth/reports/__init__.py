@@ -1,6 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from custom.intrahealth.reports.consommation import Consommation
 from custom.intrahealth.reports.dashboard_1 import Dashboard1Report
 from custom.intrahealth.reports.disponibilite_dashboard import DisponibiliteReport
 from custom.intrahealth.reports.dashboard_2 import Dashboard2Report
@@ -25,6 +27,7 @@ CUSTOM_REPORTS = (
         Dashboard3Report,
         DisponibiliteReport,
         TauxDeRuptureReport,
+        Consommation,
     )),
     ("INFORMED PUSH MODEL REPORTS UCR", (
         TableuDeBoardReport2,
