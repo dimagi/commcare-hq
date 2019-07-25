@@ -233,7 +233,7 @@ class PartiallyLockingQueue(object):
 
     def _add_item(self, lock_ids, queue_obj, to_queue=True):
         """
-        :to_queue boolean: adds object to queues if True, just to lock tracking if not
+        :to_queue boolean: adds object to queues if True, just do lock tracking if not
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
         if to_queue:
