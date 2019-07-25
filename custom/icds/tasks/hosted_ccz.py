@@ -42,6 +42,8 @@ def setup_ccz_file_for_hosting(hosted_ccz_id, user_email=None):
             # delete the file from blob db if it was added but later failed
             hosted_ccz.delete_ccz()
             six.reraise(*exc)
+    else:
+        hosted_ccz.update_status('completed')
 
 
 def _notify_failure_to_user(hosted_ccz, build, user_email):
