@@ -6,7 +6,7 @@ import re
 
 from sqlalchemy.exc import OperationalError
 from nose.tools import with_setup
-from testil import assert_raises, eq, tempdir
+from testil import assert_raises, Config, eq, tempdir
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as JsonDiff
 
@@ -52,6 +52,55 @@ def test_db_unique_id():
     delete_db()
     with init_db(memory=False) as db:
         assert db.unique_id != uid, uid
+
+
+def test_update_cases():
+    with init_db() as db:
+        result = db.update_cases([
+            Config(id="a", total_forms=2, processed_forms=1),
+            Config(id="b", total_forms=2, processed_forms=1),
+            Config(id="c", total_forms=2, processed_forms=1),
+        ])
+        eq(sorted(result), [
+            ("a", 2, 1),
+            ("b", 2, 1),
+            ("c", 2, 1),
+        ])
+        result = db.update_cases([
+            Config(id="b", total_forms=1, processed_forms=3),
+            Config(id="c", total_forms=3, processed_forms=1),
+            Config(id="d", total_forms=2, processed_forms=1),
+        ])
+        eq(sorted(result), [
+            ("b", 2, 4),
+            ("c", 3, 2),
+            ("d", 2, 1),
+        ])
+
+
+def test_add_processed_forms():
+    with init_db() as db:
+        db.update_cases([
+            Config(id="a", total_forms=2, processed_forms=1),
+            Config(id="b", total_forms=2, processed_forms=1),
+            Config(id="c", total_forms=4, processed_forms=1),
+        ])
+        result = db.add_processed_forms({"b": 1, "c": 2, "d": 2})
+        eq(sorted(result), [
+            ("b", 2, 2),
+            ("c", 4, 3),
+            ("d", None, None),
+        ])
+
+
+def test_iter_cases_with_unprocessed_forms():
+    with init_db() as db:
+        db.update_cases([
+            Config(id="a", total_forms=2, processed_forms=1),
+            Config(id="b", total_forms=2, processed_forms=1),
+            Config(id="c", total_forms=4, processed_forms=1),
+        ])
+        eq(list(db.iter_cases_with_unprocessed_forms()), ["a", "b", "c"])
 
 
 @with_setup(teardown=delete_db)

@@ -33,26 +33,26 @@ class TestCaseDiffQueue(SimpleTestCase):
 
     def setUp(self):
         super(TestCaseDiffQueue, self).setUp()
-        self.diff_cases_patcher = patch.object(mod, "diff_cases", self.diff_cases)
-        self.get_cases_patcher = patch(
-            "corehq.form_processor.backends.couch.dbaccessors.CaseAccessorCouch.get_cases",
-            self.get_cases,
-        )
-        self.get_stock_forms_patcher = patch.object(
-            mod, "get_stock_forms_by_case_id", self.get_stock_forms)
+        self.patches = [
+            patch.object(mod, "diff_cases", self.diff_cases),
+            patch(
+                "corehq.form_processor.backends.couch.dbaccessors.CaseAccessorCouch.get_cases",
+                self.get_cases,
+            ),
+            patch.object(mod, "get_stock_forms_by_case_id", self.get_stock_forms),
+        ]
 
-        self.diff_cases_patcher.start()
-        self.get_cases_patcher.start()
-        self.get_stock_forms_patcher.start()
+        for patcher in self.patches:
+            patcher.start()
         self.statedb = StateDB.init(":memory:")  # in-memory db for test speed
         self.cases = {}
+        self.processed_forms = defaultdict(set)
         self.stock_forms = defaultdict(set)
         self.diffed = defaultdict(int)
 
     def tearDown(self):
-        self.diff_cases_patcher.stop()
-        self.get_cases_patcher.stop()
-        self.get_stock_forms_patcher.stop()
+        for patcher in self.patches:
+            patcher.stop()
         self.statedb.close()
         super(TestCaseDiffQueue, self).tearDown()
 
@@ -90,6 +90,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         # simulate a single call to couch failing
         with self.queue() as queue, self.get_cases_failure():
             queue.update({"a", "b", "c"}, "f1")
+            queue.flush()
         with self.queue() as queue:
             queue.update({"d"}, "f2")
         self.assertDiffed("a b c d")
@@ -116,15 +117,14 @@ class TestCaseDiffQueue(SimpleTestCase):
         self.assertEqual(queue.num_diffed_cases, 4)
 
     def test_diff_cases_failure(self):
-        self.add_cases("a b c", "f1")
-        self.add_cases("d", "f2")
-        self.add_cases("e", "f3")
+        self.add_cases("a", "f1")
+        self.add_cases("b", "f2")
         with self.queue() as queue, self.diff_cases_failure():
-            queue.update({"a", "b", "c"}, "f1")
-            queue.update({"d"}, "f2")
+            queue.update({"a"}, "f1")
+            queue.flush()
         with self.queue() as queue:
-            queue.update({"e"}, "f3")
-        self.assertDiffed("a b c d e")
+            queue.update({"b"}, "f2")
+        self.assertDiffed("a b")
 
     def test_stop_with_cases_to_diff(self):
         self.add_cases("a", "f1")
@@ -139,16 +139,16 @@ class TestCaseDiffQueue(SimpleTestCase):
         self.assertDiffed("a")
 
     def test_resume_after_error_in_process_remaining_diffs(self):
-        self.add_cases("a b c", "f1")
-        self.add_cases("d", "f2")
+        self.add_cases("a", "f1")
+        self.add_cases("b", "f2")
         with self.assertRaises(Error), self.queue() as queue:
             mock = patch.object(queue, "process_remaining_diffs").start()
             mock.side_effect = Error("cannot process remaining diffs")
-            queue.update({"a", "b", "c"}, "f1")
+            queue.update({"a"}, "f1")
         queue.pool.kill()  # simulate end process
         with self.queue() as queue:
-            queue.update({"d"}, "f2")
-        self.assertDiffed("a b c d")
+            queue.update({"b"}, "f2")
+        self.assertDiffed("a b")
 
     def test_defer_diff_until_all_forms_are_processed(self):
         self.add_cases("a b", "f0")
@@ -157,7 +157,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.queue() as queue:
             queue.update({"a", "b"}, "f0")
             queue.update({"c", "d"}, "f1")
-            flush(queue.pool)
+            queue.flush(complete=False)
             self.assertDiffed("a c")
             queue.update({"b", "d", "e"}, "f2")
         self.assertDiffed("a b c d e")
@@ -166,35 +166,20 @@ class TestCaseDiffQueue(SimpleTestCase):
         self.add_cases("a b", "f0")
         with self.queue() as queue:
             queue.update({"a", "b"}, "f0")
-            flush(queue.pool)
+            queue.flush(complete=False)
             self.assertDiffed("a b")
-            queue.statedb.add_diffs("CommCareCase", "a", DIFFS)
             queue.update({"a"}, "f1")  # unexpected update
-        self.assertDiffed({"a": 3, "b": 1})
-        self.assertEqual(queue.statedb.get_diffs(), [])
+        self.assertDiffed({"a": 2, "b": 1})
 
     def test_unexpected_case_update_scenario_2(self):
         self.add_cases("a", "f0")
         self.add_cases("b", "f1")
         with self.queue() as queue:
             queue.update({"a", "b"}, "f0")  # unexpected update first time b is seen
-            flush(queue.pool)
+            queue.flush(complete=False)
             self.assertDiffed("a b")
-            queue.statedb.add_diffs("CommCareCase", "b", DIFFS)
             queue.update({"b"}, "f1")
-        self.assertDiffed({"a": 1, "b": 3})
-        self.assertEqual(queue.statedb.get_diffs(), [])
-
-    def test_unexpected_case_update_scenario_3(self):
-        self.add_cases("a b c", "f0")
-        self.add_cases("a b c", "f2")
-        with self.queue() as queue:
-            queue.update(["a", "b", "c"], "f0")
-            self.assertEqual(set(queue.cases), {"a", "b"})
-            # unexpected update after first seen but before diff -> no extra diff
-            queue.update({"a"}, "f1")
-            queue.update({"a", "b", "c"}, "f2")
-        self.assertDiffed("a b c")
+        self.assertDiffed({"a": 1, "b": 2})
 
     def test_missing_couch_case(self):
         self.add_cases("found", "form")
@@ -210,20 +195,61 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.queue() as queue:
             queue.update({"a"}, "f0")
             queue.update(["b", "c"], "f1")
-            flush(queue.pool)
-            self.assertDiffed("a b")
+            queue.flush(complete=False)
+            self.assertDiffed("a b c")
 
     def test_case_with_stock_forms(self):
         self.add_cases("a", "f0", stock_forms="f1")
+        self.add_cases("b c", "f2")
+        with self.queue() as queue:
+            queue.update({"a"}, "f0")
+            queue.update(["b", "c"], "f2")
+            queue.flush(complete=False)
+            self.assertDiffed("b c")
+            queue.update({"a"}, "f1")
+            queue.flush(complete=False)
+            self.assertDiffed("a b c")
+
+    def test_case_with_many_forms(self):
+        self.add_cases("a", ["f%s" % n for n in range(25)])
         self.add_cases("b c d", "f2")
         with self.queue() as queue:
             queue.update({"a"}, "f0")
             queue.update(["b", "c", "d"], "f2")
-            flush(queue.pool)
-            self.assertDiffed("b c")
-            queue.update({"a"}, "f1")
-            flush(queue.pool)
+            queue.flush(complete=False)
+            self.assertDiffed("b c d")
+            self.assertNotIn("a", queue.cases)
+            for n in range(1, 25):
+                queue.update({"a"}, "f%s" % n)
+            queue.flush(complete=False)
             self.assertDiffed("a b c d")
+
+    def test_resume_on_case_with_many_forms(self):
+        self.add_cases("a", ["f%s" % n for n in range(25)])
+        self.add_cases("b c d", "f2")
+        with self.assertRaises(Error), self.queue() as queue:
+            queue.update({"a"}, "f0")
+            queue.update(["b", "c", "d"], "f2")
+            queue.flush(complete=False)
+            mock = patch.object(queue, "process_remaining_diffs").start()
+            mock.side_effect = Error("cannot process remaining diffs")
+        self.assertDiffed("b c d")
+        queue.pool.kill()  # simulate end process
+        with self.queue() as queue:
+            queue.flush(complete=False)
+            self.assertNotIn("a", queue.cases)
+            for n in range(1, 25):
+                queue.update({"a"}, "f%s" % n)
+            queue.flush(complete=False)
+            self.assertDiffed("a b c d")
+
+    def test_case_with_many_unprocessed_forms(self):
+        self.add_cases("a", ["f%s" % n for n in range(25)])
+        self.add_cases("b c d", "f2")
+        with self.queue() as queue:
+            queue.update({"a"}, "f0")
+            queue.update(["b", "c", "d"], "f2")
+        self.assertDiffed("a b c d")
 
     def test_status_logger(self):
         event = Event()
