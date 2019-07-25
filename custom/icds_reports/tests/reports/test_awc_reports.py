@@ -34,6 +34,12 @@ class FirstDayOfMayDate(date):
         return date(2017, 5, 1)
 
 
+class SecondDayOfMay(date):
+    @classmethod
+    def utcnow(cls):
+        return datetime.datetime(2017, 5, 2)
+
+
 class TestAWCReport(TestCase):
     def test_beneficiary_details_recorded_weight_none(self):
         data = get_beneficiary_details(
@@ -2574,7 +2580,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_first_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2598,7 +2604,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_second_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2622,7 +2628,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_third_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2646,7 +2652,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_forth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2670,7 +2676,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_fifth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2694,7 +2700,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_sixth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2718,7 +2724,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_seventh_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2740,4 +2746,49 @@ class TestAWCReport(TestCase):
                     'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_on_first_of_month(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+            data = get_awc_report_lactating(
+                start=0,
+                length=7,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+
+            print(data['data'])
+            self.assertListEqual(
+                data['data'],
+                [
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
+                     'age': 20, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'36d5e223-a631-4030-910c-262a1d066fb3', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
+                     'age': 23, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 4, 20),
+                     'case_id': u'aefb8fe5-1cd1-4235-9baf-963b1a0b498e', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 24,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 20),
+                     'case_id': u'10a53900-f65e-46b7-ae0c-f32a208c0677', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'1a6851bc-8172-48fc-80d1-b198f23033ab', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 29,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'1744a035-56f1-4059-86f5-93fcea3c6076', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'}
+                ]
             )
