@@ -2757,8 +2757,6 @@ class TestAWCReport(TestCase):
                 reversed_order=False,
                 awc_id='a50'
             )
-
-            print(data['data'])
             self.assertListEqual(
                 data['data'],
                 [
