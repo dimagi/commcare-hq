@@ -426,7 +426,7 @@ def copy_app(request, domain):
             source = z.read(z.filelist[0].filename)
         app_id_or_source = source
     elif request.POST.get('build_id'):
-        build = Application.get(request.POST.get('build_id'))
+        build = get_app(domain, request.POST.get('build_id'))
         build._unset_build_fields()
         app_id_or_source = build.export_json(dump_json=False)
     else:
@@ -451,7 +451,7 @@ def copy_app(request, domain):
 def _create_linked_app(request, master_app, link_domain, link_app_name, master_build_id=None):
     master_domain = master_app.domain
     if master_build_id:
-        master_version = Application.get(master_build_id)
+        master_version = get_app(master_domain, master_build_id)
     else:
         master_version = get_latest_released_app_version(master_domain, master_app._id)
     if not master_version:
