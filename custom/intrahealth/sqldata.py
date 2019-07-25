@@ -3946,7 +3946,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def group_by(self):
-        group_by = [self.loc_name, self.loc_id]
+        group_by = [self.loc_name, self.loc_id, 'real_date_repeat']
         return group_by
 
     @property
@@ -3960,7 +3960,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def rows(self):
-
+        self.get_data()
         # TODO: we need only the latest value of total_stock from selected daterange
         return [
             {'region_name': 'Region 1', 'region_id': 1, 'total_stock': 15},
@@ -4047,4 +4047,72 @@ class EffectiveDeLivraisonDataSource(SqlData):
             {'region_name': 'Region 5', 'region_id': 5, 'nb_pps_visites': 100},
             {'region_name': 'Region 6', 'region_id': 6, 'nb_pps_visites': 10},
         ]
-        # return self.get_data()
+    # return self.get_data()
+
+
+class TauxDeRuptureRateData(SqlData):
+    slug = 'taux_de_rupture_par_pps'
+    comment = 'Nombre de produits en rupture sur le nombre total de produits du PPS'
+    title = 'Taux de Rupture par PPS'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(TauxDeRuptureRateData, self).__init__()
+        self.config = config
+
+    @property
+    def group_by(self):
+        return ['doc_id', 'real_date', self.loc_name, self.loc_id, 'nb_products_stockout', 'count_products_select']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
+            DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
+            DatabaseColumn("Date", SimpleColumn('real_date')),
+            DatabaseColumn("Number of stockout products", SimpleColumn('nb_products_stockout')),
+            DatabaseColumn("Number of products in pps", SimpleColumn('count_products_select')),
+        ]
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = []
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        return filters
+
+    @property
+    def rows(self):
+        return []

@@ -18,9 +18,9 @@ from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource,
 from dimagi.utils.dates import force_to_date
 
 
-class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    name = "Disponibilité"
-    slug = 'disponibilite_report'
+class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
+    name = "Taux De Rupture"
+    slug = 'taux_de_rupture_report'
     comment = 'test comment change me later'
     default_rows = 10
 
@@ -28,7 +28,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
-        super(DisponibiliteReport, self).decorator_dispatcher(request, *args, **kwargs)
+        super(TauxDeRuptureReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def fields(self):
@@ -42,7 +42,6 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     def report_context(self):
         context = {
             'report': self.get_report_context(),
-            'charts': self.charts,
             'title': self.name
         }
 
@@ -74,6 +73,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         )
 
     def get_report_context(self):
+
         if self.needs_filters:
             headers = []
             rows = []
