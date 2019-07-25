@@ -96,15 +96,21 @@ class ProductFixturesProvider(FixtureProvider):
     def _get_fixture_items(self, restore_state, indexed):
         restore_user = restore_state.restore_user
 
-        def get_products():
-            return sorted(
-                Product.by_domain(restore_user.domain),
-                key=lambda product: product.code
-            )
+        project = restore_user.project
+        if not project or not project.commtrack_enabled:
+            return []
+
+        if not self._should_sync(restore_state):
+            return []
+
+        data = sorted(
+            Product.by_domain(restore_user.domain),
+            key=lambda product: product.code
+        )
 
         fixture_nodes = simple_fixture_generator(
             restore_user, self.id, "product", PRODUCT_FIELDS,
-            get_products, restore_state.last_sync_log
+            data
         )
         if not fixture_nodes:
             return []
@@ -112,6 +118,21 @@ class ProductFixturesProvider(FixtureProvider):
         if indexed:
             fixture_nodes[0].attrib['indexed'] = 'true'
         return fixture_nodes
+
+    def _should_sync(self, restore_state):
+        """
+        Determine if a data collection needs to be synced.
+        """
+        last_sync = restore_state.last_sync_log
+        if not last_sync:
+            # definitely sync if we haven't synced before
+            return True
+
+        changes_since_last_sync = SQLProduct.objects.filter(
+            domain=restore_state.restore_user.domain, last_modified__gte=last_sync.date
+        ).exists()
+
+        return changes_since_last_sync
 
 
 product_fixture_generator = ProductFixturesProvider()
