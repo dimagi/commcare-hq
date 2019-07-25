@@ -21,29 +21,15 @@ from testil import tempdir
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 
 from .. import casediff as mod
-from ..statedb import delete_state_db, init_state_db
+from ..statedb import delete_state_db, init_state_db, StateDB
 
 log = logging.getLogger(__name__)
-
-
-class StateDirTest(SimpleTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(StateDirTest, cls).setUpClass()
-        cls.tmp = tempdir()
-        cls.state_dir = cls.tmp.__enter__()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.tmp.__exit__(None, None, None)
-        super(StateDirTest, cls).tearDownClass()
 
 
 @patch.object(mod.CaseDiffQueue, "BATCH_SIZE", 2)
 @patch.object(mod.BatchProcessor, "MAX_RETRIES", 0)
 @patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
-class TestCaseDiffQueue(StateDirTest):
+class TestCaseDiffQueue(SimpleTestCase):
 
     def setUp(self):
         super(TestCaseDiffQueue, self).setUp()
@@ -58,6 +44,7 @@ class TestCaseDiffQueue(StateDirTest):
         self.diff_cases_patcher.start()
         self.get_cases_patcher.start()
         self.get_stock_forms_patcher.start()
+        self.statedb = StateDB.init(":memory:")  # in-memory db for test speed
         self.cases = {}
         self.stock_forms = defaultdict(set)
         self.diffed = defaultdict(int)
@@ -66,7 +53,7 @@ class TestCaseDiffQueue(StateDirTest):
         self.diff_cases_patcher.stop()
         self.get_cases_patcher.stop()
         self.get_stock_forms_patcher.stop()
-        delete_state_db("test", self.state_dir)
+        self.statedb.close()
         super(TestCaseDiffQueue, self).tearDown()
 
     def test_case_diff(self):
@@ -251,8 +238,7 @@ class TestCaseDiffQueue(StateDirTest):
     @contextmanager
     def queue(self):
         log.info("init CaseDiffQueue")
-        with init_state_db("test", self.state_dir) as statedb, \
-                mod.CaseDiffQueue(statedb) as queue:
+        with mod.CaseDiffQueue(self.statedb) as queue:
             yield queue
 
     def add_cases(self, case_ids, xform_ids=(), actions=(), stock_forms=()):
@@ -333,7 +319,18 @@ class TestCaseDiffQueue(StateDirTest):
 
 
 @patch.object(gevent.get_hub(), "SYSTEM_ERROR", BaseException)
-class TestCaseDiffProcess(StateDirTest):
+class TestCaseDiffProcess(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCaseDiffProcess, cls).setUpClass()
+        cls.tmp = tempdir()
+        cls.state_dir = cls.tmp.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.__exit__(None, None, None)
+        super(TestCaseDiffProcess, cls).tearDownClass()
 
     def tearDown(self):
         delete_state_db("test", self.state_dir)

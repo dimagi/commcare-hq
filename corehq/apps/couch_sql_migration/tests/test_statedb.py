@@ -5,16 +5,18 @@ import pickle
 import re
 
 from sqlalchemy.exc import OperationalError
+from nose.tools import with_setup
 from testil import assert_raises, eq, tempdir
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as JsonDiff
 
 from ..statedb import (
     Counts,
-    ResumeError,
     delete_state_db,
     diff_doc_id_idx,
     init_state_db,
+    ResumeError,
+    StateDB,
 )
 
 
@@ -28,41 +30,46 @@ def teardown_module():
     _tmp.__exit__(None, None, None)
 
 
-def teardown():
-    delete_state_db("test", state_dir)
-
-
-def init_db():
+def init_db(memory=True):
+    if memory:
+        return StateDB.init(":memory:")
     return init_state_db("test", state_dir)
 
 
+def delete_db():
+    delete_state_db("test", state_dir)
+
+
+@with_setup(teardown=delete_db)
 def test_db_unique_id():
-    with init_db() as db:
+    with init_db(memory=False) as db:
         uid = db.unique_id
         assert re.search(r"\d{8}-\d{6}.\d{6}", uid), uid
 
-    with init_db() as db:
+    with init_db(memory=False) as db:
         eq(db.unique_id, uid)
 
-    delete_state_db("test", state_dir)
-    with init_db() as db:
+    delete_db()
+    with init_db(memory=False) as db:
         assert db.unique_id != uid, uid
 
 
+@with_setup(teardown=delete_db)
 def test_problem_forms():
-    with init_db() as db:
+    with init_db(memory=False) as db:
         db.add_problem_form("abc")
 
-    with init_db() as db:
+    with init_db(memory=False) as db:
         db.add_problem_form("def")
         eq(set(db.iter_problem_forms()), {"abc", "def"})
 
 
+@with_setup(teardown=delete_db)
 def test_no_action_case_forms():
-    with init_db() as db:
+    with init_db(memory=False) as db:
         db.add_no_action_case_form("abc")
 
-    with init_db() as db:
+    with init_db(memory=False) as db:
         eq(db.get_no_action_case_forms(), {"abc"})
 
         # verify that memoized result is cleared on add
@@ -70,16 +77,17 @@ def test_no_action_case_forms():
         eq(db.get_no_action_case_forms(), {"abc", "def"})
 
 
+@with_setup(teardown=delete_db)
 def test_resume_state():
-    with init_db() as db:
+    with init_db(memory=False) as db:
         eq(db.pop_resume_state("test", []), [])
         db.set_resume_state("test", ["abc", "def"])
 
-    with init_db() as db:
+    with init_db(memory=False) as db:
         eq(db.pop_resume_state("test", []), ["abc", "def"])
 
     # simulate resume without save
-    with init_db() as db:
+    with init_db(memory=False) as db:
         with assert_raises(ResumeError):
             db.pop_resume_state("test", [])
 
@@ -114,8 +122,9 @@ def test_diff_doc_id_idx_exists():
         diff_doc_id_idx.create(db.engine)
 
 
+@with_setup(teardown=delete_db)
 def test_pickle():
-    with init_db() as db:
+    with init_db(memory=False) as db:
         other = pickle.loads(pickle.dumps(db))
         assert isinstance(other, type(db)), (other, db)
         assert other is not db

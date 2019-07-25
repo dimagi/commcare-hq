@@ -58,6 +58,9 @@ class StateDB(DiffDB):
         return self
 
     def __exit__(self, *exc_info):
+        self.close()
+
+    def close(self):
         self.engine.dispose()
         if self._connection is not None:
             self._connection.close()
