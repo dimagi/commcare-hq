@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.http import JsonResponse
 from io import open
 
