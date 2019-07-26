@@ -65,7 +65,7 @@ def get_form_list(domain):
     form_list = []
     for app_id in get_app_ids_in_domain(domain):
         latest_app = get_app(domain, app_id, latest=True)
-        if latest_app.doc_type != "RemoteApp":
+        if latest_app.doc_type in ('Application', 'LinkedApplication'):
             for m in latest_app.get_modules():
                 for f in m.get_forms():
                     form_list.append({"code": f.unique_id, "name": f.full_path_name})
