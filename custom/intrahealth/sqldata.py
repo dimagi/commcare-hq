@@ -4202,6 +4202,7 @@ class ConsommationPerProductData(SqlData):
 
 
 class LossRatePerProductData(SqlData):
+    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 2’
     slug = 'taux_de_perte'
     comment = 'Taux de Perte (hors péremption)'
     title = 'Taux de Perte (hors péremption)'
@@ -4283,6 +4284,7 @@ class LossRatePerProductData(SqlData):
 
 
 class ExpirationRatePerProductData(SqlData):
+    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 2’
     slug = 'taux_de_peremption'
     comment = 'valeur péremption sur valeur totale'
     title = 'Taux de Péremption'
@@ -4364,6 +4366,7 @@ class ExpirationRatePerProductData(SqlData):
 
 
 class SatisfactionRateAfterDeliveryPerProductData(SqlData):
+    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 3’
     slug = 'taux_de_peremption'
     comment = 'valeur péremption sur valeur totale'
     title = 'Taux de Péremption'
@@ -4393,6 +4396,87 @@ class SatisfactionRateAfterDeliveryPerProductData(SqlData):
             DatabaseColumn("Quantity of the product  suggested", SumColumn('ideal_topup')),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
             DatabaseColumn("Program name", SimpleColumn('program_name'))
+        ]
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        elif self.config['product_program']:
+            filters.append(EQ('program_id', 'product_program'))
+        return filters
+
+    @property
+    def rows(self):
+        # TODO: we don't know in which format data will be displaied
+        return []
+    # return self.get_data()
+
+
+class ValuationOfPNAStockPerProductV2Data(SqlData):
+    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 3’
+    slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
+    comment = 'Valeur des stocks PNA disponible (chaque produit)'
+    title = 'Valeur des stocks PNA disponible (chaque produit)'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(ValuationOfPNAStockPerProductV2Data, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        # TODO: we don't know if we need to create data source or use existing one
+        return get_table_name(self.config['domain'], "")
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Program name", SimpleColumn('program_name')),
+            DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
         ]
         return columns
 

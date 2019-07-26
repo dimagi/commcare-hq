@@ -14,21 +14,21 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
-from custom.intrahealth.sqldata import ExpirationRatePerProductData
+from custom.intrahealth.sqldata import ValuationOfPNAStockPerProductV2Data
 from dimagi.utils.dates import force_to_date
 
 
-class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    slug = 'taux_de_peremption'
-    comment = 'valeur péremption sur valeur totale'
-    name = 'Taux de Péremption'
+class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
+    slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
+    comment = 'Valeur des stocks PNA disponible (chaque produit)'
+    name = 'Valeur des stocks PNA disponible'
     default_rows = 10
 
     report_template_path = 'yeksi_naa/tabular_report.html'
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
-        super(TauxDePeremptionReport, self).decorator_dispatcher(request, *args, **kwargs)
+        super(ValuerDesStocksPNADisponsibleReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def fields(self):
@@ -71,7 +71,7 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
         return DataTablesHeader(
             DataTablesColumn(self.selected_location_type),
             DataTablesColumn(
-                'Produites'
+                'Valuer'
             ),
         )
 
@@ -98,7 +98,7 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
 
     def calculate_rows(self):
         # TODO: needs further implementation
-        rows = ExpirationRatePerProductData(config=self.config).rows
+        rows = ValuationOfPNAStockPerProductV2Data(config=self.config).rows
         return rows
 
     @property
@@ -115,7 +115,7 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
 
             return [
                 {
-                    "key": "valeur péremption sur valeur totale",
+                    "key": "Valeur des stocks PNA disponible (chaque produit)",
                     'values': com
                 },
             ]

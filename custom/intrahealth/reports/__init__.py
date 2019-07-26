@@ -17,6 +17,7 @@ from custom.intrahealth.reports.taux_de_peremption_dashboard import TauxDePeremp
 from custom.intrahealth.reports.taux_de_perte_dashboard import TauxDePerteReport
 from custom.intrahealth.reports.taux_de_rupture_dashboard import TauxDeRuptureReport
 from custom.intrahealth.reports.taux_de_satisfaction_dashboard import TauxDeSatisfactionReport
+from custom.intrahealth.reports.valuer_des_stocks_pna_disponible_dashboard import ValuerDesStocksPNADisponsibleReport
 
 CUSTOM_REPORTS = (
     ('INFORMED PUSH MODEL REPORTS', (
@@ -29,11 +30,13 @@ CUSTOM_REPORTS = (
         Dashboard2Report,
         Dashboard3Report,
         DisponibiliteReport,
-        TauxDeRuptureReport,
-        ConsommationReport,
-        TauxDePerteReport,
-        TauxDePeremptionReport,
-        TauxDeSatisfactionReport,
+        # TODO: initialize when calculations for reports are ready
+        # TauxDeRuptureReport,
+        # ConsommationReport,
+        # TauxDePerteReport,
+        # TauxDePeremptionReport,
+        # TauxDeSatisfactionReport,
+        # ValuerDesStocksPNADisponsibleReport,
     )),
     ("INFORMED PUSH MODEL REPORTS UCR", (
         TableuDeBoardReport2,

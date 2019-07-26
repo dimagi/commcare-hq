@@ -22,7 +22,7 @@ from dimagi.utils.dates import force_to_date
 class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'taux_de_satisfaction_apres_livraison'
     comment = 'produits proposés sur produits livrés'
-    name = 'Taux de satisfaction (après livraison)'
+    name = 'Taux de satisfaction'
     default_rows = 10
 
     report_template_path = 'yeksi_naa/tabular_report.html'
