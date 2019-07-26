@@ -43,6 +43,7 @@ def is_commtrack(project, request):
 
 
 def get_per_domain_context(project, request=None):
+    from corehq import toggles
     custom_logo_url = None
     if (project and project.has_custom_logo and
             domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
@@ -58,7 +59,7 @@ def get_per_domain_context(project, request=None):
         else:
             domain_name = request.couch_user.domain
             role = request.couch_user.get_domain_membership(domain_name).role
-            if not role and settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            if not role and toggles.ICDS.enabled(domain_name):
                 allow_report_an_issue = False
             else:
                 allow_report_an_issue = request.couch_user.has_permission(domain_name, 'report_an_issue')
