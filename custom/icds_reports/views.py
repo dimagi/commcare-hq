@@ -818,6 +818,11 @@ class FactSheetsView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
+
         loc_level = get_location_level(config.get('aggregation_level'))
 
         beta = icds_pre_release_features(request.user)

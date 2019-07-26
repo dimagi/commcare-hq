@@ -308,6 +308,12 @@ Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka, Elasticsearch).
 
+```bash
+$ ./manage.py check_services
+```
+
+Some of the services listed there aren't necessary for very basic operation, but it can give you a good idea of what's broken.
+
 Then run the following separately:
 
     # run the Django server

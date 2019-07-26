@@ -1,7 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-from collections import OrderedDict
-
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -11,12 +9,10 @@ from corehq import toggles
 from corehq.apps.api.odata.utils import (
     get_case_odata_fields_from_config,
     get_case_type_to_properties,
-    get_form_odata_fields_from_config,
     get_xmlns_by_app,
     get_xmlns_to_properties,
-)
+    get_form_odata_fields_from_config)
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
-from corehq.apps.export.dbaccessors import get_odata_case_configs_by_domain, get_odata_form_configs_by_domain
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
@@ -167,7 +163,7 @@ class ODataFormMetadataView(View):
     def get(self, request, domain, config_id):
         config = get_document_or_404(FormExportInstance, domain, config_id)
         metadata = render_to_string('api/form_odata_metadata.xml', {
-            'fields': get_case_odata_fields_from_config(config),
+            'fields': get_form_odata_fields_from_config(config),
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
