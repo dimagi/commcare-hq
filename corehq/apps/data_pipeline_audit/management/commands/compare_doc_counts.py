@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
 from corehq.apps.data_pipeline_audit.tools import get_doc_counts_for_domain
+from corehq.apps.es.domains import DomainES
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.markup import SimpleTableWriter, CSVRowFormatter, \
     TableRowFormatter
@@ -13,12 +14,15 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domains', nargs='*')
+        parser.add_argument('--all_domains', action='store_true', default=False, dest='all_domains',
+                            help='Compare for all domains')
         parser.add_argument('--csv', action='store_true', default=False, dest='csv',
                             help='Write output in CSV format.')
 
     def handle(self, domains, **options):
         csv = options.get('csv')
-
+        if options.get('all_domains', False):
+            domains = DomainES().values_list('name', flat=True)
         if csv:
             row_formatter = CSVRowFormatter()
         else:
