@@ -46,7 +46,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
-from corehq.const import SERVER_DATE_FORMAT
+from corehq.const import SERVER_DATE_FORMAT, ONE_DAY
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
@@ -1283,3 +1283,17 @@ def _dictfetchall(cursor):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
+def setup_aggregation(agg_date):
+    _update_ucr_table_mapping()
+
+    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
+    if db_alias:
+        with connections[db_alias].cursor() as cursor:
+            _create_aggregate_functions(cursor)
+
+        _update_aggregate_locations_tables()
+    state_ids = list(SQLLocation.objects
+                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                     .values_list('location_id', flat=True))
+    cache.put('agg_state_ids_{}'.format(agg_date), state_ids, ONE_DAY * 2)
