@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+import signal
 import six
 
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
@@ -51,6 +52,23 @@ from corehq.util.timer import TimingContext
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
+
+
+class WarmShutdown(object):
+    # modified from https://stackoverflow.com/a/50174144
+
+    shutting_down = False
+
+    def __enter__(self):
+        self.current_handler = signal.signal(signal.SIGTERM, self.handler)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.shutting_down:
+            exit(0)
+        signal.signal(signal.SIGTERM, self.current_handler)
+
+    def handler(self, signum, frame):
+        self.shutting_down = True
 
 
 def time_ucr_process_change(method):
@@ -271,7 +289,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         retry_changes = set()
         change_exceptions = []
         for domain, changes_chunk in six.iteritems(changes_by_domain):
-            failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
+            with WarmShutdown():
+                failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
             retry_changes.update(failed)
             change_exceptions.extend(exceptions)
 
