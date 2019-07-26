@@ -56,6 +56,12 @@ class DishaDump(object):
             content_format = Format('', 'json', '', True)
             return get_download_response(_file, file_ref.get_file_size(), content_format, self._blob_id(), request)
         else:
+            DISHA_NOTIFICATION_EMAIL = '{}@{}'.format('icds-dashboard', 'dimagi.com')
+            _soft_assert = soft_assert(to=[DISHA_NOTIFICATION_EMAIL], send_to_ops=False)
+            _soft_assert(False, "Expected DISHA data is not missing for state {}, month {}".format(
+                self.state_name,
+                str(self.month)
+            ))
             return JsonResponse({"message": "Data is not updated for this month"})
 
     def _get_columns(self):
