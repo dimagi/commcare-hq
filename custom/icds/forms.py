@@ -54,6 +54,15 @@ class HostedCCZForm(forms.Form):
                                  required=False, widget=Select(choices=[]))
     file_name = forms.CharField(label=ugettext_lazy("CCZ File Name"), required=False)
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3, 'cols': 15}))
+    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+                               choices=(
+                                   ('', ugettext_lazy('Select Status')),
+                                   (HostedCCZ.PENDING, ugettext_lazy('Pending')),
+                                   (HostedCCZ.BUILDING, ugettext_lazy('Building')),
+                                   (HostedCCZ.FAILED, ugettext_lazy('Failed')),
+                                   (HostedCCZ.COMPLETED, ugettext_lazy('Completed'))),
+                               required=False,
+                               help_text=ugettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, email, *args, **kwargs):
         self.domain = domain
@@ -66,6 +75,8 @@ class HostedCCZForm(forms.Form):
             self.fields['app_id'].initial = request.GET.get('app_id')
         if request.GET.get('link_id'):
             self.fields['link_id'].initial = request.GET.get('link_id')
+        if request.GET.get('status'):
+            self.fields['status'].initial = request.GET.get('status')
         self.helper.layout = crispy.Layout(
             crispy.Field('link_id', css_class="hqwebapp-select2", id="link-id-select"),
             crispy.Field('app_id', css_class="hqwebapp-select2", id='app-id-search-select'),
@@ -73,6 +84,7 @@ class HostedCCZForm(forms.Form):
             crispy.Field('profile_id', id='app-profile-id-input'),
             crispy.Field('file_name'),
             crispy.Field('note'),
+            crispy.Field('status'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
