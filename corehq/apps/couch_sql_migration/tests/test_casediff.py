@@ -243,6 +243,40 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.flush(complete=False)
             self.assertDiffed("a b c d")
 
+    def test_cases_cache_max_size(self):
+        self.add_cases("a b c d e f", ["f0", "f1"])
+        patch_max_cases = patch.object(mod.CaseDiffQueue, "MAX_MEMORIZED_CASES", 4)
+        with patch_max_cases, self.queue() as queue:
+            queue.update({"a", "b", "c", "d", "e", "f"}, "f0")
+            queue.flush(complete=False)
+            self.assertEqual(len(queue.cases), 4, queue.cases)
+            self.assertDiffed([])
+            queue.update({"a", "b", "c", "d", "e", "f"}, "f1")
+        self.assertDiffed("a b c d e f")
+
+    def test_cases_lru_cache(self):
+        # forms fa-ff update corresponding cases
+        for case_id in "abcdef":
+            self.add_cases(case_id, "f%s" % case_id)
+        # forms f1-f5 update case a
+        for i in range(1, 6):
+            self.add_cases("a", "f%s" % i)
+        self.add_cases("a b c d e f", "fx")
+        patch_max_cases = patch.object(mod.CaseDiffQueue, "MAX_MEMORIZED_CASES", 4)
+        with patch_max_cases, self.queue() as queue:
+            for i, case_id in enumerate("abcdef"):
+                queue.update(case_id, "f%s" % case_id)
+                if i > 0:
+                    # keep "a" fresh in the LRU cache
+                    queue.update("a", "f%s" % i)
+            queue.flush(complete=False)
+            self.assertIn("a", queue.cases)
+            self.assertNotIn("b", queue.cases)
+            self.assertNotIn("c", queue.cases)
+            self.assertDiffed([])
+            queue.update({"a", "b", "c", "d", "e", "f"}, "fx")
+        self.assertDiffed("a b c d e f")
+
     def test_case_with_many_unprocessed_forms(self):
         self.add_cases("a", ["f%s" % n for n in range(25)])
         self.add_cases("b c d", "f2")

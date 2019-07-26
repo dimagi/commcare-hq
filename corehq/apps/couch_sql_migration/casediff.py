@@ -28,6 +28,7 @@ from corehq.form_processor.parsers.ledgers.form import MissingFormXml
 from dimagi.utils.chunked import chunked
 
 from .diff import filter_case_diffs, filter_ledger_diffs
+from .lrudict import LRUDict
 
 log = logging.getLogger(__name__)
 
@@ -61,8 +62,11 @@ class CaseDiffQueue(object):
     """
 
     BATCH_SIZE = 100
+    MAX_MEMORIZED_CASES = 4096
 
     def __init__(self, statedb, status_interval=STATUS_INTERVAL):
+        assert self.BATCH_SIZE < self.MAX_MEMORIZED_CASES, \
+            (self.BATCH_SIZE, self.MAX_MEMORIZED_CASES)
         self.statedb = statedb
         self.status_interval = status_interval
         self.pending_cases = defaultdict(int)  # case id -> processed form count
@@ -71,7 +75,7 @@ class CaseDiffQueue(object):
         self.pool = Pool(5)
         self.case_batcher = BatchProcessor(self.pool)
         self.diff_batcher = BatchProcessor(self.pool)
-        self.cases = {}
+        self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
         self.num_diffed_cases = 0
         self._is_flushing = False
 
@@ -117,6 +121,7 @@ class CaseDiffQueue(object):
         """
         log.debug("enqueue or load %s", pending)
         to_diff = []
+        update_lru = self.cases.get
         batch = self.pending_loads
         result = self.statedb.add_processed_forms(pending)
         for case_id, total_forms, processed_forms in result:
@@ -127,6 +132,8 @@ class CaseDiffQueue(object):
                     batch = self.pending_loads = defaultdict(int)
             elif total_forms <= processed_forms:
                 to_diff.append(case_id)
+            else:
+                update_lru(case_id)
         if self._is_flushing and batch:
             self._load_cases(batch)
             self.pending_loads = defaultdict(int)
