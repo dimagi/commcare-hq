@@ -32,7 +32,7 @@ from corehq.apps.hqmedia.views import (
     ProcessAudioFileUploadView,
 )
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, is_linked_domain
-from corehq.apps.app_manager.util import (get_commcare_versions)
+from corehq.apps.app_manager.util import get_commcare_versions, is_remote_app
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.cloudcare.utils import should_show_preview_app
@@ -275,8 +275,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
-    if (app and app.doc_type in ('Application', 'LinkedApplication')
-            and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER)):
+    if app and not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView

@@ -55,6 +55,8 @@ from corehq.apps.app_manager.util import (
     app_doc_types,
     get_and_assert_practice_user_in_domain,
     get_latest_enabled_versions_per_profile,
+    is_linked_app,
+    is_remote_app,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, update_linked_app, clear_xmlns_app_id_cache
@@ -170,7 +172,7 @@ def get_app_view_context(request, app):
             disable_if_true = setting.get('disable_if_true')
             if disable_if_true and getattr(app, setting['id']):
                 continue
-            if app.get_doc_type() == 'LinkedApplication':
+            if is_linked_app(app):
                 if setting['id'] in app.SUPPORTED_SETTINGS:
                     if setting['id'] not in app.linked_app_attrs:
                         setting['is_inherited'] = True
@@ -275,10 +277,12 @@ def get_app_view_context(request, app):
     context.update({
         'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False)
     })
-    # Not used in APP_MANAGER_V2
-    context['is_app_view'] = True
 
-    if app.get_doc_type() == 'LinkedApplication':
+    context.update({
+        'is_linked_app': is_linked_app(app),
+        'is_remote_app': is_remote_app(app),
+    })
+    if is_linked_app(app):
         context['upstream_url'] = _get_upstream_url(app, request.couch_user)
         try:
             context['master_version'] = app.get_master_version()
@@ -812,7 +816,7 @@ def edit_app_attr(request, domain, app_id, attr):
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
-            if app.get_doc_type() == 'LinkedApplication' and attribute in app.SUPPORTED_SETTINGS:
+            if is_linked_app(app) and attribute in app.SUPPORTED_SETTINGS:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })
@@ -843,12 +847,12 @@ def edit_app_attr(request, domain, app_id, attr):
     # For Normal Apps
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
-            raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+            raise Exception("App type %s does not support Web Apps" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
 
     def require_remote_app():
-        if app.get_doc_type() not in ("RemoteApp",):
+        if not is_remote_app(app):
             raise Exception("App type %s does not support profile url" % app.get_doc_type())
 
     # For RemoteApps
