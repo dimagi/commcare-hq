@@ -563,8 +563,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @cached_property
     def has_media(self):
+        from corehq.apps.app_manager.util import is_remote_app
         for app in self.full_applications():
-            if app.doc_type == 'Application' and app.has_media():
+            if not is_remote_app(app) and app.has_media():
                 return True
         return False
 
