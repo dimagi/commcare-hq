@@ -4067,7 +4067,7 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def group_by(self):
-        return ['real_date', self.loc_name, self.loc_id]
+        return ['real_date', self.loc_name, self.loc_id, 'product_id', 'product_name']
 
     @property
     def columns(self):
@@ -4219,7 +4219,7 @@ class LossRatePerProductData(SqlData):
 
     @property
     def group_by(self):
-        return [self.loc_name, self.loc_id, 'product_id', 'product_name']
+        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
 
     @property
     def columns(self):
@@ -4310,6 +4310,87 @@ class ExpirationRatePerProductData(SqlData):
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn("Expired products valuation", SumColumn('expired_pna_valuation')),
             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Program name", SimpleColumn('program_name'))
+        ]
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        elif self.config['product_program']:
+            filters.append(EQ('program_id', 'product_program'))
+        return filters
+
+    @property
+    def rows(self):
+        # TODO: we don't know in which format data will be displaied
+        return []
+    # return self.get_data()
+
+
+class SatisfactionRateAfterDeliveryPerProductData(SqlData):
+    slug = 'taux_de_peremption'
+    comment = 'valeur péremption sur valeur totale'
+    title = 'Taux de Péremption'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(SatisfactionRateAfterDeliveryPerProductData, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        # TODO: we don't know if we need to create data source or use existing one
+        return get_table_name(self.config['domain'], "")
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
+            DatabaseColumn("Quantity of the product  suggested", SumColumn('ideal_topup')),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
             DatabaseColumn("Program name", SimpleColumn('program_name'))
         ]

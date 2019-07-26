@@ -16,6 +16,7 @@ from custom.intrahealth.reports.recap_passage_report_v2 import RecapPassageRepor
 from custom.intrahealth.reports.taux_de_peremption_dashboard import TauxDePeremptionReport
 from custom.intrahealth.reports.taux_de_perte_dashboard import TauxDePerteReport
 from custom.intrahealth.reports.taux_de_rupture_dashboard import TauxDeRuptureReport
+from custom.intrahealth.reports.taux_de_satisfaction_dashboard import TauxDeSatisfactionReport
 
 CUSTOM_REPORTS = (
     ('INFORMED PUSH MODEL REPORTS', (
@@ -32,6 +33,7 @@ CUSTOM_REPORTS = (
         ConsommationReport,
         TauxDePerteReport,
         TauxDePeremptionReport,
+        TauxDeSatisfactionReport,
     )),
     ("INFORMED PUSH MODEL REPORTS UCR", (
         TableuDeBoardReport2,
