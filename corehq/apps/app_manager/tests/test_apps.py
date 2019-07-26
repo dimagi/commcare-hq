@@ -163,10 +163,12 @@ class AppManagerTest(TestCase, TestXmlMixin):
                 old_config_ids = {config.uuid for config in old_module.report_configs}
                 new_config_ids = {config.uuid for config in new_module.report_configs}
                 self.assertEqual(old_config_ids.intersection(new_config_ids), set())
+        return new_app
 
     def testImportApp_from_id(self):
         self.assertTrue(self.app.blobs)
-        self._test_import_app(self.app.id)
+        imported_app = self._test_import_app(self.app.id)
+        self.assertEqual(imported_app.progenitor_app_id, self.app.id)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.models.ReportAppConfig.report')
