@@ -21,7 +21,7 @@ class Command(BaseCommand):
                     couch_user = CommCareUser.get_by_username(username)
                     device_id = couch_user.last_device.device_id
                     app_id = couch_user.last_device.app_meta[0].build_id
-                    get_restore_response(
+                    response, timing = get_restore_response(
                         'icds-cas',
                         couch_user,
                         app_id,
@@ -33,4 +33,4 @@ class Command(BaseCommand):
                 except Exception as e:
                     print(e)
                 else:
-                    print(username)
+                    print('{} {}'.format(username, timing.duration))
