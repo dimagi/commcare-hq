@@ -5311,14 +5311,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
         return copy_form
 
-    @cached_property
-    def has_case_management(self):
-        for module in self.get_modules():
-            for form in module.get_forms():
-                if len(form.active_actions()) > 0:
-                    return True
-        return False
-
     @memoized
     def case_type_exists(self, case_type):
         return case_type in self.get_case_types()

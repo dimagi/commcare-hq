@@ -562,14 +562,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return list(set(a.application_version for a in apps))
 
     @cached_property
-    def has_case_management(self):
-        for app in self.full_applications():
-            if app.doc_type == 'Application':
-                if app.has_case_management():
-                    return True
-        return False
-
-    @cached_property
     def has_media(self):
         for app in self.full_applications():
             if app.doc_type == 'Application' and app.has_media():
