@@ -102,7 +102,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.reports.disha import build_dumps_for_month
+from custom.icds_reports.reports.disha import build_dumps_for_month, DishaDump
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
     ISSNIPMonthlyReport,
@@ -1177,6 +1177,13 @@ def build_disha_dump():
     else:
         _soft_assert(False, "DISHA weekly task has succeeded.")
     celery_task_logger.info("Finished dumping DISHA data")
+
+
+@task(queue='icds_dashboard_reports_queue', serializer='pickle')
+def build_missing_disha_dump(month, state_name):
+    # the params should already be validated and cleaned
+    assert month < date.today()
+    DishaDump(state_name, month).build_export_json(query_master=True)
 
 
 @periodic_task(run_every=crontab(hour=17, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')

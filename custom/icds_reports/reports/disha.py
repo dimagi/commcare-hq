@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import datetime, timedelta
 from django.http import JsonResponse
 from io import open
 
@@ -56,13 +57,18 @@ class DishaDump(object):
             content_format = Format('', 'json', '', True)
             return get_download_response(_file, file_ref.get_file_size(), content_format, self._blob_id(), request)
         else:
-            DISHA_NOTIFICATION_EMAIL = '{}@{}'.format('icds-dashboard', 'dimagi.com')
-            _soft_assert = soft_assert(to=[DISHA_NOTIFICATION_EMAIL], send_to_ops=False)
-            _soft_assert(False, "Expected DISHA data is not missing for state {}, month {}".format(
-                self.state_name,
-                str(self.month)
-            ))
-            return JsonResponse({"message": "Data is not updated for this month"})
+            from custom.icds_reports.tasks import build_missing_disha_dump
+            args = [self.month, self.state_name]
+            now = datetime.utcnow()
+            if now.hour >= 14:
+                # 14 hours should be when much after ICDS agg task would have finished by
+                build_missing_disha_dump.delay(*args)
+            else:
+                build_missing_disha_dump.apply_async(
+                    args=args,
+                    eta=now.replace(hour=14)
+                )
+            return JsonResponse({"message": "Data is not updated for this month, please check after 14:00 UTC"})
 
     def _get_columns(self):
         columns = [field.name for field in DishaIndicatorView._meta.fields]
