@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from custom.intrahealth.reports.consommation import Consommation
+from custom.intrahealth.reports.consommation_dashboard import ConsommationReport
 from custom.intrahealth.reports.dashboard_1 import Dashboard1Report
 from custom.intrahealth.reports.disponibilite_dashboard import DisponibiliteReport
 from custom.intrahealth.reports.dashboard_2 import Dashboard2Report
@@ -13,7 +13,8 @@ from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardRepor
 from custom.intrahealth.reports.tableu_de_board_report_v2 import TableuDeBoardReport2
 from custom.intrahealth.reports.fiche_consommation_report_v2 import FicheConsommationReport2
 from custom.intrahealth.reports.recap_passage_report_v2 import RecapPassageReport2
-from custom.intrahealth.reports.taux_de_perte_dashboard import TauxDePerte
+from custom.intrahealth.reports.taux_de_peremption_dashboard import TauxDePeremptionReport
+from custom.intrahealth.reports.taux_de_perte_dashboard import TauxDePerteReport
 from custom.intrahealth.reports.taux_de_rupture_dashboard import TauxDeRuptureReport
 
 CUSTOM_REPORTS = (
@@ -28,8 +29,9 @@ CUSTOM_REPORTS = (
         Dashboard3Report,
         DisponibiliteReport,
         TauxDeRuptureReport,
-        Consommation,
-        TauxDePerte,
+        ConsommationReport,
+        TauxDePerteReport,
+        TauxDePeremptionReport,
     )),
     ("INFORMED PUSH MODEL REPORTS UCR", (
         TableuDeBoardReport2,

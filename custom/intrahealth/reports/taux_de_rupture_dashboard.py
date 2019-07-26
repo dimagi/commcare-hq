@@ -67,6 +67,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def headers(self):
+        # TODO: needs further implementation
         return DataTablesHeader(
             DataTablesColumn(self.selected_location_type),
             DataTablesColumn(

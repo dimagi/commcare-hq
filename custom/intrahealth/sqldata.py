@@ -4067,7 +4067,7 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def group_by(self):
-        return ['doc_id', 'real_date', self.loc_name, self.loc_id, 'nb_products_stockout', 'count_products_select']
+        return ['real_date', self.loc_name, self.loc_id]
 
     @property
     def columns(self):
@@ -4149,6 +4149,7 @@ class ConsommationPerProductData(SqlData):
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
             DatabaseColumn("Product name", SimpleColumn('product_name')),
+            DatabaseColumn("Consumption", SimpleColumn('actual_consumption'))
         ]
         return columns
 
@@ -4223,21 +4224,95 @@ class LossRatePerProductData(SqlData):
     @property
     def columns(self):
         columns = [
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn("Total number of PNA lost product", SumColumn('loss_amt')),
             DatabaseColumn("PNA final stock", SumColumn('final_pna_stock')),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
             DatabaseColumn("Program name", SimpleColumn('program_name'))
         ]
-        if self.loc_id == 'pps_id':
-            columns.append(DatabaseColumn("PPS ID", SimpleColumn('pps_id')))
-            columns.append(DatabaseColumn("PPS Name", SimpleColumn('pps_name')))
-        elif self.loc_id == 'district_id':
-            columns.append(DatabaseColumn("District ID", SimpleColumn('district_id')))
-            columns.append(DatabaseColumn("District Name", SimpleColumn('district_name')))
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
         else:
-            columns.append(DatabaseColumn("Region ID", SimpleColumn('region_id')))
-            columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        elif self.config['product_program']:
+            filters.append(EQ('program_id', 'product_program'))
+        return filters
+
+    @property
+    def rows(self):
+        # TODO: we don't know in which format data will be displaied
+        return []
+    # return self.get_data()
+
+
+class ExpirationRatePerProductData(SqlData):
+    slug = 'taux_de_peremption'
+    comment = 'valeur péremption sur valeur totale'
+    title = 'Taux de Péremption'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(ExpirationRatePerProductData, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        # TODO: we don't know if we need to create data source or use existing one
+        return get_table_name(self.config['domain'], "")
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Expired products valuation", SumColumn('expired_pna_valuation')),
+            DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Program name", SimpleColumn('program_name'))
+        ]
         return columns
 
     @cached_property
