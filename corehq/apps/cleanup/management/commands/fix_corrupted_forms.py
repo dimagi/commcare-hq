@@ -24,7 +24,7 @@ class Command(BaseCommand):
         old_source = form.source
         new_source = fix_form(old_source)
         if old_source != new_source:
-            if input("commit the above changes?\n[y/N] ") == 'y':
+            if input("\n\ncommit the above changes?\n[y/N] ") == 'y':
                 form.source = new_source
                 app.save()
                 print("saved")
@@ -66,7 +66,7 @@ def fix_form(source):
             if unicode_block:
                 transformed = latin_to_utf(unicode_block)
                 new_source += transformed
-                print("{} --> {}".format(unicode_block, transformed))
+                print("{} --> {}\n".format(unicode_block, transformed))
                 unicode_block = ""
             new_source += char
     return new_source
