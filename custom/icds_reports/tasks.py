@@ -332,8 +332,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 first_of_month_string = monthly_date.strftime('%Y-%m-01')
                 for state_id in state_ids:
                     create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
-            if date.weekday() == 5:
-                icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly', force_citus=force_citus)
             chain(
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                          force_citus=force_citus),
@@ -390,7 +388,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
             '_agg_awc_table': _agg_awc_table,
-            '_agg_awc_table_weekly': _agg_awc_table_weekly,
             'aggregate_awc_daily': aggregate_awc_daily,
         }[func_name]
 
@@ -664,12 +661,6 @@ def _agg_ls_table(day):
 def _agg_thr_table(state_id, day):
     with transaction.atomic(using=db_for_read_write(AggregateTHRForm)):
         AggregateTHRForm.aggregate(state_id, force_to_date(day))
-
-
-@track_time
-def _agg_awc_table_weekly(day):
-    with transaction.atomic(using=db_for_read_write(AggAwc)):
-        AggAwc.weekly_aggregate(force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
