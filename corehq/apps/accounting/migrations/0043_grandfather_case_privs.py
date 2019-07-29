@@ -6,16 +6,16 @@ from __future__ import absolute_import
 from django.core.management import call_command
 from django.db import migrations
 
-from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import (
-    cchq_prbac_bootstrap,
-)
 from corehq.privileges import (
     CASE_SHARING_GROUPS,
     CHILD_CASES,
 )
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
+@skip_on_fresh_install
 def _grandfather_case_privs(apps, schema_editor):
+    call_command('cchq_prbac_bootstrap')
     call_command(
         'cchq_prbac_grandfather_privs',
         CASE_SHARING_GROUPS,
@@ -31,6 +31,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(cchq_prbac_bootstrap),
         migrations.RunPython(_grandfather_case_privs),
     ]
