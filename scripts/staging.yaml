@@ -54,6 +54,7 @@ branches:
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - mk/skip-files-build # MK July 6
   - mk/use-ids-to-validate-translations # July 19
+  - nh/build_reqjs  # Norman July 29
   - revert-24882-jls/compress-mobile-workers-js # Jenny July 24
   - jls/resource-versions # Jenny July 24
 submodules: {}
