@@ -4,11 +4,8 @@ from __future__ import unicode_literals
 import copy
 import json
 import os
-import tempfile
 import urllib3
-import zipfile
 from collections import defaultdict
-from wsgiref.util import FileWrapper
 
 from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
@@ -16,7 +13,6 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpRespo
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.http import urlencode as django_urlencode
-from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
@@ -83,7 +79,6 @@ from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
-from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, json_request
 from toggle.shortcuts import set_toggle
@@ -389,21 +384,10 @@ def app_source(request, domain, app_id):
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     app = get_app(domain, app_id)
-    form = CopyApplicationForm(
-        domain, app, request.POST,
-        export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-    )
+    form = CopyApplicationForm(domain, app, request.POST)
     if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
-
-    gzip = request.FILES.get('gzip')
-    if gzip:
-        with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
-            source = z.read(z.filelist[0].filename)
-        app_id_or_source = source
-    else:
-        app_id_or_source = app_id
 
     def _inner(request, link_domain, data, master_domain=domain):
         clear_app_cache(request, link_domain)
@@ -415,7 +399,7 @@ def copy_app(request, domain):
             return _create_linked_app(request, app, link_domain, data['name'])
         else:
             return _copy_app_helper(
-                request, master_domain, app_id_or_source, link_domain, data['name'], app_id)
+                request, master_domain, app_id, link_domain, data['name'], app_id)
 
     # having login_and_domain_required validates that the user
     # has access to the domain we're copying the app to
@@ -502,24 +486,6 @@ def _build_sample_app(app):
         return copy
     else:
         notify_exception(None, 'Validation errors building sample app', details=errors)
-
-
-@require_can_edit_apps
-def export_gzip(req, domain, app_id):
-    app_json = get_app(domain, app_id)
-    fd, fpath = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as tmp:
-        with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
-            z.writestr('application.json', app_json.export_json())
-
-    wrapper = FileWrapper(open(fpath, 'rb'))
-    response = HttpResponse(wrapper, content_type='application/zip')
-    response['Content-Length'] = os.path.getsize(fpath)
-    app = Application.get(app_id)
-    set_file_download(response, '{domain}-{app_name}-{app_version}.zip'.format(
-        app_name=slugify(app.name), app_version=slugify(six.text_type(app.version)), domain=domain
-    ))
-    return response
 
 
 @require_can_edit_apps
