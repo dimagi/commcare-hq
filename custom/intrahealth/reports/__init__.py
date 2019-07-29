@@ -8,6 +8,7 @@ from custom.intrahealth.reports.disponibilite_dashboard import DisponibiliteRepo
 from custom.intrahealth.reports.dashboard_2 import Dashboard2Report
 from custom.intrahealth.reports.dashboard_3 import Dashboard3Report
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
+from custom.intrahealth.reports.indicateurs_de_base_dasboard import IndicateursDeBaseReport
 from custom.intrahealth.reports.recap_passage_one_dashboard import RecapPassageOneReport
 from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
 from custom.intrahealth.reports.recap_passage_two_dashboard import RecapPassageTwoReport
@@ -41,6 +42,7 @@ CUSTOM_REPORTS = (
         ValuerDesStocksPNADisponsibleReport,
         RecapPassageOneReport,
         RecapPassageTwoReport,
+        IndicateursDeBaseReport
     )),
     ("INFORMED PUSH MODEL REPORTS UCR", (
         TableuDeBoardReport2,
