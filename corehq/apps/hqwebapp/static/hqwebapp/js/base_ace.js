@@ -4,8 +4,7 @@ hqDefine('hqwebapp/js/base_ace', [
     'ace-builds/src-min-noconflict/mode-json',
 ], function (
     $,
-    ace,
-    jsonMode
+    ace
 ) {
 
     var initAceEditor = function (element, mode, options, value) {
