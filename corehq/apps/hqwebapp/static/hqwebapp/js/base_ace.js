@@ -4,7 +4,8 @@ hqDefine('hqwebapp/js/base_ace', [
     'ace-builds/src-min-noconflict/mode-json',
 ], function (
     $,
-    ace
+    ace,
+    jsonMode  // eslint-disable-line no-unused-vars
 ) {
 
     var initAceEditor = function (element, mode, options, value) {
