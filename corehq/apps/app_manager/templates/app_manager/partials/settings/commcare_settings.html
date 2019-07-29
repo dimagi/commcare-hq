@@ -73,7 +73,6 @@
       </div>
     </div>
   </div>
-  {{ request|toggle_tag_info:"CUSTOM_PROPERTIES" }}
   {% if request|toggle_enabled:"CUSTOM_PROPERTIES" and app.doc_type != 'LinkedApplication' %}
     <div class="panel panel-appmanager" data-slug="custom-properties" data-bind="css: {hide: customPropertiesCollapse}">
       <div class="panel-heading">

@@ -1429,13 +1429,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_DEV_TOGGLE_INFO = StaticToggle(
-    'highlight_feature_flags',
-    'Highlight / Mark Feature Flags in the UI',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",

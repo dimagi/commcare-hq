@@ -273,7 +273,6 @@
             </div>
           </div>
         {% endif %}
-        {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
         {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
           <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
             <form action="{% url "gzip_app" domain app.id %}" method="POST">
