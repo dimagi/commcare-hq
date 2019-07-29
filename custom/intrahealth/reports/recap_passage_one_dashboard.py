@@ -13,26 +13,22 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
-from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource, EffectiveDeLivraisonDataSource
+from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter, ProgramFilter
+from custom.intrahealth.sqldata import ValuationOfPNAStockPerProductV2Data, RecapPassageOneData
 from dimagi.utils.dates import force_to_date
 
 
-class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    name = "Disponibilité"
-    slug = 'disponibilite_report'
-    comment = 'test comment change me later'
+class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
+    slug = 'recap_passage_1'
+    comment = 'recap passage 1'
+    name = 'Recap Passage 1'
     default_rows = 10
 
     report_template_path = 'yeksi_naa/tabular_report.html'
 
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(DisponibiliteReport, self).decorator_dispatcher(request, *args, **kwargs)
-
     @property
     def fields(self):
-        return [DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, ProgramFilter, YeksiNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):
@@ -42,7 +38,6 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     def report_context(self):
         context = {
             'report': self.get_report_context(),
-            'charts': self.charts,
             'title': self.name
         }
 
@@ -68,9 +63,12 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def headers(self):
+        # TODO: needs further implementation
         return DataTablesHeader(
             DataTablesColumn(self.selected_location_type),
-            DataTablesColumn('Taux de disponibilité de la Gamme des produits'),
+            DataTablesColumn(
+                'Rows'
+            ),
         )
 
     def get_report_context(self):
@@ -95,45 +93,9 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         return context
 
     def calculate_rows(self):
-        visits = VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
-        effectives = EffectiveDeLivraisonDataSource(config=self.config).rows
-
-        def to_report_row(v, e):
-            loc_type = self.selected_location_type.lower()
-            loc_id = v['{}_id'.format(loc_type)]
-            effective_for_location = next(item for item in e if item['{}_id'.format(loc_type)] == loc_id)
-
-            calc_percent = ((v['total_stock'] or 0) / float((effective_for_location['nb_pps_visites'] or 1))) * 100
-            return [
-                v['{}_name'.format(loc_type)],
-                {
-                    'html': '{:.2f} %'.format(calc_percent),
-                    'sort_key': calc_percent
-                }
-            ]
-        rows = []
-        for visit in visits:
-            rows.append(to_report_row(visit, effectives))
+        # TODO: needs further implementation
+        rows = RecapPassageOneData(config=self.config).rows
         return rows
-
-    @property
-    def charts(self):
-        chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
-        chart.height = 400
-        chart.marginBottom = 100
-
-        def get_data_for_graph():
-            com = []
-            rows = self.calculate_rows()
-            for row in rows:
-                com.append({"x": row[0], "y": row[1]['sort_key']})
-
-            return [
-                {"key": "Taux de disponibilité de la Gamme des produits ", 'values': com},
-            ]
-
-        chart.data = get_data_for_graph()
-        return [chart]
 
     @property
     def config(self):
@@ -151,6 +113,5 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         config['startdate'] = startdate
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
-        config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
         return config

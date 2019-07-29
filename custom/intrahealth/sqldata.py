@@ -4526,3 +4526,93 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
         # TODO: we don't know in which format data will be displaied
         return []
     # return self.get_data()
+
+
+class RecapPassageOneData(SqlData):
+    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 3’
+    slug = 'recap_passage_1'
+    comment = 'recap passage 1'
+    title = 'Recap Passage 1'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(RecapPassageOneData, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        # TODO: we don't know if we need to create data source or use existing one
+        return get_table_name(self.config['domain'], "")
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('old_stock_total')),
+            DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('total_stock')),
+            DatabaseColumn(_("Stock Total"), SumColumn('display_total_stock', alias='stock_total')),
+            DatabaseColumn(_("Precedent"), SumColumn('old_stock_pps')),
+            DatabaseColumn(_("Recu hors entrepots mobiles"), SumColumn('outside_receipts_amt')),
+            DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
+            DatabaseColumn(_("Reelle"), SumColumn('actual_consumption')),
+            DatabaseColumn("Stock Total", AliasColumn('stock_total')),
+            DatabaseColumn("PPS Restant", SumColumn('pps_stock')),
+            DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
+            DatabaseColumn(_("Livraison"), SumColumn('livraison'))
+        ]
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['selected_location']:
+            filters.append(EQ(self.loc_id, 'selected_location'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        elif self.config['product_program']:
+            filters.append(EQ('program_id', 'product_program'))
+        return filters
+
+    @property
+    def rows(self):
+        # TODO: we don't know in which format data will be displaied
+        return []
+    # return self.get_data()

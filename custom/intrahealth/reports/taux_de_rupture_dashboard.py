@@ -42,7 +42,8 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     def report_context(self):
         context = {
             'report': self.get_report_context(),
-            'title': self.name
+            'title': self.name,
+            'charts': self.charts
         }
 
         return context
@@ -131,7 +132,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:
-            startdate = datetime.datetime.now().date() - relativedelta(days=1)
+            startdate = datetime.datetime.now()
         if self.request.GET.get('enddate'):
             enddate = force_to_date(self.request.GET.get('enddate'))
         else:

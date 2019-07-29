@@ -38,7 +38,8 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
     def report_context(self):
         context = {
             'report': self.get_report_context(),
-            'title': self.name
+            'title': self.name,
+            'charts': self.charts
         }
 
         return context
