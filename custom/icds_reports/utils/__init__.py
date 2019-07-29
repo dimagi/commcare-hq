@@ -1232,23 +1232,25 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     return file_hash
 
 
-
 def create_child_report_excel_file(excel_data, data_type, month, aggregation_level):
     export_info = excel_data[1][1]
 
     primary_headers = ['Children weighed','Height measured for Children', '', 'Severely Underweight Children',
                        'Moderately Underweight Children','Children with normal weight for age (WfA)',
-                       'Severely wasted Children','Moderately wasted children','Children with normal weight for height',
-                       'Severely stunted children','Moderately Stunted Children','Children with normal height for age',
+                       'Severely wasted Children', 'Moderately wasted children',
+                       'Children with normal weight for height',
+                       'Severely stunted children','Moderately Stunted Children',
+                       'Children with normal height for age',
                        'Newborn with Low birth weight','Children completed immunization prescribed for 1 year',
                        'Children breastfed at the time of birth','Children exclusively breastfed',
                        'Children initiated with complementary feeding',
                        'Children initiated with complementary feeding appropriately',
                        'Children initiated with complementary feeding with adequate diet diversity',
                        'Children initiated with complementary feeding with adequate diet quantity',
-                       'Children initiated with complementary feeding with appropriate handwashing before feeding']
+                       'Children initiated with complementary feeding with appropriate handwashing before feeding'
+                       ]
 
-    location_padding_columns = (['']*aggregation_level)
+    location_padding_columns = ([''] * aggregation_level)
     primary_headers = location_padding_columns + primary_headers
 
     workbook = Workbook()
@@ -1267,7 +1269,6 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
         bottom=Side(style='thin')
     )
 
-
     # Primary Header
     main_header = worksheet.row_dimensions[1]
     main_header.height = 40
@@ -1280,15 +1281,14 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
         cell.fill = cell_pattern_blue
         cell.value = primary_header
 
-        if current_column_location<=aggregation_level or current_column_location == aggregation_level+7:
+        if current_column_location<=aggregation_level or current_column_location == aggregation_level + 7:
             worksheet.merge_cells('{}1:{}2'.format(get_column_letter(current_column_location),
                                                    get_column_letter(current_column_location)))
             current_column_location += 1
         else:
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location+2)))
+                                                   get_column_letter(current_column_location + 2)))
             current_column_location += 3
-
 
     # Secondary Header
     secondary_header = worksheet.row_dimensions[2]
@@ -1297,26 +1297,24 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
     bold_font_black = Font(size=14)
     for index, header in enumerate(headers):
         location_column = get_column_letter(index + 1)
-        cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= aggregation_level or index == aggregation_level+6 else 2)]
+        cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= aggregation_level or
+                                                             index == aggregation_level + 6 else 2)]
         cell.alignment = text_alignment
         worksheet.column_dimensions[location_column].width = 24
         cell.value = header
-        if index != aggregation_level+6 and index + 1 > aggregation_level:
+        if index != aggregation_level + 6 and index + 1 > aggregation_level:
             cell.fill = cell_pattern
             cell.font = bold_font_black
             cell.border = thin_border
 
-
     # Fill data
     for row_index,row in enumerate(excel_data[0][1][1:]):
         for col_index, col_value in enumerate(row):
-            row_num = row_index+3
+            row_num = row_index + 3
             column_name = get_column_letter(col_index + 1)
             cell = worksheet['{}{}'.format(column_name, row_num)]
             cell.value = col_value
             cell.border = thin_border
-
-
 
     # Export info
     worksheet2 = workbook.create_sheet("Export Info")
@@ -1325,8 +1323,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
         worksheet2['A{0}'.format(n)].value = export_info_item[0]
         worksheet2['B{0}'.format(n)].value = export_info_item[1]
 
-
-    #TODO EXPORT
+    #Export to icds file
     file_hash = uuid.uuid4().hex
     export_file = BytesIO()
     icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
