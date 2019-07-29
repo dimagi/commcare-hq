@@ -1287,7 +1287,7 @@ def _dictfetchall(cursor):
 def setup_aggregation(agg_date):
     _update_ucr_table_mapping()
 
-    db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
+    db_alias = get_icds_ucr_db_alias_or_citus(False)
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
@@ -1296,4 +1296,4 @@ def setup_aggregation(agg_date):
     state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
-    cache.put('agg_state_ids_{}'.format(agg_date), state_ids, ONE_DAY * 2)
+    cache.set('agg_state_ids_{}'.format(agg_date), state_ids, ONE_DAY * 2)

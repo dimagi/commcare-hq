@@ -39,6 +39,9 @@ STATE_TASKS = {
     'create_mbt_for_month': create_mbt_for_month
 }
 
+ALL_STATES = {
+    'child_health_monthly': _child_health_monthly_table
+}
 
 NORMAL_TASKS = {
     'setup_aggregation': setup_aggregation,
@@ -50,7 +53,6 @@ NORMAL_TASKS = {
     'agg_ccs_record': _agg_ccs_record_table,
     'agg_awc_table': _agg_awc_table,
     'aggregate_awc_daily': aggregate_awc_daily,
-    'child_health_monthly': _child_health_monthly_table
 }
 
 
@@ -75,12 +77,17 @@ class Command(BaseCommand):
         query = self.function_map[query_name]
         if query.by_state:
             pool = Pool(10)
-            state_ids = cache.get('agg_state_ids_{}'.format(agg_date))
+            state_ids = cache.get('agg_state_ids_{}'.format(date))
             if not state_ids:
                 raise CommandError('Aggregation improperly set up. State ids missing')
             for state in state_ids:
                 pool.spawn(query.func, state, agg_date)
             pool.join()
+        elif query.by_state is None:
+            state_ids = cache.get('agg_state_ids_{}'.format(date))
+            if not state_ids:
+                raise CommandError('Aggregation improperly set up. State ids missing')
+            query.func(state_ids, agg_date)
         else:
             query.func(agg_date)
 
@@ -89,6 +96,8 @@ class Command(BaseCommand):
             self.function_map[name] = AggregationQuery(True, func)
         for name, func in NORMAL_TASKS.items():
             self.function_map[name] = AggregationQuery(False, func)
+        for name, func in ALL_STATES.items():
+            self.function_map[name] = AggregationQuery(None, func)
 
     def get_agg_date(self, date, interval):
         if interval > 0:
@@ -96,8 +105,8 @@ class Command(BaseCommand):
         if not interval:
             return date
         else:
-            date_object = datetime.strptime(date, '%Y-%m-%d')
+            date_object = datetime.datetime.strptime(date, '%Y-%m-%d')
             first_day_of_month = date_object.replace(day=1)
             first_day_next_month = first_day_of_month + relativedelta(months=interval + 1)
             agg_date = first_day_next_month - relativedelta(days=1)
-            return agg_date
+            return agg_date.strftime('%Y-%m-%d')
