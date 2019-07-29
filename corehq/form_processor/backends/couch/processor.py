@@ -96,7 +96,8 @@ class FormProcessorCouch(object):
             for (qid, repeat_index) in i:
                 data = data[qid]
                 if repeat_index is not None:
-                    data = data[repeat_index]
+                    if isinstance(data, list):
+                        data = data[repeat_index]
             data[i.last()] = response
 
         new_xml = etree.tostring(xml)
