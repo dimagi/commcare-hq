@@ -5,7 +5,6 @@ from __future__ import division
 
 import datetime
 
-from dateutil import relativedelta
 from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3

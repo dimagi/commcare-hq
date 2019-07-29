@@ -7,31 +7,24 @@ import datetime
 
 from django.utils.functional import cached_property
 
-from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
-from custom.intrahealth.sqldata import ValuationOfPNAStockPerProductV2Data
+from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, ProgramFilter
 from dimagi.utils.dates import force_to_date
 
 
-class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
-    comment = 'Valeur des stocks PNA disponible (chaque produit)'
-    name = 'Valeur des stocks PNA disponible'
+class RecapPassageTwoReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
+    slug = 'recap_passage_2'
+    comment = 'recap passage 2'
+    name = 'Recap Passage 2'
     default_rows = 10
 
     report_template_path = 'yeksi_naa/tabular_report.html'
 
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(ValuerDesStocksPNADisponsibleReport, self).decorator_dispatcher(request, *args, **kwargs)
-
     @property
     def fields(self):
-        return [DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, ProgramFilter, YeksiNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):
@@ -41,8 +34,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
     def report_context(self):
         context = {
             'report': self.get_report_context(),
-            'title': self.name,
-            'charts': self.charts
+            'title': self.name
         }
 
         return context
@@ -71,7 +63,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         return DataTablesHeader(
             DataTablesColumn(self.selected_location_type),
             DataTablesColumn(
-                'Valuer'
+                'Rows'
             ),
         )
 
@@ -97,31 +89,9 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
-        rows = ValuationOfPNAStockPerProductV2Data(config=self.config).rows
+        # TODO: needs further implementation (new Data classes)
+        rows = []
         return rows
-
-    @property
-    def charts(self):
-        chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
-        chart.height = 400
-        chart.marginBottom = 100
-
-        def get_data_for_graph():
-            com = []
-            rows = self.calculate_rows()
-            for row in rows:
-                com.append({"x": row[0], "y": row[1]['sort_key']})
-
-            return [
-                {
-                    "key": "Valeur des stocks PNA disponible (chaque produit)",
-                    'values': com
-                },
-            ]
-
-        chart.data = get_data_for_graph()
-        return [chart]
 
     @property
     def config(self):
@@ -139,6 +109,5 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         config['startdate'] = startdate
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
-        config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
         return config

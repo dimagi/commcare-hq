@@ -5,7 +5,6 @@ from __future__ import division
 
 import datetime
 
-from dateutil import relativedelta
 from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
@@ -14,8 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
-from custom.intrahealth.sqldata import LossRatePerProductData, ExpirationRatePerProductData, \
-    SatisfactionRateAfterDeliveryPerProductData
+from custom.intrahealth.sqldata import SatisfactionRateAfterDeliveryPerProductData
 from dimagi.utils.dates import force_to_date
 
 
