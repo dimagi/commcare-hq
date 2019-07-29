@@ -4616,6 +4616,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
+    family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
+
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
 
@@ -5560,8 +5562,9 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    # This is the id of the master application
-    master = StringProperty()
+    master = StringProperty()  # Legacy, should be removed once all linked apps support multiple masters
+    upstream_app_id = StringProperty()  # ID of the app that was most recently pulled
+    upstream_version = IntegerProperty()  # Version of the app that was most recently pulled
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5615,6 +5618,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     else:
         source_app = wrap_app(app_id_or_source)
     source_domain = source_app.domain
+    app_family_id = source_app.get_id
     source = source_app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
@@ -5633,6 +5637,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+    app.family_id = app_family_id
 
     report_map = get_static_report_mapping(source_domain, domain)
     if report_map:
