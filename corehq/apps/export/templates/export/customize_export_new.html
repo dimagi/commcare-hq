@@ -203,7 +203,8 @@
       <fieldset data-bind="template: {
                              foreach: tables,
                              as: 'table',
-                             name: 'ko-table-configuration-template' }"></fieldset>
+                             name: 'ko-table-configuration-template'
+                           }"></fieldset>
 
       {% if request|toggle_enabled:"ALLOW_USER_DEFINED_EXPORT_COLUMNS" %}
         <fieldset>
