@@ -22,6 +22,7 @@ from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
+from gevent.pool import Pool
 from six.moves import range
 
 from couchexport.export import export_from_tables
@@ -1284,6 +1285,7 @@ def _dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
+
 def setup_aggregation(agg_date):
     _update_ucr_table_mapping()
 
@@ -1297,3 +1299,23 @@ def setup_aggregation(agg_date):
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
     cache.set('agg_state_ids_{}'.format(agg_date), state_ids, ONE_DAY * 2)
+
+
+def _child_health_monthly_aggregation(day):
+    state_ids = cache.get('agg_state_ids_{}'.format(date))
+    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
+        cursor.execute(helper.create_temporary_table())
+
+    pool = Pool(10)
+    for query, params in helper.pre_aggregation_queries():
+        pool.spawn(_child_health_helper, query, params)
+        pool.join()
+
+    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
+        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
+
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())

@@ -10,7 +10,7 @@ from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
 from custom.icds_reports.tasks import (
-    _aggregate_gm_forms, _aggregate_df_forms,_aggregate_cf_forms, _aggregate_ccs_cf_forms,
+    _aggregate_gm_forms, _aggregate_df_forms, _aggregate_cf_forms, _aggregate_ccs_cf_forms,
     _aggregate_child_health_thr_forms, _aggregate_ccs_record_thr_forms, _aggregate_child_health_pnc_forms,
     _aggregate_ccs_record_pnc_forms, _aggregate_delivery_forms, _aggregate_bp_forms,
     _aggregate_awc_infra_forms, _child_health_monthly_table, _agg_ls_awc_mgt_form, _agg_ls_vhnd_form,
@@ -40,7 +40,7 @@ STATE_TASKS = {
 }
 
 ALL_STATES = {
-    'child_health_monthly': _child_health_monthly_table
+
 }
 
 NORMAL_TASKS = {
@@ -48,6 +48,7 @@ NORMAL_TASKS = {
     'agg_ls_table': _agg_ls_table,
     'update_months_table': _update_months_table,
     'daily_attendance': _daily_attendance_table,
+    'child_health_monthly': _child_health_monthly_aggregation,
     'agg_child_health': _agg_child_health_table,
     'ccs_record_monthly': _ccs_record_monthly_table,
     'agg_ccs_record': _agg_ccs_record_table,
@@ -83,11 +84,6 @@ class Command(BaseCommand):
             for state in state_ids:
                 pool.spawn(query.func, state, agg_date)
             pool.join()
-        elif query.by_state is None:
-            state_ids = cache.get('agg_state_ids_{}'.format(date))
-            if not state_ids:
-                raise CommandError('Aggregation improperly set up. State ids missing')
-            query.func(state_ids, agg_date)
         else:
             query.func(agg_date)
 
@@ -96,8 +92,6 @@ class Command(BaseCommand):
             self.function_map[name] = AggregationQuery(True, func)
         for name, func in NORMAL_TASKS.items():
             self.function_map[name] = AggregationQuery(False, func)
-        for name, func in ALL_STATES.items():
-            self.function_map[name] = AggregationQuery(None, func)
 
     def get_agg_date(self, date, interval):
         if interval > 0:
