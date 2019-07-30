@@ -278,6 +278,9 @@ Invalidation
 Memoized doesn’t allow invalidation except by blowing away the whole cache for
 all parameters. Use ``<function>.reset_cache()``
 
+If you are trying to clear the cache of a memoized `@property`, you will need to
+invalidate the cache manually with ``self._<function_name>_cache.clear()``
+
 One of quickcache’s killer features is the ability to invalidate the cache for a
 specific function call. To invalidate the cache for ``<function>(*args,
 **kwargs)``, use ``<function>.clear(*args, **kwargs)``. Appropriately selecting

@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import copy
 import doctest
@@ -8,33 +7,45 @@ import os
 import uuid
 import warnings
 
-import mock
 from django.test import SimpleTestCase, TestCase
 
+import mock
+
 from casexml.apps.case.models import CommCareCase
+
+import corehq.motech.openmrs.repeater_helpers
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
-from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, XMLNS_OPENMRS
-from corehq.motech.openmrs.openmrs_config import OpenmrsConfig, OpenmrsCaseConfig
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
-from corehq.util.test_utils import TestFileMixin, _create_case
-import corehq.motech.openmrs.repeater_helpers
+from corehq.motech.openmrs.const import (
+    LOCATION_OPENMRS_UUID,
+    OPENMRS_DATA_TYPE_BOOLEAN,
+    XMLNS_OPENMRS,
+)
+from corehq.motech.openmrs.openmrs_config import (
+    OpenmrsCaseConfig,
+    OpenmrsConfig,
+)
 from corehq.motech.openmrs.repeater_helpers import (
     create_patient,
     find_or_create_patient,
+    get_ancestor_location_openmrs_uuid,
     get_case_location,
     get_case_location_ancestor_repeaters,
-    get_ancestor_location_openmrs_uuid,
     get_patient_by_identifier,
     get_patient_by_uuid,
     get_relevant_case_updates_from_form_json,
     save_match_ids,
 )
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.value_source import (
+    CaseTriggerInfo,
+    get_form_question_values,
+)
+from corehq.util.test_utils import TestFileMixin, _create_case
 
 
 DOMAIN = 'openmrs-repeater-tests'
@@ -554,7 +565,11 @@ class FindPatientTest(SimpleTestCase):
         openmrs_config = OpenmrsConfig.wrap({
             'case_config': {
                 'patient_finder': {
-                    'create_missing': True,
+                    'create_missing': {
+                        'doc_type': 'ConstantString',
+                        'value': 'True',
+                        'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
+                    },
                     'doc_type': 'WeightedPropertyPatientFinder',
                     'searchable_properties': [],
                     'property_weights': [],

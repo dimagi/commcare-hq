@@ -21,6 +21,16 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-visitorbook_forms",
     "display_name": "Forms - Visitor Book (Static)",
@@ -84,9 +94,9 @@
           "location_property": "_id",
           "type": "ancestor_location"
         },
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
-        "is_nullable": true,
+        "is_nullable": false,
         "type": "expression",
         "column_id": "supervisor_id",
         "create_index": true
@@ -208,6 +218,13 @@
     },
     "named_filters": {},
     "engine_id": "icds-ucr-non-dashboard",
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    },
     "disable_destructive_rebuild": true
   }
 }

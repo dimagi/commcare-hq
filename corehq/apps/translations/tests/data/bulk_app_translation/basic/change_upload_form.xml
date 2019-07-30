@@ -18,6 +18,7 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <question6/>
                     <add_markdown/>
                     <update_markdown/>
+                    <remove_markdown/>
                     <vetoed_markdown/>
                     <blank_value_node />
                     <orx:meta xmlns:cc="http://commcarehq.org/xforms">
@@ -42,6 +43,7 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
             <bind nodeset="/data/question6"/>
             <bind nodeset="/data/add_markdown" type="xsd:string"/>
             <bind nodeset="/data/update_markdown" type="xsd:string"/>
+            <bind nodeset="/data/remove_markdown" type="xsd:string"/>
             <bind nodeset="/data/vetoed_markdown" type="xsd:string"/>
             <bind nodeset="/data/blank_value_node" type="xsd:string" />
             <itext>
@@ -77,6 +79,10 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <text id="update_markdown-label">
                         <value>## smaller_markdown</value>
                         <value form="markdown">## smaller_markdown</value>
+                    </text>
+                    <text id="remove_markdown-label">
+                        <value>no longer markdown</value>
+                        <value form="markdown">no longer markdown</value>
                     </text>
                     <text id="vetoed_markdown-label">
                         <value>*i just happen to like stars a lot*</value>
@@ -118,6 +124,10 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <text id="update_markdown-label">
                         <value>## smaller_markdown</value>
                         <value form="markdown">## smaller_markdown</value>
+                    </text>
+                    <text id="remove_markdown-label">
+                        <value>just plain text</value>
+                        <value form="markdown">just plain text</value>
                     </text>
                     <text id="vetoed_markdown-label">
                         <value>*i just happen to like stars a lot*</value>
@@ -172,6 +182,9 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
         </input>
         <input ref="/data/update_markdown">
             <label ref="jr:itext('update_markdown-label')"/>
+        </input>
+        <input ref="/data/remove_markdown">
+            <label ref="jr:itext('remove_markdown-label')"/>
         </input>
         <input ref="/data/vetoed_markdown">
             <label ref="jr:itext('vetoed_markdown-label')"/>

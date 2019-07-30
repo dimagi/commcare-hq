@@ -6,11 +6,16 @@ import uuid
 from math import ceil
 
 from django.db.models import Count
-from django.http import HttpResponse, Http404
+from django.http.response import (
+    HttpResponse,
+    Http404,
+    JsonResponse
+)
 from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+from django.core.exceptions import ValidationError
 
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
@@ -30,7 +35,7 @@ from phonelog.models import UserErrorEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_built_app_on_hubspot_v2
+from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_or_api_key, track_domain_request
@@ -44,7 +49,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_build_doc_by_version,
+    get_app_cached,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
@@ -60,8 +65,16 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
-    no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+    avoid_parallel_build_request,
+)
+from corehq.apps.app_manager.exceptions import (
+    ModuleIdMissingException,
+    PracticeUserException,
+    BuildConflictException,
+)
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
@@ -234,7 +247,7 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists() or
+        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists() or
                 AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
@@ -270,7 +283,7 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    track_built_app_on_hubspot_v2.delay(request.couch_user)
+    track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
     try:
@@ -286,12 +299,12 @@ def save_copy(request, domain, app_id):
             timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
                                          timing_buckets=(1, 10, 30, 60, 120, 240))
             with timer:
-                copy = app.make_build(
-                    comment=comment,
-                    user_id=user_id,
-                )
-                copy.save(increment_version=False)
+                copy = make_app_build(app, comment, user_id)
             CouchUser.get(user_id).set_has_built_app()
+        except BuildConflictException:
+            return JsonResponse({
+                'error': _("There is already a version build in progress. Please wait.")
+            }, status=400)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -319,6 +332,16 @@ def save_copy(request, domain, app_id):
     })
 
 
+@avoid_parallel_build_request
+def make_app_build(app, comment, user_id):
+    copy = app.make_build(
+        comment=comment,
+        user_id=user_id,
+    )
+    copy.save(increment_version=False)
+    return copy
+
+
 def _track_build_for_app_preview(domain, couch_user, app_id, message):
     track_workflow(couch_user.username, message, properties={
         'domain': domain,
@@ -337,7 +360,7 @@ def revert_to_copy(request, domain, app_id):
 
     """
     app = get_app(domain, app_id)
-    copy = get_app(domain, request.POST['saved_app'])
+    copy = get_app(domain, request.POST['build_id'])
     if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
         copy.convert_to_application()
     app = app.make_reversion_to_copy(copy)
@@ -559,7 +582,7 @@ class LanguageProfilesView(View):
         return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain, app_id, *args, **kwargs):
-        profiles = json.loads(request.body).get('profiles')
+        profiles = json.loads(request.body.decode('utf-8')).get('profiles')
         app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:
@@ -593,50 +616,21 @@ class LanguageProfilesView(View):
 
 @require_can_edit_apps
 def toggle_build_profile(request, domain, build_id, build_profile_id):
-    build = Application.get(build_id)
-    action = request.GET.get('action')
-    if action and action == 'enable' and not build.is_released:
-        messages.error(request, _("Release the build first. Can not enable profiles for unreleased versions"))
-        return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
-    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
-        app_id=build.copy_of,
-        build_profile_id=build_profile_id
-    ).order_by('-version').first()
-    if action == 'enable' and latest_enabled_build_profile:
-        if latest_enabled_build_profile.version > build.version:
-            messages.error(request, _(
-                "Latest version available for this profile is {}, which is "
-                "higher than this version. Disable any higher versions first.".format(
-                    latest_enabled_build_profile.version
-                )))
-            return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
-    if action == 'enable':
-        build_profile = LatestEnabledBuildProfiles.objects.create(
-            app_id=build.copy_of,
-            version=build.version,
-            build_profile_id=build_profile_id,
-            build_id=build_id
-        )
-        build_profile.expire_cache(domain)
-    elif action == 'disable':
-        build_profile = LatestEnabledBuildProfiles.objects.filter(
-            app_id=build.copy_of,
-            version=build.version,
-            build_profile_id=build_profile_id,
-            build_id=build_id
-        ).first()
-        build_profile.delete()
-        build_profile.expire_cache(domain)
-    latest_enabled_build_profile = LatestEnabledBuildProfiles.objects.filter(
-        app_id=build.copy_of,
-        build_profile_id=build_profile_id
-    ).order_by('-version').first()
-    if latest_enabled_build_profile:
-        messages.success(request, _("Latest version for profile {} is now {}").format(
-            build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
-        ))
+    build = get_app_cached(request.domain, build_id)
+    status = request.GET.get('action') == 'enable'
+    try:
+        LatestEnabledBuildProfiles.update_status(build, build_profile_id, status)
+    except ValidationError as e:
+        messages.error(request, e)
     else:
-        messages.success(request, _("Latest release now available for profile {}").format(
-            build.build_profiles[build_profile_id].name
-        ))
+        latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
+            build.copy_of, build_profile_id)
+        if latest_enabled_build_profile:
+            messages.success(request, _("Latest version for profile {} is now {}").format(
+                build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
+            ))
+        else:
+            messages.success(request, _("Latest release now available for profile {}").format(
+                build.build_profiles[build_profile_id].name
+            ))
     return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))

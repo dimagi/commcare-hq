@@ -1,16 +1,18 @@
 attrs~=18.1
 iso8601==0.1.12
-jsonobject==0.9.8
+jsonobject==0.9.9
 jsonobject-couchdbkit~=0.9
-celery==4.1.1  # upgrade when https://github.com/celery/celery/issues/4980 is fixed
+# celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737
+# upgrade when https://github.com/celery/celery/issues/4980 is fixed
+git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 # required by django-digest
 decorator==4.0.11
-django~=1.11
+django>=1.11.22  # security update
 django-braces==1.13.0
 django-celery-results~=1.0
 django-crispy-forms==1.7.0
 jsonfield==1.0.3
-dropbox==7.3.1
+dropbox==9.3.0
 defusedxml==0.5.0
 diff-match-patch==20120106
 dimagi-memoized==1.1.1
@@ -44,8 +46,8 @@ Unidecode==0.04.20
 xlrd==1.0.0
 simplejson~=3.11
 sh==1.09
-gevent==1.2.2
-greenlet==0.4.12
+gevent==1.4.0
+greenlet==0.4.15
 openpyxl~=2.6
 six~=1.11
 socketpool==0.5.3
@@ -107,8 +109,4 @@ werkzeug==0.11.15
 CommcareTranslationChecker==0.9.3.5
 WeasyPrint==0.42.3
 
-# Workaround for https://github.com/jazzband/pip-tools/issues/355
-# git URL installs need to be listed with -e to satisfy pip-compile
-# but once they're in requirements.txt we will strip the -e
-
--e git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3

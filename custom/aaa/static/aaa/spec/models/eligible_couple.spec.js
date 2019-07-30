@@ -22,7 +22,7 @@ describe('Eligible Couple models', function () {
             var config = eligibleCoupleModels.config();
             var expectedColumns = [
                 {data: 'name()', name: 'name', title: 'Name'},
-                {data: 'age()', name: 'age', title: 'Age'},
+                {data: 'age()', name: 'dob', title: 'Age'},
                 {data: 'currentFamilyPlanningMethod()', name: 'currentFamilyPlanningMethod', title: 'Current Family Planning Method'},
                 {data: 'adoptionDateOfFamilyPlaning()', name: 'adoptionDateOfFamilyPlaning', title: 'Adoption Date Of Family Planing'},
             ];

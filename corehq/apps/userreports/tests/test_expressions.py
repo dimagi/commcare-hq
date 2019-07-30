@@ -33,7 +33,7 @@ class ExpressionPluginTest(SimpleTestCase):
     def test_custom_expression(self):
         """Confirm that plugin framework is being bootstrapped."""
         ExpressionFactory.from_spec({
-            "type": "abt_supervisor_v2019"
+            "type": "abt_supervisor"
         })
 
     def test_double_registration(self):

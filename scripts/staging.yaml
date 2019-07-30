@@ -49,11 +49,12 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
-  #- jls/reports-select2-v4  # Jenny April 9
-  - nh/cdc/one_domain  # Norman March 26
-  - odata-apikey  # Nick April 29
-  - sr-ucr-mirror # Sravan May 1
-  #- jls/locale-id-integrity-bug # Jenny May 2
-  - mk/ccz-hosting-revamp # MK May 6
+  - fr/case-templates      # FR May 15
+  #- jls/linked-app-multiple-masters # Jenny June 18
+  - rn_only_select_app_type_when_no_advanced # Rohit June 27
+  - mk/skip-files-build # MK July 6
+  - mk/use-ids-to-validate-translations # July 19
+  - nh/build_reqjs  # Norman July 29
+  - revert-24882-jls/compress-mobile-workers-js # Jenny July 24
+  - jls/resource-versions # Jenny July 24
 submodules: {}

@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -47,6 +47,7 @@ from corehq.apps.reports.standard import (
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.standard.message_event_display import (
+    EventStub,
     get_event_display,
     get_sms_status_display,
     get_status_display,
@@ -355,16 +356,16 @@ class MessageLogReport(BaseCommConnectLogReport):
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
-            DataTablesColumn(_("Status")) if self.testing_changes else Ellipsis,
-            DataTablesColumn(_("Event"), sortable=False) if self.testing_changes else Ellipsis,
+            DataTablesColumn(_("Status")) if self.show_v2 else Ellipsis,
+            DataTablesColumn(_("Event"), sortable=False) if self.show_v2 else Ellipsis,
             DataTablesColumn(_("Type"), sortable=False),
         ] if header != Ellipsis])
         headers.custom_sort = [[0, 'desc']]
         return headers
 
     @cached_property
-    def testing_changes(self):
-        return toggles.SMS_LOG_CHANGES.enabled(self.request.couch_user.username)
+    def show_v2(self):
+        return toggles.SMS_LOG_CHANGES.enabled_for_request(self.request)
 
     @property
     @memoized
@@ -415,19 +416,16 @@ class MessageLogReport(BaseCommConnectLogReport):
             return data.filter(location_id__in=location_ids)
 
         def order_by_col(data_):
-            col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
-            sort_col = self.request_params.get('iSortCol_0')
-            if sort_col is not None and sort_col < len(col_fields):
-                data_ = data_.order_by(col_fields[sort_col])
-                if self.request_params.get('sSortDir_0') == 'desc':
-                    data_ = data_.reverse()
+            data_ = data_.order_by(self._sort_column)
+            if self._sort_descending:
+                data_ = data_.reverse()
             return data_
 
         queryset = SMS.objects.filter(
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
         )
-        if self.testing_changes:
+        if self.show_v2:
             queryset = queryset.exclude(
                 direction=OUTGOING,
                 processed=False,
@@ -443,7 +441,26 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
-        return queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
+        if self.show_v2:
+            return queryset.annotate(
+                event_source=F("messaging_subevent__parent__source"),
+                event_source_id=F("messaging_subevent__parent__source_id"),
+                event_content_type=F("messaging_subevent__parent__content_type"),
+                event_form_name=F("messaging_subevent__parent__form_name"),
+            )
+        return queryset
+
+    @property
+    def _sort_column(self):
+        col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
+        sort_col = self.request_params.get('iSortCol_0')
+        if sort_col is None or sort_col < 0 or sort_col >= len(col_fields):
+            sort_col = 0
+        return col_fields[sort_col]
+
+    @property
+    def _sort_descending(self):
+        return self.request_params.get('sSortDir_0') == 'desc'
 
     def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
@@ -470,39 +487,21 @@ class MessageLogReport(BaseCommConnectLogReport):
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
-        data = self._get_queryset()
-        if paginate and self.pagination:
-            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
-
         content_cache = {}
-        for message in data:
+        messages = self._get_data(paginate)
+        events = self._get_events_by_xforms_session(messages) if self.show_v2 else {}
+        for message in messages:
             yield [val for val in [
                 get_timestamp(message.date),
                 get_contact_link(message.couch_recipient, message.couch_recipient_doc_type, raw=contact_info),
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
-                get_sms_status_display(message) if self.testing_changes else Ellipsis,
-                self._get_message_event_display(message, content_cache) if self.testing_changes else Ellipsis,
+                get_sms_status_display(message) if self.show_v2 else Ellipsis,
+                self._get_event_display(message, events, content_cache) if self.show_v2 else Ellipsis,
                 ', '.join(self._get_message_types(message)),
                 message.couch_id if include_log_id and self.include_metadata else Ellipsis,
             ] if val != Ellipsis]
-
-    def _get_message_event_display(self, message, content_cache):
-        event = None
-        if message.messaging_subevent:
-            event = message.messaging_subevent.parent
-        elif message.xforms_session_couch_id:
-            try:
-                subevent = (MessagingSubEvent.objects
-                            .get(parent__domain=self.domain,
-                                 xforms_session__couch_id=message.xforms_session_couch_id))
-                event = subevent.parent
-            except MessagingSubEvent.DoesNotExist:
-                pass
-        if event:
-            return get_event_display(self.domain, event, content_cache)
-        return "-"
 
     @property
     def rows(self):
@@ -536,6 +535,48 @@ class MessageLogReport(BaseCommConnectLogReport):
             table[0].append(_("Message Log ID"))
             result[0][1] = table
         return result
+
+    def _get_data(self, paginate):
+        """Returns the full set of data that will be shown to the user"""
+        queryset = self._get_queryset()
+
+        if paginate and self.pagination:
+            queryset = queryset[self.pagination.start:self.pagination.start + self.pagination.count]
+        return list(queryset)
+
+    def _get_events_by_xforms_session(self, messages):
+        session_ids = [
+            m.xforms_session_couch_id for m in messages
+            if m.xforms_session_couch_id and not m.messaging_subevent_id
+        ]
+        subevents = (MessagingSubEvent.objects
+                     .filter(parent__domain=self.domain,
+                             xforms_session__couch_id__in=session_ids)
+                     .values_list(
+                         'xforms_session__couch_id',
+                         'parent__source',
+                         'parent__source_id',
+                         'parent__content_type',
+                         'parent__form_name',
+                     ))
+        return {session_id: EventStub(source, source_id, content_type, form_name)
+                for session_id, source, source_id, content_type, form_name in subevents}
+
+    def _get_event_display(self, message, events, content_cache):
+        """Extract event data from a message annotated via _get_data optimizations"""
+        event = None
+        if message.messaging_subevent:
+            event = EventStub(
+                message.event_source,
+                message.event_source_id,
+                message.event_content_type,
+                message.event_form_name,
+            )
+        elif message.xforms_session_couch_id:
+            event = events.get(message.xforms_session_couch_id, None)
+        if event:
+            return get_event_display(self.domain, event, content_cache)
+        return "-"
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):

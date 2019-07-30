@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import inspect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -22,7 +21,6 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
     IntegerProperty,
@@ -61,7 +59,6 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
-    format_username,
     filter_by_app
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
@@ -73,7 +70,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.dates import force_to_datetime
 from xml.etree import cElementTree as ElementTree
 
-from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
+from couchdbkit.exceptions import ResourceConflict, BadValueError
 
 from dimagi.utils.web import get_site_domain
 import six
@@ -208,6 +205,9 @@ class Permissions(DocumentSchema):
             if self._getattr(name) != other._getattr(name):
                 return False
         return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def max(cls):
@@ -475,6 +475,7 @@ class DomainMembership(Membership):
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
     program_id = StringProperty()
+    last_accessed = DateProperty()
 
     @property
     def permissions(self):
@@ -933,6 +934,9 @@ class DeviceIdLastUsed(DocumentSchema):
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 class LastSubmission(DocumentSchema):
@@ -1864,12 +1868,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self._id
         ))
 
-        groups += [group for group in Group.by_user(self) if group.case_sharing]
+        groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
         return groups
 
     def get_reporting_groups(self):
         from corehq.apps.groups.models import Group
-        return [group for group in Group.by_user(self) if group.reporting]
+        return [group for group in Group.by_user_id(self._id) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
@@ -1890,7 +1894,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
-        return Group.by_user(self, wrap=False)
+        return Group.by_user_id(self._id, wrap=False)
 
     def set_groups(self, group_ids):
         from corehq.apps.groups.models import Group
@@ -1936,9 +1940,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return None
 
     def get_location_ids(self, domain):
+        # domain arg included here for compatibility with WebUser
         return self.assigned_location_ids
 
     def get_sql_locations(self, domain):
+        # domain arg included here for compatibility with WebUser
         from corehq.apps.locations.models import SQLLocation
         if self.assigned_location_ids:
             return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)

@@ -1,13 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from contextlib import contextmanager
-from datetime import datetime, time, date
+from datetime import date, datetime, time
 
 import six
 import xlrd
-from corehq.util.workbook_reading import Worksheet, Cell, Workbook, SpreadsheetFileInvalidError, \
-    SpreadsheetFileNotFound, SpreadsheetFileEncrypted
 from six.moves import range
+
+from corehq.util.workbook_reading import (
+    Cell,
+    CellValueError,
+    SpreadsheetFileEncrypted,
+    SpreadsheetFileInvalidError,
+    SpreadsheetFileNotFound,
+    Workbook,
+    Worksheet,
+)
 
 
 @contextmanager
@@ -38,7 +46,12 @@ class _XLSWorksheetAdaptor(object):
             else:
                 return cell.value
         elif cell.ctype == xlrd.XL_CELL_DATE:
-            datetime_tuple = xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode)
+            try:
+                datetime_tuple = xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode)
+            except xlrd.XLDateError as e:
+                # https://xlrd.readthedocs.io/en/latest/dates.html
+                raise CellValueError("Error interpreting spreadsheet value '{}' as date: {}"
+                                     .format(cell.value, repr(e)))
             if datetime_tuple[:3] == (0, 0, 0):
                 return time(*datetime_tuple[3:])
             elif datetime_tuple[3:] == (0, 0, 0):

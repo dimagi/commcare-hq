@@ -12,7 +12,7 @@ from six.moves.urllib.parse import urlencode
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
@@ -64,6 +64,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
+from corehq.const import ONE_DAY
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -79,7 +80,10 @@ from corehq.util.dates import get_previous_month_date_range
 from corehq.util.soft_assert import soft_assert
 
 _invoicing_complete_soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    to=[
+        '{}@{}'.format(name, 'dimagi.com')
+        for name in ['gbova', 'dmore', 'accounts']
+    ],
     exponential_backoff=False,
 )
 
@@ -1019,7 +1023,7 @@ def email_enterprise_report(domain, slug, couch_user):
     hash_id = uuid.uuid4().hex
     redis = get_redis_client()
     redis.set(hash_id, csv_file.getvalue())
-    redis.expire(hash_id, 60 * 60 * 24)
+    redis.expire(hash_id, ONE_DAY)
     csv_file.close()
 
     # Send email
@@ -1033,13 +1037,16 @@ def email_enterprise_report(domain, slug, couch_user):
 
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
-def calculate_users_in_all_domains():
+def calculate_users_in_all_domains(today=None):
+    today = today or datetime.date.today()
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)
-        record_date = datetime.date.today() - relativedelta(days=1)
-        user_history = DomainUserHistory.create(
-            domain=domain,
-            num_users=num_users,
-            record_date=record_date
-        )
-        user_history.save()
+        record_date = today - relativedelta(days=1)
+        try:
+            DomainUserHistory.objects.create(
+                domain=domain,
+                num_users=num_users,
+                record_date=record_date
+            )
+        except IntegrityError:
+            pass

@@ -40,7 +40,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 from corehq.messaging.scheduling.tasks import handle_case_timed_schedule_instance
 from corehq.messaging.scheduling.tests.util import delete_alert_schedules, delete_timed_schedules
 from corehq.messaging.tasks import run_messaging_rule, sync_case_for_messaging_rule
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from datetime import datetime, date, time
 from django.db.models import Q
 from django.test import TestCase
@@ -96,10 +96,12 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         for rule in AutomaticUpdateRule.objects.filter(domain=self.domain):
             rule.hard_delete()
 
-        for instance in run_query_across_partitioned_databases(CaseAlertScheduleInstance, Q(domain=self.domain)):
+        for instance in paginate_query_across_partitioned_databases(
+                CaseAlertScheduleInstance, Q(domain=self.domain)):
             delete_case_schedule_instance(instance)
 
-        for instance in run_query_across_partitioned_databases(CaseTimedScheduleInstance, Q(domain=self.domain)):
+        for instance in paginate_query_across_partitioned_databases(
+                CaseTimedScheduleInstance, Q(domain=self.domain)):
             delete_case_schedule_instance(instance)
 
         delete_alert_schedules(self.domain)

@@ -1,0 +1,72 @@
+
+        CREATE TABLE IF NOT EXISTS "icds_db_child_pnc_form_06010e08381e3ede425406c5" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_child_health_postnatal_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_child_health_postnatal_forms")
+        
+{"month_string": "2018-12-01", "state_id": "st1"}
+DROP TABLE IF EXISTS "icds_db_child_pnc_form_7a197ee47818209780c23ed9"
+{}
+
+        CREATE TABLE IF NOT EXISTS "icds_db_child_pnc_form_7a197ee47818209780c23ed9" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "icds_dashboard_child_health_postnatal_forms" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("icds_dashboard_child_health_postnatal_forms")
+        
+{"month_string": "2019-01-01", "state_id": "st1"}
+
+        INSERT INTO "icds_db_child_pnc_form_7a197ee47818209780c23ed9" (
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_increase_food_bf,
+          counsel_breast, skin_to_skin, is_ebf, water_or_milk, other_milk_to_child,
+          tea_other, eating, counsel_exclusive_bf, counsel_only_milk, counsel_adequate_bf,
+          not_breastfeeding
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+            GREATEST(ucr.counsel_increase_food_bf, prev_month.counsel_increase_food_bf) AS counsel_increase_food_bf,
+            GREATEST(ucr.counsel_breast, prev_month.counsel_breast) AS counsel_breast,
+            GREATEST(ucr.skin_to_skin, prev_month.skin_to_skin) AS skin_to_skin,
+            ucr.is_ebf AS is_ebf,
+            ucr.water_or_milk AS water_or_milk,
+            ucr.other_milk_to_child AS other_milk_to_child,
+            ucr.tea_other AS tea_other,
+            ucr.eating AS eating,
+            GREATEST(ucr.counsel_exclusive_bf, prev_month.counsel_exclusive_bf) AS counsel_exclusive_bf,
+            GREATEST(ucr.counsel_only_milk, prev_month.counsel_only_milk) AS counsel_only_milk,
+            GREATEST(ucr.counsel_adequate_bf, prev_month.counsel_adequate_bf) AS counsel_adequate_bf,
+            ucr.not_breastfeeding AS not_breastfeeding
+          FROM (
+        SELECT DISTINCT child_health_case_id AS case_id,
+        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        MAX(counsel_increase_food_bf) OVER w AS counsel_increase_food_bf,
+        MAX(counsel_breast) OVER w AS counsel_breast,
+        MAX(skin_to_skin) OVER w AS skin_to_skin,
+        LAST_VALUE(is_ebf) OVER w AS is_ebf,
+        LAST_VALUE(water_or_milk) OVER w AS water_or_milk,
+        LAST_VALUE(other_milk_to_child) OVER w AS other_milk_to_child,
+        LAST_VALUE(tea_other) OVER w AS tea_other,
+        LAST_VALUE(eating) OVER w AS eating,
+        MAX(counsel_exclusive_bf) OVER w AS counsel_exclusive_bf,
+        MAX(counsel_only_milk) OVER w AS counsel_only_milk,
+        MAX(counsel_adequate_bf) OVER w AS counsel_adequate_bf,
+        LAST_VALUE(not_breastfeeding) OVER w AS not_breastfeeding
+        FROM "ucr_icds-cas_static-postnatal_care_forms_0c30d94e"
+        WHERE timeend >= %(current_month_start)s AND
+              timeend < %(next_month_start)s AND
+              state_id = %(state_id)s AND
+              child_health_case_id IS NOT NULL
+        WINDOW w AS (
+            PARTITION BY child_health_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        ) ucr
+          FULL OUTER JOIN "icds_db_child_pnc_form_06010e08381e3ede425406c5" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

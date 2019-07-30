@@ -4,7 +4,7 @@ hqDefine("export/js/export_list_main", [
     'analytix/js/kissmetrix',
     'export/js/create_export',
     'export/js/export_list',
-    'hqwebapp/js/select_2_ajax_widget_v3',  // for case owner & user filters in DashboardFeedFilterForm
+    'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
 ], function (
     $,
     initialPageData,
@@ -24,6 +24,7 @@ hqDefine("export/js/export_list_main", [
                     is_daily_saved_export: initialPageData.get('is_daily_saved_export', true),
                     is_feed: initialPageData.get('is_feed', true),
                     is_deid: initialPageData.get('is_deid', true),
+                    is_odata: initialPageData.get('is_odata', true),
                     model_type: initialPageData.get('model_type', true),
                 },
             }));
@@ -38,6 +39,7 @@ hqDefine("export/js/export_list_main", [
             isDeid: initialPageData.get('is_deid'),
             isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
             isFeed: initialPageData.get('is_feed', true),
+            isOData: initialPageData.get('is_odata', true),
             headers: {
                 my_export_type: initialPageData.get('my_export_type'),
                 shared_export_type: initialPageData.get('shared_export_type'),

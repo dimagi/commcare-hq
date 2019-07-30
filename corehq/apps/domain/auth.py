@@ -5,6 +5,7 @@ import re
 from functools import wraps
 
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
 from tastypie.authentication import ApiKeyAuthentication
@@ -147,6 +148,23 @@ def basicauth(realm=''):
     return real_decorator
 
 
+def basic_or_api_key(realm=''):
+    def real_decorator(view):
+        def wrapper(request, *args, **kwargs):
+            username, password = get_username_and_password_from_request(request)
+            if username and password:
+                request.check_for_password_as_api_key = True
+                user = authenticate(username=username, password=password, request=request)
+                if user is not None and user.is_active:
+                    request.user = user
+                    return view(request, *args, **kwargs)
+            response = HttpResponse(status=401)
+            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+            return response
+        return wrapper
+    return real_decorator
+
+
 def formplayer_auth(view):
     return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(view)
 
@@ -177,3 +195,18 @@ def formplayer_as_user_auth(view):
         return view(request, *args, **kwargs)
 
     return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(_inner)
+
+
+class ApiKeyFallbackBackend(object):
+
+    def authenticate(self, request, username, password):
+        if not getattr(request, 'check_for_password_as_api_key', False):
+            return None
+
+        try:
+            user = User.objects.get(username=username, api_key__key=password)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            return None
+        else:
+            request.skip_two_factor_check = True
+            return user

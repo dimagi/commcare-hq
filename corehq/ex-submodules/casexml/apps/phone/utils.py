@@ -3,9 +3,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 import weakref
+from io import BytesIO
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
+
+import six
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
@@ -16,9 +19,109 @@ from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.mock import Balance
 from memoized import memoized
 
+from corehq.blobs import get_blob_db, CODES, NotFound
+from corehq.blobs.models import BlobMeta
+from corehq.util.datadog.gauges import datadog_counter
+from dimagi.utils.couch import CriticalSection
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
+
+# GLOBAL_USER_ID is expected to be a globally unique string that will never
+# change and can always be search-n-replaced in global fixture XML. The UUID
+# in this string was generated with `uuidgen` on Mac OS X 10.11.6
+# HACK if this string is present anywhere in an item list it will be replaced
+# with the restore user's user_id. DO NOT DEPEND ON THIS IMPLEMENTATION DETAIL.
+# This is an optimization to avoid an extra XML parse/serialize cycle.
+GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
+
+
+def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name, data_fn):
+    """
+    Get the fixture data for a global fixture (one that does not vary by user).
+
+    :param restore_state: Restore state object used to access features of the restore
+    :param cache_bucket_prefix: Fixture bucket prefix
+    :param fixture_name: Name of the fixture
+    :param data_fn: Function to generate the XML fixture elements
+    :return: list containing byte string representation of the fixture
+    """
+    domain = restore_state.restore_user.domain
+
+    data = None
+    key = '{}/{}'.format(cache_bucket_prefix, domain)
+
+    if not restore_state.overwrite_cache:
+        data = get_cached_fixture_items(domain, cache_bucket_prefix)
+        _record_datadog_metric('cache_miss' if data is None else 'cache_hit', key)
+
+    if data is None:
+        with CriticalSection([key]):
+            if not restore_state.overwrite_cache:
+                # re-check cache to avoid re-computing it
+                data = get_cached_fixture_items(domain, cache_bucket_prefix)
+                if data is not None:
+                    return [data]
+
+            _record_datadog_metric('generate', key)
+            items = data_fn()
+            io_data = write_fixture_items_to_io(items)
+            data = io_data.read()
+            io_data.seek(0)
+            cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
+
+    global_id = GLOBAL_USER_ID.encode('utf-8')
+    b_user_id = restore_state.restore_user.user_id.encode('utf-8')
+    return [data.replace(global_id, b_user_id)] if data else []
+
+
+def write_fixture_items_to_io(items):
+    io = BytesIO()
+    io.write(ITEMS_COMMENT_PREFIX)
+    io.write(six.text_type(len(items)).encode('utf-8'))
+    io.write(b'-->')
+    for element in items:
+        io.write(ElementTree.tostring(element, encoding='utf-8'))
+    io.seek(0)
+    return io
+
+
+def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
+    db = get_blob_db()
+    try:
+        kw = {"meta": db.metadb.get(
+            parent_id=domain,
+            type_code=CODES.fixture,
+            name=fixure_name,
+        )}
+    except BlobMeta.DoesNotExist:
+        kw = {
+            "domain": domain,
+            "parent_id": domain,
+            "type_code": CODES.fixture,
+            "name": fixure_name,
+            "key": key_prefix + '/' + domain,
+        }
+    db.put(io_data, **kw)
+
+
+def get_cached_fixture_items(domain, bucket_prefix):
+    try:
+        return get_blob_db().get(key=bucket_prefix + '/' + domain).read()
+    except NotFound:
+        return None
+
+
+def clear_fixture_cache(domain, bucket_prefix):
+    key = bucket_prefix + '/' + domain
+    _record_datadog_metric('cache_clear', key)
+    get_blob_db().delete(key=key)
+
+
+def _record_datadog_metric(name, cache_key):
+    datadog_counter('commcare.fixture.{}'.format(name), tags=[
+        'cache_key:{}'.format(cache_key),
+    ])
 
 
 def get_cached_items_with_count(cached_bytes):

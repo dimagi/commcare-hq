@@ -209,6 +209,7 @@ class UnifiedBeneficiaryReportAPI(View):
         if beneficiary_type == 'child':
             data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column_with_dir)
         elif beneficiary_type == 'eligible_couple':
+            sort_column_with_dir = '"%s" %s' % (sort_column, sort_column_dir)
             data = EligibleCoupleQueryHelper.list(
                 request.domain,
                 selected_date,
@@ -228,9 +229,6 @@ class UnifiedBeneficiaryReportAPI(View):
             data = data[start:start + length]
         else:
             number_of_data = 0
-        if beneficiary_type == 'eligible_couple':
-            month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
-            data = EligibleCoupleQueryHelper.update_list(data, month_end)
         data = list(data)
         return JsonResponse(data={
             'rows': data,
@@ -345,7 +343,8 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 values.extend([
                     'migration_status',
                     'age_marriage',
-                    'husband_name'
+                    'husband_name',
+                    'marital_status'
                 ])
             else:
                 values.append('mother_case_id')

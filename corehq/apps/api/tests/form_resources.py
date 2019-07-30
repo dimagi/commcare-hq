@@ -101,17 +101,20 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(api_form['edited_by_user_id'], 'auth-user-id')
 
     def test_get_list_xmlns(self):
-        """
-        Forms can be filtered by passing ?xmlns=<xmlns>
-
-        Since we not testing ElasticSearch, we only test that the proper query is generated.
-        """
         expected = [
             {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
-            {'term': {'xmlns.exact': 'foo'}}
+            {'term': {'xmlns.exact': 'http://XMLNS'}}
         ]
-        self._test_es_query({'xmlns': 'foo'}, expected)
+        self._test_es_query({'xmlns': 'http://XMLNS'}, expected)
+
+    def test_get_list_xmlns_exact(self):
+        expected = [
+            {'term': {'doc_type': 'xforminstance'}},
+            {'term': {'domain.exact': 'qwerty'}},
+            {'term': {'xmlns.exact': 'http://XMLNS'}}
+        ]
+        self._test_es_query({'xmlns.exact': 'http://XMLNS'}, expected)
 
     def test_get_list_received_on(self):
         """

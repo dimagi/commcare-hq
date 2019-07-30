@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views import (
     view_app,
     multimedia_ajax, current_app_version, paginate_releases,
     release_build, view_module, view_module_legacy, view_form, view_form_legacy,
-    get_form_datums, form_source, form_source_legacy, update_build_comment, export_gzip,
+    get_form_datums, form_source, form_source_legacy, update_build_comment,
     get_xform_source, form_casexml, app_source, import_app, app_from_template, copy_app,
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
@@ -30,6 +30,7 @@ from corehq.apps.app_manager.views import (
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
     update_linked_whitelist, overwrite_module_case_list, app_settings, toggle_build_profile,
 )
+from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.translations.views import (
     download_bulk_ui_translations, upload_bulk_ui_translations,
@@ -76,7 +77,6 @@ app_urls = [
     url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),
     url(r'^update_build_comment/$', update_build_comment,
         name='update_build_comment'),
-    url(r'^copy/gzip$', export_gzip, name='gzip_app'),
     url(r'^update_prompts/$', PromptSettingsUpdateView.as_view(), name=PromptSettingsUpdateView.urlname),
     url(r'^form_has_submissions/(?P<form_unique_id>[\w-]+)/$', FormHasSubmissionsView.as_view(),
         name=FormHasSubmissionsView.urlname),
@@ -169,6 +169,8 @@ urlpatterns = [
         name='edit_app_ui_translations'),
     url(r'^get_app_ui_translations/$', get_app_ui_translations, name='get_app_ui_translations'),
     url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', rearrange, name='rearrange'),
+    url(r'^move_child_modules_after_parents/(?P<app_id>[\w-]+)/$', move_child_modules_after_parents,
+        name='move_child_modules_after_parents'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', odk_qr_code, name='odk_qr_code'),
     url(r'^odk/(?P<app_id>[\w-]+)/media_qr_code/$', odk_media_qr_code, name='odk_media_qr_code'),

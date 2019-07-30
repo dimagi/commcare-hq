@@ -13,6 +13,7 @@ from six.moves import range
 
 
 class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-ccs-record'
     base_tablename = 'agg_ccs_record'
 
     def __init__(self, month):

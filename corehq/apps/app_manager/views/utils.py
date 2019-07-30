@@ -11,14 +11,32 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain, get_current_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    wrap_app,
+    get_apps_in_domain,
+    get_current_app,
+)
 from corehq.apps.app_manager.decorators import require_deploy_apps
-from corehq.apps.app_manager.exceptions import AppEditingError, \
-    ModuleNotFoundException, FormNotFoundException, AppLinkError, MultimediaMissingError
-from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
+    ModuleNotFoundException,
+    FormNotFoundException,
+    AppLinkError,
+    MultimediaMissingError,
+)
+from corehq.apps.app_manager.models import (
+    Application,
+    enable_usercase_if_necessary,
+    CustomIcon,
+)
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
+from corehq.apps.linked_domain.exceptions import (
+    RemoteRequestError,
+    RemoteAuthError,
+    ActionNotPermitted,
+)
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
@@ -132,7 +150,7 @@ def encode_if_unicode(s):
 
 
 def validate_langs(request, existing_langs):
-    o = json.loads(request.body)
+    o = json.loads(request.body.decode('utf-8'))
     langs = o['langs']
     rename = o['rename']
 
@@ -169,7 +187,7 @@ def overwrite_app(app, master_build, report_map=None):
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
-    id_map = _get_form_id_map(app_json)  # do this before we change the source
+    form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
 
     for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
@@ -186,12 +204,12 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
-    wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
+    wrapped_app = _update_form_ids(wrapped_app, master_build, form_ids_by_xmlns)
     enable_usercase_if_necessary(wrapped_app)
     return wrapped_app
 
 
-def _get_form_id_map(app):
+def _get_form_ids_by_xmlns(app):
     id_map = {}
     for module in app['modules']:
         for form in module['forms']:
@@ -199,7 +217,7 @@ def _get_form_id_map(app):
     return id_map
 
 
-def _update_form_ids(app, master_app, id_map):
+def _update_form_ids(app, master_app, form_ids_by_xmlns):
 
     _attachments = master_app.get_attachments()
 
@@ -207,7 +225,7 @@ def _update_form_ids(app, master_app, id_map):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
-    updated_source = update_form_unique_ids(app_source, id_map)
+    updated_source = update_form_unique_ids(app_source, form_ids_by_xmlns)
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = wrap_app(updated_source)

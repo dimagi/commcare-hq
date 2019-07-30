@@ -20,7 +20,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from dimagi.utils.parsing import string_to_boolean
 import six
 
-TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
+TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 
 
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):

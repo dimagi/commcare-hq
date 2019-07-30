@@ -102,6 +102,13 @@ class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
         """
         raise NotImplementedError
 
+    def expire(self, *args, **kw):
+        """Set blob expiration
+
+        See `metadata.MetaDB.expire` for more details
+        """
+        self.metadb.expire(*args, **kw)
+
     @abstractmethod
     def copy_blob(self, content, key):
         """Copy blob from other blob database

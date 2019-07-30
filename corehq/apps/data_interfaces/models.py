@@ -16,7 +16,7 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.scheduling.const import (
@@ -45,7 +45,8 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_timed_schedule_instances_for_schedule_id,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
-from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query, \
+    paginate_query, paginate_query_across_partitioned_databases
 from corehq.util.log import with_progress_bar
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
@@ -481,14 +482,14 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def get_case_ids(cls, domain, case_type, boundary_date=None, db=None):
+    def iter_cases(cls, domain, case_type, boundary_date=None, db=None):
         if should_use_sql_backend(domain):
-            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
+            return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
         else:
-            return cls._get_case_ids_from_es(domain, case_type, boundary_date=boundary_date)
+            return cls._iter_cases_from_es(domain, case_type, boundary_date=boundary_date)
 
     @classmethod
-    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
+    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
         q_expression = Q(
             domain=domain,
             type=case_type,
@@ -500,11 +501,16 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            for c_id in CommCareCaseSQL.objects.using(db).filter(q_expression).values_list('case_id', flat=True):
-                yield c_id
+            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
         else:
-            for c_id in run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id']):
-                yield c_id
+            return paginate_query_across_partitioned_databases(
+                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+            )
+
+    @classmethod
+    def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
+        case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
+        return CaseAccessors(domain).iter_cases(case_ids)
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -948,6 +954,11 @@ class CaseRuleActionResult(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    __hash__ = None
 
     def _validate_int(self, value):
         if not isinstance(value, int):

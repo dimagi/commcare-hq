@@ -16,7 +16,7 @@
     "vectorlink-uganda"
   ],
   "server_environment": ["production"],
-  "data_source_table": "supervisory-v2019",
+  "data_source_table": "supervisory-006",
   "report_id": "incident-report",
   "custom_configurable_report": "custom.abt.reports.views.FormattedSupervisoryReport",
   "config": {

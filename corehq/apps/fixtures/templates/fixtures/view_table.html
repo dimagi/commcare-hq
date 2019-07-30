@@ -20,6 +20,9 @@
 {% block page_content %}
   {% initial_page_data 'renderReportTables' 1 %}
   {% initial_page_data 'dataTablesOptions' data_tables_options %}
+  {% if not table_not_selected %}
+    <h4>{{ table_description }}</h4>
+  {% endif %}
 
   {% block reportcontent %}
     {% block reporttable %}

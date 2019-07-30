@@ -120,6 +120,31 @@ class MetaDB(object):
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
 
+    def expire(self, parent_id, key, minutes=60):
+        """Set blob expiration to some minutes from now
+
+        This makes it easy to handle the scenario where a new blob is
+        replacing another (now obsolete) blob, but immediate deletion of
+        the obsolete blob would introduce a race condition because in-
+        flight code may retain references to it. This will schedule the
+        obsolete blob for deletion in the near future at which point
+        such a race condition is extremely unlikely to be triggered.
+
+        :param parent_id: Parent identifier used for sharding.
+        :param key: Blob key.
+        :param minutes: Optional number of minutes from now that
+        the blob will be set to expire. The default is 60.
+        """
+        try:
+            meta = self.get(parent_id=parent_id, key=key)
+        except BlobMeta.DoesNotExist:
+            return
+        if meta.expires_on is None:
+            datadog_counter('commcare.temp_blobs.count')
+            datadog_counter('commcare.temp_blobs.bytes_added', value=meta.content_length)
+        meta.expires_on = _utcnow() + timedelta(minutes=minutes)
+        meta.save()
+
     def get(self, **kw):
         """Get metadata for a single blob
 
@@ -146,7 +171,7 @@ class MetaDB(object):
             kw.pop("type_code", None)
             kw.pop("name", None)
             if not kw:
-                raise TypeError("Missing argument 'name' and/or 'parent_id'")
+                raise TypeError("Missing argument 'parent_id', 'type_code' and/or 'name'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
         dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
         meta = BlobMeta.objects.using(dbname).filter(**kw).first()

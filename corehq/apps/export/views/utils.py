@@ -13,10 +13,11 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.generic import View
+from memoized import memoized
 from soil import DownloadBase
 from soil.progress import get_task_status
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.models import SQLLocation
@@ -39,7 +40,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, MAX_DATA_FILE_SIZE, MAX_DATA_FILE_SIZE_TOTAL
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
-from corehq.apps.export.models.new import DataFile, DatePeriod
+from corehq.apps.export.models.new import DataFile, DatePeriod, RowNumberColumn
 from corehq.apps.export.tasks import generate_schema_for_all_builds
 
 
@@ -85,7 +86,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_edit_permissions(self):
-        return self.couch_user.can_edit_data()
+        return self.couch_user.can_edit_data() and self.has_view_permissions
 
     @property
     def has_form_export_permissions(self):
@@ -177,6 +178,51 @@ class DashboardFeedMixin(DailySavedExportMixin):
     def report_class(self):
         from corehq.apps.export.views.list import DashboardFeedListView
         return DashboardFeedListView
+
+
+class ODataFeedMixin(object):
+
+    @method_decorator(toggles.ODATA.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
+
+    @property
+    def terminology(self):
+        return {
+            'page_header': _("OData Feed Settings"),
+            'help_text': "",
+            'name_label': _("OData Feed Name"),
+            'choose_fields_label': _("Choose the fields you want to include in this feed."),
+            'choose_fields_description': _("""
+                You can drag and drop fields to reorder them. You can also rename
+                fields, which will update the field labels in the Power BI/Tableau
+            """),
+        }
+
+    def create_new_export_instance(self, schema):
+        instance = super(ODataFeedMixin, self).create_new_export_instance(schema)
+        instance.is_odata_config = True
+        instance.transform_dates = False
+        return instance
+
+    @property
+    def page_context(self):
+        context = super(ODataFeedMixin, self).page_context
+        context['format_options'] = ["odata"]
+        return context
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        export_instance = self.export_instance_cls.get(self.export_id)
+        export_instance._id = None
+        export_instance._rev = None
+        return export_instance
+
+    @property
+    def report_class(self):
+        from corehq.apps.export.views.list import ODataFeedListView
+        return ODataFeedListView
 
 
 class GenerateSchemaFromAllBuildsView(View):
@@ -319,3 +365,14 @@ def can_view_form_exports(couch_user, domain):
 
 def can_view_case_exports(couch_user, domain):
     return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions
+
+
+def remove_row_number_from_export_columns(export_instance):
+    for table in export_instance.tables:
+        table.columns = [column for column in table.columns if not isinstance(column, RowNumberColumn)]
+
+
+def clean_odata_columns(export_instance):
+    for table in export_instance.tables:
+        for column in table.columns:
+            column.label = column.label.replace('@', '').replace('.', ' ')

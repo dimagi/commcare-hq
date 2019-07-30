@@ -4,7 +4,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media').initNavMenuMedia;
         var reportModuleModel = hqImport('app_manager/js/modules/report_module').reportModuleModel;
         var staticFilterDataModel = hqImport('app_manager/js/modules/report_module').staticFilterDataModel;
-        var choiceListUtils = hqImport('reports_core/js/choice_list_utils_v4');
+        var choiceListUtils = hqImport('reports_core/js/choice_list_utils');
 
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.
@@ -93,7 +93,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
                     url: (hqImport("hqwebapp/js/initial_page_data").reverse("choice_list_api").split('report_id')[0]
                           + element.data("filter-name") + "/"),
                     dataType: 'json',
-                    quietMillis: 250,
+                    delay: 250,
                     data: choiceListUtils.getApiQueryParams,
                     processResults: choiceListUtils.formatPageForSelect2,
                     cache: true,

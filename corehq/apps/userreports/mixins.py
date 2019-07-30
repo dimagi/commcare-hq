@@ -40,6 +40,7 @@ class ConfigurableReportDataSourceMixin(object):
                     self._config_id, self.domain, column.column_id,
                 )
             self._column_configs[column.column_id] = column
+        self._engine_id = None
 
     @property
     def aggregation_columns(self):

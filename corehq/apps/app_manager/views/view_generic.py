@@ -155,7 +155,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         template = get_module_template(request.user, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
-        module_context = get_module_view_context(app, module, lang)
+        module_context = get_module_view_context(request, app, module, lang)
         context.update(module_context)
     elif app:
         context.update(get_app_view_context(request, app))
@@ -262,8 +262,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     ]
     domain_names.sort()
     if app and copy_app_form is None:
-        toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(domain, app, export_zipped_apps_enabled=toggle_enabled)
+        copy_app_form = CopyApplicationForm(domain, app)
         context.update({
             'domain_names': domain_names,
         })
@@ -316,7 +315,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
-
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})

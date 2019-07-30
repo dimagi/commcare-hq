@@ -123,7 +123,7 @@ class TestRegisteredHousehold(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 6964.0,
+                                "y": 6951.0,
                                 "x": 1491004800000,
                                 "all": 0
                             },

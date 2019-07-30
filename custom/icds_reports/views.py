@@ -6,6 +6,8 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
+from lxml import etree
+
 
 from datetime import datetime, date
 from celery.result import AsyncResult
@@ -37,11 +39,12 @@ from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
+    THR_REPORT_EXPORT
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -53,18 +56,15 @@ from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scal
     get_adult_weight_scale_data_map, get_adult_weight_scale_sector_data
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
     get_awc_daily_status_data_map, get_awc_daily_status_sector_data
-from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics, \
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
     get_awc_report_infrastructure, get_awc_report_pregnant, get_pregnant_details, get_awc_report_lactating
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
     get_awcs_covered_data_chart
-from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_chart, \
     get_children_initiated_data_map, get_children_initiated_sector_data
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
-from custom.icds_reports.reports.demographics_data import get_demographics_data
 from custom.icds_reports.reports.disha import DishaDump
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
@@ -86,7 +86,6 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from custom.icds_reports.reports.lady_supervisor import get_lady_supervisor_data
-from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
 from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_with_low_birth_weight_chart, \
@@ -106,11 +105,17 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
     get_datatables_ordering_info
+from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
+    get_program_summary_data_with_retrying
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
 from couchexport.export import Format
+from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.models.views import NICIndicatorsView
+from django.views.decorators.csrf import csrf_exempt
 
 
 @location_safe
@@ -293,29 +298,11 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
-
-        data = {}
-        if step == 'maternal_child':
-            data = get_maternal_child_data(
-                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
-            )
-        elif step == 'icds_cas_reach':
-            data = get_cas_reach_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-            )
-        elif step == 'demographics':
-            data = get_demographics_data(
-                domain,
-                tuple(now.date().timetuple())[:3],
-                config,
-                include_test,
-                beta=icds_pre_release_features(request.couch_user)
-            )
-        elif step == 'awc_infrastructure':
-            data = get_awc_infrastructure_data(domain, config, include_test)
+        now = tuple(now.date().timetuple())[:3]
+        pre_release_features = icds_pre_release_features(self.request.couch_user)
+        data = get_program_summary_data_with_retrying(
+            step, domain, config, now, include_test, pre_release_features
+        )
         return JsonResponse(data=data)
 
 
@@ -348,7 +335,6 @@ class ServiceDeliveryDashboardView(BaseReportView):
 
         location_filters = get_location_filter(location, domain)
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
-        age_sdd = request.GET.get('ageSDD', '0_3')
 
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
@@ -363,7 +349,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
             location_filters,
             year,
             month,
-            age_sdd,
+            step,
             include_test
         )
         return JsonResponse(data=data)
@@ -796,7 +782,7 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT):
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -832,6 +818,11 @@ class FactSheetsView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
+
         loc_level = get_location_level(config.get('aggregation_level'))
 
         beta = icds_pre_release_features(request.user)
@@ -1776,9 +1767,85 @@ class DishaAPIView(View):
         return dump.get_export_as_http_response(request)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+
+@location_safe
+@method_decorator([api_auth, csrf_exempt, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
+class NICIndicatorAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_states.keys())
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than or same as current month",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "unknown_error": "Unknown Error occured",
+            "no_data": "Data does not exists"
+        }
+
+        error_message_template = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
+            SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
+               <SOAP-ENV:Header />
+               <SOAP-ENV:Body>
+                    <SOAP-ENV:Fault>
+                        <message>
+                            {}
+                        </message>
+                    </SOAP-ENV:Fault>
+               </SOAP-ENV:Body>
+            </SOAP-ENV:Envelope>
+            """
+        return error_message_template.format(error_messages[message_name]).strip()
+
+    def get_data(self, post_body):
+        xml_data = etree.fromstring(post_body.strip())
+        nic_indicators_request = {
+            'month': xml_data.xpath('//month')[0].text if xml_data.xpath('//month') else None,
+            'year': xml_data.xpath('//year')[0].text if xml_data.xpath('//year') else None,
+            'state_name': xml_data.xpath('//state_name')[0].text if xml_data.xpath('//state_name') else None,
+
+        }
+        return nic_indicators_request
+
+    def post(self, request, *args, **kwargs):
+
+        nic_indicators_request = self.get_data(request.body)
+        try:
+            month = int(nic_indicators_request.get('month'))
+            year = int(nic_indicators_request.get('year'))
+        except (ValueError, TypeError):
+            return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
+
+        query_month = date(year, month, 1)
+
+        if query_month > date.today():
+            return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
+
+        state_name = nic_indicators_request.get('state_name')
+
+        if state_name not in self.valid_states:
+            return HttpResponse(self.message('invalid_state'), content_type='text/xml', status=400)
+
+        try:
+            state_id = self.valid_states[state_name]
+            data = get_inc_indicator_api_data(state_id, month_formatter(query_month))
+            return HttpResponse(data, content_type='text/xml')
+        except NICIndicatorsView.DoesNotExist:
+            return HttpResponse(self.message('no_data'), content_type='text/xml', status=500)
+        except AttributeError:
+            return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
+
+    @property
+    @icds_quickcache([])
+    def valid_states(self):
+        states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                            state_is_test=0).values_list('state_name', 'state_id')
+        return {state[0]: state[1] for state in states}
 
 
 @location_safe
@@ -1865,7 +1932,7 @@ class CasDataExportAPIView(View):
 
         user_states = [loc.name
                        for loc in self.request.couch_user.get_sql_locations(self.request.domain)
-                       if loc.location_type__name == 'state']
+                       if loc.location_type.name == 'state']
         if state_name not in user_states and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
             return JsonResponse(self.message('no_access'), status=403)
 
@@ -1884,7 +1951,7 @@ class CasDataExportAPIView(View):
             return JsonResponse(self.message('not_available'), status=400)
 
     @property
-    @quickcache([])
+    @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 

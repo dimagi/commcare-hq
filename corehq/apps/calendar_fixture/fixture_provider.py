@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
+from corehq.const import ONE_DAY
 from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
 
 
@@ -38,7 +39,7 @@ class CalendarFixtureProvider(FixtureProvider):
                 current_year_element.append(current_month_element)
 
             current_day_element = Element('day', {
-                'date': str(int(current_day.strftime('%s')) // (60 * 60 * 24)),  # mobile uses days since epoch
+                'date': str(int(current_day.strftime('%s')) // (ONE_DAY)),  # mobile uses days since epoch
                 'number': str(current_day.day),
                 'name': _(current_day.strftime('%A')),
                 'week': str(current_day.isocalendar()[1]),

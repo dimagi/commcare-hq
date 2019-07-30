@@ -19,7 +19,10 @@ from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_tria
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
-from corehq.apps.domain.views.releases import ManageReleases
+from corehq.apps.domain.views.releases import (
+    ManageReleasesByLocation,
+    ManageReleasesByAppProfile,
+)
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
@@ -46,6 +49,10 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
 )
+from corehq.feature_previews import (
+    EXPLORE_CASE_DATA_PREVIEW,
+    is_eligible_for_ecd_preview,
+)
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
     BroadcastListView as NewBroadcastListView,
@@ -65,6 +72,10 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds.views.hosted_ccz import (
+    ManageHostedCCZLink,
+    ManageHostedCCZ,
+)
 
 
 class ProjectReportsTab(UITab):
@@ -471,6 +482,11 @@ class ProjectDataTab(UITab):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
+    def can_view_ecd_preview(self):
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request) and
+                is_eligible_for_ecd_preview(self._request))
+
+    @property
     def _is_viewable(self):
         return self.domain and (
             self.can_edit_commcare_data
@@ -512,18 +528,21 @@ class ProjectDataTab(UITab):
                 BulkDownloadNewFormExportView,
             )
             from corehq.apps.export.views.edit import (
-                EditNewCustomFormExportView,
-                EditNewCustomCaseExportView,
-                EditFormDailySavedExportView,
                 EditCaseDailySavedExportView,
-                EditFormFeedView,
                 EditCaseFeedView,
+                EditODataCaseFeedView,
+                EditODataFormFeedView,
+                EditFormDailySavedExportView,
+                EditFormFeedView,
+                EditNewCustomCaseExportView,
+                EditNewCustomFormExportView,
             )
             from corehq.apps.export.views.list import (
                 FormExportListView,
                 CaseExportListView,
                 DashboardFeedListView,
                 DailySavedExportListView,
+                ODataFeedListView,
             )
             from corehq.apps.export.views.new import (
                 CreateNewCustomFormExportView,
@@ -532,6 +551,8 @@ class ProjectDataTab(UITab):
                 CreateNewDailySavedCaseExport,
                 CreateNewFormFeedView,
                 CreateNewCaseFeedView,
+                CreateODataCaseFeedView,
+                CreateODataFormFeedView,
             )
             from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
@@ -611,6 +632,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     "show_in_dropdown": True,
                     "subpages": [_f for _f in [
                         {
@@ -635,6 +657,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DailySavedExportListView.page_title),
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -662,6 +685,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -669,8 +693,35 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': []
+                })
+            if toggles.ODATA.enabled(self.domain):
+                subpages = [
+                    {
+                        'title': _(CreateODataCaseFeedView.page_title),
+                        'urlname': CreateODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataCaseFeedView.page_title),
+                        'urlname': EditODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(CreateODataFormFeedView.page_title),
+                        'urlname': CreateODataFormFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataFormFeedView.page_title),
+                        'urlname': EditODataFormFeedView.urlname,
+                    },
+                ]
+                export_data_views.append({
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-plug',
+                    'show_in_dropdown': True,
+                    'subpages': subpages
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
@@ -702,7 +753,8 @@ class ProjectDataTab(UITab):
 
             items.extend(edit_section)
 
-        if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request) or
+             self.can_view_ecd_preview) and self.can_edit_commcare_data):
             from corehq.apps.data_interfaces.views import ExploreCaseDataView
             explore_data_views = [
                 {
@@ -759,10 +811,11 @@ class ProjectDataTab(UITab):
                 _(DownloadNewSmsExportView.page_title),
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
             ))
-        if self.can_view_form_exports or self.can_view_case_exports:
+        if self.can_view_ecd_preview and self.can_edit_commcare_data:
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
             items.append(dropdown_dict(
-                _('Find Data by ID'),
-                url=reverse('data_find_by_id', args=[self.domain])
+                _('Explore Case Data (Preview)'),
+                url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
 
         if items:
@@ -827,10 +880,10 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
-        if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
+        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
-                _('Manage Releases'),
-                url=(reverse(ManageReleases.urlname, args=[self.domain])),
+                ManageHostedCCZ.page_title,
+                url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
             ))
         return submenu_context
 
@@ -1392,6 +1445,27 @@ class EnterpriseSettingsTab(UITab):
         return items
 
 
+class HostedCCZTab(UITab):
+    title = ugettext_noop('CCZ Hostings')
+    url_prefix_formats = (
+        '/a/{domain}/ccz/hostings/',
+    )
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(HostedCCZTab, self).sidebar_items
+        items.append((_('Manage CCZ Hostings'), [
+            {'url': reverse(ManageHostedCCZLink.urlname, args=[self.domain]),
+             'title': ManageHostedCCZLink.page_title
+             },
+            {'url': reverse(ManageHostedCCZ.urlname, args=[self.domain]),
+             'title': ManageHostedCCZ.page_title
+             },
+        ]))
+        return items
+
+
 class TranslationsTab(UITab):
     title = ugettext_noop('Translations')
 
@@ -1422,6 +1496,14 @@ class TranslationsTab(UITab):
                     {
                         'url': reverse('blacklist_translations', args=[self.domain]),
                         'title': _('Blacklist Translations')
+                    },
+                    {
+                        'url': reverse('download_translations', args=[self.domain]),
+                        'title': _('Download Translations')
+                    },
+                    {
+                        'url': reverse('migrate_transifex_project', args=[self.domain]),
+                        'title': _('Migrate Project')
                     },
                 ]))
         return items
@@ -1607,6 +1689,18 @@ def _get_administration_section(domain):
         administration.append({
             'title': _(TransferDomainView.page_title),
             'url': reverse(TransferDomainView.urlname, args=[domain])
+        })
+
+    if toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByLocation.page_title),
+            'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
+        })
+
+    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByAppProfile.page_title),
+            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
         })
 
     return administration
@@ -1908,8 +2002,8 @@ class AdminTab(UITab):
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
-                {'title': _('View raw couch documents'),
-                 'url': reverse('raw_couch')},
+                {'title': _('View raw documents'),
+                 'url': reverse('raw_doc')},
                 {'title': _('View documents in ES'),
                  'url': reverse('doc_in_es')},
             ]

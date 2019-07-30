@@ -2,15 +2,15 @@
 {% load hq_shared_tags %}
 {% block filter_content %}
   {% if pagination.enabled %}
-    <input id="{{ css_id }}"
-           class="input form-control report-filter-single-option-paginated"
-           data-handler="{{ pagination.handler }}"
-           data-url="{{ pagination.url }}"
-           data-action="{{ pagination.action }}"
-           style="width: 100%"
-           placeholder="{{ select.default_text }}"
-           value="{{ select.selected|default:'' }}"
-           name="{{ slug }}" />
+    <select id="{{ css_id }}"
+            class="input form-control report-filter-single-option-paginated"
+            data-handler="{{ pagination.handler }}"
+            data-url="{{ pagination.url }}"
+            data-action="{{ pagination.action }}"
+            style="width: 100%"
+            placeholder="{{ select.default_text }}"
+            data-selected="{{ select.selected|default:'' }}"
+            name="{{ slug }}"></select>
   {% else %}
     <select id="{{ css_id }}"
             data-select-options="{% html_attr select.options %}"

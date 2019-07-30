@@ -25,11 +25,9 @@
 /corehq/util/datadog/tests/test_lockmeter.py @millerdev
 /corehq/warehouse/ @calellowitz
 
-/corehq/apps/accounting/ @nickpell
-/corehq/apps/accounting/static/ @nickpell @orangejenny
-/corehq/apps/accounting/templates/ @nickpell @orangejenny
+/corehq/apps/accounting/static/ @orangejenny
+/corehq/apps/accounting/templates/ @orangejenny
 /corehq/apps/analytics/ @orangejenny
-/corehq/apps/api/odata/ @nickpell
 /corehq/apps/app_manager/ @orangejenny @proteusvacuum
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/case_search/ @proteusvacuum
@@ -48,8 +46,7 @@
 /corehq/apps/reports/standard/cases/ @proteusvacuum
 /corehq/apps/receiverwrapper/ @snopoke @proteusvacuum
 /corehq/apps/sms*/ @millerdev
-/corehq/apps/smsbillables/ @nickpell
-/corehq/apps/smsbillables/static/ @nickpell @orangejenny
+/corehq/apps/smsbillables/static/ @orangejenny
 /corehq/apps/styleguide/ @orangejenny
 /corehq/apps/userreports/ @emord
 /corehq/apps/userreports/static/ @emord @orangejenny

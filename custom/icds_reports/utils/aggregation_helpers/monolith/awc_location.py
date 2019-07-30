@@ -11,6 +11,7 @@ from six.moves import range
 
 
 class LocationAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'location'
     base_tablename = 'awc_location'
 
     ucr_location_table = AWC_LOCATION_TABLE_ID

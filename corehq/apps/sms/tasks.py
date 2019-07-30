@@ -283,7 +283,10 @@ class OutboundDailyCounter(object):
 
     @property
     def current_usage(self):
-        return self.client.get(self.key) or 0
+        current_usage = self.client.get(self.key)
+        if isinstance(current_usage, bytes):
+            current_usage = int(current_usage.decode('utf-8'))
+        return current_usage or 0
 
     @property
     def daily_limit(self):
@@ -575,21 +578,6 @@ def publish_sms_change(self, sms):
         publish_sms_saved(sms)
     except Exception as e:
         self.retry(exc=e)
-
-
-@no_result_task(serializer='pickle', queue='background_queue')
-def sync_phone_numbers_for_domain(domain):
-    for user_id in CouchUser.ids_by_domain(domain, is_active=True):
-        _sync_user_phone_numbers(user_id)
-
-    for user_id in CouchUser.ids_by_domain(domain, is_active=False):
-        _sync_user_phone_numbers(user_id)
-
-    case_ids = CaseAccessors(domain).get_case_ids_in_domain()
-    for case in CaseAccessors(domain).iter_cases(case_ids):
-        _sync_case_phone_number(case)
-
-    MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)
 
 
 def queued_sms():

@@ -24,13 +24,21 @@ from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportPillowProcessor
 from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    doc_to_change, get_data_source_with_related_doc_type
+    doc_to_change, get_data_source_with_related_doc_type, skip_domain_filter_patch
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import softer_assert
 from pillow_retry.models import PillowError
+
+
+def setup_module():
+    skip_domain_filter_patch.start()
+
+
+def teardown_module():
+    skip_domain_filter_patch.stop()
 
 
 def _get_pillow(configs, processor_chunk_size=0):
@@ -423,7 +431,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
-        sample_doc['type'] = 'wrong_type'
+        sample_doc['doc_type'] = 'CommCareCase-Deleted'
 
         self.pillow.process_change(doc_to_change(sample_doc))
 

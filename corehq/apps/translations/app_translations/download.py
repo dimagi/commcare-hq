@@ -23,33 +23,17 @@ from corehq.apps.translations.app_translations.utils import (
 
 def get_bulk_app_single_sheet_by_name(app, lang):
     rows = []
-    for module_index, module in enumerate(app.modules):
-        prefix = [get_module_sheet_name(module)]
+    for module in app.modules:
+        sheet_name = get_module_sheet_name(module)
+        rows.append(get_name_menu_media_row(module, sheet_name, lang))
+        for module_row in get_module_rows([lang], module):
+            rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
-        # Name / menu media row
-        # Leave blanks for case_property, list_or_detail, and label
-        rows.append(prefix + ['', '', ''] + get_menu_row([module.name.get(lang)],
-                                                         [module.icon_by_language(lang)],
-                                                         [module.audio_by_language(lang)]))
-
-        # Detail case properties, etc.
-        for row in get_module_rows([lang], module):
-            # Insert blank for label
-            rows.append(prefix + list(row[:2]) + [''] + list(row[2:]))
-
-        for form_index, form in enumerate(module.forms):
-            # Leave blanks for case_property and list_or_detail
-            prefix = [get_form_sheet_name(form), '', '']
-
-            # Name / menu media row
-            # Leave another blank for label
-            rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
-                                                     [form.icon_by_language(lang)],
-                                                     [form.audio_by_language(lang)]))
-
-            # Questions
-            for row in get_form_question_rows([lang], form):
-                rows.append(prefix + row)
+        for form in module.get_forms():
+            sheet_name = get_form_sheet_name(form)
+            rows.append(get_name_menu_media_row(form, sheet_name, lang))
+            for label_name_media in get_form_question_label_name_media([lang], form):
+                rows.append(get_question_row(label_name_media, sheet_name))
 
     return OrderedDict({SINGLE_SHEET_NAME: rows})
 
@@ -66,7 +50,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = OrderedDict({MODULES_AND_FORMS_SHEET_NAME: []})
 
-    for mod_index, module in enumerate(app.get_modules()):
+    for module in app.get_modules():
         if exclude_module is not None and exclude_module(module):
             continue
 
@@ -82,7 +66,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
 
         rows[module_sheet_name] = get_module_rows(app.langs, module)
 
-        for form_index, form in enumerate(module.get_forms()):
+        for form in module.get_forms():
             if exclude_form is not None and exclude_form(form):
                 continue
 
@@ -96,16 +80,83 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
                 unique_id=form.unique_id
             ))
 
-            rows[form_sheet_name] = get_form_question_rows(app.langs, form)
+            rows[form_sheet_name] = get_form_question_label_name_media(app.langs, form)
 
     return rows
 
 
+def get_name_menu_media_row(module_or_form, sheet_name, lang):
+    """
+    Returns name / menu media row
+    """
+    return (
+        [
+            sheet_name,
+            '',  # case_property
+            '',  # list_or_detail
+            '',  # label
+        ] +
+        get_menu_row(
+            [module_or_form.name.get(lang)],
+            [module_or_form.icon_by_language(lang)],
+            [module_or_form.audio_by_language(lang)]
+        ) +
+        [
+            '',  # video by language
+            module_or_form.unique_id,
+        ]
+    )
+
+
+def get_list_detail_case_property_row(module_row, sheet_name):
+    """
+    Returns case list/detail case property name
+    """
+    case_property, list_or_detail, name = module_row
+    return [
+        sheet_name,
+        case_property,
+        list_or_detail,
+        '',  # label
+        name,
+        '',  # image
+        '',  # audio
+        '',  # video
+        '',  # unique_id
+    ]
+
+
+def get_question_row(question_label_name_media, sheet_name):
+    return (
+        [
+            sheet_name,
+            '',  # case_property
+            '',  # list_or_detail
+        ] +
+        question_label_name_media +
+        ['']  # unique_id
+    )
+
 def get_module_rows(langs, module):
     if isinstance(module, ReportModule):
-        return []
+        return get_module_report_rows(langs, module)
 
-    return get_module_case_list_form_rows(langs, module) + get_module_detail_rows(langs, module)
+    return get_module_case_list_form_rows(langs, module) + \
+        get_module_case_list_menu_item_rows(langs, module) + \
+        get_module_detail_rows(langs, module)
+
+
+def get_module_report_rows(langs, module):
+    rows = []
+
+    for index, config in enumerate(module.report_configs):
+        header_columns = tuple(config.header.get(lang, "") for lang in langs)
+        rows.append(("Report {} Display Text".format(index), 'list') + header_columns)
+        if not config.use_xpath_description:
+            description_columns = tuple(config.localized_description.get(lang, "") for lang in langs)
+            rows.append(("Report {} Description".format(index), 'list') + description_columns)
+
+    return rows
 
 
 def get_module_case_list_form_rows(langs, module):
@@ -115,6 +166,19 @@ def get_module_case_list_form_rows(langs, module):
     return [
         ('case_list_form_label', 'list') +
         tuple(module.case_list_form.label.get(lang, '') for lang in langs)
+    ]
+
+
+def get_module_case_list_menu_item_rows(langs, module):
+    if not hasattr(module, 'case_list'):
+        return []
+
+    if not module.case_list.show:
+        return []
+
+    return [
+        ('case_list_menu_item_label', 'list') +
+        tuple(module.case_list.label.get(lang, '') for lang in langs)
     ]
 
 
@@ -210,7 +274,10 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
     return rows
 
 
-def get_form_question_rows(langs, form):
+def get_form_question_label_name_media(langs, form):
+    """
+    Returns form question label, name, and media, in given langs
+    """
     if form.form_type == 'shadow_form':
         return []
 

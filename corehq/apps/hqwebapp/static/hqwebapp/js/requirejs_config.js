@@ -12,8 +12,6 @@ requirejs.config({
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.scroller": "datatables-scroller/js/dataTables.scroller",
         "datatables.colReorder": "datatables-colreorder/js/dataTables.colReorder",
-        "atjs": "At.js/dist/js/jquery.atwho.min",
-        "caretjs": "Caret.js/dist/jquery.caret.min",
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },

@@ -46,11 +46,7 @@ class Transifex(object):
         self.update_resource = update_resource
 
     @cached_property
-    def app_id_to_build(self):
-        return self._find_build_id()
-
-    def _find_build_id(self):
-        # find build id if version specified
+    def build_id(self):
         if self.version:
             return get_version_build_id(self.domain, self.app_id, self.version)
         else:
@@ -61,7 +57,7 @@ class Transifex(object):
         submit translation files to transifex
         """
         app_trans_generator = AppTranslationsGenerator(
-            self.domain, self.app_id_to_build, self.version,
+            self.domain, self.build_id, self.version,
             self.key_lang, self.source_lang, self.lang_prefix,
             self.exclude_if_default, self.use_version_postfix)
         with PoFileGenerator(app_trans_generator.translations,

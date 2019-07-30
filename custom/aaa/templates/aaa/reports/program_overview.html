@@ -3,42 +3,42 @@
 {% load menu_tags %}
 
 {% block js %}
-    {{ block.super }}
-    <script src="{% static 'aaa/js/reports/program_overview.js' %}"></script>
+  {{ block.super }}
+  <script src="{% static 'aaa/js/reports/program_overview.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-    <div id="program-overview" class="report-content" >
-        <div class="indicators" data-bind="foreach: sections">
-            <div class="row" data-bind="foreach: $data">
-                <div class="col-md-4 no-padding" >
-                    <div style="padding: 15px;" data-bind="if: format==='numeric'">
-                        <div class="col-md-12 no-padding shadow">
-                            <div class="col-md-12 indicator">
-                                <div class="main-value" data-bind="style: {color: color}"><strong><span data-bind="text: reachUtils.toIndiaFormat(value)"></span></strong></div>
-                                <div class="line"><hr></div>
-                            </div>
-                            <div class="col-md-12 indicator-bottom" data-bind="style: {background: color}">
-                                <div><span data-bind="text: indicator"></span></div>
-                                <div><span data-bind="text: diffBetweenMonths()"></span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="padding: 15px;" data-bind="if: format==='percent'">
-                        <div class="col-md-12 no-padding shadow">
-                            <div class="col-md-12 indicator">
-                                <div class="main-value" data-bind="style: {color: color}"><strong><span data-bind="text: percentFormat()"></span></strong></div>
-                                <div class="second-value"><span data-bind="text: reachUtils.toIndiaFormat(value)"></span> / <span data-bind="text: reachUtils.toIndiaFormat(total)"></span></div>
-                                <div class="line"><hr></div>
-                            </div>
-                            <div class="col-md-12 indicator-bottom" data-bind="style: {background: color}">
-                                <div><span data-bind="text: indicator"></span></div>
-                                <div><span data-bind="text: diffBetweenMonths()"></span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div id="program-overview" class="report-content" >
+    <div class="indicators" data-bind="foreach: sections">
+      <div class="row" data-bind="foreach: $data">
+        <div class="col-md-4 no-padding" >
+          <div style="padding: 15px;" data-bind="if: format==='numeric'">
+            <div class="col-md-12 no-padding shadow">
+              <div class="col-md-12 indicator">
+                <div class="main-value" data-bind="style: {color: color}"><strong><span data-bind="text: reachUtils.toIndiaFormat(value)"></span></strong></div>
+                <div class="line"><hr></div>
+              </div>
+              <div class="col-md-12 indicator-bottom" data-bind="style: {background: color}">
+                <div><span data-bind="text: indicator"></span></div>
+                <div><span data-bind="text: diffBetweenMonths()"></span></div>
+              </div>
             </div>
+          </div>
+          <div style="padding: 15px;" data-bind="if: format==='percent'">
+            <div class="col-md-12 no-padding shadow">
+              <div class="col-md-12 indicator">
+                <div class="main-value" data-bind="style: {color: color}"><strong><span data-bind="text: percentFormat()"></span></strong></div>
+                <div class="second-value"><span data-bind="text: reachUtils.toIndiaFormat(value)"></span> / <span data-bind="text: reachUtils.toIndiaFormat(total)"></span></div>
+                <div class="line"><hr></div>
+              </div>
+              <div class="col-md-12 indicator-bottom" data-bind="style: {background: color}">
+                <div><span data-bind="text: indicator"></span></div>
+                <div><span data-bind="text: diffBetweenMonths()"></span></div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 {% endblock content %}

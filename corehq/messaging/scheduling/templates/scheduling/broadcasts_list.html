@@ -5,45 +5,104 @@
 {% requirejs_main 'scheduling/js/broadcasts_list' %}
 
 {% block stylesheets %}{{ block.super }}
-<style>
+  <style>
     .label {
-        font-size: 100%;
+      font-size: 100%;
     }
-</style>
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    {% registerurl 'new_list_broadcasts' domain %}
-    {% registerurl 'edit_schedule' domain '---' '---' %}
-    <div class="btn-group">
-        <a href="{% url 'create_schedule' domain %}" class="btn btn-primary">
-            <i class="fa fa-plus"></i>
-            {% trans 'Add Broadcast' %}
-        </a>
+  {% registerurl 'new_list_broadcasts' domain %}
+  {% registerurl 'edit_schedule' domain '---' '---' %}
+  <div class="btn-group">
+    <a href="{% url 'create_schedule' domain %}" class="btn btn-primary">
+      <i class="fa fa-plus"></i>
+      {% trans 'Add Broadcast' %}
+    </a>
+  </div>
+  <h4>{% trans 'Scheduled Broadcasts' %}</h4>
+  <div id="scheduled-broadcasts" class="ko-template">
+    <div class="alert alert-info" data-bind="visible: !broadcasts().length">
+      {% trans "There are no messages to display." %}
     </div>
-    <h4>{% trans 'Scheduled Broadcasts' %}</h4>
-    <div>
-        <table id="scheduled-table" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th class="col-md-1">{% trans 'Delete' %}</th>
-                    <th class="col-md-4">{% trans 'Name' %}</th>
-                    <th class="col-md-3">{% trans 'Last Sent' %}</th>
-                    <th class="col-md-2">{% trans 'Status' %}</th>
-                    <th class="col-md-2">{% trans 'Action' %}</th>
-                </tr>
-            </thead>
-        </table>
+    <table class="table table-striped table-bordered" data-bind="visible: broadcasts().length">
+      <thead>
+        <tr>
+          <th class="col-md-1">{% trans 'Delete' %}</th>
+          <th class="col-md-4">{% trans 'Name' %}</th>
+          <th class="col-md-3">{% trans 'Last Sent' %}</th>
+          <th class="col-md-2">{% trans 'Status' %}</th>
+          <th class="col-md-2">{% trans 'Action' %}</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: broadcasts">
+        <tr data-bind="visible: !deleted()">
+          <td class="text-center">
+            <button class="btn btn-danger" data-bind="click: deleteBroadcast, disable: actionInProgress">
+              <i class="fa fa-remove"></i>
+            </button>
+          </td>
+          <td>
+            <a data-bind="text: name, attr: {href: editUrl}"></a>
+          </td>
+          <td data-bind="text: last_sent"></td>
+          <td>
+            <span class="label label-success" data-bind="visible: active()">
+              {% trans "Active" %}
+            </span>
+            <span class="label label-danger" data-bind="visible: !active()">
+              {% trans "Inactive" %}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-default"
+                    data-bind="visible: active(), disable: !editable() || actionInProgress(), click: deactivateBroadcast">
+              {% trans "Deactivate" %}
+            </button>
+            <button class="btn btn-default"
+                    data-bind="visible: !active(), disable: !editable() || actionInProgress, click: activateBroadcast">
+              {% trans "Activate" %}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
+                        slug: 'scheduled-broadcasts',
+                        perPage: itemsPerPage,
+                        totalItems: totalItems,
+                        onLoad: onPaginationLoad,
+                        showSpinner: showPaginationSpinner"></pagination>
+  </div>
+  <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
+  <div id="immediate-broadcasts" class="ko-template">
+    <div class="alert alert-info" data-bind="visible: !broadcasts().length">
+        {% trans "There are no messages to display." %}
     </div>
-    <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
-    <div>
-        <table id="immediate-table" class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th class="col-md-8">{% trans 'Name' %}</th>
-                    <th class="col-md-4">{% trans 'Sent' %}</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
+    <table class="table table-striped table-bordered" data-bind="visible: broadcasts().length">
+      <thead>
+        <tr>
+          <th class="col-md-8">{% trans 'Name' %}</th>
+          <th class="col-md-4">{% trans 'Sent' %}</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: broadcasts">
+        <tr>
+          <td>
+            <a data-bind="text: name, attr: {href: editUrl}"></a>
+          </td>
+          <td data-bind="text: last_sent"></td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
+                        slug: 'immediate-broadcasts',
+                        perPage: itemsPerPage,
+                        totalItems: totalItems,
+                        onLoad: onPaginationLoad,
+                        showSpinner: showPaginationSpinner"></pagination>
+  </div>
 {% endblock %}

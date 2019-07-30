@@ -29,7 +29,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "doc_id"
+      "doc_id",
+      "supervisor_id"
     ],
     "filters": [
       {
@@ -92,7 +93,7 @@
         "type": "dynamic_choice_list",
         "required": false,
         "slug": "owner_id",
-        "field": "owner_id",
+        "field": "awc_id",
         "choice_provider": {
           "type": "owner"
         },

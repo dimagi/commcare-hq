@@ -2,53 +2,53 @@
 {% load i18n %}
 
 <div class="report-filter-message-type-configuration" data-initial-value='{{ initial_value|JSON }}' data-conditional-alert-choices='{{ conditional_alert_choices|JSON }}'>
-    <div class="form-group">
-        <label class="control-label {{ css_label_class }}"></label>
-        <div class="col-xs-6">
-            <p>{% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}</p>
-        </div>
+  <div class="form-group">
+    <label class="control-label {{ css_label_class }}"></label>
+    <div class="col-xs-6">
+      <p>{% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}</p>
     </div>
-    <div class="form-group">
-        <label class="control-label {{ css_label_class }}">{% trans "Show" %}</label>
-        <div class="col-xs-3">
-            <select name="date_selector_type" class="form-control" data-bind="value: date_selector_type">
-                <option value="all">{% trans "All events" %}</option>
-                <option value="only_after">{% trans "Events to be sent after" %}</option>
-            </select>
-        </div>
-        <div class="col-xs-3" data-bind="visible: date_selector_type() === 'only_after'">
-            <input type="text"
-                   id="id_next_event_due_after"
-                   name="next_event_due_after"
-                   data-bind="value: next_event_due_after"
-                   class="form-control" />
-        </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label {{ css_label_class }}">{% trans "Show" %}</label>
+    <div class="col-xs-3">
+      <select name="date_selector_type" class="form-control" data-bind="value: date_selector_type">
+        <option value="all">{% trans "All events" %}</option>
+        <option value="only_after">{% trans "Events to be sent after" %}</option>
+      </select>
     </div>
-    <div class="form-group">
-        <label class="control-label {{ css_label_class }}">{% trans "Show" %}</label>
-        <div class="col-xs-3">
-            <select name="configuration_type" class="form-control" data-bind="value: configuration_type">
-                <option value="broadcast">{% trans "Broadcasts" %}</option>
-                <option value="conditional_alert">{% trans "Conditional Alerts" %}</option>
-            </select>
-        </div>
+    <div class="col-xs-3" data-bind="visible: date_selector_type() === 'only_after'">
+      <input type="text"
+             id="id_next_event_due_after"
+             name="next_event_due_after"
+             data-bind="value: next_event_due_after"
+             class="form-control" />
     </div>
-    <div class="form-group" data-bind="visible: configuration_type() === 'conditional_alert'">
-        <label class="control-label {{ css_label_class }}">{% trans "Conditional Alert" %}</label>
-        <div class="col-xs-4">
-            <select name="rule_id"
-                    class="form-control"
-                    data-bind="options: conditional_alert_choices,
-                               optionsValue: 'id',
-                               optionsText: 'name',
-                               value: rule_id">
-            </select>
-        </div>
+  </div>
+  <div class="form-group">
+    <label class="control-label {{ css_label_class }}">{% trans "Show" %}</label>
+    <div class="col-xs-3">
+      <select name="configuration_type" class="form-control" data-bind="value: configuration_type">
+        <option value="broadcast">{% trans "Broadcasts" %}</option>
+        <option value="conditional_alert">{% trans "Conditional Alerts" %}</option>
+      </select>
     </div>
-    <div>
-        {# These inputs are only used for debugging. We enable them below only if they have a value #}
-        {# so that they don't show up in the URL for normal requests and cause confusion. #}
-        <input type="hidden" name="active" data-bind="value: active, enable: active()" />
-        <input type="hidden" name="case_id" data-bind="value: case_id, enable: case_id()" />
+  </div>
+  <div class="form-group" data-bind="visible: configuration_type() === 'conditional_alert'">
+    <label class="control-label {{ css_label_class }}">{% trans "Conditional Alert" %}</label>
+    <div class="col-xs-3">
+      <select name="rule_id"
+              class="form-control"
+              data-bind="options: conditional_alert_choices,
+                         optionsValue: 'id',
+                         optionsText: 'name',
+                         value: rule_id">
+      </select>
     </div>
+  </div>
+  <div>
+    {# These inputs are only used for debugging. We enable them below only if they have a value #}
+    {# so that they don't show up in the URL for normal requests and cause confusion. #}
+    <input type="hidden" name="active" data-bind="value: active, enable: active()" />
+    <input type="hidden" name="case_id" data-bind="value: case_id, enable: case_id()" />
+  </div>
 </div>
