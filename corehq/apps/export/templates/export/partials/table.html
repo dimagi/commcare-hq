@@ -17,6 +17,7 @@
       </th>
     {% endif %}
 
+    {% if not is_odata %}
       <th class="col-sm-1">
         {% if export_filter_form %}
           {% if has_edit_permissions %}
@@ -26,6 +27,7 @@
           {{ export_type_caps }}
         {% endif %}
       </th>
+    {% endif %}
 
     {%  if allow_bulk_export %} {# form exports only #}
       <th class="col-sm-1">
@@ -409,6 +411,7 @@
       </td>
     {% endif %}
 
+    {% if not is_odata %}
       <td>
         <a data-bind="attr: {href: downloadUrl},
                       visible: !showSavedFilters,
@@ -429,6 +432,7 @@
           </a>
         {% endif %}
       </td>
+    {% endif %}
 
     {% if allow_bulk_export %}
       <td>
