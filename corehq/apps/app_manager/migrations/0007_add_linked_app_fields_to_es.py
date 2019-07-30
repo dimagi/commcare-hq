@@ -15,7 +15,7 @@ def update_es_mapping(*args, **kwargs):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('app_manager', '0004_multi_master_linked_apps'),
+        ('app_manager', '0006_multi_master_linked_apps'),
     ]
 
     operations = [

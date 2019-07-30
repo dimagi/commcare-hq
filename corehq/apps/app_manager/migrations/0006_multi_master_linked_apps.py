@@ -33,7 +33,7 @@ def _reverse_noop(app, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_manager', '0003_auto_20190326_0853'),
+        ('app_manager', '0005_latestenabledbuildprofiles_domain'),
     ]
 
     operations = [
