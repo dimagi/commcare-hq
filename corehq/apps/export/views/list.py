@@ -868,7 +868,7 @@ class ODataFeedListHelper(ExportListHelper):
 
     @property
     def create_export_form_title(self):
-        return ""
+        return _("Select a model to export to a feed")
 
     def _should_appear_in_list(self, export):
         return export['is_odata_config']
