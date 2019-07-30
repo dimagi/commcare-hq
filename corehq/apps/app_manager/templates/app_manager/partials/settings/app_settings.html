@@ -273,20 +273,6 @@
             </div>
           </div>
         {% endif %}
-        {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-          <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-            <form action="{% url "gzip_app" domain app.id %}" method="POST">
-              {% csrf_token %}
-              <legend>Export compressed application</legend>
-              <div class="panel-body">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fa fa-arrow-down"></i>
-                  {% trans "Download" %}
-                </button>
-              </div>
-            </form>
-          </div>
-        {% endif %}
       {% endif %}
       <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
         <legend>{% trans "Delete Application" %}</legend>

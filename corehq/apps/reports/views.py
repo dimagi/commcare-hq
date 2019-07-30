@@ -1961,7 +1961,7 @@ def _get_data_cleaning_updates(request, old_properties):
     updates = {}
     properties = json.loads(request.POST.get('properties'))
     for prop, value in six.iteritems(properties):
-        if prop not in old_properties or old_properties[prop] != value:
+        if prop not in old_properties or old_properties[prop].get('value') != value:
             updates[prop] = value
     return updates
 
