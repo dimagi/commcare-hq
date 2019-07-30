@@ -68,6 +68,10 @@ LOGIN_AS = 'login_as'
 
 PRACTICE_MOBILE_WORKERS = 'practice_mobile_workers'
 
+CASE_SHARING_GROUPS = 'case_sharing_groups'
+
+CHILD_CASES = 'child_cases'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -104,6 +108,8 @@ MAX_PRIVILEGES = [
     ZAPIER_INTEGRATION,
     LOGIN_AS,
     PRACTICE_MOBILE_WORKERS,
+    CASE_SHARING_GROUPS,
+    CHILD_CASES,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -152,4 +158,6 @@ class Titles(object):
             ZAPIER_INTEGRATION: _('Zapier Integration'),
             LOGIN_AS: _('Login As for App Preview'),
             PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
+            CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
+            CHILD_CASES: _('Child Cases'),
         }.get(privilege, privilege)

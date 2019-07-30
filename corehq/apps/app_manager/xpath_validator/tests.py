@@ -17,7 +17,7 @@ class XpathValidatorTest(SimpleTestCase):
         self.assertEqual(
             validate_xpath('data node'),
             XpathValidationResponse(is_valid=False, message=
-"""Lexical error on line 1. Unrecognized text.
+b"""Lexical error on line 1. Unrecognized text.
 data node
 -----^
 """))
@@ -43,7 +43,7 @@ data node
             validate_xpath(
                 "if(count(instance('commcaresession')/session/user/data/commcare_location_id) &gt; 0, instance('commcaresession')/session/user/data/commcare_location_id, /data/meta/userID)"),
             XpathValidationResponse(is_valid=False, message=
-"""Lexical error on line 1. Unrecognized text.
+b"""Lexical error on line 1. Unrecognized text.
 ...mmcare_location_id) &gt; 0, instance('co
 -----------------------^
 """))
@@ -57,7 +57,7 @@ data node
         self.assertEqual(
             validate_xpath('#hashtag'),
             XpathValidationResponse(is_valid=False,
-                                    message="hashtag is not a valid # expression\n"))
+                                    message=b"hashtag is not a valid # expression\n"))
 
     def test_case_hashtag(self):
         self.assertEqual(
@@ -68,4 +68,4 @@ data node
         self.assertEqual(
             validate_xpath('#case', allow_case_hashtags=False),
             XpathValidationResponse(is_valid=False,
-                                    message="case is not a valid # expression\n"))
+                                    message=b"case is not a valid # expression\n"))

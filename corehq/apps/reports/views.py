@@ -100,6 +100,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.reports.exceptions import EditFormValidationError
@@ -1205,16 +1206,12 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-
+    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES)
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
         all_property_names.add('external_id')
 
-    all_property_names = all_property_names.difference({'name', 'case_name', 'type', 'case_type'})
-    all_property_names = list(all_property_names)
-    all_property_names.sort()
-
-    return json_response(all_property_names)
+    return json_response(sorted(all_property_names))
 
 
 @location_safe
@@ -1964,7 +1961,7 @@ def _get_data_cleaning_updates(request, old_properties):
     updates = {}
     properties = json.loads(request.POST.get('properties'))
     for prop, value in six.iteritems(properties):
-        if prop not in old_properties or old_properties[prop] != value:
+        if prop not in old_properties or old_properties[prop].get('value') != value:
             updates[prop] = value
     return updates
 

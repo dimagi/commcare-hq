@@ -171,8 +171,10 @@ class Command(BaseCommand):
         ZERO = Counts(0, 0)
         if db.has_doc_counts():
             doc_counts = db.get_doc_counts()
+            couch_missing_cases = doc_counts.get("CommCareCase-couch", ZERO).missing
         else:
             doc_counts = None
+            couch_missing_cases = 0
         for doc_type in CASE_DOC_TYPES:
             if doc_counts is not None:
                 counts = doc_counts.get(doc_type, ZERO)
@@ -198,6 +200,12 @@ class Command(BaseCommand):
                 short,
                 diffs_only,
             )
+            if doc_type == "CommCareCase" and couch_missing_cases:
+                has_diffs = True
+                print(shell_red("%s cases could not be loaded from Couch" % couch_missing_cases))
+                if not short:
+                    for case_id in db.get_missing_doc_ids("CommCareCase-couch"):
+                        print(case_id)
 
         if diff_stats:
             for key, counts in diff_stats.items():
