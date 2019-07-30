@@ -40,6 +40,7 @@ python-magic~=0.4.13
 pytz>=2017.2
 PyYAML~=5.1
 requests~=2.20
+subprocess32
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
 Unidecode==0.04.20
