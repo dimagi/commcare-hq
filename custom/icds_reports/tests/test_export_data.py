@@ -2224,8 +2224,7 @@ class TestExportData(TestCase):
 
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
-            loc_level=3
+            month=datetime(2017, 5, 1)
         ).get_excel_data()
         self.assertListEqual(
             data,
@@ -2277,8 +2276,7 @@ class TestExportData(TestCase):
         location = ''
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
-            loc_level=0
+            month=datetime(2017, 5, 1)
         ).get_excel_data()
 
         self.assertListEqual(
