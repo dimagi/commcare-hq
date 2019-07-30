@@ -1749,11 +1749,17 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 )
 
 
+def _enable_bi_integration_preview(domain, enabled):
+    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
+    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
+
+
 ODATA = StaticToggle(
     'odata',
     'Enable Odata feed.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    save_fn=_enable_bi_integration_preview,
 )
 
 
