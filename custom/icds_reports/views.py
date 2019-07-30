@@ -818,6 +818,11 @@ class FactSheetsView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
+
         loc_level = get_location_level(config.get('aggregation_level'))
 
         beta = icds_pre_release_features(request.user)
@@ -1817,9 +1822,8 @@ class NICIndicatorAPIView(View):
             return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
 
         query_month = date(year, month, 1)
-        today = date.today()
-        current_month = today - relativedelta(months=1)
-        if query_month > current_month:
+
+        if query_month > date.today():
             return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
 
         state_name = nic_indicators_request.get('state_name')

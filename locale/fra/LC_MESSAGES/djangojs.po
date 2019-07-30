@@ -7,22 +7,22 @@
 # esoergel, 2018
 # Saket Kanth <skanth@dimagi.com>, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
-# Sarah Sagan <ssagan@dimagi.com>, 2018
 # Kelly Adediha <kadediha@dimagi.com>, 2018
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Ismaïla Diene <idiene@dimagi.com>, 2019
 # Dimagi Dev <devops@dimagi.com>, 2019
-# Tyler Wymer <twymer@dimagi.com>, 2019
 # Aissetou Sawadogo <ais107@hotmail.com>, 2019
+# Tyler Wymer <twymer@dimagi.com>, 2019
+# Sarah Sagan <ssagan@dimagi.com>, 2019
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-07-16 20:44+0000\n"
+"POT-Creation-Date: 2019-07-23 19:09+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2019\n"
+"Last-Translator: Sarah Sagan <ssagan@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -540,19 +540,19 @@ msgstr "Écran d'accueil"
 msgid "First Menu"
 msgstr "Premier Menu"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:100
 msgid "Menu: "
 msgstr "Menu: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:101
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:103
 msgid "Parent Menu: "
 msgstr "Menu parent:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:103
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:105
 msgid "Previous Screen"
 msgstr "Écran précédent"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:112
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:114
 msgid "Link to other form"
 msgstr "Ouvrir un autre formulaire"
 
@@ -568,11 +568,11 @@ msgstr "Valeur non reconnue"
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
 msgid "Active"
-msgstr ""
+msgstr "Actif"
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
 msgid "Inactive"
-msgstr ""
+msgstr "Inactif "
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
@@ -680,17 +680,17 @@ msgstr "Sélectionner un utilisateur"
 msgid "(Default)"
 msgstr "(Par défaut)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:380
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:384
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Désolé, ça n'a pas fonctionné. Veuillez rafraîchir la page et réessayer"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:414
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:418
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 "La liste des versions a changé depuis votre dernier chargement de la page."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:419
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:423
 msgid "No new changes!"
 msgstr "Pas de nouvelles modifications!"
 
@@ -2934,11 +2934,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:61
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:60
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:90
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:89
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3522,16 +3522,16 @@ msgid_plural "Download %s Users"
 msgstr[0] ""
 msgstr[1] ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:281
+#: corehq/apps/users/static/users/js/mobile_workers.js:285
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:302
+#: corehq/apps/users/static/users/js/mobile_workers.js:306
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Problème de connexion au serveur. Veuillez vérifier votre connexion internet."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:326
+#: corehq/apps/users/static/users/js/mobile_workers.js:330
 msgid "Select location"
 msgstr ""
 
@@ -3573,19 +3573,19 @@ msgid ""
 "problem persists."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:136
+#: corehq/apps/users/static/users/js/web_users.js:140
 msgid "Delete request"
 msgstr "Supprimer la requête"
 
-#: corehq/apps/users/static/users/js/web_users.js:137
+#: corehq/apps/users/static/users/js/web_users.js:141
 msgid "Are you sure you want to delete this request?"
 msgstr "Êtes-vous certain de vouloir supprimer cette requête?"
 
-#: corehq/apps/users/static/users/js/web_users.js:144
+#: corehq/apps/users/static/users/js/web_users.js:148
 msgid "Delete invitation"
 msgstr "Supprimer invitation"
 
-#: corehq/apps/users/static/users/js/web_users.js:145
+#: corehq/apps/users/static/users/js/web_users.js:149
 msgid "Are you sure you want to delete this invitation?"
 msgstr "Êtes  vous certain de vouloir supprimer cette invitation?"
 

@@ -127,7 +127,7 @@ pexpect==4.7.0            # via ipython
 phonenumberslite==8.10.10
 pickleshare==0.7.5        # via ipython
 pillow==6.0.0
-pip-tools==3.8.0
+pip-tools==4.0.0
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0
 prompt-toolkit==1.0.16    # via ipython
@@ -187,6 +187,7 @@ sqlalchemy-postgres-copy==0.5.0
 sqlalchemy==1.3.3
 sqlparse==0.3.0           # via django-debug-toolbar
 stripe==1.67.0
+subprocess32==3.5.4
 suds-jurko==0.6
 testil==1.1
 text-unidecode==1.2       # via faker

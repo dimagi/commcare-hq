@@ -27,6 +27,7 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
+from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.case_templates.views import CaseTemplatesListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
@@ -661,6 +662,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     "show_in_dropdown": True,
                     "subpages": [_f for _f in [
                         {
@@ -685,6 +687,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DailySavedExportListView.page_title),
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -712,6 +715,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -719,6 +723,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -744,6 +749,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-plug',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -868,10 +874,10 @@ class ApplicationsTab(UITab):
         return _("Applications")
 
     @classmethod
-    def make_app_title(cls, app_name, doc_type):
+    def make_app_title(cls, app):
         return mark_safe("%s%s" % (
-            escape(strip_tags(app_name)) or '(Untitled)',
-            ' (Remote)' if doc_type == 'RemoteApp' else '',
+            escape(strip_tags(app.name)) or '(Untitled)',
+            ' (Remote)' if is_remote_app(app) else '',
         ))
 
     @property
@@ -887,7 +893,7 @@ class ApplicationsTab(UITab):
         for app in apps:
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
-            app_title = self.make_app_title(app.name, app.doc_type)
+            app_title = self.make_app_title(app)
             if 'created_from_template' in app and app['created_from_template'] == 'appcues':
                 if domain_is_on_trial(self.domain):
                     # If trial is over, domain may have lost web apps access, don't do appcues intro

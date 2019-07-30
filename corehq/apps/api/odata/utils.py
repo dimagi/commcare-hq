@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.export.dbaccessors import get_latest_case_export_schema, get_latest_form_export_schema
@@ -10,6 +10,9 @@ from corehq.apps.export.models import CaseExportDataSchema, ExportInstance, Expo
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
+
+
+FieldMetadata = namedtuple('FieldMetadata', ['name', 'odata_type'])
 
 
 def get_case_type_to_properties(domain):
@@ -65,13 +68,35 @@ def format_odata_property_for_power_bi(odata_property):
 
 
 def get_case_odata_fields_from_config(case_export_config):
-    export_columns = case_export_config.tables[0].columns
-    return [column.label for column in export_columns if column.selected]
+    # todo: this should eventually be handled by the data dictionary but we don't do a good
+    # job of mapping that in exports today so we don't have datatype information handy.
+    SPECIAL_TYPES = {
+        'closed': 'Edm.Boolean',
+        'modified_on': 'Edm.DateTimeOffset',
+        'date_modified': 'Edm.DateTimeOffset',
+        'server_modified_on': 'Edm.DateTimeOffset',
+        'opened_on': 'Edm.DateTimeOffset',
+    }
+    return _get_odata_fields_from_columns(case_export_config, SPECIAL_TYPES)
 
 
 def get_form_odata_fields_from_config(form_export_config):
-    table = form_export_config.tables[0]
-    return [column.label for column in table.selected_columns]
+    SPECIAL_TYPES = {
+        'received_on': 'Edm.DateTimeOffset',
+        'form.meta.timeStart': 'Edm.DateTimeOffset',
+        'form.meta.timeEnd': 'Edm.DateTimeOffset',
+    }
+    return _get_odata_fields_from_columns(form_export_config, SPECIAL_TYPES)
+
+
+def _get_odata_fields_from_columns(export_config, special_types):
+    def _get_dot_path(export_column):
+        if export_column and export_column.item and export_column.item.path:
+            return '.'.join(subpath.name for subpath in export_column.item.path)
+        return None
+
+    return [FieldMetadata(column.label, special_types.get(_get_dot_path(column), 'Edm.String'))
+            for column in export_config.tables[0].selected_columns]
 
 
 def record_feed_access_in_datadog(request, config_id, duration, response):
