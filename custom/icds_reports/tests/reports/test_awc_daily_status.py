@@ -295,12 +295,12 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 21,
                                 "x": 1495756800000,
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 21,
                                 "x": 1495843200000,
                                 "all": 0
                             },
@@ -458,12 +458,12 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 38,
                                 "x": 1495756800000,
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 34,
                                 "x": 1495843200000,
                                 "all": 0
                             },
