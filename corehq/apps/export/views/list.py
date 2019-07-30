@@ -17,6 +17,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -605,7 +606,7 @@ def commit_filters(request, domain):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
         raise Http404
-    if export.is_odata_config and not toggles.ODATA.enabled_for_request(request):
+    if export.is_odata_config and not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -896,7 +897,7 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     urlname = 'list_odata_feeds'
     page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")

@@ -17,6 +17,7 @@ from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.util import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
@@ -27,7 +28,7 @@ class DeprecatedODataCaseServiceView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain):
         data = {
             '@odata.context': absolute_reverse(DeprecatedODataCaseMetadataView.urlname, args=[domain]),
@@ -49,7 +50,7 @@ class DeprecatedODataCaseMetadataView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain):
         case_type_to_properties = get_case_type_to_properties(domain)
         for case_type in case_type_to_properties:
@@ -69,7 +70,7 @@ class DeprecatedODataFormServiceView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain, app_id):
         data = {
             '@odata.context': absolute_reverse(DeprecatedODataFormMetadataView.urlname, args=[domain, app_id]),
@@ -91,7 +92,7 @@ class DeprecatedODataFormMetadataView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain, app_id):
         xmlns_to_properties = get_xmlns_to_properties(domain, app_id)
         metadata = render_to_string('api/odata_form_metadata.xml', {
@@ -106,7 +107,7 @@ class ODataCaseServiceView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain, config_id):
         service_document_content = {
             '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain, config_id]),
@@ -125,7 +126,7 @@ class ODataCaseMetadataView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain, config_id):
         config = get_document_or_404(CaseExportInstance, domain, config_id)
         metadata = render_to_string('api/case_odata_metadata.xml', {
@@ -140,7 +141,7 @@ class ODataFormServiceView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain, config_id):
         service_document_content = {
             '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain, config_id]),
@@ -159,7 +160,7 @@ class ODataFormMetadataView(View):
 
     @method_decorator(basic_auth_or_try_api_key_auth)
     @method_decorator(require_permission(Permissions.edit_data, login_decorator=None))
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def get(self, request, domain, config_id):
         config = get_document_or_404(FormExportInstance, domain, config_id)
         metadata = render_to_string('api/form_odata_metadata.xml', {

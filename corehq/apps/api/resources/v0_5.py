@@ -54,6 +54,7 @@ from corehq.apps.userreports.reports.view import query_dict_to_dict, \
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.apps.users.util import raw_username
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from corehq.util.timer import TimingContext
@@ -914,7 +915,7 @@ class DeprecatedODataCaseResource(v0_4.CommCareCaseResource):
     case_type = None
 
     def dispatch(self, request_type, request, **kwargs):
-        if not toggles.ODATA.enabled_for_request(request):
+        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.case_type = kwargs['case_type']
         return super(DeprecatedODataCaseResource, self).dispatch(request_type, request, **kwargs)
@@ -959,7 +960,7 @@ class DeprecatedODataFormResource(v0_4.XFormInstanceResource):
     xmlns = None
 
     def dispatch(self, request_type, request, **kwargs):
-        if not toggles.ODATA.enabled_for_request(request):
+        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.app_id = kwargs['app_id']
         self.xmlns = kwargs['xmlns']
@@ -1002,7 +1003,7 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     config_id = None
 
     def dispatch(self, request_type, request, **kwargs):
-        if not toggles.ODATA.enabled_for_request(request):
+        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.config_id = kwargs['config_id']
         with TimingContext() as timer:
@@ -1051,7 +1052,7 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
     config_id = None
 
     def dispatch(self, request_type, request, **kwargs):
-        if not toggles.ODATA.enabled_for_request(request):
+        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.config_id = kwargs['config_id']
         with TimingContext() as timer:

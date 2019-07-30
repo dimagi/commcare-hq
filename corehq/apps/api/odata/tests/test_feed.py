@@ -45,13 +45,13 @@ class TestDeprecatedODataCaseFeed(TestCase, OdataTestMixin):
         super(TestDeprecatedODataCaseFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -61,7 +61,7 @@ class TestDeprecatedODataCaseFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain(other_domain.name),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -75,7 +75,7 @@ class TestDeprecatedODataCaseFeed(TestCase, OdataTestMixin):
 
     def test_request_succeeded(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
 
@@ -130,13 +130,13 @@ class TestDeprecatedODataFormFeed(TestCase, OdataTestMixin):
         super(TestDeprecatedODataFormFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -146,7 +146,7 @@ class TestDeprecatedODataFormFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain(other_domain.name),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -160,7 +160,7 @@ class TestDeprecatedODataFormFeed(TestCase, OdataTestMixin):
 
     def test_request_succeeded(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -222,13 +222,13 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         super(TestODataCaseFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -238,7 +238,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain(other_domain.name),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -260,7 +260,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -275,7 +275,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config_in_other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain_and_config_id(self.domain.name, export_config_in_other_domain.get_id),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -284,7 +284,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
 
     def test_missing_config_id(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -307,7 +307,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/json; charset=utf-8')
@@ -375,13 +375,13 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         super(TestODataFormFeed, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -391,7 +391,7 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         self.addCleanup(other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain(other_domain.name),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -412,7 +412,7 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -426,7 +426,7 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config_in_other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain_and_config_id(
                     self.domain.name, export_config_in_other_domain.get_id),
@@ -436,7 +436,7 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
 
     def test_missing_config_id(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -459,7 +459,7 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/json; charset=utf-8')

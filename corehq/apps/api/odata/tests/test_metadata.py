@@ -46,13 +46,13 @@ class TestDeprecatedCaseMetadataDocument(TestCase, DeprecatedCaseOdataTestMixin,
         super(TestDeprecatedCaseMetadataDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -61,7 +61,7 @@ class TestDeprecatedCaseMetadataDocument(TestCase, DeprecatedCaseOdataTestMixin,
         other_domain.save()
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -74,7 +74,7 @@ class TestDeprecatedCaseMetadataDocument(TestCase, DeprecatedCaseOdataTestMixin,
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -85,7 +85,7 @@ class TestDeprecatedCaseMetadataDocument(TestCase, DeprecatedCaseOdataTestMixin,
 
     def test_no_case_types(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch('corehq.apps.api.odata.views.get_case_type_to_properties', return_value={}):
                 response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
@@ -96,7 +96,7 @@ class TestDeprecatedCaseMetadataDocument(TestCase, DeprecatedCaseOdataTestMixin,
 
     def test_populated_metadata_document(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch(
                 'corehq.apps.api.odata.views.get_case_type_to_properties',
                 return_value=OrderedDict([
@@ -144,14 +144,14 @@ class TestDeprecatedFormMetadataDocument(TestCase, DeprecatedFormOdataTestMixin,
         super(TestDeprecatedFormMetadataDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     @flaky
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -160,7 +160,7 @@ class TestDeprecatedFormMetadataDocument(TestCase, DeprecatedFormOdataTestMixin,
         other_domain.save()
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'app_id': 'my_app_id'}),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -173,7 +173,7 @@ class TestDeprecatedFormMetadataDocument(TestCase, DeprecatedFormOdataTestMixin,
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -184,7 +184,7 @@ class TestDeprecatedFormMetadataDocument(TestCase, DeprecatedFormOdataTestMixin,
 
     def test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch('corehq.apps.api.odata.views.get_xmlns_to_properties', return_value={}):
                 response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
@@ -195,7 +195,7 @@ class TestDeprecatedFormMetadataDocument(TestCase, DeprecatedFormOdataTestMixin,
 
     def test_populated_metadata_document(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch(
                 'corehq.apps.api.odata.views.get_xmlns_to_properties',
                 return_value=OrderedDict([
@@ -268,7 +268,7 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -279,7 +279,7 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
@@ -315,7 +315,7 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
         self.addCleanup(config_in_other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
@@ -386,7 +386,7 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -397,7 +397,7 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
@@ -429,7 +429,7 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
         self.addCleanup(odata_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')

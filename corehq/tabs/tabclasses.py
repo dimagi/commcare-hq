@@ -52,6 +52,7 @@ from corehq.apps.users.permissions import (
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
+    BI_INTEGRATION_PREVIEW,
 )
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
@@ -697,7 +698,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if toggles.ODATA.enabled(self.domain):
+            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
