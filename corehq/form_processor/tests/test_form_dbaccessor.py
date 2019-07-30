@@ -432,12 +432,8 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
                     {'position': 'bottom'},
                 ],
                 'grandparent': [        # Repeat group with child group
-                    {
-                        'name': 'Haruki',
-                    },
-                    {
-                        'name': 'Sugako',
-                    },
+                    {'name': 'Haruki'},
+                    {'name': 'Sugako'},
                     {
                         'name': 'Emma',
                         'parent': {
@@ -447,6 +443,16 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
                             },
                         }
                     },
+                ],
+                'body': [               # Repeat group with child repeat group
+                    {'arm': [
+                        {'elbow': '1'},
+                        {'finger': '5'},
+                    ]},
+                    {'leg': [
+                        {'knee': '1'},
+                        {'toe': '5'},
+                    ]},
                 ],
             }
         ).as_xml_string()
@@ -462,6 +468,8 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
             'grandparent[3]/name': 'Ema',
             'grandparent[3]/parent/name': 'Haruki #2',
             'grandparent[3]/parent/child/name': 'Nao-chan',
+            'body[1]/arm[1]/elbow': '2',
+            'body[2]/leg[2]/toe': '10',
         }
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         form = FormAccessors(DOMAIN).get_form(xform.form_id)
@@ -478,6 +486,10 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         self.assertEqual('Ema', form.form_data['grandparent'][2]['name'])
         self.assertEqual('Haruki #2', form.form_data['grandparent'][2]['parent']['name'])
         self.assertEqual('Nao-chan', form.form_data['grandparent'][2]['parent']['child']['name'])
+        self.assertEqual('2', form.form_data['body'][0]['arm'][0]['elbow'])
+        self.assertEqual('5', form.form_data['body'][0]['arm'][1]['finger'])
+        self.assertEqual('1', form.form_data['body'][1]['leg'][0]['elbow'])
+        self.assertEqual('10', form.form_data['body'][1]['leg'][1]['toe'])
         self.assertIn("image", form.attachments)
         self.assertEqual(form.get_attachment("image"), b"fake")
 
