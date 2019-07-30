@@ -11,6 +11,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -65,7 +66,7 @@ def get_form_list(domain):
     form_list = []
     for app_id in get_app_ids_in_domain(domain):
         latest_app = get_app(domain, app_id, latest=True)
-        if latest_app.doc_type in ('Application', 'LinkedApplication'):
+        if not is_remote_app(latest_app):
             for m in latest_app.get_modules():
                 for f in m.get_forms():
                     form_list.append({"code": f.unique_id, "name": f.full_path_name})
