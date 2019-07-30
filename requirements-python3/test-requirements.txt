@@ -108,7 +108,7 @@ pbr==5.2.0                # via mock
 pdfrw==0.4                # via weasyprint
 phonenumberslite==8.10.10
 pillow==6.0.0
-pip-tools==3.8.0
+pip-tools==4.0.0
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0
 psycogreen==1.0.1
