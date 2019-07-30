@@ -11,6 +11,7 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
 from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
@@ -104,7 +105,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         if master_link:
             linked_apps = {
                 app._id: app for app in get_brief_apps_in_domain(self.domain)
-                if app.doc_type == 'LinkedApplication'
+                if is_linked_app(app)
             }
             models_seen = set()
             history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
@@ -301,7 +302,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def linked_app_names(self, domain):
         return {
             app._id: app.name for app in get_brief_apps_in_domain(domain)
-            if app.doc_type == 'LinkedApplication'
+            if is_linked_app(app)
         }
 
     def _make_model_cell(self, record):
