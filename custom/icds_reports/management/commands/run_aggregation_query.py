@@ -16,7 +16,7 @@ from custom.icds_reports.tasks import (
     _aggregate_awc_infra_forms, _child_health_monthly_table, _agg_ls_awc_mgt_form, _agg_ls_vhnd_form,
     _agg_beneficiary_form, create_mbt_for_month, setup_aggregation, _agg_ls_table,
     _update_months_table, _daily_attendance_table, _agg_child_health_table,
-    _ccs_record_monthly_table, _agg_ccs_record_table, _agg_awc_table, _agg_awc_table_weekly,
+    _ccs_record_monthly_table, _agg_ccs_record_table, _agg_awc_table,
     aggregate_awc_daily, email_dashboad_team, _child_health_monthly_aggregation
 )
 
