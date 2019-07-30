@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta
 from io import BytesIO, open
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
@@ -22,6 +23,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from dateutil import parser as date_parser
+from gevent.pool import Pool
+
 from six.moves import range
 
 from corehq.util.celery_utils import periodic_task_on_envs
@@ -42,7 +45,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
-from corehq.const import SERVER_DATE_FORMAT
+from corehq.const import SERVER_DATE_FORMAT, ONE_DAY
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
@@ -1268,3 +1271,38 @@ def _dictfetchall(cursor):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
+
+def setup_aggregation(agg_date):
+    _update_ucr_table_mapping()
+
+    db_alias = get_icds_ucr_db_alias_or_citus(False)
+    if db_alias:
+        with connections[db_alias].cursor() as cursor:
+            _create_aggregate_functions(cursor)
+
+        _update_aggregate_locations_tables()
+    state_ids = list(SQLLocation.objects
+                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                     .values_list('location_id', flat=True))
+    cache.set('agg_state_ids_{}'.format(agg_date), state_ids, ONE_DAY * 2)
+
+
+def _child_health_monthly_aggregation(day):
+    state_ids = cache.get('agg_state_ids_{}'.format(date))
+    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
+        cursor.execute(helper.create_temporary_table())
+
+    pool = Pool(10)
+    for query, params in helper.pre_aggregation_queries():
+        pool.spawn(_child_health_helper, query, params)
+        pool.join()
+
+    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
+        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
+
+    with get_cursor(ChildHealthMonthly) as cursor:
+        cursor.execute(helper.drop_temporary_table())
