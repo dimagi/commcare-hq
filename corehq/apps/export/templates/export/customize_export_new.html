@@ -32,64 +32,75 @@
         </a>
       </div>
     {% endif %}
+
     {% include "export/partials/customize_export_header.html" %}
-    <form class="form-horizontal" method="post">
+
+    <form class="form-horizontal"
+          method="post">
       {% csrf_token %}
       <fieldset>
         <div class="form-group">
-          <label
-            for="export-type"
-            class="col-sm-3 col-md-2 control-label">
-            {% if export_instance.type == 'case' %}{% trans "Case Type" %}{% else %}{% trans "Form" %}{% endif %}
+          <label for="export-type"
+                 class="col-sm-3 col-md-2 control-label">
+            {% if export_instance.type == 'case' %}
+              {% trans "Case Type" %}
+            {% else %}
+              {% trans "Form" %}
+            {% endif %}
           </label>
           <div class="col-sm-9 col-md-8 col-lg-6">
             <p class="form-control-static">
-              {% if export_instance.type == 'case' %}{{ export_instance.case_type }}{% else %}{{ export_instance.formname }}{% endif %}
+              {% if export_instance.type == 'case' %}
+                {{ export_instance.case_type }}
+              {% else %}
+                {{ export_instance.formname }}
+              {% endif %}
             </p>
           </div>
         </div>
         <div class="form-group">
-          <label
-            for="export-name"
-            class="col-sm-3 col-md-2 control-label">
+          <label for="export-name"
+                 class="col-sm-3 col-md-2 control-label">
             {{ terminology.name_label }}
           </label>
           <div class="col-sm-9 col-md-8 col-lg-6">
-            <input type="text" class="form-control" id="export-name" data-bind="value: name" />
+            <input type="text"
+                   class="form-control"
+                   id="export-name"
+                   data-bind="value: name" />
           </div>
         </div>
         <div class="form-group">
-          <label
-            for="export-description"
-            class="col-sm-3 col-md-2 control-label">
+          <label for="export-description"
+                 class="col-sm-3 col-md-2 control-label">
             {% trans "Description" %}
           </label>
           <div class="col-sm-9 col-md-8 col-lg-6">
-                    <textarea
-                      data-bind="value: description"
+            <textarea data-bind="value: description"
                       id="export-description"
                       class="form-control"
                       rows="3">
-                    </textarea>
+            </textarea>
           </div>
         </div>
-        <div class="form-group" data-bind="
-                css: {'has-error': hasDisallowedHtmlFormat},
-                visible: formatOptions.length > 1
-            ">
-          <label
-            for="format-select"
-            class="col-sm-3 col-md-2 control-label">
+        <div class="form-group"
+             data-bind="css: {
+                          'has-error': hasDisallowedHtmlFormat
+                        },
+                        visible: formatOptions.length > 1">
+          <label for="format-select"
+                 class="col-sm-3 col-md-2 control-label">
             {% trans "Default file type" %}
           </label>
           <div class="col-sm-9 col-md-8 col-lg-6">
-            <select class="form-control" id="format-select" data-bind="
-                            options: getFormatOptionValues(),
-                            optionsText: getFormatOptionText,
-                            value: export_format
-                        ">
+            <select class="form-control"
+                    id="format-select"
+                    data-bind="options: getFormatOptionValues(),
+                               optionsText: getFormatOptionText,
+                               value: export_format">
             </select>
-            <div class="help-block" data-bind="visible: hasDisallowedHtmlFormat">
+            <div class="help-block"
+                 data-bind="visible: hasDisallowedHtmlFormat">
               {% url "domain_subscription_view" domain as software_plan_url %}
               {% blocktrans %}
                 Excel Dashboard Integration is only available on the Standard Plan or higher.
@@ -101,30 +112,30 @@
         </div>
         <div class="form-group">
           <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-4">
-              {% if not export_instance.is_odata_config %}
+            {% if not export_instance.is_odata_config %}
               <div class="checkbox">
                 <label>
-                  <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
+                  <input type="checkbox"
+                         id="transform-dates-checkbox"
+                         data-bind="checked: transform_dates" />
                   {% trans "Automatically convert dates and links for Excel" %}
                 </label>
               </div>
 
               <div class="checkbox">
                 <label>
-                  <input
-                    type="checkbox"
-                    id="daily-saved-export-checkbox"
-                    data-bind="checked: is_daily_saved_export,
-                               attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}"/>
+                  <input type="checkbox"
+                         id="daily-saved-export-checkbox"
+                         data-bind="checked: is_daily_saved_export,
+                                    attr: { disabled: hasHtmlFormat() || !{{ has_daily_saved_export_access|JSON }}}"/>
                   {% trans "Create a Daily Saved Export" %}
                 </label>
                 {% if not has_daily_saved_export_access %}
-                  <span
-                    class="hq-help-template"
-                    data-content='{% blocktrans %}
-                                    Daily saved exports are only available on the Standard Plan or higher.
-                                    Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
-                                  {% endblocktrans %}'
+                  <span class="hq-help-template"
+                        data-content='{% blocktrans %}
+                                        Daily saved exports are only available on the Standard Plan or higher.
+                                        Click <a href="{{ software_plan_url }}">here</a> to manage the software plan for your project.
+                                      {% endblocktrans %}'
                   ></span>
                 {% endif %}
               </div>
@@ -132,15 +143,20 @@
 
 
             {% if export_instance.type == 'form' %}
-              <div class="checkbox" {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>
+              <div class="checkbox"
+                   {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>
                 <label>
-                  <input type="checkbox" id="include-errors-checkbox" data-bind="checked: include_errors" />
+                  <input type="checkbox"
+                         id="include-errors-checkbox"
+                         data-bind="checked: include_errors" />
                   {% trans "Include duplicates and other unprocessed forms" %}
                 </label>
               </div>
               <div class="checkbox">
                 <label>
-                  <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: split_multiselects" />
+                  <input type="checkbox"
+                         id="split-multiselects-checkbox"
+                         data-bind="checked: split_multiselects" />
                   {% trans "Expand Checkbox Questions" %}
                 </label>
               </div>
@@ -148,21 +164,21 @@
           </div>
         </div>
         {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-          <div class="form-group" data-bind="css: { 'has-warning': hasOtherOwner && sharing() != initialSharing }">
-            <label
-              for="sharing-select"
-              class="col-sm-3 col-md-2 control-label">
+          <div class="form-group"
+               data-bind="css: { 'has-warning': hasOtherOwner && sharing() != initialSharing }">
+            <label for="sharing-select"
+                   class="col-sm-3 col-md-2 control-label">
               {% trans "Sharing" %}
               <span data-bind="makeHqHelp: {description: getSharingHelpText}"></span>
             </label>
             <div class="col-sm-9 col-md-8 col-lg-6">
-              <select class="form-control" id="sharing-select" data-bind="
-                            options: getSharingOptionValues(),
-                            optionsText: getSharingOptionText,
-                            value: sharing
-                        ">
+              <select class="form-control" id="sharing-select"
+                      data-bind="options: getSharingOptionValues(),
+                                 optionsText: getSharingOptionText,
+                                 value: sharing">
               </select>
-              <div class="help-block" data-bind="visible: hasOtherOwner && sharing() != initialSharing">
+              <div class="help-block"
+                   data-bind="visible: hasOtherOwner && sharing() != initialSharing">
                 <div data-bind="visible: sharing() == 'private'">
                   {% blocktrans %}
                     This export was created by <strong>{{ owner_name }}</strong>.
@@ -184,16 +200,16 @@
           </div>
         {% endif %}
       </fieldset>
-      <fieldset data-bind="
-            template: { foreach: tables, as: 'table', name: 'ko-table-configuration-template' }"
-      ></fieldset>
+      <fieldset data-bind="template: {
+                             foreach: tables,
+                             as: 'table',
+                             name: 'ko-table-configuration-template' }"></fieldset>
 
       {% if request|toggle_enabled:"ALLOW_USER_DEFINED_EXPORT_COLUMNS" %}
         <fieldset>
           <div class="col-sm-10">
-            <button class="btn btn-default" data-bind="
-                    click: addUserDefinedTableConfiguration
-                ">
+            <button class="btn btn-default"
+                    data-bind="click: addUserDefinedTableConfiguration">
               {% trans "Add custom table configuration " %}
             </button>
           </div>
@@ -202,25 +218,29 @@
 
       {% if allow_deid %}
         <fieldset>
-          <legend>{% trans "Privacy Settings" %}</legend>
+          <legend>
+            {% trans "Privacy Settings" %}
+          </legend>
           <div class="form-group">
-            <label for="is_safe" class="col-sm-3 col-md-2 control-label"></label>
-            <div class="col-sm-9 col-md-8 col-lg-6 deid-column" >
+            <label for="is_safe"
+                   class="col-sm-3 col-md-2 control-label"></label>
+            <div class="col-sm-9 col-md-8 col-lg-6 deid-column">
               <div data-bind="visible: isDeidColumnVisible()">
                 <div class="checkbox">
                   <label>
-                    <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
+                    <input type="checkbox"
+                           id="is_deidentified"
+                           data-bind="checked: is_deidentified" />
                     {% trans "Publish as De-Identified" %}
                   </label>
                 </div>
                 <span class="help-inline">
-                            {% trans "Check only if this export has been fully and safely de-identified." %}
-                        </span>
+                  {% trans "Check only if this export has been fully and safely de-identified." %}
+                </span>
               </div>
-              <button class="btn btn-default" data-bind="
-                        visible: !isDeidColumnVisible(),
-                        click: showDeidColumn
-                    ">
+              <button class="btn btn-default"
+                      data-bind="visible: !isDeidColumnVisible(),
+                                 click: showDeidColumn">
                 {% trans "Allow me to mark sensitive data" %}
               </button>
             </div>
@@ -230,24 +250,22 @@
       <div class="form-actions">
         <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-8 col-md-9 col-lg-10 controls">
           {% if can_edit %}
-            <button type="submit" class="btn btn-lg btn-primary" data-bind="
-                        click: save,
-                        disable: saveStateSaving() || saveStateSuccess || !isValid()
-                    ">
-                        <span data-bind="
-                            visible: saveStateReady(),
-                            text: getSaveText()">
-                        </span>
+            <button type="submit"
+                    class="btn btn-lg btn-primary"
+                    data-bind="click: save,
+                               disable: saveStateSaving() || saveStateSuccess || !isValid()">
+              <span data-bind="visible: saveStateReady(),
+                               text: getSaveText()"></span>
               <span data-bind="visible: saveStateSaving()">
-                            <i class="fa fa-refresh fa-spin"></i>
-                            {% trans "Saving" %}
-                        </span>
+                <i class="fa fa-refresh fa-spin"></i>
+                {% trans "Saving" %}
+              </span>
               <span data-bind="visible: saveStateError()">
-                            {% trans "Try Again" %}
-                        </span>
+                {% trans "Try Again" %}
+              </span>
               <span data-bind="visible: saveStateSuccess()">
-                            {% trans "Saved!" %}
-                        </span>
+                {% trans "Saved!" %}
+              </span>
             </button>
           {% endif %}
           <a class="btn btn-default btn-lg" href="{{ export_home_url }}">
@@ -258,12 +276,14 @@
             {% endif %}
           </a>
           {% if export_instance.get_id and can_edit %}
-            <a class="btn btn-lg btn-default pull-right" href="{% url 'copy_export' domain export_instance.get_id %}?next={{ export_home_url }}">
+            <a class="btn btn-lg btn-default pull-right"
+               href="{% url 'copy_export' domain export_instance.get_id %}?next={{ export_home_url }}">
               <i class="fa fa-copy fa-white"></i>
               {% trans "Copy this Export" %}
             </a>
           {% endif %}
-          <div class="text-danger" data-bind="if: !isValid()">
+          <div class="text-danger"
+               data-bind="if: !isValid()">
             {% trans "There are errors with your configuration. Please fix them before creating the export." %}
           </div>
         </div>
