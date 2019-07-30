@@ -85,6 +85,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][0]
         self.assertListEqual(
             data,
@@ -157,6 +158,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][1]
         self.assertListEqual(
             data,
@@ -191,6 +193,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][2]
         self.assertListEqual(
             data,
@@ -224,6 +227,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][3]
         self.assertListEqual(
             data,
@@ -258,6 +262,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][4]
         self.assertListEqual(
             data,
@@ -291,6 +296,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][5]
         self.assertListEqual(
             data,
@@ -324,6 +330,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][6]
         self.assertListEqual(
             data,
@@ -357,6 +364,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][7]
         self.assertListEqual(
             data,
@@ -390,6 +398,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][8]
         self.assertListEqual(
             data,
@@ -423,6 +432,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][9]
         self.assertListEqual(
             data,
@@ -456,6 +466,7 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][10]
         self.assertListEqual(
             data,
