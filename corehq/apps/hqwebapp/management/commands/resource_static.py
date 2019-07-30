@@ -38,10 +38,10 @@ class Command(BaseCommand):
 
     def output_resources(self, resources, overwrite=True):
         mode = 'w+' if overwrite else 'w'
+        from get_resource_versions import get_resource_versions
+        resource_versions = get_resource_versions()
+        resource_versions.update(resources)
         with open(os.path.join(self.root_dir, 'resource_versions.yaml'), mode) as fout:
-            from get_resource_versions import get_resource_versions
-            resource_versions = get_resource_versions()
-            resource_versions.update(resources)
             fout.write(yaml.dump([{'name': name, 'version': version}
                                   for name, version in resource_versions.items()]))
 
