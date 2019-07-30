@@ -93,6 +93,8 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
     expire_get_latest_app_release_by_location_cache,
+    is_linked_app,
+    is_remote_app,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -3889,7 +3891,7 @@ class VersionedDoc(LazyBlobDoc):
 
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
-            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
+            increment_version = not self.copy_of and not is_linked_app(self)
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -4632,7 +4634,7 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
-            'include_media': self.doc_type != 'RemoteApp',
+            'include_media': not is_remote_app(self),
             'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
             'commcare_flavor': (
                 self.commcare_flavor
@@ -5310,14 +5312,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         save_xform(to_app, copy_form, form.source.encode('utf-8'))
 
         return copy_form
-
-    @cached_property
-    def has_case_management(self):
-        for module in self.get_modules():
-            for form in module.get_forms():
-                if len(form.active_actions()) > 0:
-                    return True
-        return False
 
     @memoized
     def case_type_exists(self, case_type):
