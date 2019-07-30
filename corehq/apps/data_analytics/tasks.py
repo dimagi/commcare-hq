@@ -61,8 +61,10 @@ def build_last_month_GIR():
     try:
         generator = GIRTableGenerator([last_month])
         generator.build_table()
-    except Exception:
+    except Exception as e:
         soft_assert(to=[settings.DATA_EMAIL], send_to_ops=False)(False, "Error in his month's GIR generation")
+        # pass it so it gets logged in celery as an error as well
+        raise e
 
     message = 'Global impact report generation for month {} is now ready. To download go to' \
               ' http://www.commcarehq.org/hq/admin/download_gir/'.format(
