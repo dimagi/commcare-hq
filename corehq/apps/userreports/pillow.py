@@ -63,7 +63,7 @@ class WarmShutdown(object):
         self.current_handler = signal.signal(signal.SIGTERM, self.handler)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if self.shutting_down:
+        if self.shutting_down and exc_type is None:
             exit(0)
         signal.signal(signal.SIGTERM, self.current_handler)
 
