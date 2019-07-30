@@ -2,21 +2,17 @@
 <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
     <edmx:DataServices>
         <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
-            {% for config_id, properties in config_ids_to_properties.items %}
-            <EntityType Name="{{ config_id }}" >
+            <EntityType Name="feed" >
                 <Key>
                     <PropertyRef Name="caseid" />
                 </Key>
-                {% for property in properties %}
-                <Property Name="{{ property }}" Type="Edm.String" />
+                {% for field in fields %}
+                <Property Name="{{ field.name }}" Type="{{ field.odata_type }}" />
                 {% endfor %}
             </EntityType>
-            {% endfor %}
 
             <EntityContainer Name="Container" >
-                {% for config_id in config_ids_to_properties %}
-                <EntitySet Name="{{ config_id }}" EntityType="CommCare.{{ config_id }}"/>
-                {% endfor %}
+                <EntitySet Name="feed" EntityType="CommCare.feed"/>
             </EntityContainer>
         </Schema>
     </edmx:DataServices>

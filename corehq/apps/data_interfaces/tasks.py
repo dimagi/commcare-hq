@@ -11,6 +11,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission)
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.domain.models import Domain
+from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.decorators import serial_task
 from datetime import datetime, timedelta
 
@@ -67,7 +68,7 @@ def run_case_update_rules(now=None):
                .distinct()
                .order_by('domain'))
     for domain in domains:
-        if not any_migrations_in_progress(domain):
+        if not any_migrations_in_progress(domain) and not DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK.enabled(domain):
             run_case_update_rules_for_domain.delay(domain, now)
 
 

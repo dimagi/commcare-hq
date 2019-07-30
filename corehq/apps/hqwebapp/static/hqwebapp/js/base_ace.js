@@ -2,16 +2,14 @@ hqDefine('hqwebapp/js/base_ace', [
     'jquery',
     'knockout',
     'ace-builds/src-min-noconflict/ace',
+    'ace-builds/src-min-noconflict/mode-json',
 ], function (
     $,
     ko,
-    ace
+    ace,
+    jsonMode  // eslint-disable-line no-unused-vars
 ) {
 
-    if (!ace.config.get('basePath')) {
-        var basePath = requirejs.s.contexts._.config.paths["ace-builds/src-min-noconflict/ace"];
-        ace.config.set("basePath",basePath.substring(0,basePath.lastIndexOf("/")));
-    }
     var initAceEditor = function (element, mode, options, value) {
         var defaultOptions = {
             showPrintMargin: false,

@@ -9,6 +9,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
+    $scope.dateChanged = false;
 
     var locationParams = $location.search();
     var newKey;
@@ -294,6 +295,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 redirectTo: "/awc_reports/pse",
             })
             .when("/service_delivery_dashboard", {
+                redirectTo: "/service_delivery_dashboard/pw_lw_children",
+            })
+            .when("/service_delivery_dashboard/:step", {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
             })
             .when("/awc_reports/:step", {

@@ -262,8 +262,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     ]
     domain_names.sort()
     if app and copy_app_form is None:
-        toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(domain, app, export_zipped_apps_enabled=toggle_enabled)
+        copy_app_form = CopyApplicationForm(domain, app)
         context.update({
             'domain_names': domain_names,
         })

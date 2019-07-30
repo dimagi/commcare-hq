@@ -73,6 +73,7 @@
                         slug: 'scheduled-broadcasts',
                         perPage: itemsPerPage,
                         totalItems: totalItems,
+                        onLoad: onPaginationLoad,
                         showSpinner: showPaginationSpinner"></pagination>
   </div>
   <h4 style="clear: both">{% trans 'Immediate Broadcasts History' %}</h4>
@@ -101,6 +102,7 @@
                         slug: 'immediate-broadcasts',
                         perPage: itemsPerPage,
                         totalItems: totalItems,
+                        onLoad: onPaginationLoad,
                         showSpinner: showPaginationSpinner"></pagination>
   </div>
 {% endblock %}

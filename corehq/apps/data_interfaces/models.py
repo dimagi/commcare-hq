@@ -501,9 +501,11 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            return paginate_query(db, CommCareCaseSQL, q_expression)
+            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
         else:
-            return paginate_query_across_partitioned_databases(CommCareCaseSQL, q_expression)
+            return paginate_query_across_partitioned_databases(
+                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+            )
 
     @classmethod
     def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):

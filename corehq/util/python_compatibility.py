@@ -13,7 +13,6 @@ except ImportError:
 
 
 _soft_assert_type_text = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=True,
 )
 

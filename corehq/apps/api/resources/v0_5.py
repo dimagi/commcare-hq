@@ -1025,7 +1025,7 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     def detail_uri_kwargs(self, bundle_or_obj):
         # Not sure why this is required but the feed 500s without it
         return {
-            'pk': get_obj(bundle_or_obj)['case_id']
+            'pk': get_obj(bundle_or_obj)['_id']
         }
 
     class Meta(v0_4.CommCareCaseResource.Meta):
@@ -1037,7 +1037,7 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)" % self._meta.resource_name,
+            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
                 self.wrap_view('dispatch_list'))
         ]
 
@@ -1086,7 +1086,7 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)" % self._meta.resource_name,
+            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
                 self.wrap_view('dispatch_list'))
         ]
 

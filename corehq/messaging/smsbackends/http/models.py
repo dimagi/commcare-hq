@@ -148,4 +148,4 @@ class SQLHttpBackend(SQLSMSBackend):
                     timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         except Exception as e:
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
-            six.reraise(BackendProcessingException(msg), None, sys.exc_info()[2])
+            six.reraise(BackendProcessingException, BackendProcessingException(msg), sys.exc_info()[2])

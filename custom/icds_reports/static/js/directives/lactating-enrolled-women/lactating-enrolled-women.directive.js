@@ -14,7 +14,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.data = {
         legendTitle: 'Number of Women',
     };
-    vm.filters = ['age', 'gender', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
         info: 'Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services',

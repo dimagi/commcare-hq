@@ -7,6 +7,8 @@ from collections import defaultdict
 
 from django.db import OperationalError
 
+from corehq.util.datadog.utils import load_counter_for_model
+
 try:
     from random import choices
 except ImportError:
@@ -29,7 +31,7 @@ STALE_CHECK_FREQUENCY = 30
 
 
 def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
-                                                values=None):
+                                                values=None, load_source=None):
     """
     Runs a query across all partitioned databases in small chunks and produces a generator
     with the results.
@@ -49,11 +51,12 @@ def paginate_query_across_partitioned_databases(model_class, q_expression, annot
     """
     db_names = get_db_aliases_for_partitioned_query()
     for db_name in db_names:
-        for row in paginate_query(db_name, model_class, q_expression, annotate, query_size, values):
+        for row in paginate_query(db_name, model_class, q_expression, annotate, query_size, values, load_source):
             yield row
 
 
-def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None):
+def paginate_query(db_name, model_class, q_expression, annotate=None, query_size=5000, values=None,
+                   load_source=None):
     """
     Runs a query on the given database in small chunks and produces a generator
     with the results.
@@ -73,6 +76,8 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
 
     :return: A generator with the results
     """
+
+    track_load = load_counter_for_model(model_class)(load_source, None, extra_tags=['db:{}'.format(db_name)])
     sort_col = 'pk'
 
     return_values = None
@@ -83,24 +88,27 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
     if annotate:
         qs = qs.annotate(**annotate)
 
-    qs = qs.filter(q_expression)
-    last_value = qs.order_by('-{}'.format(sort_col)).values_list(sort_col, flat=True).first()
-    if last_value is not None:
-        qs = qs.order_by(sort_col)
-        if return_values:
-            qs = qs.values_list(*return_values)
+    qs = qs.filter(q_expression).order_by(sort_col)
 
-        value = None
-        filter_expression = {}
-        while value is None or value < last_value:
-            for row in qs.filter(**filter_expression)[:query_size]:
-                if return_values:
-                    value = row[0]
-                    yield row[1:]
-                else:
-                    value = row.pk
-                    yield row
-            filter_expression = {'{}__gt'.format(sort_col): value}
+    if return_values:
+        qs = qs.values_list(*return_values)
+
+    filter_expression = {}
+    while True:
+        results = qs.filter(**filter_expression)[:query_size]
+        for row in results:
+            track_load()
+            if return_values:
+                value = row[0]
+                yield row[1:]
+            else:
+                value = row.pk
+                yield row
+
+        if len(results) < query_size:
+            break
+
+        filter_expression = {'{}__gt'.format(sort_col): value}
 
 
 def split_list_by_db_partition(partition_values):
@@ -207,18 +215,19 @@ def _get_all_nested_subclasses(cls):
 
 
 @memoized
-def get_standby_databases():
+def get_standby_databases(relevant_dbs=None):
     standby_dbs = []
     for db_alias in settings.DATABASES:
-        with db.connections[db_alias].cursor() as cursor:
-            cursor.execute("SELECT pg_is_in_recovery()")
-            [(is_standby, )] = cursor.fetchall()
-            if is_standby:
-                standby_dbs.append(db_alias)
+        if relevant_dbs is None or db_alias in relevant_dbs:
+            with db.connections[db_alias].cursor() as cursor:
+                cursor.execute("SELECT pg_is_in_recovery()")
+                [(is_standby, )] = cursor.fetchall()
+                if is_standby:
+                    standby_dbs.append(db_alias)
     return standby_dbs
 
 
-def get_replication_delay_for_standby(db_alias):
+def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
@@ -226,7 +235,8 @@ def get_replication_delay_for_standby(db_alias):
     If the given database is not a standby database, zero delay is returned
     If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
     """
-    if db_alias not in get_standby_databases():
+
+    if db_alias not in get_standby_databases(relevant_dbs):
         return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
@@ -263,10 +273,11 @@ def filter_out_stale_standbys(dbs):
     # from given list of databases filters out those with more than
     #   acceptable standby delay, if that database is a standby
     delays_by_db = get_standby_delays_by_db()
+    relevant_dbs = tuple(dbs)
     return [
         db
         for db in dbs
-        if get_replication_delay_for_standby(db) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
+        if get_replication_delay_for_standby(db, relevant_dbs) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
     ]
 
 
@@ -288,7 +299,7 @@ def select_db_for_read(weighted_dbs):
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 
     # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(weights_by_db)
+    fresh_dbs = filter_out_stale_standbys(list(weights_by_db.keys()))
     dbs = []
     weights = []
     for _db, weight in six.iteritems(weights_by_db):

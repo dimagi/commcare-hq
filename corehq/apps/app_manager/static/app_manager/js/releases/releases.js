@@ -146,7 +146,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             return dateBuilt.getTime() > supportedDate.getTime();
         };
 
-        self.has_commcare_flavor_target = self.target_commcare_flavor() !== 'none';
+        self.has_commcare_flavor_target = !!self.commcare_flavor();
         self.download_targeted_version = ko.observable(self.has_commcare_flavor_target);
 
         self.get_odk_install_url = ko.computed(function () {
@@ -215,6 +215,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
         var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
         var self = this;
+        self.genericErrorMessage = gettext(
+            'An error occurred. Reload the page and click Make New Version to try again.');
         self.options = o;
         self.recipients = self.options.recipient_contacts;
         self.totalItems = ko.observable();
@@ -222,6 +224,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
         self.buildErrorCode = ko.observable('');
+        self.errorMessage = ko.observable(self.genericErrorMessage);
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.fetchLimit = ko.observable();
@@ -372,6 +375,10 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
         self.toggleLimitToReleased = function () {
             self.onlyShowReleased(!self.onlyShowReleased());
             self.goToPage(1);
@@ -430,6 +437,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
+            self.errorMessage(self.genericErrorMessage);
             $.post({
                 url: self.reverse('save_copy'),
                 success: function (data) {
@@ -445,6 +453,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                 error: function (xhr) {
                     self.buildErrorCode(xhr.status);
                     self.buildState('error');
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        self.errorMessage(xhr.responseJSON.error);
+                    }
                 },
             });
         };

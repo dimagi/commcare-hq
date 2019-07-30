@@ -21,7 +21,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.data = {
         legendTitle: '% Newborns',
     };
-    vm.filters = ['age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Of all the children born and weighed in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +

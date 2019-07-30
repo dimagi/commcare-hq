@@ -175,7 +175,7 @@ class EditCommCareUserView(BaseEditUserView):
     def groups(self):
         if not self.editable_user:
             return []
-        return Group.by_user(self.editable_user)
+        return Group.by_user_id(self.editable_user_id)
 
     @property
     @memoized
@@ -747,12 +747,14 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
 @require_can_edit_commcare_users
 @require_POST
+@location_safe
 def activate_commcare_user(request, domain, user_id):
     return _modify_user_status(request, domain, user_id, True)
 
 
 @require_can_edit_commcare_users
 @require_POST
+@location_safe
 def deactivate_commcare_user(request, domain, user_id):
     return _modify_user_status(request, domain, user_id, False)
 
