@@ -152,14 +152,18 @@
                   {% trans "Include duplicates and other unprocessed forms" %}
                 </label>
               </div>
-              <div class="checkbox">
-                <label>
-                  <input type="checkbox"
-                         id="split-multiselects-checkbox"
-                         data-bind="checked: split_multiselects" />
-                  {% trans "Expand Checkbox Questions" %}
-                </label>
-              </div>
+
+              {% if not export_instance.is_odata_config %}
+                {# todo odata - make this work #}
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox"
+                           id="split-multiselects-checkbox"
+                           data-bind="checked: split_multiselects" />
+                    {% trans "Expand Checkbox Questions" %}
+                  </label>
+                </div>
+              {% endif %}
             {% endif %}
           </div>
         </div>
