@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta
 from io import BytesIO, open
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
