@@ -21,7 +21,8 @@ from corehq.apps.export.views.edit import (
     EditFormDailySavedExportView,
     EditODataCaseFeedView,
     EditODataFormFeedView,
-    EditExportName,
+    EditExportDescription,
+    EditExportNameView,
 )
 from corehq.apps.export.views.list import (
     DailySavedExportListView,
@@ -166,8 +167,11 @@ urlpatterns = [
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
     url(r'^custom/edit_export_name/(?P<export_id>[\w\-]+)/$',
-        EditExportName.as_view(),
-        name=EditExportName.urlname),
+        EditExportNameView.as_view(),
+        name=EditExportNameView.urlname),
+    url(r'^custom/edit_export_description/(?P<export_id>[\w\-]+)/$',
+        EditExportDescription.as_view(),
+        name=EditExportDescription.urlname),
     url(r'^add_export_email_request/$', add_export_email_request, name='add_export_email_request'),
     url(r'^commit_filters/$', commit_filters, name='commit_filters'),
     url(r'^get_app_data_drilldown_values/$', get_app_data_drilldown_values, name='get_app_data_drilldown_values'),

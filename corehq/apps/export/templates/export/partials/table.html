@@ -64,17 +64,12 @@
   <tr>
     <td>
       <h4 data-bind="css: {'text-muted': hasEmailedExport && !isAutoRebuildEnabled()}">
-        {% if not is_odata %}
-          <span data-bind="text: name"></span>
-        {% else %}
-          <inline-edit params="
-            value: name,
-            id: 'export-title',
-            url: editNameUrl,
-            placeholder: '{% trans "Enter export name here"|escapejs %}',
-            cols: 50,
-          " data-apply-bindings="false"></inline-edit>
-        {% endif %}
+        <inline-edit params="
+          value: name,
+          url: editNameUrl,
+          placeholder: '{% trans "Enter name here"|escapejs %}',
+          cols: 50,
+        " data-apply-bindings="false"></inline-edit>
         <label class="label label-default label-default" data-bind="visible: isDeid()">
           {% trans 'De-Identified' %}
         </label>
@@ -83,7 +78,12 @@
         <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong>
         <span data-bind="text: formname"></span>
       </p>
-      <p data-bind="text: description"></p>
+      <inline-edit params="
+        value: description,
+        url: editDescriptionUrl,
+        placeholder: '{% trans "Enter description here"|escapejs %}',
+        cols: 50,
+      " data-apply-bindings="false"></inline-edit>
 
       <div data-bind="ifnot: isLocationSafeForUser()" class="text-warning">
         {% blocktrans %}
@@ -365,9 +365,15 @@
           <div data-bind="if: can_edit()">
             <div data-bind="if: isLocationSafeForUser">
               <a data-bind="attr: {href: editUrl}" class="btn btn-default">
-                <i class="fa fa-pencil"></i>
-                <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
-                <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                <div data-bind="ifnot: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span data-bind="visible: !isDailySaved()">{% trans 'Edit' %}</span>
+                  <span data-bind="visible: isDailySaved()">{% trans 'Edit Columns' %}</span>
+                </div>
+                <div data-bind="if: isOData()">
+                  <i class="fa fa-pencil"></i>
+                  <span>{% trans 'Copy' %}</span>
+                </div>
               </a>
             </div>
           </div>

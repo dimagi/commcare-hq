@@ -77,10 +77,10 @@
                 <pagination data-apply-bindings="false"
                             data-bind="visible: totalItems() > itemsPerPage"
                             params="goToPage: goToPage,
-                                                    perPage: itemsPerPage,
-                                                    maxPagesShown: 6,
-                                                    totalItems: totalItems,
-                                                    inlinePageListOnly: true"></pagination>
+                                    perPage: itemsPerPage,
+                                    maxPagesShown: 6,
+                                    totalItems: totalItems,
+                                    inlinePageListOnly: true"></pagination>
               </div>
               <!-- /ko -->
 
@@ -172,6 +172,23 @@
       <p class="lead">
         {% blocktrans %}
           We have improved our Web User Roles and Permissions to give you more control on your project space. Check it out!
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
+  {% if request|ui_notify_enabled:"ECD_PREVIEW_UPDATE" and request|feature_preview_enabled:"EXPLORE_CASE_DATA_PREVIEW" %}
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="position: absolute; width: 200px;"
+         data-target="#ProjectDataTab"
+         data-slug="{{ "ECD_PREVIEW_UPDATE"|ui_notify_slug }}"
+         role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">
+        {% blocktrans %}
+          Ever wanted to explore your case data right within CommCare?
+          Check out our new feature!
         {% endblocktrans %}
       </p>
     </div>

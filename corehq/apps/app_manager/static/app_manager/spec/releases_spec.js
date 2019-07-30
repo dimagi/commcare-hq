@@ -16,7 +16,7 @@ describe('App Releases', function () {
                     build_broken: false,
                     is_released: false,
                     domain: 'test-domain',
-                    target_commcare_flavor: false,
+                    commcare_flavor: null,
                 }, extraProps),
                 releasesMain));
         }

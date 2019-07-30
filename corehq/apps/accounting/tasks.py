@@ -80,7 +80,10 @@ from corehq.util.dates import get_previous_month_date_range
 from corehq.util.soft_assert import soft_assert
 
 _invoicing_complete_soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    to=[
+        '{}@{}'.format(name, 'dimagi.com')
+        for name in ['gbova', 'dmore', 'accounts']
+    ],
     exponential_backoff=False,
 )
 

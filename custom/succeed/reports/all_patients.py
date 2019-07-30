@@ -6,6 +6,8 @@ from django.utils.translation import ugettext_noop
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, IN
+
+from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
@@ -69,15 +71,14 @@ def date_format(date_str):
 
 
 def group_name(owner_id):
-    group = Group.by_user(owner_id, wrap=False, include_names=True)
-    if not group:
+    results = get_group_id_name_map_by_user(owner_id, limit=1)
+    if results:
+        return results[0].name
+    else:
         try:
-            group = Group.get(owner_id)
+            return Group.get(owner_id).name
         except ResourceNotFound:
-            group = dict(name="No Group")
-    if isinstance(group, list):
-        group = group[0]
-    return group['name']
+            return "No Group"
 
 
 def edit_link(case_id, app_dict, latest_build):

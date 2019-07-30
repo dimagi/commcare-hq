@@ -62,6 +62,7 @@ did it run successfully?) can be performed in the context of a Django migration.
     from django.core.management import call_command
     from django.db import migrations
 
+    from corehq.util.django_migrations import skip_on_fresh_install
 
 
     COUNT_ITEMS_TO_BE_MIGRATED = "SELECT COUNT(*) FROM ..."
@@ -81,6 +82,7 @@ did it run successfully?) can be performed in the context of a Django migration.
     """.format(commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND)
 
 
+    @skip_on_fresh_install
     def _assert_migrated(apps, schema_editor):
         """Check if migrated. Raises SystemExit if not migrated"""
         num_items = count_items_to_be_migrated(schema_editor.connection)

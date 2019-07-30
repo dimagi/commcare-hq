@@ -1,10 +1,14 @@
 # coding: utf-8
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import getpass
+import logging
+
 from django.core.management.base import BaseCommand, CommandError
-from email_validator import validate_email, EmailSyntaxError
+
+from email_validator import EmailSyntaxError, validate_email
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -32,11 +36,11 @@ class Command(BaseCommand):
         if couch_user:
             if not isinstance(couch_user, WebUser):
                 raise CommandError('Username already in use by a non-web user')
-            print("✓ User {} exists".format(couch_user.username))
+            logger.info("✓ User {} exists".format(couch_user.username))
         else:
             password = self.get_password_from_user()
             couch_user = WebUser.create(None, username, password)
-            print("→ User {} created".format(couch_user.username))
+            logger.info("→ User {} created".format(couch_user.username))
 
         is_superuser_changed = not couch_user.is_superuser
         is_staff_changed = not couch_user.is_staff
@@ -47,11 +51,11 @@ class Command(BaseCommand):
             couch_user.save()
 
         if is_superuser_changed:
-            print("→ User {} is now a superuser".format(couch_user.username))
+            logger.info("→ User {} is now a superuser".format(couch_user.username))
         else:
-            print("✓ User {} is a superuser".format(couch_user.username))
+            logger.info("✓ User {} is a superuser".format(couch_user.username))
 
         if is_staff_changed:
-            print("→ User {} can now access django admin".format(couch_user.username))
+            logger.info("→ User {} can now access django admin".format(couch_user.username))
         else:
-            print("✓ User {} can access django admin".format(couch_user.username))
+            logger.info("✓ User {} can access django admin".format(couch_user.username))

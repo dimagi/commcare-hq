@@ -495,8 +495,8 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
             'version': 2,
             'flag': MULTIPLE_APPS_UNLIMITED.slug,
             'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug],
-            'signature': b64encode(sign(message_v1)),
-            'multiple_flags_signature': b64encode(sign(message_v2))
+            'signature': b64encode(sign(message_v1)).decode('utf-8'),
+            'multiple_flags_signature': b64encode(sign(message_v2)).decode('utf-8')
         })
 
         qrcode = get_qrcode(qrcode_data)

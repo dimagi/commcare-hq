@@ -188,6 +188,7 @@ def conditionally_location_safe(conditional_function):
     safe based on the arguments or kwarguments. That function should return
     True or False.
 
+    Note - for the page to show up in the menus, the function should not rely on `request`.
     """
     def _inner(view_fn):
         if isinstance(view_fn, type):

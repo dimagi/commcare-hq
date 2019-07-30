@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date, datetime
 import json
-from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
+from custom.icds_reports.utils import india_now
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
@@ -16,6 +16,7 @@ from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorEx
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
+from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 
 class TestExportData(TestCase):
     maxDiff = None
@@ -2216,4 +2217,167 @@ class TestExportData(TestCase):
         self.assertListEqual(
             data,
             expected
+        )
+
+    def test_thr_report(self):
+        location = 'b1'
+
+        data = TakeHomeRationExport(
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=3
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
+                                    'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
+                                    'Total No. of Beneficiaries received THR>21 days in given month',
+                                    'Total No of Pictures taken by AWW'],
+                                   ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
+                                    'Data Not Entered', 2, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered',
+                                    11, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered',
+                                    10, 0, 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered',
+                                    15, 1, 4],
+                                   ['st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
+             ['Export Info', [
+                 ['Generated at', india_now()],
+                 ['State', 'st1'],
+                 ['Supervisor', 's1'],
+                 ['Block', 'b1'],
+                 ['Month', 'May'],
+                 ['Year', 2017]]
+              ]
+
+             ]
+        )
+
+    def test_thr_report_export_info_national_level(self):
+        location = ''
+        data = TakeHomeRationExport(
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=0
+        ).get_excel_data()
+
+        self.assertListEqual(
+            data,
+            [['Take Home Ration', [
+                ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                 'Total No. of Beneficiaries eligible for THR',
+                 'Total No. of Beneficiaries received THR>21 days in given month',
+                 'Total No of Pictures taken by AWW'],
+                ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered', 'Data Not Entered', 2, 0, 0],
+                ['st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered', 11, 0, 0],
+                ['st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered', 10, 0, 0],
+                ['st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered', 15, 1, 4],
+                ['st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a11', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a19', 'Data Not Entered', 'Data Not Entered', 11, 8, 0],
+                ['st1', 'd1', 'b2', 's3', 'a27', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a3', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', 2, 0, 0],
+                ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', 10, 0, 0],
+                ['st1', 'd1', 'b2', 's4', 'a12', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's4', 'a20', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', 5, 0, 0],
+                ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', 20, 0, 0],
+                ['st1', 'd1', 'b2', 's4', 'a4', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's4', 'a44', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a13', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a21', 'Data Not Entered', 'Data Not Entered', 14, 13, 0],
+                ['st2', 'd2', 'b3', 's5', 'a29', 'Data Not Entered', 'Data Not Entered', 2, 1, 0],
+                ['st2', 'd2', 'b3', 's5', 'a37', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a45', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a5', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's6', 'a14', 'Data Not Entered', 'Data Not Entered', 8, 0, 0],
+                ['st2', 'd2', 'b3', 's6', 'a22', 'Data Not Entered', 'Data Not Entered', 16, 3, 0],
+                ['st2', 'd2', 'b3', 's6', 'a30', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's6', 'a38', 'Data Not Entered', 'Data Not Entered', 6, 2, 0],
+                ['st2', 'd2', 'b3', 's6', 'a46', 'Data Not Entered', 'Data Not Entered', 67, 58, 0],
+                ['st2', 'd2', 'b3', 's6', 'a6', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a15', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a23', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a31', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a39', 'Data Not Entered', 'Data Not Entered', 9, 0, 0],
+                ['st2', 'd3', 'b4', 's7', 'a47', 'Data Not Entered', 'Data Not Entered', 8, 1, 0],
+                ['st2', 'd3', 'b4', 's7', 'a7', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's8', 'a16', 'Data Not Entered', 'Data Not Entered', 7, 0, 0],
+                ['st2', 'd3', 'b4', 's8', 'a24', 'Data Not Entered', 'Data Not Entered', 14, 12, 0],
+                ['st2', 'd3', 'b4', 's8', 'a32', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's8', 'a40', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's8', 'a48', 'aww_name48', '91552222', 22, 9, 0],
+                ['st2', 'd3', 'b4', 's8', 'a8', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st3', 'd4', 'b5', 's20', 'a101', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st4', 'd5', 'b6', 's21', 'a102', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st5', 'd6', 'b7', 's22', 'a103', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st6', 'd7', 'b8', 's23', 'a104', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st7', 'd8', 'b9', 's24', 'a105', 'Data Not Entered', 'Data Not Entered', 1, 0, 0]]],
+             ['Export Info', [
+                 ['Generated at', india_now()],
+                 ['Location', 'National'],
+                 ['Month', 'May'],
+                 ['Year', 2017]]
+              ]
+             ]
         )

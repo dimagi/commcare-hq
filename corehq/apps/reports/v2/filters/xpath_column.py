@@ -104,9 +104,14 @@ class NumericXpathColumnFilter(BaseXpathColumnFilter):
     @staticmethod
     def _get_number(value):
         try:
-            return int(value)
+            value = int(value)
         except ValueError:
-            return float(value)
+            value = float(value)
+
+        if value < 0:
+            value = "'{}'".format(value)
+
+        return value
 
     def format_value(self, value):
         return "''" if value == '' else self._get_number(value)

@@ -102,6 +102,7 @@ def allowed_report_builder_reports(request):
         (builder_enabled and legacy_builder_priv)
     ):
         return 5
+    return 0
 
 
 def _get_existing_reports(domain):

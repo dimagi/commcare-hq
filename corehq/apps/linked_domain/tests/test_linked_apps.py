@@ -179,7 +179,10 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(self.linked_app.linked_app_translations, translations)
         self.assertEqual(self.linked_app.translations, translations)
 
+    @patch('corehq.apps.app_manager.models.get_and_assert_practice_user_in_domain', lambda x, y: None)
     def test_overrides(self):
+        self.plain_master_app.practice_mobile_worker_id = "123456"
+        self.plain_master_app.save()
         image_data = _get_image_data()
         image = CommCareImage.get_by_data(image_data)
         image.attach_data(image_data, original_filename='logo.png')
@@ -223,6 +226,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
             'target_commcare_flavor': 'commcare_lts',
         }
         self.linked_app.save()
+        self.linked_app.practice_mobile_worker_id = 'abc123456def'
         self.assertEqual(self.linked_app.logo_refs, {})
 
         update_linked_app(self.linked_app, 'test_override_logos')
@@ -232,11 +236,12 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(self.plain_master_app.logo_refs, {})
         self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
         self.assertEqual(self.linked_app.logo_refs, logo_refs)
-        self.assertEqual(self.linked_app.target_commcare_flavor, 'commcare_lts')
+        self.assertEqual(self.linked_app.commcare_flavor, 'commcare_lts')
         self.assertEqual(self.linked_app.linked_app_attrs, {
             'target_commcare_flavor': 'commcare_lts',
         })
-
+        self.assertEqual(self.plain_master_app.practice_mobile_worker_id, '123456')
+        self.assertEqual(self.linked_app.practice_mobile_worker_id, 'abc123456def')
         # cleanup the linked app properties
         self.linked_app.linked_app_logo_refs = {}
         self.linked_app.linked_app_attrs = {}

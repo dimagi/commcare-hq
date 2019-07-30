@@ -26,6 +26,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -45,12 +46,12 @@ from corehq.apps.export.forms import (
     CreateExportTagForm,
     DashboardFeedFilterForm,
 )
-from corehq.apps.export.models import FormExportInstance
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.tasks import (
     get_saved_export_task_status,
     rebuild_saved_export,
 )
-from corehq.apps.export.views.edit import EditExportName
+from corehq.apps.export.views.edit import EditExportDescription, EditExportNameView
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
@@ -70,6 +71,7 @@ from corehq.apps.users.permissions import (
 )
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
+from corehq.util.view_utils import absolute_reverse
 
 
 class ExportListHelper(object):
@@ -215,11 +217,25 @@ class ExportListHelper(object):
                                  args=(self.domain, export.type, export.get_id)),
             'downloadUrl': reverse(self._download_view(export).urlname, args=(self.domain, export.get_id)),
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
-            'editNameUrl': reverse(EditExportName.urlname, args=(self.domain, export.get_id)),
+            'editNameUrl': reverse(EditExportNameView.urlname, args=(self.domain, export.get_id)),
+            'editDescriptionUrl': reverse(EditExportDescription.urlname, args=(self.domain, export.get_id)),
             'lastBuildDuration': '',
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
+            'odataUrl': self._get_odata_url(export),
         }
+
+    def _get_odata_url(self, export):
+        resource_class = ODataCaseResource if isinstance(export, CaseExportInstance) else ODataFormResource
+        return absolute_reverse(
+            'api_dispatch_detail',
+            kwargs={
+                'domain': export.domain,
+                'api_name': 'v0.5',
+                'resource_name': resource_class._meta.resource_name,
+                'pk': export.get_id + '/feed',
+            }
+        )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 
     def _get_daily_saved_export_metadata(self, export):
         """

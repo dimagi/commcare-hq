@@ -39,6 +39,12 @@
         {% blocktrans %}
           Please check that end of form navigation is correct. It appears to be pointing
           to a parent menu form, but the menu doesn't have a parent.
+         {% endblocktrans %}
+        {% include "app_manager/partials/form_error_message.html" %}
+          {% case "form link to display only forms" %}
+        {% blocktrans %}
+          Please check that end of form navigation is correct. It appears to be pointing
+          to a menu using "Display only forms," which makes that menu an invalid choice.
         {% endblocktrans %}
         {% include "app_manager/partials/form_error_message.html" %}
           {% case "no ref detail" %}

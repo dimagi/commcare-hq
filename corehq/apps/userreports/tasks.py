@@ -225,7 +225,7 @@ def _compare_ucr_reports(domain, control_report, candidate_report, filter_values
     def _run_report(spec, engine_id=None):
         data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
         if engine_id:
-            data_source.override_engine_id(engine_id)
+            data_source.data_source.override_engine_id(engine_id)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(

@@ -120,3 +120,8 @@ USERS_PERMISSIONS_UPDATES = StaticUINotify(
     ends_on=datetime(2019, 6, 3),
     only_visible_for_users_created_before=datetime(2019, 4, 3),
 )
+
+ECD_PREVIEW_UPDATE = StaticUINotify(
+    'ecd_preview_update_jul2019',
+    ends_on=datetime(2019, 9, 12),
+)

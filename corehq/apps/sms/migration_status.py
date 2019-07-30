@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.sms.models import MigrationStatus
-from django.conf import settings
-from django.template import Template
-import os
+from __future__ import absolute_import, unicode_literals
 
+from django.template import Template
+
+from corehq.apps.sms.models import MigrationStatus
+from corehq.util.django_migrations import skip_on_fresh_install
 
 EXCEPTION_MESSAGE = Template("""
 
@@ -57,12 +56,12 @@ class MigrationException(Exception):
     pass
 
 
+@skip_on_fresh_install
 def assert_messaging_migration_complete(info):
     migrations_have_not_run = any(
         [not MigrationStatus.has_migration_completed(name) for name in info.migration_names]
     )
-    is_fresh_install = os.environ.get('CCHQ_IS_FRESH_INSTALL') == '1'
-    if migrations_have_not_run and not (settings.UNIT_TESTING or is_fresh_install):
+    if migrations_have_not_run:
         raise MigrationException(EXCEPTION_MESSAGE.render(info.context))
 
 

@@ -60,6 +60,7 @@ hqDefine("export/js/export_list", [
             'name',
             'owner_username',
             'sharing',
+            'odataUrl',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
@@ -67,6 +68,7 @@ hqDefine("export/js/export_list", [
             'isFeed',
             'isOData',
             'editNameUrl',
+            'editDescriptionUrl',
             'showLink',
         ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
@@ -88,9 +90,12 @@ hqDefine("export/js/export_list", [
         if (options.editNameUrl) {
             self.editNameUrl = options.editNameUrl;
         }
+        if (options.editDescriptionUrl) {
+            self.editDescriptionUrl = options.editDescriptionUrl;
+        }
 
         if (options.isOData) {
-            self.odataFeedUrl = 'https://placekitten.com';
+            self.odataFeedUrl = options.odataUrl;
         }
 
         self.isLocationSafeForUser = function () {
@@ -290,7 +295,9 @@ hqDefine("export/js/export_list", [
             });
         };
 
-        self.fetchPage(1);
+        self.onPaginationLoad = function () {
+            self.fetchPage(1);
+        };
 
         return self;
     };

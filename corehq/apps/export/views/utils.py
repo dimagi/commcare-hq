@@ -40,7 +40,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.export.const import FORM_EXPORT, CASE_EXPORT, MAX_DATA_FILE_SIZE, MAX_DATA_FILE_SIZE_TOTAL
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
-from corehq.apps.export.models.new import DataFile, DatePeriod
+from corehq.apps.export.models.new import DataFile, DatePeriod, RowNumberColumn
 from corehq.apps.export.tasks import generate_schema_for_all_builds
 
 
@@ -365,3 +365,14 @@ def can_view_form_exports(couch_user, domain):
 
 def can_view_case_exports(couch_user, domain):
     return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions
+
+
+def remove_row_number_from_export_columns(export_instance):
+    for table in export_instance.tables:
+        table.columns = [column for column in table.columns if not isinstance(column, RowNumberColumn)]
+
+
+def clean_odata_columns(export_instance):
+    for table in export_instance.tables:
+        for column in table.columns:
+            column.label = column.label.replace('@', '').replace('.', ' ')

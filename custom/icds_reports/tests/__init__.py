@@ -61,6 +61,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'agg_awc': 'agg_awc',
     'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
     'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
+    'thr_form_v2': get_table_name('icds-cas','static-thr_forms_v2'),
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
