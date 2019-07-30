@@ -756,15 +756,16 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test,
             beta=beta
         ).get_excel_data(location)
-        if file_format == 'xlsx':
-            cache_key = create_child_report_excel_file(
-                excel_data,
-                data_type,
-                config['month'].strftime("%B %Y"),
-                aggregation_level,
-            )
-        else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
+        if beta:
+            if file_format == 'xlsx':
+                cache_key = create_child_report_excel_file(
+                    excel_data,
+                    data_type,
+                    config['month'].strftime("%B %Y"),
+                    aggregation_level,
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
 
     elif indicator == PREGNANT_WOMEN_EXPORT:
         data_type = 'Pregnant_Women'
@@ -865,7 +866,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
-    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT):
+    if (indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT) and
+        (beta is False or indicator !=CHILDREN_EXPORT)):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
