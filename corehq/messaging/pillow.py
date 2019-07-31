@@ -1,5 +1,10 @@
+from datetime import datetime
+
+import attr
+
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import CASE_TOPICS
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.messaging.tasks import update_messaging_for_case
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -7,13 +12,40 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import BulkPillowProcessor
 
 
+@attr.s
+class CaseRules(object):
+    date_loaded = attr.ib()
+    by_case_type = attr.ib()
+
+    def expired(self):
+        return (datetime.utcnow() - self.date_loaded) > 30 * 60
+
+
 class CaseMessagingSyncProcessor(BulkPillowProcessor):
+    def __init__(self):
+        self.rules_by_domain = {}
+
+    def _get_rules(self, domain, case_type):
+        domain_rules = self.rules_by_domain.get(domain)
+        if not domain_rules or domain_rules.expired():
+            rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+            domain_rules = CaseRules(
+                datetime.utcnow(), AutomaticUpdateRule.organize_rules_by_case_type(rules)
+            )
+            self.rules_by_domain[domain] = domain_rules
+        return domain_rules.by_case_type.get(case_type, [])
+
     def process_change(self, change):
+        case = change.get_document()
         update_messaging_for_case(
             change.metadata.domain,
             change.id,
-            change.get_document(),
+            case,
         )
+        if case and not case.is_deleted:
+            rules = self._get_rules(change.metadata.domain, case.type)
+            for rule in rules:
+                rule.run_rule(case, datetime.utcnow())
 
     def process_changes_chunk(self, changes_chunk):
         errors = []
