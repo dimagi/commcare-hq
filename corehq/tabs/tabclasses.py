@@ -53,6 +53,7 @@ from corehq.apps.users.permissions import (
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
+    BI_INTEGRATION_PREVIEW,
 )
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
@@ -698,7 +699,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if toggles.ODATA.enabled(self.domain):
+            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -721,7 +722,7 @@ class ProjectDataTab(UITab):
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-plug',
-                    'show_in_dropdown': True,
+                    'show_in_dropdown': False,
                     'subpages': subpages
                 })
 
@@ -817,6 +818,12 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
+            ))
+        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            from corehq.apps.export.views.list import ODataFeedListView
+            items.append(dropdown_dict(
+                _(ODataFeedListView.page_title),
+                url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
             ))
 
         if items:

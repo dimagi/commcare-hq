@@ -41,13 +41,13 @@ class TestDeprecatedCaseServiceDocument(TestCase, DeprecatedCaseOdataTestMixin):
         super(TestDeprecatedCaseServiceDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -56,7 +56,7 @@ class TestDeprecatedCaseServiceDocument(TestCase, DeprecatedCaseOdataTestMixin):
         other_domain.save()
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -69,7 +69,7 @@ class TestDeprecatedCaseServiceDocument(TestCase, DeprecatedCaseOdataTestMixin):
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -80,7 +80,7 @@ class TestDeprecatedCaseServiceDocument(TestCase, DeprecatedCaseOdataTestMixin):
 
     def test_no_case_types(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch('corehq.apps.api.odata.views.get_case_types_for_domain_es', return_value=set()):
                 response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
@@ -91,7 +91,7 @@ class TestDeprecatedCaseServiceDocument(TestCase, DeprecatedCaseOdataTestMixin):
 
     def test_with_case_types(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch(
                 'corehq.apps.api.odata.views.get_case_types_for_domain_es',
                 return_value=['case_type_1', 'case_type_2'],  # return ordered iterable for deterministic test
@@ -142,13 +142,13 @@ class TestDeprecatedFormServiceDocument(TestCase, DeprecatedFormOdataTestMixin):
         super(TestDeprecatedFormServiceDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(self.view_url)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_password(self):
         wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(wrong_credentials)
         self.assertEqual(response.status_code, 401)
 
@@ -157,7 +157,7 @@ class TestDeprecatedFormServiceDocument(TestCase, DeprecatedFormOdataTestMixin):
         other_domain.save()
         self.addCleanup(other_domain.delete)
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self.client.get(
                 reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'app_id': 'my_app_id'}),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
@@ -170,7 +170,7 @@ class TestDeprecatedFormServiceDocument(TestCase, DeprecatedFormOdataTestMixin):
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -181,7 +181,7 @@ class TestDeprecatedFormServiceDocument(TestCase, DeprecatedFormOdataTestMixin):
 
     def test_no_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=[]):
                 response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
@@ -195,7 +195,7 @@ class TestDeprecatedFormServiceDocument(TestCase, DeprecatedFormOdataTestMixin):
 
     def test_with_xmlnss(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             with patch('corehq.apps.api.odata.views.get_xmlns_by_app', return_value=['xmlns_1', 'xmlns_2']):
                 response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
@@ -268,7 +268,7 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -279,7 +279,7 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
 
     def test_successful_request(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
@@ -350,7 +350,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
         self.addCleanup(self._setup_user_permissions)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 403)
 
@@ -361,7 +361,7 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
 
     def test_successful_request(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('ODATA'):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['OData-Version'], '4.0')
