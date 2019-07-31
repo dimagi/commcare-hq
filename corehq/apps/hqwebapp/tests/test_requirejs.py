@@ -87,15 +87,17 @@ class TestRequireJS(SimpleTestCase):
                       and not f.endswith("hqwebapp/js/knockout_bindings.ko.js")]
 
         def _test_file(filename):
-            proc = subprocess.Popen(["grep", "hqImport", filename], stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            for line in [b.decode('utf-8') for b in out.split(b"\n")]:
-                if line:
-                    match = re.search(r'hqImport\([\'"]([^\'"]*)[\'"]', line)
-                    if match:
-                        errors.append("{} imported in {}".format(match.group(1), filename))
-                    else:
-                        errors.append("hqImport found in {}: {}".format(filename, line.strip()))
+            has_hqImport = False
+            with open(filename, 'r') as f:
+                line = f.readline()
+                while line:
+                    if re.search(r'hqImport', line):
+                        match = re.search(r'hqImport\([\'"]([^\'"]*)[\'"]', line)
+                        if match:
+                            errors.append("{} imported in {}".format(match.group(1), filename))
+                        else:
+                            errors.append("hqImport found in {}: {}".format(filename, line.strip()))
+                    line = f.readline()
 
         self._run_jobs(test_files, _test_file)
 
