@@ -208,6 +208,6 @@ BI_INTEGRATION_PREVIEW = FeaturePreview(
         "Use OData feeds to integrate your CommCare data with Power "
         "BI or Tableau."
     ),
-    can_self_enable_fn=is_eligible_for_ecd_preview,
+    can_self_enable_fn=is_eligible_for_bi_integration_preview,
     save_fn=clear_project_data_tab_cache,
 )
