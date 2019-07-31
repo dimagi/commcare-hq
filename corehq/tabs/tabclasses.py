@@ -721,7 +721,7 @@ class ProjectDataTab(UITab):
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-plug',
-                    'show_in_dropdown': True,
+                    'show_in_dropdown': False,
                     'subpages': subpages
                 })
 
@@ -817,6 +817,12 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
+            ))
+        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            from corehq.apps.export.views.list import ODataFeedListView
+            items.append(dropdown_dict(
+                _(ODataFeedListView.page_title),
+                url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
             ))
 
         if items:
