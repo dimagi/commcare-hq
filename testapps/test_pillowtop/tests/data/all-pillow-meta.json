@@ -236,5 +236,12 @@
         "name": "location-ucr-pillow",
         "advertised_name": "location-ucr-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
+    },
+    "case_messaging_sync_pillow": {
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "case_messaging_sync_pillow",
+        "name": "case_messaging_sync_pillow",
+        "advertised_name": "case_messaging_sync_pillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     }
 }

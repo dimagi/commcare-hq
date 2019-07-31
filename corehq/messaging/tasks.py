@@ -49,7 +49,10 @@ def _sync_case_for_messaging(domain, case_id):
     except CaseNotFound:
         case = None
     case_load_counter("messaging_sync", domain)()
+    update_messaging_for_case(domain, case_id, case)
 
+
+def update_messaging_for_case(domain, case_id, case):
     if case is None or case.is_deleted:
         sms_tasks.delete_phone_numbers_for_owners([case_id])
         delete_schedule_instances_for_cases(domain, [case_id])
