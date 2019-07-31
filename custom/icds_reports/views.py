@@ -24,7 +24,7 @@ from django.views.generic.base import View, TemplateView, RedirectView
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
-from corehq.apps.domain.decorators import login_and_domain_required, api_auth
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth, require_superuser
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
@@ -116,7 +116,7 @@ from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
 from custom.icds_reports.models.views import NICIndicatorsView
 from django.views.decorators.csrf import csrf_exempt
-
+from django.contrib.staticfiles import finders
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -235,7 +235,6 @@ class DashboardView(TemplateView):
             )]
         )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
-        kwargs['have_access_to_dashboard_manual'] = toggles.ENABLE_ICDS_DASHBOARD_MANUAL_UPDATE.enabled(self.couch_user.username)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
@@ -1965,13 +1964,16 @@ class CasDataExportAPIView(View):
 
 
 @location_safe
-@method_decorator([login_and_domain_required, toggles.ENABLE_ICDS_DASHBOARD_MANUAL_UPDATE.required_decorator()], name='dispatch')
+@method_decorator([login_and_domain_required,
+                   toggles.ENABLE_ICDS_DASHBOARD_MANUAL_UPDATE.required_decorator(),
+                   require_superuser], name='dispatch')
 class ManualUpdateView(TemplateView):
     page_title = 'Update Dashboard Manual'
     urlname = 'update_dashboard_manual'
     template_name = 'icds_reports/update_manual.html'
 
     def post(self, request, *args, **kwargs):
+        domain = self.kwargs['domain']
         data = request.FILES['dashboard_manual']
         icds_file, _ = IcdsFile.objects.get_or_create(blob_id="dashboard_manual.pdf",
                     data_type='dashboard_manual')
@@ -1986,7 +1988,14 @@ class ManualUpdateView(TemplateView):
 @method_decorator([login_and_domain_required], name='dispatch')
 class DowloadManual(View):
     def get(self, request, *argv, **kwarg):
-        blob = IcdsFile.objects.filter(blob_id="dashboard_manual.pdf").order_by('file_added').last()
-        response = HttpResponse(blob.get_file_from_blobdb().read(), content_type='application/pdf')
+        if toggles.ENABLE_ICDS_DASHBOARD_MANUAL_UPDATE.enabled(self.request.couch_user.username):
+            manual_file = IcdsFile.objects.filter(blob_id="dashboard_manual.pdf").order_by('file_added').last()
+            manual = manual_file.get_file_from_blobdb()
+        else:
+            dashboard_manual_absolute_path = finders.find('media/Dashboard_Training_Manual.pdf')
+            manual = open(dashboard_manual_absolute_path, 'rb')
+
+        response = HttpResponse(manual.read(), content_type='application/pdf')
         response['Content-Disposition'] = safe_filename_header("ICDS_dashboard_manual.pdf")
+
         return response
