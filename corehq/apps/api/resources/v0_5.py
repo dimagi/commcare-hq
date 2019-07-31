@@ -24,12 +24,7 @@ from tastypie.utils import dict_strip_unicode_keys
 from casexml.apps.stock.models import StockTransaction
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.api.odata.serializers import (
-    ODataCaseSerializer,
-    ODataFormSerializer,
-    DeprecatedODataCaseSerializer,
-    DeprecatedODataFormSerializer,
-)
+from corehq.apps.api.odata.serializers import ODataCaseSerializer, ODataFormSerializer
 from corehq.apps.api.odata.utils import record_feed_access_in_datadog
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
@@ -905,97 +900,6 @@ class DomainUsernames(Resource):
         results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
                    for user_pair in user_ids_username_pairs]
         return results
-
-
-ODATA_CASE_RESOURCE_NAME = 'Cases'
-
-
-class DeprecatedODataCaseResource(v0_4.CommCareCaseResource):
-
-    case_type = None
-
-    def dispatch(self, request_type, request, **kwargs):
-        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
-            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
-        self.case_type = kwargs['case_type']
-        return super(DeprecatedODataCaseResource, self).dispatch(request_type, request, **kwargs)
-
-    def determine_format(self, request):
-        # json only
-        return 'application/json'
-
-    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
-        # populate the domain which is required by the serializer
-        data['domain'] = request.domain
-        data['case_type'] = self.case_type
-        data['api_path'] = request.path
-        response = super(DeprecatedODataCaseResource, self).create_response(request, data, response_class,
-                                                                            **response_kwargs)
-        # adds required odata headers to the returned response
-        return add_odata_headers(response)
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        elastic_query_set = super(DeprecatedODataCaseResource, self).obj_get_list(bundle, domain, **kwargs)
-        elastic_query_set.payload['filter']['and'].append({'term': {'type.exact': self.case_type}})
-        return elastic_query_set
-
-    class Meta(v0_4.CommCareCaseResource.Meta):
-        authentication = ODataAuthentication(Permissions.edit_data)
-        resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
-        serializer = DeprecatedODataCaseSerializer()
-        max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
-
-    def prepend_urls(self):
-        return [
-            url(r"^(?P<resource_name>%s)/(?P<case_type>[\w\d_.-]+)/$" % self._meta.resource_name,
-                self.wrap_view('dispatch_list'))
-        ]
-
-
-ODATA_XFORM_INSTANCE_RESOURCE_NAME = 'Forms'
-
-
-class DeprecatedODataFormResource(v0_4.XFormInstanceResource):
-
-    xmlns = None
-
-    def dispatch(self, request_type, request, **kwargs):
-        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
-            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
-        self.app_id = kwargs['app_id']
-        self.xmlns = kwargs['xmlns']
-        return super(DeprecatedODataFormResource, self).dispatch(request_type, request, **kwargs)
-
-    def determine_format(self, request):
-        # json only
-        return 'application/json'
-
-    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
-        data['domain'] = request.domain
-        data['app_id'] = self.app_id
-        data['xmlns'] = self.xmlns
-        data['api_path'] = request.path
-        response = super(DeprecatedODataFormResource, self).create_response(
-            request, data, response_class, **response_kwargs)
-        return add_odata_headers(response)
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        elastic_query_set = super(DeprecatedODataFormResource, self).obj_get_list(bundle, domain, **kwargs)
-        full_xmlns = 'http://openrosa.org/formdesigner/' + kwargs['xmlns']
-        elastic_query_set.payload['filter']['and'].append({'term': {'xmlns.exact': full_xmlns}})
-        return elastic_query_set
-
-    class Meta(v0_4.XFormInstanceResource.Meta):
-        authentication = ODataAuthentication(Permissions.edit_data)
-        resource_name = 'odata/{}'.format(ODATA_XFORM_INSTANCE_RESOURCE_NAME)
-        serializer = DeprecatedODataFormSerializer()
-        max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
-
-    def prepend_urls(self):
-        return [
-            url(r"^(?P<resource_name>%s)/(?P<app_id>[\w\d_.-]+)/(?P<xmlns>[\w\d_.-]+)" % self._meta.resource_name,
-                self.wrap_view('dispatch_list'))
-        ]
 
 
 class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):

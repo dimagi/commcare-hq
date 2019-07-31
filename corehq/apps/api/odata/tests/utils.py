@@ -72,20 +72,6 @@ class OdataTestMixin(object):
         return base64.b64encode("{}:{}".format(username, password).encode('utf-8')).decode('utf-8')
 
 
-class DeprecatedCaseOdataTestMixin(OdataTestMixin):
-
-    @property
-    def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name})
-
-
-class DeprecatedFormOdataTestMixin(OdataTestMixin):
-
-    @property
-    def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'app_id': 'my_app_id'})
-
-
 class CaseOdataTestMixin(OdataTestMixin):
 
     @property
@@ -98,7 +84,6 @@ class FormOdataTestMixin(OdataTestMixin):
     @property
     def view_url(self):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': 'my_config_id'})
-
 
 
 def generate_api_key_from_web_user(web_user):
