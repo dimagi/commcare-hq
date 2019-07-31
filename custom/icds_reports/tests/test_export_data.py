@@ -109,7 +109,7 @@ class TestExportData(TestCase):
                 "Percentage of children initiated complementary feeding (in the past 30 days)",
                 "Percentage of children initiated appropriate complementary feeding",
                 "Percentage of children receiving complementary feeding with adequate diet diversity",
-                "Percentage of children receiving complementary feeding with adequate diet quanity",
+                "Percentage of children receiving complementary feeding with adequate diet quantity",
                 "Percentage of children receiving complementary feeding with appropriate "
                 "handwashing before feeding"
             ]
@@ -170,7 +170,7 @@ class TestExportData(TestCase):
              'Total no. of children enrolled in ICDS-CAS system and born in last month',
              'Percentage of children breastfed at birth',
              'No. of children exclusively breastfed',
-             'Total number of children (0-6 months) of age enrolled in ICDS-CAS system ',
+             'Total number of children (0-6 months) of age enrolled in ICDS-CAS system',
              'Percentage of children exclusively breastfeeding',
              'No. of children initiated complementary feeding (in the past 30 days)',
              'Total no. of children (6-8 ) months of age enrolled with ICDS-CAS',
@@ -820,7 +820,7 @@ class TestExportData(TestCase):
             beta=True
         ).get_excel_data('b1')[0][1][10]
         self.assertListEqual(
-            data[10],
+            data,
             [
                 'st2',
                 732, 1039, '70.45 %',

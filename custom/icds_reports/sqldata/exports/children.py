@@ -287,7 +287,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 slug='percent_cf_diet_diversity'
             ),
             AggregateColumn(
-                'Percentage of children receiving complementary feeding with adequate diet quanity',
+                'Percentage of children receiving complementary feeding with adequate diet quantity',
                 percent,
                 [
                     SumColumn('cf_diet_quantity',
@@ -395,7 +395,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                                                  AliasColumn('weighed_and_born_in_month'),
                                                  slug='weighed_and_born_in_month'))
 
-            agg_columns.insert(37,  AggregateColumn('No. of children completed 1 year immunization ',
+            agg_columns.insert(37,  AggregateColumn('No. of children completed 1 year immunization',
                                                     lambda x, y: ((x or 0) + (y or 0)), [
                                                         AliasColumn('fully_immunized_on_time'),
                                                         AliasColumn('fully_immunized_late')
