@@ -87,7 +87,6 @@ class TestRequireJS(SimpleTestCase):
                       and not f.endswith("hqwebapp/js/knockout_bindings.ko.js")]
 
         def _test_file(filename):
-            has_hqImport = False
             with open(filename, 'r') as f:
                 line = f.readline()
                 while line:
