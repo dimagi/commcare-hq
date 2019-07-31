@@ -362,7 +362,6 @@ HQ_APPS = (
 
     'custom.icds',
     'custom.icds_reports',
-    'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
@@ -1870,8 +1869,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
@@ -1943,8 +1940,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1999,7 +1994,6 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
