@@ -1305,7 +1305,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
 
     # Secondary Header
     secondary_header = worksheet.row_dimensions[2]
-    secondary_header.height = 60
+    secondary_header.height = 80
     headers = excel_data[0][1][0]
     bold_font_black = Font(size=14)
     for index, header in enumerate(headers):
@@ -1313,7 +1313,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
         cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= aggregation_level or
                                                              index == aggregation_level + 6 else 2)]
         cell.alignment = text_alignment
-        worksheet.column_dimensions[location_column].width = 24
+        worksheet.column_dimensions[location_column].width = 30
         cell.value = header
         if index != aggregation_level + 6 and index + 1 > aggregation_level:
             cell.fill = cell_pattern

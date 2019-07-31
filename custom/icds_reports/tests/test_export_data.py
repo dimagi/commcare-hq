@@ -85,6 +85,42 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+        ).get_excel_data('b1')[0][1][0]
+        self.assertListEqual(
+            data,
+            [
+                "State",
+                "Weighing efficiency (in month)",
+                "Height measurement efficiency (in month)",
+                "Total number of unweighed children (0-5 Years)",
+                "Percentage of severely underweight children",
+                "Percentage of moderately underweight children",
+                "Percentage of normal weight-for-age children",
+                "Percentage of children with severe wasting",
+                "Percentage of children with moderate wasting",
+                "Percentage of children with normal weight-for-height",
+                "Percentage of children with severe stunting",
+                "Percentage of children with moderate stunting",
+                "Percentage of children with normal height-for-age",
+                'Percent of newborns with low birth weight',
+                "Percentage of children with completed 1 year immunizations",
+                "Percentage of children breastfed at birth",
+                "Percentage of children exclusively breastfeeding",
+                "Percentage of children initiated complementary feeding (in the past 30 days)",
+                "Percentage of children initiated appropriate complementary feeding",
+                "Percentage of children receiving complementary feeding with adequate diet diversity",
+                "Percentage of children receiving complementary feeding with adequate diet quanity",
+                "Percentage of children receiving complementary feeding with appropriate "
+                "handwashing before feeding"
+            ]
+        )
+
+
+    def test_children_export_headers_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
             beta=True
         ).get_excel_data('b1')[0][1][0]
         self.assertListEqual(
@@ -94,7 +130,7 @@ class TestExportData(TestCase):
              'Total no. of children eligible to be weighed',
              'Weighing efficiency (in month)',
              'Total no. of children whose height was measured',
-             'Total no. of children  eligible for measuring height ',
+             'Total no. of children  eligible for measuring height',
              'Height measurement efficiency (in month)',
              'Total number of unweighed children (0-5 Years)',
              'No. of severely underweight children',
@@ -107,27 +143,27 @@ class TestExportData(TestCase):
              'Total No. of children weighed',
              'Percentage of normal weight-for-age children',
              'No. of Children with severe wasting',
-             'Total number of children whose height and weight is measured ',
+             'Total number of children whose height and weight is measured',
              'Percentage of children with severe wasting',
              'No. of moderately wasted children',
-             'Total number of children whose height and weight is measured ',
+             'Total number of children whose height and weight is measured',
              'Percentage of children with moderate wasting',
              'No. of children with normal weight-for-height',
-             'Total no. of children  whose height and weight is measured ',
+             'Total no. of children  whose height and weight is measured',
              'Percentage of children with normal weight-for-height',
              'No. of severely stunted children',
-             'Total no. of children whose height has been measured ',
+             'Total no. of children whose height has been measured',
              'Percentage of children with severe stunting',
              'No. of moderately stunted children',
-             'Total no. of children whose height has been measured ',
+             'Total no. of children whose height has been measured',
              'Percentage of children with moderate stunting',
              'No. of children with normal height for age',
-             'Total no. of children whose height has been measured ',
+             'Total no. of children whose height has been measured',
              'Percentage of children with normal height-for-age',
              'No. of newborns with low birth weight',
              'Total no. of children born and weighed in the current month',
              'Percent of newborns with low birth weight',
-             'No. of children completed 1 year immunization ',
+             'No. of children completed 1 year immunization',
              'Total no. of children from age >12 months',
              'Percentage of children with completed 1 year immunizations',
              'No. of children breastfed at birth',
@@ -145,15 +181,49 @@ class TestExportData(TestCase):
              'No.of children receiving complementary feeding with adequate diet diversity',
              'Total number of children (6 months - 2 yrs) of age enrolled with ICDS-CAS',
              'Percentage of children receiving complementary feeding with adequate diet diversity',
-             'No. of children initiated complementary feeding with adequate diet quanity',
+             'No. of children initiated complementary feeding with adequate diet quantity',
              'No.of children (6-24) months of age enrolled with ICDS-CAS',
-             'Percentage of children receiving complementary feeding with adequate diet quanity',
+             'Percentage of children receiving complementary feeding with adequate diet quantity',
              'Total Number of children receiving complementary feeding with appropriate handwashing before feeding',
              'No.of children (6-24) months of age enrolled with ICDS-CAS',
              'Percentage of children receiving complementary feeding with appropriate handwashing before feeding']
         )
 
     def test_children_export_child_one(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][1]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.40 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                '7.69 %',
+                "38.46 %",
+                "53.85 %",
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                '50.00 %',
+                '14.46%',
+                "20.00 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_one_beta(self):
         data = ChildrenExport(
             config={
                 'domain': 'icds-cas'
@@ -188,7 +258,43 @@ class TestExportData(TestCase):
             ]
         )
 
+
     def test_children_export_child_two(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][2]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                '67.39 %',
+                '1.40 %',
+                317,
+                '2.60 %',
+                '23.21 %',
+                '74.20 %',
+                '7.69 %',
+                '38.46 %',
+                '53.85 %',
+                '38.46 %',
+                '46.15 %',
+                '15.38 %',
+                "50.00 %",
+                '14.46%',
+                '20.00 %',
+                '50.00 %',
+                '65.62 %',
+                '53.52 %',
+                '34.51 %',
+                '39.44 %',
+                '47.89 %'
+            ]
+        )
+
+
+    def test_children_export_child_two_beta(self):
         data = ChildrenExport(
             config={
                 'domain': 'icds-cas'
@@ -222,7 +328,43 @@ class TestExportData(TestCase):
                 68, 142, '47.89 %']
         )
 
+
     def test_children_export_child_three(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][3]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.40 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "7.69 %",
+                "38.46 %",
+                '53.85 %',
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "50.00 %",
+                "14.46%",
+                "20.00 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+
+    def test_children_export_child_three_beta(self):
         data = ChildrenExport(
             config={
                 'domain': 'icds-cas'
@@ -296,6 +438,40 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+        ).get_excel_data('b1')[0][1][5]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.40 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "7.69 %",
+                "38.46 %",
+                "53.85 %",
+                '38.46 %',
+                "46.15 %",
+                "15.38 %",
+                "50.00 %",
+                "14.46%",
+                "20.00 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_five_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
             beta=True
         ).get_excel_data('b1')[0][1][5]
         self.assertListEqual(
@@ -330,6 +506,40 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+        ).get_excel_data('b1')[0][1][6]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "2.99 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
+                "0.00 %",
+                "7.07%",
+                "50.00 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_six_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
             beta=True
         ).get_excel_data('b1')[0][1][6]
         self.assertListEqual(
@@ -359,7 +569,43 @@ class TestExportData(TestCase):
                 88, 185, '47.57 %']
         )
 
+
     def test_children_export_child_seven(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][7]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "2.99 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
+                "0.00 %",
+                "7.07%",
+                "50.00 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+
+    def test_children_export_child_seven_beta(self):
         data = ChildrenExport(
             config={
                 'domain': 'icds-cas'
@@ -398,6 +644,40 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
+        ).get_excel_data('b1')[0][1][8]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "2.99 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
+                "0.00 %",
+                "7.07%",
+                "50.00 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_eight_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
             beta=True
         ).get_excel_data('b1')[0][1][8]
         self.assertListEqual(
@@ -427,7 +707,43 @@ class TestExportData(TestCase):
                 88, 185, '47.57 %']
         )
 
+
     def test_children_export_child_nine(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][9]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "2.99 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
+                "0.00 %",
+                "7.07%",
+                "50.00 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+
+    def test_children_export_child_nine_beta(self):
         data = ChildrenExport(
             config={
                 'domain': 'icds-cas'
@@ -466,10 +782,45 @@ class TestExportData(TestCase):
             config={
                 'domain': 'icds-cas'
             },
-            beta=True
         ).get_excel_data('b1')[0][1][10]
         self.assertListEqual(
             data,
+            [
+                "st2",
+                "70.45 %",
+                "2.99 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
+                "0.00 %",
+                "7.07%",
+                "50.00 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+
+    def test_children_export_child_ten_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][10]
+        self.assertListEqual(
+            data[10],
             [
                 'st2',
                 732, 1039, '70.45 %',
