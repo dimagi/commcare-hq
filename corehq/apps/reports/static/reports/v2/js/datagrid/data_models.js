@@ -140,6 +140,15 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                     } else {
                         self.showTimeoutError(false);
                         self.numTimeouts = 0;
+                        var timeEventTitle = "ECD Load Time";
+                        if (!self.hasInitialLoadFinished()) {
+                            timeEventTitle = timeEventTitle + " - Initial";
+                        }
+                        kissmetrics.track.event(timeEventTitle, {
+                            "Domain": initialPageData.get('domain'),
+                            "Time": data.took,
+                        });
+
                     }
 
                     self.rows(data.rows);
