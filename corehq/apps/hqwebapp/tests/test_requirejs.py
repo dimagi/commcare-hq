@@ -22,6 +22,18 @@ class TestRequireJS(SimpleTestCase):
         gevent.joinall(jobs)
 
     @classmethod
+    def _hqDefine_line(cls, filename):
+        hqDefine_line = None
+        with open(filename, 'r') as f:
+            line = f.readline()
+            while line and not hqDefine_line:
+                if re.match(r'^\s*hqDefine', line):
+                    hqDefine_line = line
+                line = f.readline()
+        return hqDefine_line
+
+
+    @classmethod
     def setUpClass(cls):
         super(TestRequireJS, cls).setUpClass()
         prefix = os.path.join(os.getcwd(), 'corehq')
@@ -37,18 +49,12 @@ class TestRequireJS(SimpleTestCase):
         cls.requirejs_files = []
 
         def _categorize_file(filename):
-            hqDefine_line = None
-            with open(filename, 'r') as f:
-                line = f.readline()
-                while line and not hqDefine_line:
-                    if re.match(r'^\s*hqDefine', line):
-                        hqDefine_line = line
-                    line = f.readline()
-            if hqDefine_line:
+            line = cls._hqDefine_line(filename)
+            if line:
                 cls.hqdefine_files.append(filename)
                 # RequireJS files list their dependencies: hqDefine("my/module.js", [...
                 # This test does depend on the dependency array starting on the same line as the hqDefine
-                if re.match(r'hqDefine.*,.*\[', hqDefine_line):
+                if re.match(r'hqDefine.*,.*\[', line):
                     cls.requirejs_files.append(filename)
 
         cls._run_jobs(cls.js_files, _categorize_file)
@@ -57,9 +63,8 @@ class TestRequireJS(SimpleTestCase):
         errors = []
 
         def _test_file(filename):
-            proc = subprocess.Popen(["grep", "hqDefine", filename], stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            for line in [b.decode('utf-8') for b in out.split(b"\n")]:
+            line = self._hqDefine_line(filename)
+            if line:
                 match = re.search(r'^\s*hqDefine\([\'"]([^\'"]*)[\'"]', line)
                 if match:
                     module = match.group(1)
