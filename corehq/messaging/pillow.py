@@ -5,6 +5,8 @@ import attr
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.tasks import update_messaging_for_case
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -36,7 +38,11 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
         return domain_rules.by_case_type.get(case_type, [])
 
     def process_change(self, change):
-        case = change.get_document()
+        try:
+            case = CaseAccessors(change.metadata.domain).get_case(change.id)
+        except CaseNotFound:
+            case = None
+
         update_messaging_for_case(
             change.metadata.domain,
             change.id,
