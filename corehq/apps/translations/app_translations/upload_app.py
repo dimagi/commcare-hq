@@ -23,11 +23,13 @@ from corehq.apps.translations.app_translations.utils import (
     is_single_sheet,
     get_menu_or_form_by_sheet_name,
     get_menu_or_form_by_unique_id,
+    get_bulk_app_sheet_headers,
 )
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
 from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+from corehq.util.workbook_json.excel import get_single_worksheet, WorkbookJSONError
 
 
 def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare):
@@ -55,7 +57,7 @@ def _email_app_translations_discrepancies(msgs, email, app_name):
     send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
 
 
-def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=None):
+def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=None):
     """
     Process the bulk upload file for the given app.
     We return these message tuples instead of calling them now to allow this
@@ -64,24 +66,46 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
     :return: Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
+
+    def get_expected_headers(sheet_name):
+        # This function does its best to return the headers we expect, based
+        # on the current app, for an uploaded sheet. If the sheet is old, it
+        # might not include the unique IDs of the modules/forms. In that case
+        # `sheet_name_to_unique_id` will be empty and we fall back to using the
+        # name of the sheet and hope that modules/forms have not been moved
+        # since the sheet was originally downloaded.
+        #
+        # If a user created a new sheet, or renamed a sheet, or a form/module
+        # has been deleted since this sheet was downloaded, then expected
+        # headers will not be found. We return an empty list, and
+        # `_check_for_sheet_error()` will handle it.
+        if sheet_name in sheet_name_to_unique_id:
+            unique_id = sheet_name_to_unique_id[sheet_name]
+            if unique_id in expected_headers_by_id:
+                return expected_headers_by_id[unique_id]
+        return expected_headers_by_sheet_name.get(sheet_name, [])
+
     msgs = []
-    error = _check_for_workbook_error(app, workbook, expected_headers)
+    error = _check_workbook_length(workbook, lang)
     if error:
         msgs.append((messages.error, error))
         return msgs
 
+    expected_headers_by_sheet_name = {k: v for k, v in get_bulk_app_sheet_headers(app, lang=lang)}
+    expected_headers_by_id = {k: v for k, v in get_bulk_app_sheet_headers(app, lang=lang, by_id=True)}
     processed_sheets = set()
-    sheet_name_to_unique_id = {}
+
     for sheet in workbook.worksheets:
+        expected_headers = get_expected_headers(sheet.worksheet.title)
         try:
-            _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
+            _check_for_sheet_error(sheet, expected_headers, processed_sheets)
         except BulkAppTranslationsException as e:
             msgs.append((messages.error, six.text_type(e)))
             continue
 
         processed_sheets.add(sheet.worksheet.title)
 
-        warnings = _check_for_sheet_warnings(app, sheet, expected_headers)
+        warnings = _check_for_sheet_warnings(sheet, expected_headers)
         for warning in warnings:
             msgs.append((messages.warning, warning))
 
@@ -94,6 +118,56 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
         (messages.success, _("App Translations Updated!"))
     )
     return msgs
+
+
+def get_sheet_name_to_unique_id_map(file_or_filename, lang):
+    """
+    Returns a map of sheet names to unique IDs, so that when modules or
+    forms have been moved we can use their ID and not their (changed) name.
+
+    This function is called before we process the upload so that we can use
+    the sheet-name-to-unique-ID map to check the sheets before they are
+    processed.
+
+    `file_or_filename` is a file not a workbook because we read uploaded
+    Excel files using WorkbookJSONReader, and it can only iterate sheet
+    rows once. This function opens its own Reader to parse the first sheet.
+    """
+
+    def get_sheet_name():
+        return MODULES_AND_FORMS_SHEET_NAME if is_multisheet() else SINGLE_SHEET_NAME
+
+    def is_multisheet():
+        return not lang
+
+    def is_modules_and_forms_row(row):
+        """
+        Returns the rows about modules and forms in single-sheet uploads.
+        They are the rows that include the unique IDs.
+        """
+        return not row['case_property'] and not row['list_or_detail'] and not row['label']
+
+    sheet_name_to_unique_id = {}
+
+    try:
+        worksheet = get_single_worksheet(file_or_filename, title=get_sheet_name())
+    except WorkbookJSONError:
+        # There is something wrong with the file. The problem will happen
+        # again when we try to process the upload. To preserve current
+        # behaviour, just return silently.
+        return sheet_name_to_unique_id
+
+    if is_multisheet():
+        rows = worksheet
+    else:
+        rows = (row for row in worksheet if is_modules_and_forms_row(row))
+
+    for row in get_unicode_dicts(rows):
+        sheet_name = row.get('menu_or_form', '')
+        unique_id = row.get('unique_id')
+        if unique_id and sheet_name not in sheet_name_to_unique_id:
+            sheet_name_to_unique_id[sheet_name] = unique_id
+    return sheet_name_to_unique_id
 
 
 def _process_single_sheet(app, sheet, names_map, lang=None):
@@ -113,28 +187,20 @@ def _process_single_sheet(app, sheet, names_map, lang=None):
     """
     msgs = []
     module_or_form = None
-    # Rows pertaining to a module (e.g. case list / case detail) or a form
-    # (i.e. questions). Keyed on that module/form's identifier:
-    module_or_form_rows = {}
-    # Rows about the app's modules and forms, like their names and unique IDs:
     modules_and_forms_rows = []
     rows = []
     for row in sheet:
         if not row['case_property'] and not row['list_or_detail'] and not row['label']:
             modules_and_forms_rows.append(row)
         elif module_or_form != row['menu_or_form']:
-            module_or_form_rows[module_or_form] = rows
+            msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
             module_or_form = row['menu_or_form']
             rows = [row]
         else:
             rows.append(row)
-    module_or_form_rows[module_or_form] = rows
-    # Process modules_and_forms_rows first to populate names_map with their unique IDs
+    msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
     msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
                               modules_and_forms_rows, names_map, lang=lang))
-    # Then process the rows for the modules and the forms.
-    for module_or_form, rows in six.iteritems(module_or_form_rows):
-        msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
     return msgs
 
 
@@ -192,24 +258,22 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
     )]
 
 
-def _check_for_workbook_error(app, workbook, headers):
-    if len(headers) == 1 and len(workbook.worksheets) > 1:
+def _check_workbook_length(workbook, lang):
+    if lang and len(workbook.worksheets) > 1:
         return _("Expected a single sheet. If you are uploading a multi-sheet file, "
                  "please select 'All Languages'.")
-    if len(headers) > 1 and len(workbook.worksheets) == 1:
+    if not lang and len(workbook.worksheets) == 1:
         return _("File contains only one sheet. If you are uploading a single-language file, "
                  "please select a language.")
 
 
-def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
-    expected_sheets = {h[0]: h[1] for h in headers}
+def _check_for_sheet_error(sheet, expected_headers, processed_sheets=Ellipsis):
 
     if sheet.worksheet.title in processed_sheets:
         raise BulkAppTranslationsException(_('Sheet "%s" was repeated. Only the first occurrence has been '
                                              'processed.') % sheet.worksheet.title)
 
-    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
-    if expected_headers is None:
+    if not expected_headers:
         raise BulkAppTranslationsException(_('Skipping sheet "%s", could not recognize title') %
                                            sheet.worksheet.title)
 
@@ -232,23 +296,20 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
                                                  expected=", ".join(expected_required_headers)))
 
 
-def _check_for_sheet_warnings(app, sheet, headers):
+def _check_for_sheet_warnings(sheet, expected_headers):
     warnings = []
-    expected_sheets = {h[0]: h[1] for h in headers}
-    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
 
     missing_cols = set(expected_headers) - set(sheet.headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
 
     if len(missing_cols) > 0:
-        warnings.append((_('Sheet "%s" has fewer columns than expected. '
-            'Sheet will be processed but the following translations will be unchanged: %s')
-            % (sheet.worksheet.title, ", ".join(missing_cols))))
+        warnings.append((_('Sheet "{sheet}" has fewer columns than expected. Sheet will be processed but the '
+            'following translations will be unchanged: {columns}').format(sheet=sheet.worksheet.title,
+                                                                          columns=", ".join(missing_cols))))
 
     if len(extra_cols) > 0:
-        warnings.append(_('Sheet "%s" has unrecognized columns. '
-            'Sheet will be processed but ignoring the following columns: %s')
-            % (sheet.worksheet.title, ", ".join(extra_cols)))
+        warnings.append(_('Sheet "{sheet}" has unrecognized columns. Sheet will be processed but will ignore the '
+            'following columns: {columns}').format(sheet=sheet.worksheet.title, columns=", ".join(extra_cols)))
 
     return warnings
 
@@ -270,11 +331,7 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
             # and in the "name / menu media" row in single-sheet translation files.
             unique_id = row.get('unique_id')
 
-            if unique_id and sheet_name not in self.sheet_name_to_unique_id:
-                # If we have a value for unique_id, save it in self.sheet_name_to_unique_id so we can look it up
-                # for rows where the unique_id column is not populated.
-                self.sheet_name_to_unique_id[sheet_name] = unique_id
-            elif not unique_id and sheet_name in self.sheet_name_to_unique_id:
+            if not unique_id and sheet_name in self.sheet_name_to_unique_id:
                 # If we don't have a value for unique_id, try to fetch it from self.sheet_name_to_unique_id
                 unique_id = self.sheet_name_to_unique_id[sheet_name]
 

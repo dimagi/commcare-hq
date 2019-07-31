@@ -6,11 +6,15 @@ hqDefine('reports/v2/js/datagrid/data_models', [
     'jquery',
     'knockout',
     'underscore',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components.ko',  // pagination widget
 ], function (
     $,
     ko,
-    _
+    _,
+    kissmetrics,
+    initialPageData
 ) {
     'use strict';
 
@@ -23,6 +27,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
         self.isDataLoading = ko.observable(false);
         self.isLoadingError = ko.observable(false);
+        self.ajaxPromise = undefined;
+
+        self.numTimeouts = 0;
+        self.showTimeoutError = ko.observable(false);
 
         self.isDataLoading.subscribe(function (isLoading) {
             if (!isLoading) return;
@@ -34,7 +42,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             var $rows = $('#js-datagrid-rows'),
                 $loading = $('#js-datagrid-loading'),
                 position = $rows.position(),
-                marginTop = $rows.height() / 2 - 50; // 50 is half the line height of the loading text
+                marginTop = Math.max(0, $rows.height() / 2 - 50); // 50 is half the line height of the loading text
 
             if (position.top === 0) return;
 
@@ -43,7 +51,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 .width($rows.width())
                 .css('left', position.left + 'px')
                 .css('top', position.top + "px");
-
+            
             $loading.find('.loading-text')
                 .css('margin-top', marginTop + 'px');
         });
@@ -58,10 +66,17 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
         self.resetPagination = ko.observable(false);
 
-        self.limit.subscribe(function () {
+        self.limit.subscribe(function (newLimit) {
             // needed to stay in sync with pagination widget
             // to prevent unnecessary reloads of data
             self.hasLimitBeenModified(true);
+
+            if (self.hasInitialLoadFinished()) {
+                kissmetrics.track.event("Changed page size", {
+                    "Domain": initialPageData.get('domain'),
+                    "Page Size Selected": newLimit,
+                });
+            }
         });
 
         self.hasNoData = ko.computed(function () {
@@ -84,6 +99,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 throw new Error("Please call init() before calling loadRecords().");
             }
 
+            if (self.ajaxPromise) {
+                self.ajaxPromise.abort();
+            }
+
             if (self.isDataLoading()) return;
 
             // wait for pagination widget to kick in
@@ -92,7 +111,8 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
             self.isLoadingError(false);
             self.isDataLoading(true);
-            $.ajax({
+
+            self.ajaxPromise = $.ajax({
                 url: self.endpoint.getUrl(),
                 method: 'post',
                 dataType: 'json',
@@ -104,12 +124,33 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 },
             })
                 .done(function (data) {
-                    self.resetPagination(data.resetPagination);
+                    if (data.isTimeout && self.numTimeouts < 6) {
+                        self.numTimeouts ++;
+                        self.isDataLoading(false);
+                        self.ajaxPromise = undefined;
+                        self.refresh();
+                        return;
+                    }
+
+                    if (data.isTimeout) {
+                        self.showTimeoutError(true);
+                        kissmetrics.track.event("ECD Timeout Error After 5 Attempts", {
+                            "Domain": initialPageData.get('domain'),
+                        });
+                    } else {
+                        self.showTimeoutError(false);
+                        self.numTimeouts = 0;
+                    }
+
                     self.rows(data.rows);
+                    if (self.hasInitialLoadFinished()) {
+                        self.resetPagination(data.resetPagination);
+                    }
                     self.totalRecords(data.totalRecords);
 
                     if (!self.hasInitialLoadFinished()) {
                         self.hasInitialLoadFinished(true);
+                        $('#js-datagrid-initial-loading').fadeOut();
                         _.each(self.reportFilters(), function (reportFilter) {
                             reportFilter.value.subscribe(function () {
                                 self.refresh();
@@ -118,12 +159,15 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                         });
                     }
                 })
-                .fail(function () {
-                    self.rows([]);
-                    self.isLoadingError(true);
+                .fail(function (e) {
+                    if (e.statusText !== 'abort') {
+                        self.rows([]);
+                        self.isLoadingError(true);
+                    }
                 })
                 .always(function () {
                     self.isDataLoading(false);
+                    self.ajaxPromise = undefined;
                 });
         };
 

@@ -283,7 +283,10 @@ class OutboundDailyCounter(object):
 
     @property
     def current_usage(self):
-        return self.client.get(self.key) or 0
+        current_usage = self.client.get(self.key)
+        if isinstance(current_usage, bytes):
+            current_usage = int(current_usage.decode('utf-8'))
+        return current_usage or 0
 
     @property
     def daily_limit(self):

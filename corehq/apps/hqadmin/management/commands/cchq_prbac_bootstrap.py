@@ -151,7 +151,13 @@ class Command(BaseCommand):
         Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
              description='Allows domains to use zapier (zapier.com) integration'),
         Role(slug=privileges.LOGIN_AS, name='Login As for App Preview',
-                     description='Allows domains to use the login as feature of app preview')
+             description='Allows domains to use the login as feature of app preview'),
+        Role(slug=privileges.CASE_SHARING_GROUPS,
+             name='Case Sharing via Groups',
+             description='Allows turning on case sharing between members in a group.'),
+        Role(slug=privileges.CHILD_CASES,
+             name='Child Cases',
+             description='Allows for use of child cases / subcases in applications.'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -170,9 +176,13 @@ class Command(BaseCommand):
     community_plan_v0_features = [
         privileges.EXCEL_DASHBOARD,
         privileges.DAILY_SAVED_EXPORT,
+        privileges.CASE_SHARING_GROUPS,
+        privileges.CHILD_CASES,
     ]
 
     community_plan_v1_features = [
+        privileges.CASE_SHARING_GROUPS,
+        privileges.CHILD_CASES,
     ]
 
     standard_plan_features = community_plan_v0_features + [

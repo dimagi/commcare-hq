@@ -8,7 +8,7 @@ from six.moves import map
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from corehq.util.python_compatibility import soft_assert_type_text
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, \
     month_formatter
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
@@ -23,6 +23,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
         self.month_end = self.month_start + relativedelta(months=1, seconds=-1)
+        self.next_month = self.month_start + relativedelta(months=1)
         self.prev_month = self.month_start - relativedelta(months=1)
         self.month_start_6m = self.month_start - relativedelta(months=6)
         self.month_end_11yr = self.month_end - relativedelta(years=11)
@@ -45,11 +46,6 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         for query in index_queries:
             cursor.execute(query)
 
-    def weekly_aggregate(self, cursor):
-        update_queries = self.weekly_updates()
-        for query, params in update_queries:
-            cursor.execute(query, params)
-
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"), agg_level)
 
@@ -67,7 +63,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}"
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
-            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe
+            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
+            thr_distribution_image_count
         )
         (
             SELECT
@@ -81,21 +78,27 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             'no',
             5,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END,
+            thr_v2.thr_distribution_image_count
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            LEFT JOIN "{thr_v2_table}" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
+                                                thr_v2.month = %(start_date)s
+                                                )
             group by awc_location.state_id,
             awc_location.district_id,
             awc_location.block_id,
             awc_location.supervisor_id,
-            awc_location.doc_id
+            awc_location.doc_id,
+            thr_distribution_image_count
         )
         """.format(
             tablename=self.tablename,
             ucr_table=self.ucr_tablename,
             cbe_table=self._ucr_tablename('static-cbe_form'),
-            vhnd_table=self._ucr_tablename('static-vhnd_form')
+            vhnd_table=self._ucr_tablename('static-vhnd_form'),
+            thr_v2_table=AGG_THR_V2_TABLE
         ), {
             'start_date': self.month_start
         }
@@ -150,7 +153,9 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_child_health_all = ut.cases_child_health_all,
             wer_weighed = ut.wer_weighed,
             wer_eligible = ut.wer_eligible,
-            cases_person_beneficiary_v2 = ut.cases_child_health
+            cases_person_beneficiary_v2 = ut.cases_child_health,
+            wer_eligible_0_2 = ut.wer_eligible_0_2,
+            wer_weighed_0_2 = ut.wer_weighed_0_2
         FROM (
             SELECT
                 awc_id,
@@ -158,7 +163,9 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(valid_in_month) AS cases_child_health,
                 sum(valid_all_registered_in_month) AS cases_child_health_all,
                 sum(nutrition_status_weighed) AS wer_weighed,
-                sum(wer_eligible) AS wer_eligible
+                sum(wer_eligible) AS wer_eligible,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2
             FROM agg_child_health
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
         ) ut
@@ -363,14 +370,16 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(due_list_ccs) AS usage_num_due_list_ccs,
                 sum(due_list_child) AS usage_num_due_list_child_health
             FROM "{usage_table}"
-            WHERE month = %(start_date)s GROUP BY awc_id, month
+            WHERE month = %(start_date)s AND form_date >= %(start_date)s AND form_date < %(next_month)s
+            GROUP BY awc_id, month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
             usage_table=self._ucr_tablename('static-usage_forms'),
         ), {
-            'start_date': self.month_start
+            'start_date': self.month_start,
+            'next_month': self.next_month,
         }
 
         yield """
@@ -516,6 +525,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('awc_num_open',),
             ('wer_weighed',),
             ('wer_eligible',),
+            ('wer_eligible_0_2',),
+            ('wer_weighed_0_2',),
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
@@ -572,6 +583,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('num_awc_infra_last_update',),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
+            ('thr_distribution_image_count',),
             ('electricity_awc', 'COALESCE(sum(electricity_awc), 0)'),
             ('infantometer', 'COALESCE(sum(infantometer), 0)'),
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
@@ -641,70 +653,3 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             group_by=", ".join(group_by),
             child_is_test=child_location
         )
-
-    def weekly_updates(self):
-        yield """
-        UPDATE  agg_awc SET
-            usage_num_hh_reg = ut.usage_num_hh_reg,
-            is_launched = ut.is_launched,
-            num_launched_states = ut.num_launched_awcs,
-            num_launched_districts = ut.num_launched_awcs,
-            num_launched_blocks = ut.num_launched_awcs,
-            num_launched_supervisors = ut.num_launched_awcs,
-            num_launched_awcs = ut.num_launched_awcs,
-            usage_awc_num_active = ut.usage_awc_num_active
-        FROM (
-        SELECT
-            awc_id,
-            month,
-            sum(add_household) AS usage_num_hh_reg,
-            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
-            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
-            CASE WHEN (
-                sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp)
-                 + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
-            ) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
-            FROM "{usage_table}"
-            WHERE month >= %(start_date)s GROUP BY awc_id, month
-        ) ut
-        WHERE ut.month <= agg_awc.month AND ut.awc_id = agg_awc.awc_id AND agg_awc.aggregation_level=5
-        AND agg_awc.num_launched_awcs = 0 AND ut.num_launched_awcs != 0;
-        """.format(
-            usage_table=self._ucr_tablename('static-usage_forms')
-        ), {
-            'start_date': self.month_start_6m
-        }
-
-        yield """
-        UPDATE  agg_awc SET
-            usage_num_hh_reg = ut.sum_usage_num_hh_reg,
-            num_launched_states = ut.num_launched_supervisors,
-            num_launched_districts = ut.num_launched_supervisors,
-            num_launched_blocks = ut.num_launched_supervisors,
-            num_launched_supervisors = ut.num_launched_supervisors,
-            num_launched_awcs = ut.sum_num_launched_awcs,
-            usage_awc_num_active = ut.sum_usage_awc_num_active
-        FROM (
-            SELECT
-                state_id,
-                CASE WHEN GROUPING(district_id) = 1 THEN 'All' else district_id END,
-                CASE WHEN GROUPING(block_id) = 1 THEN 'All' else block_id END,
-                CASE WHEN GROUPING(supervisor_id) = 1 THEN 'All' else supervisor_id END,
-                month,
-                sum(usage_num_hh_reg) as sum_usage_num_hh_reg,
-                CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END as num_launched_supervisors,
-                sum(num_launched_awcs) as sum_num_launched_awcs,
-                sum(usage_awc_num_active) as sum_usage_awc_num_active
-            FROM agg_awc
-                WHERE aggregation_level=5 AND month>=%(start_date)
-            GROUP BY month, ROLLUP (state_id, district_id, block_id, supervisor_id)
-        ) ut
-        WHERE ut.month = agg_awc.month
-          AND ut.state_id = agg_awc.state_id
-          AND ut.district_id = agg_awc.district_id
-          AND ut.block_id = agg_awc.block_id
-          AND ut.supervisor_id = agg_awc.supervisor_id
-          AND agg_awc.aggregation_level<5
-        """, {
-            'start_date': self.month_start_6m
-        }

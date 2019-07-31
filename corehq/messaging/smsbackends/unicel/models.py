@@ -84,8 +84,9 @@ class SQLUnicelBackend(SQLSMSBackend):
             params.append((OutboundParams.MESSAGE, text_as_ascii))
         except UnicodeEncodeError:
             params.extend(UNICODE_PARAMS)
-            encoded = message.text.encode('utf_16_be').encode('hex').upper()
-            params.append((OutboundParams.MESSAGE, encoded))
+            text_as_utf_16_be = message.text.encode('utf_16_be')
+            text_as_hex = codecs.encode(text_as_utf_16_be, 'hex')
+            params.append((OutboundParams.MESSAGE, text_as_hex.upper()))
 
         data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
             timeout=settings.SMS_GATEWAY_TIMEOUT).read()

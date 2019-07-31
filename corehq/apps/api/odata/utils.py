@@ -1,12 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from collections import defaultdict
+import json
+from collections import defaultdict, namedtuple
 
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.export.dbaccessors import get_latest_case_export_schema, get_latest_form_export_schema
-from corehq.apps.export.models import CaseExportDataSchema, ExportItem, FormExportDataSchema
+from corehq.apps.export.models import CaseExportDataSchema, ExportInstance, ExportItem, FormExportDataSchema
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.utils import bucket_value
+
+
+FieldMetadata = namedtuple('FieldMetadata', ['name', 'odata_type'])
 
 
 def get_case_type_to_properties(domain):
@@ -21,8 +27,7 @@ def get_case_type_to_properties(domain):
             or CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
         )
         for export_group_schema in case_export_schema.group_schemas[0].items:
-            cleaned_case_property = export_group_schema.label.replace('_', '')
-            case_type_to_properties[case_type].append(cleaned_case_property)
+            case_type_to_properties[case_type].append(export_group_schema.label)
     return dict(case_type_to_properties)
 
 
@@ -43,11 +48,15 @@ def get_properties_by_xmlns(domain, app_id, xmlns):
     form_export_schema = get_latest_form_export_schema(
         domain, app_id, complete_xmlns
     ) or FormExportDataSchema.generate_schema_from_builds(domain, app_id, complete_xmlns)
-    export_items = [
-        item for item in form_export_schema.group_schemas[0].items
-        if isinstance(item, ExportItem)
-    ]
-    return set([get_odata_property_from_export_item(item) for item in export_items]) - {''}
+
+    if not form_export_schema.group_schemas:
+        return set()
+    else:
+        export_items = [
+            item for item in form_export_schema.group_schemas[0].items
+            if isinstance(item, ExportItem)
+        ]
+        return set([get_odata_property_from_export_item(item) for item in export_items]) - {''}
 
 
 def get_odata_property_from_export_item(export_item):
@@ -56,3 +65,58 @@ def get_odata_property_from_export_item(export_item):
 
 def format_odata_property_for_power_bi(odata_property):
     return odata_property.replace('#', '').replace('@', '').replace('.', '_').strip()
+
+
+def get_case_odata_fields_from_config(case_export_config):
+    # todo: this should eventually be handled by the data dictionary but we don't do a good
+    # job of mapping that in exports today so we don't have datatype information handy.
+    SPECIAL_TYPES = {
+        'closed': 'Edm.Boolean',
+        'modified_on': 'Edm.DateTimeOffset',
+        'date_modified': 'Edm.DateTimeOffset',
+        'server_modified_on': 'Edm.DateTimeOffset',
+        'opened_on': 'Edm.DateTimeOffset',
+    }
+    return _get_odata_fields_from_columns(case_export_config, SPECIAL_TYPES)
+
+
+def get_form_odata_fields_from_config(form_export_config):
+    SPECIAL_TYPES = {
+        'received_on': 'Edm.DateTimeOffset',
+        'form.meta.timeStart': 'Edm.DateTimeOffset',
+        'form.meta.timeEnd': 'Edm.DateTimeOffset',
+    }
+    return _get_odata_fields_from_columns(form_export_config, SPECIAL_TYPES)
+
+
+def _get_odata_fields_from_columns(export_config, special_types):
+    def _get_dot_path(export_column):
+        if export_column and export_column.item and export_column.item.path:
+            return '.'.join(subpath.name for subpath in export_column.item.path)
+        return None
+
+    return [FieldMetadata(column.label, special_types.get(_get_dot_path(column), 'Edm.String'))
+            for column in export_config.tables[0].selected_columns]
+
+
+def record_feed_access_in_datadog(request, config_id, duration, response):
+    config = ExportInstance.get(config_id)
+    username = request.couch_user.username
+    json_response = json.loads(response.content.decode('utf-8'))
+    rows = json_response['value']
+    row_count = len(rows)
+    try:
+        column_count = len(rows[0])
+    except IndexError:
+        column_count = 0
+    datadog_counter('commcare.odata_feed.test_v3', tags=[
+        'domain:{}'.format(request.domain),
+        'feed_id:{}'.format(config_id),
+        'feed_type:{}'.format(config.type),
+        'username:{}'.format(username),
+        'row_count:{}'.format(row_count),
+        'column_count:{}'.format(column_count),
+        'size:{}'.format(len(response.content)),
+        'duration:{}'.format(duration),
+        'duration_bucket:{}'.format(bucket_value(duration, (1, 5, 20, 60, 120, 300, 600), 's')),
+    ])

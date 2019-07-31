@@ -36,7 +36,7 @@
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "ucr_icds-cas_static-usage_forms_92fbe2aa"
-            WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
+            WHERE inserted_at >= %(last_sync)s AND form_date > %(six_months_ago)s AND form_date <= %(now)s
             WINDOW forms AS (
               PARTITION BY awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -47,4 +47,4 @@
             ) ut
             WHERE agg_table.awc_id = ut.awc_id
         
-{"last_sync": "2019-01-05T00:00:00", "now": "2019-01-11T00:00:00"}
+{"last_sync": "2019-01-05T00:00:00", "now": "2019-01-11T00:00:00", "six_months_ago": "2018-07-11T00:00:00"}

@@ -11,6 +11,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission)
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.domain.models import Domain
+from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.decorators import serial_task
 from datetime import datetime, timedelta
 
@@ -67,7 +68,7 @@ def run_case_update_rules(now=None):
                .distinct()
                .order_by('domain'))
     for domain in domains:
-        if not any_migrations_in_progress(domain):
+        if not any_migrations_in_progress(domain) and not DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK.enabled(domain):
             run_case_update_rules_for_domain.delay(domain, now)
 
 
@@ -137,9 +138,7 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
 
     for case_type, rules in six.iteritems(rules_by_case_type):
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date, db=db))
-
-        for case in CaseAccessors(domain).iter_cases(case_ids):
+        for case in AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db):
             migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
                 last_migration_check_time)
 

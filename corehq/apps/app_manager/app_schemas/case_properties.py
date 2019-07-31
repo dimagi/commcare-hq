@@ -8,7 +8,7 @@ import logging
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_case_sharing_apps_in_domain
-from corehq.apps.app_manager.util import is_usercase_in_use
+from corehq.apps.app_manager.util import is_remote_app, is_usercase_in_use
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
@@ -21,7 +21,7 @@ def _get_forms(app):
     """
     Return list of forms in the app
     """
-    if app.doc_type == 'RemoteApp':
+    if is_remote_app(app):
         return []
     forms = []
     for module in app.get_modules():

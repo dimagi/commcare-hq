@@ -49,14 +49,11 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
-  #- nh/cdc/one_domain  # Norman March 26
-  - sr-ucr-mirror # Sravan May 1
   - fr/case-templates      # FR May 15
-  - form-odata-2.1  # Nick P May 21
-  - web-user-reports-project-access  # Gabriella May 13
-  - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
-  - rn_fix_assign_case_regression # Rohit June 6
-  - jls/ko-create-mobile-worker # Jenny June 9
-  - es/odata-exports  # Ethan June 11
+  #- jls/linked-app-multiple-masters # Jenny June 18
+  - rn_only_select_app_type_when_no_advanced # Rohit June 27
+  - mk/skip-files-build # MK July 6
+  - mk/use-ids-to-validate-translations # July 19
+  - revert-24882-jls/compress-mobile-workers-js # Jenny July 24
+  - jls/resource-versions # Jenny July 24
 submodules: {}

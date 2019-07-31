@@ -51,13 +51,35 @@ TAG_SOLUTIONS = Tag(
     description="These features are only available for our services projects. This may affect support and "
     "pricing when the project is transitioned to a subscription."
 )
+TAG_SOLUTIONS_OPEN = Tag(
+    name='Solutions - Open Use',
+    css_class='info',
+    description="These features are only available for our services projects. This may affect support and "
+    "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "
+    "enabled by GS."
+)
+TAG_SOLUTIONS_CONDITIONAL = Tag(
+    name='Solutions - Conditional Use',
+    css_class='info',
+    description="These features are only available for our services projects. This may affect support and "
+    "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "
+    "complicated and should be enabled by GS only after ensuring your partners have the proper training materials."
+)
+TAG_SOLUTIONS_LIMITED = Tag(
+    name='Solutions - Limited Use',
+    css_class='info',
+    description="These features are only available for our services projects. This may affect support and "
+    "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
+    "enabled by GS before emailing solutions@dimagi.com and requesting the feature."
+)
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
     css_class='default',
     description="These are tools for our engineering team to use to manage the product",
 )
 # Order roughly corresponds to how much we want you to use it
-ALL_TAGS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
+ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
+ALL_TAGS = [TAG_SOLUTIONS_OPEN, TAG_SOLUTIONS_CONDITIONAL, TAG_SOLUTIONS_LIMITED] + ALL_TAG_GROUPS
 
 
 class StaticToggle(object):
@@ -409,7 +431,7 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description="Advanced Modules allow you to autoload and manage multiple case types, "
                 "but may behave in unexpected ways.",
@@ -419,7 +441,7 @@ APP_BUILDER_ADVANCED = StaticToggle(
 APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'shadow-app-builder',
     'Shadow Modules',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
@@ -427,7 +449,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Allow custom XML to define case lists (ex. for case tiles)',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
 )
@@ -435,7 +457,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
     'case_list_custom_variables',
     'Show text area for entering custom variables',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Defines custom variables that can be used in case list or detail calculations',
 )
@@ -450,14 +472,14 @@ CASE_LIST_TILE = StaticToggle(
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'show_persist_case_context_setting',
     'Allow toggling the persistent case context tile',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
 )
 
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the caselist',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -471,7 +493,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -492,7 +514,7 @@ COPY_FORM_TO_APP = StaticToggle(
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'Offer hosting and sharing data files for downloading from a secure dropzone',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/ccinternal/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -500,7 +522,7 @@ DATA_FILE_DOWNLOAD = StaticToggle(
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -508,14 +530,14 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
 DHIS2_INTEGRATION = StaticToggle(
     'dhis2_integration',
     'DHIS2 Integration',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/RD/Graphing+in+HQ',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -553,7 +575,7 @@ VISIT_SCHEDULER = StaticToggle(
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
@@ -633,7 +655,7 @@ ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -652,7 +674,7 @@ def _enable_search_index(domain, enabled):
 CASE_LIST_EXPLORER = StaticToggle(
     'case_list_explorer',
     'Show the case list explorer report',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_enable_search_index,
 )
@@ -661,15 +683,27 @@ EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev). Please make sure the project '
     'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.',
+    'the Case List Explorer toggle or doing a manual migration.\n\n'
+    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
+    'This will be deprecated once the Feature Preview is in full swing.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
-    'Domains that have undergone migration for Explore Case Data, but are not '
-    'yet ready to see the full report',
+    'Domains that have undergone migration for Explore Case Data and have a '
+    'CaseSearch elasticsearch index created.\n\n'
+    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
+    'ecd_enterprise_domains',
+    'Enterprise Domains that are eligible to view the Explore Case Data '
+    'Feature Preview. By default, this feature will only be available for '
+    'domains that are Advanced or Pro and have undergone the ECD migration.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -737,7 +771,7 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
 LOCATION_TYPE_STOCK_RATES = StaticToggle(
     'location_type_stock_rates',
     "Specify stock rates per location type.",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -752,7 +786,7 @@ TRANSFER_DOMAIN = StaticToggle(
 FORM_LINK_WORKFLOW = StaticToggle(
     'form_link_workflow',
     'Form linking workflow available on forms',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -762,7 +796,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
     help_link='https://confluence.dimagi.com/display/ccinternal/Save+to+Case+Feature+Flag',
@@ -771,7 +805,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
 VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description='Allows printing from CommCare on the device',
     help_link='https://confluence.dimagi.com/display/ccinternal/Printing+from+a+form+in+CommCare+Android',
@@ -780,7 +814,7 @@ VELLUM_PRINTING = StaticToggle(
 VELLUM_DATA_IN_SETVALUE = StaticToggle(
     'allow_data_reference_in_setvalue',
     "Allow data references in a setvalue",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     description="This allows referencing other questions in the form in a setvalue. "
                 "This may still cause issues if the other questions have not been calculated yet",
@@ -797,7 +831,7 @@ CACHE_AND_INDEX = StaticToggle(
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
@@ -813,7 +847,7 @@ WEBAPPS_CASE_MIGRATION = StaticToggle(
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
@@ -822,7 +856,7 @@ MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
      'through the app builder'),
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )
@@ -879,7 +913,7 @@ def _commtrackify(domain_name, toggle_is_enabled):
 COMMTRACK = StaticToggle(
     'commtrack',
     "CommCare Supply",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     description=(
         '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
@@ -916,7 +950,7 @@ CUSTOM_INSTANCES = StaticToggle(
 CUSTOM_ASSERTIONS = StaticToggle(
     'custom_assertions',
     'Inject custom assertions into the suite',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     description=(
         'Enables the insertion of custom assertions into the suite file. '
     ),
@@ -927,7 +961,7 @@ CUSTOM_ASSERTIONS = StaticToggle(
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
@@ -972,7 +1006,7 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1011,18 +1045,19 @@ SUPPORT = StaticToggle(
 
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
-    'Basic modules can be child modules',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN]
+    'Basic modules can be sub-menus',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Sub-menus',
 )
 
 LEGACY_CHILD_MODULES = StaticToggle(
     'legacy_child_modules',
-    'Legacy, non-nested child modules',
+    'Legacy, non-nested sub-menus',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
-        "Child Menus are now displayed nested under their parent menu. Some "
+        "Sub-menus are now displayed nested under their parent menu. Some "
         "apps built before this change will require that their modules be "
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
@@ -1068,7 +1103,7 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description=("This flag makes failed messages appear in the Message Log "
                  "Report, and adds Status and Event columns"),
@@ -1096,18 +1131,10 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
-BULK_CONDITIONAL_ALERTS = StaticToggle(
-    'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts', # noqa
-)
-
 COPY_CONDITIONAL_ALERTS = StaticToggle(
     'copy_conditional_alerts',
     'Allow copying conditional alerts to another project (or within the same project).',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_USER],
 )
 
@@ -1165,7 +1192,7 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1197,24 +1224,16 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
 MOBILE_USER_DEMO_MODE = StaticToggle(
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-
-EXPORT_ZIPPED_APPS = StaticToggle(
-    'export-zipped-apps',
-    'Export+Import Zipped Applications',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
 )
 
 
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_USER]
 )
 
@@ -1250,7 +1269,7 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
 CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for Web Apps instead of latest published',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -1296,7 +1315,7 @@ DATA_MIGRATION = StaticToggle(
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
     'Make the Worker Activity Report use the Groups or Users or Locations filter',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
         "This flag allows you filter the users to display in the same way as the "
@@ -1324,7 +1343,7 @@ ICDS = StaticToggle(
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Project level data dictionary of cases',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
 )
@@ -1359,21 +1378,21 @@ LOCATION_SAFETY_EXEMPTION = StaticToggle(
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'include_metadata_in_ucr_excel_exports',
     'Include metadata in UCR excel exports',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
@@ -1391,7 +1410,7 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1419,15 +1438,14 @@ PUBLISH_CUSTOM_REPORTS = StaticToggle(
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
 PHONE_HEARTBEAT = StaticToggle(
     'phone_apk_heartbeat',
-    "Ability to configure a mobile feature to prompt "
-    "users to update to latest CommCare app and apk",
-    TAG_SOLUTIONS,
+    "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1458,15 +1476,14 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
 ENABLE_ALL_ADD_ONS = StaticToggle(
     'enable_all_add_ons',
     'Enable all app manager add-ons',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on Role and username "
-    "when doing bulk download",
-    TAG_SOLUTIONS,
+    "Ability to filter mobile workers based on Role and username when doing bulk download",
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1479,9 +1496,13 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
 
 REGEX_FIELD_VALIDATION = StaticToggle(
     'regex_field_validation',
-    'Enable regex validation for custom data fields',
-    TAG_SOLUTIONS,
+    'Regular Expression Validation for Custom Data Fields',
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
 REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
@@ -1539,7 +1560,7 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking project spaces (successor to linked apps)',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
@@ -1580,7 +1601,7 @@ TRAINING_MODULE = StaticToggle(
 EXPORT_MULTISORT = StaticToggle(
     'export_multisort',
     'Sort multiple rows in exports at once.',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1588,7 +1609,7 @@ EXPORT_MULTISORT = StaticToggle(
 EXPORT_OWNERSHIP = StaticToggle(
     'export_ownership',
     'Allow exports to have ownership.',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1621,7 +1642,7 @@ AGGREGATE_UCRS = StaticToggle(
 SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     'show_raw_data_sources_in_report_builder',
     'Allow building report builder reports directly from raw UCR Data Sources',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_CONDITIONAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1638,6 +1659,15 @@ RELATED_LOCATIONS = StaticToggle(
 ICDS_DISHA_API = StaticToggle(
     'icds_disha_access',
     'ICDS: Access DISHA API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'india'},
+)
+
+
+ICDS_NIC_INDICATOR_API = StaticToggle(
+    'icds_nic_indicator_acess',
+    'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'icds-new', 'india'},
@@ -1703,10 +1733,18 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 )
 
 
+LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
+    'location_safe_case_imports',
+    'Allow location-restricted users to import cases owned at their location or below',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -1715,7 +1753,7 @@ ODATA = StaticToggle(
     'odata',
     'Enable Odata feed.',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 
@@ -1752,7 +1790,7 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
-    'Allow project to configure ccz hosting',
+    'Allow project to manage ccz hosting',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
@@ -1789,13 +1827,20 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
     'Enables location columns to app status report',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
-MPR_ASR_CONDITIONAL_AGG = StaticToggle(
+MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     'mpr_asr_conditional_agg',
     'Improved MPR ASR by doing aggregation at selected level',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
 
+DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
+    'disable_case_update_rule_task',
+    'Disable the `run_case_update_rules` periodic task '
+    'while investigating database performance issues.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

@@ -3,11 +3,13 @@ hqDefine('dhis2/js/dhis2_map_settings', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
+    'hqwebapp/js/base_ace',
 ], function (
     $,
     ko,
     initialPageData,
-    alertUser
+    alertUser,
+    baseAce
 ) {
     var dataValueMap = function (properties) {
         var self = {};
@@ -19,7 +21,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
 
         self.errors = [];
 
-        self.serialize = function () {
+        self.toJSON = function () {
             return {
                 "column": self.ucrColumn(),
                 "data_element_id": self.dataElementId(),
@@ -74,12 +76,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
             self.dataValueMaps.remove(dataValueMap);
         };
 
-        self.serialize = function () {
-            var dataValueMaps = [];
-            for (var i = 0; i < self.dataValueMaps().length; i++) {
-                var dataValueMap = self.dataValueMaps()[i];
-                dataValueMaps.push(dataValueMap.serialize());
-            }
+        self.toJSON = function () {
             return {
                 "description": self.description(),
                 "ucr_id": self.ucrId(),
@@ -92,14 +89,31 @@ hqDefine('dhis2/js/dhis2_map_settings', [
                 "period_column": self.periodColumn(),
                 "attribute_option_combo_id": self.attributeOptionComboId(),
                 "complete_date": self.completeDate(),
-                "datavalue_maps": dataValueMaps,
+                "datavalue_maps": self.dataValueMaps(),
             };
         };
 
         return self;
     };
 
-    var dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
+    var jsonDataSetMap = function (data) {
+        var self = {};
+
+        self.dataSetMap = ko.observable(JSON.stringify(data, null, 2));
+
+        self.init = function () {
+            // So that jsonDataSetMap object ducktypes dhis2MapSettings.dataSetMap object
+        };
+
+        self.toJSON = function () {
+            return JSON.parse(self.dataSetMap());
+        };
+
+        return self;
+    };
+
+
+    var dhis2MapSettings = function (dataSetMaps, sendDataUrl, isJsonUi) {
         var self = {};
 
         self.frequencyOptions = [
@@ -111,7 +125,8 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         self.init = function () {
             if (dataSetMaps.length > 0) {
                 for (var i = 0; i < dataSetMaps.length; i++) {
-                    var map = dataSetMap(dataSetMaps[i]);
+                    var data = dataSetMaps[i],
+                        map = isJsonUi ? jsonDataSetMap(data) : dataSetMap(data);
                     map.init();
                     self.dataSetMaps.push(map);
                 }
@@ -121,7 +136,14 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         };
 
         self.addDataSetMap = function () {
-            self.dataSetMaps.push(dataSetMap({}));
+            var map = isJsonUi ? jsonDataSetMap('{}') : dataSetMap({});
+            self.dataSetMaps.push(map);
+        };
+
+        self.initDataSetMapTemplate = function (elements) {
+            _.each(elements, function (element) {
+                _.each($(element).find('.jsonwidget'), baseAce.initObservableJsonWidget);
+            });
         };
 
         self.removeDataSetMap = function (dataSetMap) {
@@ -129,14 +151,9 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         };
 
         self.submit = function (form) {
-            var dataSetMaps = [];
-            for (var i = 0; i < self.dataSetMaps().length; i++) {
-                var dataSetMap = self.dataSetMaps()[i];
-                dataSetMaps.push(dataSetMap.serialize());
-            }
             $.post(
                 form.action,
-                {'dataset_maps': JSON.stringify(dataSetMaps)},
+                {'dataset_maps': JSON.stringify(self.dataSetMaps())},
                 function (data) { alertUser.alert_user(data['success'], 'success', true); }
             ).fail(function () { alertUser.alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
@@ -153,7 +170,11 @@ hqDefine('dhis2/js/dhis2_map_settings', [
     };
 
     $(function () {
-        var viewModel = dhis2MapSettings(initialPageData.get('dataset_maps'), initialPageData.get('send_data_url'));
+        var viewModel = dhis2MapSettings(
+            initialPageData.get('dataset_maps'),
+            initialPageData.get('send_data_url'),
+            initialPageData.get('is_json_ui')
+        );
         viewModel.init();
         $('#dataset-maps').koApplyBindings(viewModel);
     });

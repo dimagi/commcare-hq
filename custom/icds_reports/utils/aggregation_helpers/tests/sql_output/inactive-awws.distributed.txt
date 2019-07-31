@@ -28,7 +28,7 @@
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "ucr_icds-cas_static-usage_forms_92fbe2aa"
-            WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
+            WHERE inserted_at >= %(last_sync)s AND month > %(six_months_ago)s AND form_date <= %(now)s
             WINDOW forms AS (
               PARTITION BY supervisor_id, awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -39,7 +39,7 @@
                 last_submission = GREATEST(agg_table.last_submission, ut.last_submission)
             FROM (
               SELECT
-                loc.awc_id as awc_id,
+                loc.doc_id as awc_id,
                 ucr.first_submission as first_submission,
                 ucr.last_submission as last_submission
               FROM "tmp_usage" ucr
@@ -49,4 +49,4 @@
             WHERE agg_table.awc_id = ut.awc_id;
             DROP TABLE "tmp_usage";
         
-{"last_sync": "2019-01-05T00:00:00", "now": "2019-01-11T00:00:00"}
+{"last_sync": "2019-01-05T00:00:00", "now": "2019-01-11T00:00:00", "six_months_ago": "2018-07-11T00:00:00"}

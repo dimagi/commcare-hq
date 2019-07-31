@@ -7,19 +7,37 @@ hqDefine('reports/v2/js/datagrid/columns', [
     'knockout',
     'underscore',
     'reports/v2/js/datagrid/column_filters',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
-    columnFilters
+    columnFilters,
+    kissmetrics,
+    initialPageData
 ) {
     'use strict';
 
     var columnModel = function (data) {
         var self = {};
 
-        self.title = ko.observable(data.title);
         self.name = ko.observable(data.name);
+        self.titlePlaceholder = ko.computed(function () {
+            try {
+                return _.map(self.name().replace('@', '').split('_'), function (name) {
+                    return name.charAt(0).toUpperCase() + name.substring(1).toLowerCase();
+                }).join(" ");
+            } catch (e) {
+                return gettext("Column Title");
+            }
+        });
+        self.title = ko.observable(data.title);
+
+        self.displayTitle = ko.computed(function () {
+            return self.title() || self.titlePlaceholder();
+        });
+
         self.width = ko.observable(data.width || 200);
         self.sort = ko.observable(data.sort);
 
@@ -44,7 +62,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         });
 
         self.showAddExpression = ko.computed(function () {
-            return self.appliedFilters().length === 1;
+            return self.appliedFilters().length > 0 && self.appliedFilters().length < 5;
         });
 
         self.unwrap = function () {
@@ -96,6 +114,11 @@ hqDefine('reports/v2/js/datagrid/columns', [
             if (!self.column().name()) return false;
             if (!_.isFunction(self.hideColumnFilterCondition)) return true;
             return !self.hideColumnFilterCondition(self.column());
+        });
+
+        self.showColumnFilterPlaceholder = ko.computed(function () {
+            if (!self.column()) return false;
+            return self.column().name() === undefined || self.column().name().length === 0;
         });
 
         self.showDelete = ko.computed(function () {
@@ -170,6 +193,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
                 self.isNew(true);
                 self.hasFilterUpdate(false);
             }
+
+            kissmetrics.track.event("Clicked Add Column", {
+                "Domain": initialPageData.get('domain'),
+            });
         };
 
         self.set = function (existingColumn) {
@@ -224,7 +251,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
 
         self.isColumnValid = ko.computed(function () {
             if (self.column()) {
-                return !!self.column().title() && !!self.column().name();
+                return !!self.column().name();
             }
             return false;
         });

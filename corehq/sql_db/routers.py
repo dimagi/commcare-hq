@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
 import threading
 
 from django.conf import settings
@@ -38,8 +39,8 @@ class MultiDBRouter(object):
     def db_for_write(self, model, **hints):
         return db_for_read_write(model, write=True)
 
-    def allow_migrate(self, db, app_label, model=None, **hints):
-        return allow_migrate(db, app_label)
+    def allow_migrate(self, db, app_label, model=None, model_name=None, **hints):
+        return allow_migrate(db, app_label, model_name)
 
     def allow_relation(self, obj1, obj2, **hints):
         from corehq.sql_db.models import PartitionedModel
@@ -56,7 +57,7 @@ class MultiDBRouter(object):
         return False
 
 
-def allow_migrate(db, app_label):
+def allow_migrate(db, app_label, model_name=None):
     """
     Return ``True`` if a app's migrations should be applied to the specified database otherwise
     return ``False``.
@@ -83,6 +84,8 @@ def allow_migrate(db, app_label):
         return db == partition_config.get_proxy_db()
     elif app_label == BLOB_DB_APP and db == 'default':
         return True
+    elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
+        return False
     elif app_label in (FORM_PROCESSOR_APP, SCHEDULING_PARTITIONED_APP, BLOB_DB_APP):
         return (
             db == partition_config.get_proxy_db() or
@@ -141,8 +144,12 @@ def get_cursor(model):
     return connections[db].cursor()
 
 
-def force_citus_engine():
-    _thread_local.force_citus = True
+@contextmanager
+def force_citus_engine(force=False):
+    if force:
+        _thread_local.force_citus = True
+    yield
+    _thread_local.force_citus = False
 
 
 def forced_citus():
