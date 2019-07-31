@@ -40,6 +40,8 @@ from six.moves import filter
 
 class LocationSelectWidget(forms.Widget):
     def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
+        from corehq.apps.locations.views import LocationsSearchView
+
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
@@ -47,7 +49,7 @@ class LocationSelectWidget(forms.Widget):
         if query_url:
             self.query_url = query_url
         else:
-            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+            self.query_url = reverse(LocationsSearchView.urlname, args=[self.domain])
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):

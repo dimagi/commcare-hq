@@ -334,7 +334,7 @@ hqDefine("users/js/mobile_workers", function () {
                     url: options.location_url,
                     data: function (params) {
                         return {
-                            name: params.term,
+                            q: params.term,
                         };
                     },
                     dataType: 'json',
@@ -342,8 +342,8 @@ hqDefine("users/js/mobile_workers", function () {
                         return {
                             results: _.map(data.results, function (r) {
                                 return {
-                                    text: r.name,
-                                    id: r.id,
+                                    text: r.text,
+                                    id: r.id.substr(3), //ids returned in form l__abcdef123
                                 };
                             }),
                         };
@@ -422,7 +422,7 @@ hqDefine("users/js/mobile_workers", function () {
             custom_field_slugs: initialPageData.get('custom_field_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
             implement_password_obfuscation: initialPageData.get('implement_password_obfuscation'),
-            location_url: initialPageData.reverse('child_locations_for_select2'),
+            location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
         });
