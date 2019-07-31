@@ -193,6 +193,7 @@ if __name__ == "__main__":
         GeventCommand('populate_form_date_modified'),
         GeventCommand('migrate_domain_from_couch_to_sql', http_adapter_pool_size=32),
         GeventCommand('migrate_multiple_domains_from_couch_to_sql', http_adapter_pool_size=32),
+        GeventCommand('run_aggregation_query'),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
         from gevent.monkey import patch_all; patch_all(subprocess=True)

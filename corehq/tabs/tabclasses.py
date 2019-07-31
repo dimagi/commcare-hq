@@ -826,13 +826,9 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "default_app"
+    view = "default_new_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
-
-    @property
-    def view(self):
-        return "default_new_app"
 
     @property
     def title(self):
