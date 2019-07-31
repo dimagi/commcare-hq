@@ -115,7 +115,6 @@ class TestExportData(TestCase):
             ]
         )
 
-
     def test_children_export_headers_beta(self):
         data = ChildrenExport(
             config={
@@ -293,7 +292,6 @@ class TestExportData(TestCase):
             ]
         )
 
-
     def test_children_export_child_two_beta(self):
         data = ChildrenExport(
             config={
@@ -362,7 +360,6 @@ class TestExportData(TestCase):
                 "47.89 %"
             ]
         )
-
 
     def test_children_export_child_three_beta(self):
         data = ChildrenExport(
@@ -604,7 +601,6 @@ class TestExportData(TestCase):
             ]
         )
 
-
     def test_children_export_child_seven_beta(self):
         data = ChildrenExport(
             config={
@@ -742,7 +738,6 @@ class TestExportData(TestCase):
             ]
         )
 
-
     def test_children_export_child_nine_beta(self):
         data = ChildrenExport(
             config={
@@ -810,7 +805,6 @@ class TestExportData(TestCase):
                 "47.57 %"
             ]
         )
-
 
     def test_children_export_child_ten_beta(self):
         data = ChildrenExport(
