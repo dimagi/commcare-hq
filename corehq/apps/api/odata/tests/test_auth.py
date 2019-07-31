@@ -19,7 +19,7 @@ from .utils import (
 
 
 @mock.patch('corehq.apps.api.odata.views.get_document_or_404', new=mock.MagicMock)
-@flag_enabled('ODATA')
+@flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True)
 class TestOdataAuth(TestCase, CaseOdataTestMixin):
 
     view_urlname = ODataCaseMetadataView.urlname  # Testing auth only, any view will do
@@ -83,7 +83,7 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
 
     def test_missing_feature_flag(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_disabled('ODATA'):
+        with flag_disabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
