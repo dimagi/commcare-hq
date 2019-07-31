@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import base64
 
@@ -8,6 +7,8 @@ from django.urls import reverse
 
 from elasticsearch.exceptions import ConnectionError
 from tastypie.models import ApiKey
+
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -23,7 +24,6 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class OdataTestMixin(object):

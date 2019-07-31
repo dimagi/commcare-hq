@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import json
 
 from django.test import TestCase
 from django.urls import reverse
-
-from mock import patch
 
 from corehq.apps.api.odata.tests.utils import (
     CaseOdataTestMixin,
@@ -18,7 +15,6 @@ from corehq.apps.api.odata.views import (
     ODataFormServiceView,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.util.test_utils import flag_enabled
 
 

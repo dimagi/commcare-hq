@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import json
 
@@ -14,12 +13,13 @@ from corehq.apps.api.odata.tests.utils import (
     setup_es_case_index,
     setup_es_form_index,
 )
-from corehq.apps.api.resources.v0_5 import (
-    ODataCaseResource,
-    ODataFormResource,
-)
+from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.models import CaseExportInstance, FormExportInstance, TableConfiguration
+from corehq.apps.export.models import (
+    CaseExportInstance,
+    FormExportInstance,
+    TableConfiguration,
+)
 from corehq.util.test_utils import flag_enabled
 
 
