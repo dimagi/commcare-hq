@@ -342,7 +342,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'hsph',
     'pact',
 
     'custom.reports.mc',
@@ -1340,7 +1339,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'hsph',
     'pact',
     'accounting',
     'succeed',
@@ -1914,9 +1912,6 @@ COUCH_CACHE_BACKENDS = [
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
-    'hsph',
-    'hsph-dev',
-    'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'crs-remind',
     'succeed',
@@ -1975,8 +1970,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'hsph-dev': 'hsph',
-    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
     'pact': 'pact',
 
