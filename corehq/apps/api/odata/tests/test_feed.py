@@ -9,12 +9,10 @@ from corehq.apps.api.odata.tests.utils import (
     OdataTestMixin,
     ensure_es_case_index_deleted,
     ensure_es_form_index_deleted,
-    generate_api_key_from_web_user,
     setup_es_case_index,
     setup_es_form_index,
 )
 from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import (
     CaseExportInstance,
     FormExportInstance,
@@ -38,49 +36,6 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestODataCaseFeed, cls).tearDownClass()
-
-    def test_no_credentials(self):
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_password(self):
-        wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_domain(self):
-        other_domain = Domain(name='other_domain')
-        other_domain.save()
-        self.addCleanup(other_domain.delete)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(
-                self._odata_feed_url_by_domain(other_domain.name),
-                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-            )
-        self.assertEqual(response.status_code, 401)
-
-    def test_user_permissions(self):
-        self.web_user.set_role(self.domain.name, 'none')
-        self.web_user.save()
-        self.addCleanup(self._setup_user_permissions)
-
-        export_config = CaseExportInstance(
-            _id='config_id',
-            tables=[TableConfiguration(columns=[])],
-            case_type='my_case_type',
-            domain=self.domain.name,
-        )
-        export_config.save()
-        self.addCleanup(export_config.delete)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 403)
 
     def test_config_in_different_domain(self):
         export_config_in_other_domain = CaseExportInstance(
@@ -107,11 +62,6 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
                 self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
             )
-        self.assertEqual(response.status_code, 404)
-
-    def test_missing_feature_flag(self):
-        correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
@@ -159,23 +109,6 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         )
 
 
-class TestODataCaseFeedUsingApiKey(TestODataCaseFeed):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestODataCaseFeedUsingApiKey, cls).setUpClass()
-        cls.api_key = generate_api_key_from_web_user(cls.web_user)
-
-    @classmethod
-    def _get_correct_credentials(cls):
-        return cls._get_basic_credentials(cls.web_user.username, cls.api_key.key)
-
-
-@flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestODataCaseFeedWithTwoFactorUsingApiKey(TestODataCaseFeedUsingApiKey):
-    pass
-
-
 class TestODataFormFeed(TestCase, OdataTestMixin):
 
     @classmethod
@@ -191,48 +124,6 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         cls._teardownclass()
         cls._teardown_accounting()
         super(TestODataFormFeed, cls).tearDownClass()
-
-    def test_no_credentials(self):
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_password(self):
-        wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_domain(self):
-        other_domain = Domain(name='other_domain')
-        other_domain.save()
-        self.addCleanup(other_domain.delete)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(
-                self._odata_feed_url_by_domain(other_domain.name),
-                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-            )
-        self.assertEqual(response.status_code, 401)
-
-    def test_user_permissions(self):
-        self.web_user.set_role(self.domain.name, 'none')
-        self.web_user.save()
-        self.addCleanup(self._setup_user_permissions)
-
-        export_config = FormExportInstance(
-            _id='config_id',
-            tables=[TableConfiguration(columns=[])],
-            domain=self.domain.name,
-        )
-        export_config.save()
-        self.addCleanup(export_config.delete)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 403)
 
     def test_config_in_different_domain(self):
         export_config_in_other_domain = FormExportInstance(
@@ -259,11 +150,6 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
                 self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
                 HTTP_AUTHORIZATION='Basic ' + correct_credentials,
             )
-        self.assertEqual(response.status_code, 404)
-
-    def test_missing_feature_flag(self):
-        correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
@@ -309,20 +195,3 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
                 'pk': config_id + '/feed',
             }
         )
-
-
-class TestODataFormFeedUsingApiKey(TestODataFormFeed):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestODataFormFeedUsingApiKey, cls).setUpClass()
-        cls.api_key = generate_api_key_from_web_user(cls.web_user)
-
-    @classmethod
-    def _get_correct_credentials(cls):
-        return cls._get_basic_credentials(cls.web_user.username, cls.api_key.key)
-
-
-@flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestODataFormFeedWithTwoFactorUsingApiKey(TestODataFormFeedUsingApiKey):
-    pass

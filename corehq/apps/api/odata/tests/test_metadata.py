@@ -1,19 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.test import TestCase
-from django.urls import reverse
 
-from corehq.apps.api.odata.tests.utils import (
-    CaseOdataTestMixin,
-    FormOdataTestMixin,
-    generate_api_key_from_web_user,
-)
 from corehq.apps.api.odata.views import (
     ODataCaseMetadataView,
     ODataFormMetadataView,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import (
     CaseExportInstance,
     ExportColumn,
@@ -23,6 +16,8 @@ from corehq.apps.export.models import (
     TableConfiguration,
 )
 from corehq.util.test_utils import flag_enabled
+
+from .utils import CaseOdataTestMixin, FormOdataTestMixin
 
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
@@ -40,41 +35,6 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
     def tearDownClass(cls):
         cls._teardownclass()
         super(TestCaseMetadataDocument, cls).tearDownClass()
-
-    def test_no_credentials(self):
-        response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_password(self):
-        wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_domain(self):
-        other_domain = Domain(name='other_domain')
-        other_domain.save()
-        self.addCleanup(other_domain.delete)
-        correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'config_id': 'my_config_id'}),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_user_permissions(self):
-        self.web_user.set_role(self.domain.name, 'none')
-        self.web_user.save()
-        self.addCleanup(self._setup_user_permissions)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 403)
-
-    def test_missing_feature_flag(self):
-        correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 404)
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
@@ -128,23 +88,6 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
         )
 
 
-class TestCaseMetadataDocumentUsingApiKey(TestCaseMetadataDocument):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestCaseMetadataDocumentUsingApiKey, cls).setUpClass()
-        cls.api_key = generate_api_key_from_web_user(cls.web_user)
-
-    @classmethod
-    def _get_correct_credentials(cls):
-        return TestCaseMetadataDocument._get_basic_credentials(cls.web_user.username, cls.api_key.key)
-
-
-@flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestCaseMetadataDocumentWithTwoFactorUsingApiKey(TestCaseMetadataDocumentUsingApiKey):
-    pass
-
-
 class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
 
     view_urlname = ODataFormMetadataView.urlname
@@ -158,41 +101,6 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
     def tearDownClass(cls):
         cls._teardownclass()
         super(TestFormMetadataDocument, cls).tearDownClass()
-
-    def test_no_credentials(self):
-        response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_password(self):
-        wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_domain(self):
-        other_domain = Domain(name='other_domain')
-        other_domain.save()
-        self.addCleanup(other_domain.delete)
-        correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name, 'config_id': 'my_config_id'}),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_user_permissions(self):
-        self.web_user.set_role(self.domain.name, 'none')
-        self.web_user.save()
-        self.addCleanup(self._setup_user_permissions)
-
-        correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 403)
-
-    def test_missing_feature_flag(self):
-        correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
-        self.assertEqual(response.status_code, 404)
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
@@ -240,20 +148,3 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
             ),
             response.content
         )
-
-
-class TestFormMetadataDocumentUsingApiKey(TestFormMetadataDocument):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestFormMetadataDocumentUsingApiKey, cls).setUpClass()
-        cls.api_key = generate_api_key_from_web_user(cls.web_user)
-
-    @classmethod
-    def _get_correct_credentials(cls):
-        return cls._get_basic_credentials(cls.web_user.username, cls.api_key.key)
-
-
-@flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestFormMetadataDocumentWithTwoFactorUsingApiKey(TestFormMetadataDocumentUsingApiKey):
-    pass
