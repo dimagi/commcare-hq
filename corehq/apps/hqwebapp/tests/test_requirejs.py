@@ -37,13 +37,18 @@ class TestRequireJS(SimpleTestCase):
         cls.requirejs_files = []
 
         def _categorize_file(filename):
-            proc = subprocess.Popen(["grep", r"^\s*hqDefine", filename], stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            if out:
+            hqDefine_line = None
+            with open(filename, 'r') as f:
+                line = f.readline()
+                while line and not hqDefine_line:
+                    if re.match(r'^\s*hqDefine', line):
+                        hqDefine_line = line
+                    line = f.readline()
+            if hqDefine_line:
                 cls.hqdefine_files.append(filename)
-                proc = subprocess.Popen(["grep", r"hqDefine.*,.*\[", filename], stdout=subprocess.PIPE)
-                (out, err) = proc.communicate()
-                if out:
+                # RequireJS files list their dependencies: hqDefine("my/module.js", [...
+                # This test does depend on the dependency array starting on the same line as the hqDefine
+                if re.match(r'hqDefine.*,.*\[', hqDefine_line):
                     cls.requirejs_files.append(filename)
 
         cls._run_jobs(cls.js_files, _categorize_file)
