@@ -1973,7 +1973,6 @@ class ManualUpdateView(TemplateView):
     template_name = 'icds_reports/update_manual.html'
 
     def post(self, request, *args, **kwargs):
-        domain = self.kwargs['domain']
         data = request.FILES['dashboard_manual']
         icds_file, _ = IcdsFile.objects.get_or_create(blob_id="dashboard_manual.pdf",
                     data_type='dashboard_manual')
