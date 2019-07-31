@@ -488,7 +488,7 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
         self.assertEqual('Nao-chan', form.form_data['grandparent'][2]['parent']['child']['name'])
         self.assertEqual('2', form.form_data['body'][0]['arm'][0]['elbow'])
         self.assertEqual('5', form.form_data['body'][0]['arm'][1]['finger'])
-        self.assertEqual('1', form.form_data['body'][1]['leg'][0]['elbow'])
+        self.assertEqual('1', form.form_data['body'][1]['leg'][0]['knee'])
         self.assertEqual('10', form.form_data['body'][1]['leg'][1]['toe'])
         self.assertIn("image", form.attachments)
         self.assertEqual(form.get_attachment("image"), b"fake")
