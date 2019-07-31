@@ -1237,11 +1237,11 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
 
     primary_headers = ['Children weighed','Height measured for Children', '', 'Severely Underweight Children',
                        'Moderately Underweight Children','Children with normal weight for age (WfA)',
-                       'Severely wasted Children', 'Moderately wasted children',
+                       'Severely wasted Children(SAM)', 'Moderately wasted children(MAM)',
                        'Children with normal weight for height',
-                       'Severely stunted children','Moderately Stunted Children',
+                       'Severely stunted children', 'Moderately Stunted Children',
                        'Children with normal height for age',
-                       'Newborn with Low birth weight','Children completed immunization prescribed for 1 year',
+                       'Newborn with Low birth weight', 'Children completed immunization prescribed for 1 year',
                        'Children breastfed at the time of birth','Children exclusively breastfed',
                        'Children initiated with complementary feeding',
                        'Children initiated with complementary feeding appropriately',
@@ -1259,8 +1259,11 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
 
     # Styling initialisation
     bold_font = Font(size=14, color="FFFFFF")
+    bold_font_black = Font(size=14, color="000000")
     cell_pattern = PatternFill("solid", fgColor="B3C5E5")
     cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
+    cell_pattern_red = PatternFill("solid", fgColor="ff0000")
+    cell_pattern_yellow = PatternFill("solid", fgColor="ffff00")
     text_alignment = Alignment(horizontal="center", vertical='top', wrap_text=True)
     thin_border = Border(
         left=Side(style='thin'),
@@ -1277,9 +1280,19 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
         cell_name = get_column_letter(current_column_location)
         cell = worksheet['{}1'.format(cell_name)]
         cell.alignment = text_alignment
-        cell.font = bold_font
-        cell.fill = cell_pattern_blue
+
         cell.value = primary_header
+
+        if primary_header == 'Severely wasted Children(SAM)':
+            cell.fill = cell_pattern_red
+            cell.font = bold_font
+        elif primary_header == 'Moderately wasted children(MAM)':
+            cell.fill = cell_pattern_yellow
+            cell.font = bold_font_black
+        else:
+            cell.fill = cell_pattern_blue
+            cell.font = bold_font
+
 
         if current_column_location<=aggregation_level or current_column_location == aggregation_level + 7:
             worksheet.merge_cells('{}1:{}2'.format(get_column_letter(current_column_location),
