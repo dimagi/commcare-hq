@@ -54,7 +54,7 @@
 {% block page_breadcrumbs %}{% endblock %}
 
 {% block content %}{{ block.super }}
-  {% registerurl "default_app" domain %}
+  {% registerurl "dashboard_default" domain %}
   {% include 'app_manager/partials/preview_app.html'%}
 {% endblock %}
 

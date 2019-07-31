@@ -66,7 +66,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     page = None
     params = {}
     args = [domain]
-    view_name = 'default_app'
+    view_name = 'dashboard_default'
 
     form_view = 'form_source'
 
