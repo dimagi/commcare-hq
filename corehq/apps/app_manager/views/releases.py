@@ -283,9 +283,13 @@ def save_copy(request, domain, app_id):
     See VersionedDoc.save_copy
 
     """
+    app = get_app(domain, app_id)
+    if app.doc_type == "LinkedApplication" and not app.multimedia_pulled:
+        return JsonResponse({
+            'error': _("Multimedia yet to be pulled for the app.")
+        }, status=400)
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
-    app = get_app(domain, app_id)
     try:
         errors = app.validate_app()
     except ModuleIdMissingException:
