@@ -14,6 +14,7 @@ from django.test.client import Client
 from django.urls import reverse
 import os
 
+from corehq.blobs import get_blob_db
 from corehq.const import OPENROSA_VERSION_2, OPENROSA_VERSION_3
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
@@ -271,6 +272,20 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
         form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
         self.assertFalse(form.is_error)
         self.assertTrue(form.initial_processing_complete)
+
+    def test_submit_duplicate_blob_not_found(self):
+        # https://dimagi-dev.atlassian.net/browse/ICDS-376
+        file, res = self._submit('form_with_case.xml')
+        self.assertEqual(201, res.status_code)
+        self.assertIn("   √   ".encode('utf-8'), res.content)
+
+        form = FormAccessors(self.domain.name).get_form('ad38211be256653bceac8e2156475666')
+        form_attachment_meta = form.get_attachment_meta('form.xml')
+        blobdb = get_blob_db()
+        with patch.object(blobdb.metadb, 'delete'):
+            blobdb.delete(form_attachment_meta.key)
+
+        file, res = self._submit('form_with_case.xml')
 
 
 @contextlib.contextmanager
