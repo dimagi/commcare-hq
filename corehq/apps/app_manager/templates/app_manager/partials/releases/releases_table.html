@@ -35,13 +35,7 @@
   </p>
   <p>
     {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-      <a class="btn btn-default" data-bind="
-                attr: {href: reverse(
-                      'app_form_summary_diff',
-                      savedApps().length ? savedApps()[savedApps().length - 1].id() : null,
-                      '{{ app.id }}')
-                      },
-                visible: savedApps().length">
+      <a class="btn btn-default" data-bind="attr: {href: compareUnbuiltChangesUrl}, visible: savedApps().length">
         <i class="fa fa-exchange"></i>
         {% trans "Version Preview" %}
       </a>
