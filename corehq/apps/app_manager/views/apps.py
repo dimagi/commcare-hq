@@ -934,7 +934,8 @@ def drop_user_case(request, domain, app_id):
 def pull_master_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify_task.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
+        update_linked_app_and_notify_task.delay(domain, app_id, request.couch_user.get_id,
+                                                request.couch_user.email)
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
