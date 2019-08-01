@@ -530,6 +530,20 @@ class ParentError(Exception):
 
 
 def diff_cases(couch_cases, statedb):
+    """Diff a batch of cases
+
+    There is a small chance that two concurrent calls to this function,
+    each having copies of the same case could write conflicting diffs to
+    the state db (worst case: duplicate diffs in case db). It is even
+    more unlikely that the relevant SQL case would also be changed at
+    the same time, resulting in the outcome of the concurrent diffs to
+    be different (worst case: replace real diff with none). Luckly a
+    concurrent change to the SQL case will cause a subsequent diff to be
+    queued to happen at a later time, which will replace any conflicting
+    case diffs in the state db.
+
+    :param couch_cases: dict `{<case_id>: <case_json>, ...}`
+    """
     log.debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
     counts = defaultdict(int)
     case_ids = list(couch_cases)
@@ -538,18 +552,8 @@ def diff_cases(couch_cases, statedb):
     for sql_case in sql_cases:
         sql_case_ids.add(sql_case.case_id)
         couch_case = couch_cases[sql_case.case_id]
-        sql_case_json = sql_case.to_json()
-        diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-        diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
-        if diffs and not sql_case.is_deleted:
-            try:
-                couch_case, diffs = rebuild_couch_case_and_re_diff(
-                    couch_case, sql_case_json, statedb)
-            except Exception as err:
-                log.warning('Case {} rebuild -> {}: {}'.format(
-                    sql_case.case_id, type(err).__name__, err))
-        if diffs:
-            statedb.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
+        couch_case, diffs = diff_case(sql_case, couch_case, statedb)
+        statedb.replace_case_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
         counts[couch_case['doc_type']] += 1
 
     diff_ledgers(case_ids, statedb)
@@ -565,6 +569,20 @@ def diff_cases(couch_cases, statedb):
 
     for doc_type, count_ in six.iteritems(counts):
         statedb.increment_counter(doc_type, count_)
+
+
+def diff_case(sql_case, couch_case, statedb):
+    sql_case_json = sql_case.to_json()
+    diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
+    diffs = filter_case_diffs(couch_case, sql_case_json, diffs, statedb)
+    if diffs and not sql_case.is_deleted:
+        try:
+            couch_case, diffs = rebuild_couch_case_and_re_diff(
+                couch_case, sql_case_json, statedb)
+        except Exception as err:
+            log.warning('Case {} rebuild -> {}: {}'.format(
+                sql_case.case_id, type(err).__name__, err))
+    return couch_case, diffs
 
 
 def rebuild_couch_case_and_re_diff(couch_case, sql_case_json, statedb):

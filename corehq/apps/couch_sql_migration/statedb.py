@@ -9,10 +9,19 @@ from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime
 
-import six
-
 from memoized import memoized
-from sqlalchemy import Column, Index, Integer, String, Text, bindparam, func
+from sqlalchemy import (
+    Column,
+    Index,
+    Integer,
+    String,
+    Text,
+    and_,
+    bindparam,
+    func,
+    or_,
+)
+
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 
@@ -227,36 +236,20 @@ class StateDB(DiffDB):
                 for doc_id in doc_ids
             ])
 
-    def add_unexpected_diff(self, case_id):
-        """Add case that has been updated by a form it does not reference"""
-        with self.session() as session:
-            sql = (
-                "INSERT OR IGNORE INTO {table} (id) VALUES (:id)"
-            ).format(table=UnexpectedCaseUpdate.__tablename__)
-            session.execute(sql, {"id": case_id})
-
-    def iter_unexpected_diffs(self):
-        """Iterate over case ids with unexpected diffs
-
-        An "unexpected diff" is a case that was unexpectedly updated by
-        a form it did not know about. All such case ids having at least
-        one diff record will be yielded by this generator.
-        """
-        unex_id = UnexpectedCaseUpdate.id
-        with self.session() as session:
-            diff_ids = session.query(Diff.doc_id)
-            query = session.query(unex_id).filter(unex_id.in_(diff_ids))
-            for case_id, in iter_large(query, unex_id):
-                yield case_id
-
-    def discard_case_diffs(self, case_ids):
-        assert not isinstance(case_ids, six.text_type), repr(case_ids)
+    def replace_case_diffs(self, kind, case_id, diffs):
+        from .couchsqlmigration import CASE_DOC_TYPES
+        assert kind in CASE_DOC_TYPES, kind
         with self.session() as session:
             (
                 session.query(Diff)
-                .filter(Diff.kind == "CommCareCase", Diff.doc_id.in_(case_ids))
+                .filter(or_(
+                    and_(Diff.kind == "CommCareCase", Diff.doc_id == case_id),
+                    and_(Diff.kind == "stock state", Diff.doc_id.startswith(case_id + "/")),
+                ))
                 .delete(synchronize_session=False)
             )
+        if diffs:
+            self.add_diffs(kind, case_id, diffs)
 
     def increment_counter(self, kind, value):
         self._upsert(DocCount, DocCount.kind, kind, value, incr=True)

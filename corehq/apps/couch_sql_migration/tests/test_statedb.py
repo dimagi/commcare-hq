@@ -141,15 +141,29 @@ def test_resume_state():
             db.pop_resume_state("test", [])
 
 
-def test_unexpected_diffs():
+def test_replace_case_diffs():
+    def make_diff(id):
+        return JsonDiff("type", "path/%s" % id, "old%s" % id, "new%s" % id)
+
     with init_db() as db:
-        db.add_diffs("kind", "abc", [JsonDiff("type", "path", "old", "new")])
-        db.add_diffs("kind", "def", [JsonDiff("type", "path", "old", "new")])
-        db.add_diffs("kind", "xyz", [JsonDiff("type", "path", "old", "new")])
-        db.add_unexpected_diff("abc")
-        db.add_unexpected_diff("def")
-        db.add_unexpected_diff("abc")
-        eq(list(db.iter_unexpected_diffs()), ["abc", "def"])
+        case_id = "865413246874321"
+        # add old diffs
+        db.replace_case_diffs("CommCareCase", case_id, [make_diff(0)])
+        db.replace_case_diffs("CommCareCase", "unaffected", [make_diff(1)])
+        db.add_diffs("stock state", case_id + "/x/y", [make_diff(2)])
+        db.add_diffs("stock state", "unaffected/x/y", [make_diff(3)])
+        # add new diffs
+        db.replace_case_diffs("CommCareCase", case_id, [make_diff(4)])
+        db.add_diffs("stock state", case_id + "/y/z", [make_diff(5)])
+        eq(
+            {(d.kind, d.doc_id, d.json_diff) for d in db.get_diffs()},
+            {(kind, doc_id, make_diff(x)) for kind, doc_id, x in [
+                ("CommCareCase", "unaffected", 1),
+                ("stock state", "unaffected/x/y", 3),
+                ("CommCareCase", case_id, 4),
+                ("stock state", case_id + "/y/z", 5),
+            ]},
+        )
 
 
 def test_counters():
