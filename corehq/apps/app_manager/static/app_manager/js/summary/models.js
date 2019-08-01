@@ -83,16 +83,21 @@ hqDefine('app_manager/js/summary/models',[
             return self.isSelected() && self.matchesQuery();
         });
         self.getDiffClass = function (attribute) {
-            return self.changes[attribute] ? 'diff-' + self.changes[attribute] : '';
+            return self.changes[attribute]['type'] ? 'diff-' + self.changes[attribute]['type'] : '';
         };
         self.getOptionsDiffClass = function (option) {
-            return self.changes['options'][option] ? 'diff-' + self.changes['options'][option] : '';
+            try {
+                return 'diff-' + self.changes['options'][option]['type'];
+            } catch (e) {
+                return '';
+            }
         };
         self.getLoadSaveDiffClass = function (attribute, caseType, caseProperty) {
-            if (self.changes[attribute][caseType] && self.changes[attribute][caseType][caseProperty]) {
-                return 'diff-' + self.changes[attribute][caseType][caseProperty];
+            try {
+                return 'diff-' + self.changes[attribute][caseType][caseProperty]['type'];
+            } catch (e) {
+                return '';
             }
-            return '';
         };
 
         return self;
