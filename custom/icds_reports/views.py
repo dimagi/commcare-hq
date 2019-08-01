@@ -238,6 +238,10 @@ class DashboardView(TemplateView):
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
+
+        if kwargs['have_access_to_all_locations']:
+            kwargs['user_location_id'] = None
+
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():
