@@ -16,7 +16,7 @@ import os
 
 from corehq.blobs import get_blob_db
 from corehq.const import OPENROSA_VERSION_2, OPENROSA_VERSION_3
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.test_utils import flag_enabled, TestFileMixin
@@ -286,6 +286,16 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
             blobdb.delete(form_attachment_meta.key)
 
         file, res = self._submit('form_with_case.xml')
+        self.assertEqual(res.status_code, 201)
+        form = FormAccessors(self.domain.name).get_form('ad38211be256653bceac8e2156475666')
+        deprecated_form = FormAccessors(self.domain.name).get_form(form.deprecated_form_id)
+        self.assertTrue(deprecated_form.is_deprecated)
+
+        case = CaseAccessors(self.domain.name).get_case('ad38211be256653bceac8e2156475667')
+        transactions = case.transactions
+        self.assertEqual(2, len(transactions))
+        self.assertTrue(transactions[0].is_form_transaction)
+        self.assertTrue(transactions[1].is_case_rebuild)
 
 
 @contextlib.contextmanager

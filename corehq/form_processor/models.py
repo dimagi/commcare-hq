@@ -46,6 +46,8 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
 
@@ -489,7 +491,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         xml = self.get_xml()
         try:
             form_json = convert_xform_to_json(xml)
-        except XMLSyntaxError:
+        except (XMLSyntaxError, ValueError):
             return {}
         # we can assume all sql domains are new timezone domains
         with force_phone_timezones_should_be_processed():
@@ -553,10 +555,19 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @memoized
     def get_xml(self):
-        return self.get_attachment('form.xml')
+        try:
+            return self.get_attachment('form.xml')
+        except NotFound:
+            notify_exception(None, "Missing form XML", {
+                'form_id': self.form_id
+            })
+            return None
 
     def xml_md5(self):
-        return self.get_attachment_meta('form.xml').content_md5()
+        try:
+            return self.get_attachment_meta('form.xml').content_md5()
+        except NotFound:
+            return None
 
     def archive(self, user_id=None, trigger_signals=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
