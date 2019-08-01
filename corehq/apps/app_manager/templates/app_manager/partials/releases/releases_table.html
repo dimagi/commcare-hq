@@ -195,7 +195,13 @@
       </div><!-- .panel-body -->
       <div class="panel-footer clearfix">
         {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-          <a class="btn btn-default" data-bind="attr: { href: $parent.reverse('app_form_summary_diff', $parent.previousBuildId($index()), $data.id()) }">
+          <a class="btn btn-default" data-bind="
+                    attr: {href: $parent.reverse(
+                            'app_form_summary_diff',
+                            $parent.previousBuildId($index()),
+                            $data.id())
+                          },
+                    visible: $parent.previousBuildId($index())">
             <i class="fa fa-exchange"></i>
             {% trans "View Changes" %}
           </a>
