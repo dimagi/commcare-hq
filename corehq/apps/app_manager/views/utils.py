@@ -16,6 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
     wrap_app,
     get_apps_in_domain,
     get_current_app,
+    get_brief_app,
 )
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import (
@@ -380,6 +381,26 @@ def update_linked_app(app, user_id):
 
     if app.master_is_remote:
         pull_missing_multimedia_for_app.delay(app.domain, app.get_id)
+
+
+def pull_missing_multimedia_for_app_and_notify(domain, app_id, email):
+    app = get_brief_app(domain, app_id)
+    subject = _("Update Status for linked app %s missing multimedia pull") % app.name
+    try:
+        pull_missing_multimedia_for_app(domain, app_id)
+    except MultimediaMissingError as e:
+        message = six.text_type(e)
+    except Exception:
+        # Send an email but then crash the process
+        # so we know what the error was
+        send_html_email_async.delay(subject, email, _(
+            "Something went wrong while pulling multimedia for your linked app. "
+            "Our team has been notified and will monitor the situation. "
+            "Please try again, and if the problem persists report it as an issue."))
+        raise
+    else:
+        message = _("Multimedia was successfully updated for the linked app.")
+    send_html_email_async.delay(subject, email, message)
 
 
 def clear_xmlns_app_id_cache(domain):

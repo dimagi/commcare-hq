@@ -30,6 +30,7 @@ from corehq.apps.app_manager.views.apps import (
     validate_language,
     view_app,
     pull_master_app,
+    pull_missing_multimedia,
     update_linked_whitelist,
 )
 from corehq.apps.app_manager.views.cli import (
