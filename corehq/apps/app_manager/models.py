@@ -5580,6 +5580,7 @@ class LinkedApplication(Application):
     # from a bug years ago. These should be fixed when mobile can handle the change
     # https://manage.dimagi.com/default.asp?283410
     uses_master_app_form_ids = BooleanProperty(default=False)
+    multimedia_pulled = False
 
     @property
     @memoized

@@ -5,9 +5,13 @@ import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests import ConnectionError
+from celery.task import task
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.app_manager.dbaccessors import (
+    wrap_app,
+    get_app,
+)
 from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
@@ -57,7 +61,9 @@ def _convert_app_from_remote_linking_source(app_json):
     return app
 
 
-def pull_missing_multimedia_for_app(app):
+@task(queue='background_queue')
+def pull_missing_multimedia_for_app(domain, app_id):
+    app = get_app(domain, app_id)
     missing_media = _get_missing_multimedia(app)
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
@@ -68,6 +74,8 @@ def pull_missing_multimedia_for_app(app):
                 'Application has missing multimedia even after an attempt to re-pull them. '
                 'Please try re-pulling the app. If this persists, report an issue.'
             ))
+    app.multimedia_pulled = True
+    app.save(increment_version=False)
 
 
 def _get_missing_multimedia(app):
