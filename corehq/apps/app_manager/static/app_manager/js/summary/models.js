@@ -82,6 +82,18 @@ hqDefine('app_manager/js/summary/models',[
         self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
+        self.getDiffPopover = function (attribute) {
+            if (!self.changes[attribute]['type']) {
+                return {};
+            }
+
+            return {
+                "title": gettext("Question") + " " + gettext(attribute) + " " + gettext(self.changes[attribute]["type"]),
+                "trigger": "hover",
+                "placement": "auto right",
+                "container": "body",
+            };
+        };
         self.getDiffClass = function (attribute) {
             return self.changes[attribute]['type'] ? 'diff-' + self.changes[attribute]['type'] : '';
         };
