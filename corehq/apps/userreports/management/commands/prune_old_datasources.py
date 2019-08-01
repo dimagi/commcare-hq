@@ -69,7 +69,7 @@ class Command(BaseCommand):
                         except Exception:
                             print("\t{}: no inserted_at column, probably not UCR".format(tablename))
                         else:
-                            print("\t{}: {}".foramt(tablename, result.fetchone()))
+                            print("\t{}: {}".format(tablename, result.fetchone()))
                 else:
                     print("\t{}".format(tablename))
 
