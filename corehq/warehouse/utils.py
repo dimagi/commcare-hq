@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.db import connections
 from django.conf import settings
+from datetime import datetime
 
 from dimagi.utils.chunked import chunked
 
@@ -48,4 +49,6 @@ def get_warehouse_latest_modified_date():
         dag_slug='app_status_batch', completed_on__isnull=False
     ).order_by('completed_on').last()
     # The end_datetime of a batch is used to filter on forms by last_modified (received_on, edited_on, deleted_on)
+    if not last_completed_app_status_batch:
+        return datetime(2000, 1, 1)
     return last_completed_app_status_batch.end_datetime
