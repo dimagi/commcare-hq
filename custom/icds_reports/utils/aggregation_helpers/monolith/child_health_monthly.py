@@ -179,28 +179,28 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("wer_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(wer_eligible)),
             ("nutrition_status_last_recorded",
                 "CASE "
-                "WHEN NOT {} THEN NULL "
+                "WHEN {wer_eligible} is NULL or NOT {wer_eligible} THEN NULL "
                 "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
                 "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
                 "WHEN gm.zscore_grading_wfa IN (3, 4) THEN 'normal' "
-                "ELSE 'unknown' END".format(wer_eligible)),
+                "ELSE 'unknown' END".format(wer_eligible=wer_eligible)),
             ("current_month_nutrition_status",
                 "CASE "
-                "WHEN NOT {} THEN NULL "
+                "WHEN {wer_eligible} is NULL or NOT {wer_eligible} THEN NULL "
                 "WHEN date_trunc('MONTH', gm.zscore_grading_wfa_last_recorded) != %(start_date)s THEN 'unweighed' "
                 "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
                 "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
                 "WHEN gm.zscore_grading_wfa IN (3, 4) THEN 'normal' "
-                "ELSE 'unweighed' END".format(wer_eligible)),
+                "ELSE 'unweighed' END".format(wer_eligible=wer_eligible)),
             ("nutrition_status_weighed",
                 "CASE "
                 "WHEN {} AND date_trunc('MONTH', gm.zscore_grading_wfa_last_recorded) = %(start_date)s THEN 1 "
                 "ELSE 0 END".format(wer_eligible)),
             ("recorded_weight",
                 "CASE "
-                "WHEN NOT {} THEN NULL "
+                "WHEN {wer_eligible} is NULL or NOT {wer_eligible} THEN NULL "
                 "WHEN date_trunc('MONTH', gm.weight_child_last_recorded) = %(start_date)s THEN gm.weight_child "
-                "ELSE NULL END".format(wer_eligible)),
+                "ELSE NULL END".format(wer_eligible=wer_eligible)),
             ("recorded_height",
                 "CASE "
                 "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN gm.height_child "
@@ -211,34 +211,34 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "ELSE 0 END".format(height_eligible)),
             ("current_month_stunting",
                 "CASE "
-                "WHEN NOT {} THEN NULL "
+                "WHEN {height_eligible} is NULL or NOT {height_eligible} THEN NULL "
                 "WHEN date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) != %(start_date)s THEN 'unmeasured' "
                 "WHEN gm.zscore_grading_hfa = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
-                "ELSE 'unmeasured' END".format(height_eligible)),
+                "ELSE 'unmeasured' END".format(height_eligible=height_eligible)),
             ("stunting_last_recorded",
                 "CASE "
-                "WHEN NOT {} THEN NULL "
+                "WHEN {height_eligible} is NULL or NOT {height_eligible} THEN NULL "
                 "WHEN gm.zscore_grading_hfa = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
-                "ELSE 'unknown' END".format(height_eligible)),
+                "ELSE 'unknown' END".format(height_eligible=height_eligible)),
             ("wasting_last_recorded",
                 "CASE "
-                "WHEN NOT {} THEN NULL "
+                "WHEN {height_eligible} is NULL or NOT {height_eligible} THEN NULL "
                 "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
-                "ELSE 'unknown' END".format(height_eligible)),
+                "ELSE 'unknown' END".format(height_eligible=height_eligible)),
             ("current_month_wasting",
                 "CASE "
-                "WHEN NOT {} THEN NULL "
+                "WHEN {height_eligible} is NULL or NOT {height_eligible} THEN NULL "
                 "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s THEN 'unmeasured' "
                 "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
-                "ELSE 'unmeasured' END".format(height_eligible)),
+                "ELSE 'unmeasured' END".format(height_eligible=height_eligible)),
             ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
             ("zscore_grading_hfa_recorded_in_month",
                 "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
