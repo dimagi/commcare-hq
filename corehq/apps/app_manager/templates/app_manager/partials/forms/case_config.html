@@ -70,7 +70,9 @@
     </div>
     <div class="panel-body">
       <label>
-        <input type="checkbox" data-bind="checked: close_case"/>
+        <input type="checkbox"
+               data-bind="checked: close_case,
+                          disable: !hasPrivilege"/>
         {% trans "Close this case when the form is complete" %}
       </label>
       {% if add_ons.conditional_form_actions %}
@@ -171,6 +173,22 @@
           {% endblocktrans %}
         </p>
 
+        {% if not add_ons_privileges.subcases %}
+          <div class="well well-sm">
+            <p>
+              <i class="fa fa-info-circle"></i>
+              {% blocktrans %}
+                <strong>Child Cases</strong> are not available in your subscription.
+                This feature is only available on our <strong>Pro</strong> plan or higher.
+                This configuration will remain un-editable until you upgrade.
+              {% endblocktrans %}
+            </p>
+            <p>
+              {% include 'hqwebapp/partials/generic_feature_upgrade.html' %}
+            </p>
+          </div>
+        {% endif %}
+
         <div data-bind="foreach: subcases">
           <div class="panel panel-appmanager panel-case-actions">
             <div class="panel-heading">
@@ -181,11 +199,13 @@
               </h4>
             </div>
             <div class="panel-case-actions-actions">
-              <a href="#"
-                 class="case-action-remove btn btn-purple"
-                 data-bind="openModal: 'remove-subcase-modal-template'">
-                <i class="fa fa-trash"></i>
-              </a>
+              {% if add_ons_privileges.subcases %}
+                <a href="#"
+                   class="case-action-remove btn btn-purple"
+                   data-bind="openModal: 'remove-subcase-modal-template'">
+                  <i class="fa fa-trash"></i>
+                </a>
+              {% endif %}
             </div>
             <div class="panel-body">
               <div class="panel panel-appmanager">
@@ -199,6 +219,7 @@
                   <span class="form-group"
                         data-bind="css: {'has-warning': !case_type()}">
                     <select class="form-control"
+                            {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
                             data-bind="options: $parent.caseTypes,
                                        optionsText: $parent.getCaseTypeLabel,
                                        value: case_type,
@@ -211,6 +232,7 @@
                         {% trans "Override reference id: " %}
                       </label>
                       <input type="text"
+                             {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
                              class="form-control"
                              data-bind="value: reference_id"/>
                     {% endif %}
@@ -221,13 +243,14 @@
             </div>
           </div>
         </div>
-
-        <a href="#"
-           class="btn btn-default"
-           data-bind="click: addSubCase">
-          <i class="fa fa-plus"></i>
-          {% trans "Add a Child Case to open a case for a different Case List..." %}
-        </a>
+        {% if add_ons_privileges.subcases %}
+          <a href="#"
+             class="btn btn-default"
+             data-bind="click: addSubCase">
+            <i class="fa fa-plus"></i>
+            {% trans "Add a Child Case to open a case for a different Case List..." %}
+          </a>
+        {% endif %}
         <!--/ko-->
       {% endif %}
     {% endif %}

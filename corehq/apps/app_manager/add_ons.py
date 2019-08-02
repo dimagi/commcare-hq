@@ -245,6 +245,11 @@ def get_dict(request, app, module=None, form=None):
     return {slug: show(slug, request, app, module, form) for slug in _ADD_ONS.keys()}
 
 
+# Get a slug => bool dictionary signifying which add-ons have privileges
+def get_privileges_dict(request):
+    return {slug: _ADD_ONS[slug].has_privilege(request) for slug in _ADD_ONS.keys()}
+
+
 # Get add-ons for display in settings UI
 def get_layout(request):
     all_slugs = set(_ADD_ONS.keys())

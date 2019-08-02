@@ -5,13 +5,19 @@
   <!--ko with: condition -->
   <span data-bind="text: $parent.actionType"></span>
 
-  <div data-bind="visible: type() === 'always'">
+  <div data-bind="visible: type() === 'always' && $parent.config.hasPrivilege">
     <a href="#"
        class="btn btn-default"
        data-bind="click: function () {type('if')}">
       <i class="fa fa-plus"></i>
       {% trans "Only if the answer to..." %}
     </a>
+  </div>
+
+  <div data-bind="visible: type() === 'always' && !$parent.config.hasPrivilege">
+    {% blocktrans %}
+      Configuration no longer allowed.
+    {% endblocktrans %}
   </div>
 
   <div class="row" data-bind="visible: type() === 'if'">
@@ -21,6 +27,7 @@
     <div class="col-sm-4">
       <select class="form-control"
               data-bind="questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
+                         disable: !$parent.config.hasPrivilege,
                          value: question"></select>
     </div>
     <div class="col-sm-2">
@@ -30,6 +37,7 @@
                            {label:'{% trans "has selected" %}', value:'selected'},
                            {label:'{% trans "is true" %}', value:'boolean_true'}
                          ],
+                         disable: !$parent.config.hasPrivilege,
                          value: operator"></select>
     </div>
     <!-- Input for question's answer -->
@@ -39,21 +47,24 @@
       <span data-bind="if: $root.getAnswers({question: question()}).length">
         <select class="form-control"
                 data-bind="optstr: $root.getAnswers({question: question()}),
+                           disable: !$parent.config.hasPrivilege,
                            value: answer"></select>
       </span>
       <!-- Non-select question: answer is a text box -->
       <span data-bind="if: !$root.getAnswers({question: question()}).length">
         <input type="text"
                class="form-control"
-               data-bind="value: answer"/>
+               data-bind="value: answer,
+                          disable: !$parent.config.hasPrivilege"/>
       </span>
     </div>
-    <div class="col-sm-1">
-      <a href="#"
-         class="btn btn-default"
-         data-bind="click: function () {type('always')}">
-        <i class="fa fa-remove"></i>
-      </a>
+    <div class="col-sm-1"
+         data-bind="if: $parent.config.hasPrivilege">
+        <a href="#"
+           class="btn btn-default"
+           data-bind="click: function () {type('always')}">
+          <i class="fa fa-remove"></i>
+        </a>
     </div>
   </div>
   <!--/ko-->
@@ -64,6 +75,7 @@
   <select class="form-control"
           data-bind="questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
                      value: path,
+                     disable: !$parent.hasPrivilege,
                      event: {
                        change: function(view, e) {
                          if (e.target.closest('#case-config-ko')) {
@@ -89,6 +101,7 @@
            class="form-control"
            data-bind="valueDefault: property.key,
                       default: property.defaultKey,
+                      disable: isDisabled,
                       casePropertyAutocomplete: suggestedProperties"/>
     </span>
   <span data-bind="visible: property.required()">
@@ -139,7 +152,7 @@
                             name: 'case-config:case-properties:property',
                             data: {
                               'property': $data,
-                              'suggestedProperties': case_transaction.suggestedPreloadProperties
+                              'suggestedProperties': case_transaction.suggestedPreloadProperties,
                             }
                           }"></div>
           <p class="help-block"
@@ -203,7 +216,8 @@
                       'has-error': validate,
                       warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())
                     }">
-        <td class="col-sm-1 text-center">
+        <td class="col-sm-1 text-center"
+            data-bind="if: $parent.hasPrivilege">
           <a href="#"
              class="btn btn-danger"
              data-bind="click: $parent.removeProperty,
@@ -224,14 +238,15 @@
                             name: 'case-config:case-properties:property',
                             data: {
                               property: $data,
-                              suggestedProperties: case_transaction.suggestedSaveProperties
+                              suggestedProperties: case_transaction.suggestedSaveProperties,
+                              'isDisabled': !$parent.hasPrivilege,
                             },
                             afterRender: $root.makePopover
                           }"></div>
           <p class="help-block"
              data-bind="html: validate,
                         visible: validate"></p>
-          <!-- ko if: $data.description -->
+          <!-- ko if: $data.description && $parent.hasPrivilege -->
           <inline-edit params="value: $data.description,
                                rows: 3,
                                cols: 30,
@@ -249,6 +264,9 @@
                                },
                                afterRenderFunc: $root.makePopover"></inline-edit>
           <!-- /ko -->
+          <!-- ko if: $data.description -->
+            <p data-bind="text: $data.description"></p>
+          <!-- /ko -->
         </td>
       </tr>
       </tbody>
@@ -257,12 +275,20 @@
          data-bind="visible: !case_properties().length">
       {% trans "No properties will be saved" %}
     </div>
-    <a href="#" class="firstProperty btn btn-default"
+    <a href="#"
+       class="firstProperty btn btn-default"
        data-bind="click: addProperty,
-                  visible: !case_properties().length">
+                  visible: !case_properties().length && $parent.hasPrivilege">
       <i class="fa fa-plus"></i>
       {% trans "Save properties" %}
     </a>
+    <!-- ko if: !case_properties().length && !$parent.hasPrivilege -->
+      <p>
+        {% blocktrans %}
+          You no longer have permission to save case properties.
+        {% endblocktrans %}
+      </p>
+    <!-- /ko -->
   </div>
 </script>
 
