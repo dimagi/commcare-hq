@@ -3912,7 +3912,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     short_url = StringProperty()
     short_odk_url = StringProperty()
     short_odk_media_url = StringProperty()
-    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url', 'short_odk_media_url']
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version',
+                    'short_url', 'short_odk_url', 'short_odk_media_url']
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
@@ -4389,7 +4390,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         assert self.get_id
         assert self.copy_of is None
         cls = self.__class__
-        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
+        copies = cls.view(
+            'app_manager/applications',
+            key=[self.domain, self._id, self.version],
+            include_docs=True,
+            limit=1
+        ).all()
         if copies:
             copy = copies[0]
         else:
