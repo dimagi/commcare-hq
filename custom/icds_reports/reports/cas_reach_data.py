@@ -101,7 +101,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
                     'help_text': awcs_launched_help_text(),
                     'color': None,
                     'percent': None,
-                    'value': get_value(daily_yesterday if current_month_selected else awc_this_month_data, 'awcs'),
+                    'value': get_value(awc_this_month_data, 'awcs'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
