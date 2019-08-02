@@ -10,7 +10,7 @@ from django.test import TestCase
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestInfantsWeightScale(TestCase):
 
     def test_map_data_keys(self):
