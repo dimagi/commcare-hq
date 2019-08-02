@@ -4402,8 +4402,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                     del copy[bad_key]
 
             copy = cls.wrap(copy)
-            copy['copy_of'] = self._id
-
+            copy._set_build_fields(self._id, user_id, comment)
             copy.copy_attachments(self)
 
         if not copy._id:
@@ -4417,12 +4416,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         # I'm putting this assert here if copy._id is ever None
         # which makes tests error
         assert copy._id
-        copy._set_build_fields(user_id, comment)
         prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
 
-    def _set_build_fields(self, user_id, comment=None):
+    def _set_build_fields(self, copy_of, user_id, comment=None):
+        self.copy_of = copy_of
         built_on = datetime.datetime.utcnow()
         self.date_created = built_on
         self.built_on = built_on
@@ -4436,6 +4435,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         self.is_released = False
 
     def unset_build_fields(self):
+        self.copy_of = None
         self.date_created = None
         self.built_on = None
         self.built_with = BuildRecord()
