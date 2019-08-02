@@ -8,18 +8,23 @@ from corehq import feature_previews, toggles
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, ShadowModule
 from corehq.apps.domain.models import Domain
-from corehq.privileges import LOOKUP_TABLES
+from corehq.privileges import (
+    LOOKUP_TABLES,
+    CHILD_CASES,
+)
 
 
 # Similar to feature flags and/or feature previews, but specific to an individual application
 # and with the additional notion of a feature being "in use" in a specific module or form
 # even if the add-on isn't enabled.
 class AddOn(object):
-    def __init__(self, name, description, help_link=None, privilege=None, used_in_module=None, used_in_form=None):
+    def __init__(self, name, description, help_link=None, privilege=None,
+                 used_in_module=None, used_in_form=None, upgrade_text=None):
         self.name = name
         self.description = description
         self.help_link = help_link
         self.privilege = privilege
+        self.upgrade_text = upgrade_text
 
         self.used_in_module = used_in_module if used_in_module else lambda m: False
         self.used_in_form = used_in_form if used_in_form else lambda f: False
@@ -150,6 +155,9 @@ _ADD_ONS = {
         "created them. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Child+Cases",
         used_in_form=lambda f: f.form_type != "module_form" or bool(f.actions.subcases),
+        privilege=CHILD_CASES,
+        upgrade_text=_("Child cases are not available on your subscription. "
+                       "This feature is only available on our Pro plan or higher.")
     ),
     "empty_case_lists": AddOn(
         name=_("New Case Lists Created Empty"),
@@ -202,7 +210,7 @@ def show(slug, request, app, module=None, form=None):
     add_on = _ADD_ONS[slug]
 
     # Do not show if there's a required privilege missing
-    if not add_on.has_privilege(request):
+    if not add_on.has_privilege(request) and add_on.upgrade_text is None:
         return False
 
     # Show if flag to enable all toggles is on
@@ -251,7 +259,12 @@ def get_layout(request):
         'name': _ADD_ONS[slug].name,
         'description': _ADD_ONS[slug].description,
         'help_link': _ADD_ONS[slug].help_link,
-    } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
+        'upgrade_text': _ADD_ONS[slug].upgrade_text,
+        'show_upgrade': (not _ADD_ONS[slug].has_privilege(request)
+                         and _ADD_ONS[slug].upgrade_text is not None),
+    } for slug in section['slugs']
+        if _ADD_ONS[slug].has_privilege(request)
+        or _ADD_ONS[slug].upgrade_text is not None]}, **section) for section in _LAYOUT]
 
 
 # Lazily migrate an app that doesn't have any add_ons configured yet.
