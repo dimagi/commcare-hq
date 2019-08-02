@@ -38,6 +38,7 @@ dump.rdb
 /staticmedia*
 .transifexrc
 python_env
+python_env-3.6
 services
 KEEP_UNTIL__*
 formplayer.properties

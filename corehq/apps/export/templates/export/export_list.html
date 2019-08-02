@@ -13,6 +13,7 @@
   {% initial_page_data 'is_daily_saved_export' is_daily_saved_export|default:False %}
   {% initial_page_data 'is_deid' is_deid %}
   {% initial_page_data 'is_feed' is_feed|default:False %}
+  {% initial_page_data 'is_odata' is_odata|default:False %}
   {% initial_page_data 'model_type' model_type %}
   {% initial_page_data 'my_export_type' my_export_type %}
   {% initial_page_data 'shared_export_type' shared_export_type %}
@@ -26,6 +27,12 @@
   {% registerurl 'update_emailed_export_data' domain %}
 
   <p>{{ lead_text }}</p>
+
+  {% if is_odata %}
+    <div class="pull-right">
+      <feedback params="featureName: '{% trans_html_attr 'PowerBI / Tableau Integration' %}'"></feedback>
+    </div>
+  {% endif %}
 
   {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
 {% endblock %}

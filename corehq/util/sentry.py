@@ -6,6 +6,7 @@ from six import string_types
 from six.moves import filter
 import re
 from django.conf import settings
+from django.db.utils import OperationalError
 from raven.contrib.django import DjangoClient
 from raven.processors import SanitizePasswordsProcessor
 
@@ -26,9 +27,9 @@ RATE_LIMITED_EXCEPTIONS = {
     'redis.exceptions.ConnectionError': 'redis',
     'ClusterDownError': 'redis',
 
-    'botocore.exceptions.ClientError': 'riak',
-    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
-    'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
+    'botocore.exceptions.ClientError': 'blobdb',
+    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'blobdb',
+    'botocore.vendored.requests.exceptions.ReadTimeout': 'blobdb',
 
     'celery.beat.SchedulingError': 'celery-beat',
 
@@ -60,6 +61,11 @@ def _get_rate_limit_key(exc_info):
         for frame in frame_summaries:
             if frame[0].startswith(package): # filename
                 return key
+
+
+def is_pg_cancelled_query_exception(e):
+    PG_QUERY_CANCELLATION_ERR_MSG = "canceling statement due to conflict with recovery"
+    return isinstance(e, OperationalError) and PG_QUERY_CANCELLATION_ERR_MSG in e.message
 
 
 class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
@@ -114,6 +120,8 @@ class HQSentryClient(DjangoClient):
             datadog_counter('commcare.sentry.errors.rate_limited', tags=[
                 'service:{}'.format(rate_limit_key)
             ])
+            if is_pg_cancelled_query_exception(ex_value):
+                datadog_counter('hq_custom.postgres.standby_query_canellations')
             exponential_backoff_key = '{}_down'.format(rate_limit_key)
             return not is_rate_limited(exponential_backoff_key)
         return True

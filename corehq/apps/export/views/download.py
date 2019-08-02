@@ -22,12 +22,13 @@ from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EX
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.tasks import build_form_multimedia_zip
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
@@ -120,7 +121,7 @@ class SMSDownloadExportViewHelper(DownloadExportViewHelper):
         return get_export(self.model, self.domain, export_id, self.request.couch_user.username)
 
 
-class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_date_range = False
@@ -419,11 +420,25 @@ def prepare_form_multimedia(request, domain):
             'error': _("Please check that you've submitted all required filters."),
         })
 
+    export = view_helper.get_export(export_specs[0]['export_id'])
+    datespan = filter_form.cleaned_data['date_range']
+    user_types = filter_form.get_es_user_types(filter_form_data)
+
+    if media_export_is_too_big(domain, export.app_id, export.xmlns, datespan, user_types):
+        return json_response({
+            'success': False,
+            'error': _("This is too many files to export at once.  "
+                       "Please modify your filters to select fewer forms."),
+        })
+
     download = DownloadBase()
-    export_object = view_helper.get_export(export_specs[0]['export_id'])
-    task_kwargs = filter_form.get_multimedia_task_kwargs(export_object, download.download_id, filter_form_data)
-    from corehq.apps.reports.tasks import build_form_multimedia_zip
-    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
+    download.set_task(build_form_multimedia_zip.delay(
+        domain=domain,
+        export_id=export.get_id,
+        datespan=datespan,
+        user_types=user_types,
+        download_id=download.download_id
+    ))
 
     return json_response({
         'success': True,

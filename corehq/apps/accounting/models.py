@@ -81,11 +81,6 @@ UNLIMITED_FEATURE_USAGE = -1
 
 MINIMUM_SUBSCRIPTION_LENGTH = 30
 
-_soft_assert_domain_not_loaded = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
-    exponential_backoff=False,
-)
-
 _soft_assert_contact_emails_missing = soft_assert(
     to=['{}@{}'.format(email, 'dimagi.com') for email in [
         'accounts',
@@ -1003,10 +998,6 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        _soft_assert_domain_not_loaded(
-            isinstance(self.domain, six.text_type), "domain type is %s" % type(self.domain))  # TODO remove April 1
-
-
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan_version()
 

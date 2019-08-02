@@ -82,7 +82,6 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
 def initiate_messaging_rule_run(rule):
     if not rule.active:
         return
-    MessagingRuleProgressHelper(rule.pk).set_initial_progress()
     AutomaticUpdateRule.objects.filter(pk=rule.pk).update(locked_for_editing=True)
     transaction.on_commit(lambda: run_messaging_rule.delay(rule.domain, rule.pk))
 
@@ -91,11 +90,11 @@ def paginated_case_ids(domain, case_type):
     row_generator = paginate_query_across_partitioned_databases(
         CommCareCaseSQL,
         Q(domain=domain, type=case_type, deleted=False),
-        values=['case_id']
+        values=['case_id'],
+        load_source='run_messaging_rule'
     )
     for row in row_generator:
-        # return value from case generator is ('<pk>', '<case_id>')
-        yield row[1]
+        yield row[0]
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
@@ -117,16 +116,20 @@ def run_messaging_rule(domain, rule_id):
     if not rule:
         return
 
-    total_count = 0
+    incr = 0
     progress_helper = MessagingRuleProgressHelper(rule_id)
+    progress_helper.set_initial_progress()
 
     for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
         sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
-        total_count += 1
-        if total_count % 1000 == 0:
-            progress_helper.set_total_case_count(total_count)
+        incr += 1
+        if incr >= 1000:
+            progress_helper.increase_total_case_count(incr)
+            incr = 0
+            if progress_helper.is_canceled():
+                break
 
-    progress_helper.set_total_case_count(total_count)
+    progress_helper.increase_total_case_count(incr)
 
     # By putting this task last in the queue, the rule should be marked
     # complete at about the time that the last tasks are finishing up.

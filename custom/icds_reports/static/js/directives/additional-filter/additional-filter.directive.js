@@ -20,21 +20,18 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
-    vm.selectedAgeSDD = $location.search()['ageSDD'] !== void(0) ? $location.search()['ageSDD'] : '0_3';
 
     vm.apply = function () {
         hqImport('analytix/js/google').track.event('Additional Filter', 'Filter Changed', '');
         $uibModalInstance.close({
             gender: vm.selectedGender,
             age: vm.selectedAge,
-            ageSDD: vm.selectedAgeSDD,
         });
     };
 
     vm.reset = function () {
         vm.selectedAge = '';
         vm.selectedGender = '';
-        vm.selectedAgeSDD = '0_3';
     };
 
     vm.close = function () {
@@ -50,23 +47,18 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
         if (storageService.getKey('last_page') !== '') {
             $location.search('gender', null);
             $location.search('age', null);
-            $location.search('ageSDD', null);
         }
         storageService.setKey('last_page', page);
     }
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
-    vm.selectedAgeSDD = $location.search()['ageSDD'] !== void(0) ? $location.search()['ageSDD'] : '0_3';
     var filtersObjects = [];
     if (vm.filters && vm.filters.indexOf('gender') === -1) {
         filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
     }
     if (vm.filters && vm.filters.indexOf('age') === -1) {
         filtersObjects.push({ label: 'Age', value: vm.selectedAge });
-    }
-    if (vm.filters && vm.filters.indexOf('ageServiceDeliveryDashboard') === -1) {
-        filtersObjects.push({ label: 'AgeSDD', value: vm.selectedAgeSDD });
     }
 
     vm.getPlaceholder = function () {
@@ -76,9 +68,6 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
                 var val = filterObject.value;
                 if (filterObject.label === 'Age') val += ' m';
                 placeholder += filterObject.label + ': ' + val + ' ';
-                if (filterObject.label === 'AgeSDD') {
-                    placeholder = filterObject.value === '0_3' ? '0-3 years (0-1095 days)' : '3-6 years (1096-2190 days)';
-                }
             }
         });
 
@@ -107,7 +96,6 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
         modalInstance.result.then(function (data) {
             $location.search('gender', data['gender']);
             $location.search('age', data['age']);
-            $location.search('ageSDD', data['ageSDD']);
             $scope.$emit('filtersChange');
         });
     };

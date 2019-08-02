@@ -36,15 +36,11 @@ class CopyApplicationForm(forms.Form):
     toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
 
     def __init__(self, from_domain, app, *args, **kwargs):
-        export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name', 'toggles']
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if export_zipped_apps_enabled:
-            self.fields['gzip'] = forms.FileField(required=False)
-            fields.append('gzip')
         if LINKED_DOMAINS.enabled(self.from_domain):
             fields.append(PrependedText('linked', ''))
 

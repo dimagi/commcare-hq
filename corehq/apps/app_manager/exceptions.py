@@ -175,3 +175,7 @@ class MultimediaMissingError(AppManagerException):
 
 class BuildNotFoundException(AppManagerException):
     pass
+
+
+class BuildConflictException(Exception):
+    pass

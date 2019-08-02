@@ -37,12 +37,10 @@
             {% trans "New Conditional Alert" %}
           </a>
 
-          {% if request|toggle_enabled:'BULK_CONDITIONAL_ALERTS' %}
-            <a href="{% url 'upload_conditional_alert' domain %}" class="btn btn-info">
-              <i class="fa fa-cloud-upload"></i>
-              {% trans "Bulk Upload Conditional Alerts" %}
-            </a>
-          {% endif %}
+          <a href="{% url 'upload_conditional_alert' domain %}" class="btn btn-info">
+            <i class="fa fa-cloud-upload"></i>
+            {% trans "Bulk Upload SMS Alert Content" %}
+          </a>
         </div>
       </div>
       <div class="col-sm-4 col-md-3">
@@ -126,8 +124,10 @@
     <pagination data-apply-bindings="false"
                 data-bind="visible: !emptyTable()"
                 params="goToPage: goToPage,
-                            perPage: itemsPerPage,
-                            totalItems: totalItems,
-                            showSpinner: showPaginationSpinner"></pagination>
+                        perPage: itemsPerPage,
+                        totalItems: totalItems,
+                        onLoad: onPaginationLoad,
+                        slug: 'conditional-alerts',
+                        showSpinner: showPaginationSpinner"></pagination>
   </div>
 {% endblock %}

@@ -50,13 +50,6 @@ from corehq.apps.analytics.utils import analytics_enabled_for_email
 from io import open
 from six.moves import range
 
-_hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                               '{}@{}'.format('biyeun', 'dimagi.com'),
-                                               '{}@{}'.format('jschweers', 'dimagi.com'),
-                                               '{}@{}'.format('aphilippot', 'dimagi.com'),
-                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
-                                           send_to_ops=False)
-
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
 
@@ -438,15 +431,6 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-def _log_failed_periodic_data(email, message):
-    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
-        False, "ANALYTICS - Failed to sync periodic data", {
-            'user_email': email,
-            'message': message,
-        }
-    )
-
-
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
@@ -594,7 +578,13 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            _hubspot_failure_soft_assert(False, e.response.content)
+            soft_assert(to=[settings.SUPPORT_EMAIL,
+                            '{}@{}'.format('miemma', 'dimagi.com'),
+                            '{}@{}'.format('aphilippot', 'dimagi.com'),
+                            '{}@{}'.format('colaughlin', 'dimagi.com')],
+                        send_to_ops=False)(False,
+                                           'Error submitting periodic analytics data to Hubspot or Kissmetrics',
+                                           {'response': e.response.content.decode('utf-8')})
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
@@ -625,7 +615,7 @@ def _track_periodic_data_on_kiss(submit_json):
     ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
 
     filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
-    with open(filename, 'wb') as csvfile:
+    with open(filename, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(headers)
 

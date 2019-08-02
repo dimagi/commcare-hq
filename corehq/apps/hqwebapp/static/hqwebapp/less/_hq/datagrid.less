@@ -135,3 +135,28 @@ for the new reporting grids (tables).
   float: right;
   margin-top: -40px;
 }
+
+.datagrid-initial-loading {
+  position: relative;
+  z-index: 1000;
+
+  .modal-dialog {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 300px;
+    margin-left: -150px;
+
+    .modal-content {
+      padding-top: 20px;
+
+      .lead {
+        padding-top: 10px;
+      }
+    }
+  }
+}
+
+.table-datagrid {
+  min-height: 200px;
+}

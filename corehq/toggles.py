@@ -683,15 +683,27 @@ EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev). Please make sure the project '
     'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.',
+    'the Case List Explorer toggle or doing a manual migration.\n\n'
+    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
+    'This will be deprecated once the Feature Preview is in full swing.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
-    'Domains that have undergone migration for Explore Case Data, but are not '
-    'yet ready to see the full report',
+    'Domains that have undergone migration for Explore Case Data and have a '
+    'CaseSearch elasticsearch index created.\n\n'
+    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
+    'ecd_enterprise_domains',
+    'Enterprise Domains that are eligible to view the Explore Case Data '
+    'Feature Preview. By default, this feature will only be available for '
+    'domains that are Advanced or Pro and have undergone the ECD migration.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1033,18 +1045,19 @@ SUPPORT = StaticToggle(
 
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
-    'Basic modules can be child modules',
+    'Basic modules can be sub-menus',
     TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Sub-menus',
 )
 
 LEGACY_CHILD_MODULES = StaticToggle(
     'legacy_child_modules',
-    'Legacy, non-nested child modules',
+    'Legacy, non-nested sub-menus',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
-        "Child Menus are now displayed nested under their parent menu. Some "
+        "Sub-menus are now displayed nested under their parent menu. Some "
         "apps built before this change will require that their modules be "
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
@@ -1090,7 +1103,7 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description=("This flag makes failed messages appear in the Message Log "
                  "Report, and adds Status and Event columns"),
@@ -1116,14 +1129,6 @@ MESSAGE_LOG_METADATA = StaticToggle(
     'Include message id in Message Log export.',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-)
-
-BULK_CONDITIONAL_ALERTS = StaticToggle(
-    'bulk_conditional_alerts',
-    'Allow bulk download and upload of conditional alerts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Allow+bulk+download+and+upload+of+conditional+alerts', # noqa
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(
@@ -1222,14 +1227,6 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-
-EXPORT_ZIPPED_APPS = StaticToggle(
-    'export-zipped-apps',
-    'Export+Import Zipped Applications',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
 )
 
 
@@ -1424,13 +1421,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_DEV_TOGGLE_INFO = StaticToggle(
-    'highlight_feature_flags',
-    'Highlight / Mark Feature Flags in the UI',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
@@ -1499,9 +1489,13 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
 
 REGEX_FIELD_VALIDATION = StaticToggle(
     'regex_field_validation',
-    'Enable regex validation for custom data fields',
+    'Regular Expression Validation for Custom Data Fields',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds the option to specify a regular expression "
+                "(regex) to validate custom user data, custom location data, "
+                "and/or custom product data fields.",
+    help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
 REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
@@ -1663,6 +1657,15 @@ ICDS_DISHA_API = StaticToggle(
     relevant_environments={'icds', 'icds-new', 'india'},
 )
 
+
+ICDS_NIC_INDICATOR_API = StaticToggle(
+    'icds_nic_indicator_acess',
+    'ICDS: Dashboard Indicator API for NIC',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-new', 'india'},
+)
+
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
@@ -1726,7 +1729,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
 LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     'location_safe_case_imports',
     'Allow location-restricted users to import cases owned at their location or below',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1734,16 +1737,22 @@ LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
-    TAG_SOLUTIONS,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+
+def _enable_bi_integration_preview(domain, enabled):
+    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
+    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
 
 
 ODATA = StaticToggle(
     'odata',
     'Enable Odata feed.',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    save_fn=_enable_bi_integration_preview,
 )
 
 
@@ -1780,7 +1789,7 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
 
 MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
-    'Allow project to configure ccz hosting',
+    'Allow project to manage ccz hosting',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
@@ -1817,7 +1826,7 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
     'Enables location columns to app status report',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
@@ -1825,4 +1834,12 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     'Improved MPR ASR by doing aggregation at selected level',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
+    'disable_case_update_rule_task',
+    'Disable the `run_case_update_rules` periodic task '
+    'while investigating database performance issues.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

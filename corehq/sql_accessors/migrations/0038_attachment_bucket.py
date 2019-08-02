@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration, noop_migration
+from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -15,6 +14,4 @@ class Migration(migrations.Migration):
         ('sql_accessors', '0037_delete_ledgers_with_case'),
     ]
 
-    operations = [
-        noop_migration()
-    ]
+    operations = []

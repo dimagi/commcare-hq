@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+import signal
 import six
 
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
@@ -51,6 +52,23 @@ from corehq.util.timer import TimingContext
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
+
+
+class WarmShutdown(object):
+    # modified from https://stackoverflow.com/a/50174144
+
+    shutting_down = False
+
+    def __enter__(self):
+        self.current_handler = signal.signal(signal.SIGTERM, self.handler)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.shutting_down and exc_type is None:
+            exit(0)
+        signal.signal(signal.SIGTERM, self.current_handler)
+
+    def handler(self, signum, frame):
+        self.shutting_down = True
 
 
 def time_ucr_process_change(method):
@@ -271,7 +289,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         retry_changes = set()
         change_exceptions = []
         for domain, changes_chunk in six.iteritems(changes_by_domain):
-            failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
+            with WarmShutdown():
+                failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
             retry_changes.update(failed)
             change_exceptions.extend(exceptions)
 
@@ -309,19 +328,20 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     or doc_subtype in adapter.config.get_case_type_or_xmlns_filter()):
                                 # Delete if the subtype is unknown or
                                 # if the subtype matches our filters, but the full filter no longer applies
-                                to_delete_by_adapter[adapter].append(doc['_id'])
+                                to_delete_by_adapter[adapter].append(doc)
 
         with self._datadog_timing('single_batch_delete'):
             # bulk delete by adapter
-            to_delete = [c.id for c in changes_chunk if c.deleted]
+            to_delete = [{'_id': c.id} for c in changes_chunk if c.deleted]
             for adapter in adapters:
-                delete_ids = to_delete_by_adapter[adapter] + to_delete
-                if not delete_ids:
+                delete_docs = to_delete_by_adapter[adapter] + to_delete
+                if not delete_docs:
                     continue
                 with self._datadog_timing('delete', adapter.config._id):
                     try:
-                        adapter.bulk_delete(delete_ids)
+                        adapter.bulk_delete(delete_docs)
                     except Exception:
+                        delete_ids = [doc['_id'] for doc in delete_docs]
                         retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
 
         with self._datadog_timing('single_batch_load'):
@@ -415,6 +435,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             eval_context = EvaluationContext(doc)
             # make copy to avoid modifying list during iteration
             adapters = list(self.table_adapters_by_domain[domain])
+            doc_subtype = change.metadata.document_subtype
             for table in adapters:
                 if table.config.filter(doc, eval_context):
                     if table.run_asynchronous:
@@ -422,7 +443,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     else:
                         self._save_doc_to_table(domain, table, doc, eval_context)
                         eval_context.reset_iteration()
-                elif table.config.deleted_filter(doc) or table.doc_exists(doc):
+                elif (doc_subtype is None
+                        or doc_subtype in table.config.get_case_type_or_xmlns_filter()):
                     table.delete(doc)
 
             if async_tables:
