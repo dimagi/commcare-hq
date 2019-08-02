@@ -395,7 +395,7 @@ def copy_app(request, domain):
 
     if request.POST.get('build_id'):
         build = Application.get(request.POST.get('build_id'))
-        build._unset_build_fields()
+        build.unset_build_fields()
         app_id_or_source = build.export_json(dump_json=False)
     else:
         app_id_or_source = app_id

@@ -4539,7 +4539,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         self.comment_from = user_id
         self.is_released = False
 
-    def _unset_build_fields(self):
+    def unset_build_fields(self):
         self.date_created = None
         self.built_on = None
         self.built_with = BuildRecord()
