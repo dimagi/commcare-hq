@@ -247,7 +247,7 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
 
     def get_messages(self, language_code=None):
         # default 24 hours
-        ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES = getattr(settings, 'ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES', 60 * 24)
+        ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES = getattr(settings, 'ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES', 60 * 24 * 2)
         warehouse_lag = (datetime.utcnow() - get_warehouse_latest_modified_date()).total_seconds() / 60
         if warehouse_lag > ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES:
             return []
