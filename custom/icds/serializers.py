@@ -18,7 +18,7 @@ class HostedCCZLinkSerializer(serializers.ModelSerializer):
 class HostedCCZSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = HostedCCZ
-        fields = ['id', 'link', 'app_id', 'version', 'note']
+        fields = ['id', 'link', 'app_id', 'version', 'note', 'status']
 
     def to_representation(self, instance):
         ret = super(HostedCCZSerializer, self).to_representation(instance)

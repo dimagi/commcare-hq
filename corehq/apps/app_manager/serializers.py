@@ -17,5 +17,5 @@ class LatestEnabledBuildProfileSerializer(serializers.ModelSerializer):
         ret = super(LatestEnabledBuildProfileSerializer, self).to_representation(instance)
         build_profile_id = self.instance.build_profile_id
         ret['app_name'] = self.context['app_names'][ret['app_id']]
-        ret['profile_name'] = self.instance.build.build_profiles[build_profile_id].name
+        ret['profile_name'] = self.instance.build['build_profiles'][build_profile_id]['name']
         return ret

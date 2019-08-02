@@ -1230,14 +1230,6 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
 )
 
 
-EXPORT_ZIPPED_APPS = StaticToggle(
-    'export-zipped-apps',
-    'Export+Import Zipped Applications',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
@@ -1427,13 +1419,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     'Always turn login as off',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-SHOW_DEV_TOGGLE_INFO = StaticToggle(
-    'highlight_feature_flags',
-    'Highlight / Mark Feature Flags in the UI',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1757,11 +1742,17 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 )
 
 
+def _enable_bi_integration_preview(domain, enabled):
+    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
+    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
+
+
 ODATA = StaticToggle(
     'odata',
     'Enable Odata feed.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    save_fn=_enable_bi_integration_preview,
 )
 
 

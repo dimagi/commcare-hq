@@ -27,9 +27,9 @@ RATE_LIMITED_EXCEPTIONS = {
     'redis.exceptions.ConnectionError': 'redis',
     'ClusterDownError': 'redis',
 
-    'botocore.exceptions.ClientError': 'riak',
-    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
-    'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
+    'botocore.exceptions.ClientError': 'blobdb',
+    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'blobdb',
+    'botocore.vendored.requests.exceptions.ReadTimeout': 'blobdb',
 
     'celery.beat.SchedulingError': 'celery-beat',
 
