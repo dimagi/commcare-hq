@@ -1,11 +1,17 @@
 {% load i18n %}
 
-<script type="text/html" id="case-config:condition">
+<script type="text/html"
+        id="case-config:condition">
   <!--ko with: condition -->
   <span data-bind="text: $parent.actionType"></span>
 
   <div data-bind="visible: type() === 'always'">
-    <a href="#" class="btn btn-default" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
+    <a href="#"
+       class="btn btn-default"
+       data-bind="click: function () {type('if')}">
+      <i class="fa fa-plus"></i>
+      {% trans "Only if the answer to..." %}
+    </a>
   </div>
 
   <div class="row" data-bind="visible: type() === 'if'">
@@ -13,35 +19,39 @@
       {% trans "Only if the answer to" %}
     </div>
     <div class="col-sm-4">
-      <select class="form-control" data-bind="
-                questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
-                value: question,
-            "></select>
+      <select class="form-control"
+              data-bind="questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
+                         value: question"></select>
     </div>
     <div class="col-sm-2">
-      <select class="form-control" data-bind="
-                    optstr: [
-                        {label:'{% trans "is" %}', value:'='},
-                        {label:'{% trans "has selected" %}', value:'selected'},
-                        {label:'{% trans "is true" %}', value:'boolean_true'}
-                    ],
-                    value: operator"></select>
+      <select class="form-control"
+              data-bind="optstr: [
+                           {label:'{% trans "is" %}', value:'='},
+                           {label:'{% trans "has selected" %}', value:'selected'},
+                           {label:'{% trans "is true" %}', value:'boolean_true'}
+                         ],
+                         value: operator"></select>
     </div>
     <!-- Input for question's answer -->
-    <div class="col-sm-4" data-bind="visible: operator() != 'boolean_true'">
+    <div class="col-sm-4"
+         data-bind="visible: operator() != 'boolean_true'">
       <!-- Select question: answer is a dropdown -->
       <span data-bind="if: $root.getAnswers({question: question()}).length">
-                <select class="form-control" data-bind="
-                    optstr: $root.getAnswers({question: question()}),
-                    value: answer"></select>
-            </span>
+        <select class="form-control"
+                data-bind="optstr: $root.getAnswers({question: question()}),
+                           value: answer"></select>
+      </span>
       <!-- Non-select question: answer is a text box -->
       <span data-bind="if: !$root.getAnswers({question: question()}).length">
-                <input type="text" class="form-control" data-bind="value: answer"/>
-            </span>
+        <input type="text"
+               class="form-control"
+               data-bind="value: answer"/>
+      </span>
     </div>
     <div class="col-sm-1">
-      <a href="#" class="btn btn-default" data-bind="click: function () {type('always')}">
+      <a href="#"
+         class="btn btn-default"
+         data-bind="click: function () {type('always')}">
         <i class="fa fa-remove"></i>
       </a>
     </div>
@@ -49,164 +59,222 @@
   <!--/ko-->
 </script>
 
-<script type="text/html" id="case-config:case-properties:question">
-  <select class="form-control" data-bind="
-        questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
-        value: path,
-        event: { change: function(view, e) {
-            if (e.target.closest('#case-config-ko')) {
-                var action = e.target.closest('.case-preload') ? 'Load' : 'Save';
-                hqImport('analytix/js/google').track.event('Case Management', 'Form Level', action + ' Property (add/edit)');
-            }
-        } }
-    "></select>
-  <p class="help-block" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
-  <p class="help-block" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
+<script type="text/html"
+        id="case-config:case-properties:question">
+  <select class="form-control"
+          data-bind="questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
+                     value: path,
+                     event: {
+                       change: function(view, e) {
+                         if (e.target.closest('#case-config-ko')) {
+                           var action = e.target.closest('.case-preload') ? 'Load' : 'Save';
+                           hqImport('analytix/js/google').track.event('Case Management', 'Form Level', action + ' Property (add/edit)');
+                         }
+                       }
+                     }"></select>
+  <p class="help-block"
+     data-bind="visible: required() && !path()">
+    {% trans "Required" %}
+  </p>
+  <p class="help-block"
+     data-bind="visible: !required() && !path() && key()">
+    {% trans "Not assigned" %}
+  </p>
 </script>
 
-<script type="text/html" id="case-config:case-properties:property">
+<script type="text/html"
+        id="case-config:case-properties:property">
   <span data-bind="visible: !property.required()">
-        <input type="text" class="form-control" data-bind="
-            valueDefault: property.key,
-            default: property.defaultKey,
-            casePropertyAutocomplete: suggestedProperties
-        "/>
+    <input type="text"
+           class="form-control"
+           data-bind="valueDefault: property.key,
+                      default: property.defaultKey,
+                      casePropertyAutocomplete: suggestedProperties"/>
     </span>
   <span data-bind="visible: property.required()">
-        <code data-bind="text: property.key"></code>
-    </span>
+    <code data-bind="text: property.key"></code>
+  </span>
 </script>
 
-<script type="text/html" id="case-config:case-transaction:case-preload">
+<script type="text/html"
+        id="case-config:case-transaction:case-preload">
   <div class="panel-heading">
     <h4 class="panel-title panel-title-nolink">
-      <i class="fa fa-arrow-right"></i><i class="fa fa-file-o"></i> {% trans "Load the following properties into the form questions" %}
+      <i class="fa fa-arrow-right"></i><i class="fa fa-file-o"></i>
+      {% trans "Load the following properties into the form questions" %}
     </h4>
   </div>
   <div class="panel-body">
-    <table class="table table-savecaseprops" data-bind="visible: case_preload().length">
+    <table class="table table-savecaseprops"
+           data-bind="visible: case_preload().length">
       <thead>
       <tr>
         <th></th>
-        <th>{% trans "Property" %}</th>
+        <th>
+          {% trans "Property" %}
+        </th>
         <th></th>
-        <th>{% trans "Question" %}</th>
+        <th>
+          {% trans "Question" %}
+        </th>
       </tr>
       </thead>
 
       <tbody data-bind="foreach: case_preload">
-      <tr class="form-group" data-bind="css: {'has-error': validateProperty || validateQuestion}">
+      <tr class="form-group"
+          data-bind="css: {
+                       'has-error': validateProperty || validateQuestion,
+                     }">
         <td class="col-sm-1 text-center">
-          <a href="#" class="btn btn-danger" data-bind="
-                            click: $parent.removePreload,
-                            visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
+          <a href="#"
+             class="btn btn-danger"
+             data-bind="click: $parent.removePreload,
+                        visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
             <i class="fa fa-remove"></i>
           </a>
         </td>
         <td class="col-sm-5">
-          <div class="full-width-select2" data-bind="template: {
+          <div class="full-width-select2"
+               data-bind="template: {
                             name: 'case-config:case-properties:property',
-                            data: {'property': $data, 'suggestedProperties': case_transaction.suggestedPreloadProperties}
-                        }"></div>
-          <p class="help-block" data-bind="html: validateProperty, visible: validateProperty"></p>
+                            data: {
+                              'property': $data,
+                              'suggestedProperties': case_transaction.suggestedPreloadProperties
+                            }
+                          }"></div>
+          <p class="help-block"
+             data-bind="html: validateProperty,
+                        visible: validateProperty"></p>
         </td>
         <td class="col-sm-1 text-center">
           <i class="fa fa-arrow-right"></i><i class="fa fa-file-o"></i>
         </td>
         <td class="col-sm-5">
-          <div class="full-width-select2" data-bind="template: 'case-config:case-properties:question'"></div>
-          <p class="help-block" data-bind="html: validateQuestion, visible: validateQuestion"></p>
+          <div class="full-width-select2"
+               data-bind="template: 'case-config:case-properties:question'"></div>
+          <p class="help-block"
+             data-bind="html: validateQuestion,
+                        visible: validateQuestion"></p>
         </td>
       </tr>
       </tbody>
     </table>
-    <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
+    <div class="alert alert-block alert-info"
+         data-bind="visible: !case_preload().length">
       {% trans "No properties will be loaded" %}
     </div>
-    <a href="#" class="firstProperty btn btn-default" data-bind="click: addPreload, visible: !case_preload().length">
+    <a href="#"
+       class="firstProperty btn btn-default"
+       data-bind="click: addPreload,
+                  visible: !case_preload().length">
       <i class="fa fa-plus"></i>
       {% trans "Load properties" %}
     </a>
   </div>
 </script>
 
-<script type="text/html" id="case-config:case-transaction:case-properties">
+<script type="text/html"
+        id="case-config:case-transaction:case-properties">
   <div class="panel-heading">
     <h4 class="panel-title panel-title-nolink">
-      <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i> {% trans "Save Questions to Case Properties" %}
+      <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
+      {% trans "Save Questions to Case Properties" %}
     </h4>
   </div>
   <div class="panel-body">
-    <table class="table table-savecaseprops" data-bind="visible: case_properties().length">
+    <table class="table table-savecaseprops"
+           data-bind="visible: case_properties().length">
       <thead>
       <tr>
         <th class="col-sm-1"></th>
-        <th class="col-sm-5">{% trans "Question" %}</th>
+        <th class="col-sm-5">
+          {% trans "Question" %}
+        </th>
         <th class="col-sm-1"></th>
-        <th class="col-sm-5">{% trans "Case Property" %}</th>
+        <th class="col-sm-5">
+          {% trans "Case Property" %}
+        </th>
       </tr>
       </thead>
 
       <tbody data-bind="foreach: case_properties">
-      <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
+      <tr class="form-group"
+          data-bind="css: {
+                      'has-error': validate,
+                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())
+                    }">
         <td class="col-sm-1 text-center">
-          <a href="#" class="btn btn-danger" data-bind="
-                            click: $parent.removeProperty,
-                            visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
-                        ">
+          <a href="#"
+             class="btn btn-danger"
+             data-bind="click: $parent.removeProperty,
+                        visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)">
             <i class="fa fa-remove"></i>
           </a>
         </td>
         <td class="col-sm-5">
-          <div class="full-width-select2" data-bind="template: 'case-config:case-properties:question'"></div>
+          <div class="full-width-select2"
+               data-bind="template: 'case-config:case-properties:question'"></div>
         </td>
         <td class="text-center col-sm-1">
           <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
         </td>
         <td class="col-sm-5">
-          <div class="full-width-select2" data-bind="template: {
+          <div class="full-width-select2"
+               data-bind="template: {
                             name: 'case-config:case-properties:property',
-                            data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties},
+                            data: {
+                              property: $data,
+                              suggestedProperties: case_transaction.suggestedSaveProperties
+                            },
                             afterRender: $root.makePopover
-                        }"></div>
-          <p class="help-block" data-bind="html: validate, visible: validate"></p>
+                          }"></div>
+          <p class="help-block"
+             data-bind="html: validate,
+                        visible: validate"></p>
           <!-- ko if: $data.description -->
-          <inline-edit params="
-                            value: $data.description,
-                            rows: 3,
-                            cols: 30,
-                            placeholder: '{% trans "Click here to add a description" %}',
-                            url: '{% url "update_property_description" domain %}',
-                            saveParams: {'caseType': $data.caseType, 'name':  $data.key},
-                            saveValueName: 'description',
-                            errorMessage: '{% trans "Error updating description. Please try again." %}',
-                            readOnlyClass: 'property-description',
-                            readOnlyAttrs: {'data-content': $data.description},
-                            afterRenderFunc: $root.makePopover,
-                        "></inline-edit>
+          <inline-edit params="value: $data.description,
+                               rows: 3,
+                               cols: 30,
+                               placeholder: '{% trans "Click here to add a description" %}',
+                               url: '{% url "update_property_description" domain %}',
+                               saveParams: {
+                                 'caseType': $data.caseType,
+                                 'name':  $data.key
+                               },
+                               saveValueName: 'description',
+                               errorMessage: '{% trans "Error updating description. Please try again." %}',
+                               readOnlyClass: 'property-description',
+                               readOnlyAttrs: {
+                                 'data-content': $data.description
+                               },
+                               afterRenderFunc: $root.makePopover"></inline-edit>
           <!-- /ko -->
         </td>
       </tr>
       </tbody>
     </table>
-    <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
+    <div class="alert alert-block alert-info"
+         data-bind="visible: !case_properties().length">
       {% trans "No properties will be saved" %}
     </div>
-    <a href="#" class="firstProperty btn btn-default" data-bind="click: addProperty, visible: !case_properties().length">
+    <a href="#" class="firstProperty btn btn-default"
+       data-bind="click: addProperty,
+                  visible: !case_properties().length">
       <i class="fa fa-plus"></i>
       {% trans "Save properties" %}
     </a>
   </div>
 </script>
 
-<script type="text/html" id="case-config:refresh-form-questions">
+<script type="text/html"
+        id="case-config:refresh-form-questions">
   <p class="pull-right">
     <button class="btn btn-default refresh-form-questions"
             type="button"
             data-bind="click: function(data, event){
-                        refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{form.unique_id}}', event);
-                        hqImport('analytix/js/google').track.event('Refresh case management', 'Button Clicked');
-                        }">
+                         refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{form.unique_id}}', event);
+                         hqImport('analytix/js/google').track.event('Refresh case management', 'Button Clicked');
+                       }">
       <i class="fa fa-refresh"></i>
     </button>
   </p>
