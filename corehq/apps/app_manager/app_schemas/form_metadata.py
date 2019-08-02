@@ -45,6 +45,10 @@ class _Change(JsonObject):
     old_value = StringProperty()
     new_value = StringProperty()
 
+class _TranslationChange(_Change):
+    old_value = DictProperty()
+    new_value = DictProperty()
+
 class _QuestionDiff(JsonObject):
     question = ObjectProperty(_Change)
     label = ObjectProperty(_Change)
@@ -302,20 +306,21 @@ class _AppDiffGenerator(object):
                 self._mark_item_added(second_module, 'module')
 
     def _mark_attribute(self, first_item, second_item, attribute):
-        is_translatable_property = (isinstance(first_item[attribute], dict)
-                                    and isinstance(second_item[attribute], dict))
-        translation_changed = (is_translatable_property
+        translation_changed = (self._is_translatable_property(first_item[attribute], second_item[attribute])
                                and set(second_item[attribute].items()) - set(first_item[attribute].items()))
         attribute_changed = first_item[attribute] != second_item[attribute]
         attribute_added = second_item[attribute] and not first_item[attribute]
         attribute_removed = first_item[attribute] and not second_item[attribute]
         if attribute_changed or translation_changed:
-            self._mark_item_changed(first_item, attribute)
-            self._mark_item_changed(second_item, attribute)
+            self._mark_item_changed(first_item, second_item, attribute)
         if attribute_added:
             self._mark_item_added(second_item, attribute)
         if attribute_removed:
             self._mark_item_removed(first_item, attribute)
+
+    @staticmethod
+    def _is_translatable_property(first_property, second_property):
+        return (isinstance(first_property, dict) and isinstance(second_property, dict))
 
     def _mark_forms(self, second_forms):
         for second_form in second_forms:
@@ -392,15 +397,30 @@ class _AppDiffGenerator(object):
 
     def _mark_item_removed(self, item, key):
         self._set_contains_changes(item)
-        item.changes[key] = _Change(type=REMOVED)
+        try:
+            old_value = item[key]
+        except KeyError:
+            old_value = None
+        item.changes[key] = _Change(type=REMOVED, old_value=old_value)
 
     def _mark_item_added(self, item, key):
         self._set_contains_changes(item)
-        item.changes[key] = _Change(type=ADDED)
+        try:
+            new_value = item[key]
+        except KeyError:
+            new_value = None
+        item.changes[key] = _Change(type=ADDED, new_value=new_value)
 
-    def _mark_item_changed(self, item, key):
-        self._set_contains_changes(item)
-        item.changes[key] = _Change(type=CHANGED)
+    def _mark_item_changed(self, first_item, second_item, key):
+        self._set_contains_changes(first_item)
+        self._set_contains_changes(second_item)
+        if self._is_translatable_property(first_item[key], second_item[key]):
+            change_class = _TranslationChange
+        else:
+            change_class = _Change
+        change = change_class(type=CHANGED, old_value=first_item[key], new_value=second_item[key])
+        first_item.changes[key] = change
+        second_item.changes[key] = change
 
     def _set_contains_changes(self, item):
         """For forms and modules, set contains_changes to True

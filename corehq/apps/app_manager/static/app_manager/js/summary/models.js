@@ -12,7 +12,8 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/layout',
     'app_manager/js/widgets',       // version dropdown
     'analytix/js/kissmetrix',
-], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics) {
+    'DOMPurify/dist/purify.min',
+], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics, DOMPurify) {
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['unique_id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
         var self = _.extend({
@@ -83,17 +84,76 @@ hqDefine('app_manager/js/summary/models',[
             return self.isSelected() && self.matchesQuery();
         });
         self.getDiffPopover = function (attribute) {
-            if (!self.changes[attribute]['type']) {
+            var change = self.changes[attribute],
+                attributeToName = {
+                    'module': gettext("Module"),
+                    'form': gettext("Form"),
+                    'question': gettext("Question"),
+                    'name': gettext("Name"),
+                    'label': gettext("Label"),
+                    'type': gettext("Question Type"),
+                    'value': gettext("Question Value"),
+                    'options': gettext("Options"),
+                    'calculate': gettext("Calculate condition"),
+                    'relevant': gettext("Display condition"),
+                    'required': gettext("Required"),
+                    'comment': gettext("Question Comment"),
+                    'setvalue': gettext("Default Value"),
+                    'constraint': gettext("Validation Condition"),
+                    'load_properties': gettext("Loaded Case Properties"),
+                    'save_properties': gettext("Saved Case Properties"),
+                    'short_comment': gettext("Comment"),
+                    'form_filter': gettext("Form Filter"),
+                    'module_filter': gettext("Module Filter"),
+                };
+            if (!change['type']) {
                 return {};
             }
 
             return {
-                "title": gettext("Question") + " " + gettext(attribute) + " " + gettext(self.changes[attribute]["type"]),
+                "title": attributeToName[attribute] + " " + gettext(change["type"]),
+                "content": _getDiffPopoverContent(change),
                 "trigger": "hover",
                 "placement": "auto right",
                 "container": "body",
+                "html": true,
             };
         };
+
+        var _getDiffPopoverContent = function (change) {
+            var oldValue = change['old_value'],
+                newValue = change['new_value'];
+
+            if (!oldValue && !newValue) {
+                return '';
+            }
+            var getContent = function (title, value) {
+                if (!value) {
+                    return '';
+                }
+
+                var newContent = "<dt>" + title + "</dt>";
+                if (value instanceof Object) { // translatable property
+                    newContent += "<dl>";
+                    for (var translationKey in value) {
+                        newContent += "<dt>" + translationKey + "</dt>";
+                        newContent += "<dd>" + DOMPurify.sanitize(value[translationKey]) + "</dd>";
+                    }
+                    newContent += "</dl>";
+                } else {
+                    newContent += "<dd>" + DOMPurify.sanitize(value) + "</dd>";
+                }
+                return newContent;
+            };
+
+            var content = "<dl>";
+            content += getContent(gettext('Old Value'), oldValue);
+            content += getContent(gettext('New Value'), newValue);
+            content += "</dl>";
+
+            return content;
+        };
+
         self.getDiffClass = function (attribute) {
             return self.changes[attribute]['type'] ? 'diff-' + self.changes[attribute]['type'] : '';
         };
