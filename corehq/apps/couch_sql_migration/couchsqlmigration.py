@@ -35,7 +35,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     doc_type_to_state,
 )
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.exceptions import AttachmentNotFound, MissingFormXml
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import (
     CaseAttachmentSQL,
@@ -46,7 +46,6 @@ from corehq.form_processor.models import (
     XFormInstanceSQL,
     XFormOperationSQL,
 )
-from corehq.form_processor.parsers.ledgers.form import MissingFormXml
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import (
     adjust_datetimes,

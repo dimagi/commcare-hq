@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 
-from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -178,7 +178,12 @@ def _handle_duplicate(new_doc):
         XFormInstance.get_db().delete_doc(conflict_id)
         return new_doc, None
 
-    existing_md5 = existing_doc.xml_md5()
+    try:
+        existing_md5 = existing_doc.xml_md5()
+    except MissingFormXml:
+        existing_md5 = None
+        existing_doc.problem = 'Missing form.xml'
+
     new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
