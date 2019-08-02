@@ -245,7 +245,7 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
         ).aggregate(value=Max("last_form_submission_date"))["value"]
 
     def get_messages(self, language_code=None):
-        ACCEPTABLE_LAG_IN_MINUTES = 60 * 12  # 12 hours
+        ACCEPTABLE_LAG_IN_MINUTES = 60 * 24  # 24 hours
         warehouse_lag = (datetime.utcnow() - get_warehouse_latest_modified_date()).total_seconds() / 60
         if warehouse_lag > ACCEPTABLE_LAG_IN_MINUTES:
             return []
