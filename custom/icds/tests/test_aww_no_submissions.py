@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.test import TestCase
+import mock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
@@ -11,6 +12,7 @@ from custom.icds.messaging.custom_content import run_indicator_for_user
 from custom.icds.messaging.indicators import AWWSubmissionPerformanceIndicator
 
 
+@mock.patch('custom.icds.messaging.indicators.get_warehouse_latest_modified_date', return_value=datetime.utcnow())
 class TestAWWSubmissionPerformanceIndicator(TestCase):
     domain = 'domain'
 
