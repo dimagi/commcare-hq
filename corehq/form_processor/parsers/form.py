@@ -182,7 +182,8 @@ def _handle_duplicate(new_doc):
         existing_md5 = existing_doc.xml_md5()
     except MissingFormXml:
         existing_md5 = None
-        existing_doc.problem = 'Missing form.xml'
+        if not existing_doc.is_error:
+            existing_doc.problem = 'Missing form.xml'
 
     new_md5 = new_doc.xml_md5()
 
