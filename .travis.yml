@@ -7,12 +7,10 @@ branches:
     - master
 env:
   matrix:
-    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes PYTHON3=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes PYTHON3=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes PYTHON3=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=08 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=9f JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=08 JS_SETUP=yes PYTHON3=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=9f JS_SETUP=yes PYTHON3=yes
     - TEST=python-sharded-and-javascript JS_SETUP=yes PYTHON3=yes
   global:
     - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
