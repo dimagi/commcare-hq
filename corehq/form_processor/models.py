@@ -489,9 +489,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from .utils import convert_xform_to_json, adjust_datetimes
         from corehq.form_processor.utils.metadata import scrub_form_meta
         xml = self.get_xml()
+        if xml is None:  # form XML is missing from blob storage
+            return {}
         try:
             form_json = convert_xform_to_json(xml)
-        except (XMLSyntaxError, ValueError):
+        except XMLSyntaxError:
             return {}
         # we can assume all sql domains are new timezone domains
         with force_phone_timezones_should_be_processed():
