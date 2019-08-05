@@ -724,8 +724,9 @@ class RepeatRecord(Document):
     def _format_response(response):
         if not _is_response(response):
             return None
+        response_body = getattr(response, "text", "")
         return '{}: {}.\n{}'.format(
-            response.status_code, response.reason, getattr(response, 'content', None))
+            response.status_code, response.reason, response_body)
 
     def handle_success(self, response):
         """
