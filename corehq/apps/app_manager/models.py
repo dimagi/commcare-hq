@@ -5611,7 +5611,6 @@ class LinkedApplication(Application):
         for key, ref in self.logo_refs.items():
             mm = CommCareMultimedia.get(ref['m_id'])
             self.create_mapping(mm, ref['path'], save=False)
-        self.save()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
