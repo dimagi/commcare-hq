@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import six
+import yaml
 from django.core.management.base import BaseCommand
 from django.contrib.staticfiles import finders
 from django.conf import settings
@@ -35,15 +36,20 @@ class Command(BaseCommand):
         print("Current commit SHA: %s" % sha)
         return sha
 
-    def output_resources(self, resources):
-        with open(os.path.join(self.root_dir, 'resource_versions.py'), 'w') as fout:
-            fout.write("resource_versions = %s" % json.dumps(resources, indent=2))
+    def output_resources(self, resources, overwrite=True):
+        if not overwrite:
+            from get_resource_versions import get_resource_versions
+            old_resources = get_resource_versions()
+            resources.update(old_resources)
+        with open(os.path.join(self.root_dir, 'resource_versions.yaml'), 'w') as fout:
+            fout.write(yaml.dump([{'name': name, 'version': version}
+                                  for name, version in resources.items()]))
 
-    def overwrite_resources(self, resources, sha=None):
+    def update_resources(self, resources, sha=None, overwrite=True):
         if not sha:
             sha = self.current_sha()
         rcache.set(RESOURCE_PREFIX % sha, resources, 86400)
-        self.output_resources(resources)
+        self.output_resources(resources, overwrite=overwrite)
 
     def handle(self, **options):
         prefix = os.getcwd()
@@ -56,7 +62,7 @@ class Command(BaseCommand):
         existing_resources = rcache.get(RESOURCE_PREFIX % current_sha, None)
         if existing_resources and not isinstance(existing_resources, six.string_types):
             print("getting resource dict from cache")
-            self.output_resources(existing_resources)
+            self.output_resources(existing_resources, overwrite=True)
             return
         if isinstance(existing_resources, six.string_types):
             soft_assert_type_text(existing_resources)
@@ -72,7 +78,7 @@ class Command(BaseCommand):
                     url = os.path.join(storage.prefix, path)
                 filename = os.path.join(storage.location, path)
                 resources[url] = self.get_hash(filename)
-        self.overwrite_resources(resources, sha=current_sha)
+        self.update_resources(resources, sha=current_sha)
 
     def get_hash(self, filename):
         with open(filename, 'rb') as f:
