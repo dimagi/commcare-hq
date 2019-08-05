@@ -90,9 +90,11 @@ hqDefine('app_manager/js/summary/models',[
         self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
-        self.getDiffPopover = function (attribute) {
-            var change = self.changes[attribute],
-                oldValue = change['old_value'],
+        self.getDiffPopover = function (change, attribute) {
+            if (!change || !change['type']){
+                return {};
+            }
+            var oldValue = change['old_value'],
                 newValue = change['new_value'],
                 content = '',
                 attributeToName = {
@@ -103,7 +105,7 @@ hqDefine('app_manager/js/summary/models',[
                     'label': gettext("Label"),
                     'type': gettext("Question Type"),
                     'value': gettext("Question Value"),
-                    'options': gettext("Options"),
+                    'options': gettext("Option"),
                     'calculate': gettext("Calculate condition"),
                     'relevant': gettext("Display condition"),
                     'required': gettext("Required"),
@@ -114,9 +116,6 @@ hqDefine('app_manager/js/summary/models',[
                     'form_filter': gettext("Form Filter"),
                     'module_filter': gettext("Module Filter"),
                 };
-            if (!change['type']) {
-                return {};
-            }
             if (oldValue || newValue) {
                 content = "<dl>";
                 content += _getPopoverText(gettext('Old Value'), oldValue);

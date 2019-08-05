@@ -373,8 +373,8 @@ class _AppDiffGenerator(object):
             second_question.changes['options'][added_option] = _Change(type=ADDED).to_json()
 
         for changed_option in changed_options:
-            first_question.changes['options'][changed_option] = _Change(type=CHANGED).to_json()
-            second_question.changes['options'][changed_option] = _Change(type=CHANGED).to_json()
+            first_question.changes['options'][changed_option] = _Change(type=CHANGED, old_value=first_options_by_value[changed_option]).to_json()
+            second_question.changes['options'][changed_option] = _Change(type=CHANGED, new_value=second_options_by_value[changed_option]).to_json()
 
         if removed_options or added_options or changed_options:
             self._set_contains_changes(first_question)
