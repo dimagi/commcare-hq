@@ -1329,7 +1329,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1419,13 +1419,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     'Always turn login as off',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-SHOW_DEV_TOGGLE_INFO = StaticToggle(
-    'highlight_feature_flags',
-    'Highlight / Mark Feature Flags in the UI',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1661,7 +1654,7 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'india'},
 )
 
 
@@ -1670,7 +1663,7 @@ ICDS_NIC_INDICATOR_API = StaticToggle(
     'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'india'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1749,11 +1742,17 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 )
 
 
+def _enable_bi_integration_preview(domain, enabled):
+    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
+    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
+
+
 ODATA = StaticToggle(
     'odata',
     'Enable Odata feed.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    save_fn=_enable_bi_integration_preview,
 )
 
 

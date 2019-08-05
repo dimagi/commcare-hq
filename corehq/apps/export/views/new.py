@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import json
 
 from couchdbkit import ResourceNotFound
+
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
@@ -265,7 +267,7 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
     urlname = 'new_form_faily_saved_export'
 
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
@@ -278,7 +280,7 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
         return export_instance
 
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")

@@ -3,11 +3,15 @@ hqDefine('hqwebapp/js/base_ace', [
     'knockout',
     'ace-builds/src-min-noconflict/ace',
     'ace-builds/src-min-noconflict/mode-json',
+    'ace-builds/src-min-noconflict/mode-xml',
+    'ace-builds/src-min-noconflict/ext-searchbox',
 ], function (
     $,
     ko,
     ace,
-    jsonMode  // eslint-disable-line no-unused-vars
+    jsonMode,  // eslint-disable-line no-unused-vars
+    xmlMode,   // eslint-disable-line no-unused-vars
+    searchBox  // eslint-disable-line no-unused-vars
 ) {
 
     var initAceEditor = function (element, mode, options, value) {
