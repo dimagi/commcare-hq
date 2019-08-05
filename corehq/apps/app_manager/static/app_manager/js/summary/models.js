@@ -91,7 +91,7 @@ hqDefine('app_manager/js/summary/models',[
             return self.isSelected() && self.matchesQuery();
         });
         self.getDiffPopover = function (change, attribute) {
-            if (!change || !change['type']){
+            if (!change || !change['type']) {
                 return {};
             }
             var oldValue = change['old_value'],
@@ -146,7 +146,7 @@ hqDefine('app_manager/js/summary/models',[
                 }[attribute],
                 content = "<dl>" + _getPopoverText(
                     gettext("Case Property") + " " + loadOrSave + " " + gettext(change['type']),
-                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> "+ gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type'])
+                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> " + gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type'])
                 ) + "</dl>";
 
             return _.defaults({

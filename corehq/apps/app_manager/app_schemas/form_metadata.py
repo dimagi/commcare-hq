@@ -45,9 +45,11 @@ class _Change(JsonObject):
     old_value = StringProperty()
     new_value = StringProperty()
 
+
 class _TranslationChange(_Change):
     old_value = DictProperty()
     new_value = DictProperty()
+
 
 class _QuestionDiff(JsonObject):
     question = ObjectProperty(_Change)
@@ -373,8 +375,14 @@ class _AppDiffGenerator(object):
             second_question.changes['options'][added_option] = _Change(type=ADDED).to_json()
 
         for changed_option in changed_options:
-            first_question.changes['options'][changed_option] = _Change(type=CHANGED, old_value=first_options_by_value[changed_option]).to_json()
-            second_question.changes['options'][changed_option] = _Change(type=CHANGED, new_value=second_options_by_value[changed_option]).to_json()
+            first_question.changes['options'][changed_option] = _Change(
+                type=CHANGED,
+                old_value=first_options_by_value[changed_option]
+            ).to_json()
+            second_question.changes['options'][changed_option] = _Change(
+                type=CHANGED,
+                new_value=second_options_by_value[changed_option]
+            ).to_json()
 
         if removed_options or added_options or changed_options:
             self._set_contains_changes(first_question)
@@ -387,9 +395,13 @@ class _AppDiffGenerator(object):
         added_properties = second_props - first_props
 
         for removed_property in removed_properties:
-            first_question.changes[attribute][removed_property[0]] = {removed_property[1]: _Change(type=REMOVED).to_json()}
+            first_question.changes[attribute][removed_property[0]] = {
+                removed_property[1]: _Change(type=REMOVED).to_json()
+            }
         for added_property in added_properties:
-            second_question.changes[attribute][added_property[0]] = {added_property[1]: _Change(type=ADDED).to_json()}
+            second_question.changes[attribute][added_property[0]] = {
+                added_property[1]: _Change(type=ADDED).to_json()
+            }
 
         if removed_properties or added_properties:
             self._set_contains_changes(first_question)

@@ -162,7 +162,10 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
             'group': 'agroup',
         })
         first, second = get_app_diff(self.app1, self.app2)
-        self.assertEqual(second[0]['forms'][0]['questions'][0]['children'][0]['changes']['question']['type'], ADDED)
+        self.assertEqual(
+            second[0]['forms'][0]['questions'][0]['children'][0]['changes']['question']['type'],
+            ADDED
+        )
 
     def test_remove_question_from_group(self):
         self._add_question_to_group(self.app1.modules[0].forms[0], {
@@ -171,7 +174,10 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
             'group': 'agroup',
         })
         first, second = get_app_diff(self.app1, self.app2)
-        self.assertEqual(first[0]['forms'][0]['questions'][0]['children'][0]['changes']['question']['type'], REMOVED)
+        self.assertEqual(
+            first[0]['forms'][0]['questions'][0]['children'][0]['changes']['question']['type'],
+            REMOVED
+        )
 
     def test_change_question_in_group(self):
         self._add_question_to_group(self.app1.modules[0].forms[0], {
