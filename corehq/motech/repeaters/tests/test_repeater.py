@@ -1,3 +1,4 @@
+# encoding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
@@ -938,7 +939,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
 
 @attr.s
-class Response:
+class Response(object):
     status_code = attr.ib()
     reason = attr.ib()
     content = attr.ib(default=None)
@@ -946,7 +947,7 @@ class Response:
 
     @property
     def text(self):
-        return '' if self.content is None else str(self.content, self.encoding, errors='replace')
+        return '' if self.content is None else self.content.decode(self.encoding, errors='replace')
 
 
 class HandleResponseTests(SimpleTestCase):
