@@ -13,11 +13,10 @@ from six.moves import range
 class LocationAggregationHelper(BaseICDSAggregationHelper):
     helper_key = 'location'
     base_tablename = 'awc_location'
+    local_tablename = 'awc_location_local'
 
     ucr_location_table = AWC_LOCATION_TABLE_ID
     ucr_aww_table = AWW_USER_TABLE_ID
-
-    local_tablename = 'awc_location_local'
 
     def __init__(self):
         pass
