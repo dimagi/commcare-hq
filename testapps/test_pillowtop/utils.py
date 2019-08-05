@@ -14,28 +14,32 @@ from pillowtop.pillow.interface import PillowBase
 
 class process_pillow_changes(ContextDecorator):
     def __init__(self, pillow_name_or_instance=None, pillow_kwargs=None):
-        self.pillows = []
+        self._pillows = []
+        self.pillow_names_or_instances = []
         if pillow_name_or_instance:
-            self.add_pillow(pillow_name_or_instance, pillow_kwargs)
+            self.pillow_names_or_instances.append((pillow_name_or_instance, pillow_kwargs))
 
     def add_pillow(self, pillow_name_or_instance, pillow_kwargs=None):
-        if isinstance(pillow_name_or_instance, PillowBase):
-            self.pillows.append(pillow_name_or_instance)
-        else:
-            self.pillows.append(self._get_pillow(pillow_name_or_instance, pillow_kwargs or {}))
+        self.pillow_names_or_instances.append((pillow_name_or_instance, pillow_kwargs))
 
     def _get_pillow(self, pillow_name, pillow_kwargs):
         with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
             return get_pillow_by_name(pillow_name, instantiate=True, **pillow_kwargs)
 
     def __enter__(self):
+        for pillow_name_or_instance, pillow_kwargs in self.pillow_names_or_instances:
+            if isinstance(pillow_name_or_instance, PillowBase):
+                self._pillows.append(pillow_name_or_instance)
+            else:
+                self._pillows.append(self._get_pillow(pillow_name_or_instance, pillow_kwargs or {}))
+
         self.offsets = [
             pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()
-            for pillow in self.pillows
+            for pillow in self._pillows
         ]
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for offsets, pillow in zip(self.offsets, self.pillows):
+        for offsets, pillow in zip(self.offsets, self._pillows):
             pillow.process_changes(since=offsets, forever=False)
 
 
