@@ -37,14 +37,13 @@ class Command(BaseCommand):
         return sha
 
     def output_resources(self, resources, overwrite=True):
-        resource_versions = {}
         if not overwrite:
             from get_resource_versions import get_resource_versions
-            resource_versions = get_resource_versions()
-            resource_versions.update(resources)
+            old_resources = get_resource_versions()
+            resources.update(old_resources)
         with open(os.path.join(self.root_dir, 'resource_versions.yaml'), 'w') as fout:
             fout.write(yaml.dump([{'name': name, 'version': version}
-                                  for name, version in resource_versions.items()]))
+                                  for name, version in resources.items()]))
 
     def update_resources(self, resources, sha=None, overwrite=True):
         if not sha:
