@@ -456,7 +456,7 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 ENABLE_SOFT_ASSERT_EMAILS = True
 
 SERVER_ENVIRONMENT = 'localdev'
-ICDS_ENVS = ('icds', 'icds-new')
+ICDS_ENVS = ('icds',)
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
