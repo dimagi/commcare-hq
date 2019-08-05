@@ -541,7 +541,7 @@ def sql_form_to_json(form):
     """
     try:
         form.get_xml()
-    except (AttachmentNotFound, BlobNotFound):
+    except (AttachmentNotFound, MissingFormXml):
         form.get_xml.get_cache(form)[()] = ""
         assert form.get_xml() == "", form.get_xml()
     return form.to_json()
