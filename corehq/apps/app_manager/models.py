@@ -4408,7 +4408,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                     del copy[bad_key]
 
             copy = cls.wrap(copy)
-            copy._set_build_fields(self._id, user_id, comment)
+            copy.convert_app_to_build(self._id, user_id, comment)
             copy.copy_attachments(self)
 
         if not copy._id:
@@ -4426,7 +4426,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
         return copy
 
-    def _set_build_fields(self, copy_of, user_id, comment=None):
+    def convert_app_to_build(self, copy_of, user_id, comment=None):
         self.copy_of = copy_of
         built_on = datetime.datetime.utcnow()
         self.date_created = built_on
@@ -4440,7 +4440,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         self.comment_from = user_id
         self.is_released = False
 
-    def unset_build_fields(self):
+    def convert_build_to_app(self):
         self.copy_of = None
         self.date_created = None
         self.built_on = None
