@@ -29,7 +29,6 @@ def _all_zeros(data, agg_level):
     return retry
 
 
-
 def get_program_summary_data(step, domain, config, now, include_test, pre_release_features):
     data = {}
     if step == 'maternal_child':
