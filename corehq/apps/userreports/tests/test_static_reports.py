@@ -20,7 +20,8 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
     @classmethod
     def setUpClass(cls):
         super(TestStaticReportConfig, cls).setUpClass()
-        cls.configs = list(StaticDataSourceConfiguration.all())
+        with patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')])):
+            cls.configs = list(StaticDataSourceConfiguration.all())
 
     def setUp(self):
         super(TestStaticReportConfig, self).setUp()
@@ -32,20 +33,22 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
 
     def test_get_all_json(self):
         with override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'json')]):
-            self.assertEqual(2, len(self.configs))
-            example, dimagi = self.configs
+            all = list(StaticReportConfiguration.all())
+            self.assertEqual(2, len(all))
+            example, dimagi = all
             self.assertEqual('example', example.domain)
             self.assertEqual('dimagi', dimagi.domain)
-            for config in self.configs:
+            for config in all:
                 self.assertEqual('Custom Title', config.title)
 
     def test_get_all_yaml(self):
         with override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'yaml')]):
-            self.assertEqual(2, len(self.configs))
-            example, dimagi = self.configs
+            all = list(StaticReportConfiguration.all())
+            self.assertEqual(2, len(all))
+            example, dimagi = all
             self.assertEqual('example', example.domain)
             self.assertEqual('dimagi', dimagi.domain)
-            for config in self.configs:
+            for config in all:
                 self.assertEqual('Custom Title', config.title)
 
     def test_production_config(self):
@@ -60,19 +63,18 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
         )
         self.assertEqual(0, len(duplicates), msg)
 
-    @patch('corehq.apps.callcenter.data_source.get_call_center_domains',
-           MagicMock(return_value=[domain_lite('cc1')]))
     def test_data_sources_actually_exist(self):
 
         data_sources_on_domain = defaultdict(set)
-        for data_source in StaticDataSourceConfiguration.all():
+        for data_source in self.configs:
             data_sources_on_domain[data_source.domain].add(data_source.get_id)
 
         def has_no_data_source(report_config):
             available_data_sources = data_sources_on_domain[report_config.domain]
             return report_config.config_id not in available_data_sources
 
-        configs_missing_data_source = list(filter(has_no_data_source, self.configs))
+        all_configs = StaticReportConfiguration.all()
+        configs_missing_data_source = list(filter(has_no_data_source, all_configs))
 
         msg = ("There are {} report configs which reference data sources that "
                "don't exist (or which don't exist on that domain):\n{}".format(
