@@ -60,4 +60,5 @@ branches:
   - jls/resource-versions # Jenny July 24
   - jls/copy-app-version # Jenny Aug 2
   - mk/imrpove-mm-pull # MK Aug 5
+  - es/linked-app-fields  # ES Aug 5th
 submodules: {}
