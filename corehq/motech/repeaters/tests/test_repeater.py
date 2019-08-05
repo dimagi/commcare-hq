@@ -6,7 +6,8 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-from django.test import TestCase, override_settings
+import attr
+from django.test import TestCase, override_settings, SimpleTestCase
 
 from mock import patch
 from six.moves import range
@@ -933,3 +934,42 @@ class TestRepeaterDeleted(BaseRepeaterTest):
             process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
+
+
+class FormatResponseTests(SimpleTestCase):
+
+    @attr.s
+    class Response:
+        status_code = attr.ib()
+        reason = attr.ib()
+        content = attr.ib(default=None)
+        encoding = attr.ib(default='ascii')
+
+        @property
+        def text(self):
+            return '' if self.content is None else str(self.content, self.encoding, errors='replace')
+
+    def test_content_is_ascii(self):
+        response = self.Response(
+            status_code=200,
+            reason='OK',
+            content=b'3.6 roentgen. Not great. Not terrible.'
+        )
+        formatted = RepeatRecord._format_response(response)
+        self.assertEqual(formatted, '200: OK.\n3.6 roentgen. Not great. Not terrible.')
+
+    def test_encoding_is_not_ascii(self):
+        response = self.Response(
+            status_code=200,
+            reason='OK',
+            content=b'3,6 \xe1\xa8\xd4\xe5\xac\xa8\xd4\xa0 \xd5\xa8 \xb5\xd6\xe1\xd6\xf5\xd6. '
+                    b'\xd5\xa8 \xe3\xe5\xe1\xa0\xf5\xd4\xd6',
+            encoding='cp855'
+        )
+        formatted = RepeatRecord._format_response(response)
+        self.assertEqual(formatted, '200: OK.\n3,6 рентгена Не хорошо. Не страшно')
+
+    def test_content_is_None(self):
+        response = self.Response(500, 'The core is exposed')
+        formatted = RepeatRecord._format_response(response)
+        self.assertEqual(formatted, '500: The core is exposed.\n')
