@@ -53,6 +53,11 @@ branches:
   #- jls/linked-app-multiple-masters # Jenny June 18
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - mk/skip-files-build # MK July 6
-  - es/form-multimedia  # ES July 19
+  - nh/icds/skip_trans+mk/use-ids-to-validate-translations  # Norman Aug 2
+  - nh/icds/skip_trans  # Norman Aug 2
   - mk/use-ids-to-validate-translations # July 19
+  - revert-24882-jls/compress-mobile-workers-js # Jenny July 24
+  - jls/resource-versions # Jenny July 24
+  - jls/copy-app-version # Jenny Aug 2
+  - mk/imrpove-mm-pull # MK Aug 5
 submodules: {}

@@ -20,6 +20,7 @@ def setup_ccz_file_for_hosting(hosted_ccz_id, user_email=None):
         hosted_ccz = HostedCCZ.objects.get(pk=hosted_ccz_id)
     except HostedCCZ.DoesNotExist:
         return
+    hosted_ccz.update_status('building')
     version = hosted_ccz.version
     ccz_utility = hosted_ccz.utility
     # set up the file if not already present
@@ -32,13 +33,17 @@ def setup_ccz_file_for_hosting(hosted_ccz_id, user_email=None):
                                             download_targeted_version=bool(build.commcare_flavor))
             with open(ccz_file, 'rb') as ccz:
                 ccz_utility.store_file_in_blobdb(ccz, name=hosted_ccz.file_name)
+            hosted_ccz.update_status('completed')
         except:
             exc = sys.exc_info()
+            hosted_ccz.update_status('failed')
             if user_email:
                 _notify_failure_to_user(hosted_ccz, build, user_email)
             # delete the file from blob db if it was added but later failed
             hosted_ccz.delete_ccz()
             six.reraise(*exc)
+    else:
+        hosted_ccz.update_status('completed')
 
 
 def _notify_failure_to_user(hosted_ccz, build, user_email):

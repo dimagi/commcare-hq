@@ -254,27 +254,6 @@ def ui_notify_slug(ui_notify_instance_or_name):
 
 
 @register.filter
-def toggle_tag_info(request, toggle_or_toggle_name):
-    """Show Tag Information for feature flags / Toggles,
-    and if not enabled, show where the UI would be.
-    Useful for trying to find out if you have all the flags enabled in a
-    particular location or whether a feature on prod is part of a particular
-    flag. """
-    if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
-        return ""
-    flag = _get_obj_from_name_or_instance(toggles, toggle_or_toggle_name)
-    tag = flag.tag
-    is_enabled = flag.enabled_for_request(request)
-    return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
-        css_class=tag.css_class,
-        tag_name=tag.name,
-        description=flag.label,
-        status=" <strong>[DISABLED]</strong>" if not is_enabled else "",
-        css_disabled=" label-flag-disabled" if not is_enabled else "",
-    ))
-
-
-@register.filter
 def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False

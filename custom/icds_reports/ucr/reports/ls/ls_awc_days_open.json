@@ -19,7 +19,6 @@
   ],
   "server_environment": [
     "india",
-    "icds-new",
     "icds"
   ],
   "report_id": "static-ls_awc_days_open",

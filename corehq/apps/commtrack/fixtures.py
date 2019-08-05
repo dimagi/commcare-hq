@@ -4,18 +4,11 @@ from xml.etree import cElementTree as ElementTree
 import six
 
 
-def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=None, user_id=None):
+def simple_fixture_generator(restore_user, id, name, fields, data, user_id=None):
     """
     Fixture generator used to build commtrack related fixtures such
     as products and programs.
     """
-    project = restore_user.project
-    if not project or not project.commtrack_enabled:
-        return []
-
-    # expand this here to prevent two separate couch calls
-    data = data_fn()
-
     name_plural = "{}s".format(name)
     root = ElementTree.Element('fixture',
                                {

@@ -13,7 +13,6 @@ import re
 import types
 import uuid
 from collections import defaultdict, namedtuple, Counter, OrderedDict
-from functools import wraps
 
 from copy import deepcopy
 from distutils.version import LooseVersion
@@ -94,6 +93,8 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
     expire_get_latest_app_release_by_location_cache,
+    is_linked_app,
+    is_remote_app,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -3890,7 +3891,7 @@ class VersionedDoc(LazyBlobDoc):
 
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
-            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
+            increment_version = not self.copy_of and not is_linked_app(self)
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -4225,7 +4226,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return False
 
     @memoized
-    def get_previous_version(self):
+    def get_latest_build(self):
         return self.view('app_manager/applications',
             startkey=[self.domain, self.master_id, {}],
             endkey=[self.domain, self.master_id],
@@ -4633,7 +4634,7 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
-            'include_media': self.doc_type != 'RemoteApp',
+            'include_media': not is_remote_app(self),
             'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
             'commcare_flavor': (
                 self.commcare_flavor
@@ -4770,32 +4771,33 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        previous_version = self.get_previous_version()
-        if previous_version:
-            force_new_version = self.build_profiles != previous_version.build_profiles
-            for form_stuff in self.get_forms(bare=False):
-                filename = 'files/%s' % self.get_form_filename(**form_stuff)
-                form = form_stuff["form"]
-                if not force_new_version:
-                    try:
-                        previous_form = previous_version.get_form(form.unique_id)
-                        # take the previous version's compiled form as-is
-                        # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename)
-                    except (ResourceNotFound, FormNotFoundException):
-                        form.version = None
-                    else:
-                        previous_hash = _hash(previous_source)
-
-                        # hack - temporarily set my version to the previous version
-                        # so that that's not treated as the diff
-                        previous_form_version = previous_form.get_version()
-                        form.version = previous_form_version
-                        my_hash = _hash(self.fetch_xform(form=form))
-                        if previous_hash != my_hash:
-                            form.version = None
-                else:
+        latest_build = self.get_latest_build()
+        if not latest_build:
+            return
+        force_new_version = self.build_profiles != latest_build.build_profiles
+        for form_stuff in self.get_forms(bare=False):
+            filename = 'files/%s' % self.get_form_filename(**form_stuff)
+            form = form_stuff["form"]
+            if not force_new_version:
+                try:
+                    previous_form = latest_build.get_form(form.unique_id)
+                    # take the previous version's compiled form as-is
+                    # (generation code may have changed since last build)
+                    previous_source = latest_build.fetch_attachment(filename)
+                except (ResourceNotFound, FormNotFoundException):
                     form.version = None
+                else:
+                    previous_hash = _hash(previous_source)
+
+                    # hack - temporarily set my version to the previous version
+                    # so that that's not treated as the diff
+                    previous_form_version = previous_form.get_version()
+                    form.version = previous_form_version
+                    my_hash = _hash(self.fetch_xform(form=form))
+                    if previous_hash != my_hash:
+                        form.version = None
+            else:
+                form.version = None
 
     def set_media_versions(self):
         """
@@ -4805,8 +4807,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        previous_version = self.get_previous_version()
-        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+        latest_build = self.get_latest_build()
+        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
@@ -5311,14 +5313,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
         return copy_form
 
-    @cached_property
-    def has_case_management(self):
-        for module in self.get_modules():
-            for form in module.get_forms():
-                if len(form.active_actions()) > 0:
-                    return True
-        return False
-
     @memoized
     def case_type_exists(self, case_type):
         return case_type in self.get_case_types()
@@ -5370,7 +5364,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             # If there are multiple forms with the same xmlns, then all but one are shadow forms, therefore they
             # all have the same xform.
             return forms[0].wrapped_xform()
-
 
     def get_questions(self, xmlns, langs=None, include_triggers=False, include_groups=False,
                       include_translations=False):
@@ -5868,20 +5861,14 @@ class LatestEnabledBuildProfiles(models.Model):
     build_id = models.CharField(max_length=255)
     active = models.BooleanField(default=True)
 
-    def get_domain(self):
-        # method to set domain on records added before domain column was added
-        if not self.domain:
-            self.domain = Application.get(self.build_id).domain
-        return self.domain
-
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        self.expire_cache(self.get_domain())
+        self.expire_cache(self.domain)
 
     @property
     def build(self):
         if not hasattr(self, '_build'):
-            self._build = get_build_by_version(self.get_domain(), self.app_id, self.version)['value']
+            self._build = get_build_by_version(self.domain, self.app_id, self.version)['value']
         return self._build
 
     def clean(self):

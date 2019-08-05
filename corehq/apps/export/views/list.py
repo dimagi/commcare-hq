@@ -17,6 +17,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -605,7 +606,7 @@ def commit_filters(request, domain):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
         raise Http404
-    if export.is_odata_config and not toggles.ODATA.enabled_for_request(request):
+    if export.is_odata_config and not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -868,7 +869,7 @@ class ODataFeedListHelper(ExportListHelper):
 
     @property
     def create_export_form_title(self):
-        return ""
+        return _("Select a model to export to a feed")
 
     def _should_appear_in_list(self, export):
         return export['is_odata_config']
@@ -896,13 +897,19 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     urlname = 'list_odata_feeds'
-    page_title = ugettext_lazy("Power BI/Tableau Integration")
+    page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")
     lead_text = ugettext_lazy('''
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau">
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau"
+           target="_blank">
+            Learn more.
+        </a><br />
+        This is a Feature Preview.
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
+           target="_blank">
             Learn more.
         </a>
     ''')

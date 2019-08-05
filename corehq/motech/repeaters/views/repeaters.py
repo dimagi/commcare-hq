@@ -380,11 +380,11 @@ def test_repeater(request, domain):
             resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
             else:
                 return HttpResponse(json.dumps({"success": False,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
 
         except Exception as e:
