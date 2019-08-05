@@ -6,6 +6,7 @@ import datetime
 import math
 from collections import defaultdict, namedtuple
 import six
+from django.conf import settings
 from six.moves import map, range
 from six.moves.urllib.parse import urlencode
 
@@ -1754,6 +1755,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         case_owners = _get_owner_ids_from_users(users_to_iterate)
         user_ids = user_ids
 
+        if settings.CASE_ES_DROP_FORM_FIELDS:
+            active_cases_by_owner = {}
+        else:
+            active_cases_by_owner = get_active_case_counts_by_owner(
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
+            )
+
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
                 self.domain, avg_datespan, user_ids=user_ids, export=export
@@ -1761,9 +1769,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             submissions_by_user=get_submission_counts_by_user(
                 self.domain, self.datespan, user_ids=user_ids, export=export
             ),
-            active_cases_by_owner=get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
-            ),
+            active_cases_by_owner=active_cases_by_owner,
             total_cases_by_owner=get_total_case_counts_by_owner(
                 self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
