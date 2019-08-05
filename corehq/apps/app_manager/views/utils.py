@@ -362,7 +362,7 @@ def update_linked_app(app, user_id):
             ))
 
         report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
-
+        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map])
         try:
             app = overwrite_app(app, latest_master_build, report_map)
         except AppEditingError as e:
@@ -375,7 +375,7 @@ def update_linked_app(app, user_id):
 
         if app.master_is_remote:
             try:
-                pull_missing_multimedia_for_app(app)
+                pull_missing_multimedia_for_app(app, old_multimedia_ids)
             except RemoteRequestError:
                 raise AppLinkError(_(
                     'Error fetching multimedia from remote server. Please try again later.'
