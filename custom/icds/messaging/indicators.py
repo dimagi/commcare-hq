@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 import pytz
 
+from django.conf import settings
 from django.db.models import Max
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
@@ -28,6 +29,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.util.quickcache import quickcache
 from corehq.warehouse.models.facts import ApplicationStatusFact
+from corehq.warehouse.utils import get_warehouse_latest_modified_date
 from custom.icds.const import (
     CHILDREN_WEIGHED_REPORT_ID,
     DAYS_AWC_OPEN_REPORT_ID,
@@ -244,6 +246,12 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
         ).aggregate(value=Max("last_form_submission_date"))["value"]
 
     def get_messages(self, language_code=None):
+        # default 24 hours
+        ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES = getattr(settings, 'ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES', 60 * 24 * 2)
+        warehouse_lag = (datetime.utcnow() - get_warehouse_latest_modified_date()).total_seconds() / 60
+        if warehouse_lag > ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES:
+            return []
+
         more_than_one_week = False
         more_than_one_month = False
         one_month_ago = datetime.utcnow() - timedelta(days=30)
