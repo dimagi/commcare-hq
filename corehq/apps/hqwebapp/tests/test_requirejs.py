@@ -23,14 +23,12 @@ class TestRequireJS(SimpleTestCase):
 
     @classmethod
     def _hqDefine_line(cls, filename):
-        hqDefine_line = None
+        pattern = re.compile(r'^\s*hqDefine')
         with open(filename, 'r') as f:
-            line = f.readline()
-            while line and not hqDefine_line:
-                if re.match(r'^\s*hqDefine', line):
-                    hqDefine_line = line
-                line = f.readline()
-        return hqDefine_line
+            for line in f:
+                if re.match(pattern, line):
+                    return line
+        return None
 
 
     @classmethod
@@ -40,10 +38,13 @@ class TestRequireJS(SimpleTestCase):
 
         proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
+        design_pattern = re.compile(r'/_design/')
+        couchapps_pattern = re.compile(r'couchapps')
+        vellum_pattern = re.compile(r'/vellum/')
         cls.js_files = [f for f in [b.decode('utf-8') for b in out.split(b"\n")] if f
-                    and not re.search(r'/_design/', f)
-                    and not re.search(r'couchapps', f)
-                    and not re.search(r'/vellum/', f)]
+                    and not design_pattern.search(f)
+                    and not couchapps_pattern.search(f)
+                    and not vellum_pattern.search(f)]
 
         cls.hqdefine_files = []
         cls.requirejs_files = []
@@ -89,9 +90,10 @@ class TestRequireJS(SimpleTestCase):
         def _test_file(filename):
             with open(filename, 'r') as f:
                 line = f.readline()
+                pattern = re.compile(r'hqImport\([\'"]([^\'"]*)[\'"]')
                 while line:
-                    if re.search(r'hqImport', line):
-                        match = re.search(r'hqImport\([\'"]([^\'"]*)[\'"]', line)
+                    if 'hqImport' in line:
+                        match = pattern.search(line)
                         if match:
                             errors.append("{} imported in {}".format(match.group(1), filename))
                         else:
