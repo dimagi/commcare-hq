@@ -147,7 +147,7 @@
       <!-- ko foreach: load_properties -->
       <li data-bind="visible: $root.showCaseProperties">
         <i class = "fa fa-li text-muted fa-briefcase"></i>
-        <span data-bind="css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property) ">
+        <span data-bind="css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property), popover: $parent.getLoadSavePopover('load_properties', $data.case_type, $data.property)">
           <span class="text-muted" data-bind="text:$data.case_type, css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property)"></span> -
           <!-- ko text: $data.property --><!-- /ko -->
         </span>
@@ -164,7 +164,7 @@
           <i class = "fa text-muted fa-arrow-right"></i>
           <i class = "fa text-muted fa-briefcase"></i>
         </span>
-        <span data-bind="css: $parent.getLoadSaveDiffClass('save_properties', $data.case_type, $data.property) ">
+        <span data-bind="css: $parent.getLoadSaveDiffClass('save_properties', $data.case_type, $data.property), popover: $parent.getLoadSavePopover('save_properties', $data.case_type, $data.property)">
           <span class="text-muted" data-bind="text:$data.case_type"></span> -
           <!-- ko text: $data.property --><!-- /ko -->
         </span>

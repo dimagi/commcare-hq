@@ -77,6 +77,13 @@ hqDefine('app_manager/js/summary/models',[
     var contentItemModel = function (options) {
         var self = _.extend({}, options);
 
+        var basePopoverOptions = {
+            "trigger": "hover",
+            "placement": "auto right",
+            "container": "body",
+            "html": true,
+        };
+
         self.children = _.map(options.children, function (child) { return contentItemModel(child); });
         self.isSelected = ko.observable(true);  // based on what's selected in menu
         self.matchesQuery = ko.observable(true);   // based on what's entered in search box
@@ -85,6 +92,9 @@ hqDefine('app_manager/js/summary/models',[
         });
         self.getDiffPopover = function (attribute) {
             var change = self.changes[attribute],
+                oldValue = change['old_value'],
+                newValue = change['new_value'],
+                content = '',
                 attributeToName = {
                     'module': gettext("Module"),
                     'form': gettext("Form"),
@@ -100,8 +110,6 @@ hqDefine('app_manager/js/summary/models',[
                     'comment': gettext("Question Comment"),
                     'setvalue': gettext("Default Value"),
                     'constraint': gettext("Validation Condition"),
-                    'load_properties': gettext("Loaded Case Properties"),
-                    'save_properties': gettext("Saved Case Properties"),
                     'short_comment': gettext("Comment"),
                     'form_filter': gettext("Form Filter"),
                     'module_filter': gettext("Module Filter"),
@@ -109,49 +117,61 @@ hqDefine('app_manager/js/summary/models',[
             if (!change['type']) {
                 return {};
             }
-
-            return {
+            if (oldValue || newValue) {
+                content = "<dl>";
+                content += _getPopoverText(gettext('Old Value'), oldValue);
+                content += _getPopoverText(gettext('New Value'), newValue);
+                content += "</dl>";
+            }
+            return _.defaults({
                 "title": attributeToName[attribute] + " " + gettext(change["type"]),
-                "content": _getDiffPopoverContent(change),
-                "trigger": "hover",
-                "placement": "auto right",
-                "container": "body",
-                "html": true,
-            };
+                "content": content,
+            }, basePopoverOptions);
         };
+        self.getLoadSavePopover = function (attribute, caseType, caseProperty) {
+            try {
+                var change = self.changes[attribute][caseType][caseProperty];
+            } catch (e) {
+                return {};
+            }
+            if (!change) {
+                return {};
+            }
+            var title = {
+                    'load_properties': gettext("Loaded Case Properties"),
+                    'save_properties': gettext("Saved Case Properties"),
+                }[attribute],
+                loadOrSave = {
+                    'load_properties': gettext("load"),
+                    'save_properties': gettext("save"),
+                }[attribute],
+                content = "<dl>" + _getPopoverText(
+                    gettext("Case Property") + " " + loadOrSave + " " + gettext(change['type']),
+                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> "+ gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type'])
+                ) + "</dl>";
 
-        var _getDiffPopoverContent = function (change) {
-            var oldValue = change['old_value'],
-                newValue = change['new_value'];
-
-            if (!oldValue && !newValue) {
+            return _.defaults({
+                "title": title,
+                "content": content,
+            }, basePopoverOptions);
+        };
+        var _getPopoverText = function (title, value) {
+            if (!value) {
                 return '';
             }
-            var getContent = function (title, value) {
-                if (!value) {
-                    return '';
+
+            var text = "<dt>" + title + "</dt>";
+            if (value instanceof Object) { // translatable property
+                text += "<dl>";
+                for (var translationKey in value) {
+                    text += "<dt>" + translationKey + "</dt>";
+                    text += "<dd>" + DOMPurify.sanitize(value[translationKey]) + "</dd>";
                 }
-
-                var newContent = "<dt>" + title + "</dt>";
-                if (value instanceof Object) { // translatable property
-                    newContent += "<dl>";
-                    for (var translationKey in value) {
-                        newContent += "<dt>" + translationKey + "</dt>";
-                        newContent += "<dd>" + DOMPurify.sanitize(value[translationKey]) + "</dd>";
-                    }
-                    newContent += "</dl>";
-                } else {
-                    newContent += "<dd>" + DOMPurify.sanitize(value) + "</dd>";
-                }
-                return newContent;
-            };
-
-            var content = "<dl>";
-            content += getContent(gettext('Old Value'), oldValue);
-            content += getContent(gettext('New Value'), newValue);
-            content += "</dl>";
-
-            return content;
+                text += "</dl>";
+            } else {
+                text += "<dd>" + DOMPurify.sanitize(value) + "</dd>";
+            }
+            return text;
         };
 
         self.getDiffClass = function (attribute) {
