@@ -957,7 +957,8 @@ def pull_missing_multimedia(request, domain, app_id):
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:
-        pull_missing_multimedia_for_app(domain, app_id)
+        app = get_app(domain, app_id)
+        pull_missing_multimedia_for_app(app)
     return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
 
 

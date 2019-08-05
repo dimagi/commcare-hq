@@ -16,7 +16,6 @@ from corehq.apps.app_manager.dbaccessors import (
     wrap_app,
     get_apps_in_domain,
     get_current_app,
-    get_brief_app,
 )
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import (
@@ -389,10 +388,10 @@ def update_linked_app(app, user_id):
 
 
 def pull_missing_multimedia_for_app_and_notify(domain, app_id, email):
-    app = get_brief_app(domain, app_id)
+    app = get_app(domain, app_id)
     subject = _("Update Status for linked app %s missing multimedia pull") % app.name
     try:
-        pull_missing_multimedia_for_app(domain, app_id)
+        pull_missing_multimedia_for_app(app)
     except MultimediaMissingError as e:
         message = six.text_type(e)
     except Exception:
