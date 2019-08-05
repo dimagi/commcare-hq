@@ -85,6 +85,22 @@
             },
             {
                 "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "slug": "inspection_date",
+                "field": "inspection_date",
+                "type": "date",
+                "display": {
+                    "fra": "Date d'inspection",
+                    "frm": "Date d'inspection",
+                    "en": "Date of inspection",
+                    "sw": "Date of inspection",
+                    "kin": "Date of inspection",
+                    "por": "Data de inspe\u00e7\u00e3o"
+                }
+            },
+            {
+                "compare_as_string": false,
                 "show_all": true,
                 "datatype": "string",
                 "required": false,
@@ -182,6 +198,28 @@
             "created_by_builder": false
         },
         "columns": [
+            {
+                "description": null,
+                "field": "inspection_date",
+                "format": "default",
+                "transform": {
+                    "type": "date_format",
+                    "format": "%Y-%m-%d %H:%M"
+                },
+                "column_id": "inspection_date",
+                "alias": null,
+                "calculate_total": false,
+                "type": "field",
+                "display": {
+                    "fra": "Date d'inspection",
+                    "frm": "Date d'inspection",
+                    "en": "Date of inspection",
+                    "sw": "Date of inspection",
+                    "kin": "Date of inspection",
+                    "por": "Data de inspe\u00e7\u00e3o"
+                },
+                "aggregation": "simple"
+            },
             {
                 "description": null,
                 "field": "received_on",
