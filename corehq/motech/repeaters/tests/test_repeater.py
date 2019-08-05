@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import attr
 from django.test import TestCase, override_settings, SimpleTestCase
 
-from mock import patch
+from mock import patch, Mock
 from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
@@ -34,6 +34,7 @@ from corehq.motech.repeaters.models import (
     RepeatRecord,
     ShortFormRepeater,
     UserRepeater,
+    Repeater,
 )
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator,
@@ -936,21 +937,82 @@ class TestRepeaterDeleted(BaseRepeaterTest):
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
 
 
+@attr.s
+class Response:
+    status_code = attr.ib()
+    reason = attr.ib()
+    content = attr.ib(default=None)
+    encoding = attr.ib(default='ascii')
+
+    @property
+    def text(self):
+        return '' if self.content is None else str(self.content, self.encoding, errors='replace')
+
+
+class HandleResponseTests(SimpleTestCase):
+
+    def setUp(self):
+
+        class DummyRepeater(Repeater):
+
+            @property
+            def generator(self):
+                return FormRepeaterXMLPayloadGenerator(self)
+
+            def payload_doc(self, repeat_record):
+                return {}
+
+        self.repeater = DummyRepeater(
+            domain="test-domain",
+            url="https://example.com/api/",
+        )
+        self.repeat_record = Mock()
+
+    def test_handle_ok_response(self):
+        response = Response(status_code=200, reason='OK', content=b'OK')
+        self.repeater.handle_response(response, self.repeat_record)
+
+        self.repeat_record.handle_exception.assert_not_called()
+        self.repeat_record.handle_success.assert_called()
+        self.repeat_record.handle_failure.assert_not_called()
+
+    def test_handle_true_response(self):
+        response = True
+        self.repeater.handle_response(response, self.repeat_record)
+
+        self.repeat_record.handle_exception.assert_not_called()
+        self.repeat_record.handle_success.assert_called()
+        self.repeat_record.handle_failure.assert_not_called()
+
+    def test_handle_none_response(self):
+        response = None
+        self.repeater.handle_response(response, self.repeat_record)
+
+        self.repeat_record.handle_exception.assert_not_called()
+        self.repeat_record.handle_success.assert_not_called()
+        self.repeat_record.handle_failure.assert_called()
+
+    def test_handle_500_response(self):
+        response = Response(status_code=500, reason='The core is exposed')
+        self.repeater.handle_response(response, self.repeat_record)
+
+        self.repeat_record.handle_exception.assert_not_called()
+        self.repeat_record.handle_success.assert_not_called()
+        self.repeat_record.handle_failure.assert_called()
+
+    def test_handle_exception(self):
+        err = Exception('The core is exposed')
+        self.repeater.handle_response(err, self.repeat_record)
+
+        self.repeat_record.handle_exception.assert_called()
+        self.repeat_record.handle_success.assert_not_called()
+        self.repeat_record.handle_failure.assert_not_called()
+
+
 class FormatResponseTests(SimpleTestCase):
 
-    @attr.s
-    class Response:
-        status_code = attr.ib()
-        reason = attr.ib()
-        content = attr.ib(default=None)
-        encoding = attr.ib(default='ascii')
-
-        @property
-        def text(self):
-            return '' if self.content is None else str(self.content, self.encoding, errors='replace')
-
     def test_content_is_ascii(self):
-        response = self.Response(
+        response = Response(
             status_code=200,
             reason='OK',
             content=b'3.6 roentgen. Not great. Not terrible.'
@@ -959,7 +1021,7 @@ class FormatResponseTests(SimpleTestCase):
         self.assertEqual(formatted, '200: OK.\n3.6 roentgen. Not great. Not terrible.')
 
     def test_encoding_is_not_ascii(self):
-        response = self.Response(
+        response = Response(
             status_code=200,
             reason='OK',
             content=b'3,6 \xe1\xa8\xd4\xe5\xac\xa8\xd4\xa0 \xd5\xa8 \xb5\xd6\xe1\xd6\xf5\xd6. '
@@ -970,6 +1032,6 @@ class FormatResponseTests(SimpleTestCase):
         self.assertEqual(formatted, '200: OK.\n3,6 рентгена Не хорошо. Не страшно')
 
     def test_content_is_None(self):
-        response = self.Response(500, 'The core is exposed')
+        response = Response(500, 'The core is exposed')
         formatted = RepeatRecord._format_response(response)
         self.assertEqual(formatted, '500: The core is exposed.\n')
