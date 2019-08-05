@@ -70,7 +70,7 @@ def get_case_messaging_sync_pillow(pillow_id='case_messaging_sync_pillow', topic
                          num_processes=1, process_num=0,
                          processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
     if topics:
-        assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"
+        assert set(topics).issubset(CASE_TOPICS), set(topics) - set(CASE_TOPICS)
     topics = topics or CASE_TOPICS
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
