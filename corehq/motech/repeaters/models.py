@@ -320,7 +320,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
-        elif result is True or 200 <= result.status_code < 300:
+        elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
