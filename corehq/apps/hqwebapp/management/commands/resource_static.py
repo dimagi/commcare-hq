@@ -36,12 +36,14 @@ class Command(BaseCommand):
         print("Current commit SHA: %s" % sha)
         return sha
 
-    def output_resources(self, resources, overwrite=True):
+    def output_resources(self, resources, overwrite=True, path=None):
         if not overwrite:
             from get_resource_versions import get_resource_versions
-            old_resources = get_resource_versions()
+            old_resources = get_resource_versions(path=path)
             resources.update(old_resources)
-        with open(os.path.join(self.root_dir, 'resource_versions.yaml'), 'w') as fout:
+        if not path:
+            path = os.path.join(self.root_dir, 'resource_versions.yaml')
+        with open(path, 'w') as fout:
             fout.write(yaml.dump([{'name': name, 'version': version}
                                   for name, version in resources.items()]))
 
