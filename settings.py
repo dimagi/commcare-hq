@@ -264,6 +264,7 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer',
+    'corehq.apps.case_templates',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.users',
