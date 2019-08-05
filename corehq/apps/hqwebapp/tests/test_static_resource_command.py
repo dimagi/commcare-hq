@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
 import yaml
-from nose.plugins.attrib import attr
 
 from django.test import SimpleTestCase
 from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
