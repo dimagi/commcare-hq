@@ -309,7 +309,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(self.linked_app.upstream_app_id, self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master2_version + 3)
 
-    def test_get_previous_version(self):
+    def test_get_latest_build_from_upstream(self):
         # Make build of master1, pull linked app, and make linked app build
         self._make_master1_build()
         self._pull_linked_app(self.master1.get_id)
@@ -325,11 +325,11 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._pull_linked_app(self.master2.get_id)
         linked_build3 = self._make_linked_build()
 
-        previous_master2_version = linked_build3.get_previous_version()
+        previous_master2_version = linked_build3.get_latest_build_from_upstream(self.master2.get_id)
         self.assertEqual(previous_master2_version.upstream_app_id, self.master2.get_id)
         self.assertEqual(previous_master2_version.get_id, linked_build2.get_id)
 
-        previous_master1_version = linked_build3.get_previous_version(master_app_id=self.master1.get_id)
+        previous_master1_version = linked_build3.get_latest_build_from_upstream(self.master1.get_id)
         self.assertEqual(previous_master1_version.upstream_app_id, self.master1.get_id)
         self.assertEqual(previous_master1_version.get_id, linked_build1.get_id)
 
