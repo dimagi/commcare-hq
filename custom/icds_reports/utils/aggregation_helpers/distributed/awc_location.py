@@ -58,7 +58,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'doc_id': location['location_id'],
                 'awc_name': location['name'],
                 'awc_site_code': location['location_type__code'],
-                'awc_is_test': metadata['is_test_location'],
+                'awc_is_test': metadata.get('is_test_location'),
             }
 
             current_location = location
@@ -69,11 +69,11 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'],
                     '{}_site_code'.format(loc_type): current_location['location_type__code'],
-                    '{}_is_test'.format(loc_type): metadata['is_test_location'],
+                    '{}_is_test'.format(loc_type): metadata.get('is_test_location'),
                 })
                 if loc_type in ('block', 'district', 'state'):
                     loc.update({
-                        '{}_map_location_name'.format(loc_type): metadata['map_location_name'],
+                        '{}_map_location_name'.format(loc_type): metadata.get('map_location_name'),
                     })
 
             writer.writerow(loc)
