@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from django.conf import settings
 from django.db.models import Max
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
@@ -37,6 +36,7 @@ from custom.icds.const import (
     SUPERVISOR_APP_ID,
     THR_REPORT_ID,
     VHND_SURVEY_XMLNS,
+    ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES
 )
 from lxml import etree
 
@@ -246,9 +246,7 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
         ).aggregate(value=Max("last_form_submission_date"))["value"]
 
     def get_messages(self, language_code=None):
-        # default 24 hours
-        ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES = getattr(settings, 'ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES', 60 * 24 * 2)
-        warehouse_lag = (datetime.utcnow() - get_warehouse_latest_modified_date()).total_seconds() / 60
+        warehouse_lag = (datetime.utcnow() - get_warehouse_latest_modified_date(email_on_delay=True)).total_seconds() / 60
         if warehouse_lag > ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES:
             return []
 
