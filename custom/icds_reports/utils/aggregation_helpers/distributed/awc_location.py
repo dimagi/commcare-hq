@@ -78,6 +78,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 
             writer.writerow(loc)
 
+        output.seek(0)
         return output
 
     def aggregate(self, cursor):

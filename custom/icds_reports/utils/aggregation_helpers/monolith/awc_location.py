@@ -58,7 +58,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                 'doc_id': location['location_id'],
                 'awc_name': location['name'],
                 'awc_site_code': location['location_type__code'],
-                'awc_is_test': metadata.get('is_test_location'),
+                'awc_is_test': metadata.get('is_test_location') or 0,
             }
 
             current_location = location
@@ -69,7 +69,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'],
                     '{}_site_code'.format(loc_type): current_location['location_type__code'],
-                    '{}_is_test'.format(loc_type): metadata.get('is_test_location'),
+                    '{}_is_test'.format(loc_type): metadata.get('is_test_location') or 0,
                 })
                 if loc_type in ('block', 'district', 'state'):
                     loc.update({
@@ -78,6 +78,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
 
             writer.writerow(loc)
 
+        output.seek(0)
         return output
 
     def aggregate(self, cursor):
@@ -105,10 +106,11 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         """.format(tablename=self.base_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
-        cursor.copy_from(csv_file, 'temp_awc_location')
+        # double cursor to get psycopg2 cursor from django cursor
+        cursor.cursor.copy_from(csv_file, 'temp_awc_location')
 
     def create_temporary_table_query(self):
-        return "CREATE TEMPORARY TABLE \"temp_awc_location\" AS SELECT * FROM \"{tablename}\"".format(
+        return "CREATE TABLE \"temp_awc_location\" (LIKE \"{tablename}\" INCLUDING INDEXES)".format(
             tablename=self.base_tablename,
         )
 
