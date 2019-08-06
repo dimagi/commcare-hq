@@ -106,8 +106,9 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         """.format(tablename=self.base_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
+        columns = csv_file.readline().split('\t')
         # double cursor to get psycopg2 cursor from django cursor
-        cursor.cursor.copy_from(csv_file, 'temp_awc_location')
+        cursor.cursor.copy_from(csv_file, 'temp_awc_location', columns=columns)
 
     def create_temporary_table_query(self):
         return "CREATE TABLE \"temp_awc_location\" (LIKE \"{tablename}\" INCLUDING INDEXES)".format(
