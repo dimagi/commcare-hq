@@ -362,7 +362,7 @@ def update_linked_app(app, user_id):
             ))
 
         report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
-        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map])
+        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         try:
             app = overwrite_app(app, latest_master_build, report_map)
         except AppEditingError as e:
