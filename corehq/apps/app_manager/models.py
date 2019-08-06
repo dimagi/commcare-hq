@@ -5627,13 +5627,11 @@ class LinkedApplication(Application):
         return {}
 
     @memoized
-    def get_previous_version(self, master_app_id=None):
-        if master_app_id is None:
-            master_app_id = self.upstream_app_id
+    def get_latest_build_from_upstream(self, upstream_app_id):
         build_ids = get_build_ids(self.domain, self.master_id)
         for build_id in build_ids:
             build_doc = Application.get_db().get(build_id)
-            if build_doc.get('upstream_app_id', build_doc['master']) == master_app_id:
+            if build_doc.get('upstream_app_id', build_doc['master']) == upstream_app_id:
                 return self.wrap(build_doc)
         return None
 
@@ -5643,8 +5641,8 @@ class LinkedApplication(Application):
         if not previous_version:
             # If there's no previous version, check for a previous version in the same family.
             # This allows projects using multiple masters to copy a master app and start pulling
-            # from that copy without resetting thei form and multimedia versions.
-            previous_version = self.get_previous_version(master_app_id=self.progenitor_app_id)
+            # from that copy without resetting the form and multimedia versions.
+            previous_version = self.get_latest_build_from_upstream(self.progenitor_app_id)
         return previous_version
 
     @classmethod
