@@ -169,6 +169,7 @@
     {% if is_linked_app %}
       <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
       <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+      <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
       <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% else %}
       <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
@@ -273,28 +274,6 @@
             </div>
           </div>
         {% endif %}
-      {% endif %}
-      {% if app.master_is_remote%}
-        <div class="panel panel-appmanager panel-appmanager-form">
-          <form action="{% url "pull_missing_multimedia" domain app.id %}" method="POST">
-            {% csrf_token %}
-            <legend>
-              {% trans "Sync all multimedia with master" %}
-            </legend>
-            <div class="panel-body">
-              <div class="checkbox">
-                <label>
-                  <input type="checkbox" name="notify">
-                  {% trans "Email when finished (recommended for applications with large number of multimedia files or heavy files)" %}
-                </label>
-              </div>
-              <button type="submit" class="btn btn-primary">
-                <i class="fa fa-arrow-down"></i>
-                {% trans "Pull missing multimedia" %}
-              </button>
-            </div>
-          </form>
-        </div>
       {% endif %}
       <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
         <legend>{% trans "Delete Application" %}</legend>
