@@ -1,13 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from six.moves import map
+import io
 
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
+import csv342 as csv
+from six.moves import map, range
+
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.userreports.models import (
+    StaticDataSourceConfiguration,
+    get_datasource_config,
+)
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
-from six.moves import range
 
 
 class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -15,11 +21,62 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
     base_tablename = 'awc_location'
     local_tablename = 'awc_location_local'
 
-    ucr_location_table = AWC_LOCATION_TABLE_ID
     ucr_aww_table = AWW_USER_TABLE_ID
 
     def __init__(self):
         pass
+
+    @property
+    def _table_column_names(self):
+        return (
+            'doc_id', 'awc_name', 'awc_site_code', 'awc_is_test',
+            'supervisor_id', 'supervisor_name', 'supervisor_site_code', 'supervisor_is_test',
+            'block_id', 'block_name', 'block_site_code', 'block_is_test', 'block_map_location_name',
+            'district_id', 'district_name', 'district_site_code', 'district_is_test', 'district_map_location_name',
+            'state_id', 'state_name', 'state_site_code', 'state_is_test', 'state_map_location_name',
+            'aggregation_level',
+        )
+
+    def generate_csv(self):
+        domain_locations = SQLLocation.objects.filter(domain=self.domain).values(
+            'pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+        locations_by_pk = {
+            loc['pk']: loc
+            for loc in domain_locations
+        }
+        locations = [loc for loc in domain_locations if loc['location_type__code'] == 'awc']
+
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=self._table_column_names, delimiter='\t')
+        writer.writeheader()
+
+        for location in locations:
+            loc = {
+                'aggregation_level': 5,
+                'doc_id': location['location_id'],
+                'awc_name': location['name'],
+                'awc_site_code': location['location__type_code'],
+                'awc_is_test': location['metadata']['is_test_location'],
+            }
+
+            current_location = location
+            while current_location['parent_id']:
+                current_location = locations_by_pk[current_location['parent_id']]
+                loc_type = current_location['location_type__code']
+                loc.update({
+                    '{}_id'.format(loc_type): current_location['location_id'],
+                    '{}_name'.format(loc_type): current_location['name'],
+                    '{}_site_code'.format(loc_type): current_location['location__type_code'],
+                    '{}_is_test'.format(loc_type): current_location['metadata']['is_test_location'],
+                })
+                if loc_type in ('block', 'district', 'state'):
+                    loc.update({
+                        '{}_map_location_name'.format(loc_type): location['metadata']['map_location_name'],
+                    })
+
+            writer.writerow(loc)
+
+        return output
 
     def aggregate(self, cursor):
         drop_table_query = self.drop_table_query()
@@ -35,12 +92,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         cursor.execute(self.create_local_table())
 
     @property
-    def ucr_location_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_location_table)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
-    @property
     def ucr_aww_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_aww_table)
         config, _ = get_datasource_config(doc_id, self.domain)
@@ -51,7 +102,15 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             DELETE FROM "{tablename}";
         """.format(tablename=self.base_tablename)
 
-    def aggregate_query(self):
+    def aggregate_to_temporary_table(self, cursor, csv_file):
+        cursor.copy_from(csv_file, 'temp_awc_location')
+
+    def create_temporary_table_query(self):
+        return "CREATE TEMPORARY TABLE \"temp_awc_location\" AS SELECT * FROM \"{tablename}\"".format(
+            tablename=self.base_tablename,
+        )
+
+    def move_data_to_real_table(self):
         columns = (
             ('doc_id', 'doc_id'),
             ('awc_name', 'awc_name'),
@@ -68,12 +127,12 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ('state_id', 'state_id'),
             ('state_name', 'state_name'),
             ('state_site_code', 'state_site_code'),
-            ('aggregation_level', '5'),
+            ('aggregation_level', 'aggregation_level'),
             ('block_map_location_name', 'block_map_location_name'),
             ('district_map_location_name', 'district_map_location_name'),
             ('state_map_location_name', 'state_map_location_name'),
-            ('aww_name', 'NULL'),
-            ('contact_phone_number', 'NULL'),
+            ('aww_name', 'aww_name'),
+            ('contact_phone_number', 'contact_phone_number'),
             ('state_is_test', 'state_is_test'),
             ('district_is_test', 'district_is_test'),
             ('block_is_test', 'block_is_test'),
@@ -87,18 +146,17 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ) (
               SELECT
                 {calculations}
-              FROM "{ucr_location_tablename}"
+              FROM "temp_awc_location"
             )
         """.format(
             tablename=self.base_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            ucr_location_tablename=self.ucr_location_tablename
         )
 
     def aww_query(self):
         return """
-            UPDATE "{tablename}" awc_loc SET
+            UPDATE "temp_awc_location" awc_loc SET
               aww_name = ut.aww_name,
               contact_phone_number = ut.contact_phone_number
             FROM (
@@ -179,12 +237,12 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             )
 
         return """
-            INSERT INTO "{tablename}" (
+            INSERT INTO "temp_awc_location" (
               {columns}
             ) (
               SELECT
                 {calculations}
-              FROM "{tablename}"
+              FROM "temp_awc_location"
               GROUP BY {group_by}
             )
         """.format(
