@@ -48,7 +48,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         locations = [loc for loc in domain_locations if loc['location_type__code'] == 'awc']
 
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=self._table_column_names, delimiter='\t')
+        writer = csv.DictWriter(output, fieldnames=self._table_column_names, delimiter='\t', newline='\n')
         writer.writeheader()
 
         for location in locations:
