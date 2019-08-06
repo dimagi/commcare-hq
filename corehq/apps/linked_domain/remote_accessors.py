@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import requests
-import json
+
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests import ConnectionError
@@ -13,7 +13,7 @@ from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.soft_assert import soft_assert
+
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
@@ -57,12 +57,12 @@ def _convert_app_from_remote_linking_source(app_json):
     return app
 
 
-def pull_missing_multimedia_for_app(app):
-    missing_media = _get_missing_multimedia(app)
+def pull_missing_multimedia_for_app(app, old_multimedia_ids=None):
+    missing_media = _get_missing_multimedia(app, old_multimedia_ids)
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
     if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
-        still_missing_media = _get_missing_multimedia(app)
+        still_missing_media = _get_missing_multimedia(app, old_multimedia_ids)
         if still_missing_media:
             raise MultimediaMissingError(_(
                 'Application has missing multimedia even after an attempt to re-pull them. '
@@ -70,9 +70,11 @@ def pull_missing_multimedia_for_app(app):
             ))
 
 
-def _get_missing_multimedia(app):
+def _get_missing_multimedia(app, old_multimedia_ids=None):
     missing = []
     for path, media_info in app.multimedia_map.items():
+        if old_multimedia_ids and media_info['multimedia_id'] in old_multimedia_ids:
+            continue
         try:
             local_media = CommCareMultimedia.get(media_info['multimedia_id'])
         except ResourceNotFound:
