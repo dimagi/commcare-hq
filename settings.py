@@ -706,6 +706,11 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
+# Set to True to remove the `actions` and `xform_id` fields from the
+# ES Case index. These fields contribute high load to the shard
+# databases.
+CASE_ES_DROP_FORM_FIELDS = False
+
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
 REPEATERS_WHITELIST = None
