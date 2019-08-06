@@ -102,7 +102,7 @@ jinja2==2.10.1
 jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.16
+jsonobject-couchdbkit==0.9.17
 jsonobject==0.9.9
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
