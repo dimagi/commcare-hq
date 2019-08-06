@@ -58,7 +58,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                 'doc_id': location['location_id'],
                 'awc_name': location['name'],
                 'awc_site_code': location['location_type__code'],
-                'awc_is_test': metadata.get('is_test_location') or 0,
+                'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
             }
 
             current_location = location
@@ -69,7 +69,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'],
                     '{}_site_code'.format(loc_type): current_location['location_type__code'],
-                    '{}_is_test'.format(loc_type): metadata.get('is_test_location') or 0,
+                    '{}_is_test'.format(loc_type): 1 if metadata.get('is_test_location') == 'test' else 0,
                 })
                 if loc_type in ('block', 'district', 'state'):
                     loc.update({
