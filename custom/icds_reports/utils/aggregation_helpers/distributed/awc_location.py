@@ -55,7 +55,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'aggregation_level': 5,
                 'doc_id': location['location_id'],
                 'awc_name': location['name'],
-                'awc_site_code': location['location__type_code'],
+                'awc_site_code': location['location_type__code'],
                 'awc_is_test': location['metadata']['is_test_location'],
             }
 
@@ -66,7 +66,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'],
-                    '{}_site_code'.format(loc_type): current_location['location__type_code'],
+                    '{}_site_code'.format(loc_type): current_location['location_type__code'],
                     '{}_is_test'.format(loc_type): current_location['metadata']['is_test_location'],
                 })
                 if loc_type in ('block', 'district', 'state'):
