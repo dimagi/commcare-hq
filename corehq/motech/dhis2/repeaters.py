@@ -26,7 +26,7 @@ class Dhis2Repeater(FormRepeater):
         app_label = 'repeaters'
 
     include_app_id_param = False
-    friendly_name = _("Forward to DHIS2")
+    friendly_name = _("Forward Forms to DHIS2 as Anonymous Events")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
     dhis2_config = SchemaProperty(Dhis2Config)
