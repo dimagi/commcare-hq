@@ -1475,7 +1475,7 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on Role and username when doing bulk download",
+    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
