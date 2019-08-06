@@ -56,7 +56,9 @@
         {% elif not is_odata %}
           {% trans 'Edit' %}
         {% else %}
-          {% trans 'Copy' %}
+          {% blocktrans %}
+            Copy &amp; Edit
+          {% endblocktrans %}
         {% endif %}
       </th>
       <th class="col-sm-1">
