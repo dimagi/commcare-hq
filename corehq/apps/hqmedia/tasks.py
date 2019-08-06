@@ -228,6 +228,11 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                 )
         if include_index_files and include_multimedia_files:
             multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
+            if multimedia_errors:
+                multimedia_errors.append(_(
+                    "Please try syncing multimedia files in multimedia tab under app settings to resolve "
+                    "issues with missing files"
+                ))
             errors.extend(multimedia_errors)
             if multimedia_errors:
                 notify_exception(
