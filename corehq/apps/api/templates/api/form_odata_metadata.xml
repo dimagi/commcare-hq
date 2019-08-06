@@ -7,7 +7,7 @@
                     <PropertyRef Name="formid" />
                 </Key>
                 {% for field in fields %}
-                <Property Name="{{ field }}" Type="Edm.String" />
+                <Property Name="{{ field.name }}" Type="{{ field.odata_type }}" />
                 {% endfor %}
             </EntityType>
 

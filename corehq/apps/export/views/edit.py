@@ -20,6 +20,7 @@ from corehq.apps.export.views.utils import (
     clean_odata_columns,
     remove_row_number_from_export_columns,
 )
+from corehq.apps.locations.permissions import location_safe
 
 
 class BaseEditNewCustomExportView(BaseExportView):
@@ -75,6 +76,7 @@ class BaseEditNewCustomExportView(BaseExportView):
         return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_form'
     page_title = ugettext_lazy("Edit Form Data Export")
@@ -87,6 +89,7 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
         return FormExportListView
 
 
+@location_safe
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
     page_title = ugettext_lazy("Edit Case Data Export")

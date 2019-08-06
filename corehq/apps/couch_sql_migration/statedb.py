@@ -6,14 +6,16 @@ import json
 import os
 import os.path
 from collections import namedtuple
+from contextlib import contextmanager
 from datetime import datetime
 
+import six
 from django.conf import settings
 
 from memoized import memoized
-from sqlalchemy import func, Column, Integer, String, Text
+from sqlalchemy import func, Column, Index, Integer, String, Text
 
-from corehq.apps.tzmigration.planning import Base, DiffDB
+from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 
 
 def init_state_db(domain):
@@ -48,7 +50,6 @@ class StateDB(DiffDB):
         db = super(StateDB, cls).init(path)
         if is_new_db:
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
-            db.save_resume_state([])
         return db
 
     def __enter__(self):
@@ -59,15 +60,27 @@ class StateDB(DiffDB):
         if self._connection is not None:
             self._connection.close()
 
+    @contextmanager
+    def session(self, session=None):
+        if session is not None:
+            yield session
+            return
+        session = self.Session()
+        try:
+            yield session
+            session.commit()
+        finally:
+            session.close()
+
     @property
     @memoized
     def unique_id(self):
-        return self._get_kv("db_unique_id").value
+        with self.session() as session:
+            return self._get_kv("db_unique_id", session).value
 
     def add_problem_form(self, form_id):
-        session = self.Session()
-        session.add(ProblemForm(id=form_id))
-        session.commit()
+        with self.session() as session:
+            session.add(ProblemForm(id=form_id))
 
     def iter_problem_forms(self):
         query = self.Session().query(ProblemForm.id)
@@ -75,9 +88,8 @@ class StateDB(DiffDB):
             yield form_id
 
     def add_no_action_case_form(self, form_id):
-        session = self.Session()
-        session.add(NoActionCaseForm(id=form_id))
-        session.commit()
+        with self.session() as session:
+            session.add(NoActionCaseForm(id=form_id))
         self.get_no_action_case_forms.reset_cache(self)
 
     @memoized
@@ -85,57 +97,88 @@ class StateDB(DiffDB):
         """Get the set of form ids that touch cases without actions"""
         return {x for x, in self.Session().query(NoActionCaseForm.id)}
 
-    def save_resume_state(self, state):
-        self._set_kv("resume_state", json.dumps(state))
+    def set_resume_state(self, key, value):
+        resume_key = "resume-{}".format(key)
+        self._upsert(KeyValue, KeyValue.key, resume_key, json.dumps(value))
 
-    def pop_saved_resume_state(self):
-        value = self._pop_kv("resume_state")
-        if value is None:
-            raise ResumeError(
-                "Cannot resume because previous session did not exit cleanly.")
-        return json.loads(value.value)
+    def pop_resume_state(self, key, default):
+        resume_key = "resume-{}".format(key)
+        with self.session() as session:
+            kv = self._get_kv(resume_key, session)
+            if kv is None:
+                self._set_kv(resume_key, RESUME_NOT_ALLOWED, session)
+                value = default
+            elif kv.value == RESUME_NOT_ALLOWED:
+                raise ResumeError("previous session did not save resume state")
+            else:
+                value = json.loads(kv.value)
+                kv.value = RESUME_NOT_ALLOWED
+        return value
 
-    def _get_kv(self, key, session=None):
-        if session is None:
-            session = self.Session()
+    def _get_kv(self, key, session):
         return session.query(KeyValue).filter_by(key=key).scalar()
 
-    def _pop_kv(self, key):
-        session = self.Session()
-        kv = self._get_kv(key, session)
-        if kv is not None:
-            session.delete(kv)
-            session.commit()
-        return kv
+    def _set_kv(self, key, value, session=None):
+        with self.session(session) as session:
+            session.add(KeyValue(key=key, value=value))
 
-    def _set_kv(self, key, value):
-        session = self.Session()
-        session.add(KeyValue(key=key, value=value))
-        session.commit()
+    def _upsert(self, model, key_field, key, value, incr=False):
+        with self.session() as session:
+            updated = (
+                session.query(model)
+                .filter(key_field == key)
+                .update(
+                    {model.value: (model.value + value) if incr else value},
+                    synchronize_session=False,
+                )
+            )
+            if not updated:
+                obj = model(value=value)
+                key_field.__set__(obj, key)
+                session.add(obj)
+            else:
+                assert updated == 1, (key, updated)
 
     def add_missing_docs(self, kind, doc_ids):
-        session = self.Session()
-        session.bulk_save_objects([
-            MissingDoc(kind=kind, doc_id=doc_id)
-            for doc_id in doc_ids
-        ])
-        session.commit()
+        with self.session() as session:
+            session.bulk_save_objects([
+                MissingDoc(kind=kind, doc_id=doc_id)
+                for doc_id in doc_ids
+            ])
+
+    def add_unexpected_diff(self, case_id):
+        """Add case that has been updated by a form it does not reference"""
+        with self.session() as session:
+            sql = (
+                "INSERT OR IGNORE INTO {table} (id) VALUES (:id)"
+            ).format(table=UnexpectedCaseUpdate.__tablename__)
+            session.execute(sql, {"id": case_id})
+
+    def iter_unexpected_diffs(self):
+        """Iterate over case ids with unexpected diffs
+
+        An "unexpected diff" is a case that was unexpectedly updated by
+        a form it did not know about. All such case ids having at least
+        one diff record will be yielded by this generator.
+        """
+        unex_id = UnexpectedCaseUpdate.id
+        with self.session() as session:
+            diff_ids = session.query(Diff.doc_id)
+            query = session.query(unex_id).filter(unex_id.in_(diff_ids))
+            for case_id, in iter_large(query, unex_id):
+                yield case_id
+
+    def discard_case_diffs(self, case_ids):
+        assert not isinstance(case_ids, six.text_type), repr(case_ids)
+        with self.session() as session:
+            (
+                session.query(Diff)
+                .filter(Diff.kind == "CommCareCase", Diff.doc_id.in_(case_ids))
+                .delete(synchronize_session=False)
+            )
 
     def increment_counter(self, kind, value):
-        session = self.Session()
-        updated = (
-            session.query(DocCount)
-            .filter_by(kind=kind)
-            .update(
-                {DocCount.value: DocCount.value + value},
-                synchronize_session=False,
-            )
-        )
-        if not updated:
-            session.add(DocCount(kind=kind, value=value))
-        else:
-            assert updated == 1, (kind, updated)
-        session.commit()
+        self._upsert(DocCount, DocCount.kind, kind, value, incr=True)
 
     def get_doc_counts(self):
         """Returns a dict of counts by kind
@@ -146,12 +189,12 @@ class StateDB(DiffDB):
         - total: number of items counted with `increment_counter`.
         - missing: count of ids added with `add_missing_docs`.
         """
-        session = self.Session()
-        totals = {dc.kind: dc.value for dc in session.query(DocCount)}
-        missing = {row[0]: row[1] for row in session.query(
-            MissingDoc.kind,
-            func.count(MissingDoc.doc_id),
-        ).group_by(MissingDoc.kind).all()}
+        with self.session() as session:
+            totals = {dc.kind: dc.value for dc in session.query(DocCount)}
+            missing = {row[0]: row[1] for row in session.query(
+                MissingDoc.kind,
+                func.count(MissingDoc.doc_id),
+            ).group_by(MissingDoc.kind).all()}
         return {kind: Counts(
             total=totals.get(kind, 0),
             missing=missing.get(kind, 0),
@@ -170,6 +213,9 @@ class StateDB(DiffDB):
 
 class ResumeError(Exception):
     pass
+
+
+RESUME_NOT_ALLOWED = "RESUME_NOT_ALLOWED"
 
 
 class DocCount(Base):
@@ -204,6 +250,15 @@ class ProblemForm(Base):
     __tablename__ = "problemform"
 
     id = Column(String(50), nullable=False, primary_key=True)
+
+
+class UnexpectedCaseUpdate(Base):
+    __tablename__ = "unexpectedcaseupdate"
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
+diff_doc_id_idx = Index("diff_doc_id_idx", Diff.doc_id)
 
 
 Counts = namedtuple('Counts', 'total missing')

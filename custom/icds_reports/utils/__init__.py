@@ -22,6 +22,7 @@ from django.template.loader import render_to_string, get_template
 from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 from weasyprint import HTML, CSS
 
 from corehq import toggles
@@ -1230,6 +1231,121 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     icds_file.save()
     return file_hash
 
+
+def create_child_report_excel_file(excel_data, data_type, month, aggregation_level):
+    export_info = excel_data[1][1]
+
+    primary_headers = ['Children weighed','Height measured for Children', '', 'Severely Underweight Children',
+                       'Moderately Underweight Children','Children with normal weight for age (WfA)',
+                       'Severely wasted Children(SAM)', 'Moderately wasted children(MAM)',
+                       'Children with normal weight for height',
+                       'Severely stunted children', 'Moderately Stunted Children',
+                       'Children with normal height for age',
+                       'Newborn with Low birth weight', 'Children completed immunization prescribed for 1 year',
+                       'Children breastfed at the time of birth','Children exclusively breastfed',
+                       'Children initiated with complementary feeding',
+                       'Children initiated with complementary feeding appropriately',
+                       'Children initiated with complementary feeding with adequate diet diversity',
+                       'Children initiated with complementary feeding with adequate diet quantity',
+                       'Children initiated with complementary feeding with appropriate handwashing before feeding'
+                       ]
+
+    location_padding_columns = ([''] * aggregation_level)
+    primary_headers = location_padding_columns + primary_headers
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Children"
+
+    # Styling initialisation
+    bold_font = Font(size=14, color="FFFFFF")
+    bold_font_black = Font(size=14, color="000000")
+    cell_pattern = PatternFill("solid", fgColor="B3C5E5")
+    cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
+    cell_pattern_red = PatternFill("solid", fgColor="ff0000")
+    cell_pattern_yellow = PatternFill("solid", fgColor="ffff00")
+    text_alignment = Alignment(horizontal="center", vertical='top', wrap_text=True)
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # Primary Header
+    main_header = worksheet.row_dimensions[1]
+    main_header.height = 40
+    current_column_location = 1
+    for index, primary_header in enumerate(primary_headers):
+        cell_name = get_column_letter(current_column_location)
+        cell = worksheet['{}1'.format(cell_name)]
+        cell.alignment = text_alignment
+
+        cell.value = primary_header
+
+        if primary_header == 'Severely wasted Children(SAM)':
+            cell.fill = cell_pattern_red
+            cell.font = bold_font
+        elif primary_header == 'Moderately wasted children(MAM)':
+            cell.fill = cell_pattern_yellow
+            cell.font = bold_font_black
+        else:
+            cell.fill = cell_pattern_blue
+            cell.font = bold_font
+
+
+        if current_column_location<=aggregation_level or current_column_location == aggregation_level + 7:
+            worksheet.merge_cells('{}1:{}2'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location)))
+            current_column_location += 1
+        else:
+            worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location + 2)))
+            current_column_location += 3
+
+    # Secondary Header
+    secondary_header = worksheet.row_dimensions[2]
+    secondary_header.height = 80
+    headers = excel_data[0][1][0]
+    bold_font_black = Font(size=14)
+    for index, header in enumerate(headers):
+        location_column = get_column_letter(index + 1)
+        cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= aggregation_level or
+                                                             index == aggregation_level + 6 else 2)]
+        cell.alignment = text_alignment
+        worksheet.column_dimensions[location_column].width = 30
+        cell.value = header
+        if index != aggregation_level + 6 and index + 1 > aggregation_level:
+            cell.fill = cell_pattern
+            cell.font = bold_font_black
+            cell.border = thin_border
+
+    # Fill data
+    for row_index,row in enumerate(excel_data[0][1][1:]):
+        for col_index, col_value in enumerate(row):
+            row_num = row_index + 3
+            column_name = get_column_letter(col_index + 1)
+            cell = worksheet['{}{}'.format(column_name, row_num)]
+            cell.value = col_value
+            cell.border = thin_border
+
+    # Export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    #Export to icds file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+
+    return file_hash
 
 def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_level):
     export_info = excel_data[1][1]

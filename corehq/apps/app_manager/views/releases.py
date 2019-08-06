@@ -6,7 +6,11 @@ import uuid
 from math import ceil
 
 from django.db.models import Count
-from django.http import HttpResponse, Http404
+from django.http.response import (
+    HttpResponse,
+    Http404,
+    JsonResponse
+)
 from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
 from django.views.generic import View
@@ -64,8 +68,13 @@ from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
     require_deploy_apps,
+    avoid_parallel_build_request,
 )
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
+from corehq.apps.app_manager.exceptions import (
+    ModuleIdMissingException,
+    PracticeUserException,
+    BuildConflictException,
+)
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
@@ -290,12 +299,12 @@ def save_copy(request, domain, app_id):
             timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
                                          timing_buckets=(1, 10, 30, 60, 120, 240))
             with timer:
-                copy = app.make_build(
-                    comment=comment,
-                    user_id=user_id,
-                )
-                copy.save(increment_version=False)
+                copy = make_app_build(app, comment, user_id)
             CouchUser.get(user_id).set_has_built_app()
+        except BuildConflictException:
+            return JsonResponse({
+                'error': _("There is already a version build in progress. Please wait.")
+            }, status=400)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -321,6 +330,16 @@ def save_copy(request, domain, app_id):
             'lang': lang
         }),
     })
+
+
+@avoid_parallel_build_request
+def make_app_build(app, comment, user_id):
+    copy = app.make_build(
+        comment=comment,
+        user_id=user_id,
+    )
+    copy.save(increment_version=False)
+    return copy
 
 
 def _track_build_for_app_preview(domain, couch_user, app_id, message):

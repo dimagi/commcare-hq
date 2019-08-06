@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views import (
     view_app,
     multimedia_ajax, current_app_version, paginate_releases,
     release_build, view_module, view_module_legacy, view_form, view_form_legacy,
-    get_form_datums, form_source, form_source_legacy, update_build_comment, export_gzip,
+    get_form_datums, form_source, form_source_legacy, update_build_comment,
     get_xform_source, form_casexml, app_source, import_app, app_from_template, copy_app,
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
@@ -77,7 +77,6 @@ app_urls = [
     url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),
     url(r'^update_build_comment/$', update_build_comment,
         name='update_build_comment'),
-    url(r'^copy/gzip$', export_gzip, name='gzip_app'),
     url(r'^update_prompts/$', PromptSettingsUpdateView.as_view(), name=PromptSettingsUpdateView.urlname),
     url(r'^form_has_submissions/(?P<form_unique_id>[\w-]+)/$', FormHasSubmissionsView.as_view(),
         name=FormHasSubmissionsView.urlname),
@@ -85,7 +84,6 @@ app_urls = [
 
 
 urlpatterns = [
-    url(r'^$', view_app, name='default_app'),
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),

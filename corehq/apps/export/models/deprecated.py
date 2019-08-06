@@ -9,6 +9,7 @@ from dimagi.ext.couchdbkit import (
 from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.dbaccessors import get_build_ids_after_version
+from corehq.apps.app_manager.util import is_remote_app
 from dimagi.utils.couch.database import iter_docs
 import six
 from six.moves import map
@@ -104,7 +105,7 @@ class FormQuestionSchema(Document):
             to_process.append(self.app_id)
 
         for app_doc in iter_docs(Application.get_db(), to_process):
-            if app_doc['doc_type'] == 'RemoteApp':
+            if is_remote_app(app_doc):
                 continue
             app = Application.wrap(app_doc)
             try:

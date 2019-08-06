@@ -13,7 +13,9 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http.response import (
+    HttpResponse,
+)
 from django.conf import settings
 
 from couchexport.models import Format
@@ -44,6 +46,7 @@ from custom.icds.models import (
     HostedCCZ,
     HostedCCZSupportingFile,
 )
+from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
 from custom.nic_compliance.utils import verify_password
 
 
@@ -159,6 +162,8 @@ class ManageHostedCCZ(BaseDomainView):
             hosted_cczs = hosted_cczs.filter(version=self.request.GET.get('version'))
         if self.request.GET.get('profile_id'):
             hosted_cczs = hosted_cczs.filter(profile_id=self.request.GET.get('profile_id'))
+        if self.request.GET.get('status'):
+            hosted_cczs = hosted_cczs.filter(status=self.request.GET.get('status'))
         hosted_cczs = [h.to_json(app_names) for h in hosted_cczs]
         return {
             'form': self.form,
@@ -233,6 +238,19 @@ def remove_hosted_ccz(request, domain, hosting_id):
         hosted_ccz.delete()
     except HostedCCZ.DoesNotExist:
         pass
+    return HttpResponseRedirect(reverse(ManageHostedCCZ.urlname, args=[domain]))
+
+
+@login_and_domain_required
+def recreate_hosted_ccz(request, domain, hosting_id):
+    try:
+        hosted_ccz = HostedCCZ.objects.get(pk=hosting_id, link__domain=domain)
+    except HostedCCZ.DoesNotExist:
+        pass
+    else:
+        hosted_ccz.utility.remove_file_from_blobdb()
+        hosted_ccz.update_status('pending')
+        setup_ccz_file_for_hosting.delay(hosted_ccz.pk, user_email=request.user.email)
     return HttpResponseRedirect(reverse(ManageHostedCCZ.urlname, args=[domain]))
 
 

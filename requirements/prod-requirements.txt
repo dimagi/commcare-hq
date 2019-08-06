@@ -93,7 +93,7 @@ jinja2==2.10.1
 jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.16
+jsonobject-couchdbkit==0.9.17
 jsonobject==0.9.9
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
@@ -164,6 +164,7 @@ socketpool==0.5.3
 sqlagg==0.13.0
 sqlalchemy==1.3.3
 stripe==1.67.0
+subprocess32==3.5.4
 suds-jurko==0.6
 text-unidecode==1.2       # via faker
 tinycss2==0.6.1           # via cssselect2, weasyprint

@@ -34,23 +34,30 @@ hqDefine('nic_compliance/js/encoder', function () {
 
     $(function(){
         if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
-            var passwordField = $("#id_auth-password, #id_password");
-            if (passwordField.length) {
-                passwordField.parents("form")[0].onsubmit = function() {
+            var ids = _.filter([
+                'id_auth-password',
+                'id_password',
+                'id_old_password',
+                'id_new_password1',
+                'id_new_password2',
+            ], function (id) {
+                return $('#' + id).length;
+            });
+            _.each(ids, function (id) {
+                var $field = $('#' + id),
+                    $form = $field.closest("form"),
+                    unencodedValue;
+                $form.submit(function () {
                     var passwordEncoder = HexParser();
-                    passwordField.val(passwordEncoder.encode(passwordField.val()));
-                };
-            }
-            var resetPasswordFields = $("#id_old_password, #id_new_password1, #id_new_password2");
-            if (resetPasswordFields.length) {
-                $(resetPasswordFields[0]).parents("form")[0].onsubmit = function() {
-                    for(var i=0; i < resetPasswordFields.length; i++) {
-                        passwordField = $(resetPasswordFields[i]);
-                        var passwordEncoder = HexParser();
-                        passwordField.val(passwordEncoder.encode(passwordField.val()));
+                    unencodedValue = $field.val();
+                    $field.val(passwordEncoder.encode(unencodedValue));
+                });
+                $(document).on("ajaxComplete", function (e, xhr, options) {
+                    if ($form.attr("action").endsWith(options.url)) {
+                        $field.val(unencodedValue);
                     }
-                };
-            }
+                });
+            });
         }
     });
 

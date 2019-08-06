@@ -34,19 +34,46 @@ class ProgramFixturesProvider(FixtureProvider):
     id = 'commtrack:programs'
 
     def __call__(self, restore_state):
-        data_fn = partial(self._get_fixture_items, restore_state)
-        return get_or_cache_global_fixture(restore_state, PROGRAM_FIXTURE_BUCKET, self.id, data_fn)
+        # disable caching temporarily
+        # https://dimagi-dev.atlassian.net/browse/IIO-332
+        # data_fn = partial(self._get_fixture_items, restore_state)
+        # return get_or_cache_global_fixture(restore_state, PROGRAM_FIXTURE_BUCKET, self.id, data_fn)
+        return self._get_fixture_items(restore_state)
 
     def _get_fixture_items(self, restore_state):
         restore_user = restore_state.restore_user
 
-        def get_programs():
-            return Program.by_domain(restore_user.domain)
+        project = restore_user.project
+        if not project or not project.commtrack_enabled:
+            return []
+
+        data = Program.by_domain(restore_user.domain)
+
+        if not self._should_sync(data, restore_state.last_sync_log):
+            return []
 
         return simple_fixture_generator(
             restore_user, self.id, "program",
-            PROGRAM_FIELDS, get_programs, restore_state.last_sync_log, GLOBAL_USER_ID
+            PROGRAM_FIELDS, data
         )
+
+    def _should_sync(self, data, last_sync):
+        """
+        Determine if a data collection needs to be synced.
+        """
+
+        # definitely sync if we haven't synced before
+        if not last_sync or not last_sync.date:
+            return True
+
+        # check if any items have been modified since last sync
+        for data_item in data:
+            # >= used because if they are the same second, who knows
+            # which actually happened first
+            if not data_item.last_modified or data_item.last_modified >= last_sync.date:
+                return True
+
+        return False
 
 
 program_fixture_generator = ProgramFixturesProvider()

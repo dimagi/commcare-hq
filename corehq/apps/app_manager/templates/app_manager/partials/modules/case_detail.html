@@ -23,7 +23,6 @@
   </div>
 </div>
 
-{{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
 <div class="btn-group">
 
   <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
@@ -49,7 +48,6 @@
 </span>
 
 {% if detail.type == 'case' %}
-  {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
   {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
     <div class="spacer"></div>
     <div class="panel panel-appmanager">
