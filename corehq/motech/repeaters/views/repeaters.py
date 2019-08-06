@@ -28,7 +28,6 @@ from corehq.motech.repeaters.forms import (
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
-    Dhis2RepeaterForm,
 )
 from corehq.motech.repeaters.models import Repeater, RepeatRecord, BASIC_AUTH, DIGEST_AUTH
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
@@ -221,16 +220,15 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
         return repeater
 
 
-class AddDhis2RepeaterView(AddFormRepeaterView):
+class AddDhis2RepeaterView(AddRepeaterView):
     urlname = 'new_dhis2_repeater$'
-    repeater_form_class = Dhis2RepeaterForm
+    repeater_form_class = GenericRepeaterForm
     page_title = ugettext_lazy("Forward to DHIS2")
     page_name = ugettext_lazy("Forward to DHIS2")
 
-    def set_repeater_attr(self, repeater, cleaned_data):
-        repeater = super(AddDhis2RepeaterView, self).set_repeater_attr(repeater, cleaned_data)
-        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
-        return repeater
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
 
 
 class EditRepeaterView(BaseRepeaterView):
