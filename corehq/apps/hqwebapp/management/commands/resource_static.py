@@ -40,7 +40,8 @@ class Command(BaseCommand):
         if not overwrite:
             from get_resource_versions import get_resource_versions
             old_resources = get_resource_versions()
-            resources.update(old_resources)
+            old_resources.update(resources)
+            resources = old_resources
         with open(os.path.join(self.root_dir, 'resource_versions.yaml'), 'w') as fout:
             fout.write(yaml.dump([{'name': name, 'version': version}
                                   for name, version in resources.items()]))
