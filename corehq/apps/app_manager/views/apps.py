@@ -47,7 +47,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import (
     update_linked_app_and_notify_task,
-    pull_missing_multimedia_for_app_and_notify_task,
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
@@ -77,7 +76,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
-from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
 from corehq.elastic import ESError
@@ -947,19 +945,6 @@ def pull_master_app(request, domain, app_id):
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     track_workflow(request.couch_user.username, "Linked domain: master app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-
-@require_can_edit_apps
-def pull_missing_multimedia(request, domain, app_id):
-    async_update = request.POST.get('notify') == 'on'
-    if async_update:
-        pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email)
-        messages.success(request,
-                         _('Your request has been submitted. We will notify you via email once completed.'))
-    else:
-        app = get_app(domain, app_id)
-        pull_missing_multimedia_for_app(app)
-    return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
 
 
 @no_conflict_require_POST

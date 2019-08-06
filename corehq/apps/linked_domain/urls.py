@@ -9,7 +9,9 @@ from corehq.apps.linked_domain.views import (
     custom_data_models,
     user_roles,
     get_latest_released_app_source,
-    DomainLinkRMIView)
+    pull_missing_multimedia,
+    DomainLinkRMIView,
+)
 
 app_name = 'linked_domain'
 
@@ -21,5 +23,7 @@ urlpatterns = [
     url(r'^case_search_config/$', case_search_config, name='case_search_config'),
     url(r'^release_source/(?P<app_id>[\w-]+)/$', get_latest_released_app_source,
         name='latest_released_app_source'),
+    url(r'^pull_missing_multimedia/(?P<app_id>[\w-]+)/$', pull_missing_multimedia,
+        name='pull_missing_multimedia'),
     url(r'^service/$', DomainLinkRMIView.as_view(), name=DomainLinkRMIView.urlname),
 ]

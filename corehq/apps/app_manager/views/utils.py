@@ -38,7 +38,7 @@ from corehq.apps.linked_domain.exceptions import (
     ActionNotPermitted,
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
-from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.util import get_static_report_mapping
@@ -386,26 +386,6 @@ def update_linked_app(app, user_id):
         app.save()
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
-
-
-def pull_missing_multimedia_for_app_and_notify(domain, app_id, email):
-    app = get_app(domain, app_id)
-    subject = _("Update Status for linked app %s missing multimedia pull") % app.name
-    try:
-        pull_missing_multimedia_for_app(app)
-    except MultimediaMissingError as e:
-        message = six.text_type(e)
-    except Exception:
-        # Send an email but then crash the process
-        # so we know what the error was
-        send_html_email_async.delay(subject, email, _(
-            "Something went wrong while pulling multimedia for your linked app. "
-            "Our team has been notified and will monitor the situation. "
-            "Please try again, and if the problem persists report it as an issue."))
-        raise
-    else:
-        message = _("Multimedia was successfully updated for the linked app.")
-    send_html_email_async.delay(subject, email, message)
 
 
 def clear_xmlns_app_id_cache(domain):
