@@ -48,7 +48,10 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         locations = [loc for loc in domain_locations if loc['location_type__code'] == 'awc']
 
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=self._table_column_names, delimiter='\t', dialect=csv.unix_dialect)
+        writer = csv.DictWriter(
+            output, fieldnames=self._table_column_names,
+            delimiter='\t', escapechar='\\', lineterminator='\n'
+        )
         writer.writeheader()
 
         for location in locations:
@@ -56,7 +59,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             loc = {
                 'aggregation_level': 5,
                 'doc_id': location['location_id'],
-                'awc_name': location['name'],
+                'awc_name': location['name'].replace("\n", ""),
                 'awc_site_code': location['location_type__code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
             }
@@ -67,7 +70,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                 loc_type = current_location['location_type__code']
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
-                    '{}_name'.format(loc_type): current_location['name'],
+                    '{}_name'.format(loc_type): current_location['name'].replace("\n", ""),
                     '{}_site_code'.format(loc_type): current_location['location_type__code'],
                     '{}_is_test'.format(loc_type): 1 if metadata.get('is_test_location') == 'test' else 0,
                 })
@@ -82,16 +85,22 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         return output
 
     def aggregate(self, cursor):
-        drop_table_query = self.drop_table_query()
-        agg_query = self.aggregate_query()
-        aww_query = self.aww_query()
-        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        location_csv = self.generate_csv()
 
-        cursor.execute(drop_table_query)
-        cursor.execute(agg_query)
-        cursor.execute(aww_query)
+        cursor.execute(self.drop_temporary_table_query())
+        cursor.execute(self.create_temporary_table_query())
+        self.aggregate_query(cursor, location_csv)
+        cursor.execute(self.aww_query)
+        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
+
+        # TODO ensure length of temp location table >= real location table
+        # TODO generate diff of tables
+
+        # todo always do in transaction
+        cursor.execute(self.drop_table_query())
+        cursor.execte(self.move_data_to_real_table())
         cursor.execute(self.create_local_table())
 
     @property
@@ -109,6 +118,9 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         columns = csv_file.readline().split('\t')
         # double cursor to get psycopg2 cursor from django cursor
         cursor.cursor.copy_from(csv_file, 'temp_awc_location', columns=columns)
+
+    def drop_temporary_table_query(self):
+        return "DROP TABLE IF EXISTS \"temp_awc_location\""
 
     def create_temporary_table_query(self):
         return "CREATE TABLE \"temp_awc_location\" (LIKE \"{tablename}\" INCLUDING INDEXES)".format(
@@ -161,7 +173,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
 
     def aww_query(self):
         return """
-            UPDATE temp_awc_location" awc_loc SET
+            UPDATE temp_awc_location awc_loc SET
               aww_name = ut.aww_name,
               contact_phone_number = ut.contact_phone_number
             FROM (
