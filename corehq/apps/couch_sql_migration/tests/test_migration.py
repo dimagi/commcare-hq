@@ -42,7 +42,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL,
     LedgerAccessorSQL,
 )
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -871,15 +871,14 @@ def create_form_with_missing_xml(domain_name):
         if isinstance(form, XFormInstance):
             # couch
             form.delete_attachment("form.xml")
-            assert form.get_xml() is None, form.get_xml()
         else:
             # sql
             blobs.delete(form.get_attachment_meta("form.xml").key)
-            try:
-                form.get_xml()
-                assert False, "expected BlobNotFound exception"
-            except BlobNotFound:
-                pass
+        try:
+            form.get_xml()
+            assert False, "expected MissingFormXml exception"
+        except MissingFormXml:
+            pass
     return form
 
 

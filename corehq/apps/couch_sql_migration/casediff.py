@@ -23,7 +23,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     LedgerAccessorSQL,
 )
-from corehq.form_processor.parsers.ledgers.form import MissingFormXml
+from corehq.form_processor.exceptions import MissingFormXml
 from dimagi.utils.chunked import chunked
 
 from .diff import filter_case_diffs, filter_ledger_diffs
