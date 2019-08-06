@@ -51,11 +51,9 @@ hqDefine('nic_compliance/js/encoder', function () {
                     var passwordEncoder = HexParser();
                     unencodedValue = $field.val();
                     $field.val(passwordEncoder.encode(unencodedValue));
-                    $field.attr("disabled", true);
                 });
                 $(document).on("ajaxComplete", function (e, xhr, options) {
                     if ($form.attr("action").endsWith(options.url)) {
-                        $field.attr("disabled", false);
                         $field.val(unencodedValue);
                     }
                 });
