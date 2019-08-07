@@ -38,7 +38,7 @@ from corehq.apps.linked_domain.exceptions import (
     ActionNotPermitted,
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
-from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.util import get_static_report_mapping
@@ -362,7 +362,7 @@ def update_linked_app(app, user_id):
             ))
 
         report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
-
+        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         try:
             app = overwrite_app(app, latest_master_build, report_map)
         except AppEditingError as e:
@@ -373,18 +373,19 @@ def update_linked_app(app, user_id):
                 ).format(ucr_id=str(e))
             )
 
-    if app.master_is_remote:
-        try:
-            pull_missing_multimedia_for_app(app)
-        except RemoteRequestError:
-            raise AppLinkError(_(
-                'Error fetching multimedia from remote server. Please try again later.'
-            ))
+        if app.master_is_remote:
+            try:
+                pull_missing_multimedia_for_app(app, old_multimedia_ids)
+            except RemoteRequestError:
+                raise AppLinkError(_(
+                    'Error fetching multimedia from remote server. Please try again later.'
+                ))
+
+        # reapply linked application specific data
+        app.reapply_overrides()
+        app.save()
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
-
-    # reapply linked application specific data
-    app.reapply_overrides()
 
 
 def clear_xmlns_app_id_cache(domain):

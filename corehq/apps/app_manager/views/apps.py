@@ -45,7 +45,9 @@ from corehq.apps.app_manager.models import (
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
+from corehq.apps.app_manager.tasks import (
+    update_linked_app_and_notify_task,
+)
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,

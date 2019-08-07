@@ -1,18 +1,20 @@
 {% load i18n %}
 {% if multimedia_state.has_media %}
-  <div class="panel panel-appmanager">
-    <div class="panel-heading">
-      <h4 class="panel-title panel-title-nolink">{% trans 'Multimedia Reference Checker' %}</h4>
+  {% if not is_linked_app %}
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">{% trans 'Multimedia Reference Checker' %}</h4>
+      </div>
+      <div class="panel-body">
+        <p>
+          <a id="open_checker" target="_blank" href="{% url "hqmedia_references" domain app.get_id %}">
+            {% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}
+            <i class="fa fa-external-link"></i>
+          </a>
+        </p>
+      </div>
     </div>
-    <div class="panel-body">
-      <p>
-        <a id="open_checker" target="_blank" href="{% url "hqmedia_references" domain app.get_id %}">
-          {% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}
-          <i class="fa fa-external-link"></i>
-        </a>
-      </p>
-    </div>
-  </div>
+  {% endif %}
 
   <div class="panel panel-appmanager">
     <div class="panel-heading">
@@ -24,6 +26,28 @@
     </div>
   </div>
 
+  {% if is_linked_app and app.master_is_remote %}
+    <div class="panel panel-appmanager panel-appmanager-form">
+      <form action="{% url "pull_missing_multimedia" domain app.id %}" method="POST">
+        {% csrf_token %}
+        <legend>
+          {% trans "Sync all multimedia with master" %}
+        </legend>
+        <div class="panel-body">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="notify">
+              {% trans "Email when finished (recommended for applications with large number of multimedia files or heavy files)" %}
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-refresh"></i>
+            {% trans "Sync" %}
+          </button>
+        </div>
+      </form>
+    </div>
+  {% endif %}
 {% else %}
   <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}
