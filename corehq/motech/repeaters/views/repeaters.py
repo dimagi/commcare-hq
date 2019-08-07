@@ -223,8 +223,8 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
 class AddDhis2RepeaterView(AddRepeaterView):
     urlname = 'new_dhis2_repeater$'
     repeater_form_class = GenericRepeaterForm
-    page_title = ugettext_lazy("Forward to DHIS2")
-    page_name = ugettext_lazy("Forward to DHIS2")
+    page_title = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+    page_name = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
 
     @property
     def page_url(self):
@@ -312,7 +312,7 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
 
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
-    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+    page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
 
 
 @require_POST
