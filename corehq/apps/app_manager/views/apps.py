@@ -45,7 +45,9 @@ from corehq.apps.app_manager.models import (
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
+from corehq.apps.app_manager.tasks import (
+    update_linked_app_and_notify_task,
+)
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
@@ -393,6 +395,13 @@ def copy_app(request, domain):
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
 
+    if request.POST.get('build_id'):
+        build = Application.get(request.POST.get('build_id'))
+        build.convert_build_to_app()
+        app_id_or_source = build.export_json(dump_json=False)
+    else:
+        app_id_or_source = app_id
+
     def _inner(request, link_domain, data, master_domain=domain):
         clear_app_cache(request, link_domain)
         if data['toggles']:
@@ -400,38 +409,39 @@ def copy_app(request, domain):
                 set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
         linked = data.get('linked')
         if linked:
-            return _create_linked_app(request, app, link_domain, data['name'])
+            master_build = get_app(master_domain, data['build_id'])
+            return _create_linked_app(request, master_build, link_domain, data['name'])
         else:
-            return _copy_app_helper(
-                request, master_domain, app_id, link_domain, data['name'], app_id)
+            return _copy_app_helper(request, master_domain, app_id_or_source, link_domain, data['name'])
 
     # having login_and_domain_required validates that the user
     # has access to the domain we're copying the app to
     return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
 
 
-def _create_linked_app(request, master_app, link_domain, link_app_name):
-    master_domain = master_app.domain
-    master_version = get_latest_released_app_version(master_domain, master_app._id)
-    if not master_version:
+def _create_linked_app(request, master_build, link_domain, link_app_name):
+    master_domain = master_build.domain
+    if not master_build:
         messages.error(request, _("Creating linked app failed."
                                   " Unable to get latest released version of your app."
                                   " Make sure you have at least one released build."))
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, master_app._id]))
+        return HttpResponseRedirect(reverse_util('app_settings', params={},
+                                                 args=[master_domain, master_build.master_id]))
 
-    linked_app = create_linked_app(master_domain, master_app._id, link_domain, link_app_name)
+    linked_app = create_linked_app(master_domain, master_build.master_id, link_domain, link_app_name)
     try:
-        update_linked_app(linked_app, request.couch_user.get_id)
+        update_linked_app(linked_app, request.couch_user.get_id, master_build=master_build)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, master_app._id]))
+        return HttpResponseRedirect(reverse_util('app_settings', params={},
+                                                 args=[master_domain, master_build.master_id]))
 
     messages.success(request, _('Application successfully copied and linked.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
 
 
-def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name, app_id):
+def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name):
     extra_properties = {'name': copy_to_app_name}
     app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties, request)
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)

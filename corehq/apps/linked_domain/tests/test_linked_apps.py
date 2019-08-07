@@ -14,12 +14,17 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
-from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
-    _get_missing_multimedia, _fetch_remote_media
+from corehq.apps.linked_domain.remote_accessors import (
+    _convert_app_from_remote_linking_source,
+    fetch_remote_media,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_ids_by_xmlns, update_linked_app
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
-from corehq.apps.linked_domain.util import convert_app_for_remote_linking
+from corehq.apps.linked_domain.util import (
+    convert_app_for_remote_linking,
+    _get_missing_multimedia,
+)
 from io import open
 
 from corehq.util.test_utils import flag_enabled, softer_assert
@@ -247,6 +252,28 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.linked_app_attrs = {}
         self.linked_app.save()
 
+    def test_update_from_specific_build(self):
+        self.linked_app.master = self.plain_master_app.get_id
+
+        self.plain_master_app.add_module(Module.new_module('M1', None))
+        copy1 = self.plain_master_app.make_build()
+        copy1.save()
+        self.addCleanup(copy1.delete)
+
+        self.plain_master_app.add_module(Module.new_module('M2', None))
+        self.plain_master_app.save()  # increment version number
+        copy2 = self.plain_master_app.make_build()
+        copy2.is_released = True
+        copy2.save()
+        self.addCleanup(copy2.delete)
+
+        update_linked_app(self.linked_app, 'test_update_from_specific_build', master_build=copy1)
+        # fetch after update to get the new version
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+
+        self.assertEqual(len(self.linked_app.modules), 1)
+        self.assertEqual(self.linked_app.version, copy1.version)
+
 
 class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
@@ -323,7 +350,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         media_details['media_type'] = 'CommCareMultimedia'
         with patch('corehq.apps.linked_domain.remote_accessors._fetch_remote_media_content') as mock:
             mock.return_value = data
-            _fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_details)
+            fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_details)
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)
