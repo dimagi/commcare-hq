@@ -2,6 +2,9 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import datetime
+
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
@@ -2467,7 +2470,9 @@ class ProgramData(ProgramsDataSource):
         records = self.get_data()
         rows = []
         for record in records:
-            rows.append([record['program_id'], record['program_name']])
+            program_name = record['program_name']
+            if program_name != 'PLANNIFICATION FAMILIALE':
+                rows.append([record['program_id'], record['program_name']])
         return sorted(rows, key=lambda x: x[0])
 
 
@@ -2604,7 +2609,10 @@ class ProductsInProgramWithNameData(ProgramsDataSource):
                 programs[program_id]['product_ids'].append(None)
         rows = []
         for program_id, program_data in programs.items():
-            rows.append([program_id, program_data['name'], program_data['product_ids']])
+            program_name = program_data['name']
+            if program_name == 'PLANNIFICATION FAMILIALE':
+                program_name = 'PLANIFICATION FAMILIALE'
+            rows.append([program_id, program_name, program_data['product_ids']])
         rows = sorted(rows, key=lambda x: x[0])
         return rows
 
@@ -3901,7 +3909,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], "visite_de_l_operateur_per_product_v2")
+        return get_table_name(self.config['domain'], '')
 
     @cached_property
     def selected_location(self):
@@ -3935,7 +3943,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        filters = [BETWEEN('real_date', 'startdate', 'enddate')]
         if self.config['selected_location']:
             filters.append(EQ(self.loc_id, 'selected_location'))
         if self.config['product_product']:
@@ -3946,106 +3954,162 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def group_by(self):
-        group_by = [self.loc_name, self.loc_id, 'real_date_repeat']
+        group_by = [self.loc_name, self.loc_id, 'real_date']
         return group_by
 
     @property
     def columns(self):
         columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date')),
             DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            DatabaseColumn("Total Stock", SimpleColumn('total_stock')),
+            # DatabaseColumn('Program ID', SimpleColumn('program_id')),
+            # DatabaseColumn('Program name', SimpleColumn('program_name')),
+            DatabaseColumn('Product ID', SimpleColumn('product_id')),
+            DatabaseColumn('Product name', SimpleColumn('product_name')),
+            DatabaseColumn("Product is outstock", SimpleColumn('product_is_outstock')),
         ]
         return columns
 
     @property
     def rows(self):
         # TODO: we need only the latest value of total_stock from selected daterange
+        # rows = self.get_data()
         return [
-            {'region_name': 'Region 1', 'region_id': 1, 'total_stock': 15},
-            {'region_name': 'Region 2', 'region_id': 2, 'total_stock': 11},
-            {'region_name': 'Region 3', 'region_id': 3, 'total_stock': 53},
-            {'region_name': 'Region 4', 'region_id': 4, 'total_stock': 23},
-            {'region_name': 'Region 5', 'region_id': 5, 'total_stock': 64},
-            {'region_name': 'Region 6', 'region_id': 6, 'total_stock': 4},
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.1', 'pps_id': 1, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 2)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.2', 'pps_id': 2, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 1)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.3', 'pps_id': 3, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 9)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.2', 'district_id': 4,
+                'pps_name': 'PPS 1.2.1', 'pps_id': 10, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 8)
+            },
+
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.1', 'pps_id': 4, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 7)
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.2', 'pps_id': 5, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 6)
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.3', 'pps_id': 6, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 13)
+            },
+
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.1', 'pps_id': 7, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 12)
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.2', 'pps_id': 8, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 11)
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.3', 'pps_id': 9, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 10)
+            },
         ]
         # return self.get_data()
 
 
 class EffectiveDeLivraisonDataSource(SqlData):
-    slug = 'effective_de_livraison'
-    title = 'effective_de_livraison'
-
-    def __init__(self, config):
-        super(EffectiveDeLivraisonDataSource, self).__init__()
-        self.config = config
-
-    @property
-    def table_name(self):
-        return get_table_name(self.config['domain'], "date_effective_de_livraison")
-
-    @cached_property
-    def selected_location(self):
-        if self.config['selected_location']:
-            return SQLLocation.objects.get(location_id=self.config['selected_location'])
-        else:
-            return None
-
-    @cached_property
-    def selected_location_type(self):
-        if not self.selected_location:
-            return 'national'
-        return self.selected_location.location_type.code
-
-    @cached_property
-    def loc_type(self):
-        if self.selected_location_type == 'national':
-            return 'region'
-        elif self.selected_location_type == 'region':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id(self):
-        return "{}_id".format(self.loc_type)
-
-    @cached_property
-    def loc_name(self):
-        return "{}_name".format(self.loc_type)
-
-    @property
-    def filters(self):
-        filters = []
-        if self.config['selected_location']:
-            filters.append(EQ(self.loc_id, 'selected_location'))
-        return filters
-
-    @property
-    def group_by(self):
-        group_by = [self.loc_name, self.loc_id]
-        return group_by
-
-    @property
-    def columns(self):
-        columns = [
-            DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
-            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            DatabaseColumn("nb_pps_visites", SimpleColumn('nb_pps_visites')),
-        ]
-        return columns
-
-    @property
-    def rows(self):
-        # TODO: we need only the latest value of nb_pps_visites from selected daterange
-        return [
-            {'region_name': 'Region 1', 'region_id': 1, 'nb_pps_visites': 45},
-            {'region_name': 'Region 2', 'region_id': 2, 'nb_pps_visites': 34},
-            {'region_name': 'Region 3', 'region_id': 3, 'nb_pps_visites': 86},
-            {'region_name': 'Region 4', 'region_id': 4, 'nb_pps_visites': 40},
-            {'region_name': 'Region 5', 'region_id': 5, 'nb_pps_visites': 100},
-            {'region_name': 'Region 6', 'region_id': 6, 'nb_pps_visites': 10},
-        ]
+    pass
+    # slug = 'effective_de_livraison'
+    # title = 'effective_de_livraison'
+    #
+    # def __init__(self, config):
+    #     super(EffectiveDeLivraisonDataSource, self).__init__()
+    #     self.config = config
+    #
+    # @property
+    # def table_name(self):
+    #     return get_table_name(self.config['domain'], "date_effective_de_livraison")
+    #
+    # @cached_property
+    # def selected_location(self):
+    #     if self.config['selected_location']:
+    #         return SQLLocation.objects.get(location_id=self.config['selected_location'])
+    #     else:
+    #         return None
+    #
+    # @cached_property
+    # def selected_location_type(self):
+    #     if not self.selected_location:
+    #         return 'national'
+    #     return self.selected_location.location_type.code
+    #
+    # @cached_property
+    # def loc_type(self):
+    #     if self.selected_location_type == 'national':
+    #         return 'region'
+    #     elif self.selected_location_type == 'region':
+    #         return 'district'
+    #     else:
+    #         return 'pps'
+    #
+    # @cached_property
+    # def loc_id(self):
+    #     return "{}_id".format(self.loc_type)
+    #
+    # @cached_property
+    # def loc_name(self):
+    #     return "{}_name".format(self.loc_type)
+    #
+    # @property
+    # def filters(self):
+    #     filters = []
+    #     if self.config['selected_location']:
+    #         filters.append(EQ(self.loc_id, 'selected_location'))
+    #     return filters
+    #
+    # @property
+    # def group_by(self):
+    #     group_by = [self.loc_name, self.loc_id]
+    #     return group_by
+    #
+    # @property
+    # def columns(self):
+    #     columns = [
+    #         DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
+    #         DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+    #         DatabaseColumn("nb_pps_visites", SimpleColumn('nb_pps_visites')),
+    #     ]
+    #     return columns
+    #
+    # @property
+    # def rows(self):
+    #     # TODO: we need only the latest value of nb_pps_visites from selected daterange
+    #     return []
     # return self.get_data()
 
 
@@ -4067,16 +4131,19 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def group_by(self):
-        return ['real_date', self.loc_name, self.loc_id, 'product_id', 'product_name']
+        return ['real_date', self.loc_name, self.loc_id]
 
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
-            DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
-            DatabaseColumn("Date", SimpleColumn('real_date')),
-            DatabaseColumn("Number of stockout products", SimpleColumn('nb_products_stockout')),
-            DatabaseColumn("Number of products in pps", SimpleColumn('count_products_select')),
+            DatabaseColumn('Date', SimpleColumn('real_date')),
+            DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
+            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            # DatabaseColumn('Program ID', SimpleColumn('program_id')),
+            # DatabaseColumn('Program name', SimpleColumn('program_name')),
+            DatabaseColumn('Product ID', SimpleColumn('product_id')),
+            DatabaseColumn('Product name', SimpleColumn('product_name')),
+            DatabaseColumn("Product is outstock", SimpleColumn('product_is_outstock')),
         ]
         return columns
 
@@ -4119,8 +4186,73 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def rows(self):
-        # TODO: we don't know in which format data will be displaied
-        return []
+        # TODO: we need only the latest value of total_stock from selected daterange
+        # rows = self.get_data()
+        return [
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.1', 'pps_id': 1, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 2)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.2', 'pps_id': 2, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 1)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.3', 'pps_id': 3, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 9)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.2', 'district_id': 4,
+                'pps_name': 'PPS 1.2.1', 'pps_id': 10, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 8)
+            },
+
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.1', 'pps_id': 4, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 7)
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.2', 'pps_id': 5, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 6)
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.3', 'pps_id': 6, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
+                'real_date': datetime.date(2019, 6, 13)
+            },
+
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.1', 'pps_id': 7, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 12)
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.2', 'pps_id': 8, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 11)
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.3', 'pps_id': 9, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
+                'real_date': datetime.date(2019, 6, 10)
+            },
+        ]
+        # return self.get_data()
 
 
 class ConsommationPerProductData(SqlData):
@@ -4136,15 +4268,16 @@ class ConsommationPerProductData(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], "operatour_combined")
+        return get_table_name(self.config['domain'], '')
 
     @property
     def group_by(self):
-        return [self.loc_name, self.loc_id, 'product_id', 'product_name']
+        return ['real_date', self.loc_name, self.loc_id, 'product_id', 'product_name']
 
     @property
     def columns(self):
         columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date')),
             DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
@@ -4196,9 +4329,73 @@ class ConsommationPerProductData(SqlData):
 
     @property
     def rows(self):
-        # TODO: we don't know in which format data will be displaied
-        return []
-    # return self.get_data()
+        # TODO: we need only the latest value of total_stock from selected daterange
+        # rows = self.get_data()
+        return [
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.1', 'pps_id': 1, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'actual_consumption': 147,
+                'real_date': datetime.date(2019, 6, 2)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.2', 'pps_id': 2, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 2', 'product_id': 2, 'actual_consumption': 56,
+                'real_date': datetime.date(2019, 6, 1)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.3', 'pps_id': 3, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'actual_consumption': 86,
+                'real_date': datetime.date(2019, 6, 9)
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.2', 'district_id': 4,
+                'pps_name': 'PPS 1.2.1', 'pps_id': 10, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 3', 'product_id': 3, 'actual_consumption': 237,
+                'real_date': datetime.date(2019, 6, 8)
+            },
+
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.1', 'pps_id': 4, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 2', 'product_id': 2, 'actual_consumption': 17,
+                'real_date': datetime.date(2019, 6, 7)
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.2', 'pps_id': 5, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'actual_consumption': 12,
+                'real_date': datetime.date(2019, 6, 6)
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.3', 'pps_id': 6, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 3', 'product_id': 3, 'actual_consumption': 5,
+                'real_date': datetime.date(2019, 6, 13)
+            },
+
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.1', 'pps_id': 7, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'actual_consumption': 69,
+                'real_date': datetime.date(2019, 6, 12)
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.2', 'pps_id': 8, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'actual_consumption': 420,
+                'real_date': datetime.date(2019, 6, 11)
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.3', 'pps_id': 9, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 3', 'product_id': 3, 'actual_consumption': 100,
+                'real_date': datetime.date(2019, 6, 10)
+            },
+        ]
+        # rows = self.get_data()
 
 
 class LossRatePerProductData(SqlData):
@@ -4216,22 +4413,21 @@ class LossRatePerProductData(SqlData):
     @property
     def table_name(self):
         # TODO: we don't know if we need to create data source or use existing one
-        return get_table_name(self.config['domain'], "")
+        return get_table_name(self.config['domain'], YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT)
 
     @property
     def group_by(self):
-        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
+        return ['real_date_repeat', 'product_name', self.loc_name, self.loc_id]
 
     @property
     def columns(self):
         columns = [
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn("Total number of PNA lost product", SumColumn('loss_amt')),
             DatabaseColumn("PNA final stock", SumColumn('final_pna_stock')),
-            DatabaseColumn("Product ID", SimpleColumn('product_id')),
-            DatabaseColumn("Program name", SimpleColumn('program_name'))
+            DatabaseColumn("Product name", SimpleColumn('product_name')),
         ]
         return columns
 
@@ -4267,20 +4463,28 @@ class LossRatePerProductData(SqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        program_id = self.config.get('product_program')
+        if program_id:
+            programs = ProductsInProgramData(config={'domain': self.config['domain']}).rows
+            for program in programs:
+                if program_id == program[0]:
+                    filters.append(OR(
+                        [CustomEQFilter("product_id", product) for product in program[1].split(" ")]
+                    ))
+                    break
         if self.config['selected_location']:
             filters.append(EQ(self.loc_id, 'selected_location'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
-        elif self.config['product_program']:
-            filters.append(EQ('program_id', 'product_program'))
+        # elif self.config['product_program']:
+        #     filters.append(EQ('program_id', 'product_program'))
         return filters
 
     @property
     def rows(self):
         # TODO: we don't know in which format data will be displaied
-        return []
-    # return self.get_data()
+        return self.get_data()
 
 
 class ExpirationRatePerProductData(SqlData):
@@ -4361,8 +4565,9 @@ class ExpirationRatePerProductData(SqlData):
     @property
     def rows(self):
         # TODO: we don't know in which format data will be displaied
-        return []
-    # return self.get_data()
+        rows = self.get_data()
+
+        return rows
 
 
 class SatisfactionRateAfterDeliveryPerProductData(SqlData):

@@ -97,8 +97,54 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
-        rows = TauxDeRuptureRateData(config=self.config).rows
+        stocks = TauxDeRuptureRateData(config=self.config).rows
+
+        def to_report_row(s):
+            loc_type = self.selected_location_type.lower()
+            stocks_list = []
+            stocks_to_return = []
+
+            for stock in s:
+                data_dict = {
+                    'location_name': stock['{}_name'.format(loc_type)],
+                    'product_available_in_ppses': 0,
+                    'number_of_ppses': 0,
+                }
+
+                length = len(stocks_list)
+                if not stocks_list:
+                    data_dict['product_available_in_ppses'] = 1 if stock['product_is_outstock'] == 1 else 0
+                    data_dict['number_of_ppses'] = 1
+                    stocks_list.append(data_dict)
+                else:
+                    for r in range(0, length):
+                        location_name = stocks_list[r]['location_name']
+                        if stock['{}_name'.format(loc_type)] == location_name:
+                            if stock['product_is_outstock'] == 1:
+                                stocks_list[r]['product_available_in_ppses'] += 1
+                            stocks_list[r]['number_of_ppses'] += 1
+                        else:
+                            if r == len(stocks_list) - 1:
+                                data_dict['product_available_in_ppses'] = 1 if stock['product_is_outstock'] == 1 else 0
+                                data_dict['number_of_ppses'] = 1
+                                stocks_list.append(data_dict)
+
+            for stock in stocks_list:
+                amount_of_products = stock['product_available_in_ppses']
+                amount_of_ppses = stock['number_of_ppses']
+                percent = (amount_of_products / float(amount_of_ppses)) * 100 \
+                    if amount_of_ppses != 0 else 0
+                stocks_to_return.append([
+                    stock['location_name'],
+                    {
+                        'html': '{:.2f} %'.format(percent),
+                        'sort_key': percent
+                    }
+                ])
+
+            return stocks_to_return
+
+        rows = to_report_row(stocks)
         return rows
 
     @property

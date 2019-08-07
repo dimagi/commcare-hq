@@ -16,7 +16,7 @@ from custom.intrahealth.sqldata import ConsommationPerProductData
 
 class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Consommation"
-    slug = 'consommation'
+    slug = 'consommation_report'
     comment = 'test comment change me later'
     default_rows = 10
 
@@ -39,7 +39,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         context = {
             'report': self.get_report_context(),
             'title': self.name,
-            'charts': self.charts
+            # 'charts': self.charts
         }
 
         return context
@@ -94,8 +94,78 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
-        rows = ConsommationPerProductData(config=self.config).rows
+        consumptions = ConsommationPerProductData(config=self.config).rows
+
+        def to_report_row(c):
+            loc_type = self.selected_location_type.lower()
+            consumptions_list = []
+            consumptions_to_return = []
+
+            for consumption in c:
+                data_dict = {
+                    'location_name': consumption['{}_name'.format(loc_type)],
+                    'products': [],
+                }
+                product_name = consumption['product_name']
+                actual_consumption = consumption['actual_consumption']
+
+                length = len(consumptions_list)
+                if not consumptions_list:
+                    product_dict = {
+                        'product_name': product_name,
+                        'actual_consumption': actual_consumption,
+                    }
+                    data_dict['products'].append(product_dict)
+                    consumptions_list.append(data_dict)
+                else:
+                    for r in range(0, length):
+                        location_name = consumptions_list[r]['location_name']
+                        if consumption['{}_name'.format(loc_type)] == location_name:
+                            if not consumptions_list[r]['products']:
+                                product_dict = {
+                                    'product_name': product_name,
+                                    'actual_consumption': actual_consumption,
+                                }
+                                consumptions_list[r]['products'].append(product_dict)
+                            else:
+                                products = consumptions_list[r]['products']
+                                amount_of_products = len(products)
+                                for s in range(0, amount_of_products):
+                                    product = products[s]
+                                    if product['product_name'] == product_name:
+                                        product['actual_consumption'] += actual_consumption
+                                        break
+                                    elif product['product_name'] != product_name and s == amount_of_products - 1:
+                                        product_dict = {
+                                            'product_name': product_name,
+                                            'actual_consumption': actual_consumption,
+                                        }
+                                        consumptions_list[r]['products'].append(product_dict)
+                        elif consumption['{}_name'.format(loc_type)] != location_name and r == length - 1:
+                            product_dict = {
+                                'product_name': product_name,
+                                'actual_consumption': actual_consumption,
+                            }
+                            data_dict['products'].append(product_dict)
+                            consumptions_list.append(data_dict)
+
+            for consumption in consumptions_list:
+                for product in consumption['products']:
+                    location_name = consumption['location_name']
+                    product_name = product['product_name']
+                    actual_consumption = product['actual_consumption']
+                    consumptions_to_return.append([
+                        location_name,
+                        product_name,
+                        {
+                            'html': '{}'.format(actual_consumption),
+                            'sort_key': actual_consumption
+                        }
+                    ])
+
+            return consumptions_to_return
+
+        rows = to_report_row(consumptions)
         return rows
 
     @property
