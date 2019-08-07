@@ -117,22 +117,24 @@
         </div>
 
         <!-- ko if: isOData -->
-        <div class="input-group">
-          <span data-bind="css: {
-                             'input-group-btn': showLink
-                           },
-                           click: copyLinkRequested">
-            <a class="btn btn-default btn-sm">
-              <i class="fa fa-clipboard"></i>
-              {% trans "Copy OData Feed Link" %}
-            </a>
-          </span>
-          <input data-bind="visible: showLink,
-                            value: odataFeedUrl"
-                 type="text"
-                 class="form-control input-sm"
-                 readonly />
-        </div>
+          <!-- ko with: odataFeedUrl -->
+          <div class="input-group">
+            <span data-bind="css: {
+                               'input-group-btn': showLink
+                             },
+                             click: copyLinkRequested">
+              <a class="btn btn-default btn-sm">
+                <i class="fa fa-clipboard"></i>
+                {% trans "Copy OData Feed Link" %}
+              </a>
+            </span>
+            <input data-bind="visible: showLink,
+                              value: url"
+                   type="text"
+                   class="form-control input-sm"
+                   readonly />
+          </div>
+          <!-- /ko -->
         <!-- /ko -->
 
         <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
@@ -222,7 +224,9 @@
               {% trans "Download" %}
             </a>
 
-            <div class="input-group" data-bind="visible: isFeed">
+            <div class="input-group"
+                 data-bind="visible: isFeed">
+              <!-- ko with: feedUrl -->
               <span data-bind="css: {
                                  'input-group-btn': showLink
                                },
@@ -233,10 +237,11 @@
                 </a>
               </span>
               <input data-bind="visible: showLink,
-                                value: emailedExport.fileData.downloadUrl()"
+                                value: url"
                      type="text"
                      class="form-control input-sm"
                      readonly />
+              <!-- /ko -->
             </div>
           </div>
 
