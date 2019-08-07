@@ -114,15 +114,18 @@ def current_url_name(request):
 
 
 def js_api_keys(request):
-    if hasattr(request, 'couch_user') and request.couch_user and not request.couch_user.analytics_enabled:
-        return {}  # disable js analytics
-    return {
-        'ANALYTICS_IDS': settings.ANALYTICS_IDS,
-        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
-        'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+    keys = {
         'SENTRY_PUBLIC_KEY': settings.SENTRY_PUBLIC_KEY,
         'SENTRY_PROJECT_ID': settings.SENTRY_PROJECT_ID,
+        'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
+    if hasattr(request, 'couch_user') and request.couch_user and not request.couch_user.analytics_enabled:
+        return keys
+    keys.update({
+        'ANALYTICS_IDS': settings.ANALYTICS_IDS,
+        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
+    })
+    return keys
 
 
 def js_toggles(request):
