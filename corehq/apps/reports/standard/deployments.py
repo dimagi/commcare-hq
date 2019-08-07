@@ -74,7 +74,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def warehouse(self):
-        return toggles.WAREHOUSE_APP_STATUS.enabled(self.domain)
+        return toggles.WAREHOUSE_APP_STATUS.enabled_for_request(self.request)
 
     @property
     def headers(self):
