@@ -338,7 +338,7 @@ def update_linked_app(app, user_id, master_build=None):
         ))
 
     if master_build:
-        master_version = master_build['version']
+        master_version = master_build.version
     else:
         try:
             master_version = app.get_master_version()
