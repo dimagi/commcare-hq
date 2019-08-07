@@ -13,7 +13,8 @@ function(doc){
             case_sharing: doc.case_sharing,
             cloudcare_enabled: doc.cloudcare_enabled,
             mobile_ucr_sync_interval: doc.mobile_ucr_sync_interval,
-            created_from_template: doc.created_from_template
+            created_from_template: doc.created_from_template,
+            progenitor_app_id: doc.progenitor_app_id,
         });
     }
 }
