@@ -338,9 +338,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def process_users(self, users, fmt_for_export=False):
         rows = []
-        first = self.pagination.start
-        last = first + self.pagination.count
-        for user in users[first:last]:
+        for user in users:
             rows.append([
                 user_display_string(user.user_dim.username,
                                     user.user_dim.first_name,
@@ -404,7 +402,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if self.selected_app_id:
                 rows = rows.filter(app_dim__application_id=self.selected_app_id)
             self._total_records = rows.count()
-            return self.process_users(rows)
+            first = self.pagination.start
+            last = first + self.pagination.count
+            return self.process_users(rows[first:last])
         else:
             users = self.user_query().run()
             self._total_records = users.total
