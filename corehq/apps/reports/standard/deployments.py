@@ -336,18 +336,18 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             rows.append(row_data)
         return rows
 
-    def process_users(self, users, fmt_for_export=False):
+    def process_facts(self, app_status_facts, fmt_for_export=False):
         rows = []
-        for user in users:
+        for fact in app_status_facts:
             rows.append([
-                user_display_string(user.user_dim.username,
-                                    user.user_dim.first_name,
-                                    user.user_dim.last_name),
-                _fmt_date(user.last_form_submission_date, fmt_for_export),
-                _fmt_date(user.last_sync_log_date, fmt_for_export),
-                getattr(user.app_dim, 'name', '---'),
-                user.last_form_app_build_version,
-                user.last_form_app_commcare_version
+                user_display_string(fact.user_dim.username,
+                                    fact.user_dim.first_name,
+                                    fact.user_dim.last_name),
+                _fmt_date(fact.last_form_submission_date, fmt_for_export),
+                _fmt_date(fact.last_sync_log_date, fmt_for_export),
+                getattr(fact.app_dim, 'name', '---'),
+                fact.last_form_app_build_version,
+                fact.last_form_app_commcare_version
             ])
         return rows
 
@@ -395,7 +395,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             self._total_records = rows.count()
             first = self.pagination.start
             last = first + self.pagination.count
-            return self.process_users(rows[first:last])
+            return self.process_facts(rows[first:last])
         else:
             users = self.user_query().run()
             self._total_records = users.total
