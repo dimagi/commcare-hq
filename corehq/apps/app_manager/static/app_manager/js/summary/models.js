@@ -22,6 +22,7 @@ hqDefine('app_manager/js/summary/models',[
         }, options);
 
         self.isSelected = ko.observable(false);
+        self.isVisibleInMenu = ko.observable(true);
         self.select = function () {
             self.isSelected(true);
         };
@@ -42,7 +43,6 @@ hqDefine('app_manager/js/summary/models',[
 
         self.select = function (item) {
             self.selectedItemId(item.unique_id);
-            self.viewChangedOnlySelected(false);
             _.each(self.items, function (i) {
                 i.isSelected(item.unique_id === i.unique_id);
                 _.each(i.subitems, function (s) {
@@ -51,7 +51,18 @@ hqDefine('app_manager/js/summary/models',[
             });
         };
         self.selectAll = function () {
+            self.viewChangedOnlySelected(false);
+            self.showAll();
             self.select('');
+        };
+
+        self.showAll = function () {
+            _.each(self.items, function (i) {
+                i.isVisibleInMenu(true);
+                _.each(i.subitems, function (s) {
+                    s.isVisibleInMenu(true);
+                });
+            });
         };
 
         self.viewChanged = options.viewChanged;
@@ -59,9 +70,10 @@ hqDefine('app_manager/js/summary/models',[
         self.viewChangedOnly = function () {
             self.viewChangedOnlySelected(true);
             _.each(self.items, function (i) {
-                i.isSelected(i.has_changes);
+                i.isVisibleInMenu(i.has_changes);
                 _.each(i.subitems, function (s) {
-                    s.isSelected(s.has_changes);
+                    i.isVisibleInMenu(i.isVisibleInMenu() || s.has_changes);
+                    s.isVisibleInMenu(s.has_changes);
                 });
             });
         };
@@ -69,7 +81,6 @@ hqDefine('app_manager/js/summary/models',[
         self.viewAllSelected = ko.computed(function () {
             return !self.selectedItemId() && !self.viewChangedOnlySelected();
         });
-
 
         return self;
     };
