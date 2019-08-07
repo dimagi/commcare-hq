@@ -67,13 +67,28 @@ class Dhis2Repeater(FormRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
+        """
+        Sends API request and returns response if ``payload`` is a form
+        that is configured to be forwarded to DHIS2.
+
+        If ``payload`` is a form that isn't configured to be forwarded,
+        returns True.
+        """
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
+                requests = Requests(
+                    self.domain,
+                    self.url,
+                    self.username,
+                    self.plaintext_password,
+                    verify=self.verify,
+                )
                 return send_data_to_dhis2(
-                    Requests(self.domain, self.url, self.username, self.plaintext_password, verify=self.verify),
+                    requests,
                     form_config,
                     payload,
                 )
+        return True
 
 
 def create_dhis_repeat_records(sender, xform, **kwargs):
