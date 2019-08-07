@@ -20,7 +20,7 @@ from dimagi.utils.dates import force_to_date
 class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Disponibilité"
     slug = 'disponibilite_report'
-    comment = 'test comment change me later'
+    comment = 'Taux de disponibilité de la gamme'
     default_rows = 10
 
     report_template_path = 'yeksi_naa/tabular_report.html'

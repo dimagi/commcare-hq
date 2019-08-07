@@ -20,7 +20,7 @@ from dimagi.utils.dates import force_to_date
 class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Taux De Rupture"
     slug = 'taux_de_rupture_report'
-    comment = 'test comment change me later'
+    comment = 'Indicateur logistique: Taux de rupture par produit et par Region'
     default_rows = 10
 
     report_template_path = 'yeksi_naa/tabular_report.html'
@@ -161,7 +161,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
             return [
                 {
-                    "key": "'Méthode de calcul: nbre de PPS avec le produit disponsible sur le nbre total de PPS visités de la période'",
+                    "key": 'Taux de disponibilite de la Gamme des produits',
                     'values': com
                 },
             ]
