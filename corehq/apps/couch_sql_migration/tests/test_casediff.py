@@ -440,7 +440,7 @@ class TestCaseDiffProcess(SimpleTestCase):
         def log_status(status):
             log.info("status: %s", status)
             keys = ["pending_cases", "pending_diffs", "diffed_cases"]
-            assert keys == list(status), status
+            assert set(keys) == set(status), status
             queue.put([status[k] for k in keys])
 
         queue = Queue()
