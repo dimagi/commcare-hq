@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import tempfile
+from collections import defaultdict
 from io import BytesIO
 
 from django.test import SimpleTestCase
@@ -45,11 +46,9 @@ from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 from corehq.util.test_utils import flag_enabled
-from corehq.util.workbook_json.excel import (
-    WorkbookJSONReader,
-    get_workbook,
-)
+from corehq.util.workbook_json.excel import WorkbookJSONReader, get_workbook
 
 EXCEL_HEADERS = (
     (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en',
@@ -1264,6 +1263,44 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             self.assertEqual(actual_sheet, expected_sheet)
         self.assertEqual(actual_workbook, self.expected_workbook)
 
+    def test_bulk_app_sheet_blacklisted(self):
+
+        def blacklist_without_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
+            menu1_sheet = get_bulk_app_sheets_by_name(self.app, eligible_for_transifex_only=True)['menu1']
+        self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
+        self.assertIn(('name', 'list', 'Name'), menu1_sheet)
+
+    def test_bulk_app_sheet_blacklisted_text(self):
+
+        def blacklist_with_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
+            menu1_sheet = get_bulk_app_sheets_by_name(self.app, eligible_for_transifex_only=True)['menu1']
+        self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
+        self.assertIn(('name', 'list', 'Name'), menu1_sheet)
+
+    def test_bulk_app_sheet_skipped_label(self):
+
+        def get_labels_to_skip(self):
+            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', lambda self: {}):
+            menu1_form1_sheet = get_bulk_app_sheets_by_name(self.app,
+                                                            eligible_for_transifex_only=True)['menu1_form1']
+        self.assertNotIn(['What_does_this_look_like-label', 'What does this look like?',
+                          'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''], menu1_form1_sheet)
+        self.assertIn(['no_media-label', 'No media', '', '', ''], menu1_form1_sheet)
+
     def test_bulk_app_single_sheet_rows(self):
         sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0])[SINGLE_SHEET_NAME]
         self.assertListEqual(sheet, [
@@ -1329,6 +1366,46 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form1', '', '', '', 'Advanced Form', None, None, '', '2b9c856ba2ea4ec1ab8743af299c1627'],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
+
+    def test_bulk_app_single_sheet_blacklisted(self):
+
+        def blacklist_without_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
+        self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
+
+    def test_bulk_app_single_sheet_blacklisted_text(self):
+
+        def blacklist_with_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
+        self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
+
+    def test_bulk_app_single_sheet_skipped_label(self):
+
+        def get_labels_to_skip(self):
+            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', lambda self: {}):
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1_form1', '', '', 'What_does_this_look_like-label', 'What does this look like?',
+             'jr://file/commcare/image/data/What_does_this_look_like.png', '', '', ''], sheet)
+        self.assertIn(['menu1_form1', '', '', 'no_media-label', 'No media', '', '', '', ''], sheet)
 
 
 class RenameLangTest(SimpleTestCase):
