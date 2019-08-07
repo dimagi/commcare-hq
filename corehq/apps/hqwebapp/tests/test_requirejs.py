@@ -39,9 +39,9 @@ class TestRequireJS(SimpleTestCase):
         proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
         cls.js_files = [f for f in [b.decode('utf-8') for b in out.split(b"\n")] if f
-                    and not '/_design/' in f
-                    and not 'couchapps' in f
-                    and not '/vellum/' in f]
+                    and '/_design/' not in f
+                    and 'couchapps' not in f
+                    and '/vellum/' not in f]
 
         cls.hqdefine_files = []
         cls.requirejs_files = []
