@@ -6,8 +6,9 @@ from __future__ import unicode_literals
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import attr
 import gevent
 import six
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -28,7 +29,7 @@ from corehq.apps.couch_sql_migration.statedb import init_state_db
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.blobs import CODES, get_blob_db, NotFound as BlobNotFound
+from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
@@ -64,12 +65,13 @@ from corehq.util import cache_utils
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.log import with_progress_bar
-from corehq.util.pagination import PaginationEventHandler
+from corehq.util.pagination import PaginationEventHandler, StopToResume
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
 log = logging.getLogger(__name__)
@@ -97,23 +99,35 @@ def setup_logging(log_dir, debug=False):
     log.info("command: %s", " ".join(sys.argv))
 
 
-def do_couch_to_sql_migration(domain, state_dir, with_progress=True):
+def do_couch_to_sql_migration(domain, state_dir, **kw):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(domain, state_dir, with_progress).migrate()
+    CouchSqlDomainMigrator(domain, state_dir, **kw).migrate()
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, state_dir, with_progress=True):
+    def __init__(
+        self,
+        domain,
+        state_dir,
+        with_progress=True,
+        live_migrate=False,
+    ):
         self._check_for_migration_restrictions(domain)
-        self.with_progress = with_progress
         self.domain = domain
+        self.with_progress = with_progress
+        self.live_migrate = live_migrate
+        self.live_stopper = LiveStopper(live_migrate)
         self.statedb = init_state_db(domain, state_dir)
         self.case_diff_queue = CaseDiffProcess(self.statedb)
         # exit immediately on uncaught greenlet error
         gevent.get_hub().SYSTEM_ERROR = BaseException
 
     def migrate(self):
-        log.info('migrating domain {}'.format(self.domain))
+        log.info('{live}migrating domain {domain} ({state})'.format(
+            live=("live " if self.live_migrate else ""),
+            domain=self.domain,
+            state=self.statedb.unique_id,
+        ))
 
         self.processed_docs = 0
         timing = TimingContext("couch_sql_migration")
@@ -337,8 +351,15 @@ class CouchSqlDomainMigrator(object):
         self._log_processed_docs_count(['type:unprocessed_cases'], throttled)
 
     def _get_resumable_iterator(self, doc_types, slug):
+        # resumable iteration state is associated with statedb.unique_id,
+        # so it will be reset (orphaned in couch) if that changes
         key = "%s.%s.%s" % (self.domain, slug, self.statedb.unique_id)
-        return _iter_changes(self.domain, doc_types, resumable_key=key)
+        return _iter_changes(
+            self.domain,
+            doc_types,
+            resumable_key=key,
+            should_stop=self.live_stopper.get_stopper(),
+        )
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
@@ -641,35 +662,88 @@ def _save_migrated_models(sql_form, case_stock_result):
     )
 
 
+@attr.s
+class LiveStopper(object):
+    live_migrate = attr.ib()
+
+    # Minimum age of forms processed during live migration. This
+    # prevents newly submitted forms from being skipped by the
+    # migration.
+    MIN_AGE = timedelta(hours=1)
+
+    def get_stopper(self):
+        """Get `should_stop(key_date)` function or `None`
+
+        :returns: `should_stop(key_date)` function if in "live" mode
+        else `None`. The first time this is called in "live" mode the
+        returned function will calculate a new stop date based on the
+        current time each time it is called. Subsequent calls of this
+        method will return a function that uses the final stop date
+        calculated in the first iteration, so all iterations will end
+        up using the same stop date. It is expected that all iterations
+        are done serially; concurrent iterations are not supported.
+        """
+        if not self.live_migrate:
+            should_stop = None
+        elif hasattr(self, "stop_date"):
+            def should_stop(key_date):
+                return key_date > stop_date
+
+            stop_date = self.stop_date
+        else:
+            def should_stop(key_date):
+                self.stop_date = stop_date = datetime.utcnow() - min_age
+                return key_date > stop_date
+
+            min_age = self.MIN_AGE
+        return should_stop
+
+
 class MigrationPaginationEventHandler(PaginationEventHandler):
     RETRIES = 5
 
-    def __init__(self, domain):
+    def __init__(self, domain, should_stop):
         self.domain = domain
+        self.should_stop = should_stop
         self.retries = self.RETRIES
 
-    def _cache_key(self):
-        return "couchsqlmigration.%s" % self.domain
+    def page_exception(self, e):
+        if self.retries <= 0:
+            return False
+        self.retries -= 1
+        gevent.sleep(1)
+        return True
+
+    def page(self, results):
+        if self.should_stop is None or not results:
+            return
+        # this is tightly coupled to by_domain_doc_type_date/view in couch:
+        # the last key element is expected to be a datetime string
+        key_date = datetime.strptime(results[-1]['key'][-1], ISO_DATETIME_FORMAT)
+        if self.should_stop(key_date):
+            raise StopToResume
 
     def page_end(self, total_emitted, duration, *args, **kwargs):
         self.retries = self.RETRIES
         cache_utils.clear_limit(self._cache_key())
 
-    def page_exception(self, e):
-        if self.retries <= 0:
-            return False
+    def _cache_key(self):
+        return "couchsqlmigration.%s" % self.domain
 
-        self.retries -= 1
-        gevent.sleep(1)
-        return True
+    def stop(self):
+        if self.should_stop is not None:
+            # always stop to preserve resume state if we reach the end
+            # of the iteration while in "live" mode
+            raise StopToResume
 
 
 def _iter_changes(domain, doc_types, **kw):
+    should_stop = kw.pop("should_stop", None)
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=doc_types,
-        event_handler=MigrationPaginationEventHandler(domain),
+        event_handler=MigrationPaginationEventHandler(domain, should_stop),
     ).iter_all_changes(**kw)
 
 

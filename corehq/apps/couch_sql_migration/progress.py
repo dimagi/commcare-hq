@@ -4,11 +4,12 @@ from __future__ import unicode_literals
 from django.conf import settings
 
 from corehq.apps.domain_migration_flags.api import (
+    MigrationStatus,
     get_migration_status,
     set_migration_started,
     set_migration_not_started,
     set_migration_complete,
-    migration_in_progress
+    migration_in_progress,
 )
 from corehq.apps.tzmigration.api import set_tz_migration_complete
 
@@ -19,8 +20,13 @@ def get_couch_sql_migration_status(domain):
     return get_migration_status(domain, COUCH_TO_SQL_SLUG)
 
 
-def set_couch_sql_migration_started(domain, dry_run=False):
-    set_migration_started(domain, COUCH_TO_SQL_SLUG, dry_run)
+def set_couch_sql_migration_started(domain, live_migrate=False):
+    if not live_migrate:
+        # allow live (dry run) migration to be completed
+        if get_couch_sql_migration_status(domain) == MigrationStatus.DRY_RUN:
+            # avoid "Cannot start a migration that is already in state dry_run"
+            set_couch_sql_migration_not_started(domain)
+    set_migration_started(domain, COUCH_TO_SQL_SLUG, dry_run=live_migrate)
 
 
 def set_couch_sql_migration_not_started(domain):
