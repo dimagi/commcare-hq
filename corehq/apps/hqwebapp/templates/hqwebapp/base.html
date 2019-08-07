@@ -133,6 +133,12 @@
 
     {% if not requirejs_main %}
       {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
+      {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
+        <script src="{% static 'raven-js/dist/raven.js' %}"></script>
+        <script>
+          Raven.config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
+        </script>
+      {% endif %}
     {% endif %}
 
     {# Up here because if daterangepicker is called from within a form widget, #}
@@ -418,11 +424,17 @@
           },
         });
         requirejs([
+        {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
+          'raven-js/dist/raven',
+        {% endif %}
           'hqwebapp/js/common',
         ], function() {
           requirejs([
             'hqwebapp/js/base_main',
           ], function () {
+          {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
+            arguments[0].config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
+          {% endif %}
             requirejs(['{{ requirejs_main }}'], function () {
               console.log("Loaded requirejs main module: {{ requirejs_main }}");
             });
