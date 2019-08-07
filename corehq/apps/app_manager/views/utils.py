@@ -347,7 +347,6 @@ def update_linked_app(app, user_id, master_build=None):
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-<<<<<<< HEAD
     if app.version is None or master_version > app.version:
         if not master_build:
             try:
