@@ -792,7 +792,7 @@ def edit_app_attr(request, domain, app_id, attr):
         name = hq_settings['name']
         resp['update'].update({
             '.variable-app_name': name,
-            '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
+            '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(app),
         })
 
     if should_edit("build_spec"):

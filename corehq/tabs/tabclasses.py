@@ -53,6 +53,7 @@ from corehq.apps.users.permissions import (
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
+    BI_INTEGRATION_PREVIEW,
 )
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
@@ -698,7 +699,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if toggles.ODATA.enabled(self.domain):
+            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -721,7 +722,7 @@ class ProjectDataTab(UITab):
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-plug',
-                    'show_in_dropdown': True,
+                    'show_in_dropdown': False,
                     'subpages': subpages
                 })
 
@@ -818,6 +819,12 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
+        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            from corehq.apps.export.views.list import ODataFeedListView
+            items.append(dropdown_dict(
+                _(ODataFeedListView.page_title),
+                url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
+            ))
 
         if items:
             items += [dropdown_dict(None, is_divider=True)]
@@ -826,13 +833,9 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "default_app"
+    view = "default_new_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
-
-    @property
-    def view(self):
-        return "default_new_app"
 
     @property
     def title(self):
@@ -2058,8 +2061,6 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Submission Map'),
                  'url': reverse('dimagisphere')},
-                {'title': _('Active Project Map'),
-                 'url': reverse('admin_report_dispatcher', args=('project_map',))},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),

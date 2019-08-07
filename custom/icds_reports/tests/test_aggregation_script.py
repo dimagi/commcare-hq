@@ -24,7 +24,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith import (
 )
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
     """
     Note: test setup and teardown are done at module level using
@@ -463,7 +463,7 @@ class DailyAttendanceAggregationTest(AggregationScriptTestBase):
         )
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class InactiveAWWsTest(TestCase):
 
     @classmethod

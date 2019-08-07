@@ -307,6 +307,14 @@ hqDefine('app_manager/js/releases/releases', function () {
             return null;
         };
 
+        self.compareUnbuiltChangesUrl = ko.computed(function () {
+            if (self.savedApps().length) {
+                var latestBuild = self.savedApps()[0];
+                return self.reverse('app_form_summary_diff', latestBuild.id(), latestBuild.copy_of());
+            }
+            return '';
+        });
+
         self.onViewChanges = function (appIdOne, appIdTwo) {
             appDiff.renderDiff(appIdOne, appIdTwo);
         };

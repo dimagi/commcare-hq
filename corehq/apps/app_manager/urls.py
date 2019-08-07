@@ -84,7 +84,6 @@ app_urls = [
 
 
 urlpatterns = [
-    url(r'^$', view_app, name='default_app'),
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
