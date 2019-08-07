@@ -58,4 +58,5 @@ branches:
   - mk/use-ids-to-validate-translations # July 19
   - revert-24882-jls/compress-mobile-workers-js # Jenny July 24
   - jls/resource-versions # Jenny July 24
+  - jls/copy-app-version # Jenny Aug 2
 submodules: {}
