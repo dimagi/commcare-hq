@@ -38,7 +38,8 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'owner-name-label': 'owner-name-value'}]
         )
@@ -63,7 +64,8 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{}]
         )
@@ -88,7 +90,8 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'owner-name-label': '---'}]
         )
@@ -113,7 +116,8 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'property-1-label': 'property-1-value'}]
         )
@@ -138,7 +142,8 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'case-id-label': 'case-id-value'}]
         )
@@ -163,7 +168,8 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'case-name-label': 'case-name-value'}]
         )
@@ -207,7 +213,8 @@ class TestODataFormSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'user-id': 'the-user-id'}]
         )
@@ -232,7 +239,8 @@ class TestODataFormSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{}]
         )
@@ -257,7 +265,8 @@ class TestODataFormSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'user-id': '---'}]
         )

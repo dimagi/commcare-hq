@@ -97,9 +97,14 @@ class CommCareHqApi(Api):
 
 def api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
+    yield url(r'v0.5/odata/cases/(?P<config_id>[\w\-:]+)/(?P<table_id>[\d]+)/$', ODataCaseServiceView.as_view(), name=ODataCaseServiceView.urlname_table)
     yield url(r'v0.5/odata/cases/(?P<config_id>[\w\-:]+)/$', ODataCaseServiceView.as_view(), name=ODataCaseServiceView.urlname)
+    yield url(r'v0.5/odata/cases/(?P<config_id>[\w\-:]+)/(?P<table_id>[\d]+)/\$metadata$', ODataCaseMetadataView.as_view(), name=ODataCaseMetadataView.urlname_table)
     yield url(r'v0.5/odata/cases/(?P<config_id>[\w\-:]+)/\$metadata$', ODataCaseMetadataView.as_view(), name=ODataCaseMetadataView.urlname)
+
+    yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/(?P<table_id>[\d]+)/$', ODataFormServiceView.as_view(), name=ODataFormServiceView.urlname_table)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/$', ODataFormServiceView.as_view(), name=ODataFormServiceView.urlname)
+    yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/(?P<table_id>[\d]+)/\$metadata$', ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname_table)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/\$metadata$', ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)

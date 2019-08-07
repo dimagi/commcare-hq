@@ -27,10 +27,19 @@ class ODataCaseSerializer(Serializer):
         domain = data.pop('domain', None)
         config_id = data.pop('config_id', None)
         api_path = data.pop('api_path', None)
-        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+        table_id = data.pop('table_id', None)
+
+        assert (all([domain, config_id, api_path, table_id]),
+                [domain, config_id, api_path, table_id])
+
+        context_urlname = ODataCaseMetadataView.urlname
+        context_url_args = [domain, config_id]
+        if table_id > 0:
+            context_urlname = ODataCaseMetadataView.urlname_table
+            context_url_args.append(table_id)
 
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain, config_id]),
+            absolute_reverse(context_urlname, args=context_url_args),
             'feed'
         )
 
@@ -39,8 +48,11 @@ class ODataCaseSerializer(Serializer):
             data['@odata.nextLink'] = next_link
 
         config = CaseExportInstance.get(config_id)
-        data['value'] = self.serialize_cases_using_config(data.pop('objects'), config)
-
+        data['value'] = self.serialize_cases_using_config(
+            data.pop('objects'),
+            config,
+            table_id
+        )
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
     @staticmethod
@@ -50,8 +62,14 @@ class ODataCaseSerializer(Serializer):
             return '{}{}{}'.format(get_url_base(), api_path, next_page)
 
     @staticmethod
-    def serialize_cases_using_config(cases, config):
-        table = config.tables[0]
+    def serialize_cases_using_config(cases, config, table_id):
+        if table_id + 1 > len(config.tables):
+            return []
+
+        table = config.tables[table_id]
+        if not table.selected:
+            return []
+
         return [
             {
                 col.label: col.get_value(
@@ -79,10 +97,19 @@ class ODataFormSerializer(Serializer):
         domain = data.pop('domain', None)
         config_id = data.pop('config_id', None)
         api_path = data.pop('api_path', None)
-        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+        table_id = data.pop('table_id', None)
+
+        assert (all([domain, config_id, api_path, table_id]),
+                [domain, config_id, api_path, table_id])
+
+        context_urlname = ODataFormMetadataView.urlname
+        context_url_args = [domain, config_id]
+        if table_id > 0:
+            context_urlname = ODataFormMetadataView.urlname_table
+            context_url_args.append(table_id)
 
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataFormMetadataView.urlname, args=[domain, config_id]),
+            absolute_reverse(context_urlname, args=context_url_args),
             'feed'
         )
 
@@ -91,8 +118,11 @@ class ODataFormSerializer(Serializer):
             data['@odata.nextLink'] = next_link
 
         config = FormExportInstance.get(config_id)
-        data['value'] = self.serialize_forms_using_config(data.pop('objects'), config)
-
+        data['value'] = self.serialize_forms_using_config(
+            data.pop('objects'),
+            config,
+            table_id
+        )
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
     @staticmethod
@@ -102,8 +132,14 @@ class ODataFormSerializer(Serializer):
             return '{}{}{}'.format(get_url_base(), api_path, next_page)
 
     @staticmethod
-    def serialize_forms_using_config(forms, config):
-        table = config.tables[0]
+    def serialize_forms_using_config(forms, config, table_id):
+        if table_id + 1 > len(config.tables):
+            return []
+
+        table = config.tables[table_id]
+        if not table.selected:
+            return []
+
         return [
             {
                 col.label: col.get_value(
