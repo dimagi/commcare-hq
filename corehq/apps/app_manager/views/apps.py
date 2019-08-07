@@ -430,7 +430,7 @@ def _create_linked_app(request, master_app, link_domain, link_app_name, master_b
 
     linked_app = create_linked_app(master_domain, master_app._id, link_domain, link_app_name)
     try:
-        update_linked_app(linked_app, request.couch_user.get_id)
+        update_linked_app(linked_app, request.couch_user.get_id, master_build=master_version)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
