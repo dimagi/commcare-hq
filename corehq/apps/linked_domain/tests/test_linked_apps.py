@@ -250,7 +250,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
     def test_update_from_specific_build(self):
         self.linked_app.master = self.plain_master_app.get_id
 
-        module = self.plain_master_app.add_module(Module.new_module('M1', None))
+        self.plain_master_app.add_module(Module.new_module('M1', None))
         copy1 = self.plain_master_app.make_build()
         copy1.save()
         self.addCleanup(copy1.delete)
