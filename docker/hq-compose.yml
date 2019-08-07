@@ -50,8 +50,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql:}/var/lib/postgresql/data
 
   couch:
-    image: klaemo/couchdb:2.0-dev
-    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
+    image: couchdb:2.3.1
     ulimits:
       # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
       # https://groups.google.com/forum/#!topic/rabbitmq-users/hO06SB-QBqc
@@ -61,7 +60,8 @@ services:
     expose:
       - "5984"
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/usr/src/couchdb/dev/lib/node1/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/opt/couchdb/data
+      - ./files/couchdb:/opt/couchdb/etc/local.d
 
   redis:
     image: redis
