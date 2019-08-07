@@ -49,6 +49,7 @@ from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.quickcache import quickcache
 from corehq.warehouse.models.facts import ApplicationStatusFact
+from dimagi.utils.chunked import chunked
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -416,8 +417,18 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def get_all_rows(self):
-        users = self.user_query(False).scroll()
-        return self.process_rows(users, True)
+        if self.warehouse:
+            user_ids = self.get_user_ids()
+            rows = ApplicationStatusFact.objects.filter(
+                user_dim__user_id__in=user_ids
+            ).select_related('user_dim', 'app_dim')
+            if self.selected_app_id:
+                rows = rows.filter(app_dim__application_id=self.selected_app_id)
+            self._total_records = rows.count()
+            return self.process_facts(chunked(rows, 10000))
+        else:
+            users = self.user_query(False).scroll()
+            return self.process_rows(users, True)
 
     @property
     def export_table(self):
