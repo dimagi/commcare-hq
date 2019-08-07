@@ -407,7 +407,8 @@ def copy_app(request, domain):
                 set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
         linked = data.get('linked')
         if linked:
-            return _create_linked_app(request, app, link_domain, data['name'], master_build_id=data['build_id'])
+            master_build = get_app(master_domain, data['build_id'])
+            return _create_linked_app(request, master_build, link_domain, data['name'])
         else:
             return _copy_app_helper(request, master_domain, app_id_or_source, link_domain, data['name'])
 
@@ -416,25 +417,23 @@ def copy_app(request, domain):
     return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
 
 
-def _create_linked_app(request, master_app, link_domain, link_app_name, master_build_id=None):
-    master_domain = master_app.domain
-    if master_build_id:
-        master_version = get_app(master_domain, master_build_id)
-    else:
-        master_version = get_latest_released_app_version(master_domain, master_app._id)
-    if not master_version:
+def _create_linked_app(request, master_build, link_domain, link_app_name):
+    master_domain = master_build.domain
+    if not master_build:
         messages.error(request, _("Creating linked app failed."
                                   " Unable to get latest released version of your app."
                                   " Make sure you have at least one released build."))
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, master_app._id]))
+        return HttpResponseRedirect(reverse_util('app_settings', params={},
+                                                 args=[master_domain, master_build.master_id]))
 
-    linked_app = create_linked_app(master_domain, master_app._id, link_domain, link_app_name)
+    linked_app = create_linked_app(master_domain, master_build.master_id, link_domain, link_app_name)
     try:
-        update_linked_app(linked_app, request.couch_user.get_id, master_build=master_version)
+        update_linked_app(linked_app, request.couch_user.get_id, master_build=master_build)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, master_app._id]))
+        return HttpResponseRedirect(reverse_util('app_settings', params={},
+                                                 args=[master_domain, master_build.master_id]))
 
     messages.success(request, _('Application successfully copied and linked.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
