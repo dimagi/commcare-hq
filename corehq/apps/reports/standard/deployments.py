@@ -385,19 +385,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     def rows(self):
         if self.warehouse:
-            mobile_user_and_group_slugs = set(
-                # Cater for old ReportConfigs
-                self.request.GET.getlist('location_restricted_mobile_worker') +
-                self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
-            )
-            users = ExpandedMobileWorkerFilter.user_es_query(
-                self.domain,
-                mobile_user_and_group_slugs,
-                self.request.couch_user,
-            ).values_list('_id', flat=True)
+            user_ids = self.get_user_ids()
             sort_clause = self.get_sql_sort()
             rows = ApplicationStatusFact.objects.filter(
-                user_dim__user_id__in=users
+                user_dim__user_id__in=user_ids
             ).order_by(sort_clause).select_related('user_dim', 'app_dim')
             if self.selected_app_id:
                 rows = rows.filter(app_dim__application_id=self.selected_app_id)
@@ -409,6 +400,19 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             users = self.user_query().run()
             self._total_records = users.total
             return self.process_rows(users.hits)
+
+    def get_user_ids(self):
+        mobile_user_and_group_slugs = set(
+            # Cater for old ReportConfigs
+            self.request.GET.getlist('location_restricted_mobile_worker') +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        )
+        user_ids = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.request.couch_user,
+        ).values_list('_id', flat=True)
+        return user_ids
 
     @property
     def get_all_rows(self):
