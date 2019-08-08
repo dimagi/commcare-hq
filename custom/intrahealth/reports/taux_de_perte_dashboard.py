@@ -13,7 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
-from custom.intrahealth.sqldata import LossRatePerProductData
+from custom.intrahealth.sqldata import LossRatePerProductData2
 from dimagi.utils.dates import force_to_date
 
 
@@ -67,13 +67,14 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
     @property
     def headers(self):
+        return LossRatePerProductData2(config=self.config).headers
         # TODO: needs further implementation
-        return DataTablesHeader(
-            DataTablesColumn(self.selected_location_type),
-            DataTablesColumn(
-                'Consommation de la gamme par produit et par Region'
-            ),
-        )
+        # return DataTablesHeader(
+        #     DataTablesColumn(self.selected_location_type),
+        #     DataTablesColumn(
+        #         'Consommation de la gamme par produit et par Region'
+        #     ),
+        # )
 
     def get_report_context(self):
         if self.needs_filters:
@@ -98,7 +99,7 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
     def calculate_rows(self):
         # TODO: needs further implementation
-        rows = LossRatePerProductData(config=self.config).rows
+        rows = LossRatePerProductData2(config=self.config).rows
         return rows
 
     @property
@@ -111,7 +112,8 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
             com = []
             rows = self.calculate_rows()
             for row in rows:
-                com.append({"x": row[0], "y": row[1]['sort_key']})
+                #-1 removes % symbol for cast to float
+                com.append({"x": row[0]['html'], "y": float(row[-1]['html'][:-1])})
 
             return [
                 {
@@ -141,4 +143,5 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
+        config['products'] = ['product1', 'product2', 'product3'] # TODO: self.request.GET.get('products')
         return config

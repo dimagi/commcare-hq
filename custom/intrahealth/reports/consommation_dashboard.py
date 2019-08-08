@@ -94,26 +94,30 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         for consumption in consumptions:
             data_dict = {
                 'location_name': consumption['{}_name'.format(loc_type)],
+                'location_id': consumption['{}_id'.format(loc_type)],
                 'products': [],
             }
             product_name = consumption['product_name']
+            product_id = consumption['product_id']
             actual_consumption = consumption['actual_consumption']
 
             length = len(consumptions_list)
             if not consumptions_list:
                 product_dict = {
                     'product_name': product_name,
+                    'product_id': product_id,
                     'actual_consumption': actual_consumption,
                 }
                 data_dict['products'].append(product_dict)
                 consumptions_list.append(data_dict)
             else:
                 for r in range(0, length):
-                    location_name = consumptions_list[r]['location_name']
-                    if consumption['{}_name'.format(loc_type)] == location_name:
+                    location_id = consumptions_list[r]['location_id']
+                    if consumption['{}_id'.format(loc_type)] == location_id:
                         if not consumptions_list[r]['products']:
                             product_dict = {
                                 'product_name': product_name,
+                                'product_id': product_id,
                                 'actual_consumption': actual_consumption,
                             }
                             consumptions_list[r]['products'].append(product_dict)
@@ -122,18 +126,20 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                             amount_of_products = len(products)
                             for s in range(0, amount_of_products):
                                 product = products[s]
-                                if product['product_name'] == product_name:
+                                if product['product_id'] == product_id:
                                     product['actual_consumption'] += actual_consumption
                                     break
-                                elif product['product_name'] != product_name and s == amount_of_products - 1:
+                                elif product['product_id'] != product_id and s == amount_of_products - 1:
                                     product_dict = {
                                         'product_name': product_name,
+                                        'product_id': product_id,
                                         'actual_consumption': actual_consumption,
                                     }
                                     consumptions_list[r]['products'].append(product_dict)
-                    elif consumption['{}_name'.format(loc_type)] != location_name and r == length - 1:
+                    elif consumption['{}_id'.format(loc_type)] != location_id and r == length - 1:
                         product_dict = {
                             'product_name': product_name,
+                            'product_id': product_id,
                             'actual_consumption': actual_consumption,
                         }
                         data_dict['products'].append(product_dict)
@@ -167,10 +173,13 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         def data_to_rows(consumptions_list):
             consumptions_to_return = []
             product_names = []
+            product_ids = []
             for consumption in consumptions_list:
                 for product in consumption['products']:
                     product_name = product['product_name']
-                    if product_name not in product_names:
+                    product_id = product['product_id']
+                    if product_id not in product_ids:
+                        product_ids.append(product_id)
                         product_names.append(product_name)
 
             for consumption in consumptions_list:
@@ -210,16 +219,19 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         def data_to_chart(consumptions_list):
             consumptions_to_return = []
             products_names_list = []
+            products_ids_list = []
             products_actual_consumption_list = []
             for consumption in consumptions_list:
                 for product in consumption['products']:
                     product_name = product['product_name']
+                    product_id = product['product_id']
                     actual_consumption = product['actual_consumption']
-                    if product_name not in products_names_list:
+                    if product_id not in products_ids_list:
+                        products_ids_list.append(product_id)
                         products_names_list.append(product_name)
                         products_actual_consumption_list.append(actual_consumption)
                     else:
-                        position = products_names_list.index(product_name)
+                        position = products_ids_list.index(product_id)
                         products_actual_consumption_list[position] += actual_consumption
 
             products_info = list(zip(products_names_list, products_actual_consumption_list))

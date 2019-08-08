@@ -9,11 +9,10 @@ from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
-from custom.intrahealth.sqldata import ExpirationRatePerProductData
+from custom.intrahealth.sqldata import ExpirationRatePerProductData2
 from dimagi.utils.dates import force_to_date
 
 
@@ -67,13 +66,14 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
 
     @property
     def headers(self):
+        return ExpirationRatePerProductData2(config=self.config).headers
         # TODO: needs further implementation
-        return DataTablesHeader(
-            DataTablesColumn(self.selected_location_type),
-            DataTablesColumn(
-                'Produites'
-            ),
-        )
+        # return DataTablesHeader(
+        #     DataTablesColumn(self.selected_location_type),
+        #     DataTablesColumn(
+        #         'Produites'
+        #     ),
+        # )
 
     def get_report_context(self):
         if self.needs_filters:
@@ -98,7 +98,7 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
 
     def calculate_rows(self):
         # TODO: needs further implementation
-        rows = ExpirationRatePerProductData(config=self.config).rows
+        rows = ExpirationRatePerProductData2(config=self.config).rows
         return rows
 
     @property
@@ -111,7 +111,15 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
             com = []
             rows = self.calculate_rows()
             for row in rows:
-                com.append({"x": row[0], "y": row[1]['sort_key']})
+                #-1 removes % symbol for cast to float
+                try:
+                    name = row[0]['html']
+                    value = float(row[-1]['html'][:-1])
+                except ValueError:
+                    value = 0.0
+                    name = "{}\n({})".format(name, "pas de données")
+                finally:
+                    com.append({"x": value, "y": value})
 
             return [
                 {
@@ -141,4 +149,5 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
+        config['products'] = ['product1', 'product2', 'product3'] # TODO: self.request.GET.get('products')
         return config

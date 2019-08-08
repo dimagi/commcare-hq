@@ -95,20 +95,16 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     def calculate_rows(self):
         stocks = VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
-        # effectives = EffectiveDeLivraisonDataSource(config=self.config).rows
 
         def to_report_row(s):
             loc_type = self.selected_location_type.lower()
             stocks_list = []
             stocks_to_return = []
 
-            # loc_id = v['{}_id'.format(loc_type)]
-            # effective_for_location = next(item for item in e if item['{}_id'.format(loc_type)] == loc_id)
-            # calc_percent = ((v['total_stock'] or 0) / float((effective_for_location['nb_pps_visites'] or 1))) * 100
-
             for stock in s:
                 data_dict = {
                     'location_name': stock['{}_name'.format(loc_type)],
+                    'location_id': stock['{}_id'.format(loc_type)],
                     'product_available_in_ppses': 0,
                     'number_of_ppses': 0,
                 }
@@ -120,8 +116,8 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     stocks_list.append(data_dict)
                 else:
                     for r in range(0, length):
-                        location_name = stocks_list[r]['location_name']
-                        if stock['{}_name'.format(loc_type)] == location_name:
+                        location_id = stocks_list[r]['location_id']
+                        if stock['{}_id'.format(loc_type)] == location_id:
                             if stock['product_is_outstock'] == 1:
                                 stocks_list[r]['product_available_in_ppses'] += 1
                             stocks_list[r]['number_of_ppses'] += 1
