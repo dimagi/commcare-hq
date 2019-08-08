@@ -252,6 +252,20 @@ class _AppDiffGenerator(object):
         self._mark_removed_items()
         self._mark_retained_items()
 
+    @property
+    def all_changes(self):
+        modules = defaultdict(dict)
+        for module in self.first:
+            modules[module.unique_id]['first'] = module
+            try:
+                modules[module.unique_id]['second'] = self._second_by_id[module.unique_id]
+            except AttributeError:
+                pass
+        for module in self.second:
+            modules[module.unique_id]['second'] = module
+
+        return list(modules.values())
+
     def _populate_id_caches(self):
         def add_question_to_id_cache(id_cache, form_id, question_path, question):
             for child in question.children:
@@ -469,4 +483,4 @@ class _AppDiffGenerator(object):
 
 def get_app_diff(app1, app2):
     diff = _AppDiffGenerator(app1, app2)
-    return diff.first, diff.second
+    return diff.first, diff.second, diff.all_changes

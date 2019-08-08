@@ -113,6 +113,5 @@ hqDefine('app_manager/js/summary/form_diff',[
 
         models.initMenu([firstFormSummaryContent, secondFormSummaryContent], formSummaryMenu);
         models.initSummary(firstFormSummaryContent, formSummaryController, "#first-app-summary");
-        models.initSummary(secondFormSummaryContent, formSummaryController, "#second-app-summary");
     });
 });

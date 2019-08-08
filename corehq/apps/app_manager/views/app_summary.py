@@ -134,13 +134,14 @@ class FormSummaryDiffView(AppSummaryView):
         first = self._app_dict(self.first_app)
         second = self._app_dict(self.second_app)
 
-        first['modules'], second['modules'] = get_app_diff(self.first_app, self.second_app)
+        first['modules'], second['modules'], all_changes = get_app_diff(self.first_app, self.second_app)
 
         context.update({
             'page_type': 'form_diff',
             'app_id': self.app.master_id,
             'first': first,
             'second': second,
+            'all_changes': all_changes,
         })
         return context
 
