@@ -4,6 +4,7 @@ import copy
 from datetime import datetime, timedelta
 import json
 
+from django.contrib import messages
 from django.urls import reverse
 
 from auditcare.models import NavigationEventAudit
@@ -581,6 +582,15 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
 
     @property
     def template_context(self):
+        msg = """
+        WARNING! This page will soon be deleted. As part of an effort to
+        upgrade elasticsearch, we are removing several admin reports which rely
+        on deprecated functionality. This page will be removed on August 16th.
+        Comparable reports are available in salesforce. If you rely on this
+        report, please contact product@dimagi.com to discuss as soon as
+        possible.
+        """
+        messages.add_message(self.request, messages.ERROR, msg)
         ctxt = super(AdminFacetedReport, self).template_context
 
         self.run_query(0)
@@ -875,6 +885,16 @@ class AdminUserReport(AdminFacetedReport):
             {"facet": "doc_type", "name": "User Type", "expanded": True},
         ]),
     ]
+
+    @property
+    def template_context(self):
+        msg = """
+        Note: This report doesn't exist in Salesforce. We're building a new
+        admin report which will allow you to search for users.
+        """
+        ctxt = super(AdminUserReport, self).template_context
+        messages.add_message(self.request, messages.ERROR, msg)
+        return ctxt
 
     @property
     def headers(self):
