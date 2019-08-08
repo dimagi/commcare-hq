@@ -98,7 +98,8 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             cursor.execute(rollup_query)
 
         self.assert_no_awc_missing_from_new_table(cursor)
-        # TODO generate diff of tables
+        old_def, new_def = self.generate_diff_of_tables(cursor)
+        # TODO figure what to do with these
 
         cursor.execute(self.delete_old_locations())
         cursor.execte(self.move_data_to_real_table())
@@ -145,6 +146,47 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         num_locations_missing = cursor.fetchone()[0]
         if num_locations_missing:
             raise LocationRemovedException(num_locations_missing)
+
+    def generate_diff_of_tables(self, cursor):
+        cursor.exectue(
+            """
+            SELECT doc_id
+            FROM "{temporary_tablename}"
+            WHERE aggregation_level = 5
+            EXCEPT
+            SELECT doc_id
+            FROM "{tablename}"
+            WHERE aggregation_level = 5
+            """.format(
+                tablename=self.base_tablename,
+                temporary_tablename=self.temporary_tablename,
+            )
+        )
+        changed_awc_ids = [row[0] for row in cursor.fetchall()]
+        if changed_awc_ids:
+            return
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM "{tablename}"
+            WHERE aggregation_level = 5 AND doc_id IN %s
+            """.format(
+                tablename=self.base_tablename,
+            ), changed_awc_ids
+        )
+        old_definitions = cursor.fetchall()
+        cursor.execute(
+            """
+            SELECT doc_id
+            FROM "{temporary_tablename}"
+            WHERE aggregation_level = 5 AND doc_id IN %s
+            """.format(
+                tablename=self.temporary_tablename,
+            ), changed_awc_ids
+        )
+        new_definitions = cursor.fetchall()
+        return old_definitions, new_definitions
 
     def move_data_to_real_table(self):
         columns = (
