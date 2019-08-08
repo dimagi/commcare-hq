@@ -9,7 +9,8 @@ from corehq.apps.linked_domain.views import (
     custom_data_models,
     user_roles,
     get_latest_released_app_source,
-    DomainLinkRMIView)
+    DomainLinkRMIView,
+)
 
 app_name = 'linked_domain'
 
