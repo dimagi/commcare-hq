@@ -61,6 +61,7 @@ hqDefine("export/js/export_list", [
             'owner_username',
             'sharing',
             'odataUrl',
+            'secondaryOdataUrls',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
@@ -98,6 +99,13 @@ hqDefine("export/js/export_list", [
 
         if (options.isOData) {
             self.odataFeedUrl = exportFeedUrl(options.odataUrl);
+            self.odataSecondaryFeedUrls = ko.observableArray(_.map(options.secondaryOdataUrls, function (urlData) {
+                urlData.url = exportFeedUrl(urlData.url);
+                return urlData;
+            }));
+            self.hasSecondaryOdataFeed = ko.computed(function () {
+                return self.odataSecondaryFeedUrls().length > 0;
+            });
         }
 
         self.isLocationSafeForUser = function () {

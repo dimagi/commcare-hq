@@ -118,22 +118,96 @@
 
         <!-- ko if: isOData -->
           <!-- ko with: odataFeedUrl -->
-          <div class="input-group">
-            <span data-bind="css: {
-                               'input-group-btn': showLink
-                             },
-                             click: copyLinkRequested">
-              <a class="btn btn-default btn-sm">
-                <i class="fa fa-clipboard"></i>
-                {% trans "Copy OData Feed Link" %}
+          <p>
+            <div class="input-group">
+              <span data-bind="css: {
+                                 'input-group-btn': showLink
+                               },
+                               click: copyLinkRequested">
+                <a class="btn btn-default btn-sm">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Copy OData Feed Link" %}
+                </a>
+              </span>
+              <input data-bind="visible: showLink,
+                                value: url"
+                     type="text"
+                     class="form-control input-sm"
+                     readonly />
+            </div>
+          </p>
+          <!-- /ko -->
+          <!-- ko if: hasSecondaryOdataFeed -->
+            <p>
+              <a class="btn btn-link btn-sm"
+                 data-bind="attr: {href: '#' + id() + 'secondary-odata'}"
+                 data-toggle="modal">
+                {% trans "Show Additional Feeds" %}
               </a>
-            </span>
-            <input data-bind="visible: showLink,
-                              value: url"
-                   type="text"
-                   class="form-control input-sm"
-                   readonly />
-          </div>
+            </p>
+            <div class="modal fade"
+                 data-bind="attr: {id: id() + 'secondary-odata'}">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button"
+                            class="close"
+                            data-dismiss="modal">
+                      <span aria-hidden="true">&times;</span>
+                      <span class="sr-only">
+                        {% trans 'Close' %}
+                      </span>
+                    </button>
+                    <h4 class="modal-title">
+                      {% trans "Secondary Feed Links" %}
+                    </h4>
+                  </div>
+                  <div class="modal-body">
+                    <p class="lead">
+                      <!-- ko if: exportType() == 'form' -->
+                      {% blocktrans %}
+                        Click to copy the links below to add <strong>repeat group</strong>
+                        support:
+                      {% endblocktrans %}
+                      <!-- /ko -->
+                      <!-- ko if: exportType() == 'case' -->
+                      {% blocktrans %}
+                        Click to copy the links below to add <strong>parent case</strong>
+                        support:
+                      {% endblocktrans %}
+                      <!-- /ko -->
+                    </p>
+                    <!-- ko foreach: odataSecondaryFeedUrls -->
+                    <p>
+                      <div class="input-group">
+                        <span data-bind="css: {
+                                           'input-group-btn': url.showLink
+                                         },
+                                         click: url.copyLinkRequested">
+                          <a class="btn btn-default btn-sm">
+                            <i class="fa fa-clipboard"></i>
+                            <span data-bind="text: label"></span>
+                          </a>
+                        </span>
+                        <input data-bind="visible: url.showLink,
+                                          value: url.url"
+                               type="text"
+                               class="form-control input-sm"
+                               readonly />
+                      </div>
+                    </p>
+                    <!-- /ko -->
+                  </div>
+                  <div class="modal-footer">
+                    <a href="#"
+                       class="btn btn-default"
+                       data-dismiss="modal">
+                      {% trans "Close" %}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
           <!-- /ko -->
         <!-- /ko -->
 
