@@ -210,26 +210,6 @@
                              name: 'ko-table-configuration-template'
                            }"></fieldset>
 
-      {% if export_instance.is_odata_config %}
-        <!-- ko if: tables().length > 1 -->
-        <div class="alert alert-info">
-          <p class="lead">
-            {% blocktrans %}
-              Your application has Repeat Groups or Child Cases, so some
-              options are currently missing.
-            {% endblocktrans %}
-          </p>
-          <p>
-            {% blocktrans %}
-              Please note that PowerBi / Tableau Integration (Preview) currently
-              does not support Repeat Groups or Child Cases. We are working
-              to support this feature soon.
-            {% endblocktrans %}
-          </p>
-        </div>
-        <!-- /ko -->
-      {% endif %}
-
       {% if request|toggle_enabled:"ALLOW_USER_DEFINED_EXPORT_COLUMNS" %}
         <fieldset>
           <div class="col-sm-10">
