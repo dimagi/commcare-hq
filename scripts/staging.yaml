@@ -49,6 +49,7 @@
 trunk: master
 name: autostaging
 branches:
+  - vellum-staging
   - fr/case-templates      # FR May 15
   #- jls/linked-app-multiple-masters # Jenny June 18
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
