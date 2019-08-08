@@ -48,7 +48,6 @@ from corehq.apps.commtrack.tests.data.balances import (
 from corehq.apps.groups.models import Group
 from corehq.apps.products.models import Product
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from pillowtop import get_pillow_by_name
 from testapps.test_pillowtop.utils import process_pillow_changes
 from io import open
 
@@ -221,7 +220,7 @@ class CommTrackSubmissionTest(XMLTest):
     @classmethod
     def setUpClass(cls):
         super(CommTrackSubmissionTest, cls).setUpClass()
-        cls.ledger_es_pillow = get_pillow_by_name('LedgerToElasticsearchPillow', instantiate=True)
+        cls.process_legder_changes = process_pillow_changes('LedgerToElasticsearchPillow')
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
@@ -243,7 +242,7 @@ class CommTrackSubmissionTest(XMLTest):
             date_formatter=date_formatter,
             device_id=device_id,
         )
-        with process_pillow_changes(self.ledger_es_pillow):
+        with self.process_legder_changes:
             submit_form_locally(
                 instance=instance,
                 domain=self.domain.name,
@@ -651,7 +650,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_legder_changes:
             form.archive()
 
         if should_use_sql_backend(self.domain):
@@ -669,7 +668,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_legder_changes:
             form.unarchive()
         _assert_initial_state()
 

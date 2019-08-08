@@ -14,7 +14,6 @@ from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_fo
 from corehq.apps.products.models import Product, SQLProduct
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
-from pillowtop import get_pillow_by_name
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -41,7 +40,7 @@ class StockStateTest(TestCase):
         cls.sp = cls.loc.linked_supply_point()
         cls.products = sorted(Product.by_domain(cls.domain), key=lambda p: p._id)
 
-        cls.ledger_es_pillow = get_pillow_by_name('LedgerToElasticsearchPillow', instantiate=True)
+        cls.process_ledger_changes = process_pillow_changes('LedgerToElasticsearchPillow')
 
     @classmethod
     def tearDownClass(cls):
@@ -61,7 +60,7 @@ class StockStateTest(TestCase):
 class StockStateBehaviorTest(StockStateTest):
 
     def test_stock_state(self):
-        with process_pillow_changes(self.ledger_es_pillow):
+        with self.process_ledger_changes:
             self.report(25, 5)
             self.report(10, 0)
 
@@ -180,7 +179,7 @@ class StockStateConsumptionTest(StockStateTest):
 
     def test_none_with_no_defaults(self):
         # need to submit something to have a state initialized
-        with process_pillow_changes(self.ledger_es_pillow):
+        with self.process_ledger_changes:
             self.report(25, 0)
 
         state = StockState.objects.get(
@@ -193,7 +192,7 @@ class StockStateConsumptionTest(StockStateTest):
 
     def test_pre_set_defaults(self):
         set_default_monthly_consumption_for_domain(self.domain, 5 * 30)
-        with process_pillow_changes(self.ledger_es_pillow):
+        with self.process_ledger_changes:
             self.report(25, 0)
         state = StockState.objects.get(
             section_id='stock',
@@ -204,7 +203,7 @@ class StockStateConsumptionTest(StockStateTest):
         self.assertEqual(5, float(state.get_daily_consumption()))
 
     def test_defaults_set_after_report(self):
-        with process_pillow_changes(self.ledger_es_pillow):
+        with self.process_ledger_changes:
             self.report(25, 0)
         set_default_monthly_consumption_for_domain(self.domain, 5 * 30)
 
