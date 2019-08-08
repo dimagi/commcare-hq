@@ -58,6 +58,9 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
 
         for location in locations:
             metadata = json.loads(location['metadata'])
+            # We strip newlines from the names because in the dashboard the names
+            # are displayed without newlines and it keeps the CSV import/export
+            # logic simpler between python and postgres
             loc = {
                 'aggregation_level': 5,
                 'doc_id': location['location_id'],
