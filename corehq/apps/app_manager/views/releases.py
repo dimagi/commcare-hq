@@ -405,6 +405,7 @@ def delete_copy(request, domain, app_id):
     return json_response({})
 
 
+@location_safe
 def odk_install(request, domain, app_id, with_media=False):
     download_target_version = request.GET.get('download_target_version') == 'true'
     app = get_app(domain, app_id)
@@ -441,6 +442,7 @@ def odk_qr_code(request, domain, app_id):
     return HttpResponse(qr_code, content_type="image/png")
 
 
+@location_safe
 def odk_media_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
     download_target_version = request.GET.get('download_target_version') == 'true'
@@ -450,12 +452,14 @@ def odk_media_qr_code(request, domain, app_id):
     return HttpResponse(qr_code, content_type="image/png")
 
 
+#@location_safe
 def short_url(request, domain, app_id):
     build_profile_id = request.GET.get('profile')
     short_url = get_app(domain, app_id).get_short_url(build_profile_id=build_profile_id)
     return HttpResponse(short_url)
 
 
+@location_safe
 def short_odk_url(request, domain, app_id, with_media=False):
     build_profile_id = request.GET.get('profile')
     short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media, build_profile_id=build_profile_id)
