@@ -99,8 +99,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         # TODO ensure length of temp location table >= real location table
         # TODO generate diff of tables
 
-        # todo always do in transaction
-        cursor.execute(self.drop_table_query())
+        cursor.execute(self.delete_old_locations())
         cursor.execte(self.move_data_to_real_table())
         cursor.execute(self.create_local_table())
 
@@ -110,10 +109,8 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
-    def drop_table_query(self):
-        return """
-            DELETE FROM "{tablename}";
-        """.format(tablename=self.base_tablename)
+    def delete_old_locations(self):
+        return "DELETE FROM \"{tablename}\"".format(tablename=self.base_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
         columns = csv_file.readline().split('\t')
