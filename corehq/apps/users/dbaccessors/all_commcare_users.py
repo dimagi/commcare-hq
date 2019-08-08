@@ -5,6 +5,7 @@ from collections import namedtuple
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es import UserES
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
@@ -46,7 +47,8 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     if search_string:
         query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
     if location_id:
-        query = query.location(location_id)
+        location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
+        query = query.location(location_ids)
 
     if count_only:
         return query.count()
