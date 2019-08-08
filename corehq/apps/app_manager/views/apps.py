@@ -29,7 +29,7 @@ from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
 )
-from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
+from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
@@ -395,24 +395,40 @@ def copy_app(request, domain):
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
 
-    if request.POST.get('build_id'):
-        build = Application.get(request.POST.get('build_id'))
-        build.convert_build_to_app()
-        app_id_or_source = build.export_json(dump_json=False)
-    else:
-        app_id_or_source = app_id
+    def _inner(request, to_domain, data, from_domain=domain):
+        clear_app_cache(request, to_domain)
 
-    def _inner(request, link_domain, data, master_domain=domain):
-        clear_app_cache(request, link_domain)
         if data['toggles']:
             for slug in data['toggles'].split(","):
-                set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+                set_toggle(slug, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+
         linked = data.get('linked')
         if linked:
-            master_build = get_app(master_domain, data['build_id'])
-            return _create_linked_app(request, master_build, link_domain, data['name'])
+            # Create a new linked application
+            # Linked apps can only be created from released versions
+            error = None
+            if data['build_id']:
+                from_app = Application.get(data['build_id'])
+                if not from_app.is_released:
+                    error = _("Make sure the version you are copying from is released.")
+            else:
+                from_app = get_latest_released_app(from_domain, app_id)
+                if not from_app:
+                    error = _("Unable to get latest released version of your app."
+                              " Make sure you have at least one released build.")
+
+            if error:
+                messages.error(request, _("Creating linked app failed. {}").format(error))
+                return HttpResponseRedirect(reverse_util('app_settings', params={},
+                                                         args=[from_domain, app_id]))
+
+            return _create_linked_app(request, from_app, to_domain, data['name'])
         else:
-            return _copy_app_helper(request, master_domain, app_id_or_source, link_domain, data['name'])
+            # Copy application
+            from_app = Application.get(data['build_id'] or app_id)
+            from_app.convert_build_to_app()
+            app_source = from_app.export_json(dump_json=False)
+            return _copy_app_helper(request, app_source, to_domain, data['name'])
 
     # having login_and_domain_required validates that the user
     # has access to the domain we're copying the app to
@@ -421,13 +437,6 @@ def copy_app(request, domain):
 
 def _create_linked_app(request, master_build, link_domain, link_app_name):
     master_domain = master_build.domain
-    if not master_build:
-        messages.error(request, _("Creating linked app failed."
-                                  " Unable to get latest released version of your app."
-                                  " Make sure you have at least one released build."))
-        return HttpResponseRedirect(reverse_util('app_settings', params={},
-                                                 args=[master_domain, master_build.master_id]))
-
     linked_app = create_linked_app(master_domain, master_build.master_id, link_domain, link_app_name)
     try:
         update_linked_app(linked_app, request.couch_user.get_id, master_build=master_build)
@@ -441,9 +450,9 @@ def _create_linked_app(request, master_build, link_domain, link_app_name):
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
 
 
-def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name):
-    extra_properties = {'name': copy_to_app_name}
-    app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties, request)
+def _copy_app_helper(request, from_app_source, to_domain, to_app_name):
+    extra_properties = {'name': to_app_name}
+    app_copy = import_app_util(from_app_source, to_domain, extra_properties, request)
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
