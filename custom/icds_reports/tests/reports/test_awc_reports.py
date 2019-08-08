@@ -2470,13 +2470,13 @@ class TestAWCReport(TestCase):
             json.dumps({
                 "draw": 1,
                 "last_month": "May 2017",
-                "recordsTotal": 32,
+                "recordsTotal": 27,
                 "months": [
                     "May 2017",
                     "Apr 2017",
                     "Mar 2017"
                 ],
-                "recordsFiltered": 32,
+                "recordsFiltered": 27,
             }, cls=DjangoJSONEncoder)
         )
 
