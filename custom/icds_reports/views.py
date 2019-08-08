@@ -1760,7 +1760,7 @@ class DishaAPIView(View):
         query_month = date(year, month, 1)
         today = date.today()
         current_month = today - relativedelta(months=1) if today.day <= 5 else today
-        if query_month > current_month:
+        if query_month > current_month or query_month < date(2018, 6, 1):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         state_name = self.request.GET.get('state_name')
