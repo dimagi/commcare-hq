@@ -18,6 +18,7 @@ class process_pillow_changes(ContextDecorator):
         self.pillow_names_or_instances = []
         if pillow_name_or_instance:
             self.pillow_names_or_instances.append((pillow_name_or_instance, pillow_kwargs))
+        self._populated = False
 
     def add_pillow(self, pillow_name_or_instance, pillow_kwargs=None):
         self.pillow_names_or_instances.append((pillow_name_or_instance, pillow_kwargs))
@@ -26,13 +27,19 @@ class process_pillow_changes(ContextDecorator):
         with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
             return get_pillow_by_name(pillow_name, instantiate=True, **pillow_kwargs)
 
-    def __enter__(self):
-        for pillow_name_or_instance, pillow_kwargs in self.pillow_names_or_instances:
-            if isinstance(pillow_name_or_instance, PillowBase):
-                self._pillows.append(pillow_name_or_instance)
-            else:
-                self._pillows.append(self._get_pillow(pillow_name_or_instance, pillow_kwargs or {}))
+    def _populate(self):
+        if not self._populated:
+            for pillow_name_or_instance, pillow_kwargs in self.pillow_names_or_instances:
+                if isinstance(pillow_name_or_instance, PillowBase):
+                    self._pillows.append(pillow_name_or_instance)
+                else:
+                    self._pillows.append(self._get_pillow(pillow_name_or_instance, pillow_kwargs or {}))
+            self._populated = True
+        else:
+            assert len(self.pillow_names_or_instances) == len(self._pillows), 'Pillows added after first use'
 
+    def __enter__(self):
+        self._populate()
         self.offsets = [
             pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()
             for pillow in self._pillows
