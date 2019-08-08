@@ -21,6 +21,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
     helper_key = 'location'
     base_tablename = 'awc_location'
     local_tablename = 'awc_location_local'
+    temporary_tablename = 'tmp_awc_location'
 
     ucr_aww_table = AWW_USER_TABLE_ID
 
@@ -117,14 +118,15 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
     def aggregate_to_temporary_table(self, cursor, csv_file):
         columns = csv_file.readline().split('\t')
         # double cursor to get psycopg2 cursor from django cursor
-        cursor.cursor.copy_from(csv_file, 'temp_awc_location', columns=columns)
+        cursor.cursor.copy_from(csv_file, self.temporary_tablename, columns=columns)
 
     def drop_temporary_table_query(self):
-        return "DROP TABLE IF EXISTS \"temp_awc_location\""
+        return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
 
     def create_temporary_table_query(self):
-        return "CREATE TABLE \"temp_awc_location\" (LIKE \"{tablename}\" INCLUDING INDEXES)".format(
+        return "CREATE TABLE \"{temporary_tablename}\" (LIKE \"{tablename}\" INCLUDING INDEXES)".format(
             tablename=self.base_tablename,
+            temporary_tablename=self.temporary_tablename,
         )
 
     def move_data_to_real_table(self):
@@ -163,17 +165,18 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ) (
               SELECT
                 {calculations}
-              FROM "temp_awc_location"
+              FROM "{temporary_tablename}"
             )
         """.format(
             tablename=self.base_tablename,
+            temporary_tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
         )
 
     def aww_query(self):
         return """
-            UPDATE temp_awc_location awc_loc SET
+            UPDATE {temporary_tablename} awc_loc SET
               aww_name = ut.aww_name,
               contact_phone_number = ut.contact_phone_number
             FROM (
@@ -185,7 +188,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ) ut
             WHERE ut.commcare_location_id = awc_loc.doc_id
         """.format(
-            tablename=self.base_tablename,
+            temporary_tablename=self.temporary_tablename,
             ucr_aww_tablename=self.ucr_aww_tablename
         )
 
@@ -254,16 +257,16 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             )
 
         return """
-            INSERT INTO "temp_awc_location" (
+            INSERT INTO "{temporary_tablename}" (
               {columns}
             ) (
               SELECT
                 {calculations}
-              FROM "temp_awc_location"
+              FROM "{temporary_tablename}"
               GROUP BY {group_by}
             )
         """.format(
-            tablename=self.base_tablename,
+            temporary_tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by)
