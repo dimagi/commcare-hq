@@ -487,11 +487,14 @@ class TableConfiguration(DocumentSchema):
             headers.extend(column.get_headers(split_column=split_columns))
         return headers
 
-    def get_rows(self, document, row_number, split_columns=False, transform_dates=False):
+    def get_rows(self, document, row_number, split_columns=False,
+                 transform_dates=False, as_json=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
         :param row_number: number indicating this documents index in the sequence of all documents in the export
+        :param as_json: optional parameter, mainly used in APIs, to spit out
+                        the data as a json-ready dict
         :return: List of ExportRows
         """
         document_id = document.get('_id')
@@ -507,7 +510,7 @@ class TableConfiguration(DocumentSchema):
         for doc_row in sub_documents:
             doc, row_index = doc_row.doc, doc_row.row
 
-            row_data = []
+            row_data = {} if as_json else []
             for col in self.selected_columns:
                 val = col.get_value(
                     domain,
@@ -518,13 +521,21 @@ class TableConfiguration(DocumentSchema):
                     split_column=split_columns,
                     transform_dates=transform_dates,
                 )
-                if isinstance(val, list):
+                if as_json:
+                    row_data[col.label] = val[0] if isinstance(val, list) else val
+                    if isinstance(val, list) and len(val) > 1:
+                        for subval_ind, subval in enumerate(val[1:]):
+                            row_data["{}__{}".format(col.label, subval_ind)] = subval
+                elif isinstance(val, list):
                     row_data.extend(val)
                 else:
                     row_data.append(val)
-            rows.append(ExportRow(
-                data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
-            ))
+            if as_json:
+                rows.append(row_data)
+            else:
+                rows.append(ExportRow(
+                    data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
+                ))
         return rows
 
     def get_column(self, item_path, item_doc_type, column_transform):
