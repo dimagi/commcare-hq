@@ -94,7 +94,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
 
         cursor.execute(self.drop_temporary_table_query())
         cursor.execute(self.create_temporary_table_query())
-        self.aggregate_query(cursor, location_csv)
+        self.aggregate_to_temporary_table(cursor, location_csv)
         cursor.execute(self.aww_query)
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
         for rollup_query in rollup_queries:
