@@ -18,8 +18,6 @@ from django.test.utils import override_settings
 from mock import Mock, patch
 from six.moves import range
 
-from corehq.toggles import NAMESPACE_DOMAIN
-
 
 def patch_datetime_api(timestamp):
     return patch('corehq.apps.sms.api.get_utcnow', new=Mock(return_value=timestamp))
