@@ -48,6 +48,7 @@ from corehq.apps.commtrack.tests.data.balances import (
 from corehq.apps.groups.models import Group
 from corehq.apps.products.models import Product
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from pillowtop import get_pillow_by_name
 from testapps.test_pillowtop.utils import process_pillow_changes
 from io import open
 
@@ -217,13 +218,17 @@ class CommTrackOTATestSQL(CommTrackOTATest):
 
 class CommTrackSubmissionTest(XMLTest):
 
+    @classmethod
+    def setUpClass(cls):
+        super(CommTrackSubmissionTest, cls).setUpClass()
+        cls.ledger_es_pillow = get_pillow_by_name('LedgerToElasticsearchPillow', instantiate=True)
+
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
         loc2 = make_loc('loc2')
         self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    @process_pillow_changes('LedgerToElasticsearchPillow')
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime,
                         device_id='351746051189879', **submit_extras):
         instance_id = uuid.uuid4().hex
@@ -238,11 +243,12 @@ class CommTrackSubmissionTest(XMLTest):
             date_formatter=date_formatter,
             device_id=device_id,
         )
-        submit_form_locally(
-            instance=instance,
-            domain=self.domain.name,
-            **submit_extras
-        )
+        with process_pillow_changes(self.ledger_es_pillow):
+            submit_form_locally(
+                instance=instance,
+                domain=self.domain.name,
+                **submit_extras
+            )
         return instance_id
 
     def check_product_stock(self, case, product_id, expected_soh, expected_qty, section_id='stock'):
