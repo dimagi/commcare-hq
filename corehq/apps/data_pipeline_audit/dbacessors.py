@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import date, timedelta
-from django.db.models import Q, Count
+from django.db.models import Count
 
 import dateutil
 import six
@@ -15,6 +15,7 @@ from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.config import get_sql_db_aliases_in_use
+from corehq.warehouse.models.facts import FormFact
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import all_known_formlike_doc_types
 
@@ -267,12 +268,10 @@ def xform_counts_for_app_in_last_month(app):
     """
     last_month_end = date.today().replace(day=1) - timedelta(days=1)
     last_month_start = last_month_end.replace(day=1)
-    q = Q(app_id=app._id, received_on__gte=last_month_start, received_on__lte=last_month_end)
-    count_by_xmlns = defaultdict(int)
-    for db_alias in get_sql_db_aliases_in_use():
-        result = XFormInstanceSQL.objects.using(db_alias).filter(q).values('xmlns').annotate(total=Count('xmlns'))
-        for r in result:
-            count_by_xmlns[r['xmlns']] += r['total']
+    result = FormFact.objects.filter(
+        app_id=app._id, received_on__gte=last_month_start, received_on__lte=last_month_end
+    ).values('xmlns').annotate(total=Count('xmlns'))
+    count_by_xmlns = {x['xmlns']: x['total'] for x in result}
     ret = [('Module Name', 'Form Name', 'Number of forms')]
     for module in app.modules:
         for form in module.get_forms():
