@@ -14,6 +14,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
+from custom.icds_reports.exceptions import LocationRemovedException
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
@@ -96,7 +97,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
 
-        # TODO ensure length of temp location table >= real location table
+        self.assert_no_awc_missing_from_new_table(cursor)
         # TODO generate diff of tables
 
         cursor.execute(self.delete_old_locations())
@@ -125,6 +126,25 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             tablename=self.base_tablename,
             temporary_tablename=self.temporary_tablename,
         )
+
+    def assert_no_awc_missing_from_new_table(self, cursor):
+        cursor.exectue(
+            """
+            SELECT count(*)
+            FROM "{tablename}"
+            WHERE aggregation_level = 5 AND doc_id NOT IN (
+                SELECT doc_id
+                FROM "{temporary_tablename}"
+                WHERE aggregation_level = 5
+            )
+            """.format(
+                tablename=self.base_tablename,
+                temporary_tablename=self.temporary_tablename,
+            )
+        )
+        num_locations_missing = cursor.fetchone()[0]
+        if num_locations_missing:
+            raise LocationRemovedException(num_locations_missing)
 
     def move_data_to_real_table(self):
         columns = (
