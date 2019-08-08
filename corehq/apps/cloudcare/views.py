@@ -240,6 +240,7 @@ class FormplayerPreviewSingleApp(View):
         return render(request, "cloudcare/formplayer_home.html", context)
 
 
+@location_safe
 class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'

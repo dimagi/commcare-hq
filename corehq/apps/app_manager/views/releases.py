@@ -98,6 +98,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 
 @cache_control(no_cache=True, no_store=True)
 @require_deploy_apps
+@location_safe
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
