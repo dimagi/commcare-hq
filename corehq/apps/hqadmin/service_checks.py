@@ -141,7 +141,10 @@ def check_celery():
             except HeartbeatNeverRecorded:
                 blocked_queues.append((queue, 'as long as we can see', threshold))
             else:
-                if blockage_duration > threshold:
+                # We get a lot of self-resolving celery "downtime" under 5 minutes
+                # so to make actionable, we never alert on blockage under 5 minutes
+                # It is still counted as out of SLA for the celery uptime metric in datadog
+                if blockage_duration > max(threshold, datetime.timedelta(minutes=5)):
                     blocked_queues.append((queue, blockage_duration, threshold))
 
     if blocked_queues:

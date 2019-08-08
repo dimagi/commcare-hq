@@ -238,6 +238,10 @@ class DashboardView(TemplateView):
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
+
+        if kwargs['have_access_to_all_locations']:
+            kwargs['user_location_id'] = None
+
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():
@@ -1773,7 +1777,7 @@ class DishaAPIView(View):
 
 
 @location_safe
-@method_decorator([api_auth, csrf_exempt, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
 class NICIndicatorAPIView(View):
 
     def message(self, message_name):
@@ -1786,59 +1790,32 @@ class NICIndicatorAPIView(View):
             "no_data": "Data does not exists"
         }
 
-        error_message_template = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
-            SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
-               <SOAP-ENV:Header />
-               <SOAP-ENV:Body>
-                    <SOAP-ENV:Fault>
-                        <message>
-                            {}
-                        </message>
-                    </SOAP-ENV:Fault>
-               </SOAP-ENV:Body>
-            </SOAP-ENV:Envelope>
-            """
-        return error_message_template.format(error_messages[message_name]).strip()
+        return {"message": error_messages[message_name]}
 
-    def get_data(self, post_body):
-        xml_data = etree.fromstring(post_body.strip())
-        nic_indicators_request = {
-            'month': xml_data.xpath('//month')[0].text if xml_data.xpath('//month') else None,
-            'year': xml_data.xpath('//year')[0].text if xml_data.xpath('//year') else None,
-            'state_name': xml_data.xpath('//state_name')[0].text if xml_data.xpath('//state_name') else None,
-
-        }
-        return nic_indicators_request
-
-    def post(self, request, *args, **kwargs):
-
-        nic_indicators_request = self.get_data(request.body)
+    def get(self, request, *args, **kwargs):
         try:
-            month = int(nic_indicators_request.get('month'))
-            year = int(nic_indicators_request.get('year'))
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
         except (ValueError, TypeError):
-            return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
+            return JsonResponse(self.message('missing_date'), status=400)
 
         query_month = date(year, month, 1)
 
         if query_month > date.today():
-            return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
+            return JsonResponse(self.message('invalid_month'),  status=400)
 
-        state_name = nic_indicators_request.get('state_name')
-
+        state_name = self.request.GET.get('state_name')
         if state_name not in self.valid_states:
-            return HttpResponse(self.message('invalid_state'), content_type='text/xml', status=400)
+            return JsonResponse(self.message('invalid_state'), status=400)
 
         try:
             state_id = self.valid_states[state_name]
             data = get_inc_indicator_api_data(state_id, month_formatter(query_month))
-            return HttpResponse(data, content_type='text/xml')
+            return JsonResponse(data)
         except NICIndicatorsView.DoesNotExist:
-            return HttpResponse(self.message('no_data'), content_type='text/xml', status=500)
+            return JsonResponse(self.message('no_data'), status=500)
         except AttributeError:
-            return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
+            return JsonResponse(self.message('unknown_error'), status=500)
 
     @property
     @icds_quickcache([])

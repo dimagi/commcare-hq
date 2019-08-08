@@ -4,7 +4,7 @@ hqDefine("hqwebapp/js/select_2_ajax_widget", [
     'select2/dist/js/select2.full.min',
 ], function ($, _) {
     $(function () {
-        $(".hqwebapp-select2-ajax-v4").each(function () {
+        $(".hqwebapp-select2-ajax").each(function () {
             var $select = $(this),
                 htmlData = $select.data();
 
