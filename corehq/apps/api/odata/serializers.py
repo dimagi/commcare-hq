@@ -16,6 +16,27 @@ from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.util.view_utils import absolute_reverse
 
 
+def _config_to_json(config, documents, table_id):
+    if table_id + 1 > len(config.tables):
+        return []
+
+    table = config.tables[table_id]
+    if not table.selected:
+        return []
+
+    data = []
+    for row_number, document in enumerate(documents):
+        rows = table.get_rows(
+            document,
+            row_number,
+            split_columns=config.split_multiselects,
+            transform_dates=config.transform_dates,
+            as_json=True,
+        )
+        data.extend(rows)
+    return data
+
+
 class ODataCaseSerializer(Serializer):
 
     def to_json(self, data, options=None):
@@ -63,27 +84,7 @@ class ODataCaseSerializer(Serializer):
 
     @staticmethod
     def serialize_cases_using_config(cases, config, table_id):
-        if table_id + 1 > len(config.tables):
-            return []
-
-        table = config.tables[table_id]
-        if not table.selected:
-            return []
-
-        return [
-            {
-                col.label: col.get_value(
-                    config.domain,
-                    case_data.get('case_id', None),
-                    case_data,
-                    [],
-                    split_column=config.split_multiselects,
-                    transform_dates=config.transform_dates,
-                )
-                for col in table.selected_columns
-            }
-            for case_data in cases
-        ]
+        return _config_to_json(config, cases, table_id)
 
 
 class ODataFormSerializer(Serializer):
@@ -133,24 +134,4 @@ class ODataFormSerializer(Serializer):
 
     @staticmethod
     def serialize_forms_using_config(forms, config, table_id):
-        if table_id + 1 > len(config.tables):
-            return []
-
-        table = config.tables[table_id]
-        if not table.selected:
-            return []
-
-        return [
-            {
-                col.label: col.get_value(
-                    config.domain,
-                    form_data.get('_id', None),
-                    form_data,
-                    [],
-                    split_column=config.split_multiselects,
-                    transform_dates=config.transform_dates,
-                )
-                for col in table.selected_columns
-            }
-            for form_data in forms
-        ]
+        return _config_to_json(config, forms, table_id)
