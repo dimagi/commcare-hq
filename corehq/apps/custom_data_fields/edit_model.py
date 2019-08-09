@@ -85,7 +85,6 @@ class CustomDataFieldForm(forms.Form):
     is_multiple_choice = forms.BooleanField(required=False)
     regex = forms.CharField(required=False)
     regex_msg = forms.CharField(required=False)
-    index_in_fixture = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -173,7 +172,6 @@ class CustomDataModelMixin(object):
             is_multiple_choice=is_multiple_choice,
             regex=regex,
             regex_msg=regex_msg,
-            index_in_fixture=field.get('index_in_fixture'),
         )
 
     @property
