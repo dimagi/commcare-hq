@@ -1002,24 +1002,6 @@ OPENMRS_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-INDEX_LOCATION_DATA_DESCRIPTION = """
-Add an option to the location fields page allowing you to specify fields which
-should be indexed by the phone. This can provide a performance boost in
-applications dealing with large location fixtures when using those fields for
-filtering. The indexed fields will be made available as top level children of
-the <location/> node with the prefix 'data_', and you must reference that to
-take advantage of the optimization. For example, reference a field called
-'is_test' like:
-    instance('locations')/locations/location[data_is_test='1']
-"""
-INDEX_LOCATION_DATA = StaticToggle(
-    'index_location_data',
-    'Enikshay: Add option to index custom location fields',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    description=INDEX_LOCATION_DATA_DESCRIPTION,
-)
-
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'EWS: Allow project to use multiple choice field in custom fields',
