@@ -1,22 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
+import sys
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.forms.fields import *  # noqa: F403
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+import six
+from crispy_forms import layout as crispy
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.request import urlopen
-import sys
-from corehq.apps.sms.mixin import BackendProcessingException
-from corehq.apps.sms.forms import BackendForm
-from corehq.apps.reminders.forms import RecordListField
-from django.forms.fields import *
-from django.core.exceptions import ValidationError
-from dimagi.ext.couchdbkit import *
+
+from dimagi.ext.couchdbkit import *  # noqa: F403
 from dimagi.utils.django.fields import TrimmedCharField
+
+from corehq.apps.reminders.forms import RecordListField
+from corehq.apps.sms.forms import BackendForm
+from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number, strip_plus
 from corehq.util.validation import is_url_or_host_banned
-from django.utils.translation import ugettext as _, ugettext_noop
-from crispy_forms import layout as crispy
-from django.conf import settings
-import six
 
 
 class HttpBackendForm(BackendForm):
