@@ -252,7 +252,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.linked_app_attrs = {}
         self.linked_app.save()
 
-    def test_update_from_specific_build(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_update_from_specific_build(self, *args):
         self.linked_app.master = self.plain_master_app.get_id
 
         self.plain_master_app.add_module(Module.new_module('M1', None))
