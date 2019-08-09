@@ -18,6 +18,7 @@
   {% compress js %}
     <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
     <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
+    <script src="{% static 'app_manager/js/widgets.js' %}"></script><!-- version when copying app -->
   {% endcompress %}
   {% if linked_domains_enabled %}
     {% compress js %}
@@ -43,6 +44,7 @@
   {% initial_page_data 'uploaders' uploaders_js %}
   {% registerurl 'app_multimedia_ajax' domain app.get_id %}
   {% registerurl "hqmedia_remove_logo" domain app.id %}
+  {% registerurl "paginate_releases" domain app.get_id %}
   {% registerurl "toggle_diff" domain %}
   {% registerurl "update_linked_whitelist" domain app.id %}
   {% include "app_manager/partials/settings/app_settings.html" %}
