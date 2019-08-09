@@ -47,7 +47,6 @@ class RateLimiter(object):
     def report_usage(self, scope, delta=1):
         scope = self.get_normalized_scope(scope)
         for rate_counter, limit in self.rate_limits:
-            print(scope, delta)
             rate_counter.increment(scope, delta=delta)
 
     def allow_usage(self, scope):
