@@ -1252,13 +1252,6 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 )
 
 
-CUSTOM_CALENDAR_FIXTURE = StaticToggle(
-    'custom_calendar_fixture',
-    'Enikshay: Send a calendar fixture down to all users (R&D)',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',
