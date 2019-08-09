@@ -257,7 +257,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
 
     @property
     def show_index_in_fixture(self):
-        return toggles.INDEX_LOCATION_DATA.enabled(self.domain)
+        return False
 
 
 class LocationTypesView(BaseDomainView):
