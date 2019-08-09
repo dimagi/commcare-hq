@@ -636,17 +636,16 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
-    'Enikshay/L10K: Enable extension syncing',
-    TAG_CUSTOM,
+    'Enable extension syncing',
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
 )
 
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
-    'Enikshay/ICDS: Toggle which webapps to see based on role',
+    'ICDS: Toggle which webapps to see based on role',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -822,7 +821,7 @@ VELLUM_DATA_IN_SETVALUE = StaticToggle(
 
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
-    'Enikshay/REC: Enable the "Cache and Index" format option when choosing sort properties '
+    'REC: Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
@@ -927,7 +926,7 @@ COMMTRACK = StaticToggle(
 
 NON_COMMTRACK_LEDGERS = StaticToggle(
     'non_commtrack_ledgers',
-    "Enikshay: Enable ledgers for projects not using Supply.",
+    "Enable ledgers for projects not using Supply.",
     TAG_CUSTOM,
     description=(
         'Turns on the ledger fixture and ledger transaction question types in '
@@ -1156,7 +1155,7 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'ICDS/eNikshay: Allow specifying a custom base URL for an application. Main use case is '
+    'ICDS: Allow specifying a custom base URL for an application. Main use case is '
     'to allow migrating ICDS to a new cluster.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
@@ -1474,8 +1473,8 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
 
 CUSTOM_ICON_BADGES = StaticToggle(
     'custom_icon_badges',
-    'eNikshay: Custom Icon Badges for modules and forms',
-    TAG_CUSTOM,
+    'Custom Icon Badges for modules and forms',
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
