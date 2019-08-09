@@ -17,9 +17,11 @@ LOCMEM = caches['locmem']
 
 class SlidingWindowRateCounter(AbstractRateCounter):
     """
-    The "Sliding Window Over Fixed Grains" approach approximates
-    the perfect sliding window approach (where you keep the timestamp of every event
-    and count the number that fall between now and now - window_duration)
+    A "Sliding Window Over Fixed Grains" approach that approximates perfect sliding window
+
+    A perfect sliding window approach would require keeping the timestamp of every event
+    and count the number that fall between now and now - window_duration;
+    for lower memory and performance overhead we instead approximate that
     by dividing time up into fixed "grains", i.e. sub-windows,
     over which we slide the larger window.
     For the earliest grain which is sliding out of the window,
