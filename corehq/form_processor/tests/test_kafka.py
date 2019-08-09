@@ -27,6 +27,7 @@ class KafkaPublishingTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(KafkaPublishingTest, cls).setUpClass()
         cls.form_accessors = FormAccessors(domain=cls.domain)
         cls.processor = TestProcessor()
         cls.form_pillow = ConstructedPillow(
