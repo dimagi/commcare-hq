@@ -995,14 +995,6 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
-RETRY_SMS_INDEFINITELY = StaticToggle(
-    'retry_sms_indefinitely',
-    'Enikshay: Retry SMS indefinitely',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    description='Leaves on the queue an SMS that has reached the maximum number of unsuccessful attempts.',
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
