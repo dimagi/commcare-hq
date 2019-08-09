@@ -1498,13 +1498,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
-REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
-    'remote_request_quetion_type',
-    'Enikshay: Enable remote request question type in the form builder',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
