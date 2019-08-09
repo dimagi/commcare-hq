@@ -25,7 +25,7 @@
   "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "ASR - 2,3 - Person Cases (Static)",
-    "description": "This is used specifically for the MPR Block Report",
+    "description": "This is used specifically for the MPR",
     "visible": false,
     "aggregation_columns": [
       "owner_id"

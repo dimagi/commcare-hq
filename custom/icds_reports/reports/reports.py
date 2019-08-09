@@ -22,7 +22,7 @@ class MPRReport(IcdsBaseReport):
 
     title = 'Monthly Progress Report (MPR)'
     slug = 'mpr_report'
-    name = 'Block MPR'
+    name = 'MPR'
 
     fields = [IcdsLocationFilter, ICDSMonthFilter, YearFilter]
 
@@ -52,7 +52,7 @@ class ASRReport(IcdsBaseReport):
 
     title = 'Annual Status Report (ASR)'
     slug = 'asr_report'
-    name = 'Block ASR'
+    name = 'ASR'
 
     fields = [IcdsRestrictedLocationFilter]
 

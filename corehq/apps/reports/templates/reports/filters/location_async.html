@@ -26,7 +26,11 @@
     <div class="form-group"
          data-bind="visible: show_location_filter_bool()">
       {# this is wrong, see filters/single_option.html for a proper implementation #}
-      <label class="control-label {{ css_label_class }}">{{ control_name }}</label>
+      <label class="control-label {{ css_label_class }}">{{ control_name }} <br>
+          {% if 'mpr_report' in path %}
+            <span style="font-weight: normal; font-style: italic">Select Sector or AWC</span>
+          {% endif %}
+      </label>
       <div class="{{ css_field_class }}">
         <div data-bind="foreach: selected_path" style="display: inline-block;">
           {% block location_select %}

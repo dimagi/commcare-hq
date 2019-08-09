@@ -44,7 +44,8 @@ class AsyncLocationFilter(BaseReportFilter):
             'loc_id': loc_id,
             'locations': self.load_locations_json(loc_id),
             'make_optional': self.make_optional,
-            'hierarchy': self.location_hierarchy_config
+            'hierarchy': self.location_hierarchy_config,
+            'path': self.request.path
         }
 
     @classmethod
