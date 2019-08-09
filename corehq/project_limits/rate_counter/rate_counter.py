@@ -104,7 +104,7 @@ class FixedWindowRateCounter(AbstractRateCounter):
 
     @staticmethod
     def _digest(string):
-        return hashlib.sha1(string).hexdigest()
+        return hashlib.sha1(string.encode('utf-8')).hexdigest()
 
     def _cache_key(self, scope, timestamp=None):
         if timestamp is None:
