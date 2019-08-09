@@ -18,7 +18,7 @@ from dimagi.utils.dates import force_to_date
 
 
 class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    slug = 'taux_de_perte'
+    slug = 'taux_de_perte_report'
     comment = 'Taux de Perte (hors péremption)'
     name = 'Taux de Perte'
     default_rows = 10

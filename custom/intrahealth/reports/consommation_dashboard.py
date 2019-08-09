@@ -192,14 +192,15 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                     if product_name not in products_names_from_list:
                         products_list.append({
                             'product_name': product_name,
-                            'actual_consumption': 0
+                            'actual_consumption': 0,
                         })
                 consumptions_to_return.append([
                     location_name,
                 ])
                 products_list = sorted(products_list, key=lambda x: x['product_name'])
                 for product_info in products_list:
-                    product_consumption = product_info['actual_consumption']
+                    consumption_data = product_info['actual_consumption']
+                    product_consumption = consumption_data if consumption_data > 0 else 'pas de données'
                     consumptions_to_return[-1].append({
                         'html': '{}'.format(product_consumption),
                         'sort_key': product_consumption

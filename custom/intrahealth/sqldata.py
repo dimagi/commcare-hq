@@ -4396,96 +4396,7 @@ class ConsommationPerProductData(SqlData):
             },
         ]
         # rows = self.get_data()
-
-
-# class LossRatePerProductData(SqlData):
-#     # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 2’
-#     slug = 'taux_de_perte'
-#     comment = 'Taux de Perte (hors péremption)'
-#     title = 'Taux de Perte (hors péremption)'
-#     show_total = True
-#     custom_total_calculate = True
-#
-#     def __init__(self, config):
-#         super(LossRatePerProductData, self).__init__()
-#         self.config = config
-#
-#     @property
-#     def table_name(self):
-#         # TODO: we don't know if we need to create data source or use existing one
-#         return get_table_name(self.config['domain'], YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT)
-#
-#     @property
-#     def group_by(self):
-#         return ['real_date_repeat', 'product_name', self.loc_name, self.loc_id]
-#
-#     @property
-#     def columns(self):
-#         columns = [
-#             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-#             DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
-#             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-#             DatabaseColumn("Total number of PNA lost product", SumColumn('loss_amt')),
-#             DatabaseColumn("PNA final stock", SumColumn('final_pna_stock')),
-#             DatabaseColumn("Product name", SimpleColumn('product_name')),
-#         ]
-#         return columns
-#
-#     @cached_property
-#     def selected_location(self):
-#         if self.config['selected_location']:
-#             return SQLLocation.objects.get(location_id=self.config['selected_location'])
-#         else:
-#             return None
-#
-#     @cached_property
-#     def selected_location_type(self):
-#         if not self.selected_location:
-#             return 'national'
-#         return self.selected_location.location_type.code
-#
-#     @cached_property
-#     def loc_type(self):
-#         if self.selected_location_type == 'national':
-#             return 'region'
-#         elif self.selected_location_type == 'region':
-#             return 'district'
-#         else:
-#             return 'pps'
-#
-#     @cached_property
-#     def loc_id(self):
-#         return "{}_id".format(self.loc_type)
-#
-#     @cached_property
-#     def loc_name(self):
-#         return "{}_name".format(self.loc_type)
-#
-#     @property
-#     def filters(self):
-#         filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
-#         program_id = self.config.get('product_program')
-#         if program_id:
-#             programs = ProductsInProgramData(config={'domain': self.config['domain']}).rows
-#             for program in programs:
-#                 if program_id == program[0]:
-#                     filters.append(OR(
-#                         [CustomEQFilter("product_id", product) for product in program[1].split(" ")]
-#                     ))
-#                     break
-#         if self.config['selected_location']:
-#             filters.append(EQ(self.loc_id, 'selected_location'))
-#         if self.config['product_product']:
-#             filters.append(EQ('product_id', 'product_product'))
-#         # elif self.config['product_program']:
-#         #     filters.append(EQ('program_id', 'product_program'))
-#         return filters
-#
-#     @property
-#     def rows(self):
-#         # TODO: we don't know in which format data will be displaied
-#         return self.get_data()
-
+    
 
 class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
     slug = 'taux_de_perte'
@@ -4698,89 +4609,6 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         return [product for product in self.config['products']]
 
 
-# class ExpirationRatePerProductData(SqlData):
-#     # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 2’
-#     slug = 'taux_de_peremption'
-#     comment = 'valeur péremption sur valeur totale'
-#     title = 'Taux de Péremption'
-#     show_total = True
-#     custom_total_calculate = True
-#
-#     def __init__(self, config):
-#         super(ExpirationRatePerProductData, self).__init__()
-#         self.config = config
-#
-#     @property
-#     def table_name(self):
-#         # TODO: we don't know if we need to create data source or use existing one
-#         return get_table_name(self.config['domain'], "")
-#
-#     @property
-#     def group_by(self):
-#         return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
-#
-#     @property
-#     def columns(self):
-#         columns = [
-#             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-#             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-#             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-#             DatabaseColumn("Expired products valuation", SumColumn('expired_pna_valuation')),
-#             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
-#             DatabaseColumn("Product ID", SimpleColumn('product_id')),
-#             DatabaseColumn("Program name", SimpleColumn('program_name'))
-#         ]
-#         return columns
-#
-#     @cached_property
-#     def selected_location(self):
-#         if self.config['selected_location']:
-#             return SQLLocation.objects.get(location_id=self.config['selected_location'])
-#         else:
-#             return None
-#
-#     @cached_property
-#     def selected_location_type(self):
-#         if not self.selected_location:
-#             return 'national'
-#         return self.selected_location.location_type.code
-#
-#     @cached_property
-#     def loc_type(self):
-#         if self.selected_location_type == 'national':
-#             return 'region'
-#         elif self.selected_location_type == 'region':
-#             return 'district'
-#         else:
-#             return 'pps'
-#
-#     @cached_property
-#     def loc_id(self):
-#         return "{}_id".format(self.loc_type)
-#
-#     @cached_property
-#     def loc_name(self):
-#         return "{}_name".format(self.loc_type)
-#
-#     @property
-#     def filters(self):
-#         filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
-#         if self.config['selected_location']:
-#             filters.append(EQ(self.loc_id, 'selected_location'))
-#         if self.config['product_product']:
-#             filters.append(EQ('product_id', 'product_product'))
-#         elif self.config['product_program']:
-#             filters.append(EQ('program_id', 'product_program'))
-#         return filters
-#
-#     @property
-#     def rows(self):
-#         # TODO: we don't know in which format data will be displaied
-#         # rows = self.get_data()
-#
-#         return []
-
-
 class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
     slug = 'taux_de_peremption'
     comment = 'valeur péremption sur valeur totale'
@@ -4916,10 +4744,10 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         data = defaultdict(list)
         loc_names = {}
         for record in records:
+            print(loc_names)
             if not self.date_in_selected_date_range(record['real_date_repeat']) \
-                or record['product_name'] not in self.products:
+            or record['product_name'] not in self.products:
                 continue
-
             if record[self.loc_id] not in data:
                 for i in range(len(self.products)):
                     data[record[self.loc_id]].append(defaultdict(int))
@@ -5009,39 +4837,12 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         return [product for product in self.config['products']]
 
 
-class SatisfactionRateAfterDeliveryPerProductData(SqlData):
-    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 3’
-    slug = 'taux_de_peremption'
-    comment = 'valeur péremption sur valeur totale'
-    title = 'Taux de Péremption'
+class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDataSource):
+    slug = 'taux_de_satisfaction_report'
+    comment = 'produits proposés sur produits livrés'
+    title = 'Taux de satisfaction (après livraison)'
     show_total = True
     custom_total_calculate = True
-
-    def __init__(self, config):
-        super(SatisfactionRateAfterDeliveryPerProductData, self).__init__()
-        self.config = config
-
-    @property
-    def table_name(self):
-        # TODO: we don't know if we need to create data source or use existing one
-        return get_table_name(self.config['domain'], "")
-
-    @property
-    def group_by(self):
-        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
-
-    @property
-    def columns(self):
-        columns = [
-            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-            DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
-            DatabaseColumn("Quantity of the product  suggested", SumColumn('ideal_topup')),
-            DatabaseColumn("Product ID", SimpleColumn('product_id')),
-            DatabaseColumn("Program name", SimpleColumn('program_name'))
-        ]
-        return columns
 
     @cached_property
     def selected_location(self):
@@ -5075,20 +4876,102 @@ class SatisfactionRateAfterDeliveryPerProductData(SqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
         if self.config['selected_location']:
             filters.append(EQ(self.loc_id, 'selected_location'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
-            filters.append(EQ('program_id', 'product_program'))
+            filters.append(EQ('select_programs', 'product_program'))
         return filters
 
     @property
+    def group_by(self):
+        return ['real_date_repeat', 'product_id', 'product_name', self.loc_id, self.loc_name, 'select_programs']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Location ID", SimpleColumn(self.loc_id)),
+            DatabaseColumn("Location Name", SimpleColumn(self.loc_name)),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+            DatabaseColumn("Programs", SimpleColumn('select_programs')),
+            DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
+            DatabaseColumn("Quantity of the product suggested", SumColumn('ideal_topup')),
+        ]
+        return columns
+
+    @property
     def rows(self):
-        # TODO: we don't know in which format data will be displaied
-        return []
-    # return self.get_data()
+        # records = self.get_data()
+        rows = [
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.1', 'pps_id': 1, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'real_date': date(2019, 6, 2),
+                'amt_delivered_convenience': 230, 'ideal_topup': 634
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.2', 'pps_id': 2, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 1),
+                'amt_delivered_convenience': 374, 'ideal_topup': 846
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
+                'pps_name': 'PPS 1.1.3', 'pps_id': 3, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 3', 'product_id': 3, 'real_date': date(2019, 6, 9),
+                'amt_delivered_convenience': 365, 'ideal_topup': 543
+            },
+            {
+                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.2', 'district_id': 4,
+                'pps_name': 'PPS 1.2.1', 'pps_id': 10, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 8),
+                'amt_delivered_convenience': 634, 'ideal_topup': 74
+            },
+
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.1', 'pps_id': 4, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'real_date': date(2019, 6, 7),
+                'amt_delivered_convenience': 35, 'ideal_topup': 543
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.2', 'pps_id': 5, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 1', 'product_id': 1, 'real_date': date(2019, 6, 6),
+                'amt_delivered_convenience': 345, 'ideal_topup': 256
+            },
+            {
+                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
+                'pps_name': 'PPS 2.1.3', 'pps_id': 6, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 3', 'product_id': 3, 'real_date': date(2019, 6, 13),
+                'amt_delivered_convenience': 25, 'ideal_topup': 356
+            },
+
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.1', 'pps_id': 7, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 12),
+                'amt_delivered_convenience': 62, 'ideal_topup': 63
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.2', 'pps_id': 8, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 11),
+                'amt_delivered_convenience': 745, 'ideal_topup': 232
+            },
+            {
+                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
+                'pps_name': 'PPS 3.1.3', 'pps_id': 9, 'program_name': 'Program 1', 'program_id': 1,
+                'product_name': 'Product 3', 'product_id': 3, 'real_date': date(2019, 6, 10),
+                'amt_delivered_convenience': 47, 'ideal_topup': 457
+            },
+        ]
+
+        return rows
 
 
 class ValuationOfPNAStockPerProductV2Data(SqlData):

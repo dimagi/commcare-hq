@@ -17,7 +17,7 @@ from dimagi.utils.dates import force_to_date
 
 
 class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    slug = 'taux_de_peremption'
+    slug = 'taux_de_peremption_report'
     comment = 'valeur péremption sur valeur totale'
     name = 'Taux de Péremption'
     default_rows = 10
