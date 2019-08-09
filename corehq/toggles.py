@@ -636,7 +636,7 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
-    'L10K: Enable extension syncing',
+    'Enable extension syncing',
     TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
