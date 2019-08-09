@@ -246,16 +246,16 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     })
 
     # Pass form for Copy Application to template
-    domain_names = [
+    domain_names = {
         d.name for d in Domain.active_for_user(request.couch_user)
         if not (is_linked_domain(request.domain)
                 and get_domain_master_link(request.domain).master_domain == d.name)
-    ]
-    domain_names.sort()
+    }
+    domain_names.add(request.domain)
     if copy_app_form is None:
         copy_app_form = CopyApplicationForm(domain, app)
         context.update({
-            'domain_names': domain_names,
+            'domain_names': sorted(domain_names),
         })
     linked_domains_enabled = toggles.LINKED_DOMAINS.enabled(domain)
     context.update({
