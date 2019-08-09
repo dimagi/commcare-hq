@@ -27,7 +27,7 @@
          data-bind="visible: show_location_filter_bool()">
       {# this is wrong, see filters/single_option.html for a proper implementation #}
       <label class="control-label {{ css_label_class }}">{{ control_name }} <br>
-          {% if 'mpr_report' in path %}
+          {% if 'reports/custom/mpr_report' in path %}
             <span style="font-weight: normal; font-style: italic">Select Sector or AWC</span>
           {% endif %}
       </label>
