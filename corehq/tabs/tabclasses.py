@@ -1773,17 +1773,12 @@ def _get_integration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
+    from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
-        })
-    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
-        feature_flag_items.append({
-            'title': _('Calendar Fixture'),
-            'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
         })
     if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
