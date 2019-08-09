@@ -1514,7 +1514,7 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
 CUSTOM_ICON_BADGES = StaticToggle(
     'custom_icon_badges',
     'Custom Icon Badges for modules and forms',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
