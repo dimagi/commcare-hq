@@ -8,7 +8,7 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_map_data_keys(self):

@@ -8,9 +8,10 @@ from custom.icds_reports.utils import DATA_NOT_ENTERED, percent_or_not_entered, 
 
 
 @icds_quickcache([
-    'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'age_sdd'
+    'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'step'
 ], timeout=30 * 60)
-def get_service_delivery_data(domain, start, length, order, reversed_order, location_filters, year, month, age_sdd, include_test=False):
+def get_service_delivery_data(domain, start, length, order, reversed_order, location_filters,
+                              year, month, step, include_test=False):
     if location_filters.get('aggregation_level') == 1:
         default_order = 'state_name'
     elif location_filters.get('aggregation_level') == 2:
@@ -45,7 +46,7 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
         return value
 
     def base_data(row_data):
-        if age_sdd == '0_3':
+        if step == 'pw_lw_children':
             return dict(
                 state_name=get_value_or_data_not_entered(row_data, 'state_name'),
                 district_name=get_value_or_data_not_entered(row_data, 'district_name'),
@@ -97,7 +98,6 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
     config['data'] = config['data'][start:(start + length)]
 
     config["aggregationLevel"] = location_filters['aggregation_level']
-    config["ageSDD"] = age_sdd
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
 

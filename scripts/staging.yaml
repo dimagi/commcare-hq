@@ -49,15 +49,19 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
-  - nh/icds/skip_trans  # Norman June 21
+  - vellum-staging
   - fr/case-templates      # FR May 15
-  - jls/ko-create-mobile-worker # Jenny June 9
-  - jls/draconian-flag # Jenny June 17
-  - jls/ko-create-mobile-worker-debug # Jenny June 17
-  - jls/linked-app-multiple-masters # Jenny June 18
-  - jls/disable-autofill # Jenny June 19
-  - odata-datadog  # Nick June 29
-  - rn_only_select_app_type_when_no_advanced # Rohit June 27 
-  - mk/migrate-transifex-proj-realigned # MK June 28
+  #- jls/linked-app-multiple-masters # Jenny June 18
+  - rn_only_select_app_type_when_no_advanced # Rohit June 27
+  - mk/skip-files-build # MK July 6
+  - nh/icds/skip_trans+mk/use-ids-to-validate-translations  # Norman Aug 2
+  - nh/icds/skip_trans  # Norman Aug 2
+  - mk/use-ids-to-validate-translations # July 19
+  - revert-24882-jls/compress-mobile-workers-js # Jenny July 24 
+  - jls/resource-versions # Jenny July 24
+  - es/linked-app-migration  # ES Aug 6th
+  #- jls/add-js-to-sentry # Jenny Aug 7
+  - jls/copy-app-version+mk/imrpove-mm-pull
+  - jls/copy-app-version # Jenny Aug 2
+  - mk/imrpove-mm-pull # MK Aug 5
 submodules: {}

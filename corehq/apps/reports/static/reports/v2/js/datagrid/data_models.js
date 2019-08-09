@@ -29,6 +29,9 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.isLoadingError = ko.observable(false);
         self.ajaxPromise = undefined;
 
+        self.numTimeouts = 0;
+        self.showTimeoutError = ko.observable(false);
+
         self.isDataLoading.subscribe(function (isLoading) {
             if (!isLoading) return;
 
@@ -91,6 +94,32 @@ hqDefine('reports/v2/js/datagrid/data_models', [
             }
         };
 
+        self.thresholds = {
+            10000: "10 sec",
+            20000: "20 sec",
+            30000: "30 sec",
+            40000: "40 sec",
+            50000: "50 sec",
+            60000: "1 min",
+            90000: "1.5 min",
+            120000: "2 min",
+            300000: "5 min",
+            600000: "10 min",
+        };
+
+        self.thresholdTimer = 0;
+        self.thresholdInterval = 10000;
+
+        self.sendThresholdAnalytics = setInterval(function () {
+            self.thresholdTimer += self.thresholdInterval;
+            if (self.thresholds.hasOwnProperty(self.thresholdTimer)) {
+                var eventTitle = "ECD Initial Load Threshold - " + self.thresholds[self.thresholdTimer];
+                kissmetrics.track.event(eventTitle, {
+                    "Domain": initialPageData.get('domain'),
+                });
+            }
+        }, self.thresholdInterval);
+
         self.loadRecords = function () {
             if (!self.reportContext) {
                 throw new Error("Please call init() before calling loadRecords().");
@@ -121,12 +150,42 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 },
             })
                 .done(function (data) {
-                    self.resetPagination(data.resetPagination);
+                    if (data.isTimeout && self.numTimeouts < 6) {
+                        self.numTimeouts ++;
+                        self.isDataLoading(false);
+                        self.ajaxPromise = undefined;
+                        self.refresh();
+                        return;
+                    }
+
+                    if (data.isTimeout) {
+                        self.showTimeoutError(true);
+                        kissmetrics.track.event("ECD Timeout Error After 5 Attempts", {
+                            "Domain": initialPageData.get('domain'),
+                        });
+                    } else {
+                        self.showTimeoutError(false);
+                        self.numTimeouts = 0;
+                        var timeEventTitle = "ECD Load Time";
+                        if (!self.hasInitialLoadFinished()) {
+                            timeEventTitle = timeEventTitle + " - Initial";
+                        }
+                        kissmetrics.track.event(timeEventTitle, {
+                            "Domain": initialPageData.get('domain'),
+                            "Time": data.took,
+                        });
+
+                    }
+
                     self.rows(data.rows);
+                    if (self.hasInitialLoadFinished()) {
+                        self.resetPagination(data.resetPagination);
+                    }
                     self.totalRecords(data.totalRecords);
 
                     if (!self.hasInitialLoadFinished()) {
                         self.hasInitialLoadFinished(true);
+                        clearInterval(self.sendThresholdAnalytics);
                         $('#js-datagrid-initial-loading').fadeOut();
                         _.each(self.reportFilters(), function (reportFilter) {
                             reportFilter.value.subscribe(function () {

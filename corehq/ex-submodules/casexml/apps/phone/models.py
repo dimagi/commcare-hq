@@ -756,7 +756,6 @@ class IndexTree(DocumentSchema):
                 all_cases.add(incoming_case)
         return all_cases
 
-    @memoized
     def get_cases_that_directly_depend_on_case(self, case_id):
         return self.reverse_indices.get(case_id, set([]))
 
@@ -765,11 +764,23 @@ class IndexTree(DocumentSchema):
         prior_ids.pop(index_name, None)
         if prior_ids:
             self.indices[from_case_id] = prior_ids
+        self._clear_index_caches()
 
     def set_index(self, from_case_id, index_name, to_case_id):
         prior_ids = self.indices.get(from_case_id, {})
         prior_ids[index_name] = to_case_id
         self.indices[from_case_id] = prior_ids
+        self._clear_index_caches()
+
+    def _clear_index_caches(self):
+        try:
+            # self.reverse_indices is a memoized property, so we can't just call self.reverse_indices.reset_cache
+            self._reverse_indices_cache.clear()
+        except AttributeError:
+            pass
+
+        self.get_all_outgoing_cases.reset_cache()
+        self.traverse_incoming_extensions.reset_cache()
 
     def apply_updates(self, other_tree):
         """

@@ -274,6 +274,7 @@ def is_case_actions(old_obj, new_obj, rule, diff):
 
 def ignore_renamed(old_name, new_name):
     def is_renamed(old_obj, new_obj, rule, diff):
+        assert diff.path, repr(diff)
         diffname = diff.path[0]
         if diffname == old_name or diffname == new_name:
             old_value = old_obj.get(old_name, MISSING)

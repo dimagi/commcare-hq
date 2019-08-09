@@ -14,7 +14,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.filters = ['gender', 'age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs that reported having a functional toilet',
     };

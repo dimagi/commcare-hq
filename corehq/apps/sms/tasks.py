@@ -28,7 +28,7 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.util import use_phone_entries
-from corehq.toggles import RETRY_SMS_INDEFINITELY, USE_SMS_WITH_INACTIVE_CONTACTS
+from corehq.toggles import USE_SMS_WITH_INACTIVE_CONTACTS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection, get_redis_client, get_redis_lock, release_lock
@@ -62,8 +62,6 @@ def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
-    elif msg.direction == OUTGOING and RETRY_SMS_INDEFINITELY.enabled(msg.domain):
-        delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
         remove_from_queue(msg)
@@ -283,7 +281,10 @@ class OutboundDailyCounter(object):
 
     @property
     def current_usage(self):
-        return self.client.get(self.key) or 0
+        current_usage = self.client.get(self.key)
+        if isinstance(current_usage, bytes):
+            current_usage = int(current_usage.decode('utf-8'))
+        return current_usage or 0
 
     @property
     def daily_limit(self):

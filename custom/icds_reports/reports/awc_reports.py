@@ -285,11 +285,11 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                     'all': '',
                     'format': 'number',
                     'frequency': 'month',
-                    'color': 'green' if percent_increase(
+                    'color': get_color_with_green_positive(percent_increase(
                         'days_open',
                         kpi_data_tm,
                         kpi_data_lm,
-                    ) > 0 else 'red',
+                    )),
                 }
             ]
         ],
@@ -983,7 +983,7 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
     filters['month'] = datetime(*month)
     filters['open_in_month'] = 1
     filters['valid_in_month'] = 1
-    if filters.get('age_in_months__in') is None:
+    if filters.get('age_in_months__range') is None:
         filters['age_in_months__lte'] = 60
     data = ChildHealthMonthlyView.objects.filter(
         **filters
@@ -1238,10 +1238,11 @@ def get_pregnant_details(case_id, awc_id):
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
-    one_month_ago = datetime.utcnow() - relativedelta(months=1, day=1)
+    latest_available_month = datetime.utcnow() - timedelta(days=1)
+    first_day_month = latest_available_month.replace(day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
-        month__gte=one_month_ago,
+        month=first_day_month,
     ).order_by('case_id', '-month').distinct('case_id').values(
         'case_id', 'lactating', 'open_in_month', 'date_death'
     ).filter(lactating=1, date_death=None).exclude(open_in_month=False)
@@ -1250,7 +1251,7 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
     if case_ids:
         data = CcsRecordMonthlyView.objects.filter(
             awc_id=awc_id,
-            month__gte=one_month_ago,
+            month=first_day_month,
             date_death=None,
             case_id__in=case_ids,
         ).order_by('case_id', '-month').distinct('case_id').values(

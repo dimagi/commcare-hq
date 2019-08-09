@@ -7,7 +7,7 @@ from time import sleep, time
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
 from celery.schedules import crontab
-from celery.task import task
+from celery.task import task, periodic_task
 from django.conf import settings
 import kombu.five
 import six
@@ -211,3 +211,10 @@ def deserialize_run_every_setting(run_every_setting):
         return fn(**params)
     else:
         raise generic_value_error
+
+
+def periodic_task_on_envs(envs, *args, **kwargs):
+    if settings.SERVER_ENVIRONMENT in envs:
+        return periodic_task(*args, **kwargs)
+    else:
+        return lambda fn: fn

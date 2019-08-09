@@ -33,7 +33,7 @@ from corehq.blobs.exceptions import NotFound, BadName
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.exceptions import UnknownActionType
+from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
@@ -553,10 +553,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @memoized
     def get_xml(self):
-        return self.get_attachment('form.xml')
+        try:
+            return self.get_attachment('form.xml')
+        except NotFound:
+            raise MissingFormXml(self.form_id)
 
     def xml_md5(self):
-        return self.get_attachment_meta('form.xml').content_md5()
+        try:
+            return self.get_attachment_meta('form.xml').content_md5()
+        except NotFound:
+            raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
@@ -605,9 +611,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     def __str__(self):
         return (
-            "XFormInstance("
+            "{f.doc_type}("
             "form_id='{f.form_id}', "
-            "domain='{f.domain}')"
+            "domain='{f.domain}', "
+            "xmlns='{f.xmlns}', "
+            ")"
         ).format(f=self)
 
     class Meta(object):

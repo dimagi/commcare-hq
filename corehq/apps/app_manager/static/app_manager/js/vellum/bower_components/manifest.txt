@@ -8,16 +8,16 @@
 ├─┬ bootstrap#3.3.7 (latest is 4.3.1)
 │ └── jquery#3.2.1 (3.4.1 available)
 ├── chai#4.2.0
-├── codemirror#5.30.0 (latest is 5.46.0)
+├── codemirror#5.30.0 (latest is 5.48.2)
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#2.7.4 (latest is 3.4.4)
+├── fuse.js#2.7.4 (latest is 3.4.5)
 ├── jquery#3.2.1 (latest is 3.4.1)
 ├── jsdiff#3.4.0
 ├─┬ jstree#3.3.8
 │ └── jquery#3.2.1 (3.4.1 available)
 ├── jstree-actions#0.1.4 (latest is 0.2.0)
-├── langcodes#7df8f9c4a3
-├── markdown-it#8.4.2
+├── langcodes#69dcfbadfc
+├── markdown-it#8.4.2 (latest is 9.0.1)
 ├── require-css#0.1.10
 ├── require-less#0.1.5
 ├── requirejs#2.3.6

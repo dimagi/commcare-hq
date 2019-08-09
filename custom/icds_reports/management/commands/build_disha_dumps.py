@@ -7,6 +7,7 @@ import argparse
 from django.core.management.base import BaseCommand
 
 from custom.icds_reports.reports.disha import build_dumps_for_month
+from dimagi.utils.dates import add_months_to_date
 
 
 class Command(BaseCommand):
@@ -26,6 +27,14 @@ class Command(BaseCommand):
             help="Month of DISHA dump - format = YYYY-MM-DD",
         )
         parser.add_argument(
+            '--extra_months',
+            type=int,
+            action="store",
+            dest="extra_months",
+            default=0,
+            help="Also build for next extra_months from month"
+        )
+        parser.add_argument(
             '--force-rebuild',
             action='store_true',
             default=False,
@@ -34,4 +43,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, month, rebuild, *args, **kwargs):
+        print("Building for month {}".format(str(month)))
         build_dumps_for_month(month, rebuild)
+        extra_months = kwargs.get('extra_months', 0)
+        for i in range(extra_months):
+            extra_month = add_months_to_date(month, i + 1)
+            assert extra_month < datetime.today().date(), "Building for future months is not a valid operation"
+            print("Building for extra month {}".format(str(extra_month)))
+            build_dumps_for_month(extra_month, rebuild)

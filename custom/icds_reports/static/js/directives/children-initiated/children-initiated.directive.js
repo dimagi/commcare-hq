@@ -21,7 +21,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = ['age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, the percentage that was given a timely introduction to solid, semi-solid or soft food.\n' +
         '\n' +

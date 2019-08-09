@@ -1,87 +1,85 @@
 from __future__ import absolute_import, unicode_literals
+
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from corehq import toggles
-from corehq.apps.api.odata.utils import get_case_type_to_properties, get_xmlns_by_app, get_xmlns_to_properties
+from corehq.apps.api.odata.utils import (
+    get_case_odata_fields_from_config,
+    get_form_odata_fields_from_config,
+)
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
+from corehq.util import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
+odata_auth = method_decorator([
+    basic_auth_or_try_api_key_auth,
+    require_permission(Permissions.edit_data, login_decorator=None),
+    BI_INTEGRATION_PREVIEW.required_decorator(),
+], name='dispatch')
 
+
+@odata_auth
 class ODataCaseServiceView(View):
 
-    urlname = 'odata_case_service'
+    urlname = 'odata_case_service_from_export_instance'
 
-    @method_decorator(basic_auth_or_try_api_key_auth)
-    @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain):
-        data = {
-            '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain]),
-            'value': [
-                {
-                    'name': case_type,
-                    'kind': 'EntitySet',
-                    'url': case_type,
-                }
-                for case_type in get_case_types_for_domain_es(domain)
-            ]
+    def get(self, request, domain, config_id):
+        service_document_content = {
+            '@odata.context': absolute_reverse(ODataCaseMetadataView.urlname, args=[domain, config_id]),
+            'value': [{
+                'name': 'feed',
+                'kind': 'EntitySet',
+                'url': 'feed',
+            }]
         }
-        return add_odata_headers(JsonResponse(data))
+        return add_odata_headers(JsonResponse(service_document_content))
 
 
+@odata_auth
 class ODataCaseMetadataView(View):
 
-    urlname = 'odata_case_meta'
+    urlname = 'odata_case_metadata_from_export_instance'
 
-    @method_decorator(basic_auth_or_try_api_key_auth)
-    @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain):
-        case_type_to_properties = get_case_type_to_properties(domain)
-        for case_type in case_type_to_properties:
-            case_type_to_properties[case_type] = sorted(
-                {'case_name', 'case_type', 'date_opened', 'owner_id', 'backend_id'}
-                | set(case_type_to_properties[case_type])
-            )
-        metadata = render_to_string('api/odata_metadata.xml', {
-            'case_type_to_properties': case_type_to_properties,
+    def get(self, request, domain, config_id):
+        config = get_document_or_404(CaseExportInstance, domain, config_id)
+        metadata = render_to_string('api/case_odata_metadata.xml', {
+            'fields': get_case_odata_fields_from_config(config),
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
+@odata_auth
 class ODataFormServiceView(View):
 
-    urlname = 'odata_form_service'
+    urlname = 'odata_form_service_from_export_instance'
 
-    @method_decorator(basic_auth_or_try_api_key_auth)
-    @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain, app_id):
-        data = {
-            '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain, app_id]),
-            'value': [
-                {
-                    'name': xmlns,
-                    'kind': 'EntitySet',
-                    'url': xmlns,
-                }
-                for xmlns in get_xmlns_by_app(domain, app_id)
-            ]
+    def get(self, request, domain, config_id):
+        service_document_content = {
+            '@odata.context': absolute_reverse(ODataFormMetadataView.urlname, args=[domain, config_id]),
+            'value': [{
+                'name': 'feed',
+                'kind': 'EntitySet',
+                'url': 'feed',
+            }]
         }
-        return add_odata_headers(JsonResponse(data))
+        return add_odata_headers(JsonResponse(service_document_content))
 
 
+@odata_auth
 class ODataFormMetadataView(View):
 
-    urlname = 'odata_form_meta'
+    urlname = 'odata_form_metadata_from_export_instance'
 
-    @method_decorator(basic_auth_or_try_api_key_auth)
-    @method_decorator(toggles.ODATA.required_decorator())
-    def get(self, request, domain, app_id):
-        xmlns_to_properties = get_xmlns_to_properties(domain, app_id)
-        metadata = render_to_string('api/odata_form_metadata.xml', {
-            'xmlns_to_properties': xmlns_to_properties,
+    def get(self, request, domain, config_id):
+        config = get_document_or_404(FormExportInstance, domain, config_id)
+        metadata = render_to_string('api/form_odata_metadata.xml', {
+            'fields': get_form_odata_fields_from_config(config),
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 

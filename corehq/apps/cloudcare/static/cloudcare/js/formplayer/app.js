@@ -302,6 +302,22 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
+    window.addEventListener(
+        'offline', function () {
+            showError(gettext("You are now offline. Web Apps is not optimized " +
+                "for offline use. Please reconnect to the Internet before " +
+                "continuing."), $("#cloudcare-notifications"));
+            $('.submit').prop('disabled', 'disabled');
+            $('.form-control').prop('disabled', 'disabled');
+        }
+    );
+    window.addEventListener(
+        'online', function () {
+            showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
+            $('.submit').removeAttr('disabled');
+            $('.form-control').removeAttr('disabled');
+        }
+    );
 });
 
 FormplayerFrontend.on('configureDebugger', function () {

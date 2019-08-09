@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import json
 
 from couchdbkit import ResourceNotFound
+
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
@@ -35,7 +37,13 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
 )
-from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin, ODataFeedMixin
+from corehq.apps.export.views.utils import (
+    DailySavedExportMixin,
+    DashboardFeedMixin,
+    ODataFeedMixin,
+    clean_odata_columns,
+    remove_row_number_from_export_columns,
+)
 
 
 class BaseExportView(BaseProjectDataView):
@@ -259,18 +267,30 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
     urlname = 'new_form_faily_saved_export'
 
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
     allow_deid = False
 
+    def create_new_export_instance(self, schema):
+        export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
+        remove_row_number_from_export_columns(export_instance)
+        clean_odata_columns(export_instance)
+        return export_instance
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
     allow_deid = False
+
+    def create_new_export_instance(self, schema):
+        export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
+        remove_row_number_from_export_columns(export_instance)
+        clean_odata_columns(export_instance)
+        return export_instance
 
 
 class DeleteNewCustomExportView(BaseExportView):

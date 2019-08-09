@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date, datetime
 import json
-from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
+from custom.icds_reports.utils import india_now
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
@@ -16,6 +16,7 @@ from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorEx
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
+from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 
 class TestExportData(TestCase):
     maxDiff = None
@@ -108,10 +109,83 @@ class TestExportData(TestCase):
                 "Percentage of children initiated complementary feeding (in the past 30 days)",
                 "Percentage of children initiated appropriate complementary feeding",
                 "Percentage of children receiving complementary feeding with adequate diet diversity",
-                "Percentage of children receiving complementary feeding with adequate diet quanity",
+                "Percentage of children receiving complementary feeding with adequate diet quantity",
                 "Percentage of children receiving complementary feeding with appropriate "
                 "handwashing before feeding"
             ]
+        )
+
+    def test_children_export_headers_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][0]
+        self.assertListEqual(
+            data,
+            ['State',
+             'Total no. of children weighed',
+             'Total no. of children eligible to be weighed',
+             'Weighing efficiency (in month)',
+             'Total no. of children whose height was measured',
+             'Total no. of children  eligible for measuring height',
+             'Height measurement efficiency (in month)',
+             'Total number of unweighed children (0-5 Years)',
+             'No. of severely underweight children',
+             'Total No. of children weighed',
+             'Percentage of severely underweight children',
+             'No. of moderately underweight children ',
+             'Total No. of children weighed',
+             'Percentage of moderately underweight children',
+             'No. of  children with normal weight for age',
+             'Total No. of children weighed',
+             'Percentage of normal weight-for-age children',
+             'No. of Children with severe wasting',
+             'Total number of children whose height and weight is measured',
+             'Percentage of children with severe wasting',
+             'No. of moderately wasted children',
+             'Total number of children whose height and weight is measured',
+             'Percentage of children with moderate wasting',
+             'No. of children with normal weight-for-height',
+             'Total no. of children  whose height and weight is measured',
+             'Percentage of children with normal weight-for-height',
+             'No. of severely stunted children',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with severe stunting',
+             'No. of moderately stunted children',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with moderate stunting',
+             'No. of children with normal height for age',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with normal height-for-age',
+             'No. of newborns with low birth weight',
+             'Total no. of children born and weighed in the current month',
+             'Percent of newborns with low birth weight',
+             'No. of children completed 1 year immunization',
+             'Total no. of children from age >12 months',
+             'Percentage of children with completed 1 year immunizations',
+             'No. of children breastfed at birth',
+             'Total no. of children enrolled in ICDS-CAS system and born in last month',
+             'Percentage of children breastfed at birth',
+             'No. of children exclusively breastfed',
+             'Total number of children (0-6 months) of age enrolled in ICDS-CAS system',
+             'Percentage of children exclusively breastfeeding',
+             'No. of children initiated complementary feeding (in the past 30 days)',
+             'Total no. of children (6-8 ) months of age enrolled with ICDS-CAS',
+             'Percentage of children initiated complementary feeding (in the past 30 days)',
+             'No. of children initiated appropriate complementary feeding',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children initiated appropriate complementary feeding',
+             'No.of children receiving complementary feeding with adequate diet diversity',
+             'Total number of children (6 months - 2 yrs) of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with adequate diet diversity',
+             'No. of children initiated complementary feeding with adequate diet quantity',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with adequate diet quantity',
+             'Total Number of children receiving complementary feeding with appropriate handwashing before feeding',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with appropriate handwashing before feeding']
         )
 
     def test_children_export_child_one(self):
@@ -148,6 +222,42 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_children_export_child_one_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][1]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                655, 972, '67.39 %',
+                13, 929, '1.40 %',
+                317,
+                17, 655, '2.60 %',
+                152, 655, '23.21 %',
+                486, 655, '74.20 %',
+                1, 13, '7.69 %',
+                5, 13, '38.46 %',
+                7, 13, '53.85 %',
+                5, 13, '38.46 %',
+                6, 13, '46.15 %',
+                2, 13, '15.38 %',
+                1, 2, '50.00 %',
+                164, 1134, '14.46%',
+                1, 5, '20.00 %',
+                28, 56, '50.00 %',
+                21, 32, '65.62 %',
+                76, 142, '53.52 %',
+                49, 142, '34.51 %',
+                56, 142, '39.44 %',
+                68, 142, '47.89 %'
+            ]
+        )
+
+
     def test_children_export_child_two(self):
         data = ChildrenExport(
             config={
@@ -181,6 +291,41 @@ class TestExportData(TestCase):
                 '47.89 %'
             ]
         )
+
+    def test_children_export_child_two_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][2]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                655, 972, '67.39 %',
+                13, 929, '1.40 %',
+                317,
+                17, 655, '2.60 %',
+                152, 655, '23.21 %',
+                486, 655, '74.20 %',
+                1, 13, '7.69 %',
+                5, 13, '38.46 %',
+                7, 13, '53.85 %',
+                5, 13, '38.46 %',
+                6, 13, '46.15 %',
+                2, 13, '15.38 %',
+                1, 2, '50.00 %',
+                164, 1134, '14.46%',
+                1, 5, '20.00 %',
+                28, 56, '50.00 %',
+                21, 32, '65.62 %',
+                76, 142, '53.52 %',
+                49, 142, '34.51 %',
+                56, 142, '39.44 %',
+                68, 142, '47.89 %']
+        )
+
 
     def test_children_export_child_three(self):
         data = ChildrenExport(
@@ -216,38 +361,73 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_children_export_child_three_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][3]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                655, 972, '67.39 %',
+                13, 929, '1.40 %',
+                317,
+                17, 655, '2.60 %',
+                152, 655, '23.21 %',
+                486, 655, '74.20 %',
+                1, 13, '7.69 %',
+                5, 13, '38.46 %',
+                7, 13, '53.85 %',
+                5, 13, '38.46 %',
+                6, 13, '46.15 %',
+                2, 13, '15.38 %',
+                1, 2, '50.00 %',
+                164, 1134, '14.46%',
+                1, 5, '20.00 %',
+                28, 56, '50.00 %',
+                21, 32, '65.62 %',
+                76, 142, '53.52 %',
+                49, 142, '34.51 %',
+                56, 142, '39.44 %',
+                68, 142, '47.89 %'
+            ]
+        )
+
     def test_children_export_child_four(self):
         data = ChildrenExport(
             config={
                 'domain': 'icds-cas'
             },
+            beta=True
         ).get_excel_data('b1')[0][1][4]
         self.assertListEqual(
             data,
             [
-                "st1",
-                "67.39 %",
-                "1.40 %",
+                'st1',
+                655, 972, '67.39 %',
+                13, 929, '1.40 %',
                 317,
-                "2.60 %",
-                "23.21 %",
-                "74.20 %",
-                "7.69 %",
-                "38.46 %",
-                "53.85 %",
-                '38.46 %',
-                "46.15 %",
-                "15.38 %",
-                "50.00 %",
-                "14.46%",
-                "20.00 %",
-                "50.00 %",
-                "65.62 %",
-                "53.52 %",
-                "34.51 %",
-                "39.44 %",
-                "47.89 %"
-            ]
+                17, 655, '2.60 %',
+                152, 655, '23.21 %',
+                486, 655, '74.20 %',
+                1, 13, '7.69 %',
+                5, 13, '38.46 %',
+                7, 13, '53.85 %',
+                5, 13, '38.46 %',
+                6, 13, '46.15 %',
+                2, 13, '15.38 %',
+                1, 2, '50.00 %',
+                164, 1134, '14.46%',
+                1, 5, '20.00 %',
+                28, 56, '50.00 %',
+                21, 32, '65.62 %',
+                76, 142, '53.52 %',
+                49, 142, '34.51 %',
+                56, 142, '39.44 %',
+                68, 142, '47.89 %']
         )
 
     def test_children_export_child_five(self):
@@ -284,6 +464,40 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_children_export_child_five_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][5]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                655, 972, '67.39 %',
+                13, 929, '1.40 %',
+                317,
+                17, 655, '2.60 %',
+                152, 655, '23.21 %',
+                486, 655, '74.20 %',
+                1, 13, '7.69 %',
+                5, 13, '38.46 %',
+                7, 13, '53.85 %',
+                5, 13, '38.46 %',
+                6, 13, '46.15 %',
+                2, 13, '15.38 %',
+                1, 2, '50.00 %',
+                164, 1134, '14.46%',
+                1, 5, '20.00 %',
+                28, 56, '50.00 %',
+                21, 32, '65.62 %',
+                76, 142, '53.52 %',
+                49, 142, '34.51 %',
+                56, 142, '39.44 %',
+                68, 142, '47.89 %']
+        )
+
     def test_children_export_child_six(self):
         data = ChildrenExport(
             config={
@@ -318,6 +532,41 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_children_export_child_six_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][6]
+        self.assertListEqual(
+            data,
+            [
+                'st2',
+                732, 1039, '70.45 %',
+                30, 1003, '2.99 %',
+                307,
+                18, 732, '2.46 %',
+                138, 732, '18.85 %',
+                576, 732, '78.69 %',
+                1, 23, '4.35 %',
+                4, 23, '17.39 %',
+                18, 23, '78.26 %',
+                11, 32, '34.38 %',
+                6, 32, '18.75 %',
+                15, 32, '46.88 %',
+                0, 4, '0.00 %',
+                87, 1230, '7.07%',
+                3, 6, '50.00 %',
+                13, 52, '25.00 %',
+                24, 40, '60.00 %',
+                94, 185, '50.81 %',
+                87, 185, '47.03 %',
+                62, 185, '33.51 %',
+                88, 185, '47.57 %']
+        )
+
+
     def test_children_export_child_seven(self):
         data = ChildrenExport(
             config={
@@ -350,6 +599,40 @@ class TestExportData(TestCase):
                 "33.51 %",
                 "47.57 %"
             ]
+        )
+
+    def test_children_export_child_seven_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][7]
+        self.assertListEqual(
+            data,
+            [
+                'st2',
+                732, 1039, '70.45 %',
+                30, 1003, '2.99 %',
+                307,
+                18, 732, '2.46 %',
+                138, 732, '18.85 %',
+                576, 732, '78.69 %',
+                1, 23, '4.35 %',
+                4, 23, '17.39 %',
+                18, 23, '78.26 %',
+                11, 32, '34.38 %',
+                6, 32, '18.75 %',
+                15, 32, '46.88 %',
+                0, 4, '0.00 %',
+                87, 1230, '7.07%',
+                3, 6, '50.00 %',
+                13, 52, '25.00 %',
+                24, 40, '60.00 %',
+                94, 185, '50.81 %',
+                87, 185, '47.03 %',
+                62, 185, '33.51 %',
+                88, 185, '47.57 %']
         )
 
     def test_children_export_child_eight(self):
@@ -386,6 +669,41 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_children_export_child_eight_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][8]
+        self.assertListEqual(
+            data,
+            [
+                'st2',
+                732, 1039, '70.45 %',
+                30, 1003, '2.99 %',
+                307,
+                18, 732, '2.46 %',
+                138, 732, '18.85 %',
+                576, 732, '78.69 %',
+                1, 23, '4.35 %',
+                4, 23, '17.39 %',
+                18, 23, '78.26 %',
+                11, 32, '34.38 %',
+                6, 32, '18.75 %',
+                15, 32, '46.88 %',
+                0, 4, '0.00 %',
+                87, 1230, '7.07%',
+                3, 6, '50.00 %',
+                13, 52, '25.00 %',
+                24, 40, '60.00 %',
+                94, 185, '50.81 %',
+                87, 185, '47.03 %',
+                62, 185, '33.51 %',
+                88, 185, '47.57 %']
+        )
+
+
     def test_children_export_child_nine(self):
         data = ChildrenExport(
             config={
@@ -420,6 +738,40 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_children_export_child_nine_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][9]
+        self.assertListEqual(
+            data,
+            [
+                'st2',
+                732, 1039, '70.45 %',
+                30, 1003, '2.99 %',
+                307,
+                18, 732, '2.46 %',
+                138, 732, '18.85 %',
+                576, 732, '78.69 %',
+                1, 23, '4.35 %',
+                4, 23, '17.39 %',
+                18, 23, '78.26 %',
+                11, 32, '34.38 %',
+                6, 32, '18.75 %',
+                15, 32, '46.88 %',
+                0, 4, '0.00 %',
+                87, 1230, '7.07%',
+                3, 6, '50.00 %',
+                13, 52, '25.00 %',
+                24, 40, '60.00 %',
+                94, 185, '50.81 %',
+                87, 185, '47.03 %',
+                62, 185, '33.51 %',
+                88, 185, '47.57 %']
+        )
+
     def test_children_export_child_ten(self):
         data = ChildrenExport(
             config={
@@ -452,6 +804,40 @@ class TestExportData(TestCase):
                 "33.51 %",
                 "47.57 %"
             ]
+        )
+
+    def test_children_export_child_ten_beta(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][10]
+        self.assertListEqual(
+            data,
+            [
+                'st2',
+                732, 1039, '70.45 %',
+                30, 1003, '2.99 %',
+                307,
+                18, 732, '2.46 %',
+                138, 732, '18.85 %',
+                576, 732, '78.69 %',
+                1, 23, '4.35 %',
+                4, 23, '17.39 %',
+                18, 23, '78.26 %',
+                11, 32, '34.38 %',
+                6, 32, '18.75 %',
+                15, 32, '46.88 %',
+                0, 4, '0.00 %',
+                87, 1230, '7.07%',
+                3, 6, '50.00 %',
+                13, 52, '25.00 %',
+                24, 40, '60.00 %',
+                94, 185, '50.81 %',
+                87, 185, '47.03 %',
+                62, 185, '33.51 %',
+                88, 185, '47.57 %']
         )
 
     def test_pregnant_women_export(self):
@@ -2216,4 +2602,167 @@ class TestExportData(TestCase):
         self.assertListEqual(
             data,
             expected
+        )
+
+    def test_thr_report(self):
+        location = 'b1'
+
+        data = TakeHomeRationExport(
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=3
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
+                                    'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
+                                    'Total No. of Beneficiaries received THR>=21 days in given month',
+                                    'Total No of Pictures taken by AWW'],
+                                   ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
+                                    'Data Not Entered', 2, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered',
+                                    11, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered',
+                                    10, 0, 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered',
+                                    15, 1, 4],
+                                   ['st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
+             ['Export Info', [
+                 ['Generated at', india_now()],
+                 ['State', 'st1'],
+                 ['Supervisor', 's1'],
+                 ['Block', 'b1'],
+                 ['Month', 'May'],
+                 ['Year', 2017]]
+              ]
+
+             ]
+        )
+
+    def test_thr_report_export_info_national_level(self):
+        location = ''
+        data = TakeHomeRationExport(
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=0
+        ).get_excel_data()
+
+        self.assertListEqual(
+            data,
+            [['Take Home Ration', [
+                ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                 'Total No. of Beneficiaries eligible for THR',
+                 'Total No. of Beneficiaries received THR>=21 days in given month',
+                 'Total No of Pictures taken by AWW'],
+                ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered', 'Data Not Entered', 2, 0, 0],
+                ['st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered', 11, 0, 0],
+                ['st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered', 10, 0, 0],
+                ['st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered', 15, 1, 4],
+                ['st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a11', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a19', 'Data Not Entered', 'Data Not Entered', 11, 8, 0],
+                ['st1', 'd1', 'b2', 's3', 'a27', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a3', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', 2, 0, 0],
+                ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', 10, 0, 0],
+                ['st1', 'd1', 'b2', 's4', 'a12', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's4', 'a20', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', 5, 0, 0],
+                ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', 20, 0, 0],
+                ['st1', 'd1', 'b2', 's4', 'a4', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b2', 's4', 'a44', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a13', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a21', 'Data Not Entered', 'Data Not Entered', 14, 13, 0],
+                ['st2', 'd2', 'b3', 's5', 'a29', 'Data Not Entered', 'Data Not Entered', 2, 1, 0],
+                ['st2', 'd2', 'b3', 's5', 'a37', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a45', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's5', 'a5', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's6', 'a14', 'Data Not Entered', 'Data Not Entered', 8, 0, 0],
+                ['st2', 'd2', 'b3', 's6', 'a22', 'Data Not Entered', 'Data Not Entered', 16, 3, 0],
+                ['st2', 'd2', 'b3', 's6', 'a30', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd2', 'b3', 's6', 'a38', 'Data Not Entered', 'Data Not Entered', 6, 2, 0],
+                ['st2', 'd2', 'b3', 's6', 'a46', 'Data Not Entered', 'Data Not Entered', 67, 58, 0],
+                ['st2', 'd2', 'b3', 's6', 'a6', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a15', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a23', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a31', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's7', 'a39', 'Data Not Entered', 'Data Not Entered', 9, 0, 0],
+                ['st2', 'd3', 'b4', 's7', 'a47', 'Data Not Entered', 'Data Not Entered', 8, 1, 0],
+                ['st2', 'd3', 'b4', 's7', 'a7', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's8', 'a16', 'Data Not Entered', 'Data Not Entered', 7, 0, 0],
+                ['st2', 'd3', 'b4', 's8', 'a24', 'Data Not Entered', 'Data Not Entered', 14, 12, 0],
+                ['st2', 'd3', 'b4', 's8', 'a32', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's8', 'a40', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st2', 'd3', 'b4', 's8', 'a48', 'aww_name48', '91552222', 22, 9, 0],
+                ['st2', 'd3', 'b4', 's8', 'a8', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st3', 'd4', 'b5', 's20', 'a101', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st4', 'd5', 'b6', 's21', 'a102', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st5', 'd6', 'b7', 's22', 'a103', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st6', 'd7', 'b8', 's23', 'a104', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
+                ['st7', 'd8', 'b9', 's24', 'a105', 'Data Not Entered', 'Data Not Entered', 1, 0, 0]]],
+             ['Export Info', [
+                 ['Generated at', india_now()],
+                 ['Location', 'National'],
+                 ['Month', 'May'],
+                 ['Year', 2017]]
+              ]
+             ]
         )
