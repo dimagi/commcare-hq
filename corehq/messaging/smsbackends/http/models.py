@@ -4,7 +4,7 @@ import sys
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms.fields import *  # noqa: F403
+from django.forms.fields import BooleanField, ChoiceField
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -13,7 +13,6 @@ from crispy_forms import layout as crispy
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.request import urlopen
 
-from dimagi.ext.couchdbkit import *  # noqa: F403
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq.apps.reminders.forms import RecordListField
@@ -53,7 +52,10 @@ class HttpBackendForm(BackendForm):
     def __init__(self, *args, **kwargs):
         if "initial" in kwargs and "additional_params" in kwargs["initial"]:
             additional_params_dict = kwargs["initial"]["additional_params"]
-            kwargs["initial"]["additional_params"] = [{"name" : key, "value" : value} for key, value in additional_params_dict.items()]
+            kwargs["initial"]["additional_params"] = [
+                {"name": key, "value": value}
+                for key, value in additional_params_dict.items()
+            ]
         super(HttpBackendForm, self).__init__(*args, **kwargs)
 
     def clean_url(self):
@@ -146,10 +148,10 @@ class SQLHttpBackend(SQLSMSBackend):
         url_params = urlencode(params)
         try:
             if config.method == "GET":
-                response = urlopen("%s?%s" % (config.url, url_params),
+                urlopen("%s?%s" % (config.url, url_params),
                     timeout=settings.SMS_GATEWAY_TIMEOUT).read()
             else:
-                response = urlopen(config.url, url_params,
+                urlopen(config.url, url_params,
                     timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         except Exception as e:
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
