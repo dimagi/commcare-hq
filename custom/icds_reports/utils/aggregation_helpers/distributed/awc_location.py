@@ -41,8 +41,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         )
 
     def generate_csv(self):
-        domain_locations = SQLLocation.objects.filter(domain=self.domain).values(
-            'pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+        domain_locations = _get_all_locations_for_domain(self.domain)
         locations_by_pk = {
             loc['pk']: loc
             for loc in domain_locations
@@ -94,7 +93,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 
         cursor.execute(self.drop_temporary_table_query())
         cursor.execute(self.create_temporary_table_query())
-        self.aggregate_query(cursor, location_csv)
+        self.aggregate_to_temporary_table(cursor, location_csv)
         cursor.execute(self.aww_query)
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
         for rollup_query in rollup_queries:
@@ -345,3 +344,11 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             tmp_local_tablename='tmp_awc_local',
             local_tablename=self.local_tablename
         )
+
+
+def _get_all_locations_for_domain(domain):
+    return (
+        SQLLocation.objects
+        .filter(domain=domain)
+        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+    )

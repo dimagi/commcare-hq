@@ -41,8 +41,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         )
 
     def generate_csv(self):
-        domain_locations = SQLLocation.objects.filter(domain=self.domain).values(
-            'pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+        domain_locations = _get_all_locations_for_domain(self.domain)
         locations_by_pk = {
             loc['pk']: loc
             for loc in domain_locations
@@ -342,3 +341,11 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             tablename=self.base_tablename,
             local_tablename=self.local_tablename
         )
+
+
+def _get_all_locations_for_domain(domain):
+    return (
+        SQLLocation.objects
+        .filter(domain=domain)
+        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+    )
