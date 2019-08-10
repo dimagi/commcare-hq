@@ -94,7 +94,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         cursor.execute(self.drop_temporary_table_query())
         cursor.execute(self.create_temporary_table_query())
         self.aggregate_to_temporary_table(cursor, location_csv)
-        cursor.execute(self.aww_query)
+        cursor.execute(self.aww_query())
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
@@ -104,7 +104,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         # TODO figure what to do with these
 
         cursor.execute(self.delete_old_locations())
-        cursor.execte(self.move_data_to_real_table())
+        cursor.execute(self.move_data_to_real_table())
         cursor.execute(self.create_local_table())
 
     @property
@@ -131,7 +131,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         )
 
     def assert_no_awc_missing_from_new_table(self, cursor):
-        cursor.exectue(
+        cursor.execute(
             """
             SELECT count(*)
             FROM "{tablename}"
@@ -147,10 +147,10 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         )
         num_locations_missing = cursor.fetchone()[0]
         if num_locations_missing:
-            raise LocationRemovedException(num_locations_missing)
+            raise LocationRemovedException(str(num_locations_missing))
 
     def generate_diff_of_tables(self, cursor):
-        cursor.exectue(
+        cursor.execute(
             """
             SELECT doc_id
             FROM "{temporary_tablename}"
@@ -166,7 +166,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         )
         changed_awc_ids = [row[0] for row in cursor.fetchall()]
         if changed_awc_ids:
-            return
+            return None, None
 
         cursor.execute(
             """
@@ -349,6 +349,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
-        .filter(domain=domain)
+        .filter(domain=domain, is_archived=False)
         .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
     )
