@@ -134,23 +134,29 @@ def _get_helper(helper_cls):
 def _get_helper_sql(helper_cls):
     helper = _get_helper(helper_cls)
     mock_cursor = MockCursor()
-    with patch(
+    monolith_patch = patch(
         'custom.icds_reports.utils.aggregation_helpers.monolith.awc_location._get_all_locations_for_domain',
-        return_value=[]):
-        with patch(
-            'custom.icds_reports.utils.aggregation_helpers.distributed.awc_location._get_all_locations_for_domain',
-            return_value=[]):
-            if hasattr(helper, 'aggregate'):
-                try:
-                    helper.aggregate(mock_cursor)
-                except AttributeError as e:
-                    # For locations we use psycopg2's cursor to do a CSV copy to
-                    if "'MockCursor' object has no attribute 'cursor'" not in str(e):
-                        raise
-            elif hasattr(helper, 'query'):
-                mock_cursor.execute(helper.query())
-            elif helper is not None:
-                raise AssertionError("Unexepcted helper type: {}".format(helper_cls))
+        return_value=[])
+    distributed_patch = patch(
+        'custom.icds_reports.utils.aggregation_helpers.distributed.awc_location._get_all_locations_for_domain',
+        return_value=[])
+    monolith_patch.start()
+    distributed_patch.start()
+
+    if hasattr(helper, 'aggregate'):
+        try:
+            helper.aggregate(mock_cursor)
+        except AttributeError as e:
+            # For locations we use psycopg2's cursor to do a CSV copy to
+            if "'MockCursor' object has no attribute 'cursor'" not in str(e):
+                raise
+    elif hasattr(helper, 'query'):
+        mock_cursor.execute(helper.query())
+    elif helper is not None:
+        raise AssertionError("Unexepcted helper type: {}".format(helper_cls))
+
+    monolith_patch.stop()
+    distributed_patch.stop()
 
     return mock_cursor.compile_output()
 

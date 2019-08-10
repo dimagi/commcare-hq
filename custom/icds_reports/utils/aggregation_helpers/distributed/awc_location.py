@@ -141,9 +141,9 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 WHERE aggregation_level = 5
             )
             """.format(
-            tablename=self.base_tablename,
+                tablename=self.base_tablename,
                 temporary_tablename=self.temporary_tablename,
-        )
+            )
         )
         num_locations_missing = cursor.fetchone()[0]
         if num_locations_missing:
