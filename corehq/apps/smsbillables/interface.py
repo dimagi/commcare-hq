@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from django.db.models.aggregates import Count
 from corehq.apps.accounting.filters import DateCreatedFilter
 from corehq.apps.reports.datatables import (
@@ -155,7 +156,7 @@ class SMSBillablesInterface(GenericTabularReport):
     def sms_billables(self):
         selected_billables = SmsBillable.objects.filter(
             date_sent__gte=DateSentFilter.get_start_date(self.request),
-            date_sent__lte=DateSentFilter.get_end_date(self.request),
+            date_sent__lt=DateSentFilter.get_end_date(self.request) + datetime.timedelta(days=1),
         )
         if DateCreatedFilter.use_filter(self.request):
             selected_billables = selected_billables.filter(
