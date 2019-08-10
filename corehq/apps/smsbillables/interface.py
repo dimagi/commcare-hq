@@ -160,9 +160,8 @@ class SMSBillablesInterface(GenericTabularReport):
         )
         if DateCreatedFilter.use_filter(self.request):
             selected_billables = selected_billables.filter(
-                date_created__gte=DateCreatedFilter.get_start_date(
-                    self.request),
-                date_created__lte=DateCreatedFilter.get_end_date(self.request),
+                date_created__gte=DateCreatedFilter.get_start_date(self.request),
+                date_created__lt=DateCreatedFilter.get_end_date(self.request) + datetime.timedelta(days=1),
             )
         show_billables = ShowBillablesFilter.get_value(
             self.request, self.domain)
