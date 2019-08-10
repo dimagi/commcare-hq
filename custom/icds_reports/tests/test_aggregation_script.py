@@ -515,12 +515,12 @@ class InactiveAWWsTest(TestCase):
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
-class AwcLocationAggregationTest(TestCase):
+class LocationAggregationTest(TestCase):
     domain_name = 'icds-cas'
 
     @classmethod
     def setUpClass(cls):
-        super(AwcLocationAggregationTest, cls).setUpClass()
+        super(LocationAggregationTest, cls).setUpClass()
 
         # save locations that are setup in module so we can add them back later
         cls.all_locations = list(SQLLocation.objects.filter(domain=cls.domain_name).all())
@@ -558,7 +558,7 @@ class AwcLocationAggregationTest(TestCase):
         LocationType.objects.filter(domain=cls.domain_name).delete()
         LocationType.objects.bulk_create(cls.all_location_types)
         SQLLocation.objects.bulk_create(cls.all_locations)
-        super(AwcLocationAggregationTest, cls).tearDownClass()
+        super(LocationAggregationTest, cls).tearDownClass()
 
     def test_number_rows_csv(self):
         csv = self.helper.generate_csv()
