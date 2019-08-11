@@ -5,7 +5,6 @@ import re
 from datetime import date, datetime, time
 from decimal import Decimal
 
-from django.db import transaction
 from django.test.testcases import TestCase, override_settings
 
 import six
@@ -574,14 +573,16 @@ class LocationAggregationTest(TestCase):
                 with get_cursor(AwcLocation) as cursor:
                     self.helper.aggregate(cursor)
 
-            before_delete = transaction.savepoint()
+            try:
+                with maybe_atomic(AwcLocation):
+                    # run agg again without any locations in awc_location
+                    with get_cursor(AwcLocation) as cursor:
+                        cursor.execute("DELETE FROM awc_location")
+                        self.helper.aggregate(cursor)
 
-            # run agg again without any locations in awc_location
-            with get_cursor(AwcLocation) as cursor:
-                cursor.execute("DELETE FROM awc_location")
-                self.helper.aggregate(cursor)
-
-            self.assertEqual(AwcLocation.objects.count(), 8)
-
-            # rollback to original definition of awc_location
-            transaction.savepoint_rollback(before_delete)
+                    self.assertEqual(AwcLocation.objects.count(), 8)
+                    raise Exception("Don't allow this to be commited")
+            except Exception as e:
+                if 'allow this' in e:
+                    pass
+                raise
