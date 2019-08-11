@@ -583,6 +583,5 @@ class LocationAggregationTest(TestCase):
                     self.assertEqual(AwcLocation.objects.count(), 8)
                     raise Exception("Don't allow this to be commited")
             except Exception as e:
-                if 'allow this' in e:
-                    pass
-                raise
+                if 'allow this' not in e:
+                    raise
