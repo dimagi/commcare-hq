@@ -5,13 +5,20 @@ import ghdiff
 from memoized import memoized
 from six.moves import zip
 
-from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
+from corehq.apps.translations.app_translations.download import (
+    get_bulk_app_sheets_by_name,
+    get_bulk_app_single_sheet_by_name,
+)
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
     get_unicode_dicts,
     is_form_sheet,
     is_module_sheet,
     is_modules_and_forms_sheet,
+    is_single_sheet,
+)
+from corehq.apps.translations.const import (
+    SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
 
@@ -35,28 +42,48 @@ class UploadedTranslationsValidator(object):
         self.headers = None
         self.expected_rows = None
         self.lang_prefix = lang_prefix
-        self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
         self.default_language_column = self.lang_prefix + self.app.default_language
-        if lang_to_compare in app.langs and lang_to_compare != self.app.default_language:
-            self.lang_cols_to_compare.append(self.lang_prefix + lang_to_compare)
-            target_lang = lang_to_compare
+        self.lang_to_compare = lang_to_compare
+        self.single_sheet = False
+        self._setup()
+
+    def _setup(self):
+        if self.lang_to_compare:
+            # assume its a single sheet workbook if there is a language
+            self.single_sheet = True
+            self._ensure_single_sheet()
+            target_lang = self.lang_to_compare
+            self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
         else:
             target_lang = self.app.default_language
+            self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
         self.app_translation_generator = AppTranslationsGenerator(
             self.app.domain, self.app.get_id, None, self.app.default_language, target_lang,
             self.lang_prefix)
 
+    def _ensure_single_sheet(self):
+        sheet = self.uploaded_workbook.worksheets[0]
+        if not is_single_sheet(sheet.title):
+            raise Exception("Expected single sheet with title %s" % SINGLE_SHEET_NAME)
+
     def _generate_expected_headers_and_rows(self):
         self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
             self.app,
+            lang=self.lang_to_compare,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
         )}
-        self.expected_rows = get_bulk_app_sheets_by_name(
-            self.app,
-            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
-        )
+        if self.single_sheet:
+            self.expected_rows = get_bulk_app_single_sheet_by_name(
+                self.app,
+                self.lang_to_compare,
+            )
+        else:
+            self.expected_rows = get_bulk_app_sheets_by_name(
+                self.app,
+                exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
+                exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
+            )
 
     @memoized
     def _get_header_index(self, sheet_name, header):
