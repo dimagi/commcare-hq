@@ -8,6 +8,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, FormNotFoundException
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_INFO_HEADERS,
     SINGLE_SHEET_NAME,
 )
 from corehq.util.python_compatibility import soft_assert_type_text
@@ -38,11 +39,8 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
     lang_list = default_lang_list + image_lang_list + audio_lang_list + video_lang_list
 
     if lang:
-        return ((SINGLE_SHEET_NAME, (
-            'menu_or_form',
-            'case_property',        # modules only
-            'list_or_detail',       # modules only
-            'label',                # forms only
+        return ((SINGLE_SHEET_NAME, tuple(
+            SINGLE_SHEET_INFO_HEADERS
         ) + tuple(lang_list) + ('unique_id',)),)
 
     headers = []
