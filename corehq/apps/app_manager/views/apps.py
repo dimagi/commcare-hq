@@ -393,7 +393,7 @@ def copy_app(request, domain):
     form = CopyApplicationForm(domain, app, request.POST)
     if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
-        return view_generic(request, domain, app_id=app_id, copy_app_form=form)
+        return view_generic(request, domain, app_id, copy_app_form=form)
 
     def _inner(request, link_domain, data, master_domain=domain):
         clear_app_cache(request, link_domain)

@@ -49,7 +49,7 @@ import six
 
 
 @retry_resource(3)
-def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
+def view_generic(request, domain, app_id, module_id=None, form_id=None,
                  copy_app_form=None, release_manager=False,
                  module_unique_id=None, form_unique_id=None):
     """
