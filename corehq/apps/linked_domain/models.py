@@ -36,7 +36,8 @@ class DomainLink(models.Model):
 
     # used for linking across remote instances of HQ
     remote_base_url = models.CharField(max_length=255, null=True, blank=True,
-                                       help_text=_("should be the full link with the trailing /"))
+                                       help_text=_("should be the full link with the trailing /. "
+                                                   "Example: https://www.commcarehq.org/"))
     remote_username = models.CharField(max_length=255, null=True, blank=True)
     remote_api_key = models.CharField(max_length=255, null=True, blank=True)
 
