@@ -551,7 +551,7 @@ def import_app(request, domain):
 
 @require_GET
 @require_deploy_apps
-def app_settings(request, domain, app_id=None):
+def app_settings(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
 
