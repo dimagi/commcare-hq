@@ -18,6 +18,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_single_sheet,
 )
 from corehq.apps.translations.const import (
+    SINGLE_SHEET_INFO_HEADERS,
     SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
@@ -127,6 +128,10 @@ class UploadedTranslationsValidator(object):
         for uploaded_row in uploaded_rows:
             parsed_uploaded_rows.append([uploaded_row.get(column_name) for column_name in columns_to_compare])
 
+        return self._generate_diff(parsed_expected_rows, parsed_uploaded_rows)
+
+    @staticmethod
+    def _generate_diff(parsed_expected_rows, parsed_uploaded_rows):
         expected_rows_as_string = '\n'.join([', '.join(row) for row in parsed_expected_rows])
         uploaded_rows_as_string = '\n'.join([', '.join(row) for row in parsed_uploaded_rows])
         diff = ghdiff.diff(expected_rows_as_string, uploaded_rows_as_string, css=False)
@@ -135,8 +140,42 @@ class UploadedTranslationsValidator(object):
         return diff
 
     def compare(self):
-        msgs = {}
         self._generate_expected_headers_and_rows()
+        if self.single_sheet:
+            return self._compare_single_sheet()
+        else:
+            return self._compare_multiple_sheets()
+
+    def _compare_single_sheet(self):
+        sheet = self.uploaded_workbook.worksheets[0]
+        columns_to_compare = SINGLE_SHEET_INFO_HEADERS + self.lang_cols_to_compare
+        parsed_expected_rows = self._processed_single_sheet_expected_rows(self.expected_rows[sheet.title],
+                                                                          columns_to_compare)
+        parsed_uploaded_rows = self._processed_single_sheet_uploaded_rows(get_unicode_dicts(sheet),
+                                                                          columns_to_compare)
+        return {sheet.title: self._generate_diff(parsed_expected_rows, parsed_uploaded_rows)}
+
+    def _processed_single_sheet_expected_rows(self, expected_rows, columns_to_compare):
+        parsed_expected_rows = []
+        for expected_row in expected_rows:
+            _parsed_row = []
+            for column_name in columns_to_compare:
+                column_value = expected_row[self._get_header_index(SINGLE_SHEET_NAME, column_name)]
+                if column_value is None:
+                    column_value = ''
+                _parsed_row.append(column_value)
+            parsed_expected_rows.append(_parsed_row)
+        return parsed_expected_rows
+
+    @staticmethod
+    def _processed_single_sheet_uploaded_rows(uploaded_rows, columns_to_compare):
+        return [
+            [uploaded_row.get(column_name) for column_name in columns_to_compare]
+            for uploaded_row in uploaded_rows
+        ]
+
+    def _compare_multiple_sheets(self):
+        msgs = {}
         for sheet in self.uploaded_workbook.worksheets:
             sheet_name = sheet.worksheet.title
             # if sheet is not in the expected rows, ignore it. This can happen if the module/form sheet is excluded
