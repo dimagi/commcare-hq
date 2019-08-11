@@ -49,7 +49,7 @@ import six
 
 
 @retry_resource(3)
-def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
+def view_generic(request, domain, app_id, module_id=None, form_id=None,
                  copy_app_form=None, release_manager=False,
                  module_unique_id=None, form_unique_id=None):
     """
@@ -59,73 +59,67 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if form_id and not module_id and module_unique_id is None:
         return bail(request, domain, app_id)
 
-    app = module = form = None
-    try:
-        if app_id:
-            app = get_app(domain, app_id)
+    app = get_app(domain, app_id)
+    module = form = None
 
-        if module_id:
-            try:
-                module = app.get_module(module_id)
-            except ModuleNotFoundException:
-                raise Http404()
-            if not module.unique_id:
-                module.get_or_create_unique_id()
-                app.save()
-        elif module_unique_id:
-            try:
-                module = app.get_module_by_unique_id(module_unique_id)
-            except ModuleNotFoundException:
-                raise Http404()
-            module_id = module.id
+    if module_id:
+        try:
+            module = app.get_module(module_id)
+        except ModuleNotFoundException:
+            raise Http404()
+        if not module.unique_id:
+            module.get_or_create_unique_id()
+            app.save()
+    elif module_unique_id:
+        try:
+            module = app.get_module_by_unique_id(module_unique_id)
+        except ModuleNotFoundException:
+            raise Http404()
+        module_id = module.id
 
-        if form_id and module is not None:
-            try:
-                form = module.get_form(form_id)
-            except IndexError:
-                raise Http404()
-        elif form_unique_id:
-            try:
-                form = app.get_form(form_unique_id)
-            except FormNotFoundException:
-                raise Http404()
-            form_id = form.id
+    if form_id and module is not None:
+        try:
+            form = module.get_form(form_id)
+        except IndexError:
+            raise Http404()
+    elif form_unique_id:
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            raise Http404()
+        form_id = form.id
 
-        if form is not None and module is None:
-            # this is the case where only the form_unique_id is given
-            module = form.get_module()
-            module_id = module.id
-
-    except (ModuleNotFoundException, FormNotFoundException):
-        return bail(request, domain, app_id)
+    if form is not None and module is None:
+        # this is the case where only the form_unique_id is given
+        module = form.get_module()
+        module_id = module.id
 
     # Application states that should no longer exist
-    if app:
-        if app.application_version == APP_V1:
-            _assert = soft_assert()
-            _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-            return render(request, "app_manager/no_longer_supported.html", {
-                'domain': domain,
-                'app': app,
-            })
-        if not app.vellum_case_management and not app.is_remote_app():
-            # Soft assert but then continue rendering; template will contain a user-facing warning
-            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-            _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
-        if (form is not None and "usercase_preload" in getattr(form, "actions", {})
-                and form.actions.usercase_preload.preload):
-            _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
-            _assert(False, 'User property easy refs + old-style config = bad', {
-                'domain': domain,
-                'app_id': app_id,
-                'module_id': module_id,
-                'module_unique_id': module_unique_id,
-                'form_id': form_id,
-                'form_unique_id': form_unique_id,
-            })
+    if app.application_version == APP_V1:
+        _assert = soft_assert()
+        _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
+        return render(request, "app_manager/no_longer_supported.html", {
+            'domain': domain,
+            'app': app,
+        })
+    if not app.vellum_case_management and not app.is_remote_app():
+        # Soft assert but then continue rendering; template will contain a user-facing warning
+        _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+        _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
+    if (form is not None and "usercase_preload" in getattr(form, "actions", {})
+            and form.actions.usercase_preload.preload):
+        _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
+        _assert(False, 'User property easy refs + old-style config = bad', {
+            'domain': domain,
+            'app_id': app_id,
+            'module_id': module_id,
+            'module_unique_id': module_unique_id,
+            'form_id': form_id,
+            'form_unique_id': form_unique_id,
+        })
 
     context = get_apps_base_context(request, domain, app)
-    if app and app.copy_of:
+    if app.copy_of:
         # redirect to "main" app rather than specific build
         return HttpResponseRedirect(reverse(
             "view_app", args=[domain, app.copy_of]
@@ -137,10 +131,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     lang = context['lang']
-    if app and not module and hasattr(app, 'translations'):
+    if not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(lang, {})})
 
-    if app and not app.is_remote_app():
+    if not app.is_remote_app():
         context.update({
             'add_ons': add_ons.get_dict(request, app, module, form),
             'add_ons_layout': add_ons.get_layout(request),
@@ -157,7 +151,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(request, app, module, lang)
         context.update(module_context)
-    elif app:
+    else:
         context.update(get_app_view_context(request, app))
 
         template = 'app_manager/app_view_settings.html'
@@ -168,9 +162,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update({
             'is_app_settings_page': not release_manager,
         })
-    else:
-        from corehq.apps.dashboard.views import DomainDashboardView
-        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -261,7 +252,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 and get_domain_master_link(request.domain).master_domain == d.name)
     ]
     domain_names.sort()
-    if app and copy_app_form is None:
+    if copy_app_form is None:
         copy_app_form = CopyApplicationForm(domain, app)
         context.update({
             'domain_names': domain_names,
@@ -274,7 +265,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
-    if app and not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
+    if not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
@@ -307,7 +298,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         })
 
     context.update({
-        'show_live_preview': app and should_show_preview_app(
+        'show_live_preview': should_show_preview_app(
             request,
             app,
             request.couch_user.username
