@@ -33,16 +33,20 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('path')
+        parser.add_argument('--state-dir',
+            default=os.environ.get("CCHQ_MIGRATION_STATE_DIR"),
+            required="CCHQ_MIGRATION_STATE_DIR" not in os.environ,
+            help="""
+                Directory for couch2sql logs and migration state. This must not
+                reside on an NFS volume for migration state consistency.
+                Can be set in environment: CCHQ_MIGRATION_STATE_DIR
+            """)
         parser.add_argument('--strict', action='store_true', default=False,
                             help="Abort domain migration even for diffs in deleted doc types")
-        parser.add_argument('--log-dir', help="""
-            Directory for couch2sql logs, which are not written if this is not
-            provided. Standard HQ logs will be used regardless of this setting.
-        """)
 
-    def handle(self, path, **options):
+    def handle(self, path, state_dir, **options):
         self.strict = options['strict']
-        setup_logging(options['log_dir'])
+        setup_logging(state_dir)
 
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
@@ -54,7 +58,7 @@ class Command(BaseCommand):
         log.info("Processing {} domains\n".format(len(domains)))
         for domain in domains:
             try:
-                success, reason = self.migrate_domain(domain)
+                success, reason = self.migrate_domain(domain, state_dir)
                 if not success:
                     failed.append((domain, reason))
             except Exception as err:
@@ -68,7 +72,7 @@ class Command(BaseCommand):
         else:
             log.info("All migrations successful!")
 
-    def migrate_domain(self, domain):
+    def migrate_domain(self, domain, state_dir):
         if should_use_sql_backend(domain):
             log.error("{} already on the SQL backend\n".format(domain))
             return True, None
@@ -79,13 +83,13 @@ class Command(BaseCommand):
 
         set_couch_sql_migration_started(domain)
 
-        do_couch_to_sql_migration(domain, with_progress=False, debug=False)
+        do_couch_to_sql_migration(domain, state_dir, with_progress=False)
 
-        stats = get_diff_stats(domain, self.strict)
+        stats = get_diff_stats(domain, state_dir, self.strict)
         if stats:
             header = "Migration has diffs: {}".format(domain)
             log.error(format_diff_stats(stats, header))
-            self.abort(domain)
+            self.abort(domain, state_dir)
             return False, "has diffs"
 
         assert couch_sql_migration_in_progress(domain)
@@ -93,14 +97,14 @@ class Command(BaseCommand):
         log.info("Domain migrated: {}\n".format(domain))
         return True, None
 
-    def abort(self, domain):
+    def abort(self, domain, state_dir):
         set_couch_sql_migration_not_started(domain)
         clear_local_domain_sql_backend_override(domain)
-        blow_away_migration(domain)
+        blow_away_migration(domain, state_dir)
 
 
-def get_diff_stats(domain, strict=True):
-    db = open_state_db(domain)
+def get_diff_stats(domain, state_dir, strict=True):
+    db = open_state_db(domain, state_dir)
     diff_stats = db.get_diff_stats()
 
     stats = {}

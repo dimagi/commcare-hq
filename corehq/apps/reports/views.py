@@ -1960,8 +1960,15 @@ def unarchive_form(request, domain, instance_id):
 def _get_data_cleaning_updates(request, old_properties):
     updates = {}
     properties = json.loads(request.POST.get('properties'))
+
+    def _get_value(val_or_dict):
+        if isinstance(val_or_dict, dict):
+            return val_or_dict.get('value')
+        else:
+            return val_or_dict
+
     for prop, value in six.iteritems(properties):
-        if prop not in old_properties or old_properties[prop] != value:
+        if prop not in old_properties or _get_value(old_properties[prop]) != value:
             updates[prop] = value
     return updates
 

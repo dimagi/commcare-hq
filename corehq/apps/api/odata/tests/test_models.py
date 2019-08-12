@@ -1,15 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from django.test import TestCase
 
 from corehq.apps.export.const import CASE_ID_TO_LINK, FORM_ID_TO_LINK
 from corehq.apps.export.models import (
     CaseExportInstance,
-    FormExportInstance,
     ExportColumn,
     ExportInstance,
     ExportItem,
+    FormExportInstance,
     PathNode,
     RowNumberColumn,
     TableConfiguration,

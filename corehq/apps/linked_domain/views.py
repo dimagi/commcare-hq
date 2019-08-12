@@ -2,15 +2,28 @@ from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime
 
+from django.contrib import messages
 from django.db.models.expressions import RawSQL
-from django.http import JsonResponse, Http404
+from django.http import (
+    JsonResponse,
+    Http404,
+    HttpResponseRedirect,
+)
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext
 from django.views import View
+from django.urls import reverse
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_apps_in_domain,
+    get_latest_released_app,
+    get_latest_released_app_versions_by_app_id,
+)
+from corehq.apps.app_manager.decorators import require_can_edit_apps
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
 from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
@@ -23,7 +36,12 @@ from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models, get_user_roles
 from corehq.apps.linked_domain.models import AppLinkDetail, wrap_detail, DomainLinkHistory, DomainLink
 from corehq.apps.linked_domain.updates import update_model_type
-from corehq.apps.linked_domain.util import convert_app_for_remote_linking, server_to_user_time
+from corehq.apps.linked_domain.util import (
+    convert_app_for_remote_linking,
+    server_to_user_time,
+    pull_missing_multimedia_for_app,
+)
+from corehq.apps.linked_domain.tasks import pull_missing_multimedia_for_app_and_notify_task
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
@@ -48,6 +66,18 @@ def custom_data_models(request, domain):
 @require_linked_domain
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
+
+
+@login_or_api_key
+@require_linked_domain
+def brief_apps(request, domain):
+    return JsonResponse({'brief_apps': get_brief_apps_in_domain(domain, include_remote=False)})
+
+
+@login_or_api_key
+@require_linked_domain
+def released_app_versions(request, domain):
+    return JsonResponse({'versions': get_latest_released_app_versions_by_app_id(domain, include_remote=False)})
 
 
 @login_or_api_key
@@ -80,6 +110,20 @@ def get_latest_released_app_source(request, domain, app_id):
     return JsonResponse(convert_app_for_remote_linking(latest_master_build))
 
 
+@require_can_edit_apps
+def pull_missing_multimedia(request, domain, app_id):
+    async_update = request.POST.get('notify') == 'on'
+    if async_update:
+        pull_missing_multimedia_for_app_and_notify_task.delay(domain, app_id, request.user.email)
+        messages.success(request,
+                         ugettext('Your request has been submitted. '
+                                  'We will notify you via email once completed.'))
+    else:
+        app = get_app(domain, app_id)
+        pull_missing_multimedia_for_app(app)
+    return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
+
+
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
     page_title = ugettext_lazy("Linked Projects")
@@ -104,7 +148,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         if master_link:
             linked_apps = {
                 app._id: app for app in get_brief_apps_in_domain(self.domain)
-                if app.doc_type == 'LinkedApplication'
+                if is_linked_app(app)
             }
             models_seen = set()
             history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
@@ -301,7 +345,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def linked_app_names(self, domain):
         return {
             app._id: app.name for app in get_brief_apps_in_domain(domain)
-            if app.doc_type == 'LinkedApplication'
+            if is_linked_app(app)
         }
 
     def _make_model_cell(self, record):

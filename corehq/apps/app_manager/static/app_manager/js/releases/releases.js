@@ -43,6 +43,24 @@ hqDefine('app_manager/js/releases/releases', function () {
             return profiles;
         };
 
+        self.upstream_app_name = ko.computed(function () {
+            if (self.doc_type() !== "LinkedApplication") {
+                return "";
+            }
+            var brief = releasesMain.masterBriefsById[self.upstream_app_id()] || {};
+            return brief.name || gettext("Unknown App");
+        });
+
+        self.upstream_url = ko.computed(function () {
+            if (self.doc_type() !== "LinkedApplication") {
+                return "";
+            }
+            if (self.upstream_app_id()) {
+                return releasesMain.upstreamUrl.replace('---', self.upstream_app_id());
+            }
+            return '';
+        });
+
         self.track_deploy_type = function (type) {
             hqImport('analytix/js/google').track.event('App Manager', 'Deploy Type', type);
         };
@@ -232,6 +250,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.latestReleasedVersion = ko.observable(self.options.latestReleasedVersion);
         self.lastAppVersion = ko.observable();
         self.buildComment = ko.observable();
+        self.masterBriefsById = _.indexBy(self.options.masterBriefs, '_id');
+        self.upstreamUrl = self.options.upstreamUrl;
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -306,6 +326,14 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
             return null;
         };
+
+        self.compareUnbuiltChangesUrl = ko.computed(function () {
+            if (self.savedApps().length) {
+                var latestBuild = self.savedApps()[0];
+                return self.reverse('app_form_summary_diff', latestBuild.id(), latestBuild.copy_of());
+            }
+            return '';
+        });
 
         self.onViewChanges = function (appIdOne, appIdTwo) {
             appDiff.renderDiff(appIdOne, appIdTwo);

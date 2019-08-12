@@ -45,12 +45,16 @@
         (
         SELECT
         location.state_id, location.district_id, location.block_id, location.supervisor_id, '2019-01-01', COALESCE(awc_table.awc_visits, 0), COALESCE(vhnd_table.vhnd_observed, 0), COALESCE(beneficiary_table.beneficiary_vists, 0), 4
-        from (select distinct state_id, district_id, block_id, supervisor_id from "ucr_icds-cas_static-awc_location_88b3f9c3" where (
-        state_is_test=0 AND
-        district_is_test=0 AND
-        block_is_test=0 AND
-        supervisor_is_test=0
-        )) location
+        from (
+            select distinct state_id, district_id, block_id, supervisor_id
+            from awc_location_local where (
+                state_is_test=0 AND
+                district_is_test=0 AND
+                block_is_test=0 AND
+                supervisor_is_test=0 AND
+                aggregation_level = 4
+            )
+        ) location
         LEFT  JOIN "icds_dashboard_ls_awc_visits_forms" awc_table on (
             location.supervisor_id=awc_table.supervisor_id AND
             awc_table.month = %(start_date)s

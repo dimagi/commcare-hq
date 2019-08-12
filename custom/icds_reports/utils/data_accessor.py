@@ -29,7 +29,6 @@ def _all_zeros(data, agg_level):
     return retry
 
 
-
 def get_program_summary_data(step, domain, config, now, include_test, pre_release_features):
     data = {}
     if step == 'maternal_child':
@@ -64,38 +63,16 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
 def get_inc_indicator_api_data(state_id, month):
 
     data = NICIndicatorsView.objects.get(month=month,
-                                            state_id=state_id)
-
-    # not using lxml because using lxml when no xml manipulation needed is just overengineering
-    api_xml_response = """
-    <?xml version="1.0" encoding="UTF-8"?>
-    <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
-    SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
-       <SOAP-ENV:Header />
-       <SOAP-ENV:Body>
-          <state>{state_name}</state>
-          <month>{month}</month>
-          <num_launched_awcs>{num_launched_awcs}</num_launched_awcs>
-          <num_households_registered>{cases_household}</num_households_registered>
-          <pregnant_enrolled>{cases_ccs_pregnant}</pregnant_enrolled>
-          <lactating_enrolled>{cases_ccs_lactating}</lactating_enrolled>
-          <children_enrolled>{cases_child_health}</children_enrolled>
-          <bf_at_birth>{bf_at_birth}</bf_at_birth>
-          <ebf_in_month>{ebf_in_month}</ebf_in_month>
-          <cf_in_month>{cf_in_month}</cf_in_month>
-       </SOAP-ENV:Body>
-    </SOAP-ENV:Envelope>
-    """.format(
-        state_name=data.state_name,
-        month=data.month,
-        num_launched_awcs=data.num_launched_awcs,
-        cases_household=data.cases_household,
-        cases_ccs_pregnant=data.cases_ccs_pregnant,
-        cases_ccs_lactating=data.cases_ccs_lactating,
-        cases_child_health=data.cases_child_health,
-        bf_at_birth=data.bf_at_birth,
-        ebf_in_month=data.ebf_in_month,
-        cf_in_month=data.cf_initiation_in_month
-    )
-
-    return api_xml_response.strip()
+                                         state_id=state_id)
+    return {
+        'state': data.state_name,
+        'month': data.month,
+        'num_launched_awcs': data.num_launched_awcs,
+        'num_households_registered': data.cases_household,
+        'pregnant_enrolled': data.cases_ccs_pregnant,
+        'lactating_enrolled': data.cases_ccs_lactating,
+        'children_enrolled': data.cases_child_health,
+        'bf_at_birth': data.bf_at_birth,
+        'ebf_in_month': data.ebf_in_month,
+        'cf_in_month': data.cf_initiation_in_month
+    }

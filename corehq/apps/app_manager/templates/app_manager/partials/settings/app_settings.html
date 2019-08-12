@@ -166,13 +166,14 @@
 
 <div class="tabbable">
   <ul class="nav nav-tabs sticky-tabs">
-    {% if app.get_doc_type == 'LinkedApplication' %}
+    {% if is_linked_app %}
       <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
       <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+      <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
       <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% else %}
       <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-      {% if app.get_doc_type == 'Application' %}
+      {% if not is_remote_app %}
         <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
       {% endif %}
       <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
@@ -181,42 +182,70 @@
     <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
   </ul>
   <div class="tab-content appmanager-tab-content">
-    {% if app.get_doc_type == 'LinkedApplication' %}
+    {% if is_linked_app %}
       <div class="tab-pane" id="linked-app">
         <div class="panel panel-appmanager panel-appmanager-form">
           <form action="{% url "pull_master_app" domain app.id %}" method="POST">
             {% csrf_token %}
             <legend>
-              {% if upstream_url %}
-                {% blocktrans %}Update from <a href="{{ upstream_url }}">master application</a>{% endblocktrans %}
-              {% else %}
-                {% trans "Update from master application" %}
-              {% endif %}
+              {% trans "Update from master application" %}
             </legend>
             <div class="panel-body">
-              <p>{% blocktrans with version=app.version %}Your app is at version {{ version }}.{% endblocktrans %}
-                {% if master_version %}
-                  {% blocktrans %}The master app is at version {{ master_version }}.{% endblocktrans %}
-                {% else %}
-                  {% trans "Unable to get master version." %}
-                {% endif %}
+              <p>
+                {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
+                  Your app was last pulled from
+                  <a href='{{ upstream_url }}'>{{ upstream_name }}</a>,
+                  version {{ upstream_version }}.
+                {% endblocktrans %}
               </p>
-              <div class="checkbox">
-                <label>
-                  <input type="checkbox" name="notify">
-                  {% trans "Email when finished (recommended for large applications)" %}
-                </label>
+              <div class="form-horizontal">
+                {% if multiple_masters %}
+                  <div class="form-group">
+                    <div class="{% css_field_class %}">
+                      <select name="master_app_id" class="form-control hqwebapp-select2"
+                              data-placeholder="{% trans_html_attr "Select a master app to pull" %}">
+                        <option value="">{% trans "Select a master app to pull" %}</option>
+                        {% for brief in master_briefs %}
+                          <option value="{{ brief.id }}">
+                            {{ brief.name }}
+                            {% for id, version in master_versions_by_id.items %}
+                              {% if id == brief.id %}
+                                ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %})
+                              {% endif %}
+                            {% endfor %}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                {% else %}
+                  <input name="master_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
+                {% endif %}
+                <div class="form-group">
+                  <div class="{% css_field_class %}">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" name="notify">
+                        {% trans "Email when finished (recommended for large applications)" %}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="{% css_field_class %}">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fa fa-arrow-up"></i>
+                      {% trans "Update" %}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary">
-                <i class="fa fa-arrow-up"></i>
-                {% trans "Update" %}
-              </button>
             </div>
           </form>
         </div>
       </div>
     {% endif %}
-    {% if app.get_doc_type == 'Application' %}
+    {% if not is_remote_app %}
       <div class="tab-pane" id="multimedia-tab">
         <div data-bind="if: load_state() === 'loading'">
           <i class="fa fa-spin fa-spinner"></i>
@@ -233,7 +262,7 @@
       {% include 'app_manager/languages.html' %}
     </div>
     <div class="tab-pane" id="actions">
-      {% if app.get_doc_type != 'LinkedApplication' %}
+      {% if not is_linked_app %}
         {% if copy_app_form %}
           <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
             <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
@@ -271,21 +300,6 @@
                 </tbody>
               </table>
             </div>
-          </div>
-        {% endif %}
-        {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
-        {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-          <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-            <form action="{% url "gzip_app" domain app.id %}" method="POST">
-              {% csrf_token %}
-              <legend>Export compressed application</legend>
-              <div class="panel-body">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fa fa-arrow-down"></i>
-                  {% trans "Download" %}
-                </button>
-              </div>
-            </form>
           </div>
         {% endif %}
       {% endif %}

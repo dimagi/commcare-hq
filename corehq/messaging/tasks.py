@@ -49,7 +49,11 @@ def _sync_case_for_messaging(domain, case_id):
     except CaseNotFound:
         case = None
     case_load_counter("messaging_sync", domain)()
+    update_messaging_for_case(domain, case_id, case)
+    run_auto_update_rules_for_case(case)
 
+
+def update_messaging_for_case(domain, case_id, case):
     if case is None or case.is_deleted:
         sms_tasks.delete_phone_numbers_for_owners([case_id])
         delete_schedule_instances_for_cases(domain, [case_id])
@@ -58,6 +62,8 @@ def _sync_case_for_messaging(domain, case_id):
     if use_phone_entries():
         sms_tasks._sync_case_phone_number(case)
 
+
+def run_auto_update_rules_for_case(case):
     rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
     for rule in rules_by_case_type.get(case.type, []):

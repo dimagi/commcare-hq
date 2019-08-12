@@ -40,6 +40,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
@@ -611,7 +612,7 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
             ProcessLogoFileUploadView, self
         ).process_upload()
         self.app.logo_refs[self.filename] = ref['ref']
-        if self.app.doc_type == 'LinkedApplication':
+        if is_linked_app(self.app):
             self.app.linked_app_logo_refs[self.filename] = ref['ref']
         self.app.save()
         return ref

@@ -24,6 +24,12 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
 
+    @classmethod
+    def setUpClass(cls):
+        super(XFormPillowTest, cls).setUpClass()
+        cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')
+        cls.process_form_changes.add_pillow('xform-pillow', {'skip_ucr': True})
+
     def setUp(self):
         super(XFormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
@@ -58,9 +64,8 @@ class XFormPillowTest(TestCase):
         self.assertEqual(1, results.total)
 
         # soft delete the form
-        with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
-            with process_pillow_changes('DefaultChangeFeedPillow'):
-                FormAccessors(self.domain).soft_delete_forms([form.form_id])
+        with self.process_form_changes:
+            FormAccessors(self.domain).soft_delete_forms([form.form_id])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
 
         # ensure not there anymore
@@ -68,12 +73,11 @@ class XFormPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     def _create_form_and_sync_to_es(self):
-        with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
-            with process_pillow_changes('DefaultChangeFeedPillow'):
-                metadata = TestFormMetadata(domain=self.domain)
-                form = get_form_ready_to_save(metadata, is_db_test=True)
-                form_processor = FormProcessorInterface(domain=self.domain)
-                form_processor.save_processed_models([form])
+        with self.process_form_changes:
+            metadata = TestFormMetadata(domain=self.domain)
+            form = get_form_ready_to_save(metadata, is_db_test=True)
+            form_processor = FormProcessorInterface(domain=self.domain)
+            form_processor.save_processed_models([form])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
         return form, metadata
 

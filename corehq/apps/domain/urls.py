@@ -62,7 +62,7 @@ from corehq.apps.domain.views.exchange import (
     CreateNewExchangeSnapshotView,
     set_published_snapshot,
 )
-from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
+from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
     DeactivateTransferDomainView,
@@ -216,7 +216,6 @@ domain_settings = [
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
-    url(r'^calendar_settings/$', CalendarFixtureConfigView.as_view(), name=CalendarFixtureConfigView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),

@@ -38,7 +38,7 @@ from corehq.apps.linked_domain.exceptions import (
     ActionNotPermitted,
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
-from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.util import get_static_report_mapping
@@ -53,7 +53,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 
 @require_deploy_apps
-def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
+def back_to_main(request, domain, app_id, module_id=None, form_id=None,
                  form_unique_id=None, module_unique_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
@@ -63,56 +63,40 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     which then redirect to the main page.
 
     """
-    page = None
-    params = {}
-    args = [domain]
-    view_name = 'default_app'
+    args = [domain, app_id]
+    view_name = 'view_app'
 
-    form_view = 'form_source'
+    app = get_app(domain, app_id)
 
-    if app_id is not None:
-        view_name = 'view_app'
-        args.append(app_id)
+    module = None
+    try:
+        if module_id is not None:
+            module = app.get_module(module_id)
+        elif module_unique_id is not None:
+            module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        raise Http404()
 
-        app = get_app(domain, app_id)
-
-        module = None
+    form = None
+    if form_id is not None and module is not None:
         try:
-            if module_id is not None:
-                module = app.get_module(module_id)
-            elif module_unique_id is not None:
-                module = app.get_module_by_unique_id(module_unique_id)
-        except ModuleNotFoundException:
+            form = module.get_form(form_id)
+        except IndexError:
+            raise Http404()
+    elif form_unique_id is not None:
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
             raise Http404()
 
-        form = None
-        if form_id is not None and module is not None:
-            try:
-                form = module.get_form(form_id)
-            except IndexError:
-                raise Http404()
-        elif form_unique_id is not None:
-            try:
-                form = app.get_form(form_unique_id)
-            except FormNotFoundException:
-                raise Http404()
+    if form is not None:
+        view_name = 'view_form' if form.no_vellum else 'form_source'
+        args.append(form.unique_id)
+    elif module is not None:
+        view_name = 'view_module'
+        args.append(module.unique_id)
 
-        if form is not None:
-            view_name = 'view_form' if form.no_vellum else form_view
-            args.append(form.unique_id)
-        elif module is not None:
-            view_name = 'view_module'
-            args.append(module.unique_id)
-
-    if page:
-        view_name = page
-
-    return HttpResponseRedirect(
-        "%s%s" % (
-            reverse(view_name, args=args),
-            "?%s" % urlencode(params) if params else ""
-        )
-    )
+    return HttpResponseRedirect(reverse(view_name, args=args))
 
 
 def get_langs(request, app):
@@ -187,12 +171,27 @@ def overwrite_app(app, master_build, report_map=None):
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
-    form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
+
+    # Corresponding forms in a master app and linked app need to have the same XMLNS but different unique ids,
+    # so the linked app needs to know if there are any new forms and, if so, assign those forms new unique ids.
+    # To do this lookup, get the XMLNSes from the the most recent versions of this app pulled from each master
+    # and compare those to the XMLNSes present in this app.
+    form_ids_by_xmlns = {}
+    master_app_briefs = app.get_master_app_briefs()
+    for brief in master_app_briefs:
+        previous_app = app.get_latest_build_from_upstream(brief.master_id)
+        if previous_app:
+            form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
+    # Add in any forms from the current linked app, before the source is overwritten.
+    # This is particularly important if there's no previous version.
+    for module in app['modules']:
+        for form in module['forms']:
+            form_ids_by_xmlns[form.xmlns] = form['unique_id']
 
     for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
             app_json[key] = value
-    app_json['version'] = master_json['version']
+    app_json['version'] = app_json.get('version', 1)
     app_json['upstream_version'] = master_json['version']
     app_json['upstream_app_id'] = master_json['copy_of']
     wrapped_app = wrap_app(app_json)
@@ -211,14 +210,6 @@ def overwrite_app(app, master_build, report_map=None):
     return wrapped_app
 
 
-def _get_form_ids_by_xmlns(app):
-    id_map = {}
-    for module in app['modules']:
-        for form in module['forms']:
-            id_map[form['xmlns']] = form['unique_id']
-    return id_map
-
-
 def _update_form_ids(app, master_app, form_ids_by_xmlns):
 
     _attachments = master_app.get_attachments()
@@ -233,6 +224,14 @@ def _update_form_ids(app, master_app, form_ids_by_xmlns):
     new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
+
+
+def _get_form_ids_by_xmlns(app):
+    id_map = {}
+    for module in app.get_modules():
+        for form in module.get_forms():
+            id_map[form.xmlns] = form.unique_id
+    return id_map
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
@@ -312,11 +311,11 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
-def update_linked_app_and_notify(domain, app_id, user_id, email):
+def update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email):
     app = get_current_app(domain, app_id)
     subject = _("Update Status for linked app %s") % app.name
     try:
-        update_linked_app(app, user_id)
+        update_linked_app(app, master_app_id, user_id)
     except (AppLinkError, MultimediaMissingError) as e:
         message = six.text_type(e)
     except Exception:
@@ -332,61 +331,69 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     send_html_email_async.delay(subject, email, message)
 
 
-def update_linked_app(app, user_id):
+def update_linked_app(app, master_app_id, user_id, master_build=None):
     if not app.domain_link:
         raise AppLinkError(_(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. '
         ))
-    try:
-        master_version = app.get_master_version()
-    except RemoteRequestError:
-        raise AppLinkError(_(
-            'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-        ))
 
-    if app.version is None or master_version > app.version:
+    if master_build:
+        master_version = master_build.version
+    else:
         try:
-            latest_master_build = app.get_latest_master_release()
-        except ActionNotPermitted:
-            raise AppLinkError(_(
-                'This project is not authorized to update from the master application. '
-                'Please contact the maintainer of the master app if you believe this is a mistake. '
-            ))
-        except RemoteAuthError:
-            raise AppLinkError(_(
-                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
-                'Please verify your authentication details for the remote link are correct.'
-            ))
+            master_version = app.get_master_version()
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
+    if app.version is None or master_version > app.version:
+        if not master_build:
+            try:
+                master_build = app.get_latest_master_release(master_app_id)
+            except ActionNotPermitted:
+                raise AppLinkError(_(
+                    'This project is not authorized to update from the master application. '
+                    'Please contact the maintainer of the master app if you believe this is a mistake. '
+                ))
+            except RemoteAuthError:
+                raise AppLinkError(_(
+                    'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+                    'Please verify your authentication details for the remote link are correct.'
+                ))
+            except RemoteRequestError:
+                raise AppLinkError(_(
+                    'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+                ))
 
-        try:
-            app = overwrite_app(app, latest_master_build, report_map)
-        except AppEditingError as e:
-            raise AppLinkError(
-                _(
-                    'This application uses mobile UCRs '
-                    'which are not available in the linked domain: {ucr_id}'
-                ).format(ucr_id=str(e))
-            )
+        previous = app.get_latest_build_from_upstream(master_app_id)
+        if previous is None or master_build.version > previous.upstream_version:
+            report_map = get_static_report_mapping(master_build.domain, app['domain'])
+            old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
+            try:
+                app = overwrite_app(app, master_build, report_map)
+            except AppEditingError as e:
+                raise AppLinkError(
+                    _(
+                        'This application uses mobile UCRs '
+                        'which are not available in the linked domain: {ucr_id}'
+                    ).format(ucr_id=str(e))
+                )
 
-    if app.master_is_remote:
-        try:
-            pull_missing_multimedia_for_app(app)
-        except RemoteRequestError:
-            raise AppLinkError(_(
-                'Error fetching multimedia from remote server. Please try again later.'
-            ))
+            if app.master_is_remote:
+                try:
+                    pull_missing_multimedia_for_app(app, old_multimedia_ids)
+                except RemoteRequestError:
+                    raise AppLinkError(_(
+                        'Error fetching multimedia from remote server. Please try again later.'
+                    ))
+
+            # reapply linked application specific data
+            app.reapply_overrides()
+            app.save()
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
-
-    # reapply linked application specific data
-    app.reapply_overrides()
 
 
 def clear_xmlns_app_id_cache(domain):

@@ -13,7 +13,9 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.apps.users.dbaccessors.couch_users import (
     get_user_id_by_username,
 )
+from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.dbaccessors.all_commcare_users import hard_delete_deleted_users
 
 
@@ -28,6 +30,7 @@ class AllCommCareUsersTest(TestCase):
         cls.ccdomain.save()
         cls.other_domain = Domain(name='other_domain')
         cls.other_domain.save()
+        bootstrap_location_types(cls.ccdomain.name)
 
         UserRole.init_domain_with_presets(cls.ccdomain.name)
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
@@ -43,12 +46,17 @@ class AllCommCareUsersTest(TestCase):
         )
         cls.custom_role.save()
 
+        cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type="district")
+        cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, type="district")
+
         cls.ccuser_1 = CommCareUser.create(
             domain=cls.ccdomain.name,
             username='ccuser_1',
             password='secret',
             email='email@example.com',
         )
+        cls.ccuser_1.set_location(cls.loc1)
+        cls.ccuser_1.save()
         cls.ccuser_2 = CommCareUser.create(
             domain=cls.ccdomain.name,
             username='ccuser_2',
@@ -56,6 +64,7 @@ class AllCommCareUsersTest(TestCase):
             email='email1@example.com',
         )
         cls.ccuser_2.set_role(cls.ccdomain.name, cls.custom_role.get_qualified_id())
+        cls.ccuser_2.set_location(cls.loc2)
         cls.ccuser_2.save()
 
         cls.web_user = WebUser.create(
@@ -81,6 +90,7 @@ class AllCommCareUsersTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
+        delete_all_locations()
         super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_all_commcare_users_by_domain(self):
@@ -122,6 +132,15 @@ class AllCommCareUsersTest(TestCase):
         )
         self.assertEqual(
             get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id}, count_only=True),
+            1
+        )
+        # can search by location
+        self.assertItemsEqual(
+            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'location_id': self.loc1._id})),
+            [self.ccuser_1.username]
+        )
+        self.assertEqual(
+            get_commcare_users_by_filters(self.ccdomain.name, {'location_id': self.loc1._id}, count_only=True),
             1
         )
 
