@@ -4,6 +4,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version, wrap_app
 from corehq.apps.app_manager.models import import_app
+from corehq.util.view_utils import absolute_reverse
 
 
 class Command(BaseCommand):
@@ -30,6 +31,9 @@ class Command(BaseCommand):
                 form.source = form.source.replace(old_id, new_id)
 
         new_app.save()
+        print("App succesfully copied, you can view it at\n{}".format(
+            absolute_reverse('view_app', args=[domain, new_app.get_id])
+        ))
 
 
 def get_old_to_new_config_ids(old_app, new_app):
