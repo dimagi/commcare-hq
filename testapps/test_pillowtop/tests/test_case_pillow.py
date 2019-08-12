@@ -23,8 +23,8 @@ class CasePillowTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(CasePillowTest, cls).setUpClass()
-        cls.process_case_changes = process_pillow_changes('case-pillow', {'skip_ucr': True})
-        cls.process_case_changes.add_pillow('DefaultChangeFeedPillow')
+        cls.process_case_changes = process_pillow_changes('DefaultChangeFeedPillow')
+        cls.process_case_changes.add_pillow('case-pillow', {'skip_ucr': True})
 
     def setUp(self):
         super(CasePillowTest, self).setUp()

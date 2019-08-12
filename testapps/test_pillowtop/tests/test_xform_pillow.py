@@ -27,8 +27,8 @@ class XFormPillowTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(XFormPillowTest, cls).setUpClass()
-        cls.process_form_changes = process_pillow_changes('xform-pillow', {'skip_ucr': True})
-        cls.process_form_changes.add_pillow('DefaultChangeFeedPillow')
+        cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')
+        cls.process_form_changes.add_pillow('xform-pillow', {'skip_ucr': True})
 
     def setUp(self):
         super(XFormPillowTest, self).setUp()
