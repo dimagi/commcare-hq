@@ -194,6 +194,15 @@
         "vellum_case_management": {
             "type": "boolean"
         },
+        "progenitor_app_id": {
+            "type": "string"
+        },
+        "upstream_version": {
+            "type": "long"
+        },
+        "upstream_app_id": {
+            "type": "string"
+        },
         "version": {
             "type": "long"
         },
