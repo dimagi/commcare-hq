@@ -51,7 +51,6 @@ class CCZTest(TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn('forms.m0f0', errors[0])
 
-    @flag_enabled('CAUTIOUS_MULTIMEDIA')
     def test_multimedia_integrity(self):
         icon_path = 'jr://file/commcare/icon.png'
         self.module.set_icon('en', icon_path)

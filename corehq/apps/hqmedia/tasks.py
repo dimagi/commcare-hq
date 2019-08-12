@@ -293,9 +293,6 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
 # Check that all media files present in media_suite.xml were added to the zip
 def check_ccz_multimedia_integrity(domain, fpath):
-    if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
-        return []
-
     errors = []
 
     with open(fpath, 'rb') as tmp:
