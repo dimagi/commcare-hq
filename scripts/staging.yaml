@@ -59,6 +59,7 @@ branches:
   - revert-24882-jls/compress-mobile-workers-js # Jenny July 24 
   - jls/resource-versions # Jenny July 24
   - es/linked-app-migration  # ES Aug 6th
+  - jls/move-progenitor-app-id  # Jenny Aug 12
   #- jls/add-js-to-sentry # Jenny Aug 7
   - jls/linked-app-multiple-masters # Jenny June 18
   - jls/copy-app-version # Jenny Aug 2
