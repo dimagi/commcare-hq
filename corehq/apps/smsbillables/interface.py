@@ -155,10 +155,10 @@ class SMSBillablesInterface(GenericTabularReport):
 
     @property
     def sms_billables(self):
-        date_span = DateSpan(DateSentFilter.get_start_date(self.request), DateSentFilter.get_end_date(self.request))
+        datespan = DateSpan(DateSentFilter.get_start_date(self.request), DateSentFilter.get_end_date(self.request))
         selected_billables = SmsBillable.objects.filter(
-            date_sent__gte=date_span.startdate,
-            date_sent__lt=date_span.enddate_adjusted,
+            date_sent__gte=datespan.startdate,
+            date_sent__lt=datespan.enddate_adjusted,
         )
         if DateCreatedFilter.use_filter(self.request):
             date_span = DateSpan(
