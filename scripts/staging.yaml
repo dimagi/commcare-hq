@@ -51,7 +51,6 @@ name: autostaging
 branches:
   - vellum-staging
   - fr/case-templates      # FR May 15
-  #- jls/linked-app-multiple-masters # Jenny June 18
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - mk/skip-files-build # MK July 6
   - nh/icds/skip_trans+mk/use-ids-to-validate-translations  # Norman Aug 2
@@ -61,7 +60,6 @@ branches:
   - jls/resource-versions # Jenny July 24
   - es/linked-app-migration  # ES Aug 6th
   #- jls/add-js-to-sentry # Jenny Aug 7
-  - jls/copy-app-version+mk/imrpove-mm-pull
+  - jls/linked-app-multiple-masters # Jenny June 18
   - jls/copy-app-version # Jenny Aug 2
-  - mk/imrpove-mm-pull # MK Aug 5
 submodules: {}
