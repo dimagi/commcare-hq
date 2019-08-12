@@ -117,6 +117,7 @@ class LocationType(models.Model):
     include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
 
     last_modified = models.DateTimeField(auto_now=True, db_index=True)
+    has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
     understock_threshold = StockLevelField(default=1.5)
