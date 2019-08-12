@@ -925,7 +925,10 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(CaseExportInstance, domain, self.config_id)
-        return get_case_export_base_query(domain, config.case_type)
+        query = get_case_export_base_query(domain, config.case_type)
+        for filter in config.get_filters():
+            query = query.filter(filter.to_es_filter())
+        return query
 
     def detail_uri_kwargs(self, bundle_or_obj):
         # Not sure why this is required but the feed 500s without it
@@ -974,7 +977,10 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
-        return get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=True)
+        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=True)
+        for filter in config.get_filters():
+            query = query.filter(filter.to_es_filter())
+        return query
 
     def detail_uri_kwargs(self, bundle_or_obj):
         # Not sure why this is required but the feed 500s without it

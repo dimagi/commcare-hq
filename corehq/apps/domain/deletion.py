@@ -205,7 +205,6 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('form_processor', _delete_all_cases),
     CustomDeletion('form_processor', _delete_all_forms),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain'),
-    ModelDeletion('calendar_fixture', 'CalendarFixtureSettings', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain'),
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
     ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),

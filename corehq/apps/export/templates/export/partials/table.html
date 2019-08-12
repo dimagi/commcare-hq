@@ -19,7 +19,7 @@
 
     <th class="col-sm-1">
       {% if export_filter_form %}
-        {% if has_edit_permissions and not is_odata %}
+        {% if has_edit_permissions %}
           {% trans "Edit Filters" %}
         {% endif %}
       {% else %}
@@ -56,7 +56,9 @@
         {% elif not is_odata %}
           {% trans 'Edit' %}
         {% else %}
-          {% trans 'Copy' %}
+          {% blocktrans %}
+            Copy &amp; Edit
+          {% endblocktrans %}
         {% endif %}
       </th>
       <th class="col-sm-1">
@@ -416,7 +418,7 @@
          class="btn btn-primary">
         {{ export_type_caps }}
       </a>
-      {% if has_edit_permissions and not is_odata %}
+      {% if has_edit_permissions %}
         <a class="btn btn-default"
            data-bind="visible: showSavedFilters && isLocationSafeForUser(),
                       click: function (model) {

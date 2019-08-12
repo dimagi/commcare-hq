@@ -73,3 +73,7 @@ class XFormLockError(Exception):
 
     The error message should identify the locked form.
     """
+
+
+class MissingFormXml(Exception):
+    pass

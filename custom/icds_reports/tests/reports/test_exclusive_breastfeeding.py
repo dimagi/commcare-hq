@@ -9,7 +9,7 @@ from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_br
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestExclusiveBreastfeeding(TestCase):
 
     def test_map_data_keys(self):

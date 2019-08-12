@@ -1,17 +1,19 @@
 /* global interpolate */
 hqDefine('users/js/filtered_download', function () {
-    $(function () {
-        var prevFilters = {
+    function getFilters() {
+        return {
             'role_id': $("#id_role_id").val(),
             'search_string': $("#id_search_string").val(),
+            'location_id': $("[name=location_id]").val(),
         };
+    }
+
+    $(function () {
+        var prevFilters = getFilters();
         var countUsersUrl = hqImport('hqwebapp/js/initial_page_data').get('count_users_url');
         setInterval(function () {
-            var currentFilters = {
-                'role_id': $("#id_role_id").val(),
-                'search_string': $("#id_search_string").val(),
-            };
-            if (prevFilters.role_id !== currentFilters.role_id || prevFilters.search_string !== currentFilters.search_string) {
+            var currentFilters = getFilters();
+            if (!_.isEqual(currentFilters, prevFilters)) {
                 $.get({
                     url: countUsersUrl,
                     data: currentFilters,
