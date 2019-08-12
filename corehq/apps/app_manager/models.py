@@ -4122,7 +4122,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         when making a new build and setting the versions of those items.
         For normal applications, this is just the previous build.
         '''
-        return self.get_previous_version()
+        return self.get_latest_build()
 
     @memoized
     def get_latest_saved(self):
