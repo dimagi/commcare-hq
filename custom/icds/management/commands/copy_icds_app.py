@@ -17,11 +17,7 @@ class Command(BaseCommand):
         parser.add_argument('new_name')
 
     def handle(self, domain, app_id, version, new_name, **options):
-        old_app = get_build_doc_by_version(domain, app_id, version)
-        if not old_app:
-            raise Exception("No app found with id '{}' and version '{}', on '{}'"
-                            .format(app_id, version, domain))
-        old_app = wrap_app(old_app)
+        old_app = get_app_by_version(domain, app_id, version)
         old_app.convert_build_to_app()
         new_app = import_app(old_app.to_json(), domain, source_properties={'name': new_name})
 
@@ -34,6 +30,14 @@ class Command(BaseCommand):
         print("App succesfully copied, you can view it at\n{}".format(
             absolute_reverse('view_app', args=[domain, new_app.get_id])
         ))
+
+
+def get_app_by_version(domain, app_id, version):
+    app = get_build_doc_by_version(domain, app_id, version)
+    if not app:
+        raise Exception("No app found with id '{}' and version '{}', on '{}'"
+                        .format(app_id, version, domain))
+    return wrap_app(app)
 
 
 def get_old_to_new_config_ids(old_app, new_app):
