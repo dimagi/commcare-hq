@@ -4673,6 +4673,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
+    # If this app was created by copying another, this points to that app
+    progenitor_app_id = StringProperty()
+
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
 
@@ -5571,7 +5574,6 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    progenitor_app_id = StringProperty()  # ID of earliest parent app.  Identifies app "family"
     master = StringProperty()  # Legacy, should be removed once all linked apps support multiple masters
     upstream_app_id = StringProperty()  # ID of the app that was most recently pulled
     upstream_version = IntegerProperty()  # Version of the app that was most recently pulled
