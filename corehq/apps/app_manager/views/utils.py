@@ -331,56 +331,67 @@ def update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email):
     send_html_email_async.delay(subject, email, message)
 
 
-def update_linked_app(app, master_app_id, user_id):
+def update_linked_app(app, master_app_id, user_id, master_build=None):
     if not app.domain_link:
         raise AppLinkError(_(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. '
         ))
 
-    try:
-        latest_released_master_build = app.get_latest_master_release(master_app_id)
-    except ActionNotPermitted:
-        raise AppLinkError(_(
-            'This project is not authorized to update from the master application. '
-            'Please contact the maintainer of the master app if you believe this is a mistake. '
-        ))
-    except RemoteAuthError:
-        raise AppLinkError(_(
-            'Authentication failure attempting to pull latest master from remote CommCare HQ.'
-            'Please verify your authentication details for the remote link are correct.'
-        ))
-    except RemoteRequestError:
-        raise AppLinkError(_(
-            'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-        ))
-
-    previous = app.get_latest_build_from_upstream(master_app_id)
-    if previous is None or latest_released_master_build.version > previous.upstream_version:
-        report_map = get_static_report_mapping(latest_released_master_build.domain, app['domain'])
-        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
-
+    if master_build:
+        master_version = master_build.version
+    else:
         try:
-            app = overwrite_app(app, latest_released_master_build, report_map)
-        except AppEditingError as e:
-            raise AppLinkError(
-                _(
-                    'This application uses mobile UCRs '
-                    'which are not available in the linked domain: {ucr_id}'
-                ).format(ucr_id=str(e))
-            )
+            master_version = app.get_master_version()
+        except RemoteRequestError:
+            raise AppLinkError(_(
+                'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+            ))
 
-        if app.master_is_remote:
+    if app.version is None or master_version > app.version:
+        if not master_build:
             try:
-                pull_missing_multimedia_for_app(app, old_multimedia_ids)
+                master_build = app.get_latest_master_release(master_app_id)
+            except ActionNotPermitted:
+                raise AppLinkError(_(
+                    'This project is not authorized to update from the master application. '
+                    'Please contact the maintainer of the master app if you believe this is a mistake. '
+                ))
+            except RemoteAuthError:
+                raise AppLinkError(_(
+                    'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+                    'Please verify your authentication details for the remote link are correct.'
+                ))
             except RemoteRequestError:
                 raise AppLinkError(_(
-                    'Error fetching multimedia from remote server. Please try again later.'
+                    'Unable to pull latest master from remote CommCare HQ. Please try again later.'
                 ))
 
-        # reapply linked application specific data
-        app.reapply_overrides()
-        app.save()
+        previous = app.get_latest_build_from_upstream(master_app_id)
+        if previous is None or master_build.version > previous.upstream_version:
+            report_map = get_static_report_mapping(master_build.domain, app['domain'])
+            old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
+            try:
+                app = overwrite_app(app, master_build, report_map)
+            except AppEditingError as e:
+                raise AppLinkError(
+                    _(
+                        'This application uses mobile UCRs '
+                        'which are not available in the linked domain: {ucr_id}'
+                    ).format(ucr_id=str(e))
+                )
+
+            if app.master_is_remote:
+                try:
+                    pull_missing_multimedia_for_app(app, old_multimedia_ids)
+                except RemoteRequestError:
+                    raise AppLinkError(_(
+                        'Error fetching multimedia from remote server. Please try again later.'
+                    ))
+
+            # reapply linked application specific data
+            app.reapply_overrides()
+            app.save()
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
 
