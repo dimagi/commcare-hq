@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import datetime
 from django.db.models.aggregates import Count
 from dimagi.utils.dates import DateSpan
 from corehq.apps.accounting.filters import DateCreatedFilter
