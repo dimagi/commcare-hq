@@ -71,7 +71,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
   elasticsearch:
-    image: elasticsearch:1.7.4
+    image: elasticsearch:7.3.0
     environment:
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
