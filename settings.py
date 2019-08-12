@@ -263,6 +263,7 @@ HQ_APPS = (
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
+    'corehq.apps.case_templates',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.users',
