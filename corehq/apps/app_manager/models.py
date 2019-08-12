@@ -4785,8 +4785,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        previous_version = self._get_version_comparison_build()
-        if not previous_version:
+        latest_build = self._get_version_comparison_build()
+        if not latest_build:
             return
         force_new_version = self.build_profiles != latest_build.build_profiles
         for form_stuff in self.get_forms(bare=False):
