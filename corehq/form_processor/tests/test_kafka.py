@@ -10,7 +10,6 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
-from pillowtop import get_pillow_by_name
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import TestProcessor
 from testapps.test_pillowtop.utils import process_pillow_changes
