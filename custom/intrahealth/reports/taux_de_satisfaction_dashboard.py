@@ -229,53 +229,52 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
     @property
     def charts(self):
-        chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
-        chart.height = 400
-        chart.marginBottom = 100
+        chart = PieChart('Taux de Satisfaction des produits au niveau national',
+                         'produits proposes sur produits livres', [])
 
         def data_to_chart(quantities_list):
-            quantities_to_return = []
             products_names_list = []
-            products_ids_list = []
-            products_amt_delivered_convenience_list = []
-            products_ideal_topup_list = []
+            products_occurences = {}
+            products_data = {}
+            product_names = []
+
             for quantity in quantities_list:
+                products_list = []
                 for product in quantity['products']:
+                    products_list.append(product)
+                    if product['product_name'] not in product_names:
+                        product_names.append(product['product_name'])
+                products_names_from_list = [x['product_name'] for x in quantity['products']]
+                for product_name in product_names:
+                    if product_name not in products_names_from_list:
+                        products_list.append({
+                            'product_name': product_name,
+                            'amt_delivered_convenience': 0,
+                            'ideal_topup': 0,
+                        })
+
+                for product in products_list:
                     product_name = product['product_name']
-                    product_id = product['product_id']
                     amt_delivered_convenience = product['amt_delivered_convenience']
                     ideal_topup = product['ideal_topup']
-                    if product_id not in products_ids_list:
-                        products_ids_list.append(product_id)
+                    if product_name not in products_names_list:
                         products_names_list.append(product_name)
-                        products_amt_delivered_convenience_list.append(amt_delivered_convenience)
-                        products_ideal_topup_list.append(ideal_topup)
+                        products_occurences[product_name] = 1
+                        products_data[product_name] = [amt_delivered_convenience, ideal_topup]
                     else:
-                        position = products_ids_list.index(product_id)
-                        products_amt_delivered_convenience_list[position] += amt_delivered_convenience
-                        products_ideal_topup_list[position] += ideal_topup
+                        products_occurences[product_name] += 1
+                        products_data[product_name][0] += amt_delivered_convenience
+                        products_data[product_name][1] += ideal_topup
 
-            products_percents = []
-            products_info = list(zip(products_names_list,
-                                     products_amt_delivered_convenience_list,
-                                     products_ideal_topup_list))
-            for info in products_info:
-                product_name = info[0]
-                amt_delivered_convenience = info[1]
-                ideal_topup = info[2]
-                percent = (amt_delivered_convenience / float(ideal_topup)) * 100 if ideal_topup != 0 else 0
-                if percent is not 0:
-                    products_percents.append([product_name, percent])
+            chart_pertencts = []
+            for product in product_names:
+                amt_delivered_convenience = products_data[product][0]
+                ideal_topup = products_data[product][1]
+                product_occurences = products_occurences[product]
+                percent = ((amt_delivered_convenience / float(ideal_topup)) * 100) / product_occurences
+                chart_pertencts.append([product, percent])
 
-            chart_percents = []
-            sum_of_percentages = sum(x[1] for x in products_percents)
-            for product in products_percents:
-                product_name = product[0]
-                percent = product[1]
-                percent = (percent / sum_of_percentages) * 100
-                chart_percents.append([product_name, percent])
-
-            return chart_percents
+            return chart_pertencts
 
         def get_data_for_graph():
             chart_percents = data_to_chart(self.clean_rows)
@@ -284,7 +283,6 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                 {'label': x[0], 'value': x[1]} for x in chart_percents
             ]
 
-        chart = PieChart(('Taux de Satisfaction'), 'produits proposes sur produits livres', [])
         chart.data = get_data_for_graph()
         return [chart]
 

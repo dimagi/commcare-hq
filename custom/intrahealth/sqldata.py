@@ -2751,7 +2751,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             no_multiple_rows_per_pps_in_month = \
                 data[record[self.loc_id]][month_index].get(record['pps_id']) is None
             if no_multiple_rows_per_pps_in_month or \
-                    data[record[self.loc_id]][month_index][record['pps_id']] == 1:
+                data[record[self.loc_id]][month_index][record['pps_id']] == 1:
                 data[record[self.loc_id]][month_index][record['pps_id']] = 0 if \
                     record['pps_is_outstock']['html'] == 1 else 1
 
@@ -2806,6 +2806,8 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     @property
     def rows(self):
         records = self.get_data()
+        for r in records:
+            print(r)
 
         if self.loc_id == 'pps_id':
             loc_names, data = self.get_availability_data_per_month_per_pps(records)
@@ -3354,8 +3356,8 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_precise'])
             if record.get('delivery_amt_owed') is not None:
                 if data[record['pps_id']][month_index]['real_date_precise_first'] is None or \
-                        record['real_date_precise'] < \
-                        data[record['pps_id']][month_index]['real_date_precise_first']:
+                    record['real_date_precise'] < \
+                    data[record['pps_id']][month_index]['real_date_precise_first']:
                     data[record['pps_id']][month_index]['pps_total_amt_owed'] = record['pps_total_amt_owed']
                     data[record['pps_id']][month_index]['real_date_precise_first'] = \
                         record['real_date_precise']
@@ -3909,7 +3911,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], '')
+        return get_table_name(self.config['domain'], 'yeksi_naa_reports_consumption')
 
     @cached_property
     def selected_location(self):
@@ -3943,7 +3945,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN('real_date', 'startdate', 'enddate')]
+        filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
         if self.config['selected_location']:
             filters.append(EQ(self.loc_id, 'selected_location'))
         if self.config['product_product']:
@@ -3954,92 +3956,67 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def group_by(self):
-        group_by = [self.loc_name, self.loc_id, 'real_date']
+        group_by = [
+            'real_date_precise', self.loc_id, self.loc_name, 'product_is_outstock', 'product_id', 'program_id'
+            # 'region_id', 'region_name', 'district_id', 'district_name', 'pps_id', 'pps_name',
+        ]
+
         return group_by
 
     @property
     def columns(self):
         columns = [
-            DatabaseColumn('Date', SimpleColumn('real_date')),
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
+            # DatabaseColumn('Region ID', SimpleColumn('region_id')),
+            # DatabaseColumn('Region Name', SimpleColumn('region_name')),
+            # DatabaseColumn('District ID', SimpleColumn('district_id')),
+            # DatabaseColumn('District Name', SimpleColumn('district_name')),
+            # DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
+            # DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
             DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            # DatabaseColumn('Program ID', SimpleColumn('program_id')),
-            # DatabaseColumn('Program name', SimpleColumn('program_name')),
             DatabaseColumn('Product ID', SimpleColumn('product_id')),
-            DatabaseColumn('Product name', SimpleColumn('product_name')),
-            DatabaseColumn("Product is outstock", SimpleColumn('product_is_outstock')),
+            DatabaseColumn('Program ID', SimpleColumn('program_id')),
+            # DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
         return columns
 
     @property
     def rows(self):
-        # TODO: we need only the latest value of total_stock from selected daterange
-        # rows = self.get_data()
-        return [
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.1', 'pps_id': 1, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 2)
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.2', 'pps_id': 2, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 1)
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.3', 'pps_id': 3, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 9)
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.2', 'district_id': 4,
-                'pps_name': 'PPS 1.2.1', 'pps_id': 10, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 8)
-            },
+        rows_to_return = []
+        rows = self.get_data()
+        product_program = self.config['product_program']
+        product_product = self.config['product_product']
+        selected_program = product_program if product_program != '' else 'All'
+        selected_product = product_product if product_product != '' else 'All'
 
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.1', 'pps_id': 4, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 7)
-            },
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.2', 'pps_id': 5, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 6)
-            },
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.3', 'pps_id': 6, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 13)
-            },
+        print(len(rows))
+        for row in rows:
+            print(row)
+            # row_program = row['program_id']
+            # print(row_program)
+            # if row_program == selected_program:
+            #     print('no siema')
+            # if not rows_to_return:
+            #     rows_to_return.append(row)
+            # else:
+            #     length = len(rows_to_return)
+            #     for r in range(0, length):
+            #         current_product = rows_to_return[r]
+            #         current_location_id = current_product[self.loc_id]
+            #         current_product_id = current_product['product_id']
+            #         if current_location_id == row[self.loc_id] and current_product_id == row['product_id']:
+            #             current_date = current_product['real_date_precise']
+            #             new_date = row['real_date_precise']
+            #             if current_date > new_date:
+            #                 rows_to_return[r] = row
+            #         elif r == length - 1:
+            #             rows_to_return.append(row)
 
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.1', 'pps_id': 7, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 12)
-            },
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.2', 'pps_id': 8, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 11)
-            },
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.3', 'pps_id': 9, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 10)
-            },
-        ]
-        # return self.get_data()
+        print(len(rows_to_return))
+
+        return rows_to_return
 
 
 class EffectiveDeLivraisonDataSource(SqlData):
@@ -4396,7 +4373,7 @@ class ConsommationPerProductData(SqlData):
             },
         ]
         # rows = self.get_data()
-    
+
 
 class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
     slug = 'taux_de_perte'
@@ -4746,7 +4723,7 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         for record in records:
             print(loc_names)
             if not self.date_in_selected_date_range(record['real_date_repeat']) \
-            or record['product_name'] not in self.products:
+                or record['product_name'] not in self.products:
                 continue
             if record[self.loc_id] not in data:
                 for i in range(len(self.products)):
@@ -4756,7 +4733,7 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
             product = self.products.index(record['product_name'])
             if self.denominator_exists(record['final_pna_stock_valuation']):
                 if record['expired_pna_valuation']:
-                    data[record[self.loc_id]][product]['expired_pna_valuation'] +=\
+                    data[record[self.loc_id]][product]['expired_pna_valuation'] += \
                         record['expired_pna_valuation']['html']
                 data[record[self.loc_id]][product]['final_pna_stock_valuation'] += \
                     record['final_pna_stock_valuation']['html']
