@@ -6,10 +6,11 @@ from io import open
 import os
 
 
-def get_resource_versions():
+def get_resource_versions(path=None):
     resource_versions = {}
 
-    path = os.path.join(settings.FILEPATH, 'resource_versions.yaml')
+    if not path:
+        path = os.path.join(settings.FILEPATH, 'resource_versions.yaml')
     if not os.path.exists(path):
         return resource_versions
 
