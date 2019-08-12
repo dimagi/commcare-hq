@@ -391,7 +391,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(9, length);
+            assert.equal(10, length);
         });
     });
 
