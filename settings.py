@@ -647,6 +647,8 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
+SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
+
 PILLOW_RETRY_QUEUE_ENABLED = False
 
 SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
@@ -1725,6 +1727,11 @@ PILLOWTOPS = {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
+        },
+        {
+            'name': 'case_messaging_sync_pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.messaging.pillow.get_case_messaging_sync_pillow',
         },
     ],
     'core_ext': [

@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from django.conf import settings
+
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.messaging.tasks import sync_case_for_messaging
@@ -19,13 +22,14 @@ def messaging_case_changed_receiver(sender, case, **kwargs):
 
 
 def connect_signals():
-    case_post_save.connect(
-        messaging_case_changed_receiver,
-        CommCareCase,
-        dispatch_uid='messaging_couch_case_receiver'
-    )
-    sql_case_post_save.connect(
-        messaging_case_changed_receiver,
-        CommCareCaseSQL,
-        dispatch_uid='messaging_sql_case_receiver'
-    )
+    if settings.SYNC_CASE_FOR_MESSAGING_ON_SAVE:
+        case_post_save.connect(
+            messaging_case_changed_receiver,
+            CommCareCase,
+            dispatch_uid='messaging_couch_case_receiver'
+        )
+        sql_case_post_save.connect(
+            messaging_case_changed_receiver,
+            CommCareCaseSQL,
+            dispatch_uid='messaging_sql_case_receiver'
+        )
