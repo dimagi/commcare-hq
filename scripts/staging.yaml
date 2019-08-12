@@ -61,6 +61,7 @@ branches:
   - es/linked-app-migration  # ES Aug 6th
   - jls/move-progenitor-app-id  # Jenny Aug 12
   #- jls/add-js-to-sentry # Jenny Aug 7
+  - jls/linked-app-multiple-masters+jls/copy-app-version
   - jls/linked-app-multiple-masters # Jenny June 18
   - jls/copy-app-version # Jenny Aug 2
 submodules: {}
