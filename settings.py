@@ -444,6 +444,7 @@ GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+PRIVACY_EMAIL = 'privacy@example.com'
 CONTACT_EMAIL = 'info@example.com'
 FEEDBACK_EMAIL = 'hq-feedback@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
