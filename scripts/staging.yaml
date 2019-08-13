@@ -58,6 +58,7 @@ branches:
   - mk/use-ids-to-validate-translations # July 19
   - revert-24882-jls/compress-mobile-workers-js # Jenny July 24 
   - jls/resource-versions # Jenny July 24
+  - jls/more-eof-nav # Jenny Aug 13
   #- jls/add-js-to-sentry # Jenny Aug 7
   - jls/move-progenitor-app-id+jls/linked-app-multiple-masters+jls/copy-app-version
   - jls/move-progenitor-app-id  # Jenny Aug 12
