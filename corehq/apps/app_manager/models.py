@@ -5635,6 +5635,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 

@@ -18,7 +18,6 @@ class Command(BaseCommand):
 
     def handle(self, domain, app_id, version, new_name, **options):
         old_app = get_app_by_version(domain, app_id, version)
-        old_app.convert_build_to_app()
         new_app = import_app(old_app.to_json(), domain, source_properties={'name': new_name})
 
         old_to_new = get_old_to_new_config_ids(old_app, new_app)

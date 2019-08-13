@@ -428,7 +428,6 @@ def copy_app(request, domain):
         else:
             # Copy application
             from_app = Application.get(data['build_id'] or app_id)
-            from_app.convert_build_to_app()
             app_source = from_app.export_json(dump_json=False)
             return _copy_app_helper(request, app_source, to_domain, data['name'])
 
