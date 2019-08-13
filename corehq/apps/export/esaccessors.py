@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from collections import defaultdict, namedtuple
+
 import six
 from elasticsearch import ElasticsearchException
 
-from corehq.apps.es import CaseES, FormES, GroupES, LedgerES
+from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 from corehq.apps.es.sms import SMSES
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
 
@@ -58,12 +61,16 @@ def get_ledger_section_entry_combinations(domain):
     """Get all section / entry combinations in a domain.
     :returns: a generator of namedtuples with fields ``section_id``, ``entry_id``, ``doc_count``
     """
-    terms = [
-        AggregationTerm('section_id', 'section_id'),
-        AggregationTerm('entry_id', 'entry_id'),
+    ledgers = LedgerAccessors(domain).get_ledger_values_for_cases()  # TODO this should get all ledgers
+    ret = defaultdict(lambda: 0)
+    for ledger in ledgers:
+        ret[(ledger.section_id, ledger.entry_id)] += 1
+
+    row_class = namedtuple('AggregateLedgerValue', ['section_id', 'entry_id', 'doc_count'])
+    return [
+        row_class(ids[0], ids[1], count)
+        for ids, count in ret.items()
     ]
-    query = LedgerES().domain(domain)
-    return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
 
 
 def get_case_name(case_id):
