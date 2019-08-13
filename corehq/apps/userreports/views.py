@@ -293,7 +293,6 @@ class ReportBuilderView(BaseDomainView):
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
             'pricing_page_url': settings.PRICING_PAGE_URL,
-            'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
 
@@ -331,14 +330,6 @@ class ReportBuilderPaywallBase(BaseDomainView):
         return paywall_home(self.domain)
 
     @property
-    def page_context(self):
-        context = super(ReportBuilderPaywallBase, self).page_context
-        context.update({
-            'support_email': settings.SUPPORT_EMAIL
-        })
-        return context
-
-    @property
     @memoized
     def plan_name(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain).plan.name
@@ -358,7 +349,6 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
             'has_report_builder_access': has_report_builder_access(self.request),
             'at_report_limit': num_builder_reports >= max_allowed_reports,
             'max_allowed_reports': max_allowed_reports,
-            'support_email': settings.SUPPORT_EMAIL,
             'pricing_page_url': settings.PRICING_PAGE_URL,
         })
         return context

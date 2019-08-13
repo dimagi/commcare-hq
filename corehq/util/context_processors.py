@@ -174,6 +174,7 @@ def emails(request=None):
     """
     return {
         'SALES_EMAIL': settings.SALES_EMAIL,
+        'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
     }
 
 
