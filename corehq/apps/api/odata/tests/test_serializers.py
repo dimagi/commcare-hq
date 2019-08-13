@@ -20,7 +20,7 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_selected_column_included(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
@@ -52,7 +52,7 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_unselected_column_excluded(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
@@ -84,7 +84,7 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_missing_value_is_null(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
@@ -114,7 +114,7 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_non_standard_case_property(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
@@ -145,7 +145,7 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_case_id(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': 'case-id-value',
@@ -175,7 +175,7 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_case_name(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
+            ODataCaseSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
@@ -225,7 +225,7 @@ class TestODataFormSerializer(SimpleTestCase):
 
     def test_selected_column_included(self):
         self.assertEqual(
-            ODataFormSerializer.serialize_forms_using_config(
+            ODataFormSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
@@ -256,7 +256,7 @@ class TestODataFormSerializer(SimpleTestCase):
 
     def test_unselected_column_excluded(self):
         self.assertEqual(
-            ODataFormSerializer.serialize_forms_using_config(
+            ODataFormSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
@@ -287,7 +287,7 @@ class TestODataFormSerializer(SimpleTestCase):
 
     def test_missing_value_is_null(self):
         self.assertEqual(
-            ODataFormSerializer.serialize_forms_using_config(
+            ODataFormSerializer.serialize_documents_using_config(
                 [{
                     'domain': 'test_domain',
                     '_id': '54352-25234',
