@@ -13,13 +13,13 @@ from django.db.models.aggregates import Avg, StdDev
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.es import UserES, CaseES, LedgerES, FormES
+from corehq.apps.es import UserES, CaseES, FormES
 from corehq.apps.es.aggregations import TermsAggregation, DateHistogram, NestedAggregation
 from corehq.apps.reports.standard.project_health import get_performance_threshold
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
 from corehq.elastic import ES_EXPORT_INSTANCE
-from corehq.form_processor.models import LedgerTransaction, CommCareCaseSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import LedgerValue, LedgerTransaction, CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.connections import connection_manager
@@ -192,25 +192,27 @@ class Command(BaseCommand):
         self._print_table(['Month', 'Cases updated per user'], final_stats)
 
     def _ledgers_per_case(self):
-        results = (
-            LedgerES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(self.domain).aggregation(
-                TermsAggregation('by_case', 'case_id', size=100)
-            ).size(0).run()
-        )
+        if should_use_sql_backend(self.domain):
+            db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
+            results = (
+                LedgerValue.objects.using(db_name).filter(domain=self.domain)
+                .values('case_id')
+                .annotate(ledger_count=Count('pk'))
+            )[:100]
+        else:
+            raise NotImplementedError
 
-        ledgers_per_case = results.aggregations.by_case
         case_ids = set()
-        ledger_counts = []
-        for case_id, ledger_count in ledgers_per_case.counts_by_bucket().items():
-            case_ids.add(case_id)
-            ledger_counts.append(ledger_count)
+        ledger_count = 0
+        for result in results:
+            case_ids.add(result['case_id'])
+            ledger_count += result['ledger_count']
 
         if not case_ids:
             self.stdout.write("Domain has no ledgers")
             return
 
-        avg_ledgers_per_case = sum(ledger_counts) // len(case_ids)
+        avg_ledgers_per_case = ledger_count // len(case_ids)
         case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)\
             .domain(self.domain).case_ids(case_ids)\
             .aggregation(TermsAggregation('types', 'type'))\
