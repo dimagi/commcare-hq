@@ -172,20 +172,20 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             """
             SELECT *
             FROM "{tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN %s
+            WHERE aggregation_level = 5 AND doc_id = ANY(%s)
             """.format(
                 tablename=self.base_tablename,
-            ), changed_awc_ids
+            ), [changed_awc_ids]
         )
         old_definitions = cursor.fetchall()
         cursor.execute(
             """
             SELECT doc_id
             FROM "{temporary_tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN %s
+            WHERE aggregation_level = 5 AND doc_id = ANY(%s)
             """.format(
-                tablename=self.temporary_tablename,
-            ), changed_awc_ids
+                temporary_tablename=self.temporary_tablename,
+            ), [changed_awc_ids]
         )
         new_definitions = cursor.fetchall()
         return old_definitions, new_definitions
