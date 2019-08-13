@@ -6,7 +6,7 @@ from custom.champ.views import ServiceUptakeView
 import json
 import mock
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 class TestServiceUptake(ChampTestCase):

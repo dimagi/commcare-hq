@@ -7,7 +7,7 @@ from custom.champ.views import PrevisionVsAchievementsTableView
 import json
 import mock
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 class TestPVATable(ChampTestCase):
