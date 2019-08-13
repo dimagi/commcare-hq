@@ -48,7 +48,6 @@ from corehq.apps.commtrack.tests.data.balances import (
 from corehq.apps.groups.models import Group
 from corehq.apps.products.models import Product
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from testapps.test_pillowtop.utils import process_pillow_changes
 from io import open
 
 
@@ -220,7 +219,6 @@ class CommTrackSubmissionTest(XMLTest):
     @classmethod
     def setUpClass(cls):
         super(CommTrackSubmissionTest, cls).setUpClass()
-        cls.process_legder_changes = process_pillow_changes('LedgerToElasticsearchPillow')
 
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
@@ -242,12 +240,11 @@ class CommTrackSubmissionTest(XMLTest):
             date_formatter=date_formatter,
             device_id=device_id,
         )
-        with self.process_legder_changes:
-            submit_form_locally(
-                instance=instance,
-                domain=self.domain.name,
-                **submit_extras
-            )
+        submit_form_locally(
+            instance=instance,
+            domain=self.domain.name,
+            **submit_extras
+        )
         return instance_id
 
     def check_product_stock(self, case, product_id, expected_soh, expected_qty, section_id='stock'):
@@ -650,8 +647,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        with self.process_legder_changes:
-            form.archive()
+        form.archive()
 
         if should_use_sql_backend(self.domain):
             self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
@@ -668,8 +664,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        with self.process_legder_changes:
-            form.unarchive()
+        form.unarchive()
         _assert_initial_state()
 
     def test_archive_only_form(self):
