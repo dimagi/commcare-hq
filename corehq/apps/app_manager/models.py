@@ -89,6 +89,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     get_build_by_version,
+    wrap_app,
 )
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
@@ -5610,16 +5611,11 @@ class LinkedApplication(Application):
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, six.string_types):
         soft_assert_type_text(app_id_or_source)
-        app_id = app_id_or_source
-        source = get_app(None, app_id)
-        source_domain = source['domain']
-        source = source.export_json(dump_json=False)
+        source_app = get_app(None, app_id_or_source)
     else:
-        cls = get_correct_app_class(app_id_or_source)
-        # Don't modify original app source
-        app = cls.wrap(deepcopy(app_id_or_source))
-        source_domain = app['domain']
-        source = app.export_json(dump_json=False)
+        source_app = wrap_app(app_id_or_source)
+    source_domain = source_app.domain
+    source = source_app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
     except KeyError:
