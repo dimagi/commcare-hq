@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 
@@ -11,7 +12,6 @@ from corehq.apps.es import (
     CaseES,
     filters,
     aggregations,
-    LedgerES,
     CaseSearchES,
 )
 from corehq.apps.es.aggregations import (
@@ -32,6 +32,7 @@ from corehq.apps.es.cases import (
     case_type as case_type_filter,
 )
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.elastic import ES_DEFAULT_INSTANCE, ES_EXPORT_INSTANCE
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
@@ -575,40 +576,27 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
 
 
 def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
-    # todo: figure out why this causes circular import
-    from corehq.apps.reports.commtrack.util import StockLedgerValueWrapper
-    query = (LedgerES()
-             .domain(domain)
-             .section(section_id)
-             .case(case_ids))
-    if entry_ids:
-        query = query.entry(entry_ids)
-
-    return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
+    return LedgerAccessors(domain).get_ledger_values_for_cases(case_ids, section_id, entry_ids)
 
 
 def products_with_ledgers(domain, case_ids, section_id, entry_ids=None):
-    # returns entry ids/product ids that have associated ledgers
-    query = LedgerES().domain(domain).section(section_id).case(case_ids)
-    if entry_ids:
-        query = query.entry(entry_ids)
-    return set(query.values_list('entry_id', flat=True))
+    return {
+        ledger.entry_id
+        for ledger in get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids)
+    }
 
 
 def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
-    # todo: figure out why this causes circular import
-    query = LedgerES().domain(domain).section(section_id).case(case_ids)
-    if entry_ids:
-        query = query.entry(entry_ids)
+    ledgers = get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids)
+    ret = defaultdict(lambda: 0)
+    for ledger in ledgers:
+        ret[ledger.entry_id] += ledger.balance
 
-    terms = [
-        AggregationTerm('entry_id', 'entry_id'),
+    row_class = namedtuple('AggregateLedgerValue', ['entry_id', 'balance'])
+    return [
+        row_class(entry_id, balance)
+        for entry_id, balance in ret.items()
     ]
-    return NestedTermAggregationsHelper(
-        base_query=query,
-        terms=terms,
-        inner_most_aggregation=SumAggregation('balance', 'balance'),
-    ).get_data()
 
 
 def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
