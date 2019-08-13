@@ -10,7 +10,6 @@ from corehq.apps.export.models import (
     ExportItem,
     FormExportInstance,
     PathNode,
-    RowNumberColumn,
     TableConfiguration,
 )
 
@@ -66,7 +65,7 @@ class TestODataWrap(TestCase):
         self.addCleanup(export_with_column_containing_at_sign.delete)
         cleaned_export = ExportInstance.get(export_with_column_containing_at_sign.get_id)
         self.assertEqual(cleaned_export.tables[0].columns[0].label, 'label')
-    
+
     def test_caseid_column_label(self):
         export_with_modified_caseid_column = CaseExportInstance(
             is_odata_config=True,
