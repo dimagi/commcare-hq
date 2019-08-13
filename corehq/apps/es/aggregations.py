@@ -566,8 +566,7 @@ class NestedTermAggregationsHelper(object):
     """
     Helper to run nested term-based queries (equivalent to SQL group-by clauses).
     This is not at all related to the ES 'nested aggregation'. The final aggregation
-    defaults to a count of documents, though can also be used to sum a different field
-    of the document.
+    is a count of documents.
 
     Example usage:
 
@@ -583,35 +582,18 @@ class NestedTermAggregationsHelper(object):
             ]
         ).get_data()
 
-        # summing the balances of ledger values, grouped by the entry id
-
-        NestedTermAggregationsHelper(
-            base_query=LedgerES().domain(domain).section(section_id),
-            terms=[
-                AggregationTerm('entry_id', 'entry_id'),
-            ],
-            inner_most_aggregation=SumAggregation('balance', 'balance'),
-        ).get_data()
-
     This works by bucketing docs first by one terms aggregation, then within
     that bucket, bucketing further by the next term, and so on. This is then
     flattened out to appear like a group-by-multiple.
     """
 
-    def __init__(self, base_query, terms, inner_most_aggregation=None):
+    def __init__(self, base_query, terms):
         self.base_query = base_query
         self.terms = terms
-        self.inner_most_aggregation = inner_most_aggregation
 
     @property
     def query(self):
         previous_term = None
-
-        if self.inner_most_aggregation is not None:
-            if not isinstance(self.inner_most_aggregation, SumAggregation):
-                raise ValueError('currently only SumAggregations and its children are supported')
-            term = self.inner_most_aggregation
-            previous_term = term
 
         for name, field in reversed(self.terms):
             term = TermsAggregation(name, field)
@@ -628,19 +610,14 @@ class NestedTermAggregationsHelper(object):
                 if remaining_terms:
                     _add_terms(bucket, remaining_terms[0], remaining_terms[1:], current_counts, current_key=key)
                 else:
-                    # base case
-                    if self.inner_most_aggregation is None:
-                        current_counts[key] += bucket.doc_count
-                    else:
-                        current_counts[key] += getattr(bucket, self.inner_most_aggregation.name).value
+                    current_counts[key] += bucket.doc_count
 
         counts = defaultdict(lambda: 0)
         _add_terms(self.query.size(0).run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
         return self._format_counts(counts)
 
     def _format_counts(self, counts):
-        final_aggregation_name = ('doc_count' if self.inner_most_aggregation is None
-                                  else self.inner_most_aggregation.name)
+        final_aggregation_name = ('doc_count')
         row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + [final_aggregation_name])
         for combined_key, count in counts.items():
             yield row_class(*(combined_key + (count,)))
