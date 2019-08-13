@@ -380,7 +380,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
-            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
+            [settings.SALES_EMAIL],
         )
         update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
